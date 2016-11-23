@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster;
 
 import static com.lambdaworks.redis.cluster.ClusterScanSupport.asyncClusterKeyScanCursorMapper;
 import static com.lambdaworks.redis.cluster.ClusterScanSupport.asyncClusterStreamScanCursorMapper;
+import static com.lambdaworks.redis.cluster.NodeSelectionInvocationHandler.ExecutionModel.ASYNC;
 import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
 
 import java.lang.reflect.Proxy;
@@ -240,10 +241,10 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            
+
             for (RedisFuture<Boolean> listRedisFuture : executions.values()) {
                 Boolean b = MultiNodeExecution.execute(() -> listRedisFuture.get());
-                if (b == null ||  !b) {
+                if (b == null || !b) {
                     return false;
                 }
             }
@@ -343,7 +344,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             List<K> result = new ArrayList<>();
             for (RedisFuture<List<K>> future : executions.values()) {
-                result.addAll(MultiNodeExecution.execute(() -> future.get()));
+                result.addAll(MultiNodeExecution.execute(future::get));
             }
             return result;
         });
@@ -410,8 +411,8 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * @param <T> result type
      * @return map of a key (counter) and commands.
      */
-    protected <T> Map<String, RedisFuture<T>> executeOnNodes(
-            Function<RedisClusterAsyncCommands<K, V>, RedisFuture<T>> function, Function<RedisClusterNode, Boolean> filter) {
+    protected <T> Map<String, RedisFuture<T>> executeOnNodes(Function<RedisClusterAsyncCommands<K, V>, RedisFuture<T>> function,
+            Function<RedisClusterNode, Boolean> filter) {
         Map<String, RedisFuture<T>> executions = new HashMap<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
@@ -474,15 +475,19 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         NodeSelectionSupport<RedisAsyncCommands<K, V>, ?> selection;
 
+        StatefulRedisClusterConnectionImpl impl = (StatefulRedisClusterConnectionImpl) connection;
         if (dynamic) {
-            selection = new DynamicAsyncNodeSelection<>(getStatefulConnection(), predicate, intent);
+            selection = new DynamicNodeSelection<RedisAsyncCommands<K, V>, Object, K, V>(
+                    impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::async);
         } else {
-            selection = new StaticAsyncNodeSelection<>(getStatefulConnection(), predicate, intent);
+            selection = new StaticNodeSelection<RedisAsyncCommands<K, V>, Object, K, V>(
+                    impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::async);
         }
 
-        NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection);
-        return (AsyncNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(), new Class<?>[] {
-                NodeSelectionAsyncCommands.class, AsyncNodeSelection.class }, h);
+        NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
+                RedisClusterAsyncCommands.class, ASYNC);
+        return (AsyncNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(),
+                new Class<?>[] { NodeSelectionAsyncCommands.class, AsyncNodeSelection.class }, h);
     }
 
     @Override
@@ -504,7 +509,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor), asyncClusterKeyScanCursorMapper());
+        return clusterScan(scanCursor, RedisKeyAsyncCommands::scan, asyncClusterKeyScanCursorMapper());
     }
 
     @Override
@@ -553,5 +558,4 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
-
 }

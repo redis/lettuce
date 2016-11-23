@@ -16,10 +16,12 @@
 package com.lambdaworks.redis.cluster;
 
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
@@ -31,18 +33,36 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  * @param <V> Value type.
  * @author Mark Paluch
  */
-abstract class DynamicNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD, K, V> {
+class DynamicNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD, K, V> {
 
+    private final ClusterDistributionChannelWriter writer;
     private final Predicate<RedisClusterNode> selector;
+    private final ClusterConnectionProvider.Intent intent;
+    private final Function<StatefulRedisConnection<K, V>, API> apiExtractor;
 
-    public DynamicNodeSelection(StatefulRedisClusterConnection<K, V> globalConnection, Predicate<RedisClusterNode> selector,
-            ClusterConnectionProvider.Intent intent) {
-        super(globalConnection, intent);
+    public DynamicNodeSelection(ClusterDistributionChannelWriter writer, Predicate<RedisClusterNode> selector,
+            ClusterConnectionProvider.Intent intent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
+
         this.selector = selector;
+        this.intent = intent;
+        this.writer = writer;
+        this.apiExtractor = apiExtractor;
+    }
+
+    @Override
+    protected StatefulRedisConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
+
+        RedisURI uri = redisClusterNode.getUri();
+        return writer.getClusterConnectionProvider().getConnection(intent, uri.getHost(), uri.getPort());
+    }
+
+    @Override
+    protected API getApi(RedisClusterNode redisClusterNode) {
+        return apiExtractor.apply(getConnection(redisClusterNode));
     }
 
     @Override
     protected List<RedisClusterNode> nodes() {
-        return globalConnection.getPartitions().getPartitions().stream().filter(selector).collect(Collectors.toList());
+        return writer.getPartitions().getPartitions().stream().filter(selector).collect(Collectors.toList());
     }
 }

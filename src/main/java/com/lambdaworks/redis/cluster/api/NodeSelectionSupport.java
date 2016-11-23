@@ -31,13 +31,11 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 public interface NodeSelectionSupport<API, CMD> {
 
     /**
-     * 
      * @return number of nodes.
      */
     int size();
 
     /**
-     *
      * @return commands API to run on this node selection.
      */
     CMD commands();
@@ -59,9 +57,7 @@ public interface NodeSelectionSupport<API, CMD> {
     RedisClusterNode node(int index);
 
     /**
-     * 
      * @return map of {@link RedisClusterNode} and the connection/commands objects
      */
     Map<RedisClusterNode, API> asMap();
-
 }

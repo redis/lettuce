@@ -19,30 +19,23 @@ import static com.lambdaworks.redis.protocol.CommandType.AUTH;
 import static com.lambdaworks.redis.protocol.CommandType.READONLY;
 import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.*;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.NodeSelection;
 import com.lambdaworks.redis.cluster.api.sync.NodeSelectionCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
-import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.internal.AbstractInvocationHandler;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CompleteableCommand;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
@@ -96,8 +89,9 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return sync;
     }
 
-    public InvocationHandler syncInvocationHandler() {
-        return new ClusterFutureSyncInvocationHandler<>(this, async());
+    protected InvocationHandler syncInvocationHandler() {
+        return new ClusterFutureSyncInvocationHandler<>(this, RedisClusterAsyncCommands.class, NodeSelection.class,
+                NodeSelectionCommands.class, async());
     }
 
     @Override
@@ -217,151 +211,5 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Override
     public ReadFrom getReadFrom() {
         return getClusterDistributionChannelWriter().getReadFrom();
-    }
-
-    /**
-     * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a
-     * full sync class which just delegates every request.
-     *
-     * @param <K> Key type.
-     * @param <V> Value type.
-     * @author Mark Paluch
-     * @since 3.0
-     */
-    @SuppressWarnings("unchecked")
-    private static class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
-
-        private final StatefulRedisClusterConnection<K, V> connection;
-        private final Object asyncApi;
-        private final Map<Method, Method> apiMethodCache = new ConcurrentHashMap<>(RedisClusterCommands.class.getMethods().length, 1);
-        private final Map<Method, Method> connectionMethodCache = new ConcurrentHashMap<>(5, 1);
-
-        private static final Constructor<MethodHandles.Lookup> LOOKUP_CONSTRUCTOR;
-
-        static {
-            try {
-                LOOKUP_CONSTRUCTOR = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, int.class);
-                if (!LOOKUP_CONSTRUCTOR.isAccessible()) {
-                    LOOKUP_CONSTRUCTOR.setAccessible(true);
-                }
-            } catch (NoSuchMethodException exp) {
-                // should be impossible, but...
-                throw new IllegalStateException(exp);
-            }
-        }
-
-        ClusterFutureSyncInvocationHandler(StatefulRedisClusterConnection<K, V> connection, Object asyncApi) {
-            this.connection = connection;
-            this.asyncApi = asyncApi;
-        }
-
-        static MethodHandles.Lookup privateMethodHandleLookup(Class<?> declaringClass) {
-            try {
-                return LOOKUP_CONSTRUCTOR.newInstance(declaringClass, MethodHandles.Lookup.PRIVATE);
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
-        static MethodHandle getDefaultMethodHandle(Method method) {
-            Class<?> declaringClass = method.getDeclaringClass();
-            try {
-                return privateMethodHandleLookup(declaringClass).unreflectSpecial(method, declaringClass);
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException("Did not pass in an interface method: " + method);
-            }
-        }
-
-        /**
-         *
-         * @see AbstractInvocationHandler#handleInvocation(Object, Method, Object[])
-         */
-        @Override
-        protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
-
-            try {
-
-                if (method.isDefault()) {
-                    return getDefaultMethodHandle(method).bindTo(proxy).invokeWithArguments(args);
-                }
-
-                if (method.getName().equals("getConnection") && args.length > 0) {
-                    Method targetMethod = connectionMethodCache.computeIfAbsent(method, key -> {
-                        try {
-                            return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
-                        } catch (NoSuchMethodException e) {
-                            throw new IllegalStateException(e);
-                        }
-                    });
-
-                    Object result = targetMethod.invoke(connection, args);
-                    if (result instanceof StatefulRedisClusterConnection) {
-                        StatefulRedisClusterConnection<K, V> connection = (StatefulRedisClusterConnection<K, V>) result;
-                        return connection.sync();
-                    }
-
-                    if (result instanceof StatefulRedisConnection) {
-                        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection<K, V>) result;
-                        return connection.sync();
-                    }
-                }
-
-                if (method.getName().equals("readonly") && args.length == 1) {
-                    return nodes((Predicate<RedisClusterNode>) args[0], ClusterConnectionProvider.Intent.READ, false);
-                }
-
-                if (method.getName().equals("nodes") && args.length == 1) {
-                    return nodes((Predicate<RedisClusterNode>) args[0], ClusterConnectionProvider.Intent.WRITE, false);
-                }
-
-                if (method.getName().equals("nodes") && args.length == 2) {
-                    return nodes((Predicate<RedisClusterNode>) args[0], ClusterConnectionProvider.Intent.WRITE,
-                            (Boolean) args[1]);
-                }
-
-                Method targetMethod = apiMethodCache.computeIfAbsent(method, key -> {
-
-                    try {
-                        return asyncApi.getClass().getMethod(key.getName(), key.getParameterTypes());
-                    } catch (NoSuchMethodException e) {
-                        throw new IllegalStateException(e);
-                    }
-                });
-
-                Object result = targetMethod.invoke(asyncApi, args);
-
-                if (result instanceof RedisFuture) {
-                    RedisFuture<?> command = (RedisFuture<?>) result;
-                    if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
-                        if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti()) {
-                            return null;
-                        }
-                    }
-                    return LettuceFutures.awaitOrCancel(command, connection.getTimeout(), connection.getTimeoutUnit());
-                }
-
-                return result;
-
-            } catch (InvocationTargetException e) {
-                throw e.getTargetException();
-            }
-        }
-
-        protected NodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, ClusterConnectionProvider.Intent intent,
-                boolean dynamic) {
-
-            NodeSelectionSupport<RedisCommands<K, V>, ?> selection;
-
-            if (dynamic) {
-                selection = new DynamicSyncNodeSelection<>(connection, predicate, intent);
-            } else {
-                selection = new StaticSyncNodeSelection<>(connection, predicate, intent);
-            }
-
-            NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
-                    true, connection.getTimeout(), connection.getTimeoutUnit());
-            return (NodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(),
-                    new Class<?>[] { NodeSelectionCommands.class, NodeSelection.class }, h);
-        }
     }
 }
