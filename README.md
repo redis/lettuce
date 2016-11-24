@@ -111,9 +111,10 @@ Basic Usage
 -----------
 
 ```java
-RedisClient client = RedisClient.create("redis://localhost")
-RedisStringsConnection<String, String> connection = client.connect()
-String value = connection.get("key")
+RedisClient client = RedisClient.create("redis://localhost");
+StatefulRedisConnection<String, String> connection = client.connect();
+RedisStringCommands sync = connection.sync();
+String value = sync.get("key");
 ```
 
 Each Redis command is implemented by one or more methods with names identical
