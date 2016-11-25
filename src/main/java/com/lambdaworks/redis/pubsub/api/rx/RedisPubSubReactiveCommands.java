@@ -23,7 +23,7 @@ import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
 /**
- * Asynchronous and thread-safe Redis PubSub API.
+ * Reactive and thread-safe Redis PubSub API.
  *
  * @param <K> Key type.
  * @param <V> Value type.

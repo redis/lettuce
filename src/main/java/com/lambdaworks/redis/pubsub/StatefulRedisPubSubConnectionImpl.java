@@ -133,7 +133,34 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         notifyListeners(output);
     }
 
-    private void notifyListeners(PubSubOutput<K, V, V> output) {
+    @Override
+    public void activated() {
+        super.activated();
+        resubscribe();
+    }
+
+    /**
+     * Re-subscribe to all previously subscribed channels and patterns.
+     * 
+     * @return list of the futures of the {@literal subscribe} and {@literal psubscribe} commands.
+     */
+    protected List<RedisFuture<Void>> resubscribe() {
+
+        List<RedisFuture<Void>> result = new ArrayList<>();
+
+        if (!channels.isEmpty()) {
+            result.add(async().subscribe(toArray(channels)));
+        }
+
+        if (!patterns.isEmpty()) {
+            result.add(async().psubscribe(toArray(patterns)));
+        }
+
+        return result;
+    }
+
+    protected void notifyListeners(PubSubOutput<K, V, V> output) {
+
         // update listeners
         for (RedisPubSubListener<K, V> listener : listeners) {
             switch (output.type()) {
@@ -161,26 +188,6 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         }
     }
 
-    /**
-     * Re-subscribe to all previously subscribed channels and patterns.
-     * 
-     * @return list of the futures of the {@literal subscribe} and {@literal psubscribe} commands.
-     */
-    protected List<RedisFuture<Void>> resubscribe() {
-
-        List<RedisFuture<Void>> result = new ArrayList<>();
-
-        if (!channels.isEmpty()) {
-            result.add(async().subscribe(toArray(channels)));
-        }
-
-        if (!patterns.isEmpty()) {
-            result.add(async().psubscribe(toArray(patterns)));
-        }
-
-        return result;
-    }
-
     @SuppressWarnings("unchecked")
     private <T> T[] toArray(Collection<T> c) {
         Class<T> cls = (Class<T>) c.iterator().next().getClass();
@@ -206,11 +213,5 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
             default:
                 break;
         }
-    }
-
-    @Override
-    public void activated() {
-        super.activated();
-        resubscribe();
     }
 }

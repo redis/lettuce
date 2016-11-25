@@ -59,17 +59,16 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
     RedisPubSubReactiveCommands<K, V> reactive();
 
     /**
-     * Add a new listener.
-     * 
-     * @param listener Listener.
+     * Add a new {@link RedisPubSubListener listener}.
+     *
+     * @param listener the listener, must not be {@literal null}.
      */
     void addListener(RedisPubSubListener<K, V> listener);
 
     /**
-     * Remove an existing listener.
+     * Remove an existing {@link RedisPubSubListener listener}..
      * 
-     * @param listener Listener.
+     * @param listener the listener, must not be {@literal null}.
      */
     void removeListener(RedisPubSubListener<K, V> listener);
-
 }

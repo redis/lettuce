@@ -21,7 +21,6 @@ import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
 /**
- * 
  * Synchronous and thread-safe Redis PubSub API.
  * 
  * @param <K> Key type.
