@@ -17,174 +17,178 @@ package com.lambdaworks.redis.cluster.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.AbstractClusterTest;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-import com.lambdaworks.redis.internal.LettuceFactories;
-import com.lambdaworks.redis.pubsub.RedisPubSubListener;
+import com.lambdaworks.redis.cluster.pubsub.api.async.NodeSelectionPubSubAsyncCommands;
+import com.lambdaworks.redis.cluster.pubsub.api.async.PubSubAsyncNodeSelection;
+import com.lambdaworks.redis.cluster.pubsub.api.reactive.NodeSelectionPubSubReactiveCommands;
+import com.lambdaworks.redis.cluster.pubsub.api.reactive.PubSubReactiveNodeSelection;
+import com.lambdaworks.redis.cluster.pubsub.api.sync.NodeSelectionPubSubCommands;
+import com.lambdaworks.redis.cluster.pubsub.api.sync.PubSubNodeSelection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.support.PubSubTestListener;
 
 /**
  * @author Mark Paluch
  */
-public class PubSubClusterTest extends AbstractClusterTest implements RedisPubSubListener<String, String> {
+public class PubSubClusterTest extends AbstractClusterTest {
 
-    private BlockingQueue<String> channels;
-    private BlockingQueue<String> patterns;
-    private BlockingQueue<String> messages;
-    private BlockingQueue<Long> counts;
+    private PubSubTestListener connectionListener = new PubSubTestListener();
+    private PubSubTestListener nodeListener = new PubSubTestListener();
 
-    private StatefulRedisClusterConnection<String, String> connection;
-    private StatefulRedisPubSubConnection<String, String> pubSubConnection;
+    private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection;
     private StatefulRedisPubSubConnection<String, String> pubSubConnection2;
 
     @Before
     public void openPubSubConnection() throws Exception {
-        connection = clusterClient.connect();
+
         pubSubConnection = clusterClient.connectPubSub();
         pubSubConnection2 = clusterClient.connectPubSub();
-        channels = LettuceFactories.newBlockingQueue();
-        patterns = LettuceFactories.newBlockingQueue();
-        messages = LettuceFactories.newBlockingQueue();
-        counts = LettuceFactories.newBlockingQueue();
+
+        pubSubConnection.addListener(connectionListener);
     }
 
     @After
     public void closePubSubConnection() throws Exception {
-        connection.close();
         pubSubConnection.close();
         pubSubConnection2.close();
     }
 
     @Test
-    public void testRegularClientPubSubChannels() throws Exception {
+    public void testNodeIdSubscription() throws Exception {
 
-        String nodeId = pubSubConnection.sync().clusterMyId();
-        RedisClusterNode otherNode = getOtherThan(nodeId);
-        pubSubConnection.sync().subscribe(key);
+        RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
 
-        List<String> channelsOnSubscribedNode = connection.getConnection(nodeId).sync().pubsubChannels();
-        assertThat(channelsOnSubscribedNode).hasSize(1);
+        StatefulRedisPubSubConnection<String, String> node = pubSubConnection.getConnection(partition.getNodeId());
+        node.addListener(nodeListener);
 
-        List<String> channelsOnOtherNode = connection.getConnection(otherNode.getNodeId()).sync().pubsubChannels();
-        assertThat(channelsOnOtherNode).isEmpty();
+        node.sync().subscribe("channel");
+
+        pubSubConnection2.sync().publish("channel", "message");
+
+        assertThat(nodeListener.getMessages().take()).isEqualTo("message");
+        assertThat(connectionListener.getMessages().poll()).isNull();
     }
 
     @Test
-    public void testRegularClientPublish() throws Exception {
+    public void testNodeMessagePropagationSubscription() throws Exception {
 
-        String nodeId = pubSubConnection.sync().clusterMyId();
-        RedisClusterNode otherNode = getOtherThan(nodeId);
-        pubSubConnection.sync().subscribe(key);
-        pubSubConnection.addListener(this);
+        RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
+        pubSubConnection.setNodeMessagePropagation(true);
 
-        connection.getConnection(nodeId).sync().publish(key, value);
-        assertThat(messages.take()).isEqualTo(value);
+        StatefulRedisPubSubConnection<String, String> node = pubSubConnection.getConnection(partition.getNodeId());
+        node.sync().subscribe("channel");
 
-        connection.getConnection(otherNode.getNodeId()).sync().publish(key, value);
-        assertThat(messages.take()).isEqualTo(value);
-    }
+        pubSubConnection2.sync().publish("channel", "message");
 
-
-    @Test
-    public void testPubSubClientPublish() throws Exception {
-
-        String nodeId = pubSubConnection.sync().clusterMyId();
-        pubSubConnection.sync().subscribe(key);
-        pubSubConnection.addListener(this);
-
-        assertThat(pubSubConnection2.sync().clusterMyId()).isEqualTo(nodeId);
-
-        pubSubConnection2.sync().publish(key, value);
-        assertThat(messages.take()).isEqualTo(value);
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
     }
 
     @Test
-    public void testConnectToLeastClientsNode() throws Exception {
+    public void testNodeHostAndPortMessagePropagationSubscription() throws Exception {
 
-        clusterClient.reloadPartitions();
-        String nodeId = pubSubConnection.sync().clusterMyId();
+        RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
+        pubSubConnection.setNodeMessagePropagation(true);
 
-        StatefulRedisPubSubConnection<String, String> connectionAfterPartitionReload = clusterClient.connectPubSub();
-        String newConnectionNodeId = connectionAfterPartitionReload.sync().clusterMyId();
-        connectionAfterPartitionReload.close();
+        RedisURI uri = partition.getUri();
+        StatefulRedisPubSubConnection<String, String> node = pubSubConnection.getConnection(uri.getHost(), uri.getPort());
+        node.sync().subscribe("channel");
 
-        assertThat(nodeId).isNotEqualTo(newConnectionNodeId);
+        pubSubConnection2.sync().publish("channel", "message");
+
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
     }
 
     @Test
-    public void testRegularClientPubSubPublish() throws Exception {
+    public void testAsyncSubscription() throws Exception {
 
-        String nodeId = pubSubConnection.sync().clusterMyId();
-        RedisClusterNode otherNode = getOtherThan(nodeId);
-        pubSubConnection.sync().subscribe(key);
-        pubSubConnection.addListener(this);
+        pubSubConnection.setNodeMessagePropagation(true);
 
-        List<String> channelsOnSubscribedNode = connection.getConnection(nodeId).sync().pubsubChannels();
-        assertThat(channelsOnSubscribedNode).hasSize(1);
+        PubSubAsyncNodeSelection<String, String> masters = pubSubConnection.async().masters();
+        NodeSelectionPubSubAsyncCommands<String, String> commands = masters.commands();
 
-        RedisCommands<String, String> otherNodeConnection = connection.getConnection(otherNode.getNodeId()).sync();
-        otherNodeConnection.publish(key, value);
-        assertThat(channels.take()).isEqualTo(key);
+        CompletableFuture.allOf(commands.psubscribe("chann*").futures()).get();
 
+        pubSubConnection2.sync().publish("channel", "message");
+
+        assertThat(masters.size()).isEqualTo(2);
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
+        assertThat(connectionListener.getMessages().poll()).isNull();
     }
 
-    private RedisClusterNode getOtherThan(String nodeId) {
-        for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            if (redisClusterNode.getNodeId().equals(nodeId)) {
-                continue;
+    @Test
+    public void testSyncSubscription() throws Exception {
+
+        pubSubConnection.setNodeMessagePropagation(true);
+
+        PubSubNodeSelection<String, String> masters = pubSubConnection.sync().masters();
+        NodeSelectionPubSubCommands<String, String> commands = masters.commands();
+
+        commands.psubscribe("chann*");
+
+        pubSubConnection2.sync().publish("channel", "message");
+
+        assertThat(masters.size()).isEqualTo(2);
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
+        assertThat(connectionListener.getMessages().poll()).isNull();
+    }
+
+    @Test
+    public void testReactiveSubscription() throws Exception {
+
+        pubSubConnection.setNodeMessagePropagation(true);
+
+        PubSubReactiveNodeSelection<String, String> masters = pubSubConnection.reactive().masters();
+        NodeSelectionPubSubReactiveCommands<String, String> commands = masters.commands();
+
+        commands.psubscribe("chann*").flux().then().block();
+
+        pubSubConnection2.sync().publish("channel", "message");
+
+        assertThat(masters.size()).isEqualTo(2);
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
+        assertThat(connectionListener.getMessages().poll()).isNull();
+    }
+
+    @Test
+    public void testClusterListener() throws Exception {
+
+        BlockingQueue<RedisClusterNode> nodes = new LinkedBlockingQueue<>();
+        pubSubConnection.setNodeMessagePropagation(true);
+        pubSubConnection.addListener(new RedisClusterPubSubAdapter<String, String>() {
+
+            @Override
+            public void message(RedisClusterNode node, String pattern, String channel, String message) {
+                nodes.add(node);
             }
-            return redisClusterNode;
-        }
+        });
 
-        throw new IllegalStateException("No other nodes than " + nodeId + " available");
+        PubSubNodeSelection<String, String> masters = pubSubConnection.sync().masters();
+        NodeSelectionPubSubCommands<String, String> commands = masters.commands();
+
+        commands.psubscribe("chann*");
+
+        pubSubConnection2.sync().publish("channel", "message");
+
+        assertThat(masters.size()).isEqualTo(2);
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
+        assertThat(connectionListener.getMessages().take()).isEqualTo("message");
+        assertThat(connectionListener.getMessages().poll()).isNull();
+
+        assertThat(nodes.take()).isNotNull();
+        assertThat(nodes.take()).isNotNull();
+        assertThat(nodes.poll()).isNull();
     }
-
-    // RedisPubSubListener implementation
-
-    @Override
-    public void message(String channel, String message) {
-        channels.add(channel);
-        messages.add(message);
-    }
-
-    @Override
-    public void message(String pattern, String channel, String message) {
-        patterns.add(pattern);
-        channels.add(channel);
-        messages.add(message);
-    }
-
-    @Override
-    public void subscribed(String channel, long count) {
-        channels.add(channel);
-        counts.add(count);
-    }
-
-    @Override
-    public void psubscribed(String pattern, long count) {
-        patterns.add(pattern);
-        counts.add(count);
-    }
-
-    @Override
-    public void unsubscribed(String channel, long count) {
-        channels.add(channel);
-        counts.add(count);
-    }
-
-    @Override
-    public void punsubscribed(String pattern, long count) {
-        patterns.add(pattern);
-        counts.add(count);
-    }
-
 }

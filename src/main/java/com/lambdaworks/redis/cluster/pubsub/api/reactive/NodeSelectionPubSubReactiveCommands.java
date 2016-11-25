@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,66 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.pubsub.api.sync;
+package com.lambdaworks.redis.cluster.pubsub.api.reactive;
 
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.pubsub.RedisPubSubListener;
-import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.cluster.api.reactive.ReactiveExecutions;
 
 /**
- * Synchronous and thread-safe Redis PubSub API.
- * 
- * @param <K> Key type.
- * @param <V> Value type.
+ * Reactive executed commands on a node selection for Pub/Sub.
+ *
  * @author Mark Paluch
- * @since 4.0
+ * @since 4.4
  */
-public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
-
-    /**
-     * Add a new listener.
-     * 
-     * @param listener Listener.
-     */
-    void addListener(RedisPubSubListener<K, V> listener);
-
-    /**
-     * Remove an existing listener.
-     * 
-     * @param listener Listener.
-     */
-    void removeListener(RedisPubSubListener<K, V> listener);
+public interface NodeSelectionPubSubReactiveCommands<K, V> {
 
     /**
      * Listen for messages published to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code psubscribe} completion
      */
-    void psubscribe(K... patterns);
+    ReactiveExecutions<Void> psubscribe(K... patterns);
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code punsubscribe} completion
      */
-    void punsubscribe(K... patterns);
+    ReactiveExecutions<Void> punsubscribe(K... patterns);
 
     /**
      * Listen for messages published to the given channels.
-     * 
+     *
      * @param channels the channels
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
      */
-    void subscribe(K... channels);
+    ReactiveExecutions<Void> subscribe(K... channels);
 
     /**
      * Stop listening for messages posted to the given channels.
-     * 
+     *
      * @param channels the channels
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
      */
-    void unsubscribe(K... channels);
-
-    /**
-     * @return the underlying connection.
-     */
-    StatefulRedisPubSubConnection<K, V> getStatefulConnection();
+    ReactiveExecutions<Void> unsubscribe(K... channels);
 }

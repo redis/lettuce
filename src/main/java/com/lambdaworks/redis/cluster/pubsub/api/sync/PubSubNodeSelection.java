@@ -13,31 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.cluster.api.reactive;
+package com.lambdaworks.redis.cluster.pubsub.api.sync;
 
-import java.util.Collection;
-
-import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-
-import reactor.core.publisher.Flux;
+import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
+import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 
 /**
- * Execution holder for a reactive command to be executed on multiple nodes.
+ * Node selection with access to {@link RedisPubSubCommands}.
  *
  * @author Mark Paluch
  * @since 4.4
  */
-public interface ReactiveExecutions<T> {
+public interface PubSubNodeSelection<K, V>
+        extends NodeSelectionSupport<RedisPubSubCommands<K, V>, NodeSelectionPubSubCommands<K, V>> {
 
-    /**
-     * Return a {@link Flux} that contains a combined stream of the multi-node execution.
-     * 
-     * @return
-     */
-    Flux<T> flux();
-
-    /**
-     * @return collection of nodes on which the command was executed.
-     */
-    Collection<RedisClusterNode> nodes();
 }

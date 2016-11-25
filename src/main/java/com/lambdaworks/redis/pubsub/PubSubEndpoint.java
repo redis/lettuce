@@ -46,21 +46,25 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     }
 
     /**
-     * Add a new listener.
+     * Add a new {@link RedisPubSubListener listener}.
      *
-     * @param listener Listener.
+     * @param listener the listener, must not be {@literal null}.
      */
     public void addListener(RedisPubSubListener<K, V> listener) {
         listeners.add(listener);
     }
 
     /**
-     * Remove an existing listener.
+     * Remove an existing {@link RedisPubSubListener listener}..
      *
-     * @param listener Listener.
+     * @param listener the listener, must not be {@literal null}.
      */
     public void removeListener(RedisPubSubListener<K, V> listener) {
         listeners.remove(listener);
+    }
+
+    protected List<RedisPubSubListener<K, V>> getListeners() {
+        return listeners;
     }
 
     public Set<K> getChannels() {
@@ -82,7 +86,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         notifyListeners(output);
     }
 
-    private void notifyListeners(PubSubOutput<K, V, V> output) {
+    protected void notifyListeners(PubSubOutput<K, V, V> output) {
         // update listeners
         for (RedisPubSubListener<K, V> listener : listeners) {
             switch (output.type()) {

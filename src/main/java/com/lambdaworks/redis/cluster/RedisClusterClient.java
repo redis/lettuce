@@ -36,6 +36,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.event.ClusterTopologyChangedEvent;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import com.lambdaworks.redis.cluster.topology.ClusterTopologyRefresh;
 import com.lambdaworks.redis.cluster.topology.NodeConnectionFactory;
 import com.lambdaworks.redis.cluster.topology.TopologyComparators;
@@ -44,9 +45,8 @@ import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.protocol.DefaultEndpoint;
 import com.lambdaworks.redis.protocol.CommandHandler;
+import com.lambdaworks.redis.protocol.DefaultEndpoint;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubEndpoint;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
@@ -344,7 +344,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      *
      * @return A new stateful Redis Cluster connection
      */
-    public StatefulRedisPubSubConnection<String, String> connectPubSub() {
+    public StatefulRedisClusterPubSubConnection<String, String> connectPubSub() {
         return connectPubSub(newStringStringCodec());
     }
 
@@ -368,10 +368,9 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return A new stateful Redis Cluster connection
      */
     @SuppressWarnings("unchecked")
-    public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
+    public <K, V> StatefulRedisClusterPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
         return connectClusterPubSubImpl(codec);
     }
-
 
     protected StatefulRedisConnection<String, String> connectToNode(final SocketAddress socketAddress) {
         return connectToNode(newStringStringCodec(), socketAddress.toString(), null, new Supplier<SocketAddress>() {
@@ -420,6 +419,43 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
+     * Create a pub/sub connection to a redis socket address.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param nodeId the nodeId
+     * @param socketAddressSupplier supplier for the socket address
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
+     */
+    <K, V> StatefulRedisPubSubConnection<K, V> connectPubSubToNode(RedisCodec<K, V> codec, String nodeId,
+            final Supplier<SocketAddress> socketAddressSupplier) {
+
+        assertNotNull(codec);
+        assertNotEmpty(initialUris);
+
+        LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
+
+        logger.debug("connectPubSubToNode(" + nodeId + ")");
+
+        PubSubEndpoint endpoint = new PubSubEndpoint(clientOptions);
+        StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, endpoint, codec,
+                timeout, unit);
+
+        try {
+            connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier,
+                    () -> new PubSubCommandHandler<K, V>(clientResources, codec, endpoint));
+
+            connection.registerCloseables(closeableResources, connection);
+        } catch (RedisException e) {
+            connection.close();
+            throw e;
+        }
+        return connection;
+
+    }
+
+    /**
      * Create a clustered pub/sub connection with command distributor.
      *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
@@ -441,8 +477,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
 
-        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions,
-                endpoint, clusterTopologyRefreshScheduler, getResources().eventExecutorGroup());
+        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, endpoint,
+                clusterTopologyRefreshScheduler, getResources().eventExecutorGroup());
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
                 clusterWriter, codec);
 
@@ -490,7 +526,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value type
      * @return a new connection
      */
-    <K, V> StatefulRedisPubSubConnectionImpl<K, V> connectClusterPubSubImpl(RedisCodec<K, V> codec) {
+    <K, V> StatefulRedisClusterPubSubConnection<K, V> connectClusterPubSubImpl(RedisCodec<K, V> codec) {
 
         if (partitions == null) {
             initializePartitions();
@@ -502,19 +538,20 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<K, V>(clientOptions);
+        PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<K, V>(clientOptions);
 
         ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, endpoint,
                 clusterTopologyRefreshScheduler, getResources().eventExecutorGroup());
-        PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
-                clusterWriter, codec);
+
+        StatefulRedisClusterPubSubConnectionImpl<K, V> connection = new StatefulRedisClusterPubSubConnectionImpl<>(endpoint,
+                clusterWriter, codec, timeout, unit);
+
+        ClusterPubSubConnectionProvider<K, V> pooledClusterConnectionProvider = new ClusterPubSubConnectionProvider<>(this,
+                clusterWriter, codec, connection.getUpstreamListener());
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
-        StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, clusterWriter,
-                codec, timeout, unit);
-
-        clusterWriter.setPartitions(partitions);
+        connection.setPartitions(partitions);
 
         boolean connected = false;
         RedisException causingException = null;
@@ -534,7 +571,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         if (!connected) {
             connection.close();
-            throw causingException;
+            if (causingException != null) {
+                throw causingException;
+            }
         }
 
         connection.registerCloseables(closeableResources, connection, clusterWriter, pooledClusterConnectionProvider);
@@ -568,8 +607,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      *
      */
     private <K, V> void connectStateful(DefaultEndpoint endpoint, StatefulRedisClusterConnectionImpl<K, V> connection,
-                                        RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
-                                        Supplier<CommandHandler> commandHandlerSupplier) {
+            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
+            Supplier<CommandHandler> commandHandlerSupplier) {
 
         connectStateful0(connection, endpoint, connectionSettings, socketAddressSupplier, commandHandlerSupplier);
 
@@ -637,6 +676,10 @@ public class RedisClusterClient extends AbstractRedisClient {
     protected void updatePartitionsInConnections() {
 
         forEachClusterConnection(input -> {
+            input.setPartitions(partitions);
+        });
+
+        forEachClusterPubSubConnection(input -> {
             input.setPartitions(partitions);
         });
     }
@@ -803,6 +846,10 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     protected void forEachClusterConnection(Consumer<StatefulRedisClusterConnectionImpl<?, ?>> function) {
         forEachCloseable(input -> input instanceof StatefulRedisClusterConnectionImpl, function);
+    }
+
+    protected void forEachClusterPubSubConnection(Consumer<StatefulRedisClusterPubSubConnectionImpl<?, ?>> function) {
+        forEachCloseable(input -> input instanceof StatefulRedisClusterPubSubConnectionImpl, function);
     }
 
     protected <T extends Closeable> void forEachCloseable(Predicate<? super Closeable> selector, Consumer<T> function) {

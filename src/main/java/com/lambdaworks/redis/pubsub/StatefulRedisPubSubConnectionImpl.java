@@ -118,7 +118,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
     /**
      * Re-subscribe to all previously subscribed channels and patterns.
-     * 
+     *
      * @return list of the futures of the {@literal subscribe} and {@literal psubscribe} commands.
      */
     protected List<RedisFuture<Void>> resubscribe() {
