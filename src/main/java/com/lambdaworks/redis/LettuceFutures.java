@@ -89,24 +89,7 @@ public class LettuceFutures {
      * @return Result of the command.
      */
     public static <T> T awaitOrCancel(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
-        return await(timeout, unit, cmd);
-    }
 
-    /**
-     * Wait until futures are complete or the supplied timeout is reached. Commands are canceled if the timeout is reached but
-     * the command is not finished.
-     *
-     * @param cmd Command to wait for
-     * @param timeout Maximum time to wait for futures to complete
-     * @param unit Unit of time for the timeout
-     * @param <T> Result type
-     * @deprecated The method name does not reflect what the method is doing, therefore it is deprecated. Use
-     *             {@link #awaitOrCancel(RedisFuture, long, TimeUnit)} instead. The semantics did not change and
-     *             {@link #awaitOrCancel(RedisFuture, long, TimeUnit)} simply calls this method.
-     * @return True if all futures complete in time.
-     */
-    @Deprecated
-    public static <T> T await(long timeout, TimeUnit unit, RedisFuture<T> cmd) {
         try {
             if (!cmd.await(timeout, unit)) {
                 cmd.cancel(true);
