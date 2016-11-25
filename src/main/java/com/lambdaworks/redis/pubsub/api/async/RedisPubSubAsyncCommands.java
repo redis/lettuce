@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis.pubsub.api.async;
 
-import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.pubsub.RedisPubSubConnection;
@@ -36,14 +35,20 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
      * Add a new listener.
      * 
      * @param listener Listener.
+     * @deprecated Use {@link #getStatefulConnection()} and
+     *             {@link StatefulRedisPubSubConnection#addListener(RedisPubSubListener)}.
      */
+    @Deprecated
     void addListener(RedisPubSubListener<K, V> listener);
 
     /**
      * Remove an existing listener.
      * 
      * @param listener Listener.
+     * @deprecated Use {@link #getStatefulConnection()} and
+     *             {@link StatefulRedisPubSubConnection#removeListener(RedisPubSubListener)}.
      */
+    @Deprecated
     void removeListener(RedisPubSubListener<K, V> listener);
 
     /**

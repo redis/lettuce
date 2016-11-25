@@ -36,14 +36,20 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
      * Add a new listener.
      * 
      * @param listener Listener.
+     * @deprecated Use {@link #getStatefulConnection()} and
+     *             {@link StatefulRedisPubSubConnection#addListener(RedisPubSubListener)}.
      */
+    @Deprecated
     void addListener(RedisPubSubListener<K, V> listener);
 
     /**
      * Remove an existing listener.
      * 
      * @param listener Listener.
+     * @deprecated Use {@link #getStatefulConnection()} and
+     *             {@link StatefulRedisPubSubConnection#removeListener(RedisPubSubListener)}.
      */
+    @Deprecated
     void removeListener(RedisPubSubListener<K, V> listener);
 
     /**
