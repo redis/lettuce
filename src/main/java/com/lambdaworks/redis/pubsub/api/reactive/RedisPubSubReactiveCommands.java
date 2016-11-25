@@ -16,7 +16,6 @@
 package com.lambdaworks.redis.pubsub.api.reactive;
 
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
-import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
 import reactor.core.publisher.Flux;
@@ -32,20 +31,6 @@ import reactor.core.publisher.Mono;
  * @since 5.0
  */
 public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands<K, V> {
-
-    /**
-     * Add a new listener.
-     * 
-     * @param listener Listener.
-     */
-    void addListener(RedisPubSubListener<K, V> listener);
-
-    /**
-     * Remove an existing listener.
-     * 
-     * @param listener Listener.
-     */
-    void removeListener(RedisPubSubListener<K, V> listener);
 
     /**
      * Flux for messages ({@literal pmessage}) received though pattern subscriptions. The connection needs to be subscribed to

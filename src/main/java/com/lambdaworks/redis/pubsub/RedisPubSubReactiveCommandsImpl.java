@@ -51,16 +51,6 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
         this.commandBuilder = new PubSubCommandBuilder<>(codec);
     }
 
-    /**
-     * Add a new listener.
-     * 
-     * @param listener Listener.
-     */
-    @Override
-    public void addListener(RedisPubSubListener<K, V> listener) {
-        getStatefulConnection().addListener(listener);
-    }
-
     @Override
     public Flux<PatternMessage<K, V>> observePatterns() {
         return observePatterns(FluxSink.OverflowStrategy.BUFFER);
@@ -68,6 +58,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
 
     @Override
     public Flux<PatternMessage<K, V>> observePatterns(FluxSink.OverflowStrategy overflowStrategy) {
+
         return Flux.create(sink -> {
 
             RedisPubSubAdapter<K, V> listener = new RedisPubSubAdapter<K, V>() {
@@ -78,9 +69,11 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
                 }
             };
 
-            addListener(listener);
+            StatefulRedisPubSubConnection<K, V> statefulConnection = getStatefulConnection();
+            statefulConnection.addListener(listener);
+
             sink.setCancellation(() -> {
-                removeListener(listener);
+                statefulConnection.removeListener(listener);
             });
 
         }, overflowStrategy);
@@ -104,23 +97,14 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
                 }
             };
 
-            addListener(listener);
+            StatefulRedisPubSubConnection<K, V> statefulConnection = getStatefulConnection();
+            statefulConnection.addListener(listener);
 
             sink.setCancellation(() -> {
-                removeListener(listener);
+                statefulConnection.removeListener(listener);
             });
 
         }, overflowStrategy);
-    }
-
-    /**
-     * Remove an existing listener.
-     * 
-     * @param listener Listener.
-     */
-    @Override
-    public void removeListener(RedisPubSubListener<K, V> listener) {
-        getStatefulConnection().removeListener(listener);
     }
 
     @Override

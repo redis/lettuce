@@ -31,20 +31,6 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V> {
 
     /**
-     * Add a new listener.
-     * 
-     * @param listener Listener.
-     */
-    void addListener(RedisPubSubListener<K, V> listener);
-
-    /**
-     * Remove an existing listener.
-     * 
-     * @param listener Listener.
-     */
-    void removeListener(RedisPubSubListener<K, V> listener);
-
-    /**
      * Listen for messages published to channels matching the given patterns.
      * 
      * @param patterns the patterns

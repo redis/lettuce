@@ -46,26 +46,6 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
         this.commandBuilder = new PubSubCommandBuilder<>(codec);
     }
 
-    /**
-     * Add a new listener.
-     * 
-     * @param listener Listener.
-     */
-    @Override
-    public void addListener(RedisPubSubListener<K, V> listener) {
-        getStatefulConnection().addListener(listener);
-    }
-
-    /**
-     * Remove an existing listener.
-     * 
-     * @param listener Listener.
-     */
-    @Override
-    public void removeListener(RedisPubSubListener<K, V> listener) {
-        getStatefulConnection().removeListener(listener);
-    }
-
     @Override
     @SuppressWarnings("unchecked")
     public RedisFuture<Void> psubscribe(K... patterns) {

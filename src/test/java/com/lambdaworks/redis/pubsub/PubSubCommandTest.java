@@ -56,7 +56,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     @Before
     public void openPubSubConnection() throws Exception {
         pubsub = client.connectPubSub().async();
-        pubsub.addListener(this);
+        pubsub.getStatefulConnection().addListener(this);
         channels = LettuceFactories.newBlockingQueue();
         patterns = LettuceFactories.newBlockingQueue();
         messages = LettuceFactories.newBlockingQueue();
@@ -74,7 +74,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
             @Override
             protected void run(RedisClient client) throws Exception {
                 RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-                connection.addListener(PubSubCommandTest.this);
+                connection.getStatefulConnection().addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
 
                 connection.subscribe(channel);
@@ -89,7 +89,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
             @Override
             protected void run(RedisClient client) throws Exception {
                 RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-                connection.addListener(PubSubCommandTest.this);
+                connection.getStatefulConnection().addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
                 connection.quit();
                 Wait.untilTrue(() -> {
@@ -351,7 +351,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
             }
         };
 
-        pubsub.addListener(adapter);
+        pubsub.getStatefulConnection().addListener(adapter);
         pubsub.subscribe(channel);
         pubsub.psubscribe(pattern);
 
@@ -373,7 +373,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
 
-        pubsub.removeListener(this);
+        pubsub.getStatefulConnection().removeListener(this);
 
         redis.publish(channel, message);
         assertThat(channels.poll(10, TimeUnit.MILLISECONDS)).isNull();

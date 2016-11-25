@@ -16,7 +16,6 @@
 package com.lambdaworks.redis.pubsub.api.sync;
 
 import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
 /**
@@ -28,20 +27,6 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
  * @since 4.0
  */
 public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
-
-    /**
-     * Add a new listener.
-     * 
-     * @param listener Listener.
-     */
-    void addListener(RedisPubSubListener<K, V> listener);
-
-    /**
-     * Remove an existing listener.
-     * 
-     * @param listener Listener.
-     */
-    void removeListener(RedisPubSubListener<K, V> listener);
 
     /**
      * Listen for messages published to channels matching the given patterns.

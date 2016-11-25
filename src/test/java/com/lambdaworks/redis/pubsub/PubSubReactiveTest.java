@@ -68,7 +68,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
 
         pubsub = client.connectPubSub().reactive();
         pubsub2 = client.connectPubSub().reactive();
-        pubsub.addListener(this);
+        pubsub.getStatefulConnection().addListener(this);
         channels = LettuceFactories.newBlockingQueue();
         patterns = LettuceFactories.newBlockingQueue();
         messages = LettuceFactories.newBlockingQueue();
@@ -379,7 +379,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
             }
         };
 
-        pubsub.addListener(adapter);
+        pubsub.getStatefulConnection().addListener(adapter);
         pubsub.subscribe(channel).subscribe();
         pubsub.psubscribe(pattern).subscribe();
 
@@ -402,7 +402,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
 
-        pubsub.removeListener(this);
+        pubsub.getStatefulConnection().removeListener(this);
 
         pubsub2.publish(channel, message).subscribe();
         assertThat(channels.poll(10, TimeUnit.MILLISECONDS)).isNull();
