@@ -132,6 +132,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * @throws IllegalArgumentException if the {@code type} is not supported.
      */
     public static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads) {
+
         if (DefaultEventExecutorGroup.class.equals(type)) {
             return new DefaultEventExecutorGroup(numberOfThreads, new DefaultThreadFactory("lettuce-eventExecutorLoop", true));
         }
@@ -140,9 +141,10 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             return new NioEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-nioEventLoop", true));
         }
 
-        if (EpollProvider.epollEventLoopGroupClass != null && EpollProvider.epollEventLoopGroupClass.equals(type)) {
+        if (EpollProvider.isAvailable() && EpollProvider.isEventLoopGroup(type)) {
             return EpollProvider.newEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-epollEventLoop", true));
         }
+
         throw new IllegalArgumentException("Type " + type.getName() + " not supported");
     }
 

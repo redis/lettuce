@@ -27,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import com.lambdaworks.redis.Transports.NativeTransports;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
@@ -39,7 +40,6 @@ import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -119,8 +119,8 @@ public abstract class AbstractRedisClient {
     }
 
     /**
-     * Set the default timeout for {@link com.lambdaworks.redis.RedisConnection connections} created by this client. The timeout
-     * applies to connection attempts and non-blocking commands.
+     * Set the default timeout for {@link com.lambdaworks.redis.RedisConnection connections} created by this client. The timeout applies to connection attempts and
+     * non-blocking commands.
      * 
      * @param timeout Default connection timeout.
      * @param unit Unit of time for the timeout.
@@ -181,44 +181,44 @@ public abstract class AbstractRedisClient {
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
 
+        LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
+
         connectionBuilder.bootstrap().group(getEventLoopGroup(connectionPoint));
 
-        if (connectionPoint != null && connectionPoint.getSocket() != null) {
+        if (connectionPoint.getSocket() != null) {
             checkForEpollLibrary();
-            connectionBuilder.bootstrap().channel(EpollProvider.epollDomainSocketChannelClass);
+            connectionBuilder.bootstrap().channel(NativeTransports.domainSocketChannelClass());
         } else {
-            connectionBuilder.bootstrap().channel(NioSocketChannel.class);
+            connectionBuilder.bootstrap().channel(Transports.socketChannelClass());
         }
     }
 
     private synchronized EventLoopGroup getEventLoopGroup(ConnectionPoint connectionPoint) {
 
-        if ((connectionPoint == null || connectionPoint.getSocket() == null)
-                && !eventLoopGroups.containsKey(NioEventLoopGroup.class)) {
-
-            if (eventLoopGroup == null) {
-                eventLoopGroup = clientResources.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
-            }
-
-            eventLoopGroups.put(NioEventLoopGroup.class, eventLoopGroup);
+        if (connectionPoint.getSocket() == null && !eventLoopGroups.containsKey(Transports.eventLoopGroupClass())) {
+            eventLoopGroups.put(Transports.eventLoopGroupClass(),
+                    clientResources.eventLoopGroupProvider().allocate(Transports.eventLoopGroupClass()));
         }
 
-        if (connectionPoint != null && connectionPoint.getSocket() != null) {
+        if (connectionPoint.getSocket() != null) {
+
             checkForEpollLibrary();
 
-            if (!eventLoopGroups.containsKey(EpollProvider.epollEventLoopGroupClass)) {
-                EventLoopGroup epl = clientResources.eventLoopGroupProvider().allocate(EpollProvider.epollEventLoopGroupClass);
-                eventLoopGroups.put(EpollProvider.epollEventLoopGroupClass, epl);
+            Class<? extends EventLoopGroup> eventLoopGroupClass = NativeTransports.eventLoopGroupClass();
+
+            if (!eventLoopGroups.containsKey(NativeTransports.eventLoopGroupClass())) {
+                eventLoopGroups.put(eventLoopGroupClass,
+                        clientResources.eventLoopGroupProvider().allocate(eventLoopGroupClass));
             }
         }
 
-        if (connectionPoint == null || connectionPoint.getSocket() == null) {
-            return eventLoopGroups.get(NioEventLoopGroup.class);
+        if (connectionPoint.getSocket() == null) {
+            return eventLoopGroups.get(Transports.eventLoopGroupClass());
         }
 
-        if (connectionPoint != null && connectionPoint.getSocket() != null) {
+        if (connectionPoint.getSocket() != null) {
             checkForEpollLibrary();
-            return eventLoopGroups.get(EpollProvider.epollEventLoopGroupClass);
+            return eventLoopGroups.get(NativeTransports.eventLoopGroupClass());
         }
 
         throw new IllegalStateException("This should not have happened in a binary decision. Please file a bug.");
@@ -233,6 +233,11 @@ public abstract class AbstractRedisClient {
 
         RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
         SocketAddress redisAddress = connectionBuilder.socketAddress();
+
+        if (clientResources.eventExecutorGroup().isShuttingDown()) {
+            throw new IllegalStateException("Cannot connect. Worker pool not running");
+        }
+
         try {
 
             logger.debug("Connecting to Redis at {}", redisAddress);
