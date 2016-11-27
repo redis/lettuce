@@ -27,6 +27,7 @@ import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import io.netty.handler.ssl.OpenSsl;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -132,6 +133,8 @@ public class SslTest extends AbstractTest {
     @Test
     public void standaloneWithOpenSsl() throws Exception {
 
+        assumeTrue(OpenSsl.isAvailable());
+
         SslOptions sslOptions = SslOptions.builder() //
                 .openSslProvider() //
                 .truststore(new File(LOCALHOST_KEYSTORE)) //
@@ -143,6 +146,8 @@ public class SslTest extends AbstractTest {
 
     @Test(expected = RedisConnectionException.class)
     public void standaloneWithOpenSslFailsWithWrongTruststore() throws Exception {
+
+        assumeTrue(OpenSsl.isAvailable());
 
         SslOptions sslOptions = SslOptions.builder() //
                 .openSslProvider() //
