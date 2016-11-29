@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.lang.reflect.Proxy;
 
+import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.commons.pool2.impl.SoftReferenceObjectPool;
@@ -54,10 +55,58 @@ public class ConnectionPoolSupportTest extends AbstractRedisClientTest {
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
                 .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig());
 
+        borrowAndReturn(pool);
+        borrowAndClose(pool);
+        borrowAndCloseTryWithResources(pool);
+
+        pool.returnObject(pool.borrowObject().sync().getStatefulConnection());
+        pool.returnObject(pool.borrowObject().async().getStatefulConnection());
+
+        pool.close();
+    }
+
+    @Test
+    public void softReferencePoolShouldWorkWithWrappedConnections() throws Exception {
+
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig());
+
+        borrowAndReturn(pool);
+        borrowAndClose(pool);
+        borrowAndCloseTryWithResources(pool);
+
+        pool.returnObject(pool.borrowObject().sync().getStatefulConnection());
+        pool.returnObject(pool.borrowObject().async().getStatefulConnection());
+
+        pool.close();
+    }
+
+    @Test
+    public void genericPoolShouldWorkWithPlainConnections() throws Exception {
+
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig(), false);
+
+        borrowAndReturn(pool);
+
         StatefulRedisConnection<String, String> connection = pool.borrowObject();
-        RedisCommands<String, String> sync = connection.sync();
-        sync.ping();
-        sync.close();
+        assertThat(Proxy.isProxyClass(connection.getClass())).isFalse();
+        pool.returnObject(connection);
+
+        pool.close();
+    }
+
+    @Test
+    public void softReferencePoolShouldWorkWithPlainConnections() throws Exception {
+
+        SoftReferenceObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createSoftReferenceObjectPool(() -> client.connect(), false);
+
+        borrowAndReturn(pool);
+
+        StatefulRedisConnection<String, String> connection = pool.borrowObject();
+        assertThat(Proxy.isProxyClass(connection.getClass())).isFalse();
+        pool.returnObject(connection);
 
         pool.close();
     }
@@ -218,5 +267,85 @@ public class ConnectionPoolSupportTest extends AbstractRedisClientTest {
         }
 
         pool.close();
+    }
+
+    @Test
+    public void tryWithResourcesReturnsConnectionToPool() throws Exception {
+
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig());
+
+        StatefulRedisConnection<String, String> usedConnection = null;
+        try (StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
+
+            RedisCommands<String, String> sync = connection.sync();
+            sync.ping();
+
+            usedConnection = connection;
+        }
+
+        try {
+            usedConnection.isMulti();
+            fail("Missing RedisException");
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining("deallocated");
+        }
+
+        pool.close();
+    }
+
+    @Test
+    public void tryWithResourcesReturnsSoftRefConnectionToPool() throws Exception {
+
+        SoftReferenceObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createSoftReferenceObjectPool(() -> client.connect());
+
+        StatefulRedisConnection<String, String> usedConnection = null;
+        try (StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
+
+            RedisCommands<String, String> sync = connection.sync();
+            sync.ping();
+
+            usedConnection = connection;
+        }
+
+        try {
+            usedConnection.isMulti();
+            fail("Missing RedisException");
+        } catch (RedisException e) {
+            assertThat(e).hasMessageContaining("deallocated");
+        }
+
+        pool.close();
+    }
+
+    private void borrowAndReturn(ObjectPool<StatefulRedisConnection<String, String>> pool) throws Exception {
+
+        for (int i = 0; i < 10; i++) {
+            StatefulRedisConnection<String, String> connection = pool.borrowObject();
+            RedisCommands<String, String> sync = connection.sync();
+            sync.ping();
+            pool.returnObject(connection);
+        }
+    }
+
+    private void borrowAndCloseTryWithResources(ObjectPool<StatefulRedisConnection<String, String>> pool) throws Exception {
+
+        for (int i = 0; i < 10; i++) {
+            try (StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
+                RedisCommands<String, String> sync = connection.sync();
+                sync.ping();
+            }
+        }
+    }
+
+    private void borrowAndClose(ObjectPool<StatefulRedisConnection<String, String>> pool) throws Exception {
+
+        for (int i = 0; i < 10; i++) {
+            StatefulRedisConnection<String, String> connection = pool.borrowObject();
+            RedisCommands<String, String> sync = connection.sync();
+            sync.ping();
+            sync.close();
+        }
     }
 }

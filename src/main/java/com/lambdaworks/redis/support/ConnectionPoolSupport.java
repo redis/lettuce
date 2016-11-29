@@ -23,11 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.cluster.RedisClusterClient;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.PooledObject;
@@ -113,6 +108,7 @@ public abstract class ConnectionPoolSupport {
      * @param <T> connection type.
      * @return the connection pool.
      */
+    @SuppressWarnings("unchecked")
     public static <T extends StatefulConnection<?, ?>> GenericObjectPool<T> createGenericObjectPool(
             Supplier<T> connectionSupplier, GenericObjectPoolConfig config, boolean wrapConnections) {
 
@@ -120,10 +116,24 @@ public abstract class ConnectionPoolSupport {
         LettuceAssert.notNull(config, "GenericObjectPoolConfig must not be null");
 
         AtomicReference<ObjectPool<T>> poolRef = new AtomicReference<>();
-        Supplier<T> providerToUse = wrapConnections ? wrappedConnectionSupplier(connectionSupplier, poolRef)
-                : connectionSupplier;
 
-        GenericObjectPool<T> pool = new GenericObjectPool<>(new RedisPooledObjectFactory<T>(providerToUse), config);
+        GenericObjectPool<T> pool = new GenericObjectPool<T>(new RedisPooledObjectFactory<T>(connectionSupplier), config) {
+
+            @Override
+            public synchronized T borrowObject() throws Exception {
+                return wrapConnections ? wrapConnection(super.borrowObject(), this) : super.borrowObject();
+            }
+
+            @Override
+            public synchronized void returnObject(T obj) {
+
+                if (wrapConnections && obj instanceof HasTargetConnection) {
+                    super.returnObject((T) ((HasTargetConnection) obj).getTargetConnection());
+                    return;
+                }
+                super.returnObject(obj);
+            }
+        };
 
         poolRef.set(pool);
 
@@ -153,41 +163,49 @@ public abstract class ConnectionPoolSupport {
      * @param <T> connection type.
      * @return the connection pool.
      */
+    @SuppressWarnings("unchecked")
     public static <T extends StatefulConnection<?, ?>> SoftReferenceObjectPool<T> createSoftReferenceObjectPool(
             Supplier<T> connectionSupplier, boolean wrapConnections) {
 
         LettuceAssert.notNull(connectionSupplier, "Connection supplier must not be null");
 
         AtomicReference<ObjectPool<T>> poolRef = new AtomicReference<>();
-        Supplier<T> providerToUse = wrapConnections ? wrappedConnectionSupplier(connectionSupplier, poolRef)
-                : connectionSupplier;
 
-        SoftReferenceObjectPool<T> pool = new SoftReferenceObjectPool<>(new RedisPooledObjectFactory<>(providerToUse));
+        SoftReferenceObjectPool<T> pool = new SoftReferenceObjectPool<T>(new RedisPooledObjectFactory<>(connectionSupplier)) {
+            @Override
+            public synchronized T borrowObject() throws Exception {
+                return wrapConnections ? wrapConnection(super.borrowObject(), this) : super.borrowObject();
+            }
+
+            @Override
+            public synchronized void returnObject(T obj) throws Exception {
+
+                if (wrapConnections && obj instanceof HasTargetConnection) {
+                    super.returnObject((T) ((HasTargetConnection) obj).getTargetConnection());
+                    return;
+                }
+                super.returnObject(obj);
+            }
+        };
         poolRef.set(pool);
 
         return pool;
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Supplier<T> wrappedConnectionSupplier(Supplier<T> connectionSupplier,
-            AtomicReference<ObjectPool<T>> poolRef) {
+    private static <T> T wrapConnection(T connection, ObjectPool<T> pool) {
 
-        return new Supplier<T>() {
+        ReturnObjectOnCloseInvocationHandler<T> handler = new ReturnObjectOnCloseInvocationHandler<T>(connection, pool);
 
-            @Override
-            public T get() {
+        Class<?>[] implementedInterfaces = connection.getClass().getInterfaces();
+        Class[] interfaces = new Class[implementedInterfaces.length + 1];
+        interfaces[0] = HasTargetConnection.class;
+        System.arraycopy(implementedInterfaces, 0, interfaces, 1, implementedInterfaces.length);
 
-                T connection = connectionSupplier.get();
-                ReturnObjectOnCloseInvocationHandler<T> handler = new ReturnObjectOnCloseInvocationHandler<>(connection,
-                        poolRef.get());
+        T proxiedConnection = (T) Proxy.newProxyInstance(connection.getClass().getClassLoader(), interfaces, handler);
+        handler.setProxiedConnection(proxiedConnection);
 
-                T proxiedConnection = (T) Proxy.newProxyInstance(getClass().getClassLoader(),
-                        connection.getClass().getInterfaces(), handler);
-                handler.setProxiedConnection(proxiedConnection);
-
-                return proxiedConnection;
-            }
-        };
+        return proxiedConnection;
     }
 
     /**
@@ -242,12 +260,15 @@ public abstract class ConnectionPoolSupport {
             this.proxiedConnection = proxiedConnection;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
             if (method.getName().equals("getStatefulConnection")) {
                 return proxiedConnection;
+            }
+
+            if (method.getName().equals("getTargetConnection")) {
+                return connection;
             }
 
             if (connection == null) {
@@ -334,5 +355,12 @@ public abstract class ConnectionPoolSupport {
                 throw e.getTargetException();
             }
         }
+    }
+
+    /**
+     * Interface to retrieve an underlying target connection from a proxy.
+     */
+    interface HasTargetConnection {
+        StatefulConnection<?, ?> getTargetConnection();
     }
 }
