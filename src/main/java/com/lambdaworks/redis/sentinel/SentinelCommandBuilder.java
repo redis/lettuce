@@ -15,23 +15,16 @@
  */
 package com.lambdaworks.redis.sentinel;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.FAILOVER;
-import static com.lambdaworks.redis.protocol.CommandKeyword.RESET;
-import static com.lambdaworks.redis.protocol.CommandKeyword.SLAVES;
-import static com.lambdaworks.redis.protocol.CommandType.MONITOR;
-import static com.lambdaworks.redis.protocol.CommandType.PING;
-import static com.lambdaworks.redis.protocol.CommandType.SENTINEL;
-import static com.lambdaworks.redis.protocol.CommandType.SET;
+import static com.lambdaworks.redis.protocol.CommandKeyword.*;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.util.List;
 import java.util.Map;
 
+import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.IntegerOutput;
-import com.lambdaworks.redis.output.ListOfMapsOutput;
-import com.lambdaworks.redis.output.MapOutput;
-import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.output.ValueListOutput;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
@@ -85,6 +78,55 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, String> set(K key, String option, V value) {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SET).addKey(key).add(option).addValue(value);
         return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, K> clientGetname() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GETNAME);
+        return createCommand(CLIENT, new KeyOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clientSetname(K name) {
+        LettuceAssert.notNull(name, "Name must not be null");
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETNAME).addKey(name);
+        return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clientKill(String addr) {
+        LettuceAssert.notNull(addr, "Addr must not be null");
+        LettuceAssert.notEmpty(addr, "Addr must not be empty");
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KILL).add(addr);
+        return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, Long> clientKill(KillArgs killArgs) {
+        LettuceAssert.notNull(killArgs, "KillArgs must not be null");
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KILL);
+        killArgs.build(args);
+        return createCommand(CLIENT, new IntegerOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clientPause(long timeout) {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(PAUSE).add(timeout);
+        return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> clientList() {
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LIST);
+        return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+    }
+
+    public Command<K, V, String> info() {
+        return createCommand(INFO, new StatusOutput<K, V>(codec));
+    }
+
+    public Command<K, V, String> info(String section) {
+        LettuceAssert.notNull(section, "Section must not be null");
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(section);
+        return createCommand(INFO, new StatusOutput<K, V>(codec), args);
     }
 
     public Command<K, V, String> ping() {

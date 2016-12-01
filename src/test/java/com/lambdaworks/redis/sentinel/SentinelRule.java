@@ -50,7 +50,6 @@ import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
  * <li>Setup a master/slave combination</li>
  * </ul>
  *
- *
  * @author Mark Paluch
  */
 public class SentinelRule implements TestRule {

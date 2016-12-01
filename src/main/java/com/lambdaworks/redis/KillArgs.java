@@ -101,7 +101,7 @@ public class KillArgs {
         return this;
     }
 
-    <K, V> void build(CommandArgs<K, V> args) {
+    public <K, V> void build(CommandArgs<K, V> args) {
 
         if (skipme != null) {
             args.add(SKIPME).add(skipme.booleanValue() ? "yes" : "no");

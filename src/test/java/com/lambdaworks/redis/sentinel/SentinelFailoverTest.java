@@ -23,18 +23,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.lambdaworks.redis.FastShutdown;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 
+/**
+ * @author Mark Paluch
+ */
 @Ignore("For manual runs only. Fails too often due to slow sentinel sync")
 public class SentinelFailoverTest extends AbstractSentinelTest {
 

@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 
 import rx.Observable;
 
+import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.ReactiveCommandDispatcher;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -107,6 +108,46 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
     @Override
     public Observable<String> ping() {
         return createObservable(() -> commandBuilder.ping());
+    }
+
+    @Override
+    public Observable<K> clientGetname() {
+        return createObservable(commandBuilder::clientGetname);
+    }
+
+    @Override
+    public Observable<String> clientSetname(K name) {
+        return createObservable(() -> commandBuilder.clientSetname(name));
+    }
+
+    @Override
+    public Observable<String> clientKill(String addr) {
+        return createObservable(() -> commandBuilder.clientKill(addr));
+    }
+
+    @Override
+    public Observable<Long> clientKill(KillArgs killArgs) {
+        return createObservable(() -> commandBuilder.clientKill(killArgs));
+    }
+
+    @Override
+    public Observable<String> clientPause(long timeout) {
+        return createObservable(() -> commandBuilder.clientPause(timeout));
+    }
+
+    @Override
+    public Observable<String> clientList() {
+        return createObservable(commandBuilder::clientList);
+    }
+
+    @Override
+    public Observable<String> info() {
+        return createObservable(commandBuilder::info);
+    }
+
+    @Override
+    public Observable<String> info(String section) {
+        return createObservable(() -> commandBuilder.info(section));
     }
 
     @Override
