@@ -181,11 +181,6 @@ public interface RedisSentinelReactiveCommands<K, V> {
     Mono<String> ping();
 
     /**
-     * close the underlying connection.
-     */
-    void close();
-
-    /**
      *
      * @return true if the connection is open (connected and not closed).
      */

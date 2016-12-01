@@ -179,11 +179,6 @@ public interface RedisSentinelCommands<K, V> {
     String ping();
 
     /**
-     * close the underlying connection.
-     */
-    void close();
-
-    /**
      *
      * @return true if the connection is open (connected and not closed).
      */

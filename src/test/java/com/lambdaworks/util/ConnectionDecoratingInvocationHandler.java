@@ -22,6 +22,7 @@ import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.internal.AbstractInvocationHandler;
+import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
  * @author Mark Paluch
@@ -48,6 +49,9 @@ public class ConnectionDecoratingInvocationHandler extends AbstractInvocationHan
             if (result instanceof StatefulRedisClusterConnection
                     && proxyMethod.getReturnType().isAssignableFrom(StatefulRedisClusterConnection.class)) {
                 interfaces = new Class[] { StatefulConnection.class, StatefulRedisClusterConnection.class };
+            } else if (result instanceof StatefulRedisSentinelConnection
+                    && proxyMethod.getReturnType().isAssignableFrom(StatefulRedisSentinelConnection.class)) {
+                interfaces = new Class[] { StatefulConnection.class, StatefulRedisSentinelConnection.class };
             } else {
                 interfaces = new Class[] { StatefulConnection.class, StatefulRedisConnection.class };
             }

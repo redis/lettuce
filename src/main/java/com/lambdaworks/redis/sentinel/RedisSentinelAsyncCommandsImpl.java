@@ -181,7 +181,6 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
         return connection.dispatch(new AsyncCommand<>(cmd));
     }
 
-    @Override
     public void close() {
         connection.close();
     }

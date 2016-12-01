@@ -99,7 +99,7 @@ public class SentinelServerCommandTest extends AbstractSentinelTest {
         assertThat(sentinel.clientKill(KillArgs.Builder.typeNormal().id(4234))).isEqualTo(0);
         assertThat(sentinel.clientKill(KillArgs.Builder.typePubsub().id(4234))).isEqualTo(0);
 
-        connection2.close();
+        connection2.getStatefulConnection().close();
     }
 
     @Test

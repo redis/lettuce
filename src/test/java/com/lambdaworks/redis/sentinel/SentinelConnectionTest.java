@@ -114,7 +114,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     public void testSyncClose() throws Exception {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        statefulConnection.sync().close();
+        statefulConnection.sync().getStatefulConnection().close();
 
         Wait.untilTrue(() -> !sentinel.isOpen()).waitOrTimeout();
 
@@ -125,7 +125,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     @Test
     public void testAsyncClose() throws Exception {
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        statefulConnection.async().close();
+        statefulConnection.async().getStatefulConnection().close();
 
         Wait.untilTrue(() -> !sentinel.isOpen()).waitOrTimeout();
 
@@ -138,12 +138,12 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
         RedisSentinelCommands<String, String> connection = sentinelClient
                 .connectSentinel(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build()).sync();
         assertThat(connection.ping()).isEqualTo("PONG");
-        connection.close();
+        connection.getStatefulConnection().close();
     }
     @Test
     public void connectWithByteCodec() throws Exception {
         RedisSentinelCommands<byte[], byte[]> connection = sentinelClient.connectSentinel(new ByteArrayCodec()).sync();
         assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
-        connection.close();
+        connection.getStatefulConnection().close();
     }
 }

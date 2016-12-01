@@ -101,7 +101,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         RedisSentinelCommands<String, String> sentinelConnection = client.connectSentinel().sync();
         assertThat(sentinelConnection.ping()).isEqualTo("PONG");
 
-        sentinelConnection.close();
+        sentinelConnection.getStatefulConnection().close();
 
         RedisCommands<String, String> connection2 = client.connect().sync();
         assertThat(connection2.ping()).isEqualTo("PONG");

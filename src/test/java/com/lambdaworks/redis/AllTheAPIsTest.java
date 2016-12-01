@@ -91,7 +91,7 @@ public class AllTheAPIsTest {
     // Sentinel
     @Test
     public void sentinelSync() throws Exception {
-        redisClient.connectSentinel().sync().close();
+        redisClient.connectSentinel().sync().getStatefulConnection().close();
     }
 
     @Test

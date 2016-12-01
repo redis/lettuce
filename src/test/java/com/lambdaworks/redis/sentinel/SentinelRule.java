@@ -96,7 +96,7 @@ public class SentinelRule implements TestRule {
                 base.evaluate();
 
                 for (RedisSentinelCommands<String, String> commands : sentinelConnections.values()) {
-                    commands.close();
+                    commands.getStatefulConnection().close();
                 }
             }
         };
