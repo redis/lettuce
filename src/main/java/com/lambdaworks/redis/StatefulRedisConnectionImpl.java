@@ -32,11 +32,10 @@ import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.output.MultiOutput;
-import com.lambdaworks.redis.protocol.CompleteableCommand;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.protocol.TransactionalCommand;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.*;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -60,6 +59,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     private char[] password;
     private int db;
     private boolean readOnly;
+    private String clientName;
 
     /**
      * Initialize a new connection.
@@ -136,6 +136,10 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (db != 0) {
             async.selectAsync(db);
+        }
+
+        if (clientName != null) {
+            setClientName(clientName);
         }
 
         if (readOnly) {
@@ -219,4 +223,13 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return command;
     }
 
+    public void setClientName(String clientName) {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(
+                new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
+        this.clientName = clientName;
+
+        dispatch((RedisCommand) async);
+    }
 }

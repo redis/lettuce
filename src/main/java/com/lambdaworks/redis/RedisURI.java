@@ -34,8 +34,8 @@ import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
 
 /**
- * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, password and
- * timeouts within the RedisURI.
+ * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, client name,
+ * password and timeouts within the RedisURI.
  *
  * You have following possibilities to create a {@link RedisURI}:
  *
@@ -68,19 +68,20 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  *
  * <b>Redis Standalone</b> <blockquote> <i>redis</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :} </b>
  * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&database=database</i>]] </blockquote>
+ * <i>&database=database</i>] [<i>&clientName=clientName</i>]] </blockquote>
  *
  * <b>Redis Standalone (SSL)</b> <blockquote> <i>rediss</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :} </b>
  * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&database=database</i>]] </blockquote>
+ * <i>&database=database</i>] [<i>&clientName=clientName</i>]] </blockquote>
  *
  * Redis Standalone (Unix Domain Sockets)</b> <blockquote> <i>redis-socket</i><b>{@code ://} </b>[<i>password@</i>]<i>path</i>[
- * <b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&database=database</i>]] </blockquote>
+ * <b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&database=database</i>] [<i>&clientName=clientName</i>]]
+ * </blockquote>
  *
  * <b>Redis Sentinel</b> <blockquote> <i>redis-sentinel</i><b>{@code ://}</b>[<i>password@</i>]<i>host1</i> [<b>{@code :} </b>
  * <i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /} </b>
  * <i>database</i>][<b>{@code ?} </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&sentinelMasterId=sentinelMasterId</i>] [<i>&database=database</i>]] </blockquote>
+ * <i>&sentinelMasterId=sentinelMasterId</i>] [<i>&database=database</i>] [<i>&clientName=clientName</i>]] </blockquote>
  *
  * <p>
  * <b>Schemes</b>
@@ -108,8 +109,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * <p>
  * Hint: The database parameter within the query part has higher precedence than the database in the path.
  * </p>
- * 
- * 
+ *
  * RedisURI supports Redis Standalone, Redis Sentinel and Redis Cluster with plain, SSL, TLS and unix domain socket connections.
  * 
  * @author Mark Paluch
@@ -129,6 +129,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public static final String PARAMETER_NAME_DATABASE = "database";
     public static final String PARAMETER_NAME_DATABASE_ALT = "db";
     public static final String PARAMETER_NAME_SENTINEL_MASTER_ID = "sentinelMasterId";
+    public static final String PARAMETER_NAME_CLIENT_NAME = "clientName";
 
     public static final Map<String, TimeUnit> TIME_UNIT_MAP;
 
@@ -165,6 +166,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private String sentinelMasterId;
     private int port;
     private int database;
+    private String clientName;
     private char[] password;
     private boolean ssl = false;
     private boolean verifyPeer = true;
@@ -388,6 +390,26 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
+     * Returns the client name.
+     *
+     * @return
+     * @since 4.4
+     */
+    public String getClientName() {
+        return clientName;
+    }
+
+    /**
+     * Sets the client name to be applied on Redis connections.
+     *
+     * @param clientName the client name.
+     * @since 4.4
+     */
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
+
+    /**
      * Returns {@literal true} if SSL mode is enabled.
      * 
      * @return {@literal true} if SSL mode is enabled.
@@ -519,6 +541,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
                     parseDatabase(builder, queryParam);
                 }
 
+                if (forStartWith.startsWith(PARAMETER_NAME_CLIENT_NAME.toLowerCase() + "=")) {
+                    parseClientName(builder, queryParam);
+                }
+
                 if (forStartWith.startsWith(PARAMETER_NAME_SENTINEL_MASTER_ID.toLowerCase() + "=")) {
                     parseSentinelMasterId(builder, queryParam);
                 }
@@ -566,6 +592,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         if (database != 0) {
             queryPairs.add(PARAMETER_NAME_DATABASE + "=" + database);
+        }
+
+        if (clientName != null) {
+            queryPairs.add(PARAMETER_NAME_CLIENT_NAME + "=" + urlEncode(clientName));
         }
 
         if (sentinelMasterId != null) {
@@ -763,16 +793,29 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
     }
 
-    private static void parseSentinelMasterId(Builder builder, String queryParam) {
-        int index = queryParam.indexOf('=');
-        if (index < 0) {
-            return;
-        }
+    private static void parseClientName(Builder builder, String queryParam) {
 
-        String masterIdString = queryParam.substring(index + 1);
+        String clientName = getValuePart(queryParam);
+        if (isNotEmpty(clientName)) {
+            builder.withClientName(clientName);
+        }
+    }
+
+    private static void parseSentinelMasterId(Builder builder, String queryParam) {
+
+        String masterIdString = getValuePart(queryParam);
         if (isNotEmpty(masterIdString)) {
             builder.withSentinelMasterId(masterIdString);
         }
+    }
+
+    private static String getValuePart(String queryParam) {
+        int index = queryParam.indexOf('=');
+        if (index < 0) {
+            return null;
+        }
+
+        return queryParam.substring(index + 1);
     }
 
     private static Builder configureStandalone(URI uri) {
@@ -876,6 +919,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private String sentinelMasterId;
         private int port;
         private int database;
+        private String clientName;
         private char[] password;
         private boolean ssl = false;
         private boolean verifyPeer = true;
@@ -1086,7 +1130,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Adds database selection.
+         * Configures the database number.
          *
          * @param database the database number
          * @return the builder
@@ -1100,7 +1144,21 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Adds authentication.
+         * Configures a client name.
+         *
+         * @param clientName the client name
+         * @return the builder
+         */
+        public Builder withClientName(String clientName) {
+
+            LettuceAssert.notNull(clientName, "Client name must not be null");
+
+            this.clientName = clientName;
+            return this;
+        }
+
+        /**
+         * Configures authentication.
          *
          * @param password the password
          * @return the builder
@@ -1114,9 +1172,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Adds timeout.
+         * Configures a timeout.
          *
-         * @param timeout must be greater or equal 0"
+         * @param timeout must be greater or equal 0.
          * @param unit the timeout time unit.
          * @return the builder
          */
@@ -1131,7 +1189,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Adds a sentinel master Id.
+         * Configures a sentinel master Id.
          * 
          * @param sentinelMasterId sentinel master id, must not be empty or {@literal null}
          * @return the builder
@@ -1145,7 +1203,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         *
          * @return the RedisURI.
          */
         public RedisURI build() {
@@ -1160,6 +1217,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             redisURI.setPort(port);
             redisURI.password = password;
             redisURI.setDatabase(database);
+            redisURI.setClientName(clientName);
 
             redisURI.setSentinelMasterId(sentinelMasterId);
 

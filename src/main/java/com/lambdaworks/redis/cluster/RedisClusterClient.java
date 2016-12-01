@@ -599,6 +599,10 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
             connection.async().auth(new String(connectionSettings.getPassword()));
         }
+
+        if (LettuceStrings.isNotEmpty(connectionSettings.getClientName())) {
+            connection.setClientName(connectionSettings.getClientName());
+        }
     }
 
     /**
@@ -614,6 +618,10 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
             connection.async().auth(new String(connectionSettings.getPassword()));
+        }
+
+        if (LettuceStrings.isNotEmpty(connectionSettings.getClientName())) {
+            connection.setClientName(connectionSettings.getClientName());
         }
     }
 

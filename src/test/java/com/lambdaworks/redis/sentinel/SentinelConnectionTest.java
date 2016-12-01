@@ -22,16 +22,17 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.lambdaworks.TestClientResources;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
@@ -47,7 +48,8 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        sentinelClient = RedisClient.create(TestClientResources.get(),
+                RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     @Before
@@ -140,10 +142,38 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
         assertThat(connection.ping()).isEqualTo("PONG");
         connection.getStatefulConnection().close();
     }
+
     @Test
     public void connectWithByteCodec() throws Exception {
         RedisSentinelCommands<byte[], byte[]> connection = sentinelClient.connectSentinel(new ByteArrayCodec()).sync();
         assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
         connection.getStatefulConnection().close();
+    }
+
+    @Test
+    public void sentinelConnectionShouldSetClientName() throws Exception {
+
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withClientName("my-client").build();
+
+        StatefulRedisSentinelConnection<String, String> connection = sentinelClient.connectSentinel(redisURI);
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.close();
+    }
+
+    @Test
+    public void sentinelManagedConnectionShouldSetClientName() throws Exception {
+
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withClientName("my-client").build();
+
+        StatefulRedisConnection<String, String> connection = sentinelClient.connect(redisURI);
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.close();
     }
 }

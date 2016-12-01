@@ -17,7 +17,6 @@ package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.LettuceStrings.isEmpty;
 import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
-import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -31,8 +30,8 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.DefaultEndpoint;
 import com.lambdaworks.redis.protocol.CommandHandler;
+import com.lambdaworks.redis.protocol.DefaultEndpoint;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.PubSubEndpoint;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
@@ -41,7 +40,6 @@ import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.SocketAddressResolver;
 import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
-import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
@@ -200,7 +198,6 @@ public class RedisClient extends AbstractRedisClient {
         return connectStandalone(codec, redisURI, Timeout.from(redisURI));
     }
 
-
     private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI, Timeout timeout) {
 
         assertNotNull(codec);
@@ -215,7 +212,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private <K, V> void connectStateful(StatefulRedisConnectionImpl<K, V> connection, RedisURI redisURI,
-                                        DefaultEndpoint endpoint, Supplier<CommandHandler> commandHandlerSupplier) {
+            DefaultEndpoint endpoint, Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
         if (redisURI.isSsl()) {
@@ -239,10 +236,13 @@ public class RedisClient extends AbstractRedisClient {
             connection.async().auth(new String(redisURI.getPassword()));
         }
 
+        if (LettuceStrings.isNotEmpty(redisURI.getClientName())) {
+            connection.setClientName(redisURI.getClientName());
+        }
+
         if (redisURI.getDatabase() != 0) {
             connection.async().select(redisURI.getDatabase());
         }
-
     }
 
     /**
@@ -301,8 +301,8 @@ public class RedisClient extends AbstractRedisClient {
 
         PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<K, V>(clientOptions);
 
-        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint,
-                endpoint, codec, timeout.timeout, timeout.timeUnit);
+        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, endpoint, codec,
+                timeout.timeout, timeout.timeUnit);
 
         connectStateful(connection, redisURI, endpoint, () -> new PubSubCommandHandler<>(clientResources, codec, endpoint));
 
@@ -368,12 +368,13 @@ public class RedisClient extends AbstractRedisClient {
 
         DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
 
-        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(endpoint,
-                codec, timeout.timeout, timeout.timeUnit);
+        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(endpoint, codec,
+                timeout.timeout, timeout.timeUnit);
 
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
 
-        connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientResources, endpoint)).connection(connection);
+        connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientResources, endpoint))
+                .connection(connection);
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
@@ -411,6 +412,10 @@ public class RedisClient extends AbstractRedisClient {
                 throw new RedisConnectionException("Cannot connect to a sentinel: " + redisURI.getSentinels(),
                         causingException);
             }
+        }
+
+        if (LettuceStrings.isNotEmpty(redisURI.getClientName())) {
+            connection.setClientName(redisURI.getClientName());
         }
 
         return connection;
@@ -527,8 +532,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private SocketAddress lookupRedis(RedisURI sentinelUri) throws InterruptedException, TimeoutException, ExecutionException {
-        StatefulRedisSentinelConnection<String, String> connection = connectSentinel(
-                sentinelUri);
+        StatefulRedisSentinelConnection<String, String> connection = connectSentinel(sentinelUri);
         try {
             return connection.async().getMasterAddrByName(sentinelUri.getSentinelMasterId()).get(timeout, unit);
         } finally {

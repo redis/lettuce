@@ -22,6 +22,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+/**
+ * @author Mark Paluch
+ */
 public class RedisURIBuilderTest {
 
     @Test
@@ -66,6 +69,14 @@ public class RedisURIBuilderTest {
         assertThat(result.getSentinels()).isEmpty();
         assertThat(result.getHost()).isEqualTo("localhost");
         assertThat(result.getPort()).isEqualTo(1234);
+    }
+
+    @Test
+    public void redisWithClientName() throws Exception {
+        RedisURI result = RedisURI.Builder.redis("localhost").withClientName("hello").build();
+
+        assertThat(result.getHost()).isEqualTo("localhost");
+        assertThat(result.getClientName()).isEqualTo("hello");
     }
 
     @Test(expected = IllegalArgumentException.class)

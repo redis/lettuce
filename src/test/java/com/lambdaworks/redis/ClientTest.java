@@ -39,6 +39,7 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ClientTest extends AbstractRedisClientTest {
+
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
@@ -259,6 +260,38 @@ public class ClientTest extends AbstractRedisClientTest {
 
         assertThat(eval.isCancelled()).isTrue();
         assertThat(eval.isDone()).isTrue();
+
+        connection.close();
+    }
+
+    @Test
+    public void standaloneConnectionShouldSetClientName() throws Exception {
+
+        RedisURI redisURI = RedisURI.create(host, port);
+        redisURI.setClientName("my-client");
+
+        StatefulRedisConnection<String, String> connection = client.connect(redisURI);
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.close();
+    }
+
+    @Test
+    public void pubSubConnectionShouldSetClientName() throws Exception {
+
+        RedisURI redisURI = RedisURI.create(host, port);
+        redisURI.setClientName("my-client");
+
+        StatefulRedisConnection<String, String> connection = client.connectPubSub(redisURI);
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
         connection.close();
     }

@@ -41,8 +41,9 @@ import com.lambdaworks.redis.models.role.RoleParser;
  */
 public class MasterSlaveTest extends AbstractRedisClientTest {
 
-    private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd).withDatabase(5)
-            .build();
+    private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd)
+            .withClientName("my-client").withDatabase(5).build();
+
     private StatefulRedisMasterSlaveConnectionImpl<String, String> connection;
     private RedisAsyncCommands<String, String> connectionToNode1;
     private RedisAsyncCommands<String, String> connectionToNode2;
@@ -165,6 +166,16 @@ public class MasterSlaveTest extends AbstractRedisClientTest {
         });
 
         slaveCall(connection);
+    }
+
+    @Test
+    public void masterSlaveConnectionShouldSetClientName() throws Exception {
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(masterURI.getClientName());
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(masterURI.getClientName());
+
+        connection.close();
     }
 
     @Test
