@@ -15,24 +15,9 @@
  */
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.codec.StringCodec;
-import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.internal.LettuceFactories;
-import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
-import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
-import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
-import com.lambdaworks.redis.resource.ClientResources;
-import com.lambdaworks.redis.resource.SocketAddressResolver;
-import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
-import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
-import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
-import com.lambdaworks.redis.support.ConnectionPoolSupport;
+import static com.lambdaworks.redis.LettuceStrings.isEmpty;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
@@ -43,9 +28,25 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import static com.lambdaworks.redis.LettuceStrings.isEmpty;
-import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
-import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
+import com.lambdaworks.redis.api.StatefulConnection;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.StringCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceFactories;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.SocketAddressResolver;
+import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
+import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
+import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
+import com.lambdaworks.redis.support.ConnectionPoolSupport;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
@@ -204,7 +205,7 @@ public class RedisClient extends AbstractRedisClient {
      * dependency.
      * 
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public RedisConnectionPool<RedisCommands<String, String>> pool() {
@@ -218,7 +219,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public RedisConnectionPool<RedisCommands<String, String>> pool(int maxIdle, int maxActive) {
@@ -235,7 +236,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key type
      * @param <V> Value type
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @SuppressWarnings("unchecked")
     @Deprecated
@@ -277,7 +278,7 @@ public class RedisClient extends AbstractRedisClient {
      * dependency.
      *
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public RedisConnectionPool<RedisAsyncCommands<String, String>> asyncPool() {
@@ -291,7 +292,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public RedisConnectionPool<RedisAsyncCommands<String, String>> asyncPool(int maxIdle, int maxActive) {
@@ -308,7 +309,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key type
      * @param <V> Value type
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public <K, V> RedisConnectionPool<RedisAsyncCommands<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
@@ -477,10 +478,13 @@ public class RedisClient extends AbstractRedisClient {
             connection.async().auth(new String(redisURI.getPassword()));
         }
 
+        if (LettuceStrings.isNotEmpty(redisURI.getClientName())) {
+            connection.setClientName(redisURI.getClientName());
+        }
+
         if (redisURI.getDatabase() != 0) {
             connection.async().select(redisURI.getDatabase());
         }
-
     }
 
     /**
@@ -709,6 +713,10 @@ public class RedisClient extends AbstractRedisClient {
                 throw new RedisConnectionException("Cannot connect to a sentinel: " + redisURI.getSentinels(),
                         causingException);
             }
+        }
+
+        if (LettuceStrings.isNotEmpty(redisURI.getClientName())) {
+            connection.setClientName(redisURI.getClientName());
         }
 
         return connection;

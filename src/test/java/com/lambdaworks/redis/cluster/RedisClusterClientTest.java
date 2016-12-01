@@ -39,6 +39,7 @@ import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
@@ -64,7 +65,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     public static void setupClient() throws Exception {
         setupClusterClient();
         client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient
+                .create(Collections.singletonList(RedisURI.Builder.redis(host, port1).withClientName("my-client").build()));
     }
 
     @AfterClass
@@ -164,6 +166,42 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub(CODEC);
 
         assertTimeout(connection, 1, TimeUnit.MINUTES);
+        connection.close();
+    }
+
+    @Test
+    public void clusterConnectionShouldSetClientName() throws Exception {
+
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+
+        assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
+
+        StatefulRedisConnection<String, String> nodeConnection = connection
+                .getConnection(connection.getPartitions().getPartition(0).getNodeId());
+        assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
+        nodeConnection.sync().quit();
+        assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
+
+        connection.close();
+    }
+
+    @Test
+    public void pubSubclusterConnectionShouldSetClientName() throws Exception {
+
+        StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub();
+
+        assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
+
+        StatefulRedisConnection<String, String> nodeConnection = connection
+                .getConnection(connection.getPartitions().getPartition(0).getNodeId());
+        assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
+        nodeConnection.sync().quit();
+        assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
+
         connection.close();
     }
 

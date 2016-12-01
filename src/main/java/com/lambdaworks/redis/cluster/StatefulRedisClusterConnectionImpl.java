@@ -36,10 +36,10 @@ import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.CompleteableCommand;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.*;
 
 import io.netty.channel.ChannelHandler;
 
@@ -60,6 +60,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     private char[] password;
     private boolean readOnly;
+    private String clientName;
 
     protected final RedisCodec<K, V> codec;
     protected final RedisAdvancedClusterCommands<K, V> sync;
@@ -154,9 +155,23 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             async.authAsync(new String(password));
         }
 
+        if (clientName != null) {
+            setClientName(clientName);
+        }
+
         if (readOnly) {
             async.readOnly();
         }
+    }
+
+    void setClientName(String clientName) {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(
+                new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
+        this.clientName = clientName;
+
+        dispatch((RedisCommand) async);
     }
 
     @Override

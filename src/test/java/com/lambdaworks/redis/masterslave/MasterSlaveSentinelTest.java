@@ -74,6 +74,21 @@ public class MasterSlaveSentinelTest extends AbstractSentinelTest {
     }
 
     @Test
+    public void masterSlaveConnectionShouldSetClientName() throws Exception {
+
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withClientName("my-client").build();
+
+        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(sentinelClient,
+                new Utf8StringCodec(), redisURI);
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.close();
+    }
+
+    @Test
     public void testMasterSlaveSentinelWithTwoUnavailableSentinels() throws Exception {
 
         RedisURI uri = RedisURI.create(
@@ -91,8 +106,7 @@ public class MasterSlaveSentinelTest extends AbstractSentinelTest {
     @Test
     public void testMasterSlaveSentinelWithUnavailableSentinels() throws Exception {
 
-        RedisURI uri = RedisURI
-                .create("redis-sentinel://127.0.0.1:21379,127.0.0.1:21379?sentinelMasterId=mymaster&timeout=5s");
+        RedisURI uri = RedisURI.create("redis-sentinel://127.0.0.1:21379,127.0.0.1:21379?sentinelMasterId=mymaster&timeout=5s");
 
         try {
             MasterSlave.connect(sentinelClient, new Utf8StringCodec(), uri);

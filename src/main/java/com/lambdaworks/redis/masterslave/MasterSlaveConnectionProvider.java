@@ -262,6 +262,9 @@ public class MasterSlaveConnectionProvider<K, V> {
                 builder.withPassword(new String(initialRedisUri.getPassword()));
             }
 
+            if (initialRedisUri.getClientName() != null) {
+                builder.withClientName(initialRedisUri.getClientName());
+            }
             builder.withDatabase(initialRedisUri.getDatabase());
 
             StatefulRedisConnection<K, V> connection = redisClient.connect(redisCodec, builder.build());

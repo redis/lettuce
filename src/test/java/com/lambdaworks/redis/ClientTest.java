@@ -17,13 +17,9 @@ package com.lambdaworks.redis;
 
 import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
-import static com.lambdaworks.Connections.getConnectionWatchdog;
 import static com.lambdaworks.Connections.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.FixMethodOrder;
@@ -31,17 +27,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runners.MethodSorters;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Timeout;
-import com.lambdaworks.Wait;
-import com.lambdaworks.redis.ClientOptions.DisconnectedBehavior;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
-import com.lambdaworks.redis.server.RandomResponseServer;
-import io.netty.channel.Channel;
 
 /**
  * @author Will Glozer
@@ -49,6 +39,7 @@ import io.netty.channel.Channel;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ClientTest extends AbstractRedisClientTest {
+
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
@@ -274,6 +265,38 @@ public class ClientTest extends AbstractRedisClientTest {
 
         assertThat(eval.isCancelled()).isTrue();
         assertThat(eval.isDone()).isTrue();
+
+        connection.close();
+    }
+
+    @Test
+    public void standaloneConnectionShouldSetClientName() throws Exception {
+
+        RedisURI redisURI = RedisURI.create(host, port);
+        redisURI.setClientName("my-client");
+
+        StatefulRedisConnection<String, String> connection = client.connect(redisURI);
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.close();
+    }
+
+    @Test
+    public void pubSubConnectionShouldSetClientName() throws Exception {
+
+        RedisURI redisURI = RedisURI.create(host, port);
+        redisURI.setClientName("my-client");
+
+        StatefulRedisConnection<String, String> connection = client.connectPubSub(redisURI);
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
         connection.close();
     }

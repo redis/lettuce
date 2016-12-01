@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -159,6 +160,33 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     public void deprecatedConnectWithByteCodec() throws Exception {
         RedisSentinelAsyncCommands<byte[], byte[]> connection = sentinelClient.connectSentinelAsync(new ByteArrayCodec());
         assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
+        connection.close();
+    }
+
+    @Test
+    public void sentinelConnectionShouldSetClientName() throws Exception {
+
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withClientName("my-client").build();
+
+        StatefulRedisSentinelConnection<String, String> connection = sentinelClient.connectSentinel(redisURI);
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.close();
+    }
+
+    @Test
+    public void sentinelManagedConnectionShouldSetClientName() throws Exception {
+
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withClientName("my-client").build();
+
+        StatefulRedisConnection<String, String> connection = sentinelClient.connect(redisURI);
+
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
         connection.close();
     }
 }

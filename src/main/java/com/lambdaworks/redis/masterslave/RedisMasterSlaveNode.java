@@ -35,7 +35,13 @@ class RedisMasterSlaveNode implements RedisNodeDescription {
             builder.withPassword(new String(seed.getPassword()));
         }
 
-        this.redisURI = builder.withDatabase(seed.getDatabase()).build();
+        if (seed.getClientName() != null) {
+            builder.withClientName(seed.getClientName());
+        }
+
+        builder.withDatabase(seed.getDatabase());
+
+        this.redisURI = builder.build();
         this.role = role;
     }
 

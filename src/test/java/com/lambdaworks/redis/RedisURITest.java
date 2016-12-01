@@ -209,6 +209,14 @@ public class RedisURITest {
     }
 
     @Test
+    public void clientNameParsingTest() {
+        RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/?clientName=hello");
+        assertThat(redisURI.getClientName()).isEqualTo("hello");
+
+        assertThat(redisURI.toURI().toString()).isEqualTo("redis://auth@localhost:1234?clientName=hello");
+    }
+
+    @Test
     public void parsingWithInvalidValuesTest() {
         RedisURI redisURI = RedisURI
                 .create("redis://@host:1234/?database=AAA&database=&timeout=&timeout=XYZ&sentinelMasterId=");

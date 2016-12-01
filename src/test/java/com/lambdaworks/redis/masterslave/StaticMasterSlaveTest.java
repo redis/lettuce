@@ -51,8 +51,8 @@ public class StaticMasterSlaveTest extends AbstractRedisClientTest {
     @Before
     public void before() throws Exception {
 
-        RedisURI node1 = RedisURI.Builder.redis(host, TestSettings.port(3)).withDatabase(2).build();
-        RedisURI node2 = RedisURI.Builder.redis(host, TestSettings.port(4)).withDatabase(2).build();
+        RedisURI node1 = RedisURI.Builder.redis(host, TestSettings.port(3)).withClientName("my-client").withDatabase(2).build();
+        RedisURI node2 = RedisURI.Builder.redis(host, TestSettings.port(4)).withClientName("my-client").withDatabase(2).build();
 
         connectionToNode1 = client.connect(node1).async();
         connectionToNode2 = client.connect(node2).async();
@@ -176,6 +176,16 @@ public class StaticMasterSlaveTest extends AbstractRedisClientTest {
                 Arrays.asList(slave));
 
         connection.sync().set(key, value);
+    }
+
+    @Test
+    public void masterSlaveConnectionShouldSetClientName() throws Exception {
+
+        assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
+
+        connection.close();
     }
 
     @Test

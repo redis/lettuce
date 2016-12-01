@@ -20,7 +20,9 @@ import java.util.concurrent.TimeUnit;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.codec.StringCodec;
+import com.lambdaworks.redis.output.StatusOutput;
+import com.lambdaworks.redis.protocol.*;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
@@ -38,6 +40,8 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     protected final RedisSentinelCommands<K, V> sync;
     protected final RedisSentinelAsyncCommands<K, V> async;
     protected final RedisSentinelReactiveCommands<K, V> reactive;
+
+    private String clientName;
 
     public StatefulRedisSentinelConnectionImpl(RedisChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout,
             TimeUnit unit) {
@@ -67,5 +71,25 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     @Override
     public RedisSentinelReactiveCommands<K, V> reactive() {
         return reactive;
+    }
+
+    @Override
+    public void activated() {
+
+        super.activated();
+
+        if (clientName != null) {
+            setClientName(clientName);
+        }
+    }
+
+    public void setClientName(String clientName) {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(
+                new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
+        this.clientName = clientName;
+
+        dispatch((RedisCommand) async);
     }
 }
