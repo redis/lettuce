@@ -37,6 +37,9 @@ import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
+/**
+ * @author Mark Paluch
+ */
 public class SentinelConnectionTest extends AbstractSentinelTest {
 
     private StatefulRedisSentinelConnection<String, String> connection;

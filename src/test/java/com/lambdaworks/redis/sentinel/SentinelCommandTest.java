@@ -36,6 +36,9 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
+/**
+ * @author Mark Paluch
+ */
 public class SentinelCommandTest extends AbstractSentinelTest {
 
     @Rule

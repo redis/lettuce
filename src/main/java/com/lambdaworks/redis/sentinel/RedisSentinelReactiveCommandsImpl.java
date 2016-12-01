@@ -19,6 +19,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Map;
 
+import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.AbstractRedisReactiveCommands;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -112,12 +113,52 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
         return createMono(commandBuilder::ping);
     }
 
-    // @Override
+    @Override
+    public Mono<K> clientGetname() {
+        return createMono(commandBuilder::clientGetname);
+    }
+
+    @Override
+    public Mono<String> clientSetname(K name) {
+        return createMono(() -> commandBuilder.clientSetname(name));
+    }
+
+    @Override
+    public Mono<String> clientKill(String addr) {
+        return createMono(() -> commandBuilder.clientKill(addr));
+    }
+
+    @Override
+    public Mono<Long> clientKill(KillArgs killArgs) {
+        return createMono(() -> commandBuilder.clientKill(killArgs));
+    }
+
+    @Override
+    public Mono<String> clientPause(long timeout) {
+        return createMono(() -> commandBuilder.clientPause(timeout));
+    }
+
+    @Override
+    public Mono<String> clientList() {
+        return createMono(commandBuilder::clientList);
+    }
+
+    @Override
+    public Mono<String> info() {
+        return createMono(commandBuilder::info);
+    }
+
+    @Override
+    public Mono<String> info(String section) {
+        return createMono(() -> commandBuilder.info(section));
+    }
+
+    @Override
     public void close() {
         connection.close();
     }
 
-    // @Override
+    @Override
     public boolean isOpen() {
         return connection.isOpen();
     }

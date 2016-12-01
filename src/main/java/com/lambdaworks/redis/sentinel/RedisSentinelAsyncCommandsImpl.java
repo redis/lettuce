@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -134,6 +135,46 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     @Override
     public RedisFuture<String> ping() {
         return dispatch(commandBuilder.ping());
+    }
+
+    @Override
+    public RedisFuture<K> clientGetname() {
+        return dispatch(commandBuilder.clientGetname());
+    }
+
+    @Override
+    public RedisFuture<String> clientSetname(K name) {
+        return dispatch(commandBuilder.clientSetname(name));
+    }
+
+    @Override
+    public RedisFuture<String> clientKill(String addr) {
+        return dispatch(commandBuilder.clientKill(addr));
+    }
+
+    @Override
+    public RedisFuture<Long> clientKill(KillArgs killArgs) {
+        return dispatch(commandBuilder.clientKill(killArgs));
+    }
+
+    @Override
+    public RedisFuture<String> clientPause(long timeout) {
+        return dispatch(commandBuilder.clientPause(timeout));
+    }
+
+    @Override
+    public RedisFuture<String> clientList() {
+        return dispatch(commandBuilder.clientList());
+    }
+
+    @Override
+    public RedisFuture<String> info() {
+        return dispatch(commandBuilder.info());
+    }
+
+    @Override
+    public RedisFuture<String> info(String section) {
+        return dispatch(commandBuilder.info(section));
     }
 
     public <T> AsyncCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
