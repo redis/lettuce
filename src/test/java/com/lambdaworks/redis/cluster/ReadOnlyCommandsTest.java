@@ -28,7 +28,7 @@ public class ReadOnlyCommandsTest {
 
     @Test
     public void testCount() throws Exception {
-        assertThat(ReadOnlyCommands.READ_ONLY_COMMANDS).hasSize(72);
+        assertThat(ReadOnlyCommands.READ_ONLY_COMMANDS).hasSize(71);
     }
 
     @Test
