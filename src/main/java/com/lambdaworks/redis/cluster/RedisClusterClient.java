@@ -863,41 +863,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
     }
 
-    protected RedisURI getFirstUri() {
-        assertNotEmpty(initialUris);
-        Iterator<RedisURI> iterator = initialUris.iterator();
-        return iterator.next();
-    }
-
-    /**
-     * Returns a {@link Supplier} for {@link SocketAddress connection points}.
-     * 
-     * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
-     *        parameter but create a new collection with the desired order, must not be {@literal null}.
-     * @return {@link Supplier} for {@link SocketAddress connection points}.
-     */
-    protected Supplier<SocketAddress> getSocketAddressSupplier(
-            Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
-
-        LettuceAssert.notNull(sortFunction, "Sort function must not be null");
-
-        final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions,
-                sortFunction, clientResources);
-        return () -> {
-            if (partitions.isEmpty()) {
-                SocketAddress socketAddress = SocketAddressResolver.resolve(getFirstUri(), clientResources.dnsResolver());
-                logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
-                return socketAddress;
-            }
-
-            return socketAddressSupplier.get();
-        };
-    }
-
-    protected RedisCodec<String, String> newStringStringCodec() {
-        return StringCodec.UTF8;
-    }
-
     /**
      * Sets the new cluster topology. The partitions are not applied to existing connections.
      *
@@ -942,22 +907,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         super.shutdown(quietPeriod, timeout, timeUnit);
     }
 
-    protected void forEachClusterConnection(Consumer<StatefulRedisClusterConnectionImpl<?, ?>> function) {
-        forEachCloseable(input -> input instanceof StatefulRedisClusterConnectionImpl, function);
-    }
-
-    protected void forEachClusterPubSubConnection(Consumer<StatefulRedisClusterPubSubConnectionImpl<?, ?>> function) {
-        forEachCloseable(input -> input instanceof StatefulRedisClusterPubSubConnectionImpl, function);
-    }
-
-    protected <T extends Closeable> void forEachCloseable(Predicate<? super Closeable> selector, Consumer<T> function) {
-        for (Closeable c : closeableResources) {
-            if (selector.test(c)) {
-                function.accept((T) c);
-            }
-        }
-    }
-
     /**
      * Set the {@link ClusterClientOptions} for the client.
      *
@@ -967,13 +916,139 @@ public class RedisClusterClient extends AbstractRedisClient {
         super.setOptions(clientOptions);
     }
 
+    // -------------------------------------------------------------------------
+    // Implementation hooks and helper methods
+    // -------------------------------------------------------------------------
+
     /**
-     * Returns the initial {@link RedisURI URIs}.
+     * Returns the first {@link RedisURI} configured with this {@link RedisClusterClient} instance.
+     * 
+     * @return the first {@link RedisURI}.
+     */
+    protected RedisURI getFirstUri() {
+        assertNotEmpty(initialUris);
+        Iterator<RedisURI> iterator = initialUris.iterator();
+        return iterator.next();
+    }
+
+    /**
+     * Returns a {@link Supplier} for {@link SocketAddress connection points}.
+     * 
+     * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
+     *        parameter but create a new collection with the desired order, must not be {@literal null}.
+     * @return {@link Supplier} for {@link SocketAddress connection points}.
+     */
+    protected Supplier<SocketAddress> getSocketAddressSupplier(
+            Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
+
+        LettuceAssert.notNull(sortFunction, "Sort function must not be null");
+
+        final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions,
+                sortFunction, clientResources);
+        return () -> {
+            if (partitions.isEmpty()) {
+                SocketAddress socketAddress = SocketAddressResolver.resolve(getFirstUri(), clientResources.dnsResolver());
+                logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
+                return socketAddress;
+            }
+
+            return socketAddressSupplier.get();
+        };
+    }
+
+    /**
+     * Returns an {@link Iterable} of the initial {@link RedisURI URIs}.
      * 
      * @return the initial {@link RedisURI URIs}
      */
     protected Iterable<RedisURI> getInitialUris() {
         return initialUris;
+    }
+
+    /**
+     * Apply a {@link Consumer} of {@link StatefulRedisClusterConnectionImpl} to all active connections.
+     * 
+     * @param function the {@link Consumer}.
+     */
+    protected void forEachClusterConnection(Consumer<StatefulRedisClusterConnectionImpl<?, ?>> function) {
+        forEachCloseable(input -> input instanceof StatefulRedisClusterConnectionImpl, function);
+    }
+
+    /**
+     * Apply a {@link Consumer} of {@link StatefulRedisClusterPubSubConnectionImpl} to all active connections.
+     *
+     * @param function the {@link Consumer}.
+     */
+    protected void forEachClusterPubSubConnection(Consumer<StatefulRedisClusterPubSubConnectionImpl<?, ?>> function) {
+        forEachCloseable(input -> input instanceof StatefulRedisClusterPubSubConnectionImpl, function);
+    }
+
+    /**
+     * Apply a {@link Consumer} of {@link Closeable} to all active connections.
+     *
+     * @param function the {@link Consumer}.
+     */
+    @SuppressWarnings("unchecked")
+    protected <T extends Closeable> void forEachCloseable(Predicate<? super Closeable> selector, Consumer<T> function) {
+        for (Closeable c : closeableResources) {
+            if (selector.test(c)) {
+                function.accept((T) c);
+            }
+        }
+    }
+
+    /**
+     * Returns the seed {@link RedisURI} for the topology refreshing. This method is called before each topology refresh to
+     * provide an {@link Iterable} of {@link RedisURI} that is used to perform the next topology refresh.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override that method.
+     * 
+     * @return {@link Iterable} of {@link RedisURI} for the next topology refresh.
+     */
+    protected Iterable<RedisURI> getTopologyRefreshSource() {
+
+        boolean initialSeedNodes = !useDynamicRefreshSources();
+
+        Iterable<RedisURI> seed;
+        if (initialSeedNodes || partitions == null || partitions.isEmpty()) {
+            seed = RedisClusterClient.this.initialUris;
+        } else {
+            List<RedisURI> uris = new ArrayList<>();
+            for (RedisClusterNode partition : TopologyComparators.sortByUri(partitions)) {
+                uris.add(partition.getUri());
+            }
+            seed = uris;
+        }
+        return seed;
+    }
+
+    /**
+     * Returns {@link true} if {@link ClusterTopologyRefreshOptions#useDynamicRefreshSources() dynamic refresh sources} are
+     * enabled.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override that method.
+     * 
+     * @return {@link true} if dynamic refresh sources are used.
+     * @see ClusterTopologyRefreshOptions#useDynamicRefreshSources()
+     */
+    protected boolean useDynamicRefreshSources() {
+
+        if (getClusterClientOptions() != null) {
+            ClusterTopologyRefreshOptions topologyRefreshOptions = getClusterClientOptions().getTopologyRefreshOptions();
+
+            return topologyRefreshOptions.useDynamicRefreshSources();
+        }
+        return true;
+    }
+
+    /**
+     * Returns a {@link String} {@link RedisCodec codec}.
+     *
+     * @return a {@link String} {@link RedisCodec codec}.
+     * @see StringCodec#UTF8
+     */
+    protected RedisCodec<String, String> newStringStringCodec() {
+        return StringCodec.UTF8;
     }
 
     ClusterClientOptions getClusterClientOptions() {
@@ -1003,33 +1078,6 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private static void assertNotNull(ClientResources clientResources) {
         LettuceAssert.notNull(clientResources, "ClientResources must not be null");
-    }
-
-    protected Iterable<RedisURI> getTopologyRefreshSource() {
-
-        boolean initialSeedNodes = !useDynamicRefreshSources();
-
-        Iterable<RedisURI> seed;
-        if (initialSeedNodes || partitions == null || partitions.isEmpty()) {
-            seed = RedisClusterClient.this.initialUris;
-        } else {
-            List<RedisURI> uris = new ArrayList<>();
-            for (RedisClusterNode partition : TopologyComparators.sortByUri(partitions)) {
-                uris.add(partition.getUri());
-            }
-            seed = uris;
-        }
-        return seed;
-    }
-
-    protected boolean useDynamicRefreshSources() {
-
-        if (getClusterClientOptions() != null) {
-            ClusterTopologyRefreshOptions topologyRefreshOptions = getClusterClientOptions().getTopologyRefreshOptions();
-
-            return topologyRefreshOptions.useDynamicRefreshSources();
-        }
-        return true;
     }
 
     private class NodeConnectionFactoryImpl implements NodeConnectionFactory {
