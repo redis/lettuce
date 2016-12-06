@@ -422,7 +422,33 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
+     * Set the {@link ClientOptions} for the client.
+     *
+     * @param clientOptions the new client options
+     * @throws IllegalArgumentException if {@literal clientOptions} is null
+     */
+    @Override
+    public void setOptions(ClientOptions clientOptions) {
+        super.setOptions(clientOptions);
+    }
+
+    /**
+     * Returns the {@link ClientResources} which are used with that client.
+     *
+     * @return the {@link ClientResources} for this client
+     */
+    public ClientResources getResources() {
+        return clientResources;
+    }
+
+    // -------------------------------------------------------------------------
+    // Implementation hooks and helper methods
+    // -------------------------------------------------------------------------
+
+    /**
      * Create a new instance of {@link StatefulRedisPubSubConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClient} may override that method.
      *
      * @param endpoint the endpoint
      * @param channelWriter the channel writer
@@ -440,6 +466,8 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Create a new instance of {@link StatefulRedisSentinelConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClient} may override that method.
      *
      * @param channelWriter the channel writer
      * @param codec codec
@@ -456,6 +484,8 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClient} may override that method.
      *
      * @param channelWriter the channel writer
      * @param codec codec
@@ -468,6 +498,51 @@ public class RedisClient extends AbstractRedisClient {
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
             RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         return new StatefulRedisConnectionImpl<>(channelWriter, codec, timeout, unit);
+    }
+
+    /**
+     * Resolve a {@link RedisURI} to a {@link SocketAddress}. Resolution is performed either using Redis Sentinel (if the
+     * {@link RedisURI} is configured with Sentinels) or via DNS resolution.
+     * <p>
+     * Subclasses of {@link RedisClient} may override that method.
+     * 
+     * @param redisURI must not be {@literal null}.
+     * @return the resolved {@link SocketAddress}.
+     * @throws InterruptedException
+     * @throws TimeoutException
+     * @throws ExecutionException
+     * @see ClientResources#dnsResolver()
+     * @see RedisURI#getSentinels()
+     * @see RedisURI#getSentinelMasterId()
+     */
+    protected SocketAddress getSocketAddress(RedisURI redisURI)
+            throws InterruptedException, TimeoutException, ExecutionException {
+        SocketAddress redisAddress;
+
+        if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
+            logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
+                    redisURI.getSentinelMasterId());
+            redisAddress = lookupRedis(redisURI);
+
+            if (redisAddress == null) {
+                throw new RedisConnectionException(
+                        "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId());
+            }
+
+        } else {
+            redisAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
+        }
+        return redisAddress;
+    }
+
+    /**
+     * Returns a {@link String} {@link RedisCodec codec}.
+     *
+     * @return a {@link String} {@link RedisCodec codec}.
+     * @see StringCodec#UTF8
+     */
+    protected RedisCodec<String, String> newStringStringCodec() {
+        return StringCodec.UTF8;
     }
 
     private void validateUrisAreOfSameConnectionType(List<RedisURI> redisUris) {
@@ -502,41 +577,9 @@ public class RedisClient extends AbstractRedisClient {
         };
     }
 
-    /**
-     * Returns the {@link ClientResources} which are used with that client.
-     *
-     * @return the {@link ClientResources} for this client
-     */
-    public ClientResources getResources() {
-        return clientResources;
-    }
-
-    private SocketAddress getSocketAddress(RedisURI redisURI)
-            throws InterruptedException, TimeoutException, ExecutionException {
-        SocketAddress redisAddress;
-
-        if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
-            logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
-                    redisURI.getSentinelMasterId());
-            redisAddress = lookupRedis(redisURI);
-
-            if (redisAddress == null) {
-                throw new RedisConnectionException(
-                        "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId());
-            }
-
-        } else {
-            redisAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
-        }
-        return redisAddress;
-    }
-
     private SocketAddress lookupRedis(RedisURI sentinelUri) throws InterruptedException, TimeoutException, ExecutionException {
-        StatefulRedisSentinelConnection<String, String> connection = connectSentinel(sentinelUri);
-        try {
+        try (StatefulRedisSentinelConnection<String, String> connection = connectSentinel(sentinelUri)) {
             return connection.async().getMasterAddrByName(sentinelUri.getSentinelMasterId()).get(timeout, unit);
-        } finally {
-            connection.close();
         }
     }
 
@@ -562,10 +605,6 @@ public class RedisClient extends AbstractRedisClient {
         }
     }
 
-    protected RedisCodec<String, String> newStringStringCodec() {
-        return StringCodec.UTF8;
-    }
-
     private static <K, V> void assertNotNull(RedisCodec<K, V> codec) {
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
     }
@@ -582,17 +621,6 @@ public class RedisClient extends AbstractRedisClient {
         LettuceAssert.assertState(this.redisURI != EMPTY_URI,
                 "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
         checkValidRedisURI(this.redisURI);
-    }
-
-    /**
-     * Set the {@link ClientOptions} for the client.
-     *
-     * @param clientOptions the new client options
-     * @throws IllegalArgumentException if {@literal clientOptions} is null
-     */
-    @Override
-    public void setOptions(ClientOptions clientOptions) {
-        super.setOptions(clientOptions);
     }
 
     private Timeout defaultTimeout() {
