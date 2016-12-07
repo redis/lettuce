@@ -386,6 +386,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @param database the Redis database number.
      */
     public void setDatabase(int database) {
+
+        LettuceAssert.isTrue(database >= 0, "Invalid database number: " + database);
+
         this.database = database;
     }
 
@@ -1137,7 +1140,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          */
         public Builder withDatabase(int database) {
 
-            LettuceAssert.isTrue(database >= 0 && database <= 15, "Invalid database number: " + database);
+            LettuceAssert.isTrue(database >= 0, "Invalid database number: " + database);
 
             this.database = database;
             return this;
