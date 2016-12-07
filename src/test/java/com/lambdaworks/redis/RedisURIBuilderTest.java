@@ -80,12 +80,13 @@ public class RedisURIBuilderTest {
 
     @Test
     public void redisFromUrl() throws Exception {
-        RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS + "://password@localhost/1");
+        RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS + "://password@localhost/21");
 
         assertThat(result.getSentinels()).isEmpty();
         assertThat(result.getHost()).isEqualTo("localhost");
         assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.getPassword()).isEqualTo("password".toCharArray());
+        assertThat(result.getDatabase()).isEqualTo(21);
         assertThat(result.isSsl()).isFalse();
     }
 
