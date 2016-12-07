@@ -202,10 +202,10 @@ public class RedisURITest {
 
     @Test
     public void databaseParsingTest() {
-        RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/?database=5");
-        assertThat(redisURI.getDatabase()).isEqualTo(5);
+        RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/?database=21");
+        assertThat(redisURI.getDatabase()).isEqualTo(21);
 
-        assertThat(redisURI.toURI().toString()).isEqualTo("redis://auth@localhost:1234?database=5");
+        assertThat(redisURI.toURI().toString()).isEqualTo("redis://auth@localhost:1234?database=21");
     }
 
     @Test
