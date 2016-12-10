@@ -17,16 +17,41 @@ package com.lambdaworks.redis.codec;
 
 import java.nio.ByteBuffer;
 
+import io.netty.buffer.ByteBuf;
+
 /**
- * A {@link RedisCodec} that uses plain byte arrays.
+ * A {@link RedisCodec} that uses plain byte arrays without further transformations.
  * 
  * @author Mark Paluch
  * @since 3.3
  */
-public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
+public class ByteArrayCodec implements RedisCodec<byte[], byte[]>, ToByteBufEncoder<byte[], byte[]> {
 
     public static final ByteArrayCodec INSTANCE = new ByteArrayCodec();
     private static final byte[] EMPTY = new byte[0];
+
+    @Override
+    public void encodeKey(byte[] key, ByteBuf target) {
+
+        if (key != null) {
+            target.writeBytes(key);
+        }
+    }
+
+    @Override
+    public void encodeValue(byte[] value, ByteBuf target) {
+        encodeKey(value, target);
+    }
+
+    @Override
+    public int estimateSize(Object keyOrValue) {
+
+        if (keyOrValue == null) {
+            return 0;
+        }
+
+        return ((byte[]) keyOrValue).length;
+    }
 
     @Override
     public byte[] decodeKey(ByteBuffer bytes) {
@@ -41,7 +66,7 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
     @Override
     public ByteBuffer encodeKey(byte[] key) {
 
-        if(key == null){
+        if (key == null) {
             return ByteBuffer.wrap(EMPTY);
         }
 
@@ -50,12 +75,7 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
 
     @Override
     public ByteBuffer encodeValue(byte[] value) {
-
-        if(value == null){
-            return ByteBuffer.wrap(EMPTY);
-        }
-
-        return ByteBuffer.wrap(value);
+        return encodeKey(value);
     }
 
     private static byte[] getBytes(ByteBuffer buffer) {
@@ -63,5 +83,4 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
         buffer.get(b);
         return b;
     }
-
 }

@@ -304,7 +304,7 @@ public class CommandArgs<K, V> {
      * Returns a command string representation of {@link CommandArgs} with annotated key and value parameters.
      *
      * {@code args.addKey("mykey").add(2.0)} will return {@code key<mykey> 2.0}.
-     * 
+     *
      * @return the command string representation.
      */
     public String toCommandString() {
@@ -562,15 +562,10 @@ public class CommandArgs<K, V> {
         @Override
         void encode(ByteBuf target) {
 
-            if (codec == ExperimentalByteArrayCodec.INSTANCE) {
-                ((ExperimentalByteArrayCodec) codec).encodeKey(target, (byte[]) key);
-                return;
-            }
-
             if (codec instanceof ToByteBufEncoder) {
 
                 ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
-                ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(key));
+                ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(key) + 6);
                 toByteBufEncoder.encodeKey(key, temporaryBuffer);
 
                 ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
@@ -605,15 +600,10 @@ public class CommandArgs<K, V> {
         @Override
         void encode(ByteBuf target) {
 
-            if (codec == ExperimentalByteArrayCodec.INSTANCE) {
-                ((ExperimentalByteArrayCodec) codec).encodeValue(target, (byte[]) val);
-                return;
-            }
-
             if (codec instanceof ToByteBufEncoder) {
 
                 ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
-                ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(val));
+                ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(val) + 6);
                 toByteBufEncoder.encodeValue(val, temporaryBuffer);
 
                 ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
@@ -628,39 +618,6 @@ public class CommandArgs<K, V> {
         @Override
         public String toString() {
             return String.format("value<%s>", new StringCodec().decodeValue(codec.encodeValue(val)));
-        }
-    }
-
-    /**
-     * This codec writes directly {@code byte[]} to the target buffer without wrapping it in a {@link ByteBuffer} to reduce GC
-     * pressure.
-     */
-    public static final class ExperimentalByteArrayCodec extends ByteArrayCodec {
-
-        public static final ExperimentalByteArrayCodec INSTANCE = new ExperimentalByteArrayCodec();
-
-        private ExperimentalByteArrayCodec() {
-
-        }
-
-        public void encodeKey(ByteBuf target, byte[] key) {
-
-            target.writeByte('$');
-
-            if (key == null) {
-                target.writeBytes("0\r\n\r\n".getBytes());
-                return;
-            }
-
-            IntegerArgument.writeInteger(target, key.length);
-            target.writeBytes(CRLF);
-
-            target.writeBytes(key);
-            target.writeBytes(CRLF);
-        }
-
-        public void encodeValue(ByteBuf target, byte[] value) {
-            encodeKey(target, value);
         }
     }
 }
