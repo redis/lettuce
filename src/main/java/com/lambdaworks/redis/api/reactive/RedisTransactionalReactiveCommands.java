@@ -15,9 +15,8 @@
  */
 package com.lambdaworks.redis.api.reactive;
 
-import java.util.List;
 import com.lambdaworks.redis.TransactionResult;
-import reactor.core.publisher.Flux;
+
 import reactor.core.publisher.Mono;
 
 /**

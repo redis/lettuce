@@ -17,12 +17,9 @@ package com.lambdaworks.redis.api.async;
 
 import java.util.List;
 import java.util.Set;
-import com.lambdaworks.redis.ScanArgs;
-import com.lambdaworks.redis.ScanCursor;
-import com.lambdaworks.redis.StreamScanCursor;
-import com.lambdaworks.redis.ValueScanCursor;
+
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.RedisFuture;
 
 /**
  * Asynchronous executed commands for Sets.

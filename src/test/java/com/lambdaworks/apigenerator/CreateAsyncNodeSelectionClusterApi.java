@@ -16,12 +16,14 @@
 package com.lambdaworks.apigenerator;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.internal.LettuceSets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -31,6 +33,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * Create async API based on the templates.
@@ -40,8 +43,8 @@ import com.github.javaparser.ast.type.Type;
 @RunWith(Parameterized.class)
 public class CreateAsyncNodeSelectionClusterApi {
 
-    private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
-            "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite");
+    private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest", "close",
+            "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "setAutoFlushCommands", "flushCommands");
 
     private CompilationUnitFactory factory;
 

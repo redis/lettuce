@@ -17,9 +17,10 @@ package com.lambdaworks.redis.api.async;
 
 import java.util.Date;
 import java.util.List;
+
 import com.lambdaworks.redis.KillArgs;
-import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * Asynchronous executed commands for Server Control.
@@ -187,11 +188,15 @@ public interface RedisServerAsyncCommands<K, V> {
 
     /**
      * Make the server crash: Out of memory.
+     *
+     * @return nothing, because the server crashes before returning.
      */
     void debugOom();
 
     /**
      * Make the server crash: Invalid pointer access.
+     *
+     * @return nothing, because the server crashes before returning.
      */
     void debugSegfault();
 

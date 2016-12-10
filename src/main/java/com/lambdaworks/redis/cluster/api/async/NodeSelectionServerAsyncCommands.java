@@ -17,9 +17,9 @@ package com.lambdaworks.redis.cluster.api.async;
 
 import java.util.Date;
 import java.util.List;
+
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.RedisFuture;
 
 /**
  * Asynchronous executed commands on a node selection for Server Control.

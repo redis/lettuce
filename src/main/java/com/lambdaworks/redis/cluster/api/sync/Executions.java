@@ -16,7 +16,6 @@
 package com.lambdaworks.redis.cluster.api.sync;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;

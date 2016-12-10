@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.api.sync;
 
 import java.util.List;
+
 import com.lambdaworks.redis.ScriptOutputType;
 
 /**

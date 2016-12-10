@@ -15,10 +15,10 @@
  */
 package com.lambdaworks.redis.api.sync;
 
-import com.lambdaworks.redis.*;
-
 import java.util.List;
 import java.util.Set;
+
+import com.lambdaworks.redis.*;
 
 /**
  * Synchronous executed commands for the Geo-API.

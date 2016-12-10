@@ -15,9 +15,8 @@
  */
 package com.lambdaworks.redis.api.async;
 
-import java.util.List;
-import com.lambdaworks.redis.TransactionResult;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.TransactionResult;
 
 /**
  * Asynchronous executed commands for Transactions.

@@ -15,8 +15,6 @@
  */
 package com.lambdaworks.redis.cluster.api.async;
 
-import com.lambdaworks.redis.RedisFuture;
-
 /**
  * Asynchronous executed commands on a node selection for HyperLogLog (PF* commands).
  * 

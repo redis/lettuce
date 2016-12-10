@@ -15,9 +15,9 @@
  */
 package com.lambdaworks.redis.api.reactive;
 
-import java.util.List;
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

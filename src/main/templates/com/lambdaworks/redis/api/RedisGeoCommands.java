@@ -15,11 +15,7 @@
  */
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.GeoArgs;
-import com.lambdaworks.redis.GeoCoordinates;
-import com.lambdaworks.redis.GeoRadiusStoreArgs;
-import com.lambdaworks.redis.GeoWithin;
-import com.lambdaworks.redis.Value;
+import com.lambdaworks.redis.*;
 import java.util.List;
 import java.util.Set;
 

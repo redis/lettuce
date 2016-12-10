@@ -44,7 +44,7 @@ import com.lambdaworks.redis.internal.LettuceSets;
 public class CreateSyncNodeSelectionClusterApi {
 
     private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch");
+            "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch", "setAutoFlushCommands", "flushCommands");
 
     private CompilationUnitFactory factory;
 

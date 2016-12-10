@@ -17,8 +17,6 @@ package com.lambdaworks.redis.api.reactive;
 
 import com.lambdaworks.redis.*;
 
-import java.util.List;
-import java.util.Set;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

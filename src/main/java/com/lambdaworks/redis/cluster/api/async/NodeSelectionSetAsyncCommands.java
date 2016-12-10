@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster.api.async;
 
 import java.util.List;
 import java.util.Set;
+
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.StreamScanCursor;

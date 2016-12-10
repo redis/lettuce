@@ -15,12 +15,12 @@
  */
 package com.lambdaworks.redis.api.reactive;
 
-import java.util.Set;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.ValueScanCursor;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

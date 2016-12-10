@@ -15,10 +15,10 @@
  */
 package com.lambdaworks.redis.cluster.api.async;
 
-import com.lambdaworks.redis.*;
-
 import java.util.List;
 import java.util.Set;
+
+import com.lambdaworks.redis.*;
 
 /**
  * Asynchronous executed commands on a node selection for the Geo-API.

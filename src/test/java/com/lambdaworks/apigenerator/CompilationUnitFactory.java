@@ -102,6 +102,7 @@ public class CompilationUnitFactory {
         }
 
         resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().getContent())));
+        result.setComment(template.getComment());
 
         result.setImports(new ArrayList<>());
         ASTHelper.addTypeDeclaration(result, resultType);

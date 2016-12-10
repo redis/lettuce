@@ -16,8 +16,9 @@
 package com.lambdaworks.redis.api.async;
 
 import java.util.List;
-import com.lambdaworks.redis.ScriptOutputType;
+
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.ScriptOutputType;
 
 /**
  * Asynchronous executed commands for Scripting.

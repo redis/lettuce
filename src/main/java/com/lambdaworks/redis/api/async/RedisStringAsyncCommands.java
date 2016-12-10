@@ -17,17 +17,16 @@ package com.lambdaworks.redis.api.async;
 
 import java.util.List;
 import java.util.Map;
-import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
+
 import com.lambdaworks.redis.BitFieldArgs;
 import com.lambdaworks.redis.KeyValue;
-import com.lambdaworks.redis.SetArgs;
-import com.lambdaworks.redis.Value;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.SetArgs;
+import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 
 /**
  * Asynchronous executed commands for Strings.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -38,7 +37,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Append a value to a key.
-     * 
+     *
      * @param key the key
      * @param value the value
      * @return Long integer-reply the length of the string after the append operation.
@@ -47,52 +46,52 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Count set bits in a string.
-     * 
+     *
      * @param key the key
-     * 
+     *
      * @return Long integer-reply The number of bits set to 1.
      */
     RedisFuture<Long> bitcount(K key);
 
     /**
      * Count set bits in a string.
-     * 
+     *
      * @param key the key
      * @param start the start
      * @param end the end
-     * 
+     *
      * @return Long integer-reply The number of bits set to 1.
      */
     RedisFuture<Long> bitcount(K key, long start, long end);
 
     /**
      * Execute {@code BITFIELD} with its subcommands.
-     * 
+     *
      * @param key the key
      * @param bitFieldArgs the args containing subcommands, must not be {@literal null}.
-     * 
+     *
      * @return Long bulk-reply the results from the bitfield commands.
      */
     RedisFuture<List<Long>> bitfield(K key, BitFieldArgs bitFieldArgs);
 
     /**
      * Find first bit set or clear in a string.
-     * 
+     *
      * @param key the key
      * @param state the state
-     * 
+     *
      * @return Long integer-reply The command returns the position of the first bit set to 1 or 0 according to the request.
-     * 
+     *
      *         If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
      *         returned.
-     * 
+     *
      *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
      *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
      *         command {@code BITPOS key 0} will return 24, since up to bit 23 all the bits are 1.
-     * 
+     *
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
      *         specify no range or the <em>start</em> argument <strong>only</strong>.
-     * 
+     *
      *         However this behavior changes if you are looking for clear bits and specify a range with both
      *         <strong>start</strong> and <strong>end</strong>. If no clear bit is found in the specified range, the function
      *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
@@ -101,23 +100,23 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Find first bit set or clear in a string.
-     * 
+     *
      * @param key the key
      * @param state the bit type: long
      * @param start the start type: long
      * @param end the end type: long
      * @return Long integer-reply The command returns the position of the first bit set to 1 or 0 according to the request.
-     * 
+     *
      *         If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
      *         returned.
-     * 
+     *
      *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
      *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
      *         command {@code BITPOS key 0} will return 24, since up to bit 23 all the bits are 1.
-     * 
+     *
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
      *         specify no range or the <em>start</em> argument <strong>only</strong>.
-     * 
+     *
      *         However this behavior changes if you are looking for clear bits and specify a range with both
      *         <strong>start</strong> and <strong>end</strong>. If no clear bit is found in the specified range, the function
      *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
@@ -126,7 +125,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Perform bitwise AND between strings.
-     * 
+     *
      * @param destination result key of the operation
      * @param keys operation input key names
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
@@ -136,7 +135,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Perform bitwise NOT between strings.
-     * 
+     *
      * @param destination result key of the operation
      * @param source operation input key names
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
@@ -146,7 +145,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Perform bitwise OR between strings.
-     * 
+     *
      * @param destination result key of the operation
      * @param keys operation input key names
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
@@ -156,7 +155,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Perform bitwise XOR between strings.
-     * 
+     *
      * @param destination result key of the operation
      * @param keys operation input key names
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
@@ -166,7 +165,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Decrement the integer value of a key by one.
-     * 
+     *
      * @param key the key
      * @return Long integer-reply the value of {@code key} after the decrement
      */
@@ -174,7 +173,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Decrement the integer value of a key by the given number.
-     * 
+     *
      * @param key the key
      * @param amount the decrement type: long
      * @return Long integer-reply the value of {@code key} after the decrement
@@ -183,7 +182,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Get the value of a key.
-     * 
+     *
      * @param key the key
      * @return V bulk-string-reply the value of {@code key}, or {@literal null} when {@code key} does not exist.
      */
@@ -191,7 +190,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Returns the bit value at offset in the string value stored at key.
-     * 
+     *
      * @param key the key
      * @param offset the offset type: long
      * @return Long integer-reply the bit value stored at <em>offset</em>.
@@ -200,7 +199,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Get a substring of the string stored at a key.
-     * 
+     *
      * @param key the key
      * @param start the start type: long
      * @param end the end type: long
@@ -210,7 +209,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Set the string value of a key and return its old value.
-     * 
+     *
      * @param key the key
      * @param value the value
      * @return V bulk-string-reply the old value stored at {@code key}, or {@literal null} when {@code key} did not exist.
@@ -219,7 +218,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Increment the integer value of a key by one.
-     * 
+     *
      * @param key the key
      * @return Long integer-reply the value of {@code key} after the increment
      */
@@ -227,7 +226,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Increment the integer value of a key by the given amount.
-     * 
+     *
      * @param key the key
      * @param amount the increment type: long
      * @return Long integer-reply the value of {@code key} after the increment
@@ -236,7 +235,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Increment the float value of a key by the given amount.
-     * 
+     *
      * @param key the key
      * @param amount the increment type: double
      * @return Double bulk-string-reply the value of {@code key} after the increment.
@@ -245,7 +244,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Get the values of all the given keys.
-     * 
+     *
      * @param keys the key
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      */
@@ -263,7 +262,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Set multiple keys to multiple values.
-     * 
+     *
      * @param map the null
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
@@ -271,38 +270,38 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Set multiple keys to multiple values, only if none of the keys exist.
-     * 
+     *
      * @param map the null
      * @return Boolean integer-reply specifically:
-     * 
+     *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
     RedisFuture<Boolean> msetnx(Map<K, V> map);
 
     /**
      * Set the string value of a key.
-     * 
+     *
      * @param key the key
      * @param value the value
-     * 
+     *
      * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
     RedisFuture<String> set(K key, V value);
 
     /**
      * Set the string value of a key.
-     * 
+     *
      * @param key the key
      * @param value the value
      * @param setArgs the setArgs
-     * 
+     *
      * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
     RedisFuture<String> set(K key, V value, SetArgs setArgs);
 
     /**
      * Sets or clears the bit at offset in the string value stored at key.
-     * 
+     *
      * @param key the key
      * @param offset the offset type: long
      * @param value the value type: string
@@ -312,7 +311,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Set the value and expiration of a key.
-     * 
+     *
      * @param key the key
      * @param seconds the seconds type: long
      * @param value the value
@@ -322,7 +321,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Set the value and expiration in milliseconds of a key.
-     * 
+     *
      * @param key the key
      * @param milliseconds the milliseconds type: long
      * @param value the value
@@ -332,18 +331,18 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Set the value of a key, only if the key does not exist.
-     * 
+     *
      * @param key the key
      * @param value the value
      * @return Boolean integer-reply specifically:
-     * 
+     *
      *         {@code 1} if the key was set {@code 0} if the key was not set
      */
     RedisFuture<Boolean> setnx(K key, V value);
 
     /**
      * Overwrite part of a string at key starting at the specified offset.
-     * 
+     *
      * @param key the key
      * @param offset the offset type: long
      * @param value the value
@@ -353,7 +352,7 @@ public interface RedisStringAsyncCommands<K, V> {
 
     /**
      * Get the length of the value stored in a key.
-     * 
+     *
      * @param key the key
      * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */

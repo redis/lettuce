@@ -16,9 +16,10 @@
 package com.lambdaworks.redis.api.reactive;
 
 import java.util.Date;
-import java.util.List;
+
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.protocol.CommandType;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -283,7 +284,6 @@ public interface RedisServerReactiveCommands<K, V> {
      * Synchronously save the dataset to disk and then shut down the server.
      * 
      * @param save {@literal true} force save operation
-     * @return nothing
      */
     Mono<Void> shutdown(boolean save);
 

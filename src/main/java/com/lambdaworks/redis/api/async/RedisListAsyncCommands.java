@@ -16,9 +16,10 @@
 package com.lambdaworks.redis.api.async;
 
 import java.util.List;
+
 import com.lambdaworks.redis.KeyValue;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * Asynchronous executed commands for Lists.
