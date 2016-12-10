@@ -15,10 +15,8 @@
  */
 package com.lambdaworks.redis.cluster.api.async;
 
-import java.lang.AutoCloseable;
 import java.util.List;
 import java.util.Map;
-import com.lambdaworks.redis.RedisFuture;
 
 /**
  * 

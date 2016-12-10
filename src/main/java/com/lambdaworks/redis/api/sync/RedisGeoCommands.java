@@ -15,12 +15,13 @@
  */
 package com.lambdaworks.redis.api.sync;
 
+import java.util.List;
+import java.util.Set;
+
 import com.lambdaworks.redis.GeoArgs;
 import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.GeoRadiusStoreArgs;
 import com.lambdaworks.redis.GeoWithin;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Synchronous executed commands for the Geo-API.

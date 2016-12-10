@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.cluster.api.sync;
 
 import java.util.List;
+
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
@@ -121,6 +122,7 @@ public interface NodeSelectionListCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #lpushx(Object, Object[])}
      */
+    @Deprecated
     Executions<Long> lpushx(K key, V value);
 
     /**
@@ -217,6 +219,7 @@ public interface NodeSelectionListCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #rpushx(java.lang.Object, java.lang.Object[])}
      */
+    @Deprecated
     Executions<Long> rpushx(K key, V value);
 
     /**

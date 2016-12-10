@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster.api.sync;
 
 import java.util.Date;
 import java.util.List;
+
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 

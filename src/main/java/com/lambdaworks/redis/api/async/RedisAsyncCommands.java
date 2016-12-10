@@ -17,8 +17,8 @@ package com.lambdaworks.redis.api.async;
 
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisAsyncConnection;
+import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 

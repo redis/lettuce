@@ -16,15 +16,8 @@
 package com.lambdaworks.redis.cluster.api.sync;
 
 import java.util.List;
-import com.lambdaworks.redis.Limit;
-import com.lambdaworks.redis.Range;
-import com.lambdaworks.redis.ScanArgs;
-import com.lambdaworks.redis.ScanCursor;
-import com.lambdaworks.redis.ScoredValue;
-import com.lambdaworks.redis.ScoredValueScanCursor;
-import com.lambdaworks.redis.StreamScanCursor;
-import com.lambdaworks.redis.ZAddArgs;
-import com.lambdaworks.redis.ZStoreArgs;
+
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
@@ -523,6 +516,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range, Limit limit)}
      */
+    @Deprecated
     Executions<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
 
     /**

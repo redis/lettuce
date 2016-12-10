@@ -17,9 +17,10 @@ package com.lambdaworks.redis.api.sync;
 
 import java.util.List;
 import java.util.Map;
+
+import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
-import com.lambdaworks.redis.output.CommandOutput;
 
 /**
  * 

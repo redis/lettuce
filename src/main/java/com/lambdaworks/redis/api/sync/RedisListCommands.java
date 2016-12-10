@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.api.sync;
 
 import java.util.List;
+
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
@@ -121,6 +122,7 @@ public interface RedisListCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #lpushx(Object, Object[])}
      */
+    @Deprecated
     Long lpushx(K key, V value);
 
     /**
@@ -217,6 +219,7 @@ public interface RedisListCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #rpushx(java.lang.Object, java.lang.Object[])}
      */
+    @Deprecated
     Long rpushx(K key, V value);
 
     /**

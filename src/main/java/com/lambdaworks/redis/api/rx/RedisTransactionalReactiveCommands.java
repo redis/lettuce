@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis.api.rx;
 
-import java.util.List;
 import rx.Observable;
 
 /**

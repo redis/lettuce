@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis.api.rx;
 
-import java.util.Collection;
 import java.util.Map;
 
 import com.lambdaworks.redis.output.CommandOutput;

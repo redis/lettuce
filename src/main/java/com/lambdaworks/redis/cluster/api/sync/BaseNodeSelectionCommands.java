@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis.cluster.api.sync;
 
-import java.lang.AutoCloseable;
 import java.util.List;
 import java.util.Map;
 

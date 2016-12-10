@@ -18,9 +18,9 @@ package com.lambdaworks.redis.cluster.api.rx;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
-
 import com.lambdaworks.redis.api.rx.*;
+
+import rx.Observable;
 
 /**
  * A complete reactive and thread-safe cluster Redis API with 400+ Methods.

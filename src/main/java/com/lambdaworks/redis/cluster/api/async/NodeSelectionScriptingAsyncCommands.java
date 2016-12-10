@@ -16,8 +16,8 @@
 package com.lambdaworks.redis.cluster.api.async;
 
 import java.util.List;
+
 import com.lambdaworks.redis.ScriptOutputType;
-import com.lambdaworks.redis.RedisFuture;
 
 /**
  * Asynchronous executed commands on a node selection for Scripting.

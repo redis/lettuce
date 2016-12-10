@@ -17,12 +17,8 @@ package com.lambdaworks.redis.cluster.api.sync;
 
 import java.util.Date;
 import java.util.List;
-import com.lambdaworks.redis.KeyScanCursor;
-import com.lambdaworks.redis.MigrateArgs;
-import com.lambdaworks.redis.ScanArgs;
-import com.lambdaworks.redis.ScanCursor;
-import com.lambdaworks.redis.SortArgs;
-import com.lambdaworks.redis.StreamScanCursor;
+
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 

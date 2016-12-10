@@ -19,7 +19,6 @@ import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
-
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import rx.Observable;

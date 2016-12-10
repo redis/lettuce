@@ -17,7 +17,10 @@ package com.lambdaworks.redis.cluster.api.rx;
 
 import java.util.Map;
 
-import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.KeyScanCursor;
+import com.lambdaworks.redis.ScanArgs;
+import com.lambdaworks.redis.ScanCursor;
+import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.api.rx.*;
 import com.lambdaworks.redis.cluster.ClusterClientOptions;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;

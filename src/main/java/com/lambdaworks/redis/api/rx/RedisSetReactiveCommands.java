@@ -15,12 +15,12 @@
  */
 package com.lambdaworks.redis.api.rx;
 
-import java.util.Set;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
 import com.lambdaworks.redis.StreamScanCursor;
 import com.lambdaworks.redis.ValueScanCursor;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
+
 import rx.Observable;
 
 /**

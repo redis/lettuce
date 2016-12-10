@@ -17,14 +17,11 @@ package com.lambdaworks.redis.api.async;
 
 import java.util.List;
 import java.util.Map;
-import com.lambdaworks.redis.MapScanCursor;
-import com.lambdaworks.redis.ScanArgs;
-import com.lambdaworks.redis.ScanCursor;
-import com.lambdaworks.redis.StreamScanCursor;
+
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.RedisFuture;
 
 /**
  * Asynchronous executed commands for Hashes (Key-Value pairs).

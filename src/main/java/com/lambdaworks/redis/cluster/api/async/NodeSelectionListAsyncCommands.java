@@ -16,9 +16,9 @@
 package com.lambdaworks.redis.cluster.api.async;
 
 import java.util.List;
+
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
-import com.lambdaworks.redis.RedisFuture;
 
 /**
  * Asynchronous executed commands on a node selection for Lists.
@@ -122,6 +122,7 @@ public interface NodeSelectionListAsyncCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #lpushx(Object, Object[])}
      */
+    @Deprecated
     AsyncExecutions<Long> lpushx(K key, V value);
 
     /**
@@ -218,6 +219,7 @@ public interface NodeSelectionListAsyncCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #rpushx(java.lang.Object, java.lang.Object[])}
      */
+    @Deprecated
     AsyncExecutions<Long> rpushx(K key, V value);
 
     /**

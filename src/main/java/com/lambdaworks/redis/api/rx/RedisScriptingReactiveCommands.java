@@ -15,8 +15,8 @@
  */
 package com.lambdaworks.redis.api.rx;
 
-import java.util.List;
 import com.lambdaworks.redis.ScriptOutputType;
+
 import rx.Observable;
 
 /**

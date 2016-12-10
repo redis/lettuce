@@ -149,7 +149,6 @@ public interface BaseRedisCommands<K, V> extends AutoCloseable {
     /**
      * Close the connection. The connection will become not usable anymore as soon as this method was called.
      */
-    @Override
     void close();
 
     /**

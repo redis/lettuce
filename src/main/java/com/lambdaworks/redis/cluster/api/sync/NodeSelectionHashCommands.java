@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster.api.sync;
 
 import java.util.List;
 import java.util.Map;
+
 import com.lambdaworks.redis.MapScanCursor;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;

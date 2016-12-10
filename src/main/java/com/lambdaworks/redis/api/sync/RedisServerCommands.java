@@ -17,6 +17,7 @@ package com.lambdaworks.redis.api.sync;
 
 import java.util.Date;
 import java.util.List;
+
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 
@@ -186,11 +187,15 @@ public interface RedisServerCommands<K, V> {
 
     /**
      * Make the server crash: Out of memory.
+     *
+     * @return nothing, because the server crashes before returning.
      */
     void debugOom();
 
     /**
      * Make the server crash: Invalid pointer access.
+     *
+     * @return nothing, because the server crashes before returning.
      */
     void debugSegfault();
 
@@ -329,8 +334,8 @@ public interface RedisServerCommands<K, V> {
      * Internal command used for replication.
      * 
      * @return String simple-string-reply
-     *
-     * @Deprecated/
+     */
+    @Deprecated
     String sync();
 
     /**

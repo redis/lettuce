@@ -15,9 +15,9 @@
  */
 package com.lambdaworks.redis.api.rx;
 
-import java.util.List;
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
+
 import rx.Observable;
 
 /**
@@ -122,6 +122,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #lpushx(Object, Object[])}
      */
+    @Deprecated
     Observable<Long> lpushx(K key, V value);
 
     /**
@@ -218,6 +219,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #rpushx(java.lang.Object, java.lang.Object[])}
      */
+    @Deprecated
     Observable<Long> rpushx(K key, V value);
 
     /**

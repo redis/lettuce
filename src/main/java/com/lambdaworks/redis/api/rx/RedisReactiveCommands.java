@@ -17,10 +17,10 @@ package com.lambdaworks.redis.api.rx;
 
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
-
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
+
+import rx.Observable;
 
 /**
  * A complete reactive and thread-safe Redis API with 400+ Methods.

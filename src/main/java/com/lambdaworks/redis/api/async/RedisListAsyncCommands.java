@@ -16,9 +16,10 @@
 package com.lambdaworks.redis.api.async;
 
 import java.util.List;
+
 import com.lambdaworks.redis.KeyValue;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * Asynchronous executed commands for Lists.
@@ -122,6 +123,7 @@ public interface RedisListAsyncCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #lpushx(Object, Object[])}
      */
+    @Deprecated
     RedisFuture<Long> lpushx(K key, V value);
 
     /**
@@ -218,6 +220,7 @@ public interface RedisListAsyncCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      * @deprecated Use {@link #rpushx(java.lang.Object, java.lang.Object[])}
      */
+    @Deprecated
     RedisFuture<Long> rpushx(K key, V value);
 
     /**
