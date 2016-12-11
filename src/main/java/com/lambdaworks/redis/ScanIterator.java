@@ -38,7 +38,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  * @author Mark Paluch
  * @since 4.4
  */
-abstract public class ScanIterator<T> implements Iterator<T> {
+public abstract class ScanIterator<T> implements Iterator<T> {
 
     /**
      * Sequentially iterate over keys in the keyspace. This method uses {@code SCAN} to perform an iterative scan.
