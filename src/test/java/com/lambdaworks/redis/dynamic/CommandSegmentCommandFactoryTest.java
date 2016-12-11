@@ -18,12 +18,11 @@ package com.lambdaworks.redis.dynamic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
-import java.util.List;
 import java.util.concurrent.Future;
 
 import org.junit.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.SetArgs;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -38,7 +37,6 @@ import com.lambdaworks.redis.dynamic.output.OutputRegistryCommandOutputFactoryRe
 import com.lambdaworks.redis.dynamic.segment.AnnotationCommandSegmentFactory;
 import com.lambdaworks.redis.dynamic.segment.CommandSegmentFactory;
 import com.lambdaworks.redis.dynamic.support.ReflectionUtils;
-import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
@@ -49,7 +47,7 @@ public class CommandSegmentCommandFactoryTest {
     @Test
     public void setKeyValue() {
 
-        RedisCommand<?, ?, ?> command = createCommand(createCommandMethod(Commands.class, "set", String.class, String.class),
+        RedisCommand<?, ?, ?> command = createCommand(methodOf(Commands.class, "set", String.class, String.class),
                 new StringCodec(), "key", "value");
 
         assertThat(toString(command)).isEqualTo("SET key<key> key<value>");
@@ -58,7 +56,7 @@ public class CommandSegmentCommandFactoryTest {
     @Test
     public void setKeyValueWithByteArrayCodec() {
 
-        RedisCommand<?, ?, ?> command = createCommand(createCommandMethod(Commands.class, "set", String.class, String.class),
+        RedisCommand<?, ?, ?> command = createCommand(methodOf(Commands.class, "set", String.class, String.class),
                 new ByteArrayCodec(), "key", "value");
 
         assertThat(toString(command)).isEqualTo("SET key value");
@@ -67,7 +65,7 @@ public class CommandSegmentCommandFactoryTest {
     @Test
     public void setKeyValueWithHintedValue() {
 
-        RedisCommand<?, ?, ?> command = createCommand(createCommandMethod(Commands.class, "set2", String.class, String.class),
+        RedisCommand<?, ?, ?> command = createCommand(methodOf(Commands.class, "set2", String.class, String.class),
                 new StringCodec(), "key", "value");
 
         assertThat(toString(command)).isEqualTo("SET key<key> value<value>");
@@ -77,16 +75,26 @@ public class CommandSegmentCommandFactoryTest {
     public void setWithArgs() {
 
         RedisCommand<?, ?, ?> command = createCommand(
-                createCommandMethod(Commands.class, "set", String.class, String.class, SetArgs.class), new StringCodec(), "key",
-                "value", SetArgs.Builder.ex(123).nx());
+                methodOf(Commands.class, "set", String.class, String.class, SetArgs.class), new StringCodec(), "key", "value",
+                SetArgs.Builder.ex(123).nx());
 
         assertThat(toString(command)).isEqualTo("SET key<key> key<value> EX 123 NX");
     }
 
     @Test
+    public void varargsMethodWithParameterIndexAccess() {
+
+        RedisCommand<?, ?, ?> command = createCommand(
+                methodOf(Commands.class, "varargsWithParamIndexes", ScanArgs.class, String[].class), new StringCodec(),
+                ScanArgs.Builder.limit(1), new String[] { "a", "b" });
+
+        assertThat(toString(command)).isEqualTo("MGET a b Q09VTlQ= 1");
+    }
+
+    @Test
     public void clientSetname() {
 
-        RedisCommand<?, ?, ?> command = createCommand(createCommandMethod(Commands.class, "clientSetname", String.class),
+        RedisCommand<?, ?, ?> command = createCommand(methodOf(Commands.class, "clientSetname", String.class),
                 new ByteArrayCodec(), "name");
 
         assertThat(toString(command)).isEqualTo("CLIENT SETNAME name");
@@ -95,7 +103,7 @@ public class CommandSegmentCommandFactoryTest {
     @Test
     public void annotatedClientSetname() {
 
-        RedisCommand<?, ?, ?> command = createCommand(createCommandMethod(Commands.class, "woohoo", String.class),
+        RedisCommand<?, ?, ?> command = createCommand(methodOf(Commands.class, "methodWithNamedParameters", String.class),
                 new StringCodec(), "name");
 
         assertThat(toString(command)).isEqualTo("CLIENT SETNAME key<name>");
@@ -105,8 +113,7 @@ public class CommandSegmentCommandFactoryTest {
     public void asyncWithTimeout() {
 
         try {
-            createCommand(createCommandMethod(MethodsWithTimeout.class, "async", String.class, Timeout.class),
-                    new StringCodec());
+            createCommand(methodOf(MethodsWithTimeout.class, "async", String.class, Timeout.class), new StringCodec());
             fail("Missing CommandCreationException");
         } catch (CommandCreationException e) {
             assertThat(e).hasMessageContaining("Asynchronous command methods do not support Timeout parameters");
@@ -116,11 +123,11 @@ public class CommandSegmentCommandFactoryTest {
     @Test
     public void syncWithTimeout() {
 
-        createCommand(createCommandMethod(MethodsWithTimeout.class, "sync", String.class, Timeout.class), new StringCodec(),
-                "hello", null);
+        createCommand(methodOf(MethodsWithTimeout.class, "sync", String.class, Timeout.class), new StringCodec(), "hello",
+                null);
     }
 
-    private CommandMethod createCommandMethod(Class<?> commandInterface, String methodName, Class... args) {
+    private CommandMethod methodOf(Class<?> commandInterface, String methodName, Class... args) {
         return new CommandMethod(ReflectionUtils.findMethod(commandInterface, methodName, args));
     }
 
@@ -158,7 +165,10 @@ public class CommandSegmentCommandFactoryTest {
         boolean clientSetname(String connectionName);
 
         @Command("CLIENT SETNAME :connectionName")
-        boolean woohoo(@Param("connectionName") String connectionName);
+        boolean methodWithNamedParameters(@Param("connectionName") String connectionName);
+
+        @Command("MGET ?1 ?0")
+        String varargsWithParamIndexes(ScanArgs scanArgs, String... keys);
     }
 
     static interface MethodsWithTimeout {

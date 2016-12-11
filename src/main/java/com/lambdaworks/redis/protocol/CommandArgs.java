@@ -63,7 +63,6 @@ public class CommandArgs<K, V> {
     private K firstKey;
 
     /**
-     *
      * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
      */
     public CommandArgs(RedisCodec<K, V> codec) {

@@ -18,6 +18,7 @@ package com.lambdaworks.redis.dynamic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.Value;
 import com.lambdaworks.redis.dynamic.annotation.Command;
 import com.lambdaworks.redis.dynamic.domain.Timeout;
 
@@ -45,6 +47,21 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
         api.setSync(key, value, Timeout.create(10, TimeUnit.SECONDS));
         assertThat(api.get("key")).isEqualTo("value");
         assertThat(api.getAsBytes("key")).isEqualTo("value".getBytes());
+    }
+
+    @Test
+    public void mgetAsValues() throws Exception {
+
+        redis.set(key, value);
+
+        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+
+        TestInterface api = factory.getCommands(TestInterface.class);
+
+        List<Value<String>> values = api.mgetAsValues(key, "key2");
+        assertThat(values).hasSize(2);
+        assertThat(values.get(0)).isEqualTo(Value.just(value));
+        assertThat(values.get(1)).isEqualTo(Value.empty());
     }
 
     @Test
@@ -105,6 +122,9 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
         @Command("SET")
         Mono<String> setReactive(String key, String value);
+
+        @Command("MGET")
+        List<Value<String>> mgetAsValues(String... keys);
     }
 
     static interface TooFewParameters extends Commands {

@@ -17,9 +17,8 @@ package com.lambdaworks.redis.dynamic;
 
 import static com.lambdaworks.redis.protocol.CommandKeyword.LIMIT;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Array;
+import java.util.*;
 
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.dynamic.parameter.MethodParametersAccessor;
@@ -91,6 +90,15 @@ class ParameterBinder {
             return;
         }
 
+        if (argument instanceof byte[]) {
+            args.add((byte[]) argument);
+            return;
+        }
+
+        if (argument.getClass().isArray()) {
+            argument = asIterable(argument);
+        }
+
         if (index != -1) {
 
             if (accessor.isKey(index)) {
@@ -118,12 +126,20 @@ class ParameterBinder {
             }
         }
 
+        if (argument instanceof Iterable) {
+            for (Object argumentElement : (Iterable<Object>) argument) {
+                bindArgument(args, argumentElement);
+            }
+        } else {
+            bindArgument(args, argument);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <K, V> void bindArgument(CommandArgs<K, V> args, Object argument) {
+
         if (argument instanceof String) {
             args.add((String) argument);
-        }
-
-        if (argument instanceof byte[]) {
-            args.add((byte[]) argument);
         }
 
         if (argument instanceof Double) {
@@ -246,5 +262,21 @@ class ParameterBinder {
         }
 
         return upper.getValue().toString();
+    }
+
+    private Object asIterable(Object argument) {
+
+        if (argument.getClass().getComponentType().isPrimitive()) {
+
+            int length = Array.getLength(argument);
+
+            List<Object> elements = new ArrayList<>(length);
+            for (int i = 0; i < length; i++) {
+                elements.add(Array.get(argument, i));
+            }
+
+            return elements;
+        }
+        return Arrays.asList((Object[]) argument);
     }
 }

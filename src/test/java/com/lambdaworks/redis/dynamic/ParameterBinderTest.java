@@ -58,6 +58,22 @@ public class ParameterBinderTest {
     }
 
     @Test
+    public void bindsStringArrayCorrectly() {
+
+        CommandArgs<String, String> args = bind(new String[] { "arg1", "arg2" });
+
+        assertThat(args.toCommandString()).isEqualTo("arg1 arg2");
+    }
+
+    @Test
+    public void bindsIntArrayCorrectly() {
+
+        CommandArgs<String, String> args = bind(new int[] { 1, 2, 3 });
+
+        assertThat(args.toCommandString()).isEqualTo("1 2 3");
+    }
+
+    @Test
     public void bindsValueCorrectly() {
 
         CommandArgs<String, String> args = bind(Value.just("string"));
