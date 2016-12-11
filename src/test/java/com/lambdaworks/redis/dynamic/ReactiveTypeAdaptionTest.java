@@ -31,7 +31,8 @@ import rx.Single;
  */
 public class ReactiveTypeAdaptionTest extends AbstractRedisClientTest {
 
-    private TestInterface api;
+    private RxJava1Types rxjava1;
+    private RxJava2Types rxjava2;
 
     @Before
     public void before() throws Exception {
@@ -39,51 +40,55 @@ public class ReactiveTypeAdaptionTest extends AbstractRedisClientTest {
         redis.set(key, value);
 
         RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
-        this.api = factory.getCommands(TestInterface.class);
+        this.rxjava1 = factory.getCommands(RxJava1Types.class);
+        this.rxjava2 = factory.getCommands(RxJava2Types.class);
     }
 
     @Test
     public void rxJava1Single() throws Exception {
 
-        Single<String> single = api.getRxJava1Single(key);
+        Single<String> single = rxjava1.getRxJava1Single(key);
         assertThat(single.toBlocking().value()).isEqualTo(value);
     }
 
     @Test
     public void rxJava1Observable() throws Exception {
 
-        Observable<String> observable = api.getRxJava1Observable(key);
+        Observable<String> observable = rxjava1.getRxJava1Observable(key);
         assertThat(observable.toBlocking().last()).isEqualTo(value);
     }
 
     @Test
     public void rxJava2Single() throws Exception {
 
-        io.reactivex.Single<String> single = api.getRxJava2Single(key);
+        io.reactivex.Single<String> single = rxjava2.getRxJava2Single(key);
         assertThat(single.blockingGet()).isEqualTo(value);
     }
 
     @Test
     public void rxJava2Maybe() throws Exception {
 
-        io.reactivex.Maybe<String> maybe = api.getRxJava2Maybe(key);
+        io.reactivex.Maybe<String> maybe = rxjava2.getRxJava2Maybe(key);
         assertThat(maybe.blockingGet()).isEqualTo(value);
     }
 
     @Test
     public void rxJava2Observable() throws Exception {
 
-        io.reactivex.Observable<String> observable = api.getRxJava2Observable(key);
+        io.reactivex.Observable<String> observable = rxjava2.getRxJava2Observable(key);
         assertThat(observable.blockingFirst()).isEqualTo(value);
     }
 
-    static interface TestInterface extends Commands {
+    static interface RxJava1Types extends Commands {
 
         @Command("GET")
         Single<String> getRxJava1Single(String key);
 
         @Command("GET")
         Observable<String> getRxJava1Observable(String key);
+    }
+
+    static interface RxJava2Types extends Commands {
 
         @Command("GET")
         io.reactivex.Single<String> getRxJava2Single(String key);

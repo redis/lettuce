@@ -88,7 +88,7 @@ public class CommandSegmentCommandFactoryTest {
                 methodOf(Commands.class, "varargsWithParamIndexes", ScanArgs.class, String[].class), new StringCodec(),
                 ScanArgs.Builder.limit(1), new String[] { "a", "b" });
 
-        assertThat(toString(command)).isEqualTo("MGET a b Q09VTlQ= 1");
+        assertThat(toString(command)).isEqualTo("MGET a b COUNT 1");
     }
 
     @Test

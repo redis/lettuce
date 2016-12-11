@@ -117,7 +117,7 @@ public class ParameterBinderTest {
 
         CommandArgs<String, String> args = bind(Limit.create(10, 100));
 
-        assertThat(args.toCommandString()).isEqualTo("TElNSVQ= 10 100");
+        assertThat(args.toCommandString()).isEqualTo("LIMIT 10 100");
     }
 
     @Test
@@ -150,7 +150,7 @@ public class ParameterBinderTest {
     public void bindsValueRangeCorrectly() {
 
         CommandMethod commandMethod = new CommandMethod(
-                ReflectionUtils.findMethod(MyCommands.class, "someMethod", Range.class));
+                ReflectionUtils.findMethod(MyCommands.class, "valueRange", Range.class));
 
         CommandArgs<String, String> args = bind(commandMethod,
                 Range.from(Range.Boundary.including("lower"), Range.Boundary.excluding("upper")));
@@ -163,7 +163,7 @@ public class ParameterBinderTest {
     public void bindsUnboundedValueRangeCorrectly() {
 
         CommandMethod commandMethod = new CommandMethod(
-                ReflectionUtils.findMethod(MyCommands.class, "someMethod", Range.class));
+                ReflectionUtils.findMethod(MyCommands.class, "valueRange", Range.class));
 
         CommandArgs<String, String> args = bind(commandMethod, Range.unbounded());
 
@@ -184,12 +184,12 @@ public class ParameterBinderTest {
 
         CommandArgs<String, String> args = bind(CommandType.LINDEX);
 
-        assertThat(args.toCommandString()).isEqualTo(Base64Utils.encodeToString("LINDEX".getBytes()));
+        assertThat(args.toCommandString()).isEqualTo("LINDEX");
     }
 
     private CommandArgs<String, String> bind(Object object) {
         CommandMethod commandMethod = new CommandMethod(
-                ReflectionUtils.findMethod(MyCommands.class, "someMethod", Object.class));
+                ReflectionUtils.findMethod(MyCommands.class, "justObject", Object.class));
         return bind(commandMethod, object);
     }
 
@@ -205,8 +205,8 @@ public class ParameterBinderTest {
 
     private interface MyCommands {
 
-        void someMethod(Object object);
+        void justObject(Object object);
 
-        void someMethod(@com.lambdaworks.redis.dynamic.annotation.Value Range<String> value);
+        void valueRange(@com.lambdaworks.redis.dynamic.annotation.Value Range<String> value);
     }
 }

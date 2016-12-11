@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.LettuceStrings;
-import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.codec.ToByteBufEncoder;
@@ -277,7 +276,9 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> add(ProtocolKeyword keyword) {
 
         LettuceAssert.notNull(keyword, "CommandKeyword must not be null");
-        return add(keyword.getBytes());
+
+        singularArguments.add(ProtocolKeywordArgument.of(keyword));
+        return this;
     }
 
     @Override
@@ -369,6 +370,29 @@ public class CommandArgs<K, V> {
          * @param buffer
          */
         abstract void encode(ByteBuf buffer);
+    }
+
+    static class ProtocolKeywordArgument extends SingularArgument {
+
+        final ProtocolKeyword protocolKeyword;
+
+        private ProtocolKeywordArgument(ProtocolKeyword protocolKeyword) {
+            this.protocolKeyword = protocolKeyword;
+        }
+
+        static ProtocolKeywordArgument of(ProtocolKeyword val) {
+            return new ProtocolKeywordArgument(val);
+        }
+
+        @Override
+        void encode(ByteBuf buffer) {
+            BytesArgument.writeBytes(buffer, protocolKeyword.getBytes());
+        }
+
+        @Override
+        public String toString() {
+            return protocolKeyword.name();
+        }
     }
 
     static class BytesArgument extends SingularArgument {

@@ -42,7 +42,7 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
         RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
 
-        TestInterface api = factory.getCommands(TestInterface.class);
+        MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
         api.setSync(key, value, Timeout.create(10, TimeUnit.SECONDS));
         assertThat(api.get("key")).isEqualTo("value");
@@ -56,7 +56,7 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
         RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
 
-        TestInterface api = factory.getCommands(TestInterface.class);
+        MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
         List<Value<String>> values = api.mgetAsValues(key, "key2");
         assertThat(values).hasSize(2);
@@ -69,7 +69,7 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
         RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
 
-        TestInterface api = factory.getCommands(TestInterface.class);
+        MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
         Future<String> set = api.set(key, value);
         assertThat(set).isInstanceOf(CompletableFuture.class);
@@ -81,7 +81,7 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
         RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
 
-        TestInterface api = factory.getCommands(TestInterface.class);
+        MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
         Mono<String> set = api.setReactive(key, value);
         assertThat(set.block()).isEqualTo("OK");
@@ -108,7 +108,7 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
 
     }
 
-    static interface TestInterface extends Commands {
+    static interface MultipleExecutionModels extends Commands {
 
         String get(String key);
 
