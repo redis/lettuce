@@ -35,7 +35,10 @@ public class KeyValueStreamingAdapter<K, V> implements KeyValueStreamingChannel<
 
     @Override
     public void onKeyValue(K key, V value) {
-        map.put(key, value);
+
+        synchronized (map) {
+            map.put(key, value);
+        }
     }
 
     public Map<K, V> getMap() {
