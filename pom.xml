@@ -497,7 +497,7 @@
                         <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
                         <link>http://reactivex.io/RxJava/javadoc/</link>
                     </links>
-                    <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax</additionalparam>
+                    <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax -Xdoclint:-missing</additionalparam>
                     <tags>
                         <tag>
                             <name>generated</name>
