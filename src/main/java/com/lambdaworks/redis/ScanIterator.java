@@ -35,6 +35,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  * ({@code ZSCAN}), and hashes ({@code HSCAN}). A {@link ScanIterator} is stateful and not thread-safe. Instances can be used
  * only once to iterate over results.
  *
+ * @param <T> Element type
  * @author Mark Paluch
  * @since 4.4
  */
@@ -44,6 +45,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * Sequentially iterate over keys in the keyspace. This method uses {@code SCAN} to perform an iterative scan.
      * 
      * @param commands the commands interface, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return a new {@link ScanIterator}.
      */
     public static <K, V> ScanIterator<K> scan(RedisKeyCommands<K, V> commands) {
@@ -55,6 +58,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      *
      * @param commands the commands interface, must not be {@literal null}.
      * @param scanArgs the scan arguments, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return a new {@link ScanIterator}.
      */
     public static <K, V> ScanIterator<K> scan(RedisKeyCommands<K, V> commands, ScanArgs scanArgs) {
@@ -95,6 +100,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * iterative scan.
      *
      * @param commands the commands interface, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return a new {@link ScanIterator}.
      */
     public static <K, V> ScanIterator<KeyValue<K, V>> hscan(RedisHashCommands<K, V> commands, K key) {
@@ -107,6 +114,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      *
      * @param commands the commands interface, must not be {@literal null}.
      * @param scanArgs the scan arguments, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return a new {@link ScanIterator}.
      */
     public static <K, V> ScanIterator<KeyValue<K, V>> hscan(RedisHashCommands<K, V> commands, K key, ScanArgs scanArgs) {
@@ -149,6 +158,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * iterative scan.
      *
      * @param commands the commands interface, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return a new {@link ScanIterator}.
      */
     public static <K, V> ScanIterator<V> sscan(RedisSetCommands<K, V> commands, K key) {
@@ -161,6 +172,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      *
      * @param commands the commands interface, must not be {@literal null}.
      * @param scanArgs the scan arguments, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return a new {@link ScanIterator}.
      */
     public static <K, V> ScanIterator<V> sscan(RedisSetCommands<K, V> commands, K key, ScanArgs scanArgs) {
@@ -202,6 +215,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * perform an iterative scan.
      *
      * @param commands the commands interface, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return a new {@link ScanIterator}.
      */
     public static <K, V> ScanIterator<ScoredValue<V>> zscan(RedisSortedSetCommands<K, V> commands, K key) {
@@ -214,6 +229,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      *
      * @param commands the commands interface, must not be {@literal null}.
      * @param scanArgs the scan arguments, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return a new {@link ScanIterator}.
      */
     public static <K, V> ScanIterator<ScoredValue<V>> zscan(RedisSortedSetCommands<K, V> commands, K key, ScanArgs scanArgs) {

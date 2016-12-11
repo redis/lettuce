@@ -896,6 +896,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Apply a {@link Consumer} of {@link Closeable} to all active connections.
      *
+     * @param <T>
      * @param function the {@link Consumer}.
      */
     @SuppressWarnings("unchecked")

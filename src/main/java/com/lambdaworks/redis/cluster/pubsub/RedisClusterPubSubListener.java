@@ -30,6 +30,7 @@ public interface RedisClusterPubSubListener<K, V> {
     /**
      * Message received from a channel subscription.
      * 
+     * @param node the {@link RedisClusterNode} where the {@literal message} originates.
      * @param channel Channel.
      * @param message Message.
      */
@@ -37,7 +38,8 @@ public interface RedisClusterPubSubListener<K, V> {
 
     /**
      * Message received from a pattern subscription.
-     * 
+     *
+     * @param node the {@link RedisClusterNode} where the {@literal message} originates.
      * @param pattern Pattern
      * @param channel Channel
      * @param message Message
@@ -46,7 +48,8 @@ public interface RedisClusterPubSubListener<K, V> {
 
     /**
      * Subscribed to a channel.
-     * 
+     *
+     * @param node the {@link RedisClusterNode} where the {@literal message} originates.
      * @param channel Channel
      * @param count Subscription count.
      */
@@ -62,7 +65,8 @@ public interface RedisClusterPubSubListener<K, V> {
 
     /**
      * Unsubscribed from a channel.
-     * 
+     *
+     * @param node the {@link RedisClusterNode} where the {@literal message} originates.
      * @param channel Channel
      * @param count Subscription count.
      */
@@ -70,7 +74,8 @@ public interface RedisClusterPubSubListener<K, V> {
 
     /**
      * Unsubscribed from a pattern.
-     * 
+     *
+     * @param node the {@link RedisClusterNode} where the {@literal message} originates.
      * @param pattern Channel
      * @param count Subscription count.
      */

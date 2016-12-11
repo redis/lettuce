@@ -518,7 +518,7 @@
                         <link>http://commons.apache.org/proper/commons-pool/api-2.4.2/</link>
                         <link>https://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
-                    <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax</additionalparam>
+                    <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax -Xdoclint:-missing</additionalparam>
                     <tags>
                         <tag>
                             <name>generated</name>

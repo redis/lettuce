@@ -177,6 +177,7 @@ public class RedisCommandFactory {
      * Returns a Redis Command instance for the given interface.
      * 
      * @param commandInterface must not be {@literal null}.
+     * @param <T> command interface type.
      * @return the implemented Redis Commands interface.
      */
     public <T extends Commands> T getCommands(Class<T> commandInterface) {
