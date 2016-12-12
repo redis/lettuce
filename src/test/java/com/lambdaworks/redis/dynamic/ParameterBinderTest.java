@@ -146,7 +146,7 @@ public class ParameterBinderTest {
         bind(Range.from(Range.Boundary.including(11), Range.Boundary.excluding("hello")));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void bindsValueRangeCorrectly() {
 
         CommandMethod commandMethod = new CommandMethod(
@@ -159,7 +159,7 @@ public class ParameterBinderTest {
                 Base64Utils.encodeToString("(upper".getBytes())));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void bindsUnboundedValueRangeCorrectly() {
 
         CommandMethod commandMethod = new CommandMethod(
@@ -198,7 +198,7 @@ public class ParameterBinderTest {
                 object);
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
-        binder.bind(args, segments, parametersAccessor);
+        binder.bind(args, StringCodec.UTF8, segments, parametersAccessor);
 
         return args;
     }

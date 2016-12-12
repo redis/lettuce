@@ -18,9 +18,11 @@ package com.lambdaworks.redis.dynamic;
 import static com.lambdaworks.redis.protocol.CommandKeyword.LIMIT;
 
 import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.dynamic.parameter.MethodParametersAccessor;
 import com.lambdaworks.redis.dynamic.segment.CommandSegment;
 import com.lambdaworks.redis.dynamic.segment.CommandSegment.ArgumentContribution;
@@ -42,14 +44,14 @@ class ParameterBinder {
     /**
      * Bind {@link CommandSegments} and method parameters to {@link CommandArgs}.
      * 
-     * @param args
-     * @param commandSegments
-     * @param accessor
-     * @param <K>
-     * @param <V>
+     * @param args the command arguments.
+     * @param codec the codec.
+     * @param commandSegments the command segments.
+     * @param accessor the parameter accessor.
      * @return
      */
-    <K, V> CommandArgs<K, V> bind(CommandArgs<K, V> args, CommandSegments commandSegments, MethodParametersAccessor accessor) {
+    <K, V> CommandArgs<K, V> bind(CommandArgs<K, V> args, RedisCodec<K, V> codec, CommandSegments commandSegments,
+            MethodParametersAccessor accessor) {
 
         int parameterCount = accessor.getParameterCount();
 
@@ -58,7 +60,7 @@ class ParameterBinder {
         for (CommandSegment commandSegment : commandSegments) {
 
             ArgumentContribution argumentContribution = commandSegment.contribute(accessor);
-            bind(args, argumentContribution.getValue(), argumentContribution.getParameterIndex(), accessor);
+            bind(args, codec, argumentContribution.getValue(), argumentContribution.getParameterIndex(), accessor);
 
             eatenParameters.add(argumentContribution.getParameterIndex());
         }
@@ -70,7 +72,7 @@ class ParameterBinder {
             }
 
             Object bindableValue = accessor.getBindableValue(i);
-            bind(args, bindableValue, i, accessor);
+            bind(args, codec, bindableValue, i, accessor);
 
             eatenParameters.add(i);
         }
@@ -78,8 +80,12 @@ class ParameterBinder {
         return args;
     }
 
+    /*
+     * Bind key/value/byte[] arguments. Other arguments are unwound, if applicable, and bound according to their type.
+     */
     @SuppressWarnings("unchecked")
-    private <K, V> void bind(CommandArgs<K, V> args, Object argument, int index, MethodParametersAccessor accessor) {
+    private <K, V> void bind(CommandArgs<K, V> args, RedisCodec<K, V> codec, Object argument, int index,
+            MethodParametersAccessor accessor) {
 
         if (argument == null) {
 
@@ -114,7 +120,8 @@ class ParameterBinder {
             if (accessor.isValue(index)) {
 
                 if (argument instanceof Range) {
-                    throw new UnsupportedOperationException("Value Range is not supported.");
+                    bindValueRange(args, codec, (Range<? extends V>) argument);
+                    return;
                 }
 
                 if (argument instanceof Iterable) {
@@ -135,6 +142,10 @@ class ParameterBinder {
         }
     }
 
+    /*
+     * Bind generic-handled arguments (String, ProtocolKeyword, Double, Map, Value hierarchy, Limit, Range, GeoCoordinates,
+     * Composite Arguments).
+     */
     @SuppressWarnings("unchecked")
     private <K, V> void bindArgument(CommandArgs<K, V> args, Object argument) {
 
@@ -201,21 +212,8 @@ class ParameterBinder {
 
         if (argument instanceof Range) {
 
-            Range<?> range = (Range<?>) argument;
-
-            if (range.getLower().getValue() != null && !(range.getLower().getValue() instanceof Number)) {
-                throw new IllegalArgumentException(
-                        "Cannot bind non-numeric lower range value for a numeric Range. Annotate with @Value if the Range contains a value range.");
-            }
-
-            if (range.getUpper().getValue() != null && !(range.getUpper().getValue() instanceof Number)) {
-                throw new IllegalArgumentException(
-                        "Cannot bind non-numeric upper range value for a numeric Range. Annotate with @Value if the Range contains a value range.");
-            }
-
-            args.add(min((Range) range));
-            args.add(max((Range) range));
-
+            Range<? extends Number> range = (Range<? extends Number>) argument;
+            bindNumericRange(args, range);
             return;
         }
 
@@ -232,7 +230,29 @@ class ParameterBinder {
         }
     }
 
-    private String min(Range<? extends Number> range) {
+    private <K, V> void bindValueRange(CommandArgs<K, V> args, RedisCodec<K, V> codec, Range<? extends V> range) {
+
+        args.add(minValue(codec, range));
+        args.add(maxValue(codec, range));
+    }
+
+    private <K, V> void bindNumericRange(CommandArgs<K, V> args, Range<? extends Number> range) {
+
+        if (range.getLower().getValue() != null && !(range.getLower().getValue() instanceof Number)) {
+            throw new IllegalArgumentException(
+                    "Cannot bind non-numeric lower range value for a numeric Range. Annotate with @Value if the Range contains a value range.");
+        }
+
+        if (range.getUpper().getValue() != null && !(range.getUpper().getValue() instanceof Number)) {
+            throw new IllegalArgumentException(
+                    "Cannot bind non-numeric upper range value for a numeric Range. Annotate with @Value if the Range contains a value range.");
+        }
+
+        args.add(minNumeric(range));
+        args.add(maxNumeric(range));
+    }
+
+    private String minNumeric(Range<? extends Number> range) {
 
         Range.Boundary<? extends Number> lower = range.getLower();
 
@@ -248,7 +268,7 @@ class ParameterBinder {
         return lower.getValue().toString();
     }
 
-    private String max(Range<? extends Number> range) {
+    private String maxNumeric(Range<? extends Number> range) {
 
         Range.Boundary<? extends Number> upper = range.getUpper();
 
@@ -262,6 +282,30 @@ class ParameterBinder {
         }
 
         return upper.getValue().toString();
+    }
+
+    private <K, V> byte[] minValue(RedisCodec<K, V> codec, Range<? extends V> range) {
+        return valueRange(range.getLower(), MINUS_BYTES, codec);
+    }
+
+    private <K, V> byte[] maxValue(RedisCodec<K, V> codec, Range<? extends V> range) {
+        return valueRange(range.getUpper(), PLUS_BYTES, codec);
+    }
+
+    private <K, V> byte[] valueRange(Range.Boundary<? extends V> boundary, byte[] unbounded, RedisCodec<K, V> codec) {
+
+        if (boundary.getValue() == null) {
+            return unbounded;
+        }
+
+        ByteBuffer encodeValue = codec.encodeValue(boundary.getValue());
+        byte[] argument = new byte[encodeValue.remaining() + 1];
+
+        argument[0] = (byte) (boundary.isIncluding() ? '[' : '(');
+
+        encodeValue.get(argument, 1, argument.length - 1);
+
+        return argument;
     }
 
     private Object asIterable(Object argument) {

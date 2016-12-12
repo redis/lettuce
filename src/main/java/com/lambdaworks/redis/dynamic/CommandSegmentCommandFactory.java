@@ -89,7 +89,7 @@ class CommandSegmentCommandFactory<K, V> implements CommandFactory {
         com.lambdaworks.redis.protocol.Command<?, ?, ?> command = new com.lambdaworks.redis.protocol.Command<>(
                 this.segments.getCommandType(), output, args);
 
-        parameterBinder.bind(args, segments, parametersAccessor);
+        parameterBinder.bind(args, redisCodec, segments, parametersAccessor);
 
         return command;
     }
