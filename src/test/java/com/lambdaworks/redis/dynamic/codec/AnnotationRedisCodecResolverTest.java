@@ -20,15 +20,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import com.lambdaworks.redis.dynamic.CommandMethod;
 import org.junit.Test;
 
-import com.lambdaworks.redis.dynamic.annotation.Key;
-import com.lambdaworks.redis.dynamic.annotation.Value;
+import com.lambdaworks.redis.Range;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
+import com.lambdaworks.redis.dynamic.CommandMethod;
+import com.lambdaworks.redis.dynamic.annotation.Key;
+import com.lambdaworks.redis.dynamic.annotation.Value;
 import com.lambdaworks.redis.dynamic.support.ReflectionUtils;
 
 /**
@@ -90,7 +93,19 @@ public class AnnotationRedisCodecResolverTest {
         resolve(method);
     }
 
+    @Test
+    public void shouldDiscoverCodecTypesFromWrappers() {
+
+        Method method = ReflectionUtils.findMethod(CommandMethods.class, "withWrappers", Range.class,
+                com.lambdaworks.redis.Value.class);
+
+        Set<Class<?>> types = new AnnotationRedisCodecResolver(codecs).findTypes(new CommandMethod(method), Value.class);
+
+        assertThat(types).contains(String.class, Number.class);
+    }
+
     protected RedisCodec<?, ?> resolve(Method method) {
+
         CommandMethod commandMethod = new CommandMethod(method);
         AnnotationRedisCodecResolver resolver = new AnnotationRedisCodecResolver(codecs);
 
@@ -110,6 +125,10 @@ public class AnnotationRedisCodecResolverTest {
         String nothingAnnotated(String key, String value);
 
         String mixedTypes(@Key String key, @Value byte[] value);
+
+        String withWrappers(@Value Range<String> range, @Value com.lambdaworks.redis.Value<Number> value);
+
+        String withMap(Map<Integer, String> map);
     }
 
 }

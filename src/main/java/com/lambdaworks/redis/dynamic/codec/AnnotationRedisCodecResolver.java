@@ -15,16 +15,13 @@
  */
 package com.lambdaworks.redis.dynamic.codec;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import com.lambdaworks.redis.dynamic.annotation.Key;
-import com.lambdaworks.redis.dynamic.annotation.Value;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.dynamic.CommandMethod;
+import com.lambdaworks.redis.dynamic.annotation.Key;
+import com.lambdaworks.redis.dynamic.annotation.Value;
 import com.lambdaworks.redis.dynamic.parameter.Parameter;
 import com.lambdaworks.redis.dynamic.support.ClassTypeInformation;
 import com.lambdaworks.redis.dynamic.support.TypeInformation;
@@ -94,6 +91,7 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         commandMethod.getParameters().getBindableParameters().forEach(parameter -> {
 
             for (Voted<RedisCodec<?, ?>> vote : votes) {
+
                 ClassTypeInformation<? extends RedisCodec> typeInformation = ClassTypeInformation.from(vote.subject.getClass());
 
                 TypeInformation<?> superTypeInformation = typeInformation.getSuperTypeInformation(RedisCodec.class);
@@ -104,14 +102,18 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
                     continue;
                 }
 
+                TypeInformation<?> parameterType = parameter.getTypeInformation();
+                TypeInformation<?> parameterKeyType = ParameterWrappers.getKeyType(parameterType);
+                TypeInformation<?> parameterValueType = ParameterWrappers.getValueType(parameterType);
+
                 TypeInformation<?> keyType = typeArguments.get(0);
                 TypeInformation<?> valueType = typeArguments.get(1);
 
-                if (keyType.isAssignableFrom(parameter.getTypeInformation())) {
+                if (keyType.isAssignableFrom(parameterKeyType)) {
                     vote.votes++;
                 }
 
-                if (valueType.isAssignableFrom(parameter.getTypeInformation())) {
+                if (valueType.isAssignableFrom(parameterValueType)) {
                     vote.votes++;
                 }
             }
@@ -173,20 +175,24 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         return null;
     }
 
-    private Set<Class<?>> findTypes(CommandMethod commandMethod, Class<?> annotation) {
+    Set<Class<?>> findTypes(CommandMethod commandMethod, Class<?> annotation) {
 
-        Set<Class<?>> types = new HashSet<>();
+        Set<Class<?>> types = new LinkedHashSet<>();
 
         for (Parameter parameter : commandMethod.getParameters().getBindableParameters()) {
 
             types.addAll(parameter.getAnnotations().stream()
                     .filter(parameterAnnotation -> annotation.isAssignableFrom(parameterAnnotation.getClass()))
                     .map(parameterAnnotation -> {
-                        if (parameter.getTypeInformation().isCollectionLike()
-                                && !parameter.getTypeInformation().getType().isArray()) {
-                            return parameter.getTypeInformation().getComponentType().getType();
+
+                        TypeInformation<?> typeInformation = parameter.getTypeInformation();
+
+                        if (annotation == Key.class && ParameterWrappers.hasKeyType(typeInformation)) {
+                            TypeInformation<?> parameterKeyType = ParameterWrappers.getKeyType(typeInformation);
+                            return parameterKeyType.getType();
                         }
-                        return parameter.getTypeInformation().getType();
+
+                        return ParameterWrappers.getValueType(typeInformation).getType();
 
                     }).collect(Collectors.toList()));
         }
@@ -199,7 +205,7 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         private T subject;
         private int votes;
 
-        public Voted(T subject, int votes) {
+        Voted(T subject, int votes) {
             this.subject = subject;
             this.votes = votes;
         }
@@ -207,6 +213,99 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         @Override
         public int compareTo(Voted<?> o) {
             return votes - o.votes;
+        }
+    }
+
+    /**
+     * Parameter wrapper support for types that encapsulate one or more parameter values.
+     */
+    protected static class ParameterWrappers {
+
+        private final static Set<Class<?>> WRAPPERS = new HashSet<>();
+        private final static Set<Class<?>> WITH_KEY_TYPE = new HashSet<>();
+        private final static Set<Class<?>> WITH_VALUE_TYPE = new HashSet<>();
+
+        static {
+
+            WRAPPERS.add(com.lambdaworks.redis.Value.class);
+            WRAPPERS.add(com.lambdaworks.redis.KeyValue.class);
+            WRAPPERS.add(com.lambdaworks.redis.ScoredValue.class);
+            WRAPPERS.add(com.lambdaworks.redis.Range.class);
+
+            WRAPPERS.add(List.class);
+            WRAPPERS.add(Collection.class);
+            WRAPPERS.add(Set.class);
+            WRAPPERS.add(Iterable.class);
+            WRAPPERS.add(Map.class);
+
+            WITH_VALUE_TYPE.add(com.lambdaworks.redis.Value.class);
+            WITH_VALUE_TYPE.add(com.lambdaworks.redis.KeyValue.class);
+            WITH_KEY_TYPE.add(com.lambdaworks.redis.KeyValue.class);
+            WITH_VALUE_TYPE.add(com.lambdaworks.redis.ScoredValue.class);
+
+            WITH_KEY_TYPE.add(Map.class);
+            WITH_VALUE_TYPE.add(Map.class);
+        }
+
+        /**
+         * @param typeInformation must not be {@literal null}.
+         * @return {@literal true} if {@code parameterClass} is a parameter wrapper.
+         */
+        public static boolean supports(TypeInformation<?> typeInformation) {
+            return WRAPPERS.contains(typeInformation.getType())
+                    || (typeInformation.getType().isArray() && !(typeInformation.getType().equals(byte[].class)));
+        }
+
+        /**
+         * @param typeInformation must not be {@literal null}.
+         * @return {@literal true} if the type has a key type variable.
+         */
+        public static boolean hasKeyType(TypeInformation<?> typeInformation) {
+            return WITH_KEY_TYPE.contains(typeInformation.getType());
+        }
+
+        /**
+         * @param typeInformation must not be {@literal null}.
+         * @return {@literal true} if the type has a value type variable.
+         */
+        public static boolean hasValueType(TypeInformation<?> typeInformation) {
+            return WITH_VALUE_TYPE.contains(typeInformation.getType());
+        }
+
+        /**
+         * @param typeInformation must not be {@literal null}.
+         * @return the key type.
+         */
+        public static TypeInformation<?> getKeyType(TypeInformation<?> typeInformation) {
+
+            if (!supports(typeInformation) || !hasKeyType(typeInformation)) {
+                return typeInformation;
+            }
+
+            return typeInformation.getComponentType();
+        }
+
+        /**
+         * @param typeInformation must not be {@literal null}.
+         * @return the value type.
+         */
+        public static TypeInformation<?> getValueType(TypeInformation<?> typeInformation) {
+
+            if (!supports(typeInformation) || typeInformation.getComponentType() == null) {
+                return typeInformation;
+            }
+
+            if (!hasValueType(typeInformation)) {
+                return typeInformation.getComponentType();
+            }
+
+            List<TypeInformation<?>> typeArguments = typeInformation.getTypeArguments();
+
+            if (hasKeyType(typeInformation)) {
+                return typeArguments.get(1);
+            }
+
+            return typeArguments.get(0);
         }
     }
 }
