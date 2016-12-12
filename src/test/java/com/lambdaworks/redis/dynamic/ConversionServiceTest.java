@@ -31,7 +31,7 @@ import reactor.core.publisher.Mono;
  */
 public class ConversionServiceTest {
 
-    ConversionService sut = new ConversionService();
+    private ConversionService sut = new ConversionService();
 
     @Test
     public void getConverter() {

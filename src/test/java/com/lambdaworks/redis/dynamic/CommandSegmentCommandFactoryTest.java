@@ -131,13 +131,14 @@ public class CommandSegmentCommandFactoryTest {
         return new CommandMethod(ReflectionUtils.findMethod(commandInterface, methodName, args));
     }
 
+    @SuppressWarnings("unchecked")
     private RedisCommand<?, ?, ?> createCommand(CommandMethod commandMethod, RedisCodec<?, ?> codec, Object... args) {
 
         CommandSegmentFactory segmentFactory = new AnnotationCommandSegmentFactory();
         CodecAwareOutputFactoryResolver outputFactoryResolver = new CodecAwareOutputFactoryResolver(
                 new OutputRegistryCommandOutputFactoryResolver(new OutputRegistry()), codec);
         CommandSegmentCommandFactory factory = new CommandSegmentCommandFactory(
-                segmentFactory.createCommandSegments(commandMethod), commandMethod, (RedisCodec) codec, outputFactoryResolver);
+                segmentFactory.createCommandSegments(commandMethod), commandMethod, codec, outputFactoryResolver);
 
         return factory.createCommand(args);
     }

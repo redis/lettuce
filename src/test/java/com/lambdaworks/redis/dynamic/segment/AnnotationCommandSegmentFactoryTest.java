@@ -121,5 +121,4 @@ public class AnnotationCommandSegmentFactoryTest {
 
         void clientSetname();
     }
-
 }

@@ -19,13 +19,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.Collections;
 
-import com.lambdaworks.redis.GeoCoordinates;
-import com.lambdaworks.redis.KeyValue;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.lambdaworks.redis.GeoCoordinates;
+import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.dynamic.segment.CommandSegment;
 import com.lambdaworks.redis.dynamic.segment.CommandSegments;
 import com.lambdaworks.redis.dynamic.support.ReflectionUtils;
@@ -111,7 +111,7 @@ public class CommandMethodVerifierTest {
         Method method = ReflectionUtils.findMethod(MyInterface.class, methodName, parameterTypes);
         CommandMethod commandMethod = new CommandMethod(method);
 
-        sut.validate(new CommandSegments(Arrays.asList(CommandSegment.constant(methodName))), commandMethod);
+        sut.validate(new CommandSegments(Collections.singletonList(CommandSegment.constant(methodName))), commandMethod);
     }
 
     static interface MyInterface {
