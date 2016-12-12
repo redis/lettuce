@@ -18,8 +18,6 @@ package com.lambdaworks.redis.internal;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import org.springframework.util.TypeUtils;
-
 import com.lambdaworks.redis.JavaRuntime;
 
 /**
@@ -143,7 +141,6 @@ public class LettuceClassUtils {
      * @param lhsType the target type
      * @param rhsType the value type that should be assigned to the target type
      * @return if the target type is assignable from the value type
-     * @see TypeUtils#isAssignable
      */
     public static boolean isAssignable(Class<?> lhsType, Class<?> rhsType) {
 

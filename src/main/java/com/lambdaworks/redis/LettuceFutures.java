@@ -30,7 +30,6 @@ import java.util.concurrent.TimeoutException;
 public class LettuceFutures {
 
     private LettuceFutures() {
-
     }
 
     /**

@@ -108,12 +108,15 @@ public class LettuceStrings {
      * @return the delimited {@code String}
      */
     public static String arrayToDelimitedString(Object[] arr, String delim) {
+
         if ((arr == null || arr.length == 0)) {
             return "";
         }
+
         if (arr.length == 1) {
             return "" + arr[0];
         }
+
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < arr.length; i++) {
             if (i > 0) {
@@ -140,6 +143,7 @@ public class LettuceStrings {
         if (coll == null || coll.isEmpty()) {
             return "";
         }
+
         StringBuilder sb = new StringBuilder();
         Iterator<?> it = coll.iterator();
         while (it.hasNext()) {
