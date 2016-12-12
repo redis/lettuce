@@ -79,6 +79,13 @@ public class ReactiveTypeAdaptionTest extends AbstractRedisClientTest {
         assertThat(observable.blockingFirst()).isEqualTo(value);
     }
 
+    @Test
+    public void rxJava2Flowable() throws Exception {
+
+        io.reactivex.Flowable<String> flowable = rxjava2.getRxJava2Flowable(key);
+        assertThat(flowable.blockingFirst()).isEqualTo(value);
+    }
+
     static interface RxJava1Types extends Commands {
 
         @Command("GET")
@@ -98,5 +105,8 @@ public class ReactiveTypeAdaptionTest extends AbstractRedisClientTest {
 
         @Command("GET")
         io.reactivex.Observable<String> getRxJava2Observable(String key);
+
+        @Command("GET")
+        io.reactivex.Flowable<String> getRxJava2Flowable(String key);
     }
 }
