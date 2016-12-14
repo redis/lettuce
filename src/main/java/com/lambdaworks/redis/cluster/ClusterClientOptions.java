@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.SocketOptions;
+import com.lambdaworks.redis.SslOptions;
 
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
@@ -183,8 +184,14 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         @Override
-        public ClientOptions.Builder socketOptions(SocketOptions socketOptions) {
+        public Builder socketOptions(SocketOptions socketOptions) {
             super.socketOptions(socketOptions);
+            return this;
+        }
+
+        @Override
+        public Builder sslOptions(SslOptions sslOptions) {
+            super.sslOptions(sslOptions);
             return this;
         }
 
