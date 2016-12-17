@@ -21,11 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 import com.lambdaworks.redis.Transports.NativeTransports;
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -117,7 +115,7 @@ public abstract class AbstractRedisClient {
 
     /**
      * Populate connection builder with necessary resources.
-     * 
+     *
      * @param socketAddressSupplier address supplier for initial connect and re-connect
      * @param connectionBuilder connection builder to configure the connection
      * @param redisURI URI of the redis instance
@@ -198,50 +196,103 @@ public abstract class AbstractRedisClient {
         EpollProvider.checkForEpollLibrary();
     }
 
-    @SuppressWarnings("unchecked")
-    protected <K, V, T extends RedisChannelHandler<K, V>> T initializeChannel(ConnectionBuilder connectionBuilder) {
+    /**
+     * Retrieve the connection from {@link ConnectionFuture}. Performs a blocking {@link ConnectionFuture#get()} to synchronize
+     * the channel/connection initialization. Any exception is rethrown as {@link RedisConnectionException}.
+     *
+     * @param connectionFuture must not be null.
+     * @param <T> Connection type.
+     * @return the connection.
+     * @throws RedisConnectionException in case of connection failures.
+     * @since 4.4
+     */
+    protected <T> T getConnection(ConnectionFuture<T> connectionFuture) {
 
-        RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
+        String msg = String.format("Unable to connect to %s", connectionFuture.getRemoteAddress());
+
+        try {
+            return connectionFuture.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RedisConnectionException(msg, e);
+        } catch (Exception e) {
+
+            if (e instanceof ExecutionException) {
+                throw new RedisConnectionException(msg, e.getCause());
+            }
+
+            throw new RedisConnectionException(msg, e);
+        }
+    }
+
+    /**
+     * Connect and initialize a channel from {@link ConnectionBuilder}.
+     *
+     * @param connectionBuilder must not be {@literal null}.
+     * @return the {@link ConnectionFuture} to synchronize the connection process.
+     * @since 4.4
+     */
+    @SuppressWarnings("unchecked")
+    protected <K, V, T extends RedisChannelHandler<K, V>> ConnectionFuture<T> initializeChannelAsync(
+            ConnectionBuilder connectionBuilder) {
+
         SocketAddress redisAddress = connectionBuilder.socketAddress();
 
         if (clientResources.eventExecutorGroup().isShuttingDown()) {
-            throw new IllegalStateException("Cannot connect. Worker pool not running");
+            throw new IllegalStateException("Cannot connect, Event executor group is terminated.");
         }
 
-        try {
+        logger.debug("Connecting to Redis at {}", redisAddress);
 
-            logger.debug("Connecting to Redis at {}", redisAddress);
+        CompletableFuture<Channel> channelReadyFuture = new CompletableFuture<>();
+        Bootstrap redisBootstrap = connectionBuilder.bootstrap();
+        RedisChannelInitializer initializer = connectionBuilder.build();
+        redisBootstrap.handler(initializer);
+        ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
 
-            Bootstrap redisBootstrap = connectionBuilder.bootstrap();
-            RedisChannelInitializer initializer = connectionBuilder.build();
-            redisBootstrap.handler(initializer);
-            ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
+        connectFuture.addListener(future -> {
 
-            connectFuture.await();
+            if (!future.isSuccess()) {
 
-            if (!connectFuture.isSuccess()) {
-                if (connectFuture.cause() instanceof Exception) {
-                    throw (Exception) connectFuture.cause();
+                logger.debug("Connecting to Redis at {}: {}", redisAddress, future.cause());
+                connectionBuilder.endpoint().initialState();
+                channelReadyFuture.completeExceptionally(future.cause());
+                return;
+            }
+
+            CompletableFuture<Boolean> initFuture = (CompletableFuture<Boolean>) initializer.channelInitialized();
+            initFuture.whenComplete((success, throwable) -> {
+
+                if (throwable == null) {
+                    logger.debug("Connecting to Redis at {}: Success", redisAddress);
+                    RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
+                    connection.registerCloseables(closeableResources, connection);
+                    channelReadyFuture.complete(connectFuture.channel());
+                    return;
                 }
-                connectFuture.get();
-            }
 
-            try {
-                initializer.channelInitialized().get(connectionBuilder.getTimeout(), connectionBuilder.getTimeUnit());
-            } catch (TimeoutException e) {
-                throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout() + " "
-                        + connectionBuilder.getTimeUnit(), e);
-            }
-            connection.registerCloseables(closeableResources, connection);
+                logger.debug("Connecting to Redis at {}, initialization: {}", redisAddress, throwable);
+                connectionBuilder.endpoint().initialState();
+                Throwable failure;
 
-            return (T) connection;
-        } catch (RedisException e) {
-            connectionBuilder.endpoint().initialState();
-            throw e;
-        } catch (Exception e) {
-            connectionBuilder.endpoint().initialState();
-            throw new RedisConnectionException("Unable to connect to " + redisAddress, e);
-        }
+                if (throwable instanceof RedisConnectionException) {
+                    failure = throwable;
+                } else if (throwable instanceof TimeoutException) {
+                    failure = new RedisConnectionException("Could not initialize channel within "
+                            + connectionBuilder.getTimeout() + " " + connectionBuilder.getTimeUnit(), throwable);
+                } else {
+                    failure = throwable;
+                }
+                channelReadyFuture.completeExceptionally(failure);
+
+                CompletableFuture<Boolean> response = new CompletableFuture<>();
+                response.completeExceptionally(failure);
+
+            });
+        });
+
+        return new ConnectionFuture<T>(redisAddress,
+                channelReadyFuture.thenApply(channel -> (T) connectionBuilder.connection()));
     }
 
     /**
@@ -361,5 +412,295 @@ public abstract class AbstractRedisClient {
     protected void setOptions(ClientOptions clientOptions) {
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         this.clientOptions = clientOptions;
+    }
+
+    /**
+     * lettuce-specific connection {@link CompletableFuture future}. Delegates calls to the decorated {@link CompletableFuture}
+     * and provides a {@link SocketAddress}.
+     *
+     * @since 4.4
+     */
+    protected class ConnectionFuture<T> extends CompletableFuture<T> {
+
+        private final SocketAddress remoteAddress;
+        private final CompletableFuture<T> delegate;
+
+        protected ConnectionFuture(SocketAddress remoteAddress, CompletableFuture<T> delegate) {
+
+            this.remoteAddress = remoteAddress;
+            this.delegate = delegate;
+        }
+
+        public SocketAddress getRemoteAddress() {
+            return remoteAddress;
+        }
+
+        private <U> ConnectionFuture<U> adopt(CompletableFuture<U> newFuture) {
+            return new ConnectionFuture<>(remoteAddress, newFuture);
+        }
+
+        @Override
+        public boolean isDone() {
+            return delegate.isDone();
+        }
+
+        @Override
+        public T get() throws InterruptedException, ExecutionException {
+            return delegate.get();
+        }
+
+        @Override
+        public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            return delegate.get(timeout, unit);
+        }
+
+        @Override
+        public T join() {
+            return delegate.join();
+        }
+
+        @Override
+        public T getNow(T valueIfAbsent) {
+            return delegate.getNow(valueIfAbsent);
+        }
+
+        @Override
+        public boolean complete(T value) {
+            return delegate.complete(value);
+        }
+
+        @Override
+        public boolean completeExceptionally(Throwable ex) {
+            return delegate.completeExceptionally(ex);
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> thenApply(Function<? super T, ? extends U> fn) {
+            return adopt(delegate.thenApply(fn));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> thenApplyAsync(Function<? super T, ? extends U> fn) {
+            return adopt(delegate.thenApplyAsync(fn));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> thenApplyAsync(Function<? super T, ? extends U> fn, Executor executor) {
+            return adopt(delegate.thenApplyAsync(fn, executor));
+        }
+
+        @Override
+        public ConnectionFuture<Void> thenAccept(Consumer<? super T> action) {
+            return adopt(delegate.thenAccept(action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> thenAcceptAsync(Consumer<? super T> action) {
+            return adopt(delegate.thenAcceptAsync(action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> thenAcceptAsync(Consumer<? super T> action, Executor executor) {
+            return adopt(delegate.thenAcceptAsync(action, executor));
+        }
+
+        @Override
+        public ConnectionFuture<Void> thenRun(Runnable action) {
+            return adopt(delegate.thenRun(action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> thenRunAsync(Runnable action) {
+            return adopt(delegate.thenRunAsync(action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> thenRunAsync(Runnable action, Executor executor) {
+            return adopt(delegate.thenRunAsync(action, executor));
+        }
+
+        @Override
+        public <U, V> ConnectionFuture<V> thenCombine(CompletionStage<? extends U> other,
+                BiFunction<? super T, ? super U, ? extends V> fn) {
+            return adopt(delegate.thenCombine(other, fn));
+        }
+
+        @Override
+        public <U, V> ConnectionFuture<V> thenCombineAsync(CompletionStage<? extends U> other,
+                BiFunction<? super T, ? super U, ? extends V> fn) {
+            return adopt(delegate.thenCombineAsync(other, fn));
+        }
+
+        @Override
+        public <U, V> ConnectionFuture<V> thenCombineAsync(CompletionStage<? extends U> other,
+                BiFunction<? super T, ? super U, ? extends V> fn, Executor executor) {
+            return adopt(delegate.thenCombineAsync(other, fn, executor));
+        }
+
+        @Override
+        public <U> ConnectionFuture<Void> thenAcceptBoth(CompletionStage<? extends U> other,
+                BiConsumer<? super T, ? super U> action) {
+            return adopt(delegate.thenAcceptBoth(other, action));
+        }
+
+        @Override
+        public <U> ConnectionFuture<Void> thenAcceptBothAsync(CompletionStage<? extends U> other,
+                BiConsumer<? super T, ? super U> action) {
+            return adopt(delegate.thenAcceptBothAsync(other, action));
+        }
+
+        @Override
+        public <U> ConnectionFuture<Void> thenAcceptBothAsync(CompletionStage<? extends U> other,
+                BiConsumer<? super T, ? super U> action, Executor executor) {
+            return adopt(delegate.thenAcceptBothAsync(other, action, executor));
+        }
+
+        @Override
+        public ConnectionFuture<Void> runAfterBoth(CompletionStage<?> other, Runnable action) {
+            return adopt(delegate.runAfterBoth(other, action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> runAfterBothAsync(CompletionStage<?> other, Runnable action) {
+            return adopt(delegate.runAfterBothAsync(other, action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> runAfterBothAsync(CompletionStage<?> other, Runnable action, Executor executor) {
+            return adopt(delegate.runAfterBothAsync(other, action, executor));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> applyToEither(CompletionStage<? extends T> other, Function<? super T, U> fn) {
+            return adopt(delegate.applyToEither(other, fn));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> applyToEitherAsync(CompletionStage<? extends T> other, Function<? super T, U> fn) {
+            return adopt(delegate.applyToEitherAsync(other, fn));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> applyToEitherAsync(CompletionStage<? extends T> other, Function<? super T, U> fn,
+                Executor executor) {
+            return adopt(delegate.applyToEitherAsync(other, fn, executor));
+        }
+
+        @Override
+        public ConnectionFuture<Void> acceptEither(CompletionStage<? extends T> other, Consumer<? super T> action) {
+            return adopt(delegate.acceptEither(other, action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> acceptEitherAsync(CompletionStage<? extends T> other, Consumer<? super T> action) {
+            return adopt(delegate.acceptEitherAsync(other, action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> acceptEitherAsync(CompletionStage<? extends T> other, Consumer<? super T> action,
+                Executor executor) {
+            return adopt(delegate.acceptEitherAsync(other, action, executor));
+        }
+
+        @Override
+        public ConnectionFuture<Void> runAfterEither(CompletionStage<?> other, Runnable action) {
+            return adopt(delegate.runAfterEither(other, action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> runAfterEitherAsync(CompletionStage<?> other, Runnable action) {
+            return adopt(delegate.runAfterEitherAsync(other, action));
+        }
+
+        @Override
+        public ConnectionFuture<Void> runAfterEitherAsync(CompletionStage<?> other, Runnable action, Executor executor) {
+            return adopt(delegate.runAfterEitherAsync(other, action, executor));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> thenCompose(Function<? super T, ? extends CompletionStage<U>> fn) {
+            return adopt(delegate.thenCompose(fn));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn) {
+            return adopt(delegate.thenComposeAsync(fn));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn,
+                Executor executor) {
+            return adopt(delegate.thenComposeAsync(fn, executor));
+        }
+
+        @Override
+        public ConnectionFuture<T> whenComplete(BiConsumer<? super T, ? super Throwable> action) {
+            return adopt(delegate.whenComplete(action));
+        }
+
+        @Override
+        public ConnectionFuture<T> whenCompleteAsync(BiConsumer<? super T, ? super Throwable> action) {
+            return adopt(delegate.whenCompleteAsync(action));
+        }
+
+        @Override
+        public ConnectionFuture<T> whenCompleteAsync(BiConsumer<? super T, ? super Throwable> action, Executor executor) {
+            return adopt(delegate.whenCompleteAsync(action, executor));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> handle(BiFunction<? super T, Throwable, ? extends U> fn) {
+            return adopt(delegate.handle(fn));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> handleAsync(BiFunction<? super T, Throwable, ? extends U> fn) {
+            return adopt(delegate.handleAsync(fn));
+        }
+
+        @Override
+        public <U> ConnectionFuture<U> handleAsync(BiFunction<? super T, Throwable, ? extends U> fn, Executor executor) {
+            return adopt(delegate.handleAsync(fn, executor));
+        }
+
+        @Override
+        public CompletableFuture<T> toCompletableFuture() {
+            return delegate.toCompletableFuture();
+        }
+
+        @Override
+        public ConnectionFuture<T> exceptionally(Function<Throwable, ? extends T> fn) {
+            return adopt(delegate.exceptionally(fn));
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return delegate.cancel(mayInterruptIfRunning);
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return delegate.isCancelled();
+        }
+
+        @Override
+        public boolean isCompletedExceptionally() {
+            return delegate.isCompletedExceptionally();
+        }
+
+        @Override
+        public void obtrudeValue(T value) {
+            delegate.obtrudeValue(value);
+        }
+
+        @Override
+        public void obtrudeException(Throwable ex) {
+            delegate.obtrudeException(ex);
+        }
+
+        @Override
+        public int getNumberOfDependents() {
+            return delegate.getNumberOfDependents();
+        }
     }
 }

@@ -205,7 +205,7 @@ public class RedisClient extends AbstractRedisClient {
 
         DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
 
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection((RedisChannelWriter) endpoint, codec,
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(endpoint, codec,
                 timeout.timeout, timeout.timeUnit);
         connectStateful(connection, redisURI, endpoint, () -> new CommandHandler(clientResources, endpoint));
         return connection;
@@ -230,19 +230,38 @@ public class RedisClient extends AbstractRedisClient {
 
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         channelType(connectionBuilder, redisURI);
-        initializeChannel(connectionBuilder);
+
+        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
         if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
-            connection.async().auth(new String(redisURI.getPassword()));
+
+            future = future.thenApplyAsync(channelHandler -> {
+
+                connection.async().auth(new String(redisURI.getPassword()));
+
+                return channelHandler;
+            }, clientResources.eventExecutorGroup());
         }
 
         if (LettuceStrings.isNotEmpty(redisURI.getClientName())) {
-            connection.setClientName(redisURI.getClientName());
+            future.thenApply(channelHandler -> {
+                connection.setClientName(redisURI.getClientName());
+                return channelHandler;
+            });
+
         }
 
         if (redisURI.getDatabase() != 0) {
-            connection.async().select(redisURI.getDatabase());
+
+            future = future.thenApplyAsync(channelHandler -> {
+
+                connection.async().select(redisURI.getDatabase());
+
+                return channelHandler;
+            }, clientResources.eventExecutorGroup());
         }
+
+        getConnection(future);
     }
 
     /**
@@ -379,7 +398,7 @@ public class RedisClient extends AbstractRedisClient {
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
             channelType(connectionBuilder, redisURI);
-            initializeChannel(connectionBuilder);
+            getConnection(initializeChannelAsync(connectionBuilder));
         } else {
             boolean connected = false;
             boolean first = true;
@@ -397,7 +416,7 @@ public class RedisClient extends AbstractRedisClient {
                     logger.debug("Connecting to Sentinel, address: " + socketAddress);
                 }
                 try {
-                    initializeChannel(connectionBuilder);
+                    getConnection(initializeChannelAsync(connectionBuilder));
                     connected = true;
                     break;
                 } catch (Exception e) {
