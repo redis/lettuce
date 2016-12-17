@@ -19,6 +19,7 @@ import java.io.Closeable;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -449,12 +450,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     protected StatefulRedisConnection<String, String> connectToNode(final SocketAddress socketAddress) {
-        return connectToNode(newStringStringCodec(), socketAddress.toString(), null, new Supplier<SocketAddress>() {
-            @Override
-            public SocketAddress get() {
-                return socketAddress;
-            }
-        });
+        return connectToNode(newStringStringCodec(), socketAddress.toString(), null, () -> socketAddress);
     }
 
     /**
@@ -470,29 +466,44 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId,
             RedisChannelWriter<K, V> clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
+        return getConnection(connectToNodeAsync(codec, nodeId, clusterWriter, socketAddressSupplier));
+    }
+
+    /**
+     * Create a connection to a redis socket address.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param nodeId the nodeId
+     * @param clusterWriter global cluster writer
+     * @param socketAddressSupplier supplier for the socket address
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
+     */
+    private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec, String nodeId,
+            RedisChannelWriter<K, V> clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
 
         assertNotNull(codec);
         assertNotEmpty(initialUris);
-
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
-        logger.debug("connectNode(" + nodeId + ")");
+        SocketAddress socketAddress = socketAddressSupplier.get();
+
+        logger.debug(String.format("connectToNodeAsync(%s at %s)", nodeId, socketAddress));
         Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
-        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, getResources(), queue,
+        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<>(clientOptions, getResources(), queue,
                 clusterWriter);
-        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(handler, codec, timeout, unit);
+        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(handler, codec, timeout, unit);
 
-        try {
-            connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
+        ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(handler, connection,
+                getFirstUri(), socketAddressSupplier);
 
-            connection.registerCloseables(closeableResources, connection);
-        } catch (RedisException e) {
-            connection.close();
-            throw e;
-        }
-
-        return connection;
+        return connectionFuture.whenComplete((conn, throwable) -> {
+            if (throwable != null) {
+                connection.close();
+            }
+        });
     }
 
     /**
@@ -522,8 +533,6 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         try {
             connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
-
-            connection.registerCloseables(closeableResources, connection);
         } catch (RedisException e) {
             connection.close();
             throw e;
@@ -590,7 +599,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
         }
 
-        connection.registerCloseables(closeableResources, connection, clusterWriter, pooledClusterConnectionProvider);
+        connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
 
         return connection;
     }
@@ -653,11 +662,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
         }
 
-        connection.registerCloseables(closeableResources, connection, clusterWriter, pooledClusterConnectionProvider);
-
-        if (getFirstUri().getPassword() != null) {
-            connection.async().auth(new String(getFirstUri().getPassword()));
-        }
+        connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
 
         return connection;
     }
@@ -665,65 +670,69 @@ public class RedisClusterClient extends AbstractRedisClient {
     /**
      * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (authentication, SSL) from
      * {@code connectionSettings}.
-     *
-     * @param handler
-     * @param connection
-     * @param connectionSettings
-     * @param socketAddressSupplier
-     * @param <K>
-     * @param <V>
      */
     private <K, V> void connectStateful(CommandHandler<K, V> handler, StatefulRedisConnectionImpl<K, V> connection,
             RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier) {
-
-        connectStateful0(handler, connection, connectionSettings, socketAddressSupplier);
-
-        if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
-            connection.async().auth(new String(connectionSettings.getPassword()));
-        }
-
-        if (LettuceStrings.isNotEmpty(connectionSettings.getClientName())) {
-            connection.setClientName(connectionSettings.getClientName());
-        }
+        getConnection(connectStatefulAsync(handler, connection, connectionSettings, socketAddressSupplier));
     }
 
     /**
      * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (authentication, SSL) from
      * {@code connectionSettings}.
-     *
-     * @param handler
-     * @param connection
-     * @param connectionSettings
-     * @param socketAddressSupplier
-     * @param <K>
-     * @param <V>
      */
     private <K, V> void connectStateful(CommandHandler<K, V> handler, StatefulRedisClusterConnectionImpl<K, V> connection,
             RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier) {
-
-        connectStateful0(handler, connection, connectionSettings, socketAddressSupplier);
-
-        if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
-            connection.async().auth(new String(connectionSettings.getPassword()));
-        }
-
-        if (LettuceStrings.isNotEmpty(connectionSettings.getClientName())) {
-            connection.setClientName(connectionSettings.getClientName());
-        }
+        getConnection(connectStatefulAsync(handler, connection, connectionSettings, socketAddressSupplier));
     }
 
     /**
-     * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (SSL) from {@code
-     * connectionSettings}.
-     *
-     * @param handler
-     * @param connection
-     * @param connectionSettings
-     * @param socketAddressSupplier
-     * @param <K>
-     * @param <V>
+     * Initiates a channel connection considering {@link ClientOptions} initialization options, authentication and client name
+     * options.
      */
-    private <K, V> void connectStateful0(CommandHandler<K, V> handler, RedisChannelHandler<K, V> connection,
+    private <K, V, T extends RedisChannelHandler<K, V>, S> ConnectionFuture<S> connectStatefulAsync(
+            CommandHandler<K, V> handler, T connection, RedisURI connectionSettings,
+            Supplier<SocketAddress> socketAddressSupplier) {
+
+        ConnectionBuilder connectionBuilder = createConnectionBuilder(handler, connection, connectionSettings,
+                socketAddressSupplier);
+
+        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
+
+        if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
+            future = future.thenApplyAsync(channelHandler -> {
+
+                if (connection instanceof StatefulRedisClusterConnectionImpl) {
+                    ((StatefulRedisClusterConnectionImpl) connection).async()
+                            .auth(new String(connectionSettings.getPassword()));
+                }
+
+                if (connection instanceof StatefulRedisConnectionImpl) {
+                    ((StatefulRedisConnectionImpl) connection).async().auth(new String(connectionSettings.getPassword()));
+                }
+
+                return channelHandler;
+            }, clientResources.eventExecutorGroup());
+
+        }
+
+        if (LettuceStrings.isNotEmpty(connectionSettings.getClientName())) {
+            future = future.thenApply(channelHandler -> {
+
+                if (connection instanceof StatefulRedisClusterConnectionImpl) {
+                    ((StatefulRedisClusterConnectionImpl) connection).setClientName(connectionSettings.getClientName());
+                }
+
+                if (connection instanceof StatefulRedisConnectionImpl) {
+                    ((StatefulRedisConnectionImpl) connection).setClientName(connectionSettings.getClientName());
+                }
+                return channelHandler;
+            });
+        }
+
+        return future.thenApply(channelHandler -> (S) connection);
+    }
+
+    private <K, V> ConnectionBuilder createConnectionBuilder(CommandHandler<K, V> handler, RedisChannelHandler<K, V> connection,
             RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier) {
 
         ConnectionBuilder connectionBuilder;
@@ -740,8 +749,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, socketAddressSupplier, connectionBuilder, connectionSettings);
         channelType(connectionBuilder, connectionSettings);
-
-        initializeChannel(connectionBuilder);
+        return connectionBuilder;
     }
 
     /**
@@ -1082,15 +1090,16 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     private class NodeConnectionFactoryImpl implements NodeConnectionFactory {
+
         @Override
         public <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, SocketAddress socketAddress) {
-            return RedisClusterClient.this.connectToNode(codec, socketAddress.toString(), null, new Supplier<SocketAddress>() {
-                @Override
-                public SocketAddress get() {
-                    return socketAddress;
-                }
-            });
+            return RedisClusterClient.this.connectToNode(codec, socketAddress.toString(), null, () -> socketAddress);
+        }
+
+        @Override
+        public <K, V> CompletableFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec,
+                SocketAddress socketAddress) {
+            return RedisClusterClient.this.connectToNodeAsync(codec, socketAddress.toString(), null, () -> socketAddress);
         }
     }
-
 }

@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.cluster.topology;
 
 import java.net.SocketAddress;
+import java.util.concurrent.CompletableFuture;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
@@ -33,9 +34,22 @@ public interface NodeConnectionFactory {
      *
      * @param codec must not be {@literal null}.
      * @param socketAddress must not be {@literal null}.
-     * @param <K>
-     * @param <V>
+     * @param <K> Key type.
+     * @param <V> Value type.
      * @return a new {@link StatefulRedisConnection}
      */
     <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, SocketAddress socketAddress);
+
+    /**
+     * Connects to a {@link SocketAddress} with the given {@link RedisCodec} asynchronously.
+     *
+     * @param codec must not be {@literal null}.
+     * @param socketAddress must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new {@link StatefulRedisConnection}
+     * @since 4.4
+     */
+    <K, V> CompletableFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec,
+            SocketAddress socketAddress);
 }

@@ -471,19 +471,38 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         channelType(connectionBuilder, redisURI);
-        initializeChannel(connectionBuilder);
+
+        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
         if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
-            connection.async().auth(new String(redisURI.getPassword()));
+
+            future = future.thenApplyAsync(channelHandler -> {
+
+                connection.async().auth(new String(redisURI.getPassword()));
+
+                return channelHandler;
+            }, clientResources.eventExecutorGroup());
         }
 
         if (LettuceStrings.isNotEmpty(redisURI.getClientName())) {
-            connection.setClientName(redisURI.getClientName());
+            future.thenApply(channelHandler -> {
+                connection.setClientName(redisURI.getClientName());
+                return channelHandler;
+            });
+
         }
 
         if (redisURI.getDatabase() != 0) {
-            connection.async().select(redisURI.getDatabase());
+
+            future = future.thenApplyAsync(channelHandler -> {
+
+                connection.async().select(redisURI.getDatabase());
+
+                return channelHandler;
+            }, clientResources.eventExecutorGroup());
         }
+
+        getConnection(future);
     }
 
     /**
