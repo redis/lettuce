@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster.topology;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -90,6 +92,7 @@ public class ClusterTopologyRefreshTest {
     public void before() throws Exception {
 
         when(clientResources.dnsResolver()).thenReturn(DnsResolvers.JVM_DEFAULT);
+        when(clientResources.eventExecutorGroup()).thenReturn(ImmediateEventExecutor.INSTANCE);
         when(connection1.async()).thenReturn(asyncCommands1);
         when(connection2.async()).thenReturn(asyncCommands2);
 
@@ -215,6 +218,28 @@ public class ClusterTopologyRefreshTest {
                 .thenReturn(completedWithException(new RedisException("connection failed")));
 
         sut.loadViews(seed, true);
+
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381)));
+    }
+
+    @Test
+    public void shouldFailIfNoNodeConnects() throws Exception {
+
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381));
+
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedWithException(new RedisException("connection failed")));
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+                .thenReturn(completedWithException(new RedisException("connection failed")));
+
+        try {
+            sut.loadViews(seed, true);
+            fail("Missing RedisConnectionException");
+        } catch (Exception e) {
+            assertThat(e).hasNoCause().hasMessage("Unable to establish a connection to Redis Cluster");
+            assertThat(e.getSuppressed()).hasSize(2);
+        }
 
         verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
         verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381)));
@@ -359,7 +384,6 @@ public class ClusterTopologyRefreshTest {
         command.completedAtNs = duration;
 
         return requests;
-
     }
 
     protected Requests createClientListRequests(int duration, String response) {

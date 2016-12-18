@@ -89,8 +89,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
             connection.sync().get(key_10439);
             fail("Missing RedisException");
         } catch (RedisConnectionException e) {
-            assertThat(e).hasRootCauseInstanceOf(
-                    ConnectException.class);
+            assertThat(e).hasRootCauseInstanceOf(ConnectException.class);
         }
 
         connection.close();
@@ -106,7 +105,8 @@ public class ClusterPartiallyDownTest extends AbstractTest {
             redisClusterClient.connect();
             fail("Missing RedisException");
         } catch (RedisException e) {
-            assertThat(e).hasNoCause();
+            assertThat(e).hasCauseInstanceOf(RedisConnectionException.class);
+            assertThat(e.getCause()).hasMessage("Unable to establish a connection to Redis Cluster");
         }
     }
 
@@ -117,10 +117,8 @@ public class ClusterPartiallyDownTest extends AbstractTest {
         redisClusterClient = RedisClusterClient.create(clientResources, seed);
 
         Partitions partitions = new Partitions();
-        partitions.addPartition(
-                new RedisClusterNode(URI_1, "a", true, null, 0, 0, 0, new ArrayList<>(), new HashSet<>()));
-        partitions.addPartition(
-                new RedisClusterNode(URI_2, "b", true, null, 0, 0, 0, new ArrayList<>(), new HashSet<>()));
+        partitions.addPartition(new RedisClusterNode(URI_1, "a", true, null, 0, 0, 0, new ArrayList<>(), new HashSet<>()));
+        partitions.addPartition(new RedisClusterNode(URI_2, "b", true, null, 0, 0, 0, new ArrayList<>(), new HashSet<>()));
 
         redisClusterClient.setPartitions(partitions);
 

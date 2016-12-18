@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster.topology;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -46,7 +47,6 @@ class AsyncConnections {
     }
 
     /**
-     *
      * @return a set of {@link RedisURI} for which {@link Connections} has a connection.
      */
     public Set<RedisURI> connectedNodes() {
@@ -58,6 +58,43 @@ class AsyncConnections {
      * @throws RedisConnectionException if no connection could be established.
      */
     public Connections get(long timeout, TimeUnit timeUnit) throws InterruptedException {
+
+        Connections connections = new Connections();
+        List<Throwable> exceptions = new CopyOnWriteArrayList<>();
+        List<Future<?>> sync = new ArrayList<>(this.futures.size());
+
+        for (Map.Entry<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> entry : this.futures.entrySet()) {
+
+            CompletableFuture<StatefulRedisConnection<String, String>> future = entry.getValue();
+
+            sync.add(future.whenComplete((connection, throwable) -> {
+
+                if (throwable != null) {
+                    exceptions.add(throwable);
+                } else {
+                    connections.addConnection(entry.getKey(), connection);
+                }
+            }));
+        }
+
+        RefreshFutures.awaitAll(timeout, timeUnit, sync);
+
+        if (connections.isEmpty() && !sync.isEmpty() && !exceptions.isEmpty()) {
+
+            RedisConnectionException collector = new RedisConnectionException(
+                    "Unable to establish a connection to Redis Cluster");
+            exceptions.forEach(collector::addSuppressed);
+
+            throw collector;
+        }
+
+        return connections;
+    }
+
+    /**
+     * @return the {@link Connections}.
+     */
+    public Connections optionalGet(long timeout, TimeUnit timeUnit) throws InterruptedException {
 
         Connections connections = new Connections();
         List<Future<?>> sync = new ArrayList<>(this.futures.size());
