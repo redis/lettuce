@@ -81,7 +81,7 @@ public class ClusterTopologyRefresh {
                 Set<RedisURI> discoveredNodes = difference(allKnownUris, toSet(seed));
 
                 if (!discoveredNodes.isEmpty()) {
-                    Connections discoveredConnections = getConnections(discoveredNodes).get(commandTimeoutNs,
+                    Connections discoveredConnections = getConnections(discoveredNodes).optionalGet(commandTimeoutNs,
                             TimeUnit.NANOSECONDS);
                     connections = connections.mergeWith(discoveredConnections);
 
@@ -139,19 +139,18 @@ public class ClusterTopologyRefresh {
                         .filter(ClusterTopologyRefresh::validNode) //
                         .map(RedisClusterNodeSnapshot::new).collect(Collectors.toList());
 
-                for (RedisClusterNodeSnapshot partition : nodeWithStats) {
+                nodeWithStats.stream() //
+                        .filter(partition -> partition.is(RedisClusterNode.NodeFlag.MYSELF)) //
+                        .forEach(partition -> {
 
-                    if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+                            if (partition.getUri() == null) {
+                                partition.setUri(node);
+                            }
 
-                        if (partition.getUri() == null) {
-                            partition.setUri(node);
-                        }
-
-                        // record latency for later partition ordering
-                        latencies.put(partition.getNodeId(), nodeTopologyView.getLatency());
-                        clientCountByNodeId.put(partition.getNodeId(), nodeTopologyView.getConnectedClients());
-                    }
-                }
+                            // record latency for later partition ordering
+                            latencies.put(partition.getNodeId(), nodeTopologyView.getLatency());
+                            clientCountByNodeId.put(partition.getNodeId(), nodeTopologyView.getConnectedClients());
+                        });
 
                 allNodes.addAll(nodeWithStats);
 
@@ -211,28 +210,31 @@ public class ClusterTopologyRefresh {
                 CompletableFuture<StatefulRedisConnection<String, String>> connectionFuture = nodeConnectionFactory
                         .connectToNodeAsync(CODEC, socketAddress);
 
-                connectionFuture.thenAccept(connection -> connection.async().clientSetname("lettuce#ClusterTopologyRefresh"));
-
                 CompletableFuture<StatefulRedisConnection<String, String>> sync = new CompletableFuture<>();
 
                 connectionFuture.whenComplete((connection, throwable) -> {
 
                     if (throwable != null) {
-                        sync.completeExceptionally(new RedisConnectionException(
-                                String.format("Unable to connect to %s", socketAddress), throwable));
+
+                        String message = String.format("Unable to connect to %s", socketAddress);
+                        if (throwable instanceof RedisConnectionException) {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(throwable.getMessage(), throwable);
+                            } else {
+                                logger.warn(throwable.getMessage());
+                            }
+                        } else {
+                            logger.warn(message, throwable);
+                        }
+
+                        sync.completeExceptionally(new RedisConnectionException(message, throwable));
                     } else {
+                        connection.async().clientSetname("lettuce#ClusterTopologyRefresh");
                         sync.complete(connection);
                     }
                 });
 
                 connections.addConnection(redisURI, sync);
-            } catch (RedisConnectionException e) {
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug(e.getMessage(), e);
-                } else {
-                    logger.warn(e.getMessage());
-                }
             } catch (RuntimeException e) {
                 logger.warn(String.format("Cannot connect to %s", redisURI), e);
             }

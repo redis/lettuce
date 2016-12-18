@@ -721,9 +721,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     protected void initializePartitions() {
-
-        Partitions loadedPartitions = loadPartitions();
-        this.partitions = loadedPartitions;
+        this.partitions = loadPartitions();
     }
 
     /**
@@ -746,25 +744,32 @@ public class RedisClusterClient extends AbstractRedisClient {
     protected Partitions loadPartitions() {
 
         Iterable<RedisURI> topologyRefreshSource = getTopologyRefreshSource();
-        Map<RedisURI, Partitions> partitions = refresh.loadViews(topologyRefreshSource, useDynamicRefreshSources());
 
-        if (partitions.isEmpty()) {
-            throw new RedisException("Cannot retrieve initial cluster partitions from initial URIs " + topologyRefreshSource);
-        }
+        String message = "Cannot retrieve initial cluster partitions from initial URIs " + topologyRefreshSource;
+        try {
+            Map<RedisURI, Partitions> partitions = refresh.loadViews(topologyRefreshSource, useDynamicRefreshSources());
 
-        Partitions loadedPartitions = determinePartitions(this.partitions, partitions);
-        RedisURI viewedBy = refresh.getViewedBy(partitions, loadedPartitions);
-
-        for (RedisClusterNode partition : loadedPartitions) {
-            if (viewedBy != null) {
-                RedisURI uri = partition.getUri();
-                RedisClusterURIUtil.applyUriConnectionSettings(viewedBy, uri);
+            if (partitions.isEmpty()) {
+                throw new RedisException(message);
             }
+
+            Partitions loadedPartitions = determinePartitions(this.partitions, partitions);
+            RedisURI viewedBy = refresh.getViewedBy(partitions, loadedPartitions);
+
+            for (RedisClusterNode partition : loadedPartitions) {
+                if (viewedBy != null) {
+                    RedisURI uri = partition.getUri();
+                    RedisClusterURIUtil.applyUriConnectionSettings(viewedBy, uri);
+                }
+            }
+
+            activateTopologyRefreshIfNeeded();
+
+            return loadedPartitions;
+
+        } catch (RedisConnectionException e) {
+            throw new RedisException(message, e);
         }
-
-        activateTopologyRefreshIfNeeded();
-
-        return loadedPartitions;
     }
 
     /**
