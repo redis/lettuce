@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.RedisURI;
 
 /**
@@ -43,29 +42,7 @@ class Requests {
     }
 
     long await(long timeout, TimeUnit timeUnit) throws InterruptedException {
-
-        long waitTime = 0;
-
-        for (Map.Entry<RedisURI, ? extends RedisFuture<?>> entry : rawViews.entrySet()) {
-            long timeoutLeft = timeUnit.toNanos(timeout) - waitTime;
-
-            if (timeoutLeft <= 0) {
-                break;
-            }
-
-            long startWait = System.nanoTime();
-            RedisFuture<?> future = entry.getValue();
-
-            try {
-                if (!future.await(timeoutLeft, TimeUnit.NANOSECONDS)) {
-                    break;
-                }
-            } finally {
-                waitTime += System.nanoTime() - startWait;
-            }
-
-        }
-        return waitTime;
+        return RefreshFutures.awaitAll(timeout, timeUnit, rawViews.values());
     }
 
     Set<RedisURI> nodes() {

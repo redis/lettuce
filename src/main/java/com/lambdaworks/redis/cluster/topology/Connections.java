@@ -16,7 +16,6 @@
 package com.lambdaworks.redis.cluster.topology;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import com.lambdaworks.redis.RedisURI;
@@ -49,7 +48,18 @@ class Connections {
      * @param connection
      */
     public void addConnection(RedisURI redisURI, StatefulRedisConnection<String, String> connection) {
-        connections.put(redisURI, connection);
+        synchronized (connections) {
+            connections.put(redisURI, connection);
+        }
+    }
+
+    /**
+     * @return {@literal true} if no connections present.
+     */
+    public boolean isEmpty() {
+        synchronized (connections) {
+            return connections.isEmpty();
+        }
     }
 
     /*
@@ -105,14 +115,6 @@ class Connections {
         for (StatefulRedisConnection<String, String> connection : connections.values()) {
             connection.close();
         }
-    }
-
-    /**
-     *
-     * @return a set of {@link RedisURI} for which {@link Connections} has a connection.
-     */
-    public Set<RedisURI> connectedNodes() {
-        return connections.keySet();
     }
 
     public Connections mergeWith(Connections discoveredConnections) {
