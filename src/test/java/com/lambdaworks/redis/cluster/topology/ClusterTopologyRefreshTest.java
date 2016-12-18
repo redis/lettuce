@@ -15,6 +15,7 @@
  */
 package com.lambdaworks.redis.cluster.topology;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.when;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
@@ -207,15 +209,15 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381));
 
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
-                .thenReturn((StatefulRedisConnection) connection1);
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
-                .thenThrow(new RedisException("connection failed"));
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+                .thenReturn(completedWithException(new RedisException("connection failed")));
 
         sut.loadViews(seed, true);
 
-        verify(nodeConnectionFactory).connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
-        verify(nodeConnectionFactory).connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381)));
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381)));
     }
 
     @Test
@@ -223,15 +225,15 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
-                .thenReturn((StatefulRedisConnection) connection1);
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
-                .thenReturn((StatefulRedisConnection) connection2);
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection2));
 
         sut.loadViews(seed, true);
 
-        verify(nodeConnectionFactory).connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
-        verify(nodeConnectionFactory).connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381)));
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381)));
     }
 
     @Test
@@ -239,12 +241,12 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
-                .thenReturn((StatefulRedisConnection) connection1);
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
 
         sut.loadViews(seed, false);
 
-        verify(nodeConnectionFactory).connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
         verifyNoMoreInteractions(nodeConnectionFactory);
     }
 
@@ -254,16 +256,16 @@ public class ClusterTopologyRefreshTest {
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381),
                 RedisURI.create("127.0.0.1", 7381));
 
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
-                .thenReturn((StatefulRedisConnection) connection1);
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
 
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
-                .thenReturn((StatefulRedisConnection) connection2);
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection2));
 
         sut.loadViews(seed, true);
 
-        verify(nodeConnectionFactory).connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
-        verify(nodeConnectionFactory).connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381)));
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381)));
     }
 
     @Test
@@ -271,8 +273,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
-                .thenReturn((StatefulRedisConnection) connection1);
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
 
         Map<RedisURI, Partitions> partitionsMap = sut.loadViews(seed, false);
 
@@ -289,10 +291,10 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
-                .thenReturn((StatefulRedisConnection) connection1);
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
-                .thenReturn((StatefulRedisConnection) connection2);
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection2));
 
         Map<RedisURI, Partitions> partitionsMap = sut.loadViews(seed, true);
 
@@ -309,8 +311,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
-                .thenReturn((StatefulRedisConnection) connection1);
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
 
         Map<RedisURI, Partitions> partitionsMap = sut.loadViews(seed, false);
 
@@ -327,10 +329,10 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
-                .thenReturn((StatefulRedisConnection) connection1);
-        when(nodeConnectionFactory.connectToNode(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
-                .thenReturn((StatefulRedisConnection) connection2);
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection2));
 
         Map<RedisURI, Partitions> partitionsMap = sut.loadViews(seed, true);
 
@@ -373,5 +375,12 @@ public class ClusterTopologyRefreshTest {
         command.complete();
 
         return requests;
+    }
+
+    private static <T> CompletableFuture<T> completedWithException(Exception e) {
+
+        CompletableFuture<T> future = new CompletableFuture<T>();
+        future.completeExceptionally(e);
+        return future;
     }
 }

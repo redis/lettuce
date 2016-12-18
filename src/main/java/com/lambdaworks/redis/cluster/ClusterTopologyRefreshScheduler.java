@@ -195,7 +195,11 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
                 logger.debug("ClusterTopologyRefreshTask requesting partitions from {}",
                         redisClusterClient.getTopologyRefreshSource());
             }
-            redisClusterClient.reloadPartitions();
+            try {
+                redisClusterClient.reloadPartitions();
+            } catch (Exception e) {
+                logger.warn("Cannot refresh Redis Cluster topology", e);
+            }
         }
     }
 }
