@@ -46,7 +46,7 @@ class ReconnectionHandler {
     private long timeout = 60;
 
     private volatile ChannelFuture currentFuture;
-    private boolean reconnectSuspended;
+    private volatile boolean reconnectSuspended;
 
     ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap,
             Supplier<SocketAddress> socketAddressSupplier) {

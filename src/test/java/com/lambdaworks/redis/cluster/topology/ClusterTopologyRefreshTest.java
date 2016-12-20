@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,6 +47,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.DnsResolvers;
+
+import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
  * @author Mark Paluch
@@ -376,7 +377,7 @@ public class ClusterTopologyRefreshTest {
         connections.addConnection(redisURI, connection);
 
         Requests requests = connections.requestTopology();
-        TimedAsyncCommand<String, String, String> command = requests.rawViews.get(redisURI);
+        TimedAsyncCommand<String, String, String> command = requests.getRequest(redisURI);
 
         command.getOutput().set(ByteBuffer.wrap(nodes.getBytes()));
         command.complete();
@@ -393,7 +394,7 @@ public class ClusterTopologyRefreshTest {
         connections.addConnection(redisURI, connection);
 
         Requests requests = connections.requestTopology();
-        TimedAsyncCommand<String, String, String> command = requests.rawViews.get(redisURI);
+        TimedAsyncCommand<String, String, String> command = requests.getRequest(redisURI);
 
         command.getOutput().set(ByteBuffer.wrap(response.getBytes()));
         command.complete();
