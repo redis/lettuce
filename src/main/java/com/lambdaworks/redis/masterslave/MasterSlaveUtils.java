@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.masterslave;
 
 import java.util.Collection;
+import java.util.Comparator;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
@@ -100,6 +101,30 @@ class MasterSlaveUtils {
         }
 
         return true;
+    }
+
+    /**
+     * Compare {@link RedisURI} based on their host and port representation.
+     */
+    enum RedisURIComparator implements Comparator<RedisURI> {
+
+        INSTANCE;
+
+        @Override
+        public int compare(RedisURI o1, RedisURI o2) {
+            String h1 = "";
+            String h2 = "";
+
+            if (o1 != null) {
+                h1 = o1.getHost() + ":" + o1.getPort();
+            }
+
+            if (o2 != null) {
+                h2 = o2.getHost() + ":" + o2.getPort();
+            }
+
+            return h1.compareToIgnoreCase(h2);
+        }
     }
 
 }

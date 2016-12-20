@@ -145,7 +145,7 @@ class SentinelTopologyRefresh implements Closeable {
     private void processMessage(String pattern, String channel, String message) {
 
         topologyRefresh.processMessage(channel, message, () -> {
-            LOG.debug("Received topology changed signal from Redis Sentinel, scheduling topology update");
+            LOG.debug("Received topology changed signal from Redis Sentinel ({}), scheduling topology update", channel);
             return () -> refreshRunnables.forEach(Runnable::run);
         });
 
