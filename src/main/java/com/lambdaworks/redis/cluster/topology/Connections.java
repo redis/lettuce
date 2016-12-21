@@ -20,6 +20,7 @@ import java.util.TreeMap;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
@@ -31,10 +32,10 @@ import com.lambdaworks.redis.protocol.CommandType;
  */
 class Connections {
 
-    private Map<RedisURI, StatefulRedisConnection<String, String>> connections = new TreeMap<>(
-            TopologyComparators.RedisURIComparator.INSTANCE);
+    private final Map<RedisURI, StatefulRedisConnection<String, String>> connections;
 
     public Connections() {
+        connections = new TreeMap<>(TopologyComparators.RedisURIComparator.INSTANCE);
     }
 
     private Connections(Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
@@ -73,9 +74,9 @@ class Connections {
 
         for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
 
-            CommandArgs<String, String> args = new CommandArgs<>(ClusterTopologyRefresh.CODEC).add(CommandKeyword.NODES);
-            Command<String, String, String> command = new Command<>(CommandType.CLUSTER,
-                    new StatusOutput<>(ClusterTopologyRefresh.CODEC), args);
+            CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.NODES);
+            Command<String, String, String> command = new Command<>(CommandType.CLUSTER, new StatusOutput<>(StringCodec.UTF8),
+                    args);
             TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
 
             entry.getValue().dispatch(timedCommand);
@@ -96,9 +97,9 @@ class Connections {
 
         for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
 
-            CommandArgs<String, String> args = new CommandArgs<>(ClusterTopologyRefresh.CODEC).add(CommandKeyword.LIST);
-            Command<String, String, String> command = new Command<>(CommandType.CLIENT,
-                    new StatusOutput<>(ClusterTopologyRefresh.CODEC), args);
+            CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.LIST);
+            Command<String, String, String> command = new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8),
+                    args);
             TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
 
             entry.getValue().dispatch(timedCommand);

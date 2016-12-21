@@ -24,6 +24,15 @@ import java.util.concurrent.TimeUnit;
  */
 class RefreshFutures {
 
+    /**
+     * Await for either future completion or to reach the timeout. Successful/exceptional future completion is not substantial.
+     *
+     * @param timeout the timeout value.
+     * @param timeUnit timeout unit.
+     * @param futures {@link Collection} of {@literal Future}s.
+     * @return time awaited in {@link TimeUnit#NANOSECONDS}.
+     * @throws InterruptedException
+     */
     static long awaitAll(long timeout, TimeUnit timeUnit, Collection<? extends Future<?>> futures) throws InterruptedException {
 
         long waitTime = 0;
