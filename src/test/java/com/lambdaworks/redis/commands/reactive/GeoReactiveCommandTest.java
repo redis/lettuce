@@ -61,9 +61,4 @@ public class GeoReactiveCommandTest extends GeoCommandTest {
     @Override
     public void geoposWithTransaction() throws Exception {
     }
-
-    @Test(expected = NumberFormatException.class)
-    public void geodistMissingElements() throws Exception {
-        super.geodistMissingElements();
-    }
 }

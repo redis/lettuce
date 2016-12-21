@@ -118,8 +118,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         assertThat(result).isGreaterThan(2.5).isLessThan(2.9);
     }
 
-    // See https://github.com/antirez/redis/issues/3512 and https://github.com/mp911de/lettuce/issues/362
-    @Test(expected = RedisException.class)
+    @Test
     public void geodistMissingElements() throws Exception {
 
         prepareGeo();
@@ -256,7 +255,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         List<Value<String>> geohash = redis.geohash("dunno", "member");
 
-        assertThat(geohash).isEmpty();
+        assertThat(geohash).hasSize(1);
+        assertThat(geohash.get(0)).isIn(null, Value.empty());
     }
 
     @Test
