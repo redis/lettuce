@@ -15,6 +15,7 @@
  */
 package com.lambdaworks.redis;
 
+import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,19 +31,19 @@ public class ConnectionEvents {
 
     private final Set<RedisConnectionStateListener> listeners = new ConcurrentSet<>();
 
-    protected void fireEventRedisConnected(RedisChannelHandler<?, ?> connection) {
+    void fireEventRedisConnected(RedisChannelHandler<?, ?> connection, SocketAddress socketAddress) {
         for (RedisConnectionStateListener listener : listeners) {
-            listener.onRedisConnected(connection);
+            listener.onRedisConnected(connection, socketAddress);
         }
     }
 
-    protected void fireEventRedisDisconnected(RedisChannelHandler<?, ?> connection) {
+    void fireEventRedisDisconnected(RedisChannelHandler<?, ?> connection) {
         for (RedisConnectionStateListener listener : listeners) {
             listener.onRedisDisconnected(connection);
         }
     }
 
-    protected void fireEventRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
+    void fireEventRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
         for (RedisConnectionStateListener listener : listeners) {
             listener.onRedisExceptionCaught(connection, cause);
         }

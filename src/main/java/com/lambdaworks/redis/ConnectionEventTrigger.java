@@ -45,7 +45,7 @@ class ConnectionEventTrigger extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        connectionEvents.fireEventRedisConnected(connection);
+        connectionEvents.fireEventRedisConnected(connection, ctx.channel().remoteAddress());
         super.channelActive(ctx);
     }
 

@@ -15,9 +15,6 @@
  */
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
-import static com.lambdaworks.Connections.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
@@ -28,8 +25,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runners.MethodSorters;
 
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.Timeout;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 
@@ -78,71 +73,6 @@ public class ClientTest extends AbstractRedisClientTest {
         async.close();
     }
 
-    @Test
-    public void listenerTest() throws Exception {
-
-        final TestConnectionListener listener = new TestConnectionListener();
-
-        RedisClient client = RedisClient.create(RedisURI.Builder.redis(host, port).build());
-
-        client.addListener(listener);
-
-        assertThat(listener.onConnected).isNull();
-        assertThat(listener.onDisconnected).isNull();
-        assertThat(listener.onException).isNull();
-
-        RedisAsyncCommands<String, String> connection = client.connect().async();
-
-        StatefulRedisConnection<String, String> statefulRedisConnection = getStatefulConnection(connection);
-
-        waitOrTimeout(() -> listener.onConnected != null, Timeout.timeout(seconds(2)));
-
-        assertThat(listener.onConnected).isEqualTo(statefulRedisConnection);
-        assertThat(listener.onDisconnected).isNull();
-
-        connection.set(key, value).get();
-        connection.close();
-
-        waitOrTimeout(new Condition() {
-
-            @Override
-            public boolean isSatisfied() {
-                return listener.onDisconnected != null;
-            }
-        }, Timeout.timeout(seconds(2)));
-
-        assertThat(listener.onConnected).isEqualTo(statefulRedisConnection);
-        assertThat(listener.onDisconnected).isEqualTo(statefulRedisConnection);
-
-        FastShutdown.shutdown(client);
-    }
-
-    @Test
-    public void listenerTestWithRemoval() throws Exception {
-
-        final TestConnectionListener removedListener = new TestConnectionListener();
-        final TestConnectionListener retainedListener = new TestConnectionListener();
-
-        RedisClient client = RedisClient.create(RedisURI.Builder.redis(host, port).build());
-        client.addListener(removedListener);
-        client.addListener(retainedListener);
-        client.removeListener(removedListener);
-
-        // that's the sut call
-        client.connect().async();
-
-        waitOrTimeout(() -> retainedListener.onConnected != null, Timeout.timeout(seconds(2)));
-
-        assertThat(retainedListener.onConnected).isNotNull();
-
-        assertThat(removedListener.onConnected).isNull();
-        assertThat(removedListener.onDisconnected).isNull();
-        assertThat(removedListener.onException).isNull();
-
-        FastShutdown.shutdown(client);
-
-    }
-
     @Test(expected = RedisException.class)
     public void timeout() throws Exception {
         redis.setTimeout(0, TimeUnit.MICROSECONDS);
@@ -185,29 +115,6 @@ public class ClientTest extends AbstractRedisClientTest {
         exception.expect(RedisException.class);
         exception.expectMessage("Unable to connect");
         client.connectPubSub();
-    }
-
-    private class TestConnectionListener implements RedisConnectionStateListener {
-
-        public RedisChannelHandler<?, ?> onConnected;
-        public RedisChannelHandler<?, ?> onDisconnected;
-        public RedisChannelHandler<?, ?> onException;
-
-        @Override
-        public void onRedisConnected(RedisChannelHandler<?, ?> connection) {
-            onConnected = connection;
-        }
-
-        @Override
-        public void onRedisDisconnected(RedisChannelHandler<?, ?> connection) {
-            onDisconnected = connection;
-        }
-
-        @Override
-        public void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
-            onException = connection;
-
-        }
     }
 
     @Test
