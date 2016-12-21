@@ -171,7 +171,7 @@ public class ClusterTopologyRefresh {
         }
 
         for (NodeTopologyView view : views) {
-            Collections.sort(view.getPartitions().getPartitions(), TopologyComparators.LatencyComparator.INSTANCE);
+            view.getPartitions().getPartitions().sort(TopologyComparators.LatencyComparator.INSTANCE);
             view.getPartitions().updateCache();
         }
 
@@ -236,7 +236,7 @@ public class ClusterTopologyRefresh {
 
                 connections.addConnection(redisURI, sync);
             } catch (RuntimeException e) {
-                logger.warn(String.format("Cannot connect to %s", redisURI), e);
+                logger.warn(String.format("Unable to connect to %s", redisURI), e);
             }
         }
 

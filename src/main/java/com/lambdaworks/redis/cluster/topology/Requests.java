@@ -23,37 +23,39 @@ import java.util.concurrent.TimeUnit;
 import com.lambdaworks.redis.RedisURI;
 
 /**
+ * Encapsulates asynchronously executed commands to multiple {@link RedisURI nodes}.
+ * 
  * @author Mark Paluch
  */
 class Requests {
 
-    Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = new TreeMap<>(
-            TopologyComparators.RedisURIComparator.INSTANCE);
+    private final Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews;
 
-    Requests() {
+    protected Requests() {
+        rawViews = new TreeMap<>(TopologyComparators.RedisURIComparator.INSTANCE);
     }
 
-    Requests(Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews) {
+    private Requests(Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews) {
         this.rawViews = rawViews;
     }
 
-    void addRequest(RedisURI redisURI, TimedAsyncCommand<String, String, String> command) {
+    protected void addRequest(RedisURI redisURI, TimedAsyncCommand<String, String, String> command) {
         rawViews.put(redisURI, command);
     }
 
-    long await(long timeout, TimeUnit timeUnit) throws InterruptedException {
+    protected long await(long timeout, TimeUnit timeUnit) throws InterruptedException {
         return RefreshFutures.awaitAll(timeout, timeUnit, rawViews.values());
     }
 
-    Set<RedisURI> nodes() {
+    protected Set<RedisURI> nodes() {
         return rawViews.keySet();
     }
 
-    TimedAsyncCommand<String, String, String> getRequest(RedisURI redisURI) {
+    protected TimedAsyncCommand<String, String, String> getRequest(RedisURI redisURI) {
         return rawViews.get(redisURI);
     }
 
-    Requests mergeWith(Requests requests) {
+    protected Requests mergeWith(Requests requests) {
 
         Map<RedisURI, TimedAsyncCommand<String, String, String>> result = new TreeMap<>(
                 TopologyComparators.RedisURIComparator.INSTANCE);
