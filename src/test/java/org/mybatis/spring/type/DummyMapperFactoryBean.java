@@ -64,13 +64,14 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
     return (SqlSessionFactory) Proxy.newProxyInstance(
         SqlSessionFactory.class.getClassLoader(),
         new Class[]{SqlSessionFactory.class},
-            (proxy, method, args) -> {
-                if ("getConfiguration".equals(method.getName())) {
-                  return getSqlSession().getConfiguration();
-                }
-                // dummy
-                return null;
-              });
+        (proxy, method, args) -> {
+            if ("getConfiguration".equals(method.getName())) {
+              return getSqlSession().getConfiguration();
+            }
+            // dummy
+            return null;
+        }
+    );
   }
 
   public static int getMapperCount(){
