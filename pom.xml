@@ -109,7 +109,7 @@
     <maven.compiler.testSource>1.8</maven.compiler.testSource>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
-    <spring.version>4.3.5.RELEASE</spring.version>
+    <spring.version>5.0.0.M3</spring.version>
   </properties>
 
   <dependencies>
@@ -147,14 +147,14 @@
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-jdbc</artifactId>
-      <version>4.0.3</version>
+      <version>4.0.4</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.derby</groupId>
       <artifactId>derby</artifactId>
-      <version>10.12.1.1</version>
+      <version>10.13.1.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -208,17 +208,18 @@
     </dependency>
 
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.7</version>
       <scope>test</scope>
     </dependency>
+
 
     <!-- Using version 1.0.1, versions higher require only jdk7 -->
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-core</artifactId>
-      <version>1.0.1</version>
+      <version>1.1.2</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -242,7 +243,7 @@
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-ejb</artifactId>
-      <version>1.0.1</version>
+      <version>1.1.2</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -258,24 +259,35 @@
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-jdbc</artifactId>
-      <version>1.0.1</version>
+      <version>1.1.2</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>javax.transaction</groupId>
-      <artifactId>transaction-api</artifactId>
-      <version>1.1</version>
+      <artifactId>javax.transaction-api</artifactId>
+      <version>1.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
-      <version>3.0.1</version>
+      <version>3.1.0</version>
       <scope>test</scope>
     </dependency>
 
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>spring-milestones</id>
+      <name>Spring Milestones</name>
+      <url>https://repo.spring.io/libs-milestone</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 
   <build>
     <plugins>

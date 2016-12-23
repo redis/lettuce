@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2015 the original author or authors.
+ *    Copyright 2010-2016 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 package org.mybatis.spring.type;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.mybatis.spring.mapper.MapperFactoryBean;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,7 +33,7 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
     super(mapperInterface);
   }
 
-  private static final Logger LOGGER = Logger.getLogger(DummyMapperFactoryBean.class);
+  private static final Logger LOGGER = LogManager.getLogger(DummyMapperFactoryBean.class);
 
   private static final AtomicInteger mapperInstanceCount = new AtomicInteger(0);
 
