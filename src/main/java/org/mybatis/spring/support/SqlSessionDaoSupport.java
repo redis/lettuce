@@ -32,7 +32,7 @@ import org.springframework.dao.support.DaoSupport;
  * {code Autowired} was removed from setSqlSessionTemplate and setSqlSessionFactory
  * in version 1.2.0.
  * 
- * @author Putthibong Boonbong
+ * @author Putthiphong Boonphong
  *
  * @see #setSqlSessionFactory
  * @see #setSqlSessionTemplate

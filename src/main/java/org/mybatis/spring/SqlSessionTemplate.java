@@ -67,7 +67,7 @@ import org.springframework.dao.support.PersistenceExceptionTranslator;
  * }
  * </pre>
  *
- * @author Putthibong Boonbong
+ * @author Putthiphong Boonphong
  * @author Hunter Presnall
  * @author Eduardo Macarron
  *

@@ -118,7 +118,7 @@ MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
   <subsection name="Acknowledgements">
     <p>
 特别感谢那些使得本项目成为现实的人们(按字母顺序排序)。 
-Eduardo Macarron, Hunter Presnall和Putthibong Boonbong的编码,
+Eduardo Macarron, Hunter Presnall和Putthiphong Boonphong的编码,
 测试和文档修改工作;
 Andrius Juozapaitis,
 Giovanni Cuccu,Raj Nagappan和Tomas Pinos的贡献;而Simone Tripodi发现了这些人并
