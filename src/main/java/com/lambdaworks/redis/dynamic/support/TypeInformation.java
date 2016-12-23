@@ -17,12 +17,17 @@ package com.lambdaworks.redis.dynamic.support;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface to access types and resolving generics on the way.
  */
 public interface TypeInformation<S> {
+
+    Type getGenericType();
 
     /**
      * Returns the {@link TypeInformation}s for the parameters of the given {@link Constructor}.
@@ -127,4 +132,6 @@ public interface TypeInformation<S> {
      * @return
      */
     List<TypeInformation<?>> getTypeArguments();
+
+    Map<TypeVariable<?>, Type> getTypeVariableMap();
 }

@@ -43,7 +43,7 @@ public class ClassTypeInformation<S> extends TypeDiscoverer<S> {
 
     static {
         for (ClassTypeInformation<?> info : Arrays.asList(COLLECTION, LIST, SET, MAP, OBJECT)) {
-            CACHE.put(info.getType(), new WeakReference<ClassTypeInformation<?>>(info));
+            CACHE.put(info.getType(), new WeakReference<>(info));
         }
     }
 

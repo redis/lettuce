@@ -18,11 +18,13 @@ package com.lambdaworks.redis.dynamic.output;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.List;
 
 import org.junit.Test;
 
 import com.lambdaworks.redis.GeoCoordinates;
+import com.lambdaworks.redis.ScoredValue;
 import com.lambdaworks.redis.Value;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.dynamic.CommandMethod;
@@ -40,8 +42,8 @@ public class OutputRegistryCommandOutputFactoryResolverTest {
     @Test
     public void shouldResolveStringListOutput() {
 
-        assertThat(getCommandOutput("stringList")).isInstanceOf(StringListOutput.class);
-        assertThat(getCommandOutput("stringIterable")).isInstanceOf(StringListOutput.class);
+        assertThat(getCommandOutput("stringList")).isInstanceOf(KeyListOutput.class);
+        assertThat(getCommandOutput("stringIterable")).isInstanceOf(KeyListOutput.class);
     }
 
     @Test
@@ -54,9 +56,17 @@ public class OutputRegistryCommandOutputFactoryResolverTest {
     @Test
     public void shouldResolveStringValueListOutput() {
 
-        CommandOutput<?, ?, ?> commandOutput = getCommandOutput("stringValueList");
+        CommandOutput<?, ?, ?> commandOutput = getCommandOutput("stringValueCollection");
 
-        assertThat(commandOutput).isInstanceOf(StringValueListOutput.class);
+        assertThat(commandOutput).isInstanceOf(ValueValueListOutput.class);
+    }
+
+    @Test
+    public void shouldResolveStringScoredValueListOutput() {
+
+        CommandOutput<?, ?, ?> commandOutput = getCommandOutput("stringScoredValueList");
+
+        assertThat(commandOutput).isInstanceOf(ScoredValueListOutput.class);
     }
 
     @Test
@@ -107,14 +117,41 @@ public class OutputRegistryCommandOutputFactoryResolverTest {
         assertThat(commandOutput).isInstanceOf(ListOfMapsOutput.class);
     }
 
+    @Test
+    public void stringValueCollectionIsAssignableFromStringValueListOutput() {
+
+        OutputSelector selector = getOutputSelector("stringValueCollection");
+
+        boolean assignable = resolver.isAssignableFrom(selector,
+                OutputRegistry.getOutputComponentType(StringValueListOutput.class));
+        assertThat(assignable).isTrue();
+    }
+
+    @Test
+    public void stringWildcardValueCollectionIsAssignableFromOutputs() {
+
+        OutputSelector selector = getOutputSelector("stringValueCollection");
+
+        assertThat(resolver.isAssignableFrom(selector, OutputRegistry.getOutputComponentType(ScoredValueListOutput.class)))
+                .isFalse();
+
+        assertThat(resolver.isAssignableFrom(selector, OutputRegistry.getOutputComponentType(StringValueListOutput.class)))
+                .isTrue();
+
+    }
+
     protected CommandOutput<?, ?, ?> getCommandOutput(String methodName) {
 
-        Method method = ReflectionUtils.findMethod(CommandMethods.class, methodName);
-        CommandMethod commandMethod = new CommandMethod(method);
-
-        CommandOutputFactory factory = resolver.resolveCommandOutput(new OutputSelector(commandMethod.getActualReturnType()));
+        OutputSelector outputSelector = getOutputSelector(methodName);
+        CommandOutputFactory factory = resolver.resolveCommandOutput(outputSelector);
 
         return factory.create(new StringCodec());
+    }
+
+    private OutputSelector getOutputSelector(String methodName) {
+
+        Method method = ReflectionUtils.findMethod(CommandMethods.class, methodName);
+        return new OutputSelector(new CommandMethod(method).getActualReturnType(), StringCodec.UTF8);
     }
 
     private static interface CommandMethods {
@@ -123,7 +160,11 @@ public class OutputRegistryCommandOutputFactoryResolverTest {
 
         Iterable<String> stringIterable();
 
-        List<Value<String>> stringValueList();
+        Collection<Value<String>> stringValueCollection();
+
+        Collection<? extends Value<String>> stringWildcardValueCollection();
+
+        List<ScoredValue<String>> stringScoredValueList();
 
         List<Value<GeoCoordinates>> geoCoordinatesValueList();
 

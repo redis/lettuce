@@ -15,6 +15,8 @@
  */
 package com.lambdaworks.redis.dynamic.output;
 
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.dynamic.support.ResolvableType;
 import com.lambdaworks.redis.dynamic.support.TypeInformation;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.CommandOutput;
@@ -34,7 +36,6 @@ import com.lambdaworks.redis.output.CommandOutput;
  */
 public class OutputType {
 
-    private final Class<?> primaryType;
     private final Class<? extends CommandOutput> commandOutputClass;
     private final TypeInformation<?> typeInformation;
     private final boolean streaming;
@@ -43,30 +44,18 @@ public class OutputType {
      * Create a new {@link OutputType} given {@code primaryType}, the {@code commandOutputClass}, {@link TypeInformation} and
      * whether the {@link OutputType} is for a {@link com.lambdaworks.redis.output.StreamingOutput}.
      * 
-     * @param primaryType must not be {@literal null}.
      * @param commandOutputClass must not be {@literal null}.
      * @param typeInformation must not be {@literal null}.
      * @param streaming {@literal true} if the type descriptor concerns the {@link com.lambdaworks.redis.output.StreamingOutput}
-     *        result type.
      */
-    public OutputType(Class<?> primaryType, Class<? extends CommandOutput> commandOutputClass,
-            TypeInformation<?> typeInformation, boolean streaming) {
+    OutputType(Class<? extends CommandOutput> commandOutputClass, TypeInformation<?> typeInformation, boolean streaming) {
 
-        LettuceAssert.notNull(primaryType, "Primary type must not be null");
         LettuceAssert.notNull(commandOutputClass, "CommandOutput class must not be null");
         LettuceAssert.notNull(typeInformation, "TypeInformation must not be null");
 
-        this.primaryType = primaryType;
         this.commandOutputClass = commandOutputClass;
         this.typeInformation = typeInformation;
         this.streaming = streaming;
-    }
-
-    /**
-     * @return
-     */
-    public Class<?> getPrimaryType() {
-        return primaryType;
     }
 
     /**
@@ -83,6 +72,10 @@ public class OutputType {
         return streaming;
     }
 
+    public ResolvableType withCodec(RedisCodec<?, ?> codec) {
+        return ResolvableType.forClass(typeInformation.getType());
+    }
+
     /**
      * @return
      */
@@ -95,8 +88,7 @@ public class OutputType {
 
         StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
-        sb.append(" [primaryType=").append(primaryType);
-        sb.append(", commandOutputClass=").append(commandOutputClass);
+        sb.append(" [commandOutputClass=").append(commandOutputClass);
         sb.append(", typeInformation=").append(typeInformation);
         sb.append(", streaming=").append(streaming);
         sb.append(']');

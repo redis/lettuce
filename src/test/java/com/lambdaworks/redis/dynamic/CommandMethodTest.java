@@ -43,8 +43,8 @@ public class CommandMethodTest {
 
         CommandMethod commandMethod = new CommandMethod(getMethod("getFuture"));
 
-        assertThat(commandMethod.getActualReturnType().getType()).isEqualTo(String.class);
-        assertThat(commandMethod.getReturnType().getType()).isEqualTo(Future.class);
+        assertThat(commandMethod.getActualReturnType().getRawClass()).isEqualTo(String.class);
+        assertThat(commandMethod.getReturnType().getRawClass()).isEqualTo(Future.class);
     }
 
     @Test
@@ -52,8 +52,8 @@ public class CommandMethodTest {
 
         CommandMethod commandMethod = new CommandMethod(getMethod("getFlux"));
 
-        assertThat(commandMethod.getActualReturnType().getType()).isEqualTo(String.class);
-        assertThat(commandMethod.getReturnType().getType()).isEqualTo(Flux.class);
+        assertThat(commandMethod.getActualReturnType().getRawClass()).isEqualTo(String.class);
+        assertThat(commandMethod.getReturnType().getRawClass()).isEqualTo(Flux.class);
     }
 
     private Method getMethod(String name) throws NoSuchMethodException {

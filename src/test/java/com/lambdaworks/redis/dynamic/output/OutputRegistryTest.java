@@ -17,16 +17,18 @@ package com.lambdaworks.redis.dynamic.output;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
-import com.lambdaworks.redis.dynamic.support.ClassTypeInformation;
 import org.junit.Test;
 
-import com.lambdaworks.redis.Value;
-import com.lambdaworks.redis.dynamic.output.OutputRegistry.KeySurrogate;
-import com.lambdaworks.redis.output.GeoCoordinatesValueListOutput;
-import com.lambdaworks.redis.output.KeyListOutput;
-import com.lambdaworks.redis.output.StringListOutput;
+import com.lambdaworks.redis.ScoredValue;
+import com.lambdaworks.redis.codec.ByteArrayCodec;
+import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.StringCodec;
+import com.lambdaworks.redis.dynamic.support.ClassTypeInformation;
+import com.lambdaworks.redis.dynamic.support.ResolvableType;
+import com.lambdaworks.redis.output.*;
 
 /**
  * @author Mark Paluch
@@ -34,36 +36,10 @@ import com.lambdaworks.redis.output.StringListOutput;
 public class OutputRegistryTest {
 
     @Test
-    public void getStreamingType() throws Exception {
-
-        OutputType streamingType = OutputRegistry.getStreamingType(GeoCoordinatesValueListOutput.class);
-
-        assertThat(streamingType.getPrimaryType()).isEqualTo(Value.class);
-    }
-
-    @Test
-    public void getOutputComponentType() throws Exception {
-
-        OutputType outputComponentType = OutputRegistry.getOutputComponentType(GeoCoordinatesValueListOutput.class);
-
-        assertThat(outputComponentType.getPrimaryType()).isEqualTo(List.class);
-    }
-
-    @Test
-    public void getKeyStreamingType() throws Exception {
-
-        OutputRegistry.getStreamingType(KeyListOutput.class);
-        OutputType streamingType = OutputRegistry.getStreamingType(KeyListOutput.class);
-
-        assertThat(streamingType.getPrimaryType()).isEqualTo(KeySurrogate.class);
-    }
-
-    @Test
     public void getKeyOutputType() throws Exception {
 
         OutputType outputComponentType = OutputRegistry.getOutputComponentType(KeyListOutput.class);
 
-        assertThat(outputComponentType.getPrimaryType()).isEqualTo(KeySurrogate.class);
         assertThat(outputComponentType.getTypeInformation().getComponentType().getType()).isEqualTo(Object.class);
     }
 
@@ -72,8 +48,72 @@ public class OutputRegistryTest {
 
         OutputType outputComponentType = OutputRegistry.getOutputComponentType(StringListOutput.class);
 
-        assertThat(outputComponentType.getPrimaryType()).isEqualTo(List.class);
         assertThat(outputComponentType.getTypeInformation().getComponentType())
                 .isEqualTo(ClassTypeInformation.from(String.class));
+    }
+
+    @Test
+    public void componentTypeOfKeyOuputWithCodecIsAssignableFromString() throws Exception {
+
+        OutputType outputComponentType = OutputRegistry.getOutputComponentType(KeyOutput.class);
+
+        ResolvableType resolvableType = outputComponentType.withCodec(new StringCodec());
+
+        assertThat(resolvableType.isAssignableFrom(String.class)).isTrue();
+    }
+
+    @Test
+    public void componentTypeOfKeyListOuputWithCodecIsAssignableFromListOfString() throws Exception {
+
+        OutputType outputComponentType = OutputRegistry.getOutputComponentType(KeyListOutput.class);
+
+        ResolvableType resolvableType = outputComponentType.withCodec(new StringCodec());
+
+        assertThat(resolvableType.isAssignableFrom(ResolvableType.forClassWithGenerics(List.class, String.class))).isTrue();
+    }
+
+    @Test
+    public void streamingTypeOfKeyOuputWithCodecIsAssignableFromString() throws Exception {
+
+        OutputType outputComponentType = OutputRegistry.getStreamingType(KeyListOutput.class);
+
+        ResolvableType resolvableType = outputComponentType.withCodec(new StringCodec());
+
+        assertThat(resolvableType.isAssignableFrom(ResolvableType.forClass(String.class))).isTrue();
+    }
+
+    @Test
+    public void streamingTypeOfKeyListOuputWithCodecIsAssignableFromListOfString() throws Exception {
+
+        OutputType outputComponentType = OutputRegistry.getStreamingType(ScoredValueListOutput.class);
+
+        ResolvableType resolvableType = outputComponentType.withCodec(new StringCodec());
+
+        assertThat(resolvableType.isAssignableFrom(ResolvableType.forClassWithGenerics(ScoredValue.class, String.class)))
+                .isTrue();
+    }
+
+    @Test
+    public void customizedValueOutput() throws Exception {
+
+        OutputType outputComponentType = OutputRegistry.getOutputComponentType(KeyTypedOutput.class);
+
+        ResolvableType resolvableType = outputComponentType.withCodec(ByteArrayCodec.INSTANCE);
+
+        assertThat(resolvableType.isAssignableFrom(ResolvableType.forClass(byte[].class))).isTrue();
+    }
+
+    private static abstract class IntermediateOutput<K1, V1> extends CommandOutput<K1, V1, V1> {
+
+        public IntermediateOutput(RedisCodec<K1, V1> codec, V1 output) {
+            super(codec, null);
+        }
+    }
+
+    private static class KeyTypedOutput extends IntermediateOutput<ByteBuffer, byte[]> {
+
+        public KeyTypedOutput(RedisCodec<ByteBuffer, byte[]> codec) {
+            super(codec, null);
+        }
     }
 }

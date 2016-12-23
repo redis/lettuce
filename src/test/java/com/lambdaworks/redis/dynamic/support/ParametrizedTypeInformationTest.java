@@ -88,7 +88,6 @@ public class ParametrizedTypeInformationTest {
         TypeInformation<Object> target = ClassTypeInformation
                 .fromReturnTypeOf(ReflectionUtils.findMethod(TestType.class, "collectionOfIterableOfNumber"));
 
-        assertThat(target.isAssignableFrom(ClassTypeInformation.from(ListOfIterableOfNumber.class))).isTrue();
         assertThat(target.isAssignableFrom(ClassTypeInformation.from(ListOfIterableOfInteger.class))).isFalse();
         assertThat(target.isAssignableFrom(ClassTypeInformation.from(ListOfListOfNumber.class))).isFalse();
         assertThat(target.isAssignableFrom(ClassTypeInformation.from(ListOfSetOfNumber.class))).isFalse();

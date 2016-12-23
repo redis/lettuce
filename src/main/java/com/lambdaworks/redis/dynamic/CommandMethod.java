@@ -27,7 +27,7 @@ import org.reactivestreams.Publisher;
 import com.lambdaworks.redis.dynamic.parameter.ExecutionSpecificParameters;
 import com.lambdaworks.redis.dynamic.parameter.Parameter;
 import com.lambdaworks.redis.dynamic.parameter.Parameters;
-import com.lambdaworks.redis.dynamic.support.ClassTypeInformation;
+import com.lambdaworks.redis.dynamic.support.ResolvableType;
 import com.lambdaworks.redis.dynamic.support.TypeInformation;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
@@ -41,10 +41,10 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 public class CommandMethod {
 
     private final Method method;
-    private final TypeInformation<?> returnType;
+    private final ResolvableType returnType;
     private final List<Class<?>> arguments = new ArrayList<>();
     private final Parameters<? extends Parameter> parameters;
-    private final TypeInformation<?> actualReturnType;
+    private final ResolvableType actualReturnType;
 
     /**
      * Create a new {@link CommandMethod} given a {@link Method}.
@@ -67,15 +67,21 @@ public class CommandMethod {
         LettuceAssert.notNull(parameters, "Parameters must not be null");
 
         this.method = method;
-        this.returnType = ClassTypeInformation.fromReturnTypeOf(method);
+        this.returnType = ResolvableType.forMethodReturnType(method);
         this.parameters = parameters;
         Collections.addAll(arguments, method.getParameterTypes());
 
-        TypeInformation<?> actualReturnType = this.returnType;
+        ResolvableType actualReturnType = this.returnType;
 
-        while (Future.class.isAssignableFrom(actualReturnType.getType())
-                || ReactiveTypes.supports(actualReturnType.getType())) {
-            actualReturnType = actualReturnType.getComponentType();
+        while (Future.class.isAssignableFrom(actualReturnType.getRawClass())
+                || ReactiveTypes.supports(actualReturnType.getRawClass())) {
+            ResolvableType[] generics = actualReturnType.getGenerics();
+
+            if (generics.length != 1) {
+                break;
+            }
+
+            actualReturnType = generics[0];
         }
 
         this.actualReturnType = actualReturnType;
@@ -101,7 +107,7 @@ public class CommandMethod {
      *
      * @return declared {@link Method} return {@link TypeInformation}.
      */
-    public TypeInformation<?> getReturnType() {
+    public ResolvableType getReturnType() {
         return returnType;
     }
 
@@ -109,7 +115,7 @@ public class CommandMethod {
      *
      * @return the actual {@link Method} return {@link TypeInformation} after unwrapping.
      */
-    public TypeInformation<?> getActualReturnType() {
+    public ResolvableType getActualReturnType() {
         return actualReturnType;
     }
 
@@ -145,7 +151,7 @@ public class CommandMethod {
      * @return {@literal true} if the method uses asynchronous execution declaring {@link Future} as result type.
      */
     public boolean isFutureExecution() {
-        return Future.class.isAssignableFrom(getReturnType().getType());
+        return Future.class.isAssignableFrom(getReturnType().getRawClass());
     }
 
     /**
@@ -153,7 +159,7 @@ public class CommandMethod {
      * @return {@literal true} if the method uses reactive execution declaring {@link Publisher} as result type.
      */
     public boolean isReactiveExecution() {
-        return ReactiveTypes.supports(getReturnType().getType());
+        return ReactiveTypes.supports(getReturnType().getRawClass());
     }
 
     @Override

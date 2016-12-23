@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.dynamic.CommandMethod;
-import com.lambdaworks.redis.dynamic.support.ClassTypeInformation;
 import com.lambdaworks.redis.dynamic.support.ReflectionUtils;
 import com.lambdaworks.redis.output.*;
 
@@ -44,20 +43,6 @@ public class CodecAwareOutputResolverTest {
         CommandOutput<?, ?, ?> commandOutput = getCommandOutput("string");
 
         assertThat(commandOutput).isInstanceOf(ValueOutput.class);
-    }
-
-    @Test
-    public void shouldDetermineKeyType() {
-
-        assertThat(resolver.isKeyType(ClassTypeInformation.from(String.class))).isFalse();
-        assertThat(resolver.isKeyType(ClassTypeInformation.from(ByteBuffer.class))).isTrue();
-    }
-
-    @Test
-    public void shouldDetermineValueType() {
-
-        assertThat(resolver.isValueType(ClassTypeInformation.from(String.class))).isTrue();
-        assertThat(resolver.isValueType(ClassTypeInformation.from(ByteBuffer.class))).isFalse();
     }
 
     @Test
@@ -104,7 +89,8 @@ public class CodecAwareOutputResolverTest {
         Method method = ReflectionUtils.findMethod(CommandMethods.class, methodName);
         CommandMethod commandMethod = new CommandMethod(method);
 
-        CommandOutputFactory factory = resolver.resolveCommandOutput(new OutputSelector(commandMethod.getActualReturnType()));
+        CommandOutputFactory factory = resolver
+                .resolveCommandOutput(new OutputSelector(commandMethod.getReturnType(), new ByteBufferAndStringCodec()));
 
         return factory.create(new ByteBufferAndStringCodec());
     }
@@ -113,7 +99,7 @@ public class CodecAwareOutputResolverTest {
 
         List<String> stringList();
 
-        List<CharSequence> charSequenceList();
+        List<? extends CharSequence> charSequenceList();
 
         List<ByteBuffer> byteBufferList();
 

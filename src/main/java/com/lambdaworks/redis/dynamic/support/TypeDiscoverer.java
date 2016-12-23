@@ -58,7 +58,7 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
      * 
      * @return
      */
-    protected Map<TypeVariable<?>, Type> getTypeVariableMap() {
+    public Map<TypeVariable<?>, Type> getTypeVariableMap() {
         return typeVariableMap;
     }
 
@@ -142,7 +142,7 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
         Map<TypeVariable, Type> map = new HashMap<>();
         map.putAll(getTypeVariableMap());
 
-        return ResolvableType.forType(type, new TypeVariableMapVariableResolver(map)).resolveType().getType();
+        return ResolvableType.forType(type, new TypeVariableMapVariableResolver(map)).getType();
     }
 
     public List<TypeInformation<?>> getParameterTypes(Constructor<?> constructor) {
@@ -166,6 +166,11 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
         }
 
         return this.resolvedType;
+    }
+
+    @Override
+    public Type getGenericType() {
+        return resolveType(type);
     }
 
     @Override

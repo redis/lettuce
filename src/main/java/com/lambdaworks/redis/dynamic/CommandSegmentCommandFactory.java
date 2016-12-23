@@ -48,7 +48,7 @@ class CommandSegmentCommandFactory<K, V> implements CommandFactory {
         this.redisCodec = redisCodec;
         this.outputResolver = outputResolver;
 
-        OutputSelector outputSelector = new OutputSelector(commandMethod.getActualReturnType());
+        OutputSelector outputSelector = new OutputSelector(commandMethod.getActualReturnType(), redisCodec);
         CommandOutputFactory factory = resolveCommandOutputFactory(outputSelector);
 
         if (factory == null) {

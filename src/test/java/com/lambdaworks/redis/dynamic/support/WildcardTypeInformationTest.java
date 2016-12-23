@@ -22,7 +22,6 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -88,19 +87,6 @@ public class WildcardTypeInformationTest {
         assertThat(target.isAssignableFrom(from(Object.class))).isFalse();
     }
 
-    @Test
-    @Ignore("Method-level variables not supported")
-    public void isAssignableFromParametrizedWildcardType() {
-
-        TypeInformation<?> target = componentTypeOf("numberOrSubtype");
-
-        assertThat(target.isAssignableFrom(from(Integer.class))).isTrue();
-        assertThat(target.isAssignableFrom(from(Number.class))).isTrue();
-        assertThat(target.isAssignableFrom(from(Float.class))).isTrue();
-        assertThat(target.isAssignableFrom(from(String.class))).isFalse();
-        assertThat(target.isAssignableFrom(from(Object.class))).isFalse();
-    }
-
     protected TypeInformation<?> componentTypeOf(String name) {
         return ClassTypeInformation.fromReturnTypeOf(methodOf(name)).getComponentType();
     }
@@ -124,7 +110,5 @@ public class WildcardTypeInformationTest {
         List<Float> exactFloat();
 
         List<? extends Number> atLeastNumber();
-
-        <T extends Number> List<? super T> numberOrSubtype();
     }
 }

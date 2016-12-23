@@ -18,7 +18,6 @@ package com.lambdaworks.redis.dynamic.output;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.lambdaworks.redis.dynamic.support.ClassTypeInformation;
@@ -59,8 +58,8 @@ public class OutputRegistryCommandOutputFactoryResolver extends CommandOutputRes
 
         Map<OutputType, CommandOutputFactory> registry = outputRegistry.getRegistry();
 
-        Set<OutputType> outputTypes = registry.keySet().stream().filter((outputType) -> !outputType.isStreaming())
-                .collect(Collectors.toSet());
+        List<OutputType> outputTypes = registry.keySet().stream().filter((outputType) -> !outputType.isStreaming())
+                .collect(Collectors.toList());
 
         List<OutputType> candidates = getCandidates(outputTypes, outputSelector);
 
@@ -76,7 +75,7 @@ public class OutputRegistryCommandOutputFactoryResolver extends CommandOutputRes
 
         Map<OutputType, CommandOutputFactory> registry = outputRegistry.getRegistry();
 
-        Set<OutputType> outputTypes = registry.keySet().stream().filter(OutputType::isStreaming).collect(Collectors.toSet());
+        List<OutputType> outputTypes = registry.keySet().stream().filter(OutputType::isStreaming).collect(Collectors.toList());
 
         List<OutputType> candidates = getCandidates(outputTypes, outputSelector);
 
@@ -91,9 +90,9 @@ public class OutputRegistryCommandOutputFactoryResolver extends CommandOutputRes
 
         return outputTypes.stream().filter(outputType -> {
 
-            if (COMMAND_OUTPUT.getType().isAssignableFrom(outputSelector.getTypeInformation().getType())) {
+            if (COMMAND_OUTPUT.getType().isAssignableFrom(outputSelector.getOutputType().getRawClass())) {
 
-                if (outputSelector.getTypeInformation().getType().isAssignableFrom(outputType.getCommandOutputClass())) {
+                if (outputSelector.getOutputType().getRawClass().isAssignableFrom(outputType.getCommandOutputClass())) {
                     return true;
                 }
             }

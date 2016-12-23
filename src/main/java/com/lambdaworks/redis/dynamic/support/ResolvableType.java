@@ -34,7 +34,7 @@ import com.lambdaworks.redis.internal.LettuceClassUtils;
  * {@link #resolve() resolve} to a {@link java.lang.Class}.
  */
 @SuppressWarnings("serial")
-class ResolvableType implements Serializable {
+public class ResolvableType implements Serializable {
 
     /**
      * {@code ResolvableType} returned when no value is available. {@code NONE} is used in preference to {@code null} so that
@@ -685,7 +685,7 @@ class ResolvableType implements Serializable {
      * <p>
      * Note: The returned {@link ResolvableType} should only be used as an intermediary as it cannot be serialized.
      */
-    ResolvableType resolveType() {
+    public ResolvableType resolveType() {
         if (this.type instanceof ParameterizedType) {
             return forType(((ParameterizedType) this.type).getRawType(), this.variableResolver);
         }
@@ -1084,7 +1084,7 @@ class ResolvableType implements Serializable {
      * @param variableResolver the variable resolver or {@code null}
      * @return a {@link ResolvableType} for the specified {@link Type} and {@link VariableResolver}
      */
-    static ResolvableType forType(Type type, VariableResolver variableResolver) {
+    public static ResolvableType forType(Type type, VariableResolver variableResolver) {
         return forType(type, null, variableResolver);
     }
 
@@ -1116,7 +1116,7 @@ class ResolvableType implements Serializable {
     /**
      * Strategy interface used to resolve {@link TypeVariable}s.
      */
-    interface VariableResolver extends Serializable {
+    public interface VariableResolver extends Serializable {
 
         /**
          * Return the source of the resolver (used for hashCode and equals).

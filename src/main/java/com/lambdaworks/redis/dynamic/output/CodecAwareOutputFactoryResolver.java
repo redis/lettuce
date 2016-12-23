@@ -15,13 +15,7 @@
  */
 package com.lambdaworks.redis.dynamic.output;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.dynamic.support.ClassTypeInformation;
-import com.lambdaworks.redis.dynamic.support.TypeInformation;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
@@ -34,9 +28,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 public class CodecAwareOutputFactoryResolver implements CommandOutputFactoryResolver {
 
     private final CommandOutputFactoryResolver delegate;
-    private final TypeInformation<?> keyType;
-    private final TypeInformation<?> valueType;
-    private final Map<String, TypeInformation<?>> typeVariables = new HashMap<>();
+    private final RedisCodec<?, ?> redisCodec;
 
     /**
      * Create a new {@link CodecAwareOutputFactoryResolver} given {@link CommandOutputFactoryResolver} and {@link RedisCodec}.
@@ -50,56 +42,16 @@ public class CodecAwareOutputFactoryResolver implements CommandOutputFactoryReso
         LettuceAssert.notNull(redisCodec, "RedisCodec must not be null");
 
         this.delegate = delegate;
-
-        ClassTypeInformation<? extends RedisCodec> typeInformation = ClassTypeInformation.from(redisCodec.getClass());
-        TypeInformation<?> superTypeInformation = typeInformation.getSuperTypeInformation(RedisCodec.class);
-        List<TypeInformation<?>> typeArguments = superTypeInformation.getTypeArguments();
-
-        this.keyType = typeArguments.get(0);
-        this.valueType = typeArguments.get(1);
-
-        this.typeVariables.put("K", keyType);
-        this.typeVariables.put("V", valueType);
+        this.redisCodec = redisCodec;
     }
 
     @Override
     public CommandOutputFactory resolveCommandOutput(OutputSelector outputSelector) {
-
-        Map<String, TypeInformation<?>> typeVariables = new HashMap<>(outputSelector.getTypeVariables());
-        typeVariables.putAll(this.typeVariables);
-
-        return delegate.resolveCommandOutput(
-                new OutputSelector(outputSelector.getTypeInformation(), isKeyType(outputSelector.getTypeInformation()),
-                        isValueType(outputSelector.getTypeInformation()), typeVariables));
+        return delegate.resolveCommandOutput(new OutputSelector(outputSelector.getOutputType(), redisCodec));
     }
 
     @Override
     public CommandOutputFactory resolveStreamingCommandOutput(OutputSelector outputSelector) {
-
-        Map<String, TypeInformation<?>> typeVariables = new HashMap<>(outputSelector.getTypeVariables());
-        typeVariables.putAll(this.typeVariables);
-
-        return delegate.resolveStreamingCommandOutput(
-                new OutputSelector(outputSelector.getTypeInformation(), isKeyType(outputSelector.getTypeInformation()),
-                        isValueType(outputSelector.getTypeInformation()), typeVariables));
-    }
-
-    protected boolean isKeyType(TypeInformation<?> typeInformation) {
-        return walkComponentTypeAssignability(typeInformation, keyType);
-    }
-
-    protected boolean isValueType(TypeInformation<?> typeInformation) {
-        return walkComponentTypeAssignability(typeInformation, valueType);
-    }
-
-    private boolean walkComponentTypeAssignability(TypeInformation<?> typeInformation, TypeInformation<?> sourceType) {
-
-        do {
-            if (typeInformation.isAssignableFrom(sourceType)) {
-                return true;
-            }
-            typeInformation = typeInformation.getComponentType();
-        } while (typeInformation != null);
-        return false;
+        return delegate.resolveStreamingCommandOutput(new OutputSelector(outputSelector.getOutputType(), redisCodec));
     }
 }

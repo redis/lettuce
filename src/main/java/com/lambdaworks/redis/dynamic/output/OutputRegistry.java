@@ -15,12 +15,16 @@
  */
 package com.lambdaworks.redis.dynamic.output;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
+import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.dynamic.support.ClassTypeInformation;
+import com.lambdaworks.redis.dynamic.support.ResolvableType;
 import com.lambdaworks.redis.dynamic.support.TypeInformation;
-import com.lambdaworks.redis.dynamic.support.TypeVariableTypeInformation;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.*;
 
@@ -59,8 +63,8 @@ public class OutputRegistry {
         register(registry, GeoCoordinatesListOutput.class, GeoCoordinatesListOutput::new);
         register(registry, GeoCoordinatesValueListOutput.class, GeoCoordinatesValueListOutput::new);
         register(registry, ScoredValueListOutput.class, ScoredValueListOutput::new);
-        register(registry, StringValueListOutput.class, StringValueListOutput::new);
         register(registry, ValueValueListOutput.class, ValueValueListOutput::new);
+        register(registry, StringValueListOutput.class, StringValueListOutput::new);
 
         register(registry, StringListOutput.class, StringListOutput::new);
         register(registry, VoidOutput.class, VoidOutput::new);
@@ -155,9 +159,33 @@ public class OutputRegistry {
         }
 
         List<TypeInformation<?>> typeArguments = superTypeInformation.getTypeArguments();
-        Class<?> primaryType = getPrimaryType(typeArguments.get(0));
 
-        return new OutputType(primaryType, commandOutputClass, typeArguments.get(0), true);
+        return new OutputType(commandOutputClass, typeArguments.get(0), true) {
+
+            @Override
+            public ResolvableType withCodec(RedisCodec<?, ?> codec) {
+
+                TypeInformation<?> typeInformation = ClassTypeInformation.from(codec.getClass());
+
+                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass,
+                        new CodecVariableTypeResolver(typeInformation));
+
+                while (resolvableType != ResolvableType.NONE) {
+
+                    ResolvableType[] interfaces = resolvableType.getInterfaces();
+                    for (ResolvableType resolvableInterface : interfaces) {
+
+                        if (resolvableInterface.getRawClass().equals(StreamingOutput.class)) {
+                            return resolvableInterface.getGeneric(0);
+                        }
+                    }
+
+                    resolvableType = resolvableType.getSuperType();
+                }
+
+                throw new IllegalStateException();
+            }
+        };
     }
 
     /**
@@ -177,36 +205,53 @@ public class OutputRegistry {
         }
 
         List<TypeInformation<?>> typeArguments = superTypeInformation.getTypeArguments();
-        Class<?> primaryType = getPrimaryType(typeArguments.get(2));
 
-        return new OutputType(primaryType, commandOutputClass, typeArguments.get(2), false);
+        return new OutputType(commandOutputClass, typeArguments.get(2), false) {
+            @Override
+            public ResolvableType withCodec(RedisCodec<?, ?> codec) {
+
+                TypeInformation<?> typeInformation = ClassTypeInformation.from(codec.getClass());
+
+                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass,
+                        new CodecVariableTypeResolver(typeInformation));
+
+                while (!resolvableType.getRawClass().equals(CommandOutput.class)) {
+                    resolvableType = resolvableType.getSuperType();
+                }
+
+                return resolvableType.getGeneric(2);
+            }
+        };
     }
 
-    private static Class<?> getPrimaryType(TypeInformation<?> typeInformation) {
+    static class CodecVariableTypeResolver implements ResolvableType.VariableResolver {
 
-        Class<?> primaryType = typeInformation.getType();
-        while (typeInformation.isCollectionLike() && typeInformation != typeInformation.getComponentType()) {
-            typeInformation = typeInformation.getComponentType();
+        private final TypeInformation<?> codecType;
+        private final List<TypeInformation<?>> typeArguments;
+
+        public CodecVariableTypeResolver(TypeInformation<?> codecType) {
+
+            this.codecType = codecType.getSuperTypeInformation(RedisCodec.class);
+            this.typeArguments = this.codecType.getTypeArguments();
         }
 
-        if (typeInformation instanceof TypeVariableTypeInformation) {
-
-            // TODO: Requires maybe a more sophisticated resolution.
-            if (typeInformation.toString().equals("K")) {
-                primaryType = KeySurrogate.class;
-            }
-
-            if (typeInformation.toString().equals("V")) {
-                primaryType = ValueSurrogate.class;
-            }
+        @Override
+        public Object getSource() {
+            return codecType;
         }
-        return primaryType;
-    }
 
-    static class KeySurrogate {
-    }
+        @Override
+        public ResolvableType resolveVariable(TypeVariable<?> variable) {
 
-    static class ValueSurrogate {
+            if (variable.getName().equals("K")) {
+                return ResolvableType.forClass(typeArguments.get(0).getType());
+            }
+
+            if (variable.getName().equals("V")) {
+                return ResolvableType.forClass(typeArguments.get(1).getType());
+            }
+            return null;
+        }
     }
 
 }
