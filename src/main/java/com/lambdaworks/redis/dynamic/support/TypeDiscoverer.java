@@ -17,7 +17,6 @@ package com.lambdaworks.redis.dynamic.support;
 
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
 
@@ -28,7 +27,6 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
 
     private final Type type;
     private final Map<TypeVariable<?>, Type> typeVariableMap;
-    private final Map<String, TypeInformation<?>> fieldTypes = new ConcurrentHashMap<String, TypeInformation<?>>();
     private final int hashCode;
 
     private boolean componentTypeResolved = false;
@@ -40,7 +38,7 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
     private Class<S> resolvedType;
 
     /**
-     * Creates a ne {@link TypeDiscoverer} for the given type, type variable map and parent.
+     * Creates a new {@link TypeDiscoverer} for the given type and type variable map.
      * 
      * @param type must not be {@literal null}.
      * @param typeVariableMap must not be {@literal null}.
@@ -48,6 +46,7 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
     protected TypeDiscoverer(Type type, Map<TypeVariable<?>, Type> typeVariableMap) {
 
         LettuceAssert.notNull(type, "Type must not be null");
+        LettuceAssert.notNull(typeVariableMap, "TypeVariableMap must not be null");
 
         this.type = type;
         this.typeVariableMap = typeVariableMap;
@@ -80,7 +79,7 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
             return new ClassTypeInformation((Class<?>) fieldType);
         }
 
-        Class<S> resolveType = resolveType(fieldType);
+        Class<S> resolveType = resolveClass(fieldType);
         Map<TypeVariable, Type> variableMap = new HashMap<TypeVariable, Type>();
         variableMap.putAll(GenericTypeResolver.getTypeVariableMap(resolveType));
 
@@ -110,17 +109,7 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
         if (fieldType instanceof WildcardType) {
 
             WildcardType wildcardType = (WildcardType) fieldType;
-            Type[] bounds = wildcardType.getLowerBounds();
-
-            if (bounds.length > 0) {
-                return createInfo(bounds[0]);
-            }
-
-            bounds = wildcardType.getUpperBounds();
-
-            if (bounds.length > 0) {
-                return createInfo(bounds[0]);
-            }
+            return new WildcardTypeInformation(wildcardType, variableMap);
         }
 
         throw new IllegalArgumentException();
@@ -132,13 +121,28 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
      * @param type
      * @return
      */
-    @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
-    protected Class<S> resolveType(Type type) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    protected Class<S> resolveClass(Type type) {
 
         Map<TypeVariable, Type> map = new HashMap<TypeVariable, Type>();
         map.putAll(getTypeVariableMap());
 
         return (Class<S>) ResolvableType.forType(type, new TypeVariableMapVariableResolver(map)).resolve(Object.class);
+    }
+
+    /**
+     * Resolves the given type into a {@link Type}.
+     *
+     * @param type
+     * @return
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    protected Type resolveType(Type type) {
+
+        Map<TypeVariable, Type> map = new HashMap<>();
+        map.putAll(getTypeVariableMap());
+
+        return ResolvableType.forType(type, new TypeVariableMapVariableResolver(map)).resolveType().getType();
     }
 
     public List<TypeInformation<?>> getParameterTypes(Constructor<?> constructor) {
@@ -158,7 +162,7 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
     public Class<S> getType() {
 
         if (resolvedType == null) {
-            this.resolvedType = resolveType(type);
+            this.resolvedType = resolveClass(type);
         }
 
         return this.resolvedType;

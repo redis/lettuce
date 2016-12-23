@@ -18,6 +18,8 @@ package com.lambdaworks.redis.dynamic.support;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -57,10 +59,10 @@ public class TypeVariableTypeInformation<T> extends ParentTypeAwareTypeInformati
 
         if (owningType instanceof ParameterizedType && index != -1) {
             Type fieldType = ((ParameterizedType) owningType).getActualTypeArguments()[index];
-            return resolveType(fieldType);
+            return resolveClass(fieldType);
         }
 
-        return resolveType(variable);
+        return resolveClass(variable);
     }
 
     /**
@@ -71,7 +73,7 @@ public class TypeVariableTypeInformation<T> extends ParentTypeAwareTypeInformati
      */
     private int getIndex(TypeVariable<?> variable) {
 
-        Class<?> rawType = resolveType(owningType);
+        Class<?> rawType = resolveClass(owningType);
         TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
 
         for (int i = 0; i < typeParameters.length; i++) {
@@ -81,6 +83,22 @@ public class TypeVariableTypeInformation<T> extends ParentTypeAwareTypeInformati
         }
 
         return -1;
+    }
+
+    @Override
+    public List<TypeInformation<?>> getTypeArguments() {
+
+        List<TypeInformation<?>> result = new ArrayList<>();
+
+        Type type = resolveType(variable);
+        if (type instanceof ParameterizedType) {
+
+            for (Type typeArgument : ((ParameterizedType) type).getActualTypeArguments()) {
+                result.add(createInfo(typeArgument));
+            }
+        }
+
+        return result;
     }
 
     @Override

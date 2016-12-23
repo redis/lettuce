@@ -64,7 +64,7 @@ class ParametrizedTypeInformation<T> extends ParentTypeAwareTypeInformation<T> {
 
         for (Type supertype : supertypes) {
 
-            Class<?> rawSuperType = resolveType(supertype);
+            Class<?> rawSuperType = resolveClass(supertype);
 
             if (Map.class.isAssignableFrom(rawSuperType)) {
 
@@ -74,13 +74,13 @@ class ParametrizedTypeInformation<T> extends ParentTypeAwareTypeInformation<T> {
             }
         }
 
-        return super.getMapValueType();
+        return super.doGetMapValueType();
     }
 
     @Override
     public List<TypeInformation<?>> getTypeArguments() {
 
-        List<TypeInformation<?>> result = new ArrayList<TypeInformation<?>>();
+        List<TypeInformation<?>> result = new ArrayList<>();
 
         for (Type argument : type.getActualTypeArguments()) {
             result.add(createInfo(argument));
@@ -114,9 +114,21 @@ class ParametrizedTypeInformation<T> extends ParentTypeAwareTypeInformation<T> {
         }
 
         for (int i = 0; i < myParameters.size(); i++) {
-            if (!myParameters.get(i).isAssignableFrom(typeParameters.get(i))) {
-                return false;
+
+            if (myParameters.get(i) instanceof WildcardTypeInformation) {
+                if (!myParameters.get(i).isAssignableFrom(typeParameters.get(i))) {
+                    return false;
+                }
+            } else {
+                if (!myParameters.get(i).getType().equals(typeParameters.get(i).getType())) {
+                    return false;
+                }
+
+                if (!myParameters.get(i).isAssignableFrom(typeParameters.get(i))) {
+                    return false;
+                }
             }
+
         }
 
         return true;
