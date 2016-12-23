@@ -21,5 +21,5 @@ import org.springframework.stereotype.Component;
 // ensures annotated classes are loaded
 @Component
 public interface AnnotatedMapper {
-  public void method();
+  void method();
 }

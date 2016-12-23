@@ -69,7 +69,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private Class<?> markerInterface;
 
-  private MapperFactoryBean<?> mapperFactoryBean = new MapperFactoryBean<Object>();
+  private MapperFactoryBean<?> mapperFactoryBean = new MapperFactoryBean<>();
 
   public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
     super(registry, false);
@@ -104,7 +104,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
   }
 
   public void setMapperFactoryBean(MapperFactoryBean<?> mapperFactoryBean) {
-    this.mapperFactoryBean = mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean<Object>();
+    this.mapperFactoryBean = mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean<>();
   }
 
 
@@ -135,21 +135,13 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
     if (acceptAllInterfaces) {
       // default include filter that accepts all classes
-      addIncludeFilter(new TypeFilter() {
-        @Override
-        public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
-          return true;
-        }
-      });
+      addIncludeFilter((metadataReader, metadataReaderFactory) -> true);
     }
 
     // exclude package-info.java
-    addExcludeFilter(new TypeFilter() {
-      @Override
-      public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
-        String className = metadataReader.getClassMetadata().getClassName();
-        return className.endsWith("package-info");
-      }
+    addExcludeFilter((metadataReader, metadataReaderFactory) -> {
+      String className = metadataReader.getClassMetadata().getClassName();
+      return className.endsWith("package-info");
     });
   }
 

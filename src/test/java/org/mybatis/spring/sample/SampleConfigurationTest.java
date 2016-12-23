@@ -69,7 +69,7 @@ public class SampleConfigurationTest {
       SqlSessionFactoryBean ss = new SqlSessionFactoryBean();
       ss.setDataSource(dataSource());
       ss.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/sample/mapper/UserMapper.xml") });
-      return (SqlSessionFactory) ss.getObject();
+      return ss.getObject();
     }
 
     @Bean
@@ -81,7 +81,7 @@ public class SampleConfigurationTest {
 
     @Bean
     public UserMapper userMapperWithFactory() throws Exception {
-      MapperFactoryBean<UserMapper> mapperFactoryBean = new MapperFactoryBean<UserMapper>();
+      MapperFactoryBean<UserMapper> mapperFactoryBean = new MapperFactoryBean<>();
       mapperFactoryBean.setMapperInterface(UserMapper.class);
       mapperFactoryBean.setSqlSessionFactory(sqlSessionFactory());
       mapperFactoryBean.afterPropertiesSet();

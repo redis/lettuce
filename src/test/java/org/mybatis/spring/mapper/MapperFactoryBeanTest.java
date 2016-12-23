@@ -202,7 +202,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
   private void find(SqlSessionTemplate sqlSessionTemplate, boolean addToConfig) throws Exception {
     // recreate the mapper for each test since sqlSessionTemplate or the underlying
     // SqlSessionFactory could change for each test
-    MapperFactoryBean<TestMapper> mapper = new MapperFactoryBean<TestMapper>();
+    MapperFactoryBean<TestMapper> mapper = new MapperFactoryBean<>();
     mapper.setMapperInterface(TestMapper.class);
     mapper.setSqlSessionTemplate(sqlSessionTemplate);
     mapper.setAddToConfig(addToConfig);

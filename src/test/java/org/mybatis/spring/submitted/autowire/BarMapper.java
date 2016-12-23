@@ -16,5 +16,5 @@
 package org.mybatis.spring.submitted.autowire;
 
 public interface BarMapper extends IBar {
-  public String executeBar();
+  String executeBar();
 }

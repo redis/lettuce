@@ -22,5 +22,5 @@ import org.springframework.stereotype.Component;
 // tests subpackage search
 @Component
 public interface MapperChildInterface extends MapperInterface {
-  public void childMethod();
+  void childMethod();
 }

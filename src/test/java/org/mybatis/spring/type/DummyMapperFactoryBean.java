@@ -49,7 +49,7 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
 
   @Override
   public T getObject() throws Exception {
-    MapperFactoryBean<T> mapperFactoryBean = new MapperFactoryBean<T>();
+    MapperFactoryBean<T> mapperFactoryBean = new MapperFactoryBean<>();
     mapperFactoryBean.setMapperInterface(getMapperInterface());
     mapperFactoryBean.setAddToConfig(isAddToConfig());
     mapperFactoryBean.setSqlSessionFactory(getCustomSessionFactoryForClass());
@@ -65,19 +65,16 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
     return (SqlSessionFactory) Proxy.newProxyInstance(
         SqlSessionFactory.class.getClassLoader(),
         new Class[]{SqlSessionFactory.class},
-        new InvocationHandler() {
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if ("getConfiguration".equals(method.getName())) {
-              return getSqlSession().getConfiguration();
-            }
-            // dummy
-            return null;
-          }
-        });
+            (proxy, method, args) -> {
+                if ("getConfiguration".equals(method.getName())) {
+                  return getSqlSession().getConfiguration();
+                }
+                // dummy
+                return null;
+              });
   }
 
-  public static final int getMapperCount(){
+  public static int getMapperCount(){
     return mapperInstanceCount.get();
   }
 }

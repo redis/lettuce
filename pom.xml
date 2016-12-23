@@ -103,6 +103,10 @@
     <clirr.comparisonVersion>1.2.2</clirr.comparisonVersion>
     <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.mapper.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
     <gcu.product>Spring</gcu.product>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
+    <maven.compiler.testSource>1.8</maven.compiler.testSource>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
     <spring.version>4.3.5.RELEASE</spring.version>

@@ -60,7 +60,7 @@ public class SpringBatchTest {
   @Test
   @Transactional
   public void shouldDuplicateSalaryOfAllEmployees() throws Exception {
-    List<Employee> employees = new ArrayList<Employee>();
+    List<Employee> employees = new ArrayList<>();
     Employee employee = pagingNoNestedItemReader.read();
     while (employee != null) {
       employee.setSalary(employee.getSalary() * 2);
@@ -77,7 +77,7 @@ public class SpringBatchTest {
   @Transactional
   public void checkPagingReadingWithNestedInResultMap() throws Exception {
     // This test is here to show that PagingReader can return wrong result in case of nested result maps
-    List<Employee> employees = new ArrayList<Employee>();
+    List<Employee> employees = new ArrayList<>();
     Employee employee = pagingNestedItemReader.read();
     while (employee != null) {
       employee.setSalary(employee.getSalary() * 2);
@@ -95,7 +95,7 @@ public class SpringBatchTest {
   public void checkCursorReadingWithoutNestedInResultMap() throws Exception {
     cursorNoNestedItemReader.doOpen();
     try {
-      List<Employee> employees = new ArrayList<Employee>();
+      List<Employee> employees = new ArrayList<>();
       Employee employee = cursorNoNestedItemReader.read();
       while (employee != null) {
         employee.setSalary(employee.getSalary() * 2);
@@ -116,7 +116,7 @@ public class SpringBatchTest {
   public void checkCursorReadingWithNestedInResultMap() throws Exception {
     cursorNestedItemReader.doOpen();
     try {
-      List<Employee> employees = new ArrayList<Employee>();
+      List<Employee> employees = new ArrayList<>();
       Employee employee = cursorNestedItemReader.read();
       while (employee != null) {
         employee.setSalary(employee.getSalary() * 2);
