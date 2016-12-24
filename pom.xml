@@ -328,25 +328,4 @@
     </testResources>
   </build>
 
-  <!-- TODO: Why is this necessary, the dependency is already present at this scope? -->
-  <!-- this is just a turn-around to Mac compilers -->
-  <profiles>
-    <profile>
-      <id>mac-jvm-classloader-issue</id>
-      <activation>
-        <os>
-          <family>mac</family>
-        </os>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>oro</groupId>
-          <artifactId>oro</artifactId>
-          <version>2.0.8</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
-
 </project>
