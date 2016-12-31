@@ -329,7 +329,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     }
 
     public void setReconnectSuspended(boolean reconnectSuspended) {
-        reconnectionHandler.setReconnectSuspended(true);
+        reconnectionHandler.setReconnectSuspended(reconnectSuspended);
     }
 
     ReconnectionHandler getReconnectionHandler() {
