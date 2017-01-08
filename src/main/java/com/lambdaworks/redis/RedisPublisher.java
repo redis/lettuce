@@ -20,9 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -32,6 +30,7 @@ import org.reactivestreams.Subscription;
 
 import reactor.core.Exceptions;
 import reactor.core.publisher.Operators;
+import reactor.util.concurrent.QueueSupplier;
 
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -125,23 +124,26 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      *
      * @param <T> data element type
      */
-    private static class RedisSubscription<T> implements Subscription, StreamingOutput.Subscriber<T> {
+    static class RedisSubscription<T> implements Subscription, StreamingOutput.Subscriber<T> {
 
-        private static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
-        private final boolean traceEnabled = LOG.isTraceEnabled();
+        static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
 
-        private final AtomicLong demand = new AtomicLong();
-        private final Queue<T> data = new ConcurrentLinkedQueue<T>();
-        private final AtomicBoolean dispatched = new AtomicBoolean();
-        private volatile boolean allDataRead = false;
+        static final AtomicLongFieldUpdater<RedisSubscription> DEMAND = AtomicLongFieldUpdater.newUpdater(
+                RedisSubscription.class, "demand");
 
-        private final StatefulConnection<?, ?> connection;
-        private final RedisCommand<?, ?, T> command;
-        private final boolean dissolve;
+        final boolean traceEnabled = LOG.isTraceEnabled();
 
-        private Subscriber<? super T> subscriber;
+        final Queue<T> data = QueueSupplier.<T> unbounded().get();
+        final StatefulConnection<?, ?> connection;
+        final RedisCommand<?, ?, T> command;
+        final boolean dissolve;
+        final AtomicReference<State> state = new AtomicReference<>(State.UNSUBSCRIBED);
+        final AtomicReference<CommandDispatch> commandDispatch = new AtomicReference<>(CommandDispatch.UNDISPATCHED);
 
-        private final AtomicReference<State> state = new AtomicReference<>(State.UNSUBSCRIBED);
+        volatile long demand;
+        volatile boolean allDataRead = false;
+
+        Subscriber<? super T> subscriber;
 
         RedisSubscription(StatefulConnection<?, ?> connection, RedisCommand<?, ?, T> command, boolean dissolve) {
 
@@ -279,7 +281,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                     this.subscriber.onNext(data);
 
-                    if (Operators.addAndGet(this.demand, -1) == 0) {
+                    if (Operators.addAndGet(DEMAND, this, -1) == 0) {
                         return false;
                     }
                 } else {
@@ -292,7 +294,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         /**
          * Reads data from the input, if possible.
-         * 
+         *
          * @return the data that was read or {@literal null}
          */
         protected T read() {
@@ -300,7 +302,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         private boolean hasDemand() {
-            return this.demand.get() > 0;
+            return this.demand > 0;
         }
 
         private boolean changeState(State oldState, State newState) {
@@ -308,10 +310,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         void checkCommandDispatch() {
-
-            if (!dispatched.get() && dispatched.compareAndSet(false, true)) {
-                dispatchCommand();
-            }
+            commandDispatch.get().dispatch(this);
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -340,7 +339,42 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     }
 
     /**
-     * Represents a state for the {@link Subscription} to be in. The following figure indicate the four different states that
+     * Represents a state for command dispatch of the {@link Subscription}. The following figure indicates the two different
+     * states that exist, and the relationships between them.
+     *
+     * <pre>
+     *   UNDISPATCHED
+     *        |
+     *        v
+     *   DISPATCHED
+     * </pre>
+     *
+     * Refer to the individual states for more information.
+     */
+    private enum CommandDispatch {
+
+        /**
+         * Initial state. Will respond to {@link #dispatch(RedisSubscription)} by changing the state to {@link #DISPATCHED} and
+         * dispatch the command.
+         */
+        UNDISPATCHED {
+
+            @Override
+            void dispatch(RedisSubscription<?> redisSubscription) {
+
+                if (redisSubscription.commandDispatch.compareAndSet(this, DISPATCHED)) {
+                    redisSubscription.dispatchCommand();
+                }
+            }
+        },
+        DISPATCHED;
+
+        void dispatch(RedisSubscription<?> redisSubscription) {
+        }
+    }
+
+    /**
+     * Represents a state for the {@link Subscription} to be in. The following figure indicates the four different states that
      * exist, and the relationships between them.
      *
      * <pre>
@@ -355,7 +389,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      *    |                 v              |
      *    ------------> COMPLETED <---------
      * </pre>
-     * 
+     *
      * Refer to the individual states for more information.
      */
     private enum State {
@@ -391,7 +425,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 if (Operators.checkRequest(n, subscription.subscriber)) {
 
-                    Operators.addAndGet(subscription.demand, n);
+                    Operators.getAndAddCap(subscription.DEMAND, subscription, n);
 
                     if (subscription.changeState(this, DEMAND)) {
 
@@ -439,7 +473,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             void request(RedisSubscription<?> subscription, long n) {
 
                 if (Operators.checkRequest(n, subscription.subscriber)) {
-                    Operators.addAndGet(subscription.demand, n);
+                    Operators.getAndAddCap(subscription.DEMAND, subscription, n);
                 }
             }
 
@@ -450,7 +484,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             void request(RedisSubscription<?> subscription, long n) {
 
                 if (Operators.checkRequest(n, subscription.subscriber)) {
-                    Operators.addAndGet(subscription.demand, n);
+                    Operators.getAndAddCap(subscription.DEMAND, subscription, n);
                 }
             }
         },
