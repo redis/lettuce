@@ -30,6 +30,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import reactor.core.Exceptions;
 import reactor.core.publisher.Operators;
 
 import com.lambdaworks.redis.api.StatefulConnection;
@@ -212,7 +213,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             LettuceAssert.notNull(t, "Data must not be null");
 
-            data.add(t);
+            if (!data.offer(t)) {
+
+                Throwable e = Operators.onOperatorError(this, Exceptions.failWithOverflow(), t);
+                onError(e);
+                return;
+            }
+
             onDataAvailable();
         }
 
