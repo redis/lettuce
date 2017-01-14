@@ -57,7 +57,7 @@
         <github.site.upload.skip>true</github.site.upload.skip>
         <lettuce-release-version>4.2.2.Final</lettuce-release-version>
         <lettuce3-release-version>3.5.0.Final</lettuce3-release-version>
-        <netty-version>4.1.6.Final</netty-version>
+        <netty-version>4.1.7.Final</netty-version>
     </properties>
 
     <scm>
@@ -111,7 +111,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative</artifactId>
-            <version>1.1.33.Fork21</version>
+            <version>1.1.33.Fork25</version>
             <classifier>${os.detected.classifier}</classifier>
             <scope>provided</scope>
             <optional>true</optional>
@@ -309,7 +309,7 @@
         <profile>
             <id>netty-40</id>
             <properties>
-               <netty-version>4.0.42.Final</netty-version>
+               <netty-version>4.0.43.Final</netty-version>
             </properties>
         </profile>
         <profile>
