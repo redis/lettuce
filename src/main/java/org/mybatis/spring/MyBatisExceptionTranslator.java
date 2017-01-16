@@ -31,7 +31,7 @@ import org.springframework.transaction.TransactionException;
  *
  * Translates MyBatis SqlSession returned exception into a Spring
  * {@code DataAccessException} using Spring's {@code SQLExceptionTranslator}
- * Can load {@code SQLExceptionTranslator} eagerly of when the
+ * Can load {@code SQLExceptionTranslator} eagerly or when the
  * first exception is translated.
  *
  * @author Eduardo Macarron
