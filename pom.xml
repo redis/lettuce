@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@
     <dependency>
       <groupId>org.mybatis</groupId>
       <artifactId>mybatis</artifactId>
-      <version>3.4.1</version>
+      <version>3.4.2</version>
       <scope>provided</scope>
     </dependency>
 
@@ -159,20 +159,6 @@
     </dependency>
 
     <dependency>
-      <groupId>ognl</groupId>
-      <artifactId>ognl</artifactId>
-      <version>3.1.12</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>cglib</groupId>
-      <artifactId>cglib</artifactId>
-      <version>3.2.4</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
@@ -195,7 +181,7 @@
 
     <dependency>
       <groupId>org.springframework</groupId>
-      <artifactId>spring-webmvc</artifactId>
+      <artifactId>spring-web</artifactId>
       <version>${spring.version}</version>
       <scope>test</scope>
     </dependency>
@@ -343,26 +329,5 @@
       </testResource>
     </testResources>
   </build>
-
-  <!-- TODO: Why is this necessary, the dependency is already present at this scope? -->
-  <!-- this is just a turn-around to Mac compilers -->
-  <profiles>
-    <profile>
-      <id>mac-jvm-classloader-issue</id>
-      <activation>
-        <os>
-          <family>mac</family>
-        </os>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>oro</groupId>
-          <artifactId>oro</artifactId>
-          <version>2.0.8</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
 
 </project>
