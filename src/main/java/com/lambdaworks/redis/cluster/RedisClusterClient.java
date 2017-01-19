@@ -141,7 +141,10 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private Partitions partitions;
 
-    private RedisClusterClient() {
+    /**
+     * Non-private constructor to make {@link RedisClusterClient} proxyable.
+     */
+    protected RedisClusterClient() {
 
         super(null);
 

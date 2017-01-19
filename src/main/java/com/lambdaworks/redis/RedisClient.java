@@ -67,6 +67,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a uri-less RedisClient. You can connect to different Redis servers but you must supply a {@link RedisURI} on
      * connecting. Methods without having a {@link RedisURI} will fail with a {@link java.lang.IllegalStateException}.
+     * Non-private constructor to make {@link RedisClient} proxyable.
      */
     protected RedisClient() {
         this(null, EMPTY_URI);
@@ -336,8 +337,7 @@ public class RedisClient extends AbstractRedisClient {
         return connectPubSub(codec, redisURI, Timeout.from(redisURI));
     }
 
-    private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI,
-            Timeout timeout) {
+    private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI, Timeout timeout) {
 
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
@@ -572,8 +572,8 @@ public class RedisClient extends AbstractRedisClient {
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
      */
-    protected SocketAddress getSocketAddress(RedisURI redisURI)
-            throws InterruptedException, TimeoutException, ExecutionException {
+    protected SocketAddress getSocketAddress(RedisURI redisURI) throws InterruptedException, TimeoutException,
+            ExecutionException {
         SocketAddress redisAddress;
 
         if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
@@ -582,8 +582,8 @@ public class RedisClient extends AbstractRedisClient {
             redisAddress = lookupRedis(redisURI);
 
             if (redisAddress == null) {
-                throw new RedisConnectionException(
-                        "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId());
+                throw new RedisConnectionException("Cannot provide redisAddress using sentinel for masterId "
+                        + redisURI.getSentinelMasterId());
             }
 
         } else {
@@ -675,8 +675,9 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private void checkForRedisURI() {
-        LettuceAssert.assertState(this.redisURI != EMPTY_URI,
-                "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
+        LettuceAssert
+                .assertState(this.redisURI != EMPTY_URI,
+                        "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
         checkValidRedisURI(this.redisURI);
     }
 
