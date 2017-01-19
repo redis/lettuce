@@ -139,7 +139,10 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private Partitions partitions;
 
-    private RedisClusterClient() {
+    /**
+     * Non-private constructor to make {@link RedisClusterClient} proxyable.
+     */
+    protected RedisClusterClient() {
 
         setOptions(ClusterClientOptions.create());
         this.initialUris = Collections.emptyList();
