@@ -34,15 +34,15 @@ import org.junit.rules.ExpectedException;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
 import com.lambdaworks.Delay;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.reactive.TestSubscriber;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
@@ -187,8 +187,8 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
         reactive.mset(map).block();
 
-        List<String> values = reactive.keys("*").flatMap(s -> reactive.get(s)).collectList().subscribeOn(Schedulers.immediate())
-                .block();
+        List<String> values = reactive.keys("*").flatMap(s -> reactive.get(s)).collectList()
+                .subscribeOn(Schedulers.immediate()).block();
 
         assertThat(values).hasSize(2).contains(value, "value1");
     }
@@ -225,12 +225,14 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
             Mono<String> ping = connection.reactive().ping();
 
-            ping.subscribeWith(TestSubscriber.create()).assertErrorWith(throwable -> {
+            ping.subscribeWith(TestSubscriber.create())
+                    .assertErrorWith(
+                            throwable -> {
 
-                assertThat(throwable).isInstanceOf(RedisException.class)
-                        .hasMessageContaining("not connected. Commands are rejected");
+                                assertThat(throwable).isInstanceOf(RedisException.class).hasMessageContaining(
+                                        "not connected. Commands are rejected");
 
-            }).await();
+                            }).await();
         }
     }
 

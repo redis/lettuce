@@ -60,7 +60,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
     private final ClientOptions clientOptions;
 
     private final QueuedCommands queuedCommands = new QueuedCommands();
-    private final boolean traceEnabled = logger.isTraceEnabled();
     private final boolean debugEnabled = logger.isDebugEnabled();
 
     protected volatile Channel channel;
@@ -418,6 +417,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
         sharedLock.doExclusive(() -> {
 
             List<RedisCommand<?, ?, ?>> commands = drainCommands(queuedCommands.getQueue());
+
+            for (RedisCommand<?, ?, ?> command : commands) {
+
+                if (command instanceof DemandAware.Sink) {
+                    ((DemandAware.Sink) command).removeSource();
+                }
+            }
+
             Collections.reverse(commands);
 
             logger.debug("{} notifyQueuedCommands {} command(s) added to buffer", logPrefix(), commands.size());

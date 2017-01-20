@@ -37,6 +37,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.StreamingOutput;
 import com.lambdaworks.redis.protocol.CommandWrapper;
+import com.lambdaworks.redis.protocol.DemandAware;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 import io.netty.util.internal.logging.InternalLogger;
@@ -131,7 +132,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         static final AtomicLongFieldUpdater<RedisSubscription> DEMAND = AtomicLongFieldUpdater.newUpdater(
                 RedisSubscription.class, "demand");
 
-        final boolean traceEnabled = LOG.isTraceEnabled();
+        private final SubscriptionCommand<?, ?, T> subscriptionCommand;
+        private final boolean traceEnabled = LOG.isTraceEnabled();
 
         final Queue<T> data = QueueSupplier.<T> unbounded().get();
         final StatefulConnection<?, ?> connection;
@@ -145,6 +147,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         Subscriber<? super T> subscriber;
 
+        @SuppressWarnings("unchecked")
         RedisSubscription(StatefulConnection<?, ?> connection, RedisCommand<?, ?, T> command, boolean dissolve) {
 
             LettuceAssert.notNull(connection, "Connection must not be null");
@@ -153,6 +156,19 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             this.connection = connection;
             this.command = command;
             this.dissolve = dissolve;
+
+            if (command.getOutput() instanceof StreamingOutput<?>) {
+                StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
+
+                if (connection instanceof StatefulRedisConnection<?, ?> && ((StatefulRedisConnection) connection).isMulti()) {
+                    streamingOutput.setSubscriber(new CompositeSubscriber<>(
+                            Arrays.asList(this, streamingOutput.getSubscriber())));
+                } else {
+                    streamingOutput.setSubscriber(this);
+                }
+            }
+
+            this.subscriptionCommand = new SubscriptionCommand<>(command, this, dissolve);
         }
 
         /**
@@ -201,10 +217,6 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             state().cancel(this);
         }
 
-        private RedisPublisher.State state() {
-            return this.state.get();
-        }
-
         /**
          * Called by {@link StreamingOutput} to dispatch data (push).
          *
@@ -214,6 +226,10 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         public void onNext(T t) {
 
             LettuceAssert.notNull(t, "Data must not be null");
+
+            if (state() == State.COMPLETED) {
+                return;
+            }
 
             if (!data.offer(t)) {
 
@@ -235,7 +251,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 LOG.trace("{} onDataAvailable()", state());
             }
 
-            this.state.get().onDataAvailable(this);
+            state().onDataAvailable(this);
         }
 
         /**
@@ -248,7 +264,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 LOG.trace("{} onAllDataRead()", state());
             }
 
-            this.state.get().onAllDataRead(this);
+            state().onAllDataRead(this);
         }
 
         /**
@@ -262,7 +278,46 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 LOG.trace("{} onError(): {}", state(), t.toString(), t);
             }
 
-            this.state.get().onError(this, t);
+            state().onError(this, t);
+        }
+
+        /**
+         * Reads data from the input, if possible.
+         *
+         * @return the data that was read or {@literal null}
+         */
+        protected T read() {
+            return data.poll();
+        }
+
+        private boolean hasDemand() {
+            return this.demand > 0;
+        }
+
+        private boolean changeState(State oldState, State newState) {
+            return this.state.compareAndSet(oldState, newState);
+        }
+
+        void checkCommandDispatch() {
+            commandDispatch.get().dispatch(this);
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        void dispatchCommand() {
+            connection.dispatch((RedisCommand) subscriptionCommand);
+        }
+
+        void checkOnDataAvailable() {
+
+            if (data.isEmpty()) {
+                if (hasDemand()) {
+                    state().readData(this);
+                }
+            }
+
+            if (!data.isEmpty()) {
+                onDataAvailable();
+            }
         }
 
         /**
@@ -292,49 +347,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             return false;
         }
 
-        /**
-         * Reads data from the input, if possible.
-         *
-         * @return the data that was read or {@literal null}
-         */
-        protected T read() {
-            return data.poll();
-        }
-
-        private boolean hasDemand() {
-            return this.demand > 0;
-        }
-
-        private boolean changeState(State oldState, State newState) {
-            return this.state.compareAndSet(oldState, newState);
-        }
-
-        void checkCommandDispatch() {
-            commandDispatch.get().dispatch(this);
-        }
-
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        void dispatchCommand() {
-
-            if (command.getOutput() instanceof StreamingOutput<?>) {
-                StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
-
-                if (connection instanceof StatefulRedisConnection<?, ?> && ((StatefulRedisConnection) connection).isMulti()) {
-                    streamingOutput.setSubscriber(new CompositeSubscriber<T>(Arrays.asList(this,
-                            streamingOutput.getSubscriber())));
-                } else {
-                    streamingOutput.setSubscriber(this);
-                }
-            }
-
-            connection.dispatch(new SubscriptionCommand(command, this, dissolve));
-        }
-
-        void checkOnDataAvailable() {
-
-            if (!data.isEmpty()) {
-                onDataAvailable();
-            }
+        RedisPublisher.State state() {
+            return this.state.get();
         }
     }
 
@@ -425,7 +439,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 if (Operators.checkRequest(n, subscription.subscriber)) {
 
-                    Operators.getAndAddCap(subscription.DEMAND, subscription, n);
+                    Operators.getAndAddCap(RedisSubscription.DEMAND, subscription, n);
 
                     if (subscription.changeState(this, DEMAND)) {
 
@@ -473,7 +487,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             void request(RedisSubscription<?> subscription, long n) {
 
                 if (Operators.checkRequest(n, subscription.subscriber)) {
-                    Operators.getAndAddCap(subscription.DEMAND, subscription, n);
+                    Operators.getAndAddCap(RedisSubscription.DEMAND, subscription, n);
                 }
             }
 
@@ -484,7 +498,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             void request(RedisSubscription<?> subscription, long n) {
 
                 if (Operators.checkRequest(n, subscription.subscriber)) {
-                    Operators.getAndAddCap(subscription.DEMAND, subscription, n);
+                    Operators.getAndAddCap(RedisSubscription.DEMAND, subscription, n);
                 }
             }
         },
@@ -526,7 +540,16 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         void cancel(RedisSubscription<?> subscription) {
 
             subscription.command.cancel();
-            subscription.changeState(this, COMPLETED);
+            if (subscription.changeState(this, COMPLETED)) {
+                readData(subscription);
+            }
+        }
+
+        void readData(RedisSubscription<?> subscription) {
+            DemandAware.Source source = subscription.subscriptionCommand.source;
+            if (source != null) {
+                source.requestMore();
+            }
         }
 
         void onDataAvailable(RedisSubscription<?> subscription) {
@@ -538,6 +561,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             subscription.allDataRead = true;
 
             if (subscription.data.isEmpty() && subscription.changeState(this, COMPLETED)) {
+                readData(subscription);
                 if (subscription.subscriber != null) {
                     subscription.subscriber.onComplete();
                 }
@@ -547,6 +571,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         void onError(RedisSubscription<?> subscription, Throwable t) {
 
             if (subscription.changeState(this, COMPLETED)) {
+                readData(subscription);
                 if (subscription.subscriber != null) {
                     subscription.subscriber.onError(t);
                 }
@@ -561,11 +586,12 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      * @param <V> value type
      * @param <T> response type
      */
-    private static class SubscriptionCommand<K, V, T> extends CommandWrapper<K, V, T> {
+    private static class SubscriptionCommand<K, V, T> extends CommandWrapper<K, V, T> implements DemandAware.Sink {
 
         private final boolean dissolve;
         private final RedisSubscription<T> subscription;
-        private boolean completed = false;
+        private volatile boolean completed = false;
+        private volatile DemandAware.Source source;
 
         public SubscriptionCommand(RedisCommand<K, V, T> command, RedisSubscription<T> subscription, boolean dissolve) {
 
@@ -573,6 +599,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             this.subscription = subscription;
             this.dissolve = dissolve;
+        }
+
+        @Override
+        public boolean hasDemand() {
+
+            // signal demand as completed commands just no-op on incoming data.
+            return completed || subscription.state() == State.COMPLETED || subscription.demand > subscription.data.size();
         }
 
         @Override
@@ -598,7 +631,9 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     if (!(getOutput() instanceof StreamingOutput<?>) && result != null) {
 
                         if (dissolve && result instanceof Collection) {
+
                             Collection<T> collection = (Collection<T>) result;
+
                             for (T t : collection) {
                                 if (t != null) {
                                     subscription.onNext(t);
@@ -615,6 +650,16 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             } finally {
                 completed = true;
             }
+        }
+
+        @Override
+        public void setSource(DemandAware.Source source) {
+            this.source = source;
+        }
+
+        @Override
+        public void removeSource() {
+            this.source = null;
         }
 
         @Override

@@ -25,7 +25,7 @@ import io.netty.channel.Channel;
  *
  * @author Mark Paluch
  */
-interface Endpoint {
+public interface Endpoint {
 
     /**
      * Notify about channel activation.

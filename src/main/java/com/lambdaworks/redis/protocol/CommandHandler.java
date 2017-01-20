@@ -62,11 +62,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final RedisStateMachine rsm = new RedisStateMachine();
     private final boolean traceEnabled = logger.isTraceEnabled();
     private final boolean debugEnabled = logger.isDebugEnabled();
+    private final BackpressureSource backpressureSource = new BackpressureSource();
 
     private final ClientResources clientResources;
     private final Endpoint endpoint;
 
-    private Channel channel;
+    Channel channel;
     private ByteBuf buffer;
     private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
     private String logPrefix;
@@ -196,13 +197,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         endpoint.notifyChannelActive(ctx.channel());
 
         super.channelActive(ctx);
+
         if (channel != null) {
-            channel.eventLoop().submit(new Runnable() {
-                @Override
-                public void run() {
-                    channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Activated());
-                }
-            });
+            channel.eventLoop().submit(
+                    (Runnable) () -> channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Activated()));
         }
 
         if (debugEnabled) {
@@ -227,8 +225,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         setState(LifecycleState.DISCONNECTED);
-
         setState(LifecycleState.DEACTIVATING);
+
         endpoint.notifyChannelInactive(ctx.channel());
         endpoint.notifyDrainQueuedCommands(this);
 
@@ -316,7 +314,22 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             WithLatency withLatency = getWithLatency(command);
 
             if (!rsm.decode(buffer, command, command.getOutput())) {
+
+                if (command instanceof DemandAware.Sink) {
+
+                    DemandAware.Sink sink = (DemandAware.Sink) command;
+                    sink.setSource(backpressureSource);
+
+                    if (!sink.hasDemand()) {
+                        ctx.channel().config().setAutoRead(false);
+                    }
+                }
+
                 return;
+            }
+
+            if (!ctx.channel().config().isAutoRead()) {
+                ctx.channel().config().setAutoRead(true);
             }
 
             recordLatency(withLatency, command.getType());
@@ -336,12 +349,17 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     private WithLatency getWithLatency(RedisCommand<?, ?, ?> command) {
+
         WithLatency withLatency = null;
 
         if (clientResources.commandLatencyCollector().isEnabled()) {
+
             RedisCommand<?, ?, ?> unwrappedCommand = CommandWrapper.unwrap(command);
+
             if (unwrappedCommand instanceof WithLatency) {
+
                 withLatency = (WithLatency) unwrappedCommand;
+
                 if (withLatency.getFirstResponse() == -1) {
                     withLatency.firstResponse(nanoTime());
                 }
@@ -357,14 +375,13 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
 
-        if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null
-                && remote() != null) {
+        if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null && remote() != null) {
 
             long firstResponseLatency = nanoTime() - withLatency.getFirstResponse();
             long completionLatency = nanoTime() - withLatency.getSent();
 
-            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
-                    completionLatency);
+            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType,
+                    firstResponseLatency, completionLatency);
         }
     }
 
@@ -515,5 +532,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     public enum LifecycleState {
         NOT_CONNECTED, REGISTERED, CONNECTED, ACTIVATING, ACTIVE, DISCONNECTED, DEACTIVATING, DEACTIVATED, CLOSED,
+    }
+
+    /**
+     * Source for backpressure.
+     */
+    class BackpressureSource implements DemandAware.Source {
+
+        @Override
+        public void requestMore() {
+
+            if (isConnected() && !isClosed() && !channel.config().isAutoRead()) {
+                channel.config().setAutoRead(true);
+            }
+        }
     }
 }

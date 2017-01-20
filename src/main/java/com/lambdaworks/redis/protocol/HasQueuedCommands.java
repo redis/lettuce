@@ -23,7 +23,7 @@ import java.util.Queue;
  *
  * @author Mark Paluch
  */
-interface HasQueuedCommands {
+public interface HasQueuedCommands {
 
     /**
      * The queue holding commands.
