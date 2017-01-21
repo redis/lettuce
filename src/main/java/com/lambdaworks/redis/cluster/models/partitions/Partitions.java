@@ -146,7 +146,7 @@ public class Partitions implements Collection<RedisClusterNode> {
 
         LettuceAssert.notNull(partition, "Partition must not be null");
 
-        synchronized (this) {
+        synchronized (partitions) {
             slotCache = EMPTY;
             partitions.add(partition);
         }
@@ -179,7 +179,7 @@ public class Partitions implements Collection<RedisClusterNode> {
 
         LettuceAssert.noNullElements(partitions, "Partitions must not contain null elements");
 
-        synchronized (partitions) {
+        synchronized (this.partitions) {
             this.partitions.clear();
             this.partitions.addAll(partitions);
             updateCache();
