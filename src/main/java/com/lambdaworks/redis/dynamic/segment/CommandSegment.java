@@ -67,7 +67,8 @@ public abstract class CommandSegment {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
+
+        StringBuffer sb = new StringBuffer();
         sb.append(getClass().getSimpleName());
         sb.append(" ").append(asString());
         return sb.toString();
