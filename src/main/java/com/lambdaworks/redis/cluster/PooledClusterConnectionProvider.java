@@ -41,7 +41,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Connection provider with built-in connection caching.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -257,7 +257,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     /**
      * Synchronize on {@code stateLock} to initiate a happens-before relation and clear the thread caches of other threads.
-     * 
+     *
      * @param partitions the new partitions.
      */
     @Override
@@ -297,7 +297,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
 
         resetFastConnectionCache();
-        closeStaleConnections();
+        closeStaleConnections(staleConnections);
     }
 
     /**
@@ -305,9 +305,14 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
      */
     @Override
     public void closeStaleConnections() {
-        logger.debug("closeStaleConnections() count before expiring: {}", getConnectionCount());
 
         Set<ConnectionKey> stale = getStaleConnectionKeys();
+        closeStaleConnections(stale);
+    }
+
+    protected void closeStaleConnections(Set<ConnectionKey> stale) {
+
+        logger.debug("closeStaleConnections() count before expiring: {}", getConnectionCount());
 
         for (ConnectionKey connectionKey : stale) {
             StatefulRedisConnection<K, V> connection = connections.get(connectionKey);
@@ -322,7 +327,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     /**
      * Retrieve a set of PoolKey's for all pooled connections that are within the pool but not within the {@link Partitions}.
-     * 
+     *
      * @return Set of {@link ConnectionKey}s
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
@@ -346,11 +351,12 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     /**
      * Set auto-flush on all commands. Synchronize on {@code stateLock} to initiate a happens-before relation and clear the
      * thread caches of other threads.
-     * 
+     *
      * @param autoFlush state of autoFlush.
      */
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
+
         synchronized (stateLock) {
             this.autoFlushCommands = autoFlush;
         }
@@ -369,6 +375,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     @Override
     public void setReadFrom(ReadFrom readFrom) {
+
         synchronized (stateLock) {
             this.readFrom = readFrom;
             Arrays.fill(readers, null);
@@ -395,10 +402,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
      * Synchronize on {@code stateLock} to initiate a happens-before relation and clear the thread caches of other threads.
      */
     private void resetFastConnectionCache() {
+
         synchronized (stateLock) {
             Arrays.fill(writers, null);
             Arrays.fill(readers, null);
-
         }
     }
 
@@ -409,11 +416,13 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     private Supplier<SocketAddress> getSocketAddressSupplier(final ConnectionKey connectionKey) {
         return () -> {
+
             if (connectionKey.nodeId != null) {
                 SocketAddress socketAddress = getSocketAddress(connectionKey.nodeId);
                 logger.debug("Resolved SocketAddress {} using for Cluster node {}", socketAddress, connectionKey.nodeId);
                 return socketAddress;
             }
+
             SocketAddress socketAddress = new InetSocketAddress(connectionKey.host, connectionKey.port);
             logger.debug("Resolved SocketAddress {} using for Cluster node at {}:{}", socketAddress, connectionKey.host,
                     connectionKey.port);
@@ -422,6 +431,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     private SocketAddress getSocketAddress(String nodeId) {
+
         for (RedisClusterNode partition : partitions) {
             if (partition.getNodeId().equals(nodeId)) {
                 return SocketAddressResolver.resolve(partition.getUri(), redisClusterClient.getResources().dnsResolver());
@@ -455,6 +465,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         @Override
         public boolean equals(Object o) {
+
             if (this == o)
                 return true;
             if (!(o instanceof ConnectionKey))
@@ -473,11 +484,25 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         @Override
         public int hashCode() {
+
             int result = intent != null ? intent.name().hashCode() : 0;
             result = 31 * result + (nodeId != null ? nodeId.hashCode() : 0);
             result = 31 * result + (host != null ? host.hashCode() : 0);
             result = 31 * result + port;
             return result;
+        }
+
+        @Override
+        public String toString() {
+
+            StringBuffer sb = new StringBuffer();
+            sb.append(getClass().getSimpleName());
+            sb.append(" [intent=").append(intent);
+            sb.append(", nodeId='").append(nodeId).append('\'');
+            sb.append(", host='").append(host).append('\'');
+            sb.append(", port=").append(port);
+            sb.append(']');
+            return sb.toString();
         }
     }
 
