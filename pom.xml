@@ -13,12 +13,20 @@
     <version>5.0.0.BUILD-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>lettuce</name>
-    <url>http://github.com/lettuce-io/lettuce-core</url>
+    <name>Lettuce</name>
+
     <description>Advanced and thread-safe Java Redis client for synchronous, asynchronous, and
         reactive usage. Supports Cluster, Sentinel, Pipelining, Auto-Reconnect, Codecs
         and much more.
     </description>
+
+    <url>http://github.com/lettuce-io/lettuce-core</url>
+
+    <organization>
+        <name>lettuce.io</name>
+        <url>https://lettuce.io</url>
+    </organization>
+
 
     <licenses>
         <license>
@@ -324,8 +332,10 @@
     </dependencies>
 
     <profiles>
+
         <profile>
             <id>netty-40</id>
+
             <properties>
                 <netty-version>4.0.45.Final</netty-version>
             </properties>
@@ -355,7 +365,9 @@
         </profile>
 
         <profile>
+
             <id>sonatype-oss-release</id>
+
             <build>
                 <plugins>
                     <plugin>
@@ -439,7 +451,9 @@
                 </plugins>
             </build>
         </profile>
+
         <profile>
+
             <id>jmh</id>
 
             <dependencies>
@@ -529,6 +543,178 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+
+            <id>no-install</id>
+
+            <properties>
+                <maven.install.skip>true</maven.install.skip>
+                <skipTests>true</skipTests>
+            </properties>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-install-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                            <uniqueVersion>false</uniqueVersion>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+
+            <id>documentation</id>
+
+            <build>
+
+                <plugins>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+
+                            <execution>
+                                <id>rename-reference-docs</id>
+                                <phase>process-resources</phase>
+                                <configuration>
+                                    <target>
+                                        <copy failonerror="false"
+                                              file="${project.build.directory}/generated-docs/index.pdf"
+                                              tofile="target/site/reference/pdf/lettuce-reference.pdf"/>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctor-maven-plugin</artifactId>
+                    </plugin>
+
+                </plugins>
+
+
+                <pluginManagement>
+                    <plugins>
+
+                        <!--
+                            Asciidoctor
+                        -->
+
+                        <plugin>
+                            <groupId>org.asciidoctor</groupId>
+                            <artifactId>asciidoctor-maven-plugin</artifactId>
+                            <version>1.5.3</version>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.asciidoctor</groupId>
+                                    <artifactId>asciidoctorj-pdf</artifactId>
+                                    <version>1.5.0-alpha.11</version>
+                                </dependency>
+                            </dependencies>
+                            <executions>
+
+                                <execution>
+                                    <id>html</id>
+                                    <phase>generate-resources</phase>
+                                    <goals>
+                                        <goal>process-asciidoc</goal>
+                                    </goals>
+                                    <configuration>
+                                        <backend>html5</backend>
+                                        <outputDirectory>${project.build.directory}/site/reference/html
+                                        </outputDirectory>
+                                        <sectids>false</sectids>
+                                        <doctype>book</doctype>
+                                        <attributes>
+                                            <linkcss>true</linkcss>
+                                            <sectanchors>true</sectanchors>
+                                            <stylesdir>stylesheets</stylesdir>
+                                            <stylesheet>golo.css</stylesheet>
+                                        </attributes>
+                                    </configuration>
+                                </execution>
+
+                                <execution>
+                                    <id>pdf</id>
+                                    <phase>generate-resources</phase>
+                                    <goals>
+                                        <goal>process-asciidoc</goal>
+                                    </goals>
+                                    <configuration>
+                                        <backend>pdf</backend>
+                                    </configuration>
+                                </execution>
+
+                            </executions>
+
+                            <configuration>
+                                <sourceDirectory>src/main/asciidoc</sourceDirectory>
+                                <sourceDocumentName>index.asciidoc</sourceDocumentName>
+                                <doctype>book</doctype>
+                                <attributes>
+                                    <version>${project.version}</version>
+                                    <allow-uri-read>true</allow-uri-read>
+                                    <toclevels>3</toclevels>
+                                    <numbered>true</numbered>
+                                    <ext-doc>https://raw.githubusercontent.com/wiki/mp911de/lettuce/</ext-doc>
+                                    <allow-uri-read></allow-uri-read>
+                                    <docinfo></docinfo>
+                                    <toc2></toc2>
+                                    <icons>font</icons>
+                                    <source-highlighter>coderay</source-highlighter>
+                                </attributes>
+                            </configuration>
+                        </plugin>
+
+
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-assembly-plugin</artifactId>
+                            <version>2.4</version>
+                            <executions>
+                                <execution>
+                                    <id>docs</id>
+                                    <phase>package</phase>
+                                    <goals>
+                                        <goal>single</goal>
+                                    </goals>
+                                    <configuration>
+                                        <finalName>${project.artifactId}-${project.version}</finalName>
+                                        <descriptors>
+                                            <descriptor>src/assembly/docs.xml</descriptor>
+                                        </descriptors>
+                                        <tarLongFileMode>gnu</tarLongFileMode>
+                                        <attach>true</attach>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
     </profiles>
 
     <build>
@@ -571,10 +757,19 @@
                 </executions>
                 <configuration>
                     <level>public</level>
+                    <overview>src/javadoc/overview.html</overview>
+                    <author>true</author>
+                    <header>Lettuce</header>
+                    <stylesheetfile>src/main/javadoc/stylesheet.css</stylesheetfile>
                     <links>
                         <link>http://netty.io/4.1/api/</link>
                         <link>http://commons.apache.org/proper/commons-pool/api-2.4.2/</link>
                         <link>https://docs.oracle.com/javase/8/docs/api/</link>
+                        <link>https://projectreactor.io/docs/core/release/api/</link>
+                        <link>http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/</link>
+                        <link>http://reactivex.io/RxJava/javadoc/</link>
+                        <link>http://reactivex.io/RxJava/2.x/javadoc/</link>
+                        <link>https://docs.spring.io/spring/docs/current/javadoc-api/</link>
                     </links>
                     <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax -Xdoclint:-missing
                     </additionalparam>
@@ -611,7 +806,7 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.5</version>
                 <configuration>
-                    <releaseProfiles>sonatype-oss-release</releaseProfiles>
+                    <releaseProfiles>sonatype-oss-release,documentation</releaseProfiles>
                     <arguments>-DskipSigning=false</arguments>
                     <goals>deploy</goals>
                     <autoVersionSubmodules>true</autoVersionSubmodules>

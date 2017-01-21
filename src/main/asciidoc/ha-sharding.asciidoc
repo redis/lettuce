@@ -1,0 +1,26 @@
+:redis-sentinel-link: <<redis-sentinel>>
+:master-slave-api-link: <<master-slave>>
+:cco-up-to-5-times: <<clientoptions.cluster-specific-options,up to 5 times>>
+:cco-link: <<clientoptions.cluster-specific-options,Cluster-specific Client options>>
+:cco-periodic-link: <<clientoptions.cluster-specific-options,Periodic updates>>
+:cco-adaptive-link: <<clientoptions.cluster-specific-options,Adaptive updates>>
+
+[[ha-sharding]]
+== High-Availability and Sharding
+
+[[master-slave]]
+=== Master/Slave
+include::{ext-doc}/Master-Slave.asciidoc[leveloffset=+2]
+
+[[redis-sentinel]]
+=== Redis Sentinel
+include::{ext-doc}/Redis-Sentinel.asciidoc[leveloffset=+2]
+
+[[redis-cluster]]
+=== Redis Cluster
+include::{ext-doc}/Redis-Cluster.asciidoc[leveloffset=+2]
+
+[[readfrom-settings]]
+=== ReadFrom Settings
+include::{ext-doc}/ReadFrom-Settings.asciidoc[leveloffset=+2]
+

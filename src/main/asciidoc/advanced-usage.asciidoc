@@ -1,0 +1,46 @@
+:auto-reconnect-link: <<client-options,auto-reconnection>>
+:client-options-link: <<client-resources>>
+:client-resources-link: <<client-options>>
+
+:custom-commands-command-output-link: <<custom-commands.outputs>>
+:custom-commands-command-exec-model-link: <<custom-commands.synchronous-asynchronous-and-reactive,Custom commands>>
+
+[[advanced-usage]]
+== Advanced usage
+
+[[client-resources]]
+=== Configuring Client resources
+include::{ext-doc}/Configuring-Client-resources.asciidoc[leveloffset=+2]
+
+[[client-options]]
+=== Client options
+include::{ext-doc}/Client-options.asciidoc[leveloffset=+2]
+
+[[ssl]]
+=== SSL Connections
+include::{ext-doc}/SSL-Connections.asciidoc[leveloffset=+2]
+
+[[unix-domain-sockets]]
+=== Unix Domain Sockets
+include::{ext-doc}/Unix-Domain-Sockets.asciidoc[leveloffset=+2]
+
+[[streaming-api]]
+=== Streaming API
+include::{ext-doc}/Streaming-API.asciidoc[leveloffset=+1]
+
+[[events]]
+=== Events
+include::{ext-doc}/Connection-Events.asciidoc[leveloffset=+2]
+
+=== Pipelining and command flushing
+include::{ext-doc}/Pipelining-and-command-flushing.asciidoc[leveloffset=+2]
+
+=== Connection Pooling
+include::{ext-doc}/Connection-Pooling.asciidoc[leveloffset=+2]
+
+=== Custom commands
+include::{ext-doc}/Custom-commands%2C-outputs-and-command-mechanics.asciidoc[leveloffset=+2]
+
+[[command-execution-reliability]]
+=== Command execution reliability
+include::{ext-doc}/Command-execution-reliability.asciidoc[leveloffset=+2]
