@@ -47,11 +47,6 @@ public class RedisClientListenerTest extends AbstractTest {
         DEFAULT_RESOURCES = TestClientResources.create();
     }
 
-    @AfterClass
-    public static void afterClass() throws Exception {
-        DEFAULT_RESOURCES.shutdown(100, 100, TimeUnit.MILLISECONDS).get();
-    }
-
     @Test
     public void shouldNotifyListener() throws Exception {
 

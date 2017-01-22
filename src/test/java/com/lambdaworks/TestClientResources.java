@@ -30,9 +30,16 @@ import com.lambdaworks.redis.resource.DefaultClientResources;
  */
 public class TestClientResources {
 
+    /**
+     * Creates a new {@link ClientResources} instance and registers a shutdown hook to de-allocate the instance upon JVM
+     * shutdown.
+     *
+     * @return a new {@link ClientResources} instance.
+     */
     public static ClientResources create() {
-        final DefaultClientResources resources = new DefaultClientResources.Builder().eventLoopGroupProvider(
-                new TestEventLoopGroupProvider()).build();
+
+        final DefaultClientResources resources = DefaultClientResources.builder()
+                .eventLoopGroupProvider(new TestEventLoopGroupProvider()).build();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override

@@ -37,11 +37,6 @@ public class RedisClientFactoryTest {
         DEFAULT_RESOURCES = TestClientResources.create();
     }
 
-    @AfterClass
-    public static void afterClass() throws Exception {
-        FastShutdown.shutdown(DEFAULT_RESOURCES);
-    }
-
     @Test
     public void plain() throws Exception {
         FastShutdown.shutdown(RedisClient.create());
