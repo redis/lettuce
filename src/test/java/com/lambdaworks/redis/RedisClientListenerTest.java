@@ -42,12 +42,7 @@ public class RedisClientListenerTest extends AbstractTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        DEFAULT_RESOURCES = TestClientResources.create();
-    }
-
-    @AfterClass
-    public static void afterClass() throws Exception {
-        DEFAULT_RESOURCES.shutdown(100, 100, TimeUnit.MILLISECONDS).get();
+        DEFAULT_RESOURCES = TestClientResources.get();
     }
 
     @Test

@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.lambdaworks.TestClientResources;
@@ -39,7 +40,8 @@ import com.lambdaworks.redis.resource.ClientResources;
  * @author Mark Paluch
  */
 public class ClusterPartiallyDownTest extends AbstractTest {
-    private static ClientResources clientResources = TestClientResources.create();
+
+    private static ClientResources clientResources;
 
     private static int port1 = 7579;
     private static int port2 = 7580;
@@ -52,6 +54,11 @@ public class ClusterPartiallyDownTest extends AbstractTest {
     private static final RedisURI URI_4 = RedisURI.create(TestSettings.host(), port4);
 
     private RedisClusterClient redisClusterClient;
+
+    @BeforeClass
+    public static void beforeClass() {
+        clientResources = TestClientResources.get();
+    }
 
     @Before
     public void before() throws Exception {

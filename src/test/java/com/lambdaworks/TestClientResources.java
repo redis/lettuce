@@ -33,9 +33,16 @@ public class TestClientResources {
     private final static TestClientResources instance = new TestClientResources();
     private ClientResources clientResources = create();
 
+    /**
+     * Creates a new {@link ClientResources} instance and registers a shutdown hook to de-allocate the instance upon JVM
+     * shutdown.
+     * 
+     * @return a new {@link ClientResources} instance.
+     */
     public static ClientResources create() {
-        final DefaultClientResources resources = DefaultClientResources.builder().eventLoopGroupProvider(
-                new TestEventLoopGroupProvider()).build();
+
+        final DefaultClientResources resources = DefaultClientResources.builder()
+                .eventLoopGroupProvider(new TestEventLoopGroupProvider()).build();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -51,6 +58,10 @@ public class TestClientResources {
         return resources;
     }
 
+    /**
+     * @return the default {@link ClientResources} instance used across multiple tests. The returned instance must not be shut
+     *         down.
+     */
     public static ClientResources get() {
         return instance.clientResources;
     }

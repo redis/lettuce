@@ -184,7 +184,7 @@ public class ConnectionPoolSupportTest extends AbstractRedisClientTest {
     @Test
     public void wrappedClusterConnectionShouldUseWrappers() throws Exception {
 
-        RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.create(),
+        RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.create(TestSettings.host(), 7379));
 
         GenericObjectPool<StatefulRedisClusterConnection<String, String>> pool = ConnectionPoolSupport
