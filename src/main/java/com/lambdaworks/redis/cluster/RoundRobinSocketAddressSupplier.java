@@ -62,7 +62,8 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
     @Override
     public SocketAddress get() {
-        if (!clusterNodes.containsAll(partitions)) {
+
+        if (!clusterNodes.containsAll(partitions) || !partitions.containsAll(clusterNodes)) {
             resetRoundRobin();
         }
 
@@ -71,12 +72,14 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
     }
 
     protected void resetRoundRobin() {
+
         clusterNodes.clear();
         clusterNodes.addAll(sortFunction.apply(partitions));
         roundRobin.offset = null;
     }
 
     protected SocketAddress getSocketAddress(RedisClusterNode redisClusterNode) {
+
         SocketAddress resolvedAddress = SocketAddressResolver.resolve(redisClusterNode.getUri(), clientResources.dnsResolver());
         logger.debug("Resolved SocketAddress {} using for Cluster node {}", resolvedAddress, redisClusterNode.getNodeId());
         return resolvedAddress;
