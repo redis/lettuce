@@ -22,18 +22,18 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.resource.ClientResources;
-import com.lambdaworks.redis.resource.DnsResolvers;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.DnsResolvers;
 
 /**
  * @author Mark Paluch
@@ -52,6 +52,7 @@ public class RoundRobinSocketAddressSupplierTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
+
         hap1.getResolvedAddress();
         hap2.getResolvedAddress();
         hap3.getResolvedAddress();
@@ -88,7 +89,7 @@ public class RoundRobinSocketAddressSupplierTest {
     }
 
     @Test
-    public void partitionTableChanges() throws Exception {
+    public void partitionTableChangesNewNode() throws Exception {
 
         RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions, redisClusterNodes -> redisClusterNodes,
                 clientResourcesMock);
@@ -106,4 +107,19 @@ public class RoundRobinSocketAddressSupplierTest {
         assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
     }
 
+    @Test
+    public void partitionTableChangesNodeRemoved() throws Exception {
+
+        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
+                redisClusterNodes -> redisClusterNodes, clientResourcesMock);
+
+        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
+        assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
+
+        partitions.remove(partitions.getPartition(2));
+
+        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
+        assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
+        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
+    }
 }
