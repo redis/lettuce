@@ -30,6 +30,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
@@ -84,16 +85,18 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
     @Test
     public void authWithReconnect() throws Exception {
+
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
+
                 RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
                 connection.addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
                 connection.quit();
-                Wait.untilTrue(() -> {
-                    return !connection.isOpen();
-                }).waitOrTimeout();
+
+                Thread.sleep(100);
+                Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
                 connection.subscribe(channel);
                 assertThat(channels.take()).isEqualTo(channel);

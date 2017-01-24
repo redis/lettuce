@@ -120,8 +120,8 @@ work/sentinel-%.conf:
 	@echo logfile $(shell pwd)/work/redis-sentinel-$*.log >> $@
 
 	@echo sentinel monitor mymaster 127.0.0.1 6482 1 >> $@
-	@echo sentinel down-after-milliseconds mymaster 100 >> $@
-	@echo sentinel failover-timeout mymaster 100 >> $@
+	@echo sentinel down-after-milliseconds mymaster 200 >> $@
+	@echo sentinel failover-timeout mymaster 200 >> $@
 	@echo sentinel parallel-syncs mymaster 1 >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
 	@echo unixsocketperm 777 >> $@
