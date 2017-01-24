@@ -126,8 +126,8 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
             final ChannelHandlerContext ctx) throws Exception {
         cmd.handle((o, throwable) -> {
             if (throwable == null) {
-                initializedFuture.complete(true);
                 ctx.fireChannelActive();
+                initializedFuture.complete(true);
             } else {
                 initializedFuture.completeExceptionally(throwable);
             }

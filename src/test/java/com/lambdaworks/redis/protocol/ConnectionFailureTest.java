@@ -69,7 +69,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
      *
      * @throws Exception
      */
-    @Test(timeout = 120000)
+    @Test(timeout = 12000)
     public void pingBeforeConnectFailOnReconnect() throws Exception {
 
         ClientOptions clientOptions = ClientOptions.builder().pingBeforeActivateConnection(true)
