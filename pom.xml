@@ -9,7 +9,7 @@
 
     <groupId>biz.paluch.redis</groupId>
     <artifactId>lettuce</artifactId>
-    <version>4.3.0.Final</version>
+    <version>4.3.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>lettuce</name>
@@ -188,7 +188,7 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>com.googlecode.multithreadedtc</groupId>
             <artifactId>multithreadedtc</artifactId>
