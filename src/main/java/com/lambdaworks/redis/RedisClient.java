@@ -85,7 +85,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Create a new client that connects to the supplied host on the default port.
-     * 
+     *
      * @param host Server hostname.
      * @deprecated Use the factory method {@link #create(String)}
      */
@@ -97,7 +97,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Create a new client that connects to the supplied host and port. Connection attempts and non-blocking commands will
      * {@link #setDefaultTimeout timeout} after 60 seconds.
-     * 
+     *
      * @param host Server hostname.
      * @param port Server port.
      * @deprecated Use the factory method {@link #create(RedisURI)}
@@ -110,7 +110,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Create a new client that connects to the supplied host and port. Connection attempts and non-blocking commands will
      * {@link #setDefaultTimeout timeout} after 60 seconds.
-     * 
+     *
      * @param redisURI Redis URI.
      * @deprecated Use the factory method {@link #create(RedisURI)}
      */
@@ -202,7 +202,7 @@ public class RedisClient extends AbstractRedisClient {
      * Creates a connection pool for synchronous connections. 5 max idle connections and 20 max active connections. Please keep
      * in mind to free all collections and close the pool once you do not need it anymore. Requires Apache commons-pool2
      * dependency.
-     * 
+     *
      * @return a new {@link RedisConnectionPool} instance
      * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
      */
@@ -214,7 +214,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore. Requires Apache commons-pool2 dependency.
-     * 
+     *
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
@@ -228,7 +228,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore. Requires Apache commons-pool2 dependency.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
@@ -467,13 +467,23 @@ public class RedisClient extends AbstractRedisClient {
             connectionBuilder = ConnectionBuilder.connectionBuilder();
         }
 
+
         connectionBuilder.clientOptions(clientOptions);
         connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         channelType(connectionBuilder, redisURI);
+
+        if (clientOptions.isPingBeforeActivateConnection()) {
+            if (hasPassword(redisURI)) {
+                connectionBuilder.enableAuthPingBeforeConnect();
+            } else {
+                connectionBuilder.enablePingBeforeConnect();
+            }
+        }
+
         initializeChannel(connectionBuilder);
 
-        if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+        if (!clientOptions.isPingBeforeActivateConnection() && hasPassword(redisURI)) {
             connection.async().auth(new String(redisURI.getPassword()));
         }
 
@@ -481,6 +491,10 @@ public class RedisClient extends AbstractRedisClient {
             connection.async().select(redisURI.getDatabase());
         }
 
+    }
+
+    private boolean hasPassword(RedisURI redisURI) {
+        return redisURI.getPassword() != null && redisURI.getPassword().length != 0;
     }
 
     /**
@@ -673,6 +687,10 @@ public class RedisClient extends AbstractRedisClient {
         logger.debug("Trying to get a Sentinel connection for one of: " + redisURI.getSentinels());
 
         connectionBuilder(commandHandler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
+
+        if (clientOptions.isPingBeforeActivateConnection()) {
+            connectionBuilder.enablePingBeforeConnect();
+        }
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
             channelType(connectionBuilder, redisURI);

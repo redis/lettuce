@@ -64,8 +64,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * <p>
  * Connections to the cluster members are opened on the first access to the cluster node and managed by the
- * {@link StatefulRedisClusterConnection}. You should not use transactional commands on cluster connections since {@code
- * MULTI}, {@code EXEC} and {@code DISCARD} have no key and cannot be assigned to a particular node.
+ * {@link StatefulRedisClusterConnection}. You should not use transactional commands on cluster connections since {@code MULTI},
+ * {@code EXEC} and {@code DISCARD} have no key and cannot be assigned to a particular node.
  * </p>
  * <p>
  * The Redis cluster client provides a {@link RedisAdvancedClusterCommands sync}, {@link RedisAdvancedClusterAsyncCommands
@@ -99,8 +99,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * initializes new connections with the {@code clientName}.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#flushall()} Run {@code FLUSHALL} on all master nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#flushdb()} Executes {@code FLUSHDB} on all master nodes.</li>
- * <li>{@link RedisAdvancedClusterAsyncCommands#keys(Object)} Executes {@code
- * KEYS} on all.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#keys(Object)} Executes {@code KEYS} on all.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#randomkey()} Returns a random key from a random master node.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#scriptFlush()} Executes {@code SCRIPT FLUSH} on all nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#scriptKill()} Executes {@code SCRIPT KILL} on all nodes.</li>
@@ -213,18 +212,18 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
 
             if (ssl.booleanValue() != redisURI.isSsl()) {
-                throw new IllegalArgumentException(
-                        "RedisURI " + redisURI + " SSL is not consistent with the other seed URI SSL settings");
+                throw new IllegalArgumentException("RedisURI " + redisURI
+                        + " SSL is not consistent with the other seed URI SSL settings");
             }
 
             if (startTls.booleanValue() != redisURI.isStartTls()) {
-                throw new IllegalArgumentException(
-                        "RedisURI " + redisURI + " StartTLS is not consistent with the other seed URI StartTLS settings");
+                throw new IllegalArgumentException("RedisURI " + redisURI
+                        + " StartTLS is not consistent with the other seed URI StartTLS settings");
             }
 
             if (verifyPeer.booleanValue() != redisURI.isVerifyPeer()) {
-                throw new IllegalArgumentException(
-                        "RedisURI " + redisURI + " VerifyPeer is not consistent with the other seed URI VerifyPeer settings");
+                throw new IllegalArgumentException("RedisURI " + redisURI
+                        + " VerifyPeer is not consistent with the other seed URI VerifyPeer settings");
             }
         }
     }
@@ -640,7 +639,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connectStateful0(handler, connection, connectionSettings, socketAddressSupplier);
 
-        if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
+        if (!clientOptions.isPingBeforeActivateConnection() && hasPassword(connectionSettings)) {
             connection.async().auth(new String(connectionSettings.getPassword()));
         }
     }
@@ -661,14 +660,18 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connectStateful0(handler, connection, connectionSettings, socketAddressSupplier);
 
-        if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
+        if (!clientOptions.isPingBeforeActivateConnection() && hasPassword(connectionSettings)) {
             connection.async().auth(new String(connectionSettings.getPassword()));
         }
     }
 
+    private boolean hasPassword(RedisURI connectionSettings) {
+        return connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0;
+    }
+
     /**
-     * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (SSL) from {@code
-     * connectionSettings}.
+     * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (SSL) from
+     * {@code connectionSettings}.
      *
      * @param handler
      * @param connection
@@ -694,6 +697,14 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, socketAddressSupplier, connectionBuilder, connectionSettings);
         channelType(connectionBuilder, connectionSettings);
+
+        if (clientOptions.isPingBeforeActivateConnection()) {
+            if (hasPassword(connectionSettings)) {
+                connectionBuilder.enableAuthPingBeforeConnect();
+            } else {
+                connectionBuilder.enablePingBeforeConnect();
+            }
+        }
 
         initializeChannel(connectionBuilder);
     }
@@ -781,7 +792,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Determines a {@link Partitions topology view} based on the current and the obtain topology views.
-     * 
+     *
      * @param current the current topology view. May be {@literal null} if {@link RedisClusterClient} has no topology view yet.
      * @param topologyViews the obtain topology views
      * @return the {@link Partitions topology view} to use.
@@ -821,13 +832,12 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Returns a {@link Supplier} for {@link SocketAddress connection points}.
-     * 
+     *
      * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
      *        parameter but create a new collection with the desired order, must not be {@literal null}.
      * @return {@link Supplier} for {@link SocketAddress connection points}.
      */
-    protected Supplier<SocketAddress> getSocketAddressSupplier(
-            Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
+    protected Supplier<SocketAddress> getSocketAddressSupplier(Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
 
         LettuceAssert.notNull(sortFunction, "Sort function must not be null");
 
@@ -915,7 +925,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Returns the initial {@link RedisURI URIs}.
-     * 
+     *
      * @return the initial {@link RedisURI URIs}
      */
     protected Iterable<RedisURI> getInitialUris() {

@@ -27,10 +27,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.lambdaworks.Wait;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisFuture;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
@@ -61,7 +58,6 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
         assertThat(future.get()).isNotNull();
         assertThat(future.isDone()).isTrue();
         assertThat(future.isCancelled()).isFalse();
-
     }
 
     @Test
@@ -85,7 +81,6 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         assertThat(statefulConnection).isSameAs(statefulConnection.async().getStatefulConnection());
-
     }
 
     @Test
@@ -94,7 +89,6 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         RedisSentinelCommands<String, String> sync = statefulConnection.sync();
         assertThat(sync.ping()).isEqualTo("PONG");
-
     }
 
     @Test
@@ -103,7 +97,6 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         assertThat(statefulConnection.sync().getStatefulConnection()).isSameAs(statefulConnection);
         assertThat(statefulConnection.sync().getStatefulConnection().sync()).isSameAs(statefulConnection.sync());
-
     }
 
     @Test
@@ -131,8 +124,8 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
     @Test
     public void connectToOneNode() throws Exception {
-        RedisSentinelCommands<String, String> connection = sentinelClient
-                .connectSentinel(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build()).sync();
+        RedisSentinelCommands<String, String> connection = sentinelClient.connectSentinel(
+                RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build()).sync();
         assertThat(connection.ping()).isEqualTo("PONG");
         connection.close();
     }

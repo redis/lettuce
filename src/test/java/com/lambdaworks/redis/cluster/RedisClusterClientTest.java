@@ -30,9 +30,11 @@ import org.junit.*;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -365,6 +367,28 @@ public class RedisClusterClientTest extends AbstractClusterTest {
             FastShutdown.shutdown(clusterClient);
 
         }
+    }
+
+    @Test
+    public void clusterAuthPingBeforeConnect() throws Exception {
+
+        RedisClusterClient clusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), port7)
+                .withPassword("foobared").build());
+        clusterClient.setOptions(ClusterClientOptions.builder().pingBeforeActivateConnection(true).build());
+
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterCommands<String, String> sync = connection.sync();
+
+        List<String> time = sync.time();
+        assertThat(time).hasSize(2);
+
+        connection.async().quit().get();
+
+        time = sync.time();
+        assertThat(time).hasSize(2);
+
+        connection.close();
+        FastShutdown.shutdown(clusterClient);
     }
 
     @Test(expected = RedisException.class)

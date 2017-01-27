@@ -137,7 +137,8 @@ public class MasterSlaveTest extends AbstractRedisClientTest {
 
         RedisCommands<String, String> redisCommands = connection.sync();
         redisCommands.set(key, value);
-        redisCommands.waitForReplication(1, 100);
+
+        Thread.sleep(500);
 
         assertThat(redisCommands.get(key)).isEqualTo(value);
     }

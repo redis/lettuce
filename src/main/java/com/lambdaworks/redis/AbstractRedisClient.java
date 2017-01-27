@@ -121,7 +121,7 @@ public abstract class AbstractRedisClient {
     /**
      * Set the default timeout for {@link com.lambdaworks.redis.RedisConnection connections} created by this client. The timeout
      * applies to connection attempts and non-blocking commands.
-     * 
+     *
      * @param timeout Default connection timeout.
      * @param unit Unit of time for the timeout.
      */
@@ -139,12 +139,17 @@ public abstract class AbstractRedisClient {
         connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, socketAddressSupplier, connectionBuilder, null);
         channelType(connectionBuilder, null);
+
+        if (clientOptions.isPingBeforeActivateConnection()) {
+            connectionBuilder.enablePingBeforeConnect();
+        }
+
         return (T) initializeChannel(connectionBuilder);
     }
 
     /**
      * Populate connection builder with necessary resources.
-     * 
+     *
      * @param handler instance of a CommandHandler for writing redis commands
      * @param connection implementation of a RedisConnection
      * @param socketAddressSupplier address supplier for initial connect and re-connect
@@ -231,16 +236,16 @@ public abstract class AbstractRedisClient {
     @SuppressWarnings("unchecked")
     protected <K, V, T extends RedisChannelHandler<K, V>> T initializeChannel(ConnectionBuilder connectionBuilder) {
 
-        RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
+    RedisChannelHandler<?, ?> connection = connectionBuilder . connection ();
         SocketAddress redisAddress = connectionBuilder.socketAddress();
         try {
 
             logger.debug("Connecting to Redis at {}", redisAddress);
 
-            Bootstrap redisBootstrap = connectionBuilder.bootstrap();
-            RedisChannelInitializer initializer = connectionBuilder.build();
-            redisBootstrap.handler(initializer);
-            ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
+        Bootstrap redisBootstrap = connectionBuilder.bootstrap();
+        RedisChannelInitializer initializer = connectionBuilder.build();
+        redisBootstrap.handler(initializer);
+        ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
 
             connectFuture.await();
 
@@ -279,7 +284,7 @@ public abstract class AbstractRedisClient {
 
     /**
      * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
-     * 
+     *
      * @param quietPeriod the quiet period as described in the documentation
      * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
      *        during the quiet period
@@ -354,7 +359,7 @@ public abstract class AbstractRedisClient {
      * happens. The listeners are not bound to a specific connection, so every time a connection event happens on any
      * connection, the listener will be notified. The corresponding netty channel handler (async connection) is passed on the
      * event.
-     * 
+     *
      * @param listener must not be {@literal null}
      */
     public void addListener(RedisConnectionStateListener listener) {
@@ -364,7 +369,7 @@ public abstract class AbstractRedisClient {
 
     /**
      * Removes a listener.
-     * 
+     *
      * @param listener must not be {@literal null}
      */
     public void removeListener(RedisConnectionStateListener listener) {
@@ -376,7 +381,7 @@ public abstract class AbstractRedisClient {
     /**
      * Returns the {@link ClientOptions} which are valid for that client. Connections inherit the current options at the moment
      * the connection is created. Changes to options will not affect existing connections.
-     * 
+     *
      * @return the {@link ClientOptions} for this client
      */
     public ClientOptions getOptions() {
@@ -385,7 +390,7 @@ public abstract class AbstractRedisClient {
 
     /**
      * Set the {@link ClientOptions} for the client.
-     * 
+     *
      * @param clientOptions client options for the client and connections that are created after setting the options
      */
     protected void setOptions(ClientOptions clientOptions) {
