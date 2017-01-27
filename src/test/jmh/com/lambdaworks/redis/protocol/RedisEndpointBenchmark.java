@@ -15,10 +15,10 @@
  */
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.cluster.EmptyStatefulRedisConnection;
 import org.openjdk.jmh.annotations.*;
 
 import com.lambdaworks.redis.ClientOptions;
+import com.lambdaworks.redis.EmptyStatefulRedisConnection;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.output.ValueOutput;
 
@@ -31,7 +31,7 @@ import io.netty.channel.embedded.EmbeddedChannel;
  * <ul>
  * <li>user command writes</li>
  * </ul>
- * 
+ *
  * @author Mark Paluch
  */
 @State(Scope.Benchmark)
@@ -51,7 +51,7 @@ public class RedisEndpointBenchmark {
         defaultEndpoint = new DefaultEndpoint(CLIENT_OPTIONS);
         command = new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
 
-        defaultEndpoint.setConnectionFacade(new EmptyStatefulRedisConnection());
+        defaultEndpoint.setConnectionFacade(EmptyStatefulRedisConnection.INSTANCE);
         defaultEndpoint.notifyChannelActive(new MyLocalChannel());
     }
 
