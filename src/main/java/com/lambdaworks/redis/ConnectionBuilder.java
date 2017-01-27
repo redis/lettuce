@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.*;
 import com.lambdaworks.redis.resource.ClientResources;
@@ -30,14 +31,18 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timer;
-import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
  * Connection builder for connections. This class is part of the internal API.
- * 
+ *
  * @author Mark Paluch
  */
 public class ConnectionBuilder {
+
+    private static final RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(
+            new Utf8StringCodec());
+    private static final Supplier<AsyncCommand<?, ?, ?>> PING_COMMAND_SUPPLIER = () -> new AsyncCommand<>(
+            INITIALIZING_CMD_BUILDER.ping());
 
     private Supplier<SocketAddress> socketAddressSupplier;
     private ConnectionEvents connectionEvents;
@@ -54,6 +59,7 @@ public class ConnectionBuilder {
     private char[] password;
     private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
     private ConnectionWatchdog connectionWatchdog;
+    private Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier = PlainChannelInitializer.NO_PING;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
@@ -90,6 +96,14 @@ public class ConnectionBuilder {
         return handlers;
     }
 
+    public void enablePingBeforeConnect() {
+        pingCommandSupplier = PING_COMMAND_SUPPLIER;
+    }
+
+    public void enableAuthPingBeforeConnect() {
+        pingCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
+    }
+
     protected ConnectionWatchdog createConnectionWatchdog() {
 
         if (connectionWatchdog != null) {
@@ -110,8 +124,7 @@ public class ConnectionBuilder {
     }
 
     public RedisChannelInitializer build() {
-        return new PlainChannelInitializer(clientOptions.isPingBeforeActivateConnection(), password(), this::buildHandlers,
-                clientResources.eventBus());
+        return new PlainChannelInitializer(pingCommandSupplier, this::buildHandlers, clientResources.eventBus());
     }
 
     public ConnectionBuilder socketAddressSupplier(Supplier<SocketAddress> socketAddressSupplier) {
@@ -217,5 +230,9 @@ public class ConnectionBuilder {
 
     public DefaultEndpoint endpoint() {
         return endpoint;
+    }
+
+    Supplier<AsyncCommand<?, ?, ?>> getPingCommandSupplier() {
+        return pingCommandSupplier;
     }
 }

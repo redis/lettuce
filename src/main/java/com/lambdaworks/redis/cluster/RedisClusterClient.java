@@ -66,8 +66,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * <p>
  * Connections to the cluster members are opened on the first access to the cluster node and managed by the
- * {@link StatefulRedisClusterConnection}. You should not use transactional commands on cluster connections since {@code
- * MULTI}, {@code EXEC} and {@code DISCARD} have no key and cannot be assigned to a particular node.
+ * {@link StatefulRedisClusterConnection}. You should not use transactional commands on cluster connections since {@code MULTI},
+ * {@code EXEC} and {@code DISCARD} have no key and cannot be assigned to a particular node.
  * </p>
  * <p>
  * The Redis cluster client provides a {@link RedisAdvancedClusterCommands sync}, {@link RedisAdvancedClusterAsyncCommands
@@ -101,8 +101,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * initializes new connections with the {@code clientName}.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#flushall()} Run {@code FLUSHALL} on all master nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#flushdb()} Executes {@code FLUSHDB} on all master nodes.</li>
- * <li>{@link RedisAdvancedClusterAsyncCommands#keys(Object)} Executes {@code
- * KEYS} on all.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#keys(Object)} Executes {@code KEYS} on all.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#randomkey()} Returns a random key from a random master node.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#scriptFlush()} Executes {@code SCRIPT FLUSH} on all nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#scriptKill()} Executes {@code SCRIPT KILL} on all nodes.</li>
@@ -192,18 +191,18 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
 
             if (ssl.booleanValue() != redisURI.isSsl()) {
-                throw new IllegalArgumentException(
-                        "RedisURI " + redisURI + " SSL is not consistent with the other seed URI SSL settings");
+                throw new IllegalArgumentException("RedisURI " + redisURI
+                        + " SSL is not consistent with the other seed URI SSL settings");
             }
 
             if (startTls.booleanValue() != redisURI.isStartTls()) {
-                throw new IllegalArgumentException(
-                        "RedisURI " + redisURI + " StartTLS is not consistent with the other seed URI StartTLS settings");
+                throw new IllegalArgumentException("RedisURI " + redisURI
+                        + " StartTLS is not consistent with the other seed URI StartTLS settings");
             }
 
             if (verifyPeer.booleanValue() != redisURI.isVerifyPeer()) {
-                throw new IllegalArgumentException(
-                        "RedisURI " + redisURI + " VerifyPeer is not consistent with the other seed URI VerifyPeer settings");
+                throw new IllegalArgumentException("RedisURI " + redisURI
+                        + " VerifyPeer is not consistent with the other seed URI VerifyPeer settings");
             }
         }
     }
@@ -456,8 +455,8 @@ public class RedisClusterClient extends AbstractRedisClient {
                 timeout, unit);
 
         try {
-            connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier,
-                    () -> new PubSubCommandHandler<K, V>(clientResources, codec, endpoint));
+            connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<K, V>(
+                    clientResources, codec, endpoint));
         } catch (RedisException e) {
             connection.close();
             throw e;
@@ -507,8 +506,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         for (int i = 0; i < connectionAttempts; i++) {
             try {
-                connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier,
-                        () -> new CommandHandler(clientResources, endpoint));
+                connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier, () -> new CommandHandler(
+                        clientResources, endpoint));
                 connected = true;
                 break;
             } catch (RedisException e) {
@@ -599,8 +598,8 @@ public class RedisClusterClient extends AbstractRedisClient {
     private <K, V> void connectStateful(StatefulRedisConnectionImpl<K, V> connection, DefaultEndpoint endpoint,
             RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
-        getConnection(
-                connectStatefulAsync(connection, endpoint, connectionSettings, socketAddressSupplier, commandHandlerSupplier));
+        getConnection(connectStatefulAsync(connection, endpoint, connectionSettings, socketAddressSupplier,
+                commandHandlerSupplier));
     }
 
     /**
@@ -610,8 +609,8 @@ public class RedisClusterClient extends AbstractRedisClient {
     private <K, V> void connectStateful(StatefulRedisClusterConnectionImpl<K, V> connection, DefaultEndpoint endpoint,
             RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
-        getConnection(
-                connectStatefulAsync(connection, endpoint, connectionSettings, socketAddressSupplier, commandHandlerSupplier));
+        getConnection(connectStatefulAsync(connection, endpoint, connectionSettings, socketAddressSupplier,
+                commandHandlerSupplier));
     }
 
     /**
@@ -625,9 +624,17 @@ public class RedisClusterClient extends AbstractRedisClient {
         ConnectionBuilder connectionBuilder = createConnectionBuilder(connection, endpoint, connectionSettings,
                 socketAddressSupplier, commandHandlerSupplier);
 
+        if (clientOptions.isPingBeforeActivateConnection()) {
+            if (hasPassword(connectionSettings)) {
+                connectionBuilder.enableAuthPingBeforeConnect();
+            } else {
+                connectionBuilder.enablePingBeforeConnect();
+            }
+        }
+
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
-        if (connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0) {
+        if (!clientOptions.isPingBeforeActivateConnection() && hasPassword(connectionSettings)) {
             future = future.thenApplyAsync(channelHandler -> {
 
                 if (connection instanceof StatefulRedisClusterConnectionImpl) {
@@ -659,6 +666,10 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         return future.thenApply(channelHandler -> (S) connection);
+    }
+
+    private boolean hasPassword(RedisURI connectionSettings) {
+        return connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0;
     }
 
     private <K, V> ConnectionBuilder createConnectionBuilder(RedisChannelHandler<K, V> connection, DefaultEndpoint endpoint,
@@ -777,7 +788,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Determines a {@link Partitions topology view} based on the current and the obtain topology views.
-     * 
+     *
      * @param current the current topology view. May be {@literal null} if {@link RedisClusterClient} has no topology view yet.
      * @param topologyViews the obtain topology views
      * @return the {@link Partitions topology view} to use.
@@ -868,7 +879,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Returns the first {@link RedisURI} configured with this {@link RedisClusterClient} instance.
-     * 
+     *
      * @return the first {@link RedisURI}.
      */
     protected RedisURI getFirstUri() {
@@ -879,13 +890,12 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Returns a {@link Supplier} for {@link SocketAddress connection points}.
-     * 
+     *
      * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
      *        parameter but create a new collection with the desired order, must not be {@literal null}.
      * @return {@link Supplier} for {@link SocketAddress connection points}.
      */
-    protected Supplier<SocketAddress> getSocketAddressSupplier(
-            Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
+    protected Supplier<SocketAddress> getSocketAddressSupplier(Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
 
         LettuceAssert.notNull(sortFunction, "Sort function must not be null");
 
@@ -904,7 +914,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Returns an {@link Iterable} of the initial {@link RedisURI URIs}.
-     * 
+     *
      * @return the initial {@link RedisURI URIs}
      */
     protected Iterable<RedisURI> getInitialUris() {
@@ -913,7 +923,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     /**
      * Apply a {@link Consumer} of {@link StatefulRedisClusterConnectionImpl} to all active connections.
-     * 
+     *
      * @param function the {@link Consumer}.
      */
     protected void forEachClusterConnection(Consumer<StatefulRedisClusterConnectionImpl<?, ?>> function) {
@@ -949,7 +959,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * provide an {@link Iterable} of {@link RedisURI} that is used to perform the next topology refresh.
      * <p>
      * Subclasses of {@link RedisClusterClient} may override that method.
-     * 
+     *
      * @return {@link Iterable} of {@link RedisURI} for the next topology refresh.
      */
     protected Iterable<RedisURI> getTopologyRefreshSource() {
@@ -974,7 +984,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * enabled.
      * <p>
      * Subclasses of {@link RedisClusterClient} may override that method.
-     * 
+     *
      * @return {@link true} if dynamic refresh sources are used.
      * @see ClusterTopologyRefreshOptions#useDynamicRefreshSources()
      */

@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.connection.ConnectedEvent;
 import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
@@ -32,28 +31,24 @@ import com.lambdaworks.redis.protocol.AsyncCommand;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
 
 /**
  * @author Mark Paluch
  */
 class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
-    static final RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(
-            new Utf8StringCodec());
+    final static Supplier<AsyncCommand<?, ?, ?>> NO_PING = () -> null;
 
-    protected final char[] password;
-
-    private boolean pingBeforeActivate;
-    private CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
     private final Supplier<List<ChannelHandler>> handlers;
+    private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;
     private final EventBus eventBus;
 
-    PlainChannelInitializer(boolean pingBeforeActivateConnection, char[] password, Supplier<List<ChannelHandler>> handlers,
+    private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
+
+    PlainChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier, Supplier<List<ChannelHandler>> handlers,
             EventBus eventBus) {
 
-        this.pingBeforeActivate = pingBeforeActivateConnection;
-        this.password = password;
+        this.pingCommandSupplier = pingCommandSupplier;
         this.handlers = handlers;
         this.eventBus = eventBus;
     }
@@ -74,6 +69,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
                 @Override
                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+
                     eventBus.publish(new DisconnectedEvent(local(ctx), remote(ctx)));
                     initializedFuture = new CompletableFuture<>();
                     pingCommand = null;
@@ -94,13 +90,11 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
                 @Override
                 public void channelActive(final ChannelHandlerContext ctx) throws Exception {
+
                     eventBus.publish(new ConnectedEvent(local(ctx), remote(ctx)));
-                    if (pingBeforeActivate) {
-                        if (password != null && password.length != 0) {
-                            pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
-                        } else {
-                            pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
-                        }
+
+                    if (pingCommandSupplier != NO_PING) {
+                        pingCommand = pingCommandSupplier.get();
                         pingBeforeActivate(pingCommand, initializedFuture, ctx);
                     } else {
                         super.channelActive(ctx);
@@ -135,13 +129,6 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         });
 
         ctx.channel().writeAndFlush(cmd);
-    }
-
-    static void removeIfExists(ChannelPipeline pipeline, Class<? extends ChannelHandler> handlerClass) {
-        ChannelHandler channelHandler = pipeline.get(handlerClass);
-        if (channelHandler != null) {
-            pipeline.remove(channelHandler);
-        }
     }
 
     @Override
