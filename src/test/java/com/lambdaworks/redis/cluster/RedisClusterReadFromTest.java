@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -42,18 +43,21 @@ public class RedisClusterReadFromTest extends AbstractClusterTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
+
         setupClusterClient();
         clusterClient = new RedisClusterClient(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass
     public static void shutdownClient() {
+
         shutdownClusterClient();
         FastShutdown.shutdown(clusterClient);
     }
 
     @Before
-    public void before() throws Exception {
+    public void before() {
+
         clusterRule.getClusterClient().reloadPartitions();
         connection = clusterClient.connect();
         sync = connection.sync();
@@ -65,26 +69,31 @@ public class RedisClusterReadFromTest extends AbstractClusterTest {
     }
 
     @Test
-    public void defaultTest() throws Exception {
+    public void defaultTest() {
         assertThat(connection.getReadFrom()).isEqualTo(ReadFrom.MASTER);
     }
 
     @Test
-    public void readWriteMaster() throws Exception {
+    public void readWriteMaster() {
+
         connection.setReadFrom(ReadFrom.MASTER);
+
         sync.set(key, value);
         assertThat(sync.get(key)).isEqualTo(value);
     }
 
     @Test
-    public void readWriteMasterPreferred() throws Exception {
+    public void readWriteMasterPreferred() {
+
         connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
+
         sync.set(key, value);
         assertThat(sync.get(key)).isEqualTo(value);
     }
 
     @Test
-    public void readWriteSlave() throws Exception {
+    public void readWriteSlave() {
+
         connection.setReadFrom(ReadFrom.SLAVE);
 
         sync.set(key, "value1");
@@ -94,7 +103,19 @@ public class RedisClusterReadFromTest extends AbstractClusterTest {
     }
 
     @Test
-    public void readWriteNearest() throws Exception {
+    public void readWriteSlavePreferred() {
+
+        connection.setReadFrom(ReadFrom.SLAVE_PREFERRED);
+
+        sync.set(key, "value1");
+
+        connection.getConnection(host, port2).sync().waitForReplication(1, 1000);
+        assertThat(sync.get(key)).isEqualTo("value1");
+    }
+
+    @Test
+    public void readWriteNearest() {
+
         connection.setReadFrom(ReadFrom.NEAREST);
 
         sync.set(key, "value1");
