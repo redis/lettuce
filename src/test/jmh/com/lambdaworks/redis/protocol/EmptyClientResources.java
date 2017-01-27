@@ -29,6 +29,8 @@ import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.Delay;
 import com.lambdaworks.redis.resource.DnsResolver;
 import com.lambdaworks.redis.resource.EventLoopGroupProvider;
+import io.netty.util.Timer;
+import io.netty.util.concurrent.*;
 
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -72,6 +74,11 @@ public class EmptyClientResources implements ClientResources {
     @Override
     public int computationThreadPoolSize() {
         return 0;
+    }
+
+    @Override
+    public Timer timer() {
+        return null;
     }
 
     @Override

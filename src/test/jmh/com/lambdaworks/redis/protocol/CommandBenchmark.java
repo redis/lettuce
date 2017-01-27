@@ -15,16 +15,17 @@
  */
 package com.lambdaworks.redis.protocol;
 
-import com.lambdaworks.redis.codec.StringCodec;
-import com.lambdaworks.redis.protocol.CommandArgs.ExperimentalByteArrayCodec;
-import org.openjdk.jmh.annotations.*;
+import java.nio.charset.StandardCharsets;
+
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.State;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.ValueOutput;
-
-import java.nio.charset.StandardCharsets;
 
 /**
  * Benchmark for {@link Command}. Test cases:
@@ -39,7 +40,6 @@ import java.nio.charset.StandardCharsets;
 public class CommandBenchmark {
 
     private final static ByteArrayCodec BYTE_ARRAY_CODEC = new ByteArrayCodec();
-    private final static ExperimentalByteArrayCodec BYTE_ARRAY_CODEC2 = ExperimentalByteArrayCodec.INSTANCE;
     private final static Utf8StringCodec OLD_STRING_CODEC = new Utf8StringCodec();
     private final static StringCodec NEW_STRING_CODEC = new StringCodec(StandardCharsets.UTF_8);
     private final static EmptyByteBuf DUMMY_BYTE_BUF = new EmptyByteBuf();
@@ -60,11 +60,6 @@ public class CommandBenchmark {
     @Benchmark
     public void encodeCommandUsingByteArrayCodec() {
         createCommand(BYTE_KEY, BYTE_ARRAY_CODEC).encode(DUMMY_BYTE_BUF);
-    }
-
-    @Benchmark
-    public void encodeCommandUsingByteArrayCodec2() {
-        createCommand(BYTE_KEY, BYTE_ARRAY_CODEC2).encode(DUMMY_BYTE_BUF);
     }
 
     @Benchmark

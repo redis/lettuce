@@ -420,12 +420,20 @@
             </dependencies>
 
             <build>
-                <resources>
-                    <resource>
-                        <directory>src/test/resources</directory>
-                    </resource>
-                </resources>
                 <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.eluder.coveralls</groupId>
+                        <artifactId>coveralls-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
@@ -433,7 +441,7 @@
                         <executions>
                             <execution>
                                 <id>add-source</id>
-                                <phase>generate-sources</phase>
+                                <phase>generate-test-sources</phase>
                                 <goals>
                                     <goal>add-test-source</goal>
                                 </goals>
@@ -448,10 +456,11 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.5.0</version>
                         <executions>
                             <execution>
                                 <id>run-benchmarks</id>
-                                <phase>process-test-resources</phase>
+                                <phase>test</phase>
                                 <goals>
                                     <goal>exec</goal>
                                 </goals>
@@ -459,10 +468,21 @@
                                     <executable>java</executable>
                                     <classpathScope>test</classpathScope>
                                     <arguments>
+                                        <argument>-Xmx2G</argument>
                                         <argument>-classpath</argument>
                                         <classpath />
                                         <argument>org.openjdk.jmh.Main</argument>
                                         <argument>.*</argument>
+                                        <argument>-tu</argument>
+                                        <argument>ns</argument>
+                                        <argument>-f</argument>
+                                        <argument>1</argument>
+                                        <argument>-wi</argument>
+                                        <argument>10</argument>
+                                        <argument>-i</argument>
+                                        <argument>10</argument>
+                                        <argument>-bm</argument>
+                                        <argument>avgt</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -479,7 +499,7 @@
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
-                <version>1.4.0.Final</version>
+                <version>1.5.0.Final</version>
             </extension>
         </extensions>
 
@@ -488,7 +508,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.6.0</version>
                 <configuration>
                     <compilerArgument>-Xlint:all,-deprecation,-unchecked</compilerArgument>
                     <testCompilerArgument>-Xlint:none</testCompilerArgument>
