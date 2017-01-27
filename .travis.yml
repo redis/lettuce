@@ -5,6 +5,7 @@ env:
   matrix:
     - PROFILE=netty-40
     - PROFILE=netty-41
+    - PROFILE=jmh
 sudo: false
 before_install:
   - if [[ ! -f stunnel.tar.gz ]]; then wget -O stunnel.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.33.tar.gz; fi

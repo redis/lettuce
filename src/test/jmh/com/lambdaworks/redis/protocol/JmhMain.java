@@ -27,7 +27,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
 
 /**
  * Manual JMH Test Launcher.
- * 
+ *
  * @author Mark Paluch
  */
 public class JmhMain {
@@ -35,9 +35,10 @@ public class JmhMain {
     public static void main(String... args) throws IOException, RunnerException {
 
         // run selectively
-        // runCommandBenchmark();
+        runCommandBenchmark();
         runCommandHandlerBenchmark();
-        // runRedisStateMachineBenchmark();
+        runRedisStateMachineBenchmark();
+        runCommandEncoderBenchmark();
 
         // or all
         // runBenchmarks();
@@ -51,9 +52,8 @@ public class JmhMain {
 
     private static void runCommandBenchmark() throws RunnerException {
 
-        new Runner(
-                prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*CommandBenchmark.*").build())
-                        .run();
+        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*CommandBenchmark.*")
+                .build()).run();
 
         new Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandBenchmark.*").build())
                 .run();
@@ -61,16 +61,16 @@ public class JmhMain {
 
     private static void runCommandHandlerBenchmark() throws RunnerException {
 
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*CommandHandlerBenchmark.*")
-                .build()).run();
+        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
+                .include(".*CommandHandlerBenchmark.*").build()).run();
         // new
         // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
     }
 
     private static void runCommandEncoderBenchmark() throws RunnerException {
 
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*CommandEncoderBenchmark.*")
-                .build()).run();
+        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
+                .include(".*CommandEncoderBenchmark.*").build()).run();
         // new
         // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
     }
