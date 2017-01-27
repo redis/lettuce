@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.cluster;
+package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.ClientOptions;
+import java.util.concurrent.TimeUnit;
+
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * @author Mark Paluch
  */
-public class EmptyStatefulRedisConnection implements StatefulRedisConnection {
+public class EmptyStatefulRedisConnection extends RedisChannelHandler implements StatefulRedisConnection {
+
+    public final static EmptyStatefulRedisConnection INSTANCE = new EmptyStatefulRedisConnection(
+            EmptyRedisChannelWriter.INSTANCE);
+
+    public EmptyStatefulRedisConnection(RedisChannelWriter writer) {
+        super(writer, 0, TimeUnit.MINUTES);
+    }
     @Override
     public boolean isMulti() {
         return false;

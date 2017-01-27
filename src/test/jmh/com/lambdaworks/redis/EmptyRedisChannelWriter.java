@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.cluster;
+package com.lambdaworks.redis;
 
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisChannelWriter;
@@ -23,6 +23,9 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @author Mark Paluch
  */
 public class EmptyRedisChannelWriter implements RedisChannelWriter {
+
+    public final static EmptyRedisChannelWriter INSTANCE = new EmptyRedisChannelWriter();
+
     @Override
     public RedisCommand write(RedisCommand command) {
         return null;
