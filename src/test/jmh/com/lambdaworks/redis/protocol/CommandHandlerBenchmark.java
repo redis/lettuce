@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.protocol;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 
 import org.openjdk.jmh.annotations.*;
 
@@ -33,7 +34,7 @@ import io.netty.channel.embedded.EmbeddedChannel;
  * <li>user command writes</li>
  * <li>netty (in-eventloop) writes</li>
  * </ul>
- * 
+ *
  * @author Mark Paluch
  */
 @State(Scope.Benchmark)
@@ -46,12 +47,20 @@ public class CommandHandlerBenchmark {
     private final static ChannelFuture EMPTY = new EmptyFuture();
 
     private CommandHandler commandHandler;
+    private Collection<?> transportBuffer;
     private Command command;
 
     @Setup
     public void setup() {
 
-        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new ArrayDeque<>(512));
+        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new ArrayDeque<>()) {
+            @Override
+            protected void setState(LifecycleState lifecycleState) {
+                CommandHandlerBenchmark.this.transportBuffer = super.transportBuffer;
+                super.setState(lifecycleState);
+            }
+        };
+
         command = new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
 
         commandHandler.setState(CommandHandler.LifecycleState.CONNECTED);
@@ -62,6 +71,7 @@ public class CommandHandlerBenchmark {
     @TearDown(Level.Iteration)
     public void tearDown() {
         commandHandler.reset();
+        transportBuffer.clear();
     }
 
     @Benchmark
@@ -105,5 +115,4 @@ public class CommandHandlerBenchmark {
             return promise;
         }
     }
-
 }
