@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
  * Defines from which Redis nodes data is read.
- * 
+ *
  * @author Mark Paluch
  * @since 4.0
  */
@@ -38,6 +38,13 @@ public abstract class ReadFrom {
     public static final ReadFrom MASTER_PREFERRED = new ReadFromImpl.ReadFromMasterPreferred();
 
     /**
+     * Setting to read preferred from slaves and fall back to master if no slave is not available.
+     *
+     * @since 4.4
+     */
+    public static final ReadFrom SLAVE_PREFERRED = new ReadFromImpl.ReadFromSlavePreferred();
+
+    /**
      * Setting to read from the slave only.
      */
     public static final ReadFrom SLAVE = new ReadFromImpl.ReadFromSlave();
@@ -49,7 +56,7 @@ public abstract class ReadFrom {
 
     /**
      * Chooses the nodes from the matching Redis nodes that match this read selector.
-     * 
+     *
      * @param nodes set of nodes that are suitable for reading
      * @return List of {@link RedisNodeDescription}s that are selected for reading
      */
@@ -57,7 +64,7 @@ public abstract class ReadFrom {
 
     /**
      * Retrieve the {@link ReadFrom} preset by name.
-     * 
+     *
      * @param name the name of the read from setting
      * @return the {@link ReadFrom} preset
      * @throws IllegalArgumentException if {@code name} is empty, {@literal null} or the {@link ReadFrom} preset is unknown.
@@ -93,9 +100,9 @@ public abstract class ReadFrom {
 
         /**
          * Returns the list of nodes that are applicable for the read operation. The list is ordered by latency.
-         * 
+         *
          * @return the collection of nodes that are applicable for reading.
-         * 
+         *
          */
         List<RedisNodeDescription> getNodes();
     }

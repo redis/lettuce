@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class ReadFromTest {
 
     @Before
     public void before() throws Exception {
+
         master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
         nearest.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
         slave.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
@@ -66,6 +67,12 @@ public class ReadFromTest {
     public void slave() throws Exception {
         List<RedisNodeDescription> result = ReadFrom.SLAVE.select(getNodes());
         assertThat(result).hasSize(2).contains(nearest, slave);
+    }
+
+    @Test
+    public void slavePreferred() throws Exception {
+        List<RedisNodeDescription> result = ReadFrom.SLAVE_PREFERRED.select(getNodes());
+        assertThat(result).hasSize(3).containsExactly(nearest, slave, master);
     }
 
     @Test

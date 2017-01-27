@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
  * Collection of common read setting implementations.
- * 
+ *
  * @author Mark Paluch
  * @since 4.0
  */
@@ -35,24 +35,29 @@ class ReadFromImpl {
      * Read from master only.
      */
     static final class ReadFromMaster extends ReadFrom {
+
         @Override
         public List<RedisNodeDescription> select(Nodes nodes) {
+
             for (RedisNodeDescription node : nodes) {
                 if (node.getRole() == RedisInstance.Role.MASTER) {
                     return LettuceLists.newList(node);
                 }
             }
+
             return Collections.emptyList();
         }
     }
 
     /**
-     * Read preffered from master. If the master is not available, read from a slave.
+     * Read from master and slaves. Prefer master reads and fall back to slaves if the master is not available.
      */
     static final class ReadFromMasterPreferred extends ReadFrom {
+
         @Override
         public List<RedisNodeDescription> select(Nodes nodes) {
-            List<RedisNodeDescription> result = new ArrayList<>();
+
+            List<RedisNodeDescription> result = new ArrayList<>(nodes.getNodes().size());
 
             for (RedisNodeDescription node : nodes) {
                 if (node.getRole() == RedisInstance.Role.MASTER) {
@@ -65,6 +70,7 @@ class ReadFromImpl {
                     result.add(node);
                 }
             }
+
             return result;
         }
     }
@@ -73,14 +79,44 @@ class ReadFromImpl {
      * Read from slave only.
      */
     static final class ReadFromSlave extends ReadFrom {
+
         @Override
         public List<RedisNodeDescription> select(Nodes nodes) {
-            List<RedisNodeDescription> result = new ArrayList<>();
+
+            List<RedisNodeDescription> result = new ArrayList<>(nodes.getNodes().size());
+
             for (RedisNodeDescription node : nodes) {
                 if (node.getRole() == RedisInstance.Role.SLAVE) {
                     result.add(node);
                 }
             }
+
+            return result;
+        }
+    }
+
+    /**
+     * Read from master and slaves. Prefer slave reads and fall back to master if the no slave is not available.
+     */
+    static final class ReadFromSlavePreferred extends ReadFrom {
+
+        @Override
+        public List<RedisNodeDescription> select(Nodes nodes) {
+
+            List<RedisNodeDescription> result = new ArrayList<>(nodes.getNodes().size());
+
+            for (RedisNodeDescription node : nodes) {
+                if (node.getRole() == RedisInstance.Role.SLAVE) {
+                    result.add(node);
+                }
+            }
+
+            for (RedisNodeDescription node : nodes) {
+                if (node.getRole() == RedisInstance.Role.MASTER) {
+                    result.add(node);
+                }
+            }
+
             return result;
         }
     }
@@ -89,6 +125,7 @@ class ReadFromImpl {
      * Read from nearest node.
      */
     static final class ReadFromNearest extends ReadFrom {
+
         @Override
         public List<RedisNodeDescription> select(Nodes nodes) {
             return nodes.getNodes();
