@@ -493,9 +493,17 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         channelType(connectionBuilder, redisURI);
 
+        if (clientOptions.isPingBeforeActivateConnection()) {
+            if (hasPassword(redisURI)) {
+                connectionBuilder.enableAuthPingBeforeConnect();
+            } else {
+                connectionBuilder.enablePingBeforeConnect();
+            }
+        }
+
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
-        if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
+        if (!clientOptions.isPingBeforeActivateConnection() && hasPassword(redisURI)) {
 
             future = future.thenApplyAsync(channelHandler -> {
 
@@ -524,6 +532,10 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         return future.thenApply(channelHandler -> (S) connection);
+    }
+
+    private boolean hasPassword(RedisURI redisURI) {
+        return redisURI.getPassword() != null && redisURI.getPassword().length != 0;
     }
 
     /**
@@ -723,6 +735,10 @@ public class RedisClient extends AbstractRedisClient {
         logger.debug("Trying to get a Redis Sentinel connection for one of: " + redisURI.getSentinels());
 
         connectionBuilder(commandHandler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
+
+        if (clientOptions.isPingBeforeActivateConnection()) {
+            connectionBuilder.enablePingBeforeConnect();
+        }
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
             channelType(connectionBuilder, redisURI);

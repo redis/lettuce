@@ -17,7 +17,6 @@ package com.lambdaworks.redis;
 
 import static com.lambdaworks.redis.ConnectionEventTrigger.local;
 import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
-import static com.lambdaworks.redis.PlainChannelInitializer.INITIALIZING_CMD_BUILDER;
 import static com.lambdaworks.redis.PlainChannelInitializer.pingBeforeActivate;
 import static com.lambdaworks.redis.PlainChannelInitializer.removeIfExists;
 
@@ -27,6 +26,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import javax.net.ssl.*;
 
@@ -37,7 +37,10 @@ import com.lambdaworks.redis.event.connection.DisconnectedEvent;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
@@ -46,7 +49,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 /**
  * Connection builder for SSL connections. This class is part of the internal API.
- * 
+ *
  * @author Mark Paluch
  */
 public class SslConnectionBuilder extends ConnectionBuilder {
@@ -75,8 +78,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         final List<ChannelHandler> channelHandlers = buildHandlers();
 
-        return new SslChannelInitializer(clientOptions().isPingBeforeActivateConnection(), channelHandlers, redisURI,
-                clientResources().eventBus(), clientOptions().getSslOptions());
+        return new SslChannelInitializer(getPingCommandSupplier(), channelHandlers, redisURI, clientResources().eventBus(),
+                clientOptions().getSslOptions());
     }
 
     /**
@@ -84,16 +87,18 @@ public class SslConnectionBuilder extends ConnectionBuilder {
      */
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
-        private final boolean pingBeforeActivate;
+        private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;
         private final List<ChannelHandler> handlers;
         private final RedisURI redisURI;
         private final EventBus eventBus;
         private final SslOptions sslOptions;
-        private CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
 
-        public SslChannelInitializer(boolean pingBeforeActivate, List<ChannelHandler> handlers, RedisURI redisURI,
-                EventBus eventBus, SslOptions sslOptions) {
-            this.pingBeforeActivate = pingBeforeActivate;
+        private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
+
+        public SslChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier, List<ChannelHandler> handlers,
+                RedisURI redisURI, EventBus eventBus, SslOptions sslOptions) {
+
+            this.pingCommandSupplier = pingCommandSupplier;
             this.handlers = handlers;
             this.redisURI = redisURI;
             this.eventBus = eventBus;
@@ -176,13 +181,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
                             SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
                             if (event.isSuccess()) {
-                                if (pingBeforeActivate) {
-                                    if (redisURI.getPassword() != null && redisURI.getPassword().length != 0) {
-                                        pingCommand = new AsyncCommand<>(
-                                                INITIALIZING_CMD_BUILDER.auth(new String(redisURI.getPassword())));
-                                    } else {
-                                        pingCommand = new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
-                                    }
+                                if (pingCommandSupplier != PlainChannelInitializer.NO_PING) {
+                                    pingCommand = pingCommandSupplier.get();
                                     pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
                                 } else {
                                     ctx.fireChannelActive();
