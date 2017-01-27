@@ -17,6 +17,9 @@ package com.lambdaworks.redis.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+
 import org.junit.Test;
 
 import reactor.core.publisher.Flux;
@@ -41,13 +44,11 @@ public class ConnectionEventsTriggeredTest extends AbstractTest {
         Flux<ConnectionEvent> publisher = client.getResources().eventBus().get()
                 .filter(event -> event instanceof ConnectionEvent).cast(ConnectionEvent.class);
 
-        client.connect().close();
-
-        StepVerifier.create(publisher).assertNext(event -> {
+        StepVerifier.create(publisher).then(() -> client.connect().close()).assertNext(event -> {
             assertThat(event.remoteAddress()).isNotNull();
             assertThat(event.localAddress()).isNotNull();
             assertThat(event.toString()).contains("->");
-        }).expectNextCount(3).thenCancel().verify();
+        }).expectNextCount(3).thenCancel().verify(Duration.of(5, ChronoUnit.SECONDS));
 
         client.shutdown();
     }
