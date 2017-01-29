@@ -15,6 +15,7 @@
  */
 package com.lambdaworks.redis;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -58,7 +59,6 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
 
     @Override
     public void setTimeout(long timeout, TimeUnit unit) {
-
     }
 
     @Override
@@ -73,7 +73,6 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
 
     @Override
     public void close() {
-
     }
 
     @Override
@@ -88,31 +87,31 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
 
     @Override
     public void activated() {
-
     }
 
     @Override
     public void deactivated() {
-
     }
 
     @Override
     public void reset() {
-
     }
 
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
-
     }
 
     @Override
     public void flushCommands() {
-
     }
 
     @Override
     public RedisCommand dispatch(RedisCommand command) {
         return null;
+    }
+
+    @Override
+    public Collection<? extends RedisCommand> dispatch(Collection commands) {
+        return commands;
     }
 }

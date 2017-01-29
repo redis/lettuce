@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 
 /**
  * An asynchronous and thread-safe API for a Redis Sentinel connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -178,7 +178,7 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     }
 
     public <T> AsyncCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
-        return connection.dispatch(new AsyncCommand<>(cmd));
+        return (AsyncCommand<K, V, T>) connection.dispatch(new AsyncCommand<>(cmd));
     }
 
     public void close() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.lambdaworks.redis.api;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.ClientOptions;
@@ -22,7 +23,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * A stateful connection providing command dispatching, timeouts and open/close methods.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -53,12 +54,22 @@ public interface StatefulConnection<K, V> extends AutoCloseable {
      * instance is returned after the call. This command does not wait until the command completes and does not guarantee
      * whether the command is executed successfully.
      *
-     * @param command the Redis command
+     * @param command the Redis command.
      * @param <T> result type
-     * @param <C> command type
-     * @return the written redis command
+     * @return the written Redis command.
      */
-    <T, C extends RedisCommand<K, V, T>> C dispatch(C command);
+    <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command);
+
+    /**
+     * Dispatch multiple command in a single write on the channel. The commands may be changed/wrapped during write and the
+     * written instance is returned after the call. This command does not wait until the command completes and does not
+     * guarantee whether the command is executed successfully.
+     *
+     * @param commands the Redis commands.
+     * @return the written Redis commands.
+     * @since 5.0
+     */
+    Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands);
 
     /**
      * Close the connection. The connection will become not usable anymore as soon as this method was called.
@@ -86,7 +97,7 @@ public interface StatefulConnection<K, V> extends AutoCloseable {
      * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
      * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
-     * 
+     *
      * @param autoFlush state of autoFlush.
      */
     void setAutoFlushCommands(boolean autoFlush);

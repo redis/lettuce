@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -41,14 +44,12 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
 
-import io.netty.channel.ChannelHandler;
-
 /**
  * A thread-safe connection to a Redis Cluster. Multiple threads may share one {@link StatefulRedisClusterConnectionImpl}
  *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
- * 
+ *
  * @author Mark Paluch
  * @since 4.0
  */
@@ -168,14 +169,29 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     @Override
-    public <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
+    public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
+        return super.dispatch(preProcessCommand(command));
+    }
 
-        RedisCommand<K, V, T> local = cmd;
+    @Override
+    public Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands) {
+
+        List<RedisCommand<K, V, ?>> commandsToSend = new ArrayList<>(commands.size());
+        for (RedisCommand<K, V, ?> command : commands) {
+            commandsToSend.add(preProcessCommand(command));
+        }
+
+        return super.dispatch(commandsToSend);
+    }
+
+    private <T> RedisCommand<K, V, T> preProcessCommand(RedisCommand<K, V, T> command) {
+
+        RedisCommand<K, V, T> local = command;
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK") && cmd.getArgs().getFirstString() != null) {
-                    this.password = cmd.getArgs().getFirstString().toCharArray();
+                if (status.equals("OK") && command.getArgs().getFirstString() != null) {
+                    this.password = command.getArgs().getFirstString().toCharArray();
                 }
             });
         }
@@ -195,8 +211,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
                 }
             });
         }
-
-        return super.dispatch((C) local);
+        return local;
     }
 
     private <T> RedisCommand<K, V, T> attachOnComplete(RedisCommand<K, V, T> command, Consumer<T> consumer) {

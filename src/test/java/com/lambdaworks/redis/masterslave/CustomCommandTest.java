@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.commands;
+package com.lambdaworks.redis.masterslave;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import java.util.Arrays;
 
-import org.junit.Test;
+import org.junit.*;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.RedisCommandExecutionException;
-import com.lambdaworks.redis.TransactionResult;
+import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
@@ -33,9 +33,37 @@ import com.lambdaworks.redis.protocol.*;
 /**
  * @author Mark Paluch
  */
-public class CustomCommandTest extends AbstractRedisClientTest {
+public class CustomCommandTest extends AbstractTest {
 
-    protected final Utf8StringCodec utf8StringCodec = new Utf8StringCodec();
+    private static final Utf8StringCodec utf8StringCodec = new Utf8StringCodec();
+    private static RedisClient redisClient;
+
+    private RedisCommands<String, String> redis;
+    private StatefulRedisConnection<String, String> connection;
+
+    @BeforeClass
+    public static void beforeClass() {
+        redisClient = RedisClient.create(TestClientResources.get());
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        FastShutdown.shutdown(redisClient);
+    }
+
+    @Before
+    public void before() {
+
+        RedisURI uri = RedisURI.create("redis-sentinel://127.0.0.1:26379?sentinelMasterId=mymaster&timeout=5s");
+        connection = MasterSlave.connect(redisClient, utf8StringCodec, uri);
+
+        redis = connection.sync();
+    }
+
+    @After
+    public void after() {
+        connection.close();
+    }
 
     @Test
     public void dispatchSet() throws Exception {
@@ -75,9 +103,10 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void standaloneAsyncPing() throws Exception {
+    public void masterSlaveAsyncPing() throws Exception {
 
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec), null);
+        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
+                new StatusOutput<>(new Utf8StringCodec()), null);
 
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         getStandaloneConnection().dispatch(async);
@@ -86,49 +115,32 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void standaloneAsyncBatchPing() throws Exception {
+    public void masterSlaveAsyncBatchPing() throws Exception {
 
-        RedisCommand<String, String, String> command1 = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec),
-                null);
+        RedisCommand<String, String, String> command1 = new Command<>(CommandType.SET, new StatusOutput<>(utf8StringCodec),
+                new CommandArgs<>(utf8StringCodec).addKey("key1").addValue("value"));
 
-        RedisCommand<String, String, String> command2 = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec),
-                null);
+        RedisCommand<String, String, String> command2 = new Command<>(CommandType.GET, new StatusOutput<>(utf8StringCodec),
+                new CommandArgs<>(utf8StringCodec).addKey("key1"));
+
+        RedisCommand<String, String, String> command3 = new Command<>(CommandType.SET, new StatusOutput<>(utf8StringCodec),
+                new CommandArgs<>(utf8StringCodec).addKey("other-key1").addValue("value"));
 
         AsyncCommand<String, String, String> async1 = new AsyncCommand<>(command1);
         AsyncCommand<String, String, String> async2 = new AsyncCommand<>(command2);
-        getStandaloneConnection().dispatch(Arrays.asList(async1, async2));
-
-        assertThat(async1.get()).isEqualTo("PONG");
-        assertThat(async2.get()).isEqualTo("PONG");
-    }
-
-    @Test
-    public void standaloneAsyncBatchTransaction() throws Exception {
-
-        RedisCommand<String, String, String> multi = new Command<>(CommandType.MULTI, new StatusOutput<>(utf8StringCodec));
-
-        RedisCommand<String, String, String> set = new Command<>(CommandType.SET, new StatusOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey("key").add("value"));
-
-        RedisCommand<String, String, TransactionResult> exec = new Command<>(CommandType.EXEC, null);
-
-        AsyncCommand<String, String, String> async1 = new AsyncCommand<>(multi);
-        AsyncCommand<String, String, String> async2 = new AsyncCommand<>(set);
-        AsyncCommand<String, String, TransactionResult> async3 = new AsyncCommand<>(exec);
+        AsyncCommand<String, String, String> async3 = new AsyncCommand<>(command3);
         getStandaloneConnection().dispatch(Arrays.asList(async1, async2, async3));
 
         assertThat(async1.get()).isEqualTo("OK");
-        assertThat(async2.get()).isEqualTo("OK");
-
-        TransactionResult transactionResult = async3.get();
-        assertThat(transactionResult.wasRolledBack()).isFalse();
-        assertThat(transactionResult.<String> get(0)).isEqualTo("OK");
+        assertThat(async2.get()).isEqualTo("value");
+        assertThat(async3.get()).isEqualTo("OK");
     }
 
     @Test
-    public void standaloneFireAndForget() throws Exception {
+    public void masterSlaveFireAndForget() throws Exception {
 
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec), null);
+        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
+                new StatusOutput<>(new Utf8StringCodec()), null);
         getStandaloneConnection().dispatch(command);
         assertThat(command.isCancelled()).isFalse();
 

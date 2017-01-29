@@ -70,7 +70,7 @@ public class ReactiveBackpressurePropagationTest {
         commandHandler = new CommandHandler(clientResources, endpoint);
 
         when(clientResources.commandLatencyCollector()).thenReturn(latencyCollector);
-        when(statefulConnection.dispatch(any())).thenAnswer(invocation -> {
+        when(statefulConnection.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 
             RedisCommand command = (RedisCommand) invocation.getArguments()[0];
             embeddedChannel.writeOutbound(command);

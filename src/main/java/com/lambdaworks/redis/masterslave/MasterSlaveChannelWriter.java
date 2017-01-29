@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,14 @@
  */
 package com.lambdaworks.redis.masterslave;
 
+import java.util.Collection;
+
 import com.lambdaworks.redis.ReadFrom;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.masterslave.MasterSlaveConnectionProvider.Intent;
 import com.lambdaworks.redis.protocol.ConnectionFacade;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -47,19 +50,68 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
             throw new RedisException("Connection is closed");
         }
 
-        MasterSlaveConnectionProvider.Intent intent = getIntent(command.getType());
-        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection) masterSlaveConnectionProvider.getConnection(intent);
+        Intent intent = getIntent(command.getType());
+        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection) masterSlaveConnectionProvider
+                .getConnection(intent);
 
         return connection.dispatch(command);
     }
 
-    private MasterSlaveConnectionProvider.Intent getIntent(ProtocolKeyword type) {
+    @Override
+    public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands) {
 
-        if (ReadOnlyCommands.isReadOnlyCommand(type)) {
-            return MasterSlaveConnectionProvider.Intent.READ;
+        LettuceAssert.notNull(commands, "Commands must not be null");
+
+        if (closed) {
+            throw new RedisException("Connection is closed");
         }
 
-        return MasterSlaveConnectionProvider.Intent.WRITE;
+        // TODO: Retain order or retain Intent preference?
+        // Currently: Retain order
+        Intent intent = getIntent(commands);
+
+        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection) masterSlaveConnectionProvider
+                .getConnection(intent);
+
+        return connection.dispatch(commands);
+    }
+
+    /**
+     * Optimization: Determine command intents and optimize for bulk execution preferring one node.
+     * <p>
+     * If there is only one intent, then we take the intent derived from the commands. If there is more than one intent, then
+     * use {@link Intent#WRITE}.
+     *
+     * @param commands {@link Collection} of {@link RedisCommand commands}.
+     * @return the intent.
+     */
+    static Intent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+
+        boolean w = false;
+        boolean r = false;
+        Intent singleIntent = Intent.WRITE;
+
+        for (RedisCommand<?, ?, ?> command : commands) {
+
+            singleIntent = getIntent(command.getType());
+            if (singleIntent == Intent.READ) {
+                r = true;
+            }
+
+            if (singleIntent == Intent.WRITE) {
+                w = true;
+            }
+
+            if (r && w) {
+                return Intent.WRITE;
+            }
+        }
+
+        return singleIntent;
+    }
+
+    private static Intent getIntent(ProtocolKeyword type) {
+        return ReadOnlyCommands.isReadOnlyCommand(type) ? Intent.READ : Intent.WRITE;
     }
 
     @Override

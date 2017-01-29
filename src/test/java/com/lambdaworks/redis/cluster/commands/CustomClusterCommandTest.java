@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,18 @@ package com.lambdaworks.redis.cluster.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.lambdaworks.TestClientResources;
+import java.util.Arrays;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.lambdaworks.redis.*;
+import com.lambdaworks.TestClientResources;
+import com.lambdaworks.redis.FastShutdown;
+import com.lambdaworks.redis.RedisCommandExecutionException;
+import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.AbstractClusterTest;
 import com.lambdaworks.redis.cluster.ClusterTestUtil;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
@@ -87,10 +92,10 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void standaloneAsyncPing() throws Exception {
+    public void clusterAsyncPing() throws Exception {
 
-        RedisCommand<String, String, String> command = new Command<>(CustomCommandTest.MyCommands.PING,
-                new StatusOutput<>(new Utf8StringCodec()), null);
+        RedisCommand<String, String, String> command = new Command<>(CustomCommandTest.MyCommands.PING, new StatusOutput<>(
+                utf8StringCodec), null);
 
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         redisClusterConnection.dispatch(async);
@@ -99,10 +104,49 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void standaloneFireAndForget() throws Exception {
+    public void clusterAsyncBatchPing() throws Exception {
 
-        RedisCommand<String, String, String> command = new Command<>(CustomCommandTest.MyCommands.PING,
-                new StatusOutput<>(new Utf8StringCodec()), null);
+        RedisCommand<String, String, String> command1 = new Command<>(CustomCommandTest.MyCommands.PING, new StatusOutput<>(
+                utf8StringCodec), null);
+
+        RedisCommand<String, String, String> command2 = new Command<>(CustomCommandTest.MyCommands.PING, new StatusOutput<>(
+                utf8StringCodec), null);
+
+        AsyncCommand<String, String, String> async1 = new AsyncCommand<>(command1);
+        AsyncCommand<String, String, String> async2 = new AsyncCommand<>(command2);
+        redisClusterConnection.dispatch(Arrays.asList(async1, async2));
+
+        assertThat(async1.get()).isEqualTo("PONG");
+        assertThat(async2.get()).isEqualTo("PONG");
+    }
+
+    @Test
+    public void clusterAsyncBatchSet() throws Exception {
+
+        RedisCommand<String, String, String> command1 = new Command<>(CommandType.SET, new StatusOutput<>(utf8StringCodec),
+                new CommandArgs<>(utf8StringCodec).addKey("key1").addValue("value"));
+
+        RedisCommand<String, String, String> command2 = new Command<>(CommandType.GET, new StatusOutput<>(utf8StringCodec),
+                new CommandArgs<>(utf8StringCodec).addKey("key1"));
+
+        RedisCommand<String, String, String> command3 = new Command<>(CommandType.SET, new StatusOutput<>(utf8StringCodec),
+                new CommandArgs<>(utf8StringCodec).addKey("other-key1").addValue("value"));
+
+        AsyncCommand<String, String, String> async1 = new AsyncCommand<>(command1);
+        AsyncCommand<String, String, String> async2 = new AsyncCommand<>(command2);
+        AsyncCommand<String, String, String> async3 = new AsyncCommand<>(command3);
+        redisClusterConnection.dispatch(Arrays.asList(async1, async2, async3));
+
+        assertThat(async1.get()).isEqualTo("OK");
+        assertThat(async2.get()).isEqualTo("value");
+        assertThat(async3.get()).isEqualTo("OK");
+    }
+
+    @Test
+    public void clusterFireAndForget() throws Exception {
+
+        RedisCommand<String, String, String> command = new Command<>(CustomCommandTest.MyCommands.PING, new StatusOutput<>(
+                utf8StringCodec), null);
         redisClusterConnection.dispatch(command);
         assertThat(command.isCancelled()).isFalse();
 

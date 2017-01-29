@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.AUTH;
-import static com.lambdaworks.redis.protocol.CommandType.DISCARD;
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
-import static com.lambdaworks.redis.protocol.CommandType.MULTI;
-import static com.lambdaworks.redis.protocol.CommandType.READONLY;
-import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
-import static com.lambdaworks.redis.protocol.CommandType.SELECT;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -36,14 +33,13 @@ import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.output.MultiOutput;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
-import io.netty.channel.ChannelHandler;
 
 /**
  * A thread-safe connection to a Redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
  *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -108,7 +104,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     /**
      * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
-     * 
+     *
      * @return a new instance
      */
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
@@ -148,7 +144,37 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     @Override
-    public <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
+    public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
+
+        RedisCommand<K, V, T> toSend = preProcessCommand(command);
+
+        try {
+            return super.dispatch(toSend);
+        } finally {
+            if (command.getType().name().equals(MULTI.name())) {
+                multi = (multi == null ? new MultiOutput<>(codec) : multi);
+            }
+        }
+    }
+
+    @Override
+    public Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands) {
+
+        List<RedisCommand<K, V, ?>> sentCommands = new ArrayList<>(commands.size());
+
+        commands.forEach(o -> {
+            RedisCommand<K, V, ?> command = preProcessCommand(o);
+
+            sentCommands.add(command);
+            if (command.getType().name().equals(MULTI.name())) {
+                multi = (multi == null ? new MultiOutput<>(codec) : multi);
+            }
+        });
+
+        return super.dispatch(sentCommands);
+    }
+
+    protected <T> RedisCommand<K, V, T> preProcessCommand(RedisCommand<K, V, T> cmd) {
 
         RedisCommand<K, V, T> local = cmd;
 
@@ -204,14 +230,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             local = new TransactionalCommand<>(local);
             multi.add(local);
         }
-
-        try {
-            return (C) super.dispatch(local);
-        } finally {
-            if (cmd.getType().name().equals(MULTI.name())) {
-                multi = (multi == null ? new MultiOutput<>(codec) : multi);
-            }
-        }
+        return local;
     }
 
     private <T> RedisCommand<K, V, T> attachOnComplete(RedisCommand<K, V, T> command, Consumer<T> consumer) {
@@ -226,8 +245,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public void setClientName(String clientName) {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
-        AsyncCommand<String, String, String> async = new AsyncCommand<>(
-                new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.CLIENT, new StatusOutput<>(
+                StringCodec.UTF8), args));
         this.clientName = clientName;
 
         dispatch((RedisCommand) async);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Abstract base for every redis connection. Provides basic connection functionality and tracks open resources.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -59,7 +59,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
      * @param unit unit of the timeout
      */
     public RedisChannelHandler(RedisChannelWriter writer, long timeout, TimeUnit unit) {
-        
+
         this.channelWriter = writer;
 
         writer.setConnectionFacade(this);
@@ -68,7 +68,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     /**
      * Set the command timeout for this connection.
-     * 
+     *
      * @param timeout Command timeout.
      * @param unit Unit of time for the timeout.
      */
@@ -83,8 +83,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
      */
     @Override
     public synchronized void close() {
-        
-        if(debugEnabled) {
+
+        if (debugEnabled) {
             logger.debug("close()");
         }
 
@@ -102,18 +102,27 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
         }
     }
 
-    protected <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
-        
-        if(debugEnabled) {
+    protected <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
+
+        if (debugEnabled) {
             logger.debug("dispatching command {}", cmd);
         }
-        
-        return (C) channelWriter.write(cmd);
+
+        return channelWriter.write(cmd);
+    }
+
+    protected Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands) {
+
+        if (debugEnabled) {
+            logger.debug("dispatching commands {}", commands);
+        }
+
+        return channelWriter.write(commands);
     }
 
     /**
      * Register Closeable resources. Internal access only.
-     * 
+     *
      * @param registry registry of closeables
      * @param closeables closeables to register
      */
@@ -129,7 +138,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
                 try {
                     closeable.close();
                 } catch (IOException e) {
-                    if(debugEnabled) {
+                    if (debugEnabled) {
                         logger.debug(e.toString(), e);
                     }
                 }
@@ -144,7 +153,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     * 
+     *
      * @return true if the connection is closed (final state in the connection lifecyle).
      */
     public boolean isClosed() {
@@ -167,7 +176,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     * 
+     *
      * @return the channel writer
      */
     public RedisChannelWriter getChannelWriter() {
@@ -175,7 +184,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     * 
+     *
      * @return true if the connection is active and not closed.
      */
     public boolean isOpen() {

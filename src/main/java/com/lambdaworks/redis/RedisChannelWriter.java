@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.lambdaworks.redis;
 
 import java.io.Closeable;
+import java.util.Collection;
 
 import com.lambdaworks.redis.protocol.ConnectionFacade;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * Writer for a channel. Writers push commands on to the communication channel and maintain a state for the commands.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -31,14 +32,25 @@ public interface RedisChannelWriter extends Closeable {
     /**
      * Write a command on the channel. The command may be changed/wrapped during write and the written instance is returned
      * after the call.
-     * 
-     * @param command the redis command
+     *
+     * @param command the Redis command.
      * @param <K> key type
      * @param <V> value type
      * @param <T> result type
      * @return the written redis command
      */
     <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
+
+    /**
+     * Write multiple commands on the channel. The commands may be changed/wrapped during write and the written instance is
+     * returned after the call.
+     *
+     * @param commands the Redis commands.
+     * @param <K> key type
+     * @param <V> value type
+     * @return the written redis command
+     */
+    <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands);
 
     @Override
     void close();
@@ -51,7 +63,7 @@ public interface RedisChannelWriter extends Closeable {
 
     /**
      * Set the corresponding connection facade in order to notify it about channel active/inactive state.
-     * 
+     *
      * @param connection the connection facade (external connection object)
      */
     void setConnectionFacade(ConnectionFacade connection);
@@ -60,7 +72,7 @@ public interface RedisChannelWriter extends Closeable {
      * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
      * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
-     * 
+     *
      * @param autoFlush state of autoFlush.
      */
     void setAutoFlushCommands(boolean autoFlush);

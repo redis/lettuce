@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,16 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.junit.Test;
 
+import com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent;
 import com.lambdaworks.redis.internal.HostAndPort;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * @author Mark Paluch
@@ -27,7 +34,7 @@ import com.lambdaworks.redis.internal.HostAndPort;
 public class ClusterDistributionChannelWriterTest {
 
     @Test
-    public void shouldParseAskTargetCorrectly() throws Exception {
+    public void shouldParseAskTargetCorrectly() {
 
         HostAndPort askTarget = ClusterDistributionChannelWriter.getAskTarget("ASK 1234 127.0.0.1:6381");
 
@@ -36,7 +43,7 @@ public class ClusterDistributionChannelWriterTest {
     }
 
     @Test
-    public void shouldParseIPv6AskTargetCorrectly() throws Exception {
+    public void shouldParseIPv6AskTargetCorrectly() {
 
         HostAndPort askTarget = ClusterDistributionChannelWriter.getAskTarget("ASK 1234 1:2:3:4::6:6381");
 
@@ -45,7 +52,7 @@ public class ClusterDistributionChannelWriterTest {
     }
 
     @Test
-    public void shouldParseMovedTargetCorrectly() throws Exception {
+    public void shouldParseMovedTargetCorrectly() {
 
         HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget("MOVED 1234 127.0.0.1:6381");
 
@@ -54,11 +61,50 @@ public class ClusterDistributionChannelWriterTest {
     }
 
     @Test
-    public void shouldParseIPv6MovedTargetCorrectly() throws Exception {
+    public void shouldParseIPv6MovedTargetCorrectly() {
 
         HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget("MOVED 1234 1:2:3:4::6:6381");
 
         assertThat(moveTarget.getHostText()).isEqualTo("1:2:3:4::6");
         assertThat(moveTarget.getPort()).isEqualTo(6381);
+    }
+
+    @Test
+    public void shouldReturnIntentForWriteCommand() {
+
+        RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
+        RedisCommand<String, String, String> mset = new Command<>(CommandType.MSET, null);
+
+        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(set, mset))).isEqualTo(Intent.WRITE);
+
+        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(Intent.WRITE);
+    }
+
+    @Test
+    public void shouldReturnDefaultIntentForNoCommands() {
+
+        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.emptyList())).isEqualTo(Intent.WRITE);
+    }
+
+    @Test
+    public void shouldReturnIntentForReadCommand() {
+
+        RedisCommand<String, String, String> get = new Command<>(CommandType.GET, null);
+        RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
+
+        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(get, mget))).isEqualTo(Intent.READ);
+
+        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(get))).isEqualTo(Intent.READ);
+    }
+
+    @Test
+    public void shouldReturnIntentForMixedCommands() {
+
+        RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
+        RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
+
+        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(set, mget))).isEqualTo(Intent.WRITE);
+
+        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(Intent.WRITE);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.DnsResolvers;
 
@@ -97,7 +98,7 @@ public class ClusterTopologyRefreshTest {
         when(connection1.async()).thenReturn(asyncCommands1);
         when(connection2.async()).thenReturn(asyncCommands2);
 
-        when(connection1.dispatch(any())).thenAnswer(invocation -> {
+        when(connection1.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 
             TimedAsyncCommand command = (TimedAsyncCommand) invocation.getArguments()[0];
             if (command.getType() == CommandType.CLUSTER) {
@@ -116,7 +117,7 @@ public class ClusterTopologyRefreshTest {
             return command;
         });
 
-        when(connection2.dispatch(any())).thenAnswer(invocation -> {
+        when(connection2.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 
             TimedAsyncCommand command = (TimedAsyncCommand) invocation.getArguments()[0];
             if (command.getType() == CommandType.CLUSTER) {
@@ -171,8 +172,8 @@ public class ClusterTopologyRefreshTest {
         Requests clusterNodesRequests = createClusterNodesRequests(1, nodes1);
         Requests clientRequests = createClientListRequests(1, "c1\nc2\n");
 
-        NodeTopologyViews nodeSpecificViews = sut.getNodeSpecificViews(clusterNodesRequests, clientRequests,
-                COMMAND_TIMEOUT_NS);
+        NodeTopologyViews nodeSpecificViews = sut
+                .getNodeSpecificViews(clusterNodesRequests, clientRequests, COMMAND_TIMEOUT_NS);
 
         List<Partitions> values = new ArrayList<>(nodeSpecificViews.toMap().values());
 
@@ -197,8 +198,8 @@ public class ClusterTopologyRefreshTest {
 
         Requests clientRequests = createClientListRequests(5, "c1\nc2\n").mergeWith(createClientListRequests(1, "c1\nc2\n"));
 
-        NodeTopologyViews nodeSpecificViews = sut.getNodeSpecificViews(clusterNodesRequests, clientRequests,
-                COMMAND_TIMEOUT_NS);
+        NodeTopologyViews nodeSpecificViews = sut
+                .getNodeSpecificViews(clusterNodesRequests, clientRequests, COMMAND_TIMEOUT_NS);
         List<Partitions> values = new ArrayList<>(nodeSpecificViews.toMap().values());
 
         assertThat(values).hasSize(2);
@@ -308,8 +309,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByClientCount(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(seed.get(0),
-                RedisURI.create("127.0.0.1", 7381));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
+                .containsSequence(seed.get(0), RedisURI.create("127.0.0.1", 7381));
     }
 
     @Test
@@ -328,8 +329,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByClientCount(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(RedisURI.create("127.0.0.1", 7381),
-                seed.get(0));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
+                .containsSequence(RedisURI.create("127.0.0.1", 7381), seed.get(0));
     }
 
     @Test
@@ -346,8 +347,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByLatency(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(seed.get(0),
-                RedisURI.create("127.0.0.1", 7381));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
+                .containsSequence(seed.get(0), RedisURI.create("127.0.0.1", 7381));
     }
 
     @Test
@@ -366,8 +367,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByLatency(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(RedisURI.create("127.0.0.1", 7381),
-                seed.get(0));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
+                .containsSequence(RedisURI.create("127.0.0.1", 7381), seed.get(0));
     }
 
     protected Requests createClusterNodesRequests(int duration, String nodes) {

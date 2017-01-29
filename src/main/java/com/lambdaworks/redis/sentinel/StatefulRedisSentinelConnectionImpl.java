@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.lambdaworks.redis.sentinel;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.RedisChannelHandler;
@@ -27,7 +28,6 @@ import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
-import io.netty.channel.ChannelHandler;
 
 /**
  * @author Mark Paluch
@@ -53,8 +53,13 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     }
 
     @Override
-    public <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
-        return super.dispatch(cmd);
+    public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
+        return super.dispatch(command);
+    }
+
+    @Override
+    public Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands) {
+        return super.dispatch(commands);
     }
 
     @Override

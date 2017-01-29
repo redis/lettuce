@@ -16,7 +16,9 @@
 package com.lambdaworks.redis.cluster;
 
 import java.net.SocketAddress;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -48,11 +50,20 @@ public class ClusterDistributionChannelWriterBenchmark {
     private final static EmptyStatefulRedisConnection CONNECTION = EmptyStatefulRedisConnection.INSTANCE;
     private static final ValueOutput<byte[], byte[]> VALUE_OUTPUT = new ValueOutput<>(ByteArrayCodec.INSTANCE);
 
-    private final static Command<byte[], byte[], byte[]> KEYED_COMMAND = new Command<>(CommandType.GET, VALUE_OUTPUT,
-            new CommandArgs<>(ByteArrayCodec.INSTANCE).addKey("benchmark".getBytes()));
+    private final static Command<byte[], byte[], byte[]> KEYED_COMMAND1 = new Command<>(CommandType.GET, VALUE_OUTPUT,
+            new CommandArgs<>(ByteArrayCodec.INSTANCE).addKey("benchmark1".getBytes()));
+
+    private final static Command<byte[], byte[], byte[]> KEYED_COMMAND2 = new Command<>(CommandType.GET, VALUE_OUTPUT,
+            new CommandArgs<>(ByteArrayCodec.INSTANCE).addKey("benchmark2".getBytes()));
+
+    private final static Command<byte[], byte[], byte[]> KEYED_COMMAND3 = new Command<>(CommandType.GET, VALUE_OUTPUT,
+            new CommandArgs<>(ByteArrayCodec.INSTANCE).addKey("benchmark3".getBytes()));
 
     private final static Command<byte[], byte[], byte[]> PLAIN_COMMAND = new Command<>(CommandType.GET, VALUE_OUTPUT,
             new CommandArgs<>(ByteArrayCodec.INSTANCE));
+
+    private final static List<Command<byte[], byte[], byte[]>> COMMANDS = Arrays.asList(KEYED_COMMAND1, KEYED_COMMAND2,
+            KEYED_COMMAND3);
 
     private ClusterDistributionChannelWriter writer;
 
@@ -84,12 +95,24 @@ public class ClusterDistributionChannelWriterBenchmark {
         writer.setPartitions(partitions);
     }
 
-    @Benchmark
+    // @Benchmark
     public void writeKeyedCommand() {
-        writer.write(KEYED_COMMAND);
+        writer.write(KEYED_COMMAND1);
     }
 
     @Benchmark
+    public void write3KeyedCommands() {
+        writer.write(KEYED_COMMAND1);
+        writer.write(KEYED_COMMAND2);
+        writer.write(KEYED_COMMAND3);
+    }
+
+    @Benchmark
+    public void write3KeyedCommandsAsBatch() {
+        writer.write(COMMANDS);
+    }
+
+    // @Benchmark
     public void writePlainCommand() {
         writer.write(PLAIN_COMMAND);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@ import com.lambdaworks.redis.resource.ClientResources;
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterNodeEndpointTest {
 
-    private AsyncCommand<String, String, String> command = new AsyncCommand<>(
-            new Command<>(CommandType.APPEND, new StatusOutput<String, String>(new Utf8StringCodec()), null));
+    private AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.APPEND,
+            new StatusOutput<String, String>(new Utf8StringCodec()), null));
 
     private Queue<RedisCommand<String, String, ?>> queue;
 
@@ -106,7 +106,7 @@ public class ClusterNodeEndpointTest {
 
         when(clientOptions.isAutoReconnect()).thenReturn(true);
         queue.add(command);
-        when(clusterChannelWriter.write(any())).thenThrow(new RedisException("meh"));
+        when(clusterChannelWriter.write(any(RedisCommand.class))).thenThrow(new RedisException("meh"));
 
         sut.close();
 
@@ -155,7 +155,7 @@ public class ClusterNodeEndpointTest {
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
         sut.write(command);
-        when(clusterChannelWriter.write(any())).thenThrow(new RedisException(""));
+        when(clusterChannelWriter.write(any(RedisCommand.class))).thenThrow(new RedisException(""));
 
         sut.close();
 

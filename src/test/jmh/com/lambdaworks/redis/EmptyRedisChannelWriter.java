@@ -15,7 +15,8 @@
  */
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.RedisChannelWriter;
+import java.util.Collection;
+
 import com.lambdaworks.redis.protocol.ConnectionFacade;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
@@ -29,6 +30,11 @@ public class EmptyRedisChannelWriter implements RedisChannelWriter {
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
         return null;
+    }
+
+    @Override
+    public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> redisCommands) {
+        return (Collection) redisCommands;
     }
 
     @Override

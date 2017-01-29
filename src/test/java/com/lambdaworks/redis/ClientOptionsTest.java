@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,8 +205,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
             protected void run(RedisClient client) throws Exception {
 
                 client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
-                RedisURI redisURI = RedisURI.Builder.redis(host, 6443).withPassword(passwd).withVerifyPeer(false)
-                        .withSsl(true).build();
+                RedisURI redisURI = RedisURI.Builder.redis(host, 6443).withPassword(passwd).withVerifyPeer(false).withSsl(true)
+                        .build();
 
                 RedisCommands<String, String> connection = client.connect(redisURI).sync();
 
@@ -274,8 +274,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
         redisConnection.async().set("key1", "value1");
         redisConnection.async().set("key2", "value2");
 
-        RedisFuture<String> sleep = controlConnection.dispatch(new AsyncCommand<>(
-                new Command<>(CommandType.DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add("SLEEP").add(2))));
+        RedisFuture<String> sleep = (RedisFuture<String>) controlConnection.dispatch(new AsyncCommand<>(new Command<>(
+                CommandType.DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add("SLEEP").add(2))));
 
         sleep.await(100, TimeUnit.MILLISECONDS);
 
@@ -321,8 +321,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
                 redisConnection.async().set("key1", "value1");
                 redisConnection.async().set("key2", "value2");
 
-                RedisFuture<String> sleep = controlConnection.dispatch(new AsyncCommand<>(new Command<>(CommandType.DEBUG,
-                        new StatusOutput<>(codec), new CommandArgs<>(codec).add("SLEEP").add(2))));
+                RedisFuture<String> sleep = (RedisFuture<String>) controlConnection.dispatch(new AsyncCommand<>(new Command<>(
+                        CommandType.DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add("SLEEP").add(2))));
 
                 sleep.await(100, TimeUnit.MILLISECONDS);
 

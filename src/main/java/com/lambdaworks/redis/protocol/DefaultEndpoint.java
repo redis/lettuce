@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Default {@link Endpoint} implementation.
- * 
+ *
  * @author Mark Paluch
  */
 public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedCommands {
@@ -73,7 +73,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
 
     /**
      * Create a new {@link DefaultEndpoint}.
-     * 
+     *
      * @param clientOptions client options for this connection, must not be {@literal null}
      */
     public DefaultEndpoint(ClientOptions clientOptions) {
@@ -93,18 +93,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
         try {
             sharedLock.incrementWriters();
 
-            if (isClosed()) {
-                throw new RedisException("Connection is closed");
-            }
-
-            if (queuedCommands.exceedsLimit(clientOptions.getRequestQueueSize())) {
-                throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
-                        + ". Commands are not accepted until the queue size drops.");
-            }
-
-            if ((channel == null || !isConnected()) && isRejectCommand()) {
-                throw new RedisException("Currently not connected. Commands are rejected.");
-            }
+            validateWrite();
 
             if (autoFlushCommands) {
 
@@ -127,6 +116,58 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
         return command;
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands) {
+
+        LettuceAssert.notNull(commands, "Commands must not be null");
+
+        try {
+            sharedLock.incrementWriters();
+
+            validateWrite();
+
+            if (autoFlushCommands) {
+
+                if (isConnected()) {
+                    writeToChannel(commands);
+                } else {
+                    writeToBuffer(commands);
+                }
+
+            } else {
+                writeToBuffer(commands);
+            }
+        } finally {
+            sharedLock.decrementWriters();
+            if (debugEnabled) {
+                logger.debug("{} write() done", logPrefix());
+            }
+        }
+
+        return (Collection<RedisCommand<K, V, ?>>) commands;
+    }
+
+    private void validateWrite() {
+
+        if (isClosed()) {
+            throw new RedisException("Connection is closed");
+        }
+
+        if (queuedCommands.exceedsLimit(clientOptions.getRequestQueueSize())) {
+            throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
+                    + ". Commands are not accepted until the queue size drops.");
+        }
+
+        if ((channel == null || !isConnected()) && isRejectCommand()) {
+            throw new RedisException("Currently not connected. Commands are rejected.");
+        }
+    }
+
+    private void writeToBuffer(Iterable<? extends RedisCommand<?, ?, ?>> commands) {
+        commands.forEach(this::writeToBuffer);
+    }
+
     private <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
 
         if (commandBuffer.contains(command)) {
@@ -136,7 +177,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
         bufferCommand(command);
     }
 
-    private <C extends RedisCommand<?, ?, T>, T> void writeToChannel(C command) {
+    private void writeToChannel(RedisCommand<?, ?, ?> command) {
 
         if (reliability == Reliability.AT_MOST_ONCE) {
             // cancel on exceptions and remove from queue, because there is no housekeeping
@@ -146,6 +187,19 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
         if (reliability == Reliability.AT_LEAST_ONCE) {
             // commands are ok to stay within the queue, reconnect will retrigger them
             writeAndFlush(command).addListener(new RetryListener(command));
+        }
+    }
+
+    private void writeToChannel(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+
+        if (reliability == Reliability.AT_MOST_ONCE) {
+            // cancel on exceptions and remove from queue, because there is no housekeeping
+            writeAndFlush(commands).addListener(new AtMostOnceWriteListener(commands, queuedCommands));
+        }
+
+        if (reliability == Reliability.AT_LEAST_ONCE) {
+            // commands are ok to stay within the queue, reconnect will retrigger them
+            writeAndFlush(commands).addListener(new RetryListener(commands));
         }
     }
 
@@ -447,7 +501,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
 
     /**
      * Execute a {@link Supplier} callback guarded by an exclusive lock.
-     * 
+     *
      * @param supplier
      * @param <T>
      * @return
@@ -456,7 +510,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
         return sharedLock.doExclusive(supplier);
     }
 
-    private ChannelFuture writeAndFlush(List<? extends RedisCommand<?, ?, ?>> commands) {
+    private ChannelFuture writeAndFlush(Iterable<? extends RedisCommand<?, ?, ?>> commands) {
 
         if (debugEnabled) {
             logger.debug("{} write() writeAndFlush commands {}", logPrefix(), commands);
@@ -520,7 +574,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
 
     private static class AtMostOnceWriteListener implements ChannelFutureListener {
 
-        private final Collection<RedisCommand<?, ?, ?>> sentCommands;
+        private final Collection<? extends RedisCommand<?, ?, ?>> sentCommands;
         private final RedisCommand<?, ?, ?> sentCommand;
         private final QueuedCommands queuedCommands;
 
@@ -530,7 +584,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
             this.queuedCommands = queuedCommands;
         }
 
-        AtMostOnceWriteListener(Collection<RedisCommand<?, ?, ?>> sentCommands, QueuedCommands queuedCommands) {
+        AtMostOnceWriteListener(Collection<? extends RedisCommand<?, ?, ?>> sentCommands, QueuedCommands queuedCommands) {
             this.sentCommand = null;
             this.sentCommands = sentCommands;
             this.queuedCommands = queuedCommands;
@@ -564,10 +618,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
      */
     private class RetryListener implements GenericFutureListener<Future<Void>> {
 
-        private final Collection<RedisCommand<?, ?, ?>> sentCommands;
+        private final Collection<? extends RedisCommand<?, ?, ?>> sentCommands;
         private final RedisCommand<?, ?, ?> sentCommand;
 
-        RetryListener(Collection<RedisCommand<?, ?, ?>> sentCommands) {
+        RetryListener(Collection<? extends RedisCommand<?, ?, ?>> sentCommands) {
             this.sentCommands = sentCommands;
             this.sentCommand = null;
         }
