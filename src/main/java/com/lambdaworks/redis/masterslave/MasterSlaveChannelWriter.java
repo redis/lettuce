@@ -26,7 +26,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * Channel writer/dispatcher that dispatches commands based on the intent to different connections.
- * 
+ *
  * @author Mark Paluch
  */
 class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
@@ -55,11 +55,10 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter<K, V> {
 
     private MasterSlaveConnectionProvider.Intent getIntent(ProtocolKeyword type) {
 
-        for (ProtocolKeyword readOnlyCommand : ReadOnlyCommands.READ_ONLY_COMMANDS) {
-            if (readOnlyCommand == type) {
-                return MasterSlaveConnectionProvider.Intent.READ;
-            }
+        if (ReadOnlyCommands.isReadOnlyCommand(type)) {
+            return MasterSlaveConnectionProvider.Intent.READ;
         }
+
         return MasterSlaveConnectionProvider.Intent.WRITE;
     }
 

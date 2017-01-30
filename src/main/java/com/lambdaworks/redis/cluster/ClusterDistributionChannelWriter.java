@@ -78,7 +78,6 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             commandToSend = new ClusterCommand<>(command, this, executionLimit);
         }
 
-
         if (commandToSend instanceof ClusterCommand && !commandToSend.isDone()) {
 
             ClusterCommand<K, V, T> clusterCommand = (ClusterCommand<K, V, T>) commandToSend;
@@ -106,15 +105,15 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
                         if (asking) {
                             // set asking bit
-                            StatefulRedisConnection<K, V> statefulRedisConnection = (StatefulRedisConnection<K, V>) connection;
-                            statefulRedisConnection.async().asking();
-                        }
-
-                        connection.getChannelWriter().write(command);
-                    } catch (Exception e) {
-                        command.completeExceptionally(e);
+                        StatefulRedisConnection<K, V> statefulRedisConnection = (StatefulRedisConnection<K, V>) connection;
+                        statefulRedisConnection.async().asking();
                     }
-                });
+
+                    connection.getChannelWriter().write(command);
+                } catch (Exception e) {
+                    command.completeExceptionally(e);
+                }
+            })  ;
 
                 return command;
             }
@@ -151,10 +150,9 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     }
 
     private ClusterConnectionProvider.Intent getIntent(ProtocolKeyword type) {
-        for (ProtocolKeyword readOnlyCommand : ReadOnlyCommands.READ_ONLY_COMMANDS) {
-            if (readOnlyCommand == type) {
-                return ClusterConnectionProvider.Intent.READ;
-            }
+
+        if (ReadOnlyCommands.isReadOnlyCommand(type)) {
+            return ClusterConnectionProvider.Intent.READ;
         }
 
         return ClusterConnectionProvider.Intent.WRITE;
@@ -163,8 +161,8 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     static HostAndPort getMoveTarget(String errorMessage) {
 
         LettuceAssert.notEmpty(errorMessage, "ErrorMessage must not be empty");
-        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.MOVED.name()),
-                "ErrorMessage must start with " + CommandKeyword.MOVED);
+        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.MOVED.name()), "ErrorMessage must start with "
+                + CommandKeyword.MOVED);
 
         String[] movedMessageParts = errorMessage.split(" ");
         LettuceAssert.isTrue(movedMessageParts.length >= 3, "ErrorMessage must consist of 3 tokens (" + errorMessage + ")");
@@ -175,8 +173,8 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     static HostAndPort getAskTarget(String errorMessage) {
 
         LettuceAssert.notEmpty(errorMessage, "ErrorMessage must not be empty");
-        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.ASK.name()),
-                "ErrorMessage must start with " + CommandKeyword.ASK);
+        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.ASK.name()), "ErrorMessage must start with "
+                + CommandKeyword.ASK);
 
         String[] movedMessageParts = errorMessage.split(" ");
         LettuceAssert.isTrue(movedMessageParts.length >= 3, "ErrorMessage must consist of 3 tokens (" + errorMessage + ")");
@@ -251,7 +249,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
     /**
      * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
-     * 
+     *
      * @return the read from setting
      */
     public ReadFrom getReadFrom() {
