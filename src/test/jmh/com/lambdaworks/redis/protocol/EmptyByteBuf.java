@@ -15,12 +15,6 @@
  */
 package com.lambdaworks.redis.protocol;
 
-import io.netty.buffer.AbstractByteBuf;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufProcessor;
-import io.netty.util.ByteProcessor;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,10 +25,17 @@ import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.charset.Charset;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.CompositeByteBuf;
+import io.netty.util.ByteProcessor;
+
 /**
  * @author Mark Paluch
  */
 class EmptyByteBuf extends ByteBuf {
+
+    private final static EmptyByteBuf INSTANCE = new EmptyByteBuf();
 
     @Override
     public int capacity() {
@@ -53,7 +54,7 @@ class EmptyByteBuf extends ByteBuf {
 
     @Override
     public ByteBufAllocator alloc() {
-        return null;
+        return EmptyByteBufAllocator.INSTANCE;
     }
 
     @Override
@@ -949,5 +950,109 @@ class EmptyByteBuf extends ByteBuf {
     @Override
     public boolean release(int i) {
         return false;
+    }
+
+    private enum EmptyByteBufAllocator implements ByteBufAllocator {
+        INSTANCE;
+
+        @Override
+        public ByteBuf buffer() {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf buffer(int i) {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf buffer(int i, int i1) {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf ioBuffer() {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf ioBuffer(int i) {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf ioBuffer(int i, int i1) {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf heapBuffer() {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf heapBuffer(int i) {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf heapBuffer(int i, int i1) {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf directBuffer() {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf directBuffer(int i) {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public ByteBuf directBuffer(int i, int i1) {
+            return EmptyByteBuf.INSTANCE;
+        }
+
+        @Override
+        public CompositeByteBuf compositeBuffer() {
+            return null;
+        }
+
+        @Override
+        public CompositeByteBuf compositeBuffer(int i) {
+            return null;
+        }
+
+        @Override
+        public CompositeByteBuf compositeHeapBuffer() {
+            return null;
+        }
+
+        @Override
+        public CompositeByteBuf compositeHeapBuffer(int i) {
+            return null;
+        }
+
+        @Override
+        public CompositeByteBuf compositeDirectBuffer() {
+            return null;
+        }
+
+        @Override
+        public CompositeByteBuf compositeDirectBuffer(int i) {
+            return null;
+        }
+
+        @Override
+        public boolean isDirectBufferPooled() {
+            return false;
+        }
+
+        @Override
+        public int calculateNewCapacity(int i, int i1) {
+            return 0;
+        }
     }
 }
