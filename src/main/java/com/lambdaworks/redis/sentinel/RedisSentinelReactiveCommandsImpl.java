@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,16 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Map;
 
-import com.lambdaworks.redis.KillArgs;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import com.lambdaworks.redis.AbstractRedisReactiveCommands;
+import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.reactive.RedisSentinelReactiveCommands;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * A reactive and thread-safe API for a Redis Sentinel connection.
@@ -38,15 +38,13 @@ import reactor.core.publisher.Mono;
  * @author Mark Paluch
  * @since 3.0
  */
-public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
-        implements RedisSentinelReactiveCommands<K, V> {
+public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
+        RedisSentinelReactiveCommands<K, V> {
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
-    private final StatefulConnection<K, V> connection;
 
     public RedisSentinelReactiveCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
-        this.connection = connection;
         commandBuilder = new SentinelCommandBuilder<K, V>(codec);
     }
 
@@ -155,16 +153,16 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
 
     @Override
     public void close() {
-        connection.close();
+        getStatefulConnection().close();
     }
 
     @Override
     public boolean isOpen() {
-        return connection.isOpen();
+        return getStatefulConnection().isOpen();
     }
 
     @Override
     public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
-        return (StatefulRedisSentinelConnection<K, V>) connection;
+        return (StatefulRedisSentinelConnection<K, V>) super.getConnection();
     }
 }

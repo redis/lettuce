@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
  * A reactive and thread-safe API for a Redis Sentinel connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -44,6 +44,6 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
     @Override
     @SuppressWarnings("unchecked")
     public StatefulRedisConnection<K, V> getStatefulConnection() {
-        return (StatefulRedisConnection<K, V>) connection;
+        return (StatefulRedisConnection<K, V>) super.getConnection();
     }
 }

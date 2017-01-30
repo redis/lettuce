@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,27 @@ package com.lambdaworks.redis.pubsub;
 
 import java.util.Map;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
+
 import com.lambdaworks.redis.RedisReactiveCommandsImpl;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.pubsub.api.reactive.ChannelMessage;
 import com.lambdaworks.redis.pubsub.api.reactive.PatternMessage;
 import com.lambdaworks.redis.pubsub.api.reactive.RedisPubSubReactiveCommands;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-import reactor.core.publisher.Mono;
-
 /**
  * A reactive and thread-safe API for a Redis pub/sub connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
  */
-public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommandsImpl<K, V>
-        implements RedisPubSubReactiveCommands<K, V> {
+public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommandsImpl<K, V> implements
+        RedisPubSubReactiveCommands<K, V> {
 
-    private PubSubCommandBuilder<K, V> commandBuilder;
+    private final PubSubCommandBuilder<K, V> commandBuilder;
 
     /**
      * Initialize a new connection.
@@ -47,7 +47,6 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
      */
     public RedisPubSubReactiveCommandsImpl(StatefulRedisPubSubConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
-        this.connection = connection;
         this.commandBuilder = new PubSubCommandBuilder<>(codec);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 
 /**
  * An asynchronous and thread-safe API for a Redis pub/sub connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K, V> implements RedisPubSubAsyncCommands<K, V> {
 
@@ -36,13 +37,12 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
 
     /**
      * Initialize a new connection.
-     * 
+     *
      * @param connection the connection .
      * @param codec Codec used to encode/decode keys and values.
      */
     public RedisPubSubAsyncCommandsImpl(StatefulRedisPubSubConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
-        this.connection = connection;
         this.commandBuilder = new PubSubCommandBuilder<>(codec);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.reactive.RedisKeyReactiveCommands;
@@ -39,9 +42,6 @@ import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
  *
@@ -52,6 +52,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         implements RedisAdvancedClusterReactiveCommands<K, V> {
 
     private final Random random = new Random();
+    private final RedisCodec<K, V> codec;
 
     /**
      * Initialize a new connection.
@@ -62,6 +63,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection,
             RedisCodec<K, V> codec) {
         super(connection, codec);
+        this.codec = codec;
     }
 
     @Override
@@ -350,7 +352,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Run a command on all available masters,
-     * 
+     *
      * @param function function producing the command
      * @param <T> result type
      * @return map of a key (counter) and commands.
@@ -361,7 +363,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Run a command on all available nodes that match {@code filter}.
-     * 
+     *
      * @param function function producing the command
      * @param filter filter function for the node selection
      * @param <T> result type
@@ -397,7 +399,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
-        return (StatefulRedisClusterConnection<K, V>) connection;
+        return (StatefulRedisClusterConnection<K, V>) super.getConnection();
     }
 
     @Override
@@ -465,7 +467,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Perform a SCAN in the cluster.
-     * 
+     *
      */
     static <T extends ScanCursor, K, V> Mono<T> clusterScan(StatefulRedisClusterConnection<K, V> connection, ScanCursor cursor,
             BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Mono<T>> scanFunction,

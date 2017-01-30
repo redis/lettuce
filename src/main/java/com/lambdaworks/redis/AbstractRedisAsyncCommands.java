@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,17 +38,17 @@ import com.lambdaworks.redis.protocol.*;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
+ * @author Mark Paluch
  */
-public abstract class AbstractRedisAsyncCommands<K, V>
-        implements RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
-        RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>,
-        RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>,
-        RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
+public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
+        RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
+        RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
+        RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
+        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
 
-    protected MultiOutput<K, V> multi;
-    protected RedisCommandBuilder<K, V> commandBuilder;
-    protected RedisCodec<K, V> codec;
-    protected StatefulConnection<K, V> connection;
+    private final RedisCommandBuilder<K, V> commandBuilder;
+    private final RedisCodec<K, V> codec;
+    private final StatefulConnection<K, V> connection;
 
     /**
      * Initialize a new instance.
@@ -59,7 +59,7 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
         this.codec = codec;
-        commandBuilder = new RedisCommandBuilder<K, V>(codec);
+        this.commandBuilder = new RedisCommandBuilder<K, V>(codec);
     }
 
     @Override
@@ -1239,7 +1239,8 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
+            Range<? extends Number> range) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
     }
 
@@ -1256,8 +1257,8 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
-           Limit limit) {
+    public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
+            Range<? extends Number> range, Limit limit) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, range, limit));
     }
 
@@ -1409,7 +1410,8 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+    public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
         return dispatch(commandBuilder.zrevrangebyscore(channel, key, range, limit));
     }
 
@@ -1424,7 +1426,8 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
+    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
+            Range<? extends Number> range) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
     }
 
@@ -1441,8 +1444,8 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
-            Limit limit) {
+    public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
+            Range<? extends Number> range, Limit limit) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, range, limit));
     }
 

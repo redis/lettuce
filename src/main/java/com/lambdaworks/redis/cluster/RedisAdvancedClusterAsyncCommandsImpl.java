@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,14 +45,13 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.IntegerOutput;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.KeyValueStreamingChannel;
-import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
- * 
+ *
  * @author Mark Paluch
  * @since 3.3
  */
@@ -61,6 +60,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
          RedisAdvancedClusterAsyncCommands<K, V> {
 
     private final Random random = new Random();
+    private final RedisCodec<K, V> codec;
 
     /**
      * Initialize a new connection.
@@ -70,6 +70,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      */
     public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
+        this.codec = codec;
     }
 
     @Override
@@ -451,7 +452,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
-        return (StatefulRedisClusterConnection<K, V>) connection;
+        return (StatefulRedisClusterConnection<K, V>) super.getConnection();
     }
 
     @Override
@@ -475,7 +476,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         NodeSelectionSupport<RedisAsyncCommands<K, V>, ?> selection;
 
-        StatefulRedisClusterConnectionImpl impl = (StatefulRedisClusterConnectionImpl) connection;
+        StatefulRedisClusterConnectionImpl impl = (StatefulRedisClusterConnectionImpl) getConnection();
         if (dynamic) {
             selection = new DynamicNodeSelection<RedisAsyncCommands<K, V>, Object, K, V>(
                     impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::async);
