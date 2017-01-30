@@ -15,7 +15,8 @@
  */
 package com.lambdaworks.redis.masterslave;
 
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
 
 import com.lambdaworks.redis.protocol.CommandType;
@@ -28,17 +29,27 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
  */
 class ReadOnlyCommands {
 
-    public static final ProtocolKeyword READ_ONLY_COMMANDS[];
+    private static final Set<CommandType> READ_ONLY_COMMANDS = EnumSet.noneOf(CommandType.class);
 
     static {
-
-        Set<ProtocolKeyword> set = new HashSet<ProtocolKeyword>(CommandName.values().length);
-
         for (CommandName commandNames : CommandName.values()) {
-            set.add(CommandType.valueOf(commandNames.name()));
+            READ_ONLY_COMMANDS.add(CommandType.valueOf(commandNames.name()));
         }
+    }
 
-        READ_ONLY_COMMANDS = set.toArray(new ProtocolKeyword[set.size()]);
+    /**
+     * @param protocolKeyword must not be {@literal null}.
+     * @return {@literal true} if {@link ProtocolKeyword} is a read-only command.
+     */
+    public static boolean isReadOnlyCommand(ProtocolKeyword protocolKeyword) {
+        return READ_ONLY_COMMANDS.contains(protocolKeyword);
+    }
+
+    /**
+     * @return an unmodifiable {@link Set} of {@link CommandType read-only} commands.
+     */
+    public static Set<CommandType> getReadOnlyCommands() {
+        return Collections.unmodifiableSet(READ_ONLY_COMMANDS);
     }
 
     enum CommandName {
