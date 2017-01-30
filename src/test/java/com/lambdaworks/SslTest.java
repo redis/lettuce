@@ -22,13 +22,10 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
-import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import io.netty.handler.ssl.OpenSsl;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,6 +36,7 @@ import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 
 import io.netty.handler.codec.DecoderException;
+import io.netty.handler.ssl.OpenSsl;
 
 /**
  * @author Mark Paluch
@@ -200,7 +198,7 @@ public class SslTest extends AbstractTest {
         connection2.getStatefulConnection().close();
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void pubSubSslAndBreakConnection() throws Exception {
 
         RedisURI redisURI = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false)
