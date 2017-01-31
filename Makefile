@@ -366,7 +366,7 @@ endif
 
 work/redis-git/src/redis-cli work/redis-git/src/redis-server:
 	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git --branch unstable --single-branch work/redis-git && cd work/redis-git|| true
-	[ -e work/redis-git ] && cd work/redis-git && git fetch && git merge origin/master || true
+	[ -e work/redis-git ] && cd work/redis-git && git fetch && git merge origin/unstable || true
 	$(MAKE) -C work/redis-git clean
 	$(MAKE) -C work/redis-git -j4
 
