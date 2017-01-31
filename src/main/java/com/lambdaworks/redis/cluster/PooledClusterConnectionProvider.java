@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,13 +246,12 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     @Override
     public void close() {
 
-        this.connections.clear();
         resetFastConnectionCache();
 
         new HashMap<>(this.connections) //
-                .values() //
-                .stream() //
-                .filter(StatefulConnection::isOpen).forEach(StatefulConnection::close);
+                .values().forEach(StatefulConnection::close);
+
+        this.connections.clear();
     }
 
     @Override
@@ -340,6 +339,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
      * @return Set of {@link ConnectionKey}s
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
+
         Map<ConnectionKey, StatefulRedisConnection<K, V>> map = new HashMap<>(connections);
         Set<ConnectionKey> stale = new HashSet<>();
 
