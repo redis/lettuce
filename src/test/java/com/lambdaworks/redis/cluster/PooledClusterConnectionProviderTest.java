@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,10 @@ public class PooledClusterConnectionProviderTest {
     private PooledClusterConnectionProvider<String, String> sut;
 
     @Mock
-    private RedisClusterClient clientMock;
+    RedisClusterClient clientMock;
 
     @Mock
-    private RedisChannelWriter<String, String> writerMock;
+    RedisChannelWriter<String, String> writerMock;
 
     @Mock
     StatefulRedisConnection<String, String> nodeConnectionMock;
@@ -65,20 +65,20 @@ public class PooledClusterConnectionProviderTest {
     @Mock
     RedisCommands<String, String> commandsMock;
 
-    private Partitions partitions = new Partitions();
+    Partitions partitions = new Partitions();
 
     @Before
-    public void before() throws Exception {
+    public void before() {
 
         sut = new PooledClusterConnectionProvider<>(clientMock, writerMock, CODEC);
 
         List<Integer> slots1 = IntStream.range(0, 8192).boxed().collect(Collectors.toList());
         List<Integer> slots2 = IntStream.range(8192, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList());
 
-        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 1), "1", true, null, 0, 0, 0, slots1,
-                Collections.singleton(RedisClusterNode.NodeFlag.MASTER)));
-        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 2), "2", true, "1", 0, 0, 0, slots2,
-                Collections.singleton(RedisClusterNode.NodeFlag.SLAVE)));
+        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 1), "1", true, null, 0, 0, 0, slots1, Collections
+                .singleton(RedisClusterNode.NodeFlag.MASTER)));
+        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 2), "2", true, "1", 0, 0, 0, slots2, Collections
+                .singleton(RedisClusterNode.NodeFlag.SLAVE)));
 
         sut.setPartitions(partitions);
 
@@ -86,7 +86,7 @@ public class PooledClusterConnectionProviderTest {
     }
 
     @Test
-    public void shouldObtainConnection() throws Exception {
+    public void shouldObtainConnection() {
 
         when(clientMock.connectToNode(eq(CODEC), eq("localhost:1"), any(), any())).thenReturn(nodeConnectionMock);
 
@@ -98,7 +98,7 @@ public class PooledClusterConnectionProviderTest {
     }
 
     @Test
-    public void shouldObtainConnectionReadFromSlave() throws Exception {
+    public void shouldObtainConnectionReadFromSlave() {
 
         when(clientMock.connectToNode(eq(CODEC), eq("localhost:2"), any(), any())).thenReturn(nodeConnectionMock);
 
@@ -113,7 +113,7 @@ public class PooledClusterConnectionProviderTest {
     }
 
     @Test
-    public void shouldCloseConnectionOnConnectFailure() throws Exception {
+    public void shouldCloseConnectionOnConnectFailure() {
 
         when(clientMock.connectToNode(eq(CODEC), eq("localhost:2"), any(), any())).thenReturn(nodeConnectionMock);
         doThrow(new RuntimeException()).when(commandsMock).readOnly();
@@ -132,7 +132,7 @@ public class PooledClusterConnectionProviderTest {
     }
 
     @Test
-    public void shouldRetryConnectionAttemptAfterConnectionAttemptWasBroken() throws Exception {
+    public void shouldRetryConnectionAttemptAfterConnectionAttemptWasBroken() {
 
         when(clientMock.connectToNode(eq(CODEC), eq("localhost:2"), any(), any())).thenReturn(nodeConnectionMock);
         doThrow(new RuntimeException()).when(commandsMock).readOnly();
@@ -153,4 +153,18 @@ public class PooledClusterConnectionProviderTest {
 
         verify(clientMock, times(2)).connectToNode(eq(CODEC), eq("localhost:2"), any(), any());
     }
+
+    @Test
+    public void shouldCloseConnections() {
+
+        when(clientMock.connectToNode(eq(CODEC), eq("localhost:1"), any(), any())).thenReturn(nodeConnectionMock);
+
+        StatefulRedisConnection<String, String> connection = sut.getConnection(Intent.READ, 1);
+        assertThat(connection).isNotNull();
+
+        sut.close();
+
+        verify(nodeConnectionMock).close();
+    }
+
 }
