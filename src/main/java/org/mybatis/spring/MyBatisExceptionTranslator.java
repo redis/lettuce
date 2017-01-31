@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.springframework.transaction.TransactionException;
  *
  * Translates MyBatis SqlSession returned exception into a Spring
  * {@code DataAccessException} using Spring's {@code SQLExceptionTranslator}
- * Can load {@code SQLExceptionTranslator} eagerly of when the
+ * Can load {@code SQLExceptionTranslator} eagerly or when the
  * first exception is translated.
  *
  * @author Eduardo Macarron
