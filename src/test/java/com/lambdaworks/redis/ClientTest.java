@@ -25,8 +25,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runners.MethodSorters;
 
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.protocol.Command;
+import com.lambdaworks.redis.protocol.CommandWrapper;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * @author Will Glozer
@@ -163,12 +167,18 @@ public class ClientTest extends AbstractRedisClientTest {
         connection.sync().set(key, value);
         connection.sync().flushall();
 
-        RedisFuture<KeyValue<String, String>> eval = async.blpop(2, key);
-        Thread.sleep(100);
+        RedisFuture<KeyValue<String, String>> eval = async.blpop(5, key);
+
+        Command unwrapped = (Command) CommandWrapper.unwrap((RedisCommand) eval);
+
+        Wait.untilNotEquals(0L, unwrapped::getSent).waitOrTimeout();
+
         assertThat(eval.isDone()).isFalse();
         assertThat(eval.isCancelled()).isFalse();
 
         async.reset();
+
+        Wait.untilTrue(eval::isCancelled).waitOrTimeout();
 
         assertThat(eval.isCancelled()).isTrue();
         assertThat(eval.isDone()).isTrue();
