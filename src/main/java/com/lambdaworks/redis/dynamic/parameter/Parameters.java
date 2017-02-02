@@ -15,12 +15,12 @@
  */
 package com.lambdaworks.redis.dynamic.parameter;
 
-import com.lambdaworks.redis.internal.LettuceAssert;
-
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Base class to abstract method {@link Parameter}s.
@@ -44,7 +44,10 @@ public abstract class Parameters<P extends Parameter> implements Iterable<P> {
         this.parameters = new ArrayList<>(method.getParameterCount());
 
         for (int i = 0; i < method.getParameterCount(); i++) {
-            parameters.add(createParameter(method, i));
+
+            P parameter = createParameter(method, i);
+
+            parameters.add(parameter);
         }
 
         this.bindableParameters = createBindableParameters();

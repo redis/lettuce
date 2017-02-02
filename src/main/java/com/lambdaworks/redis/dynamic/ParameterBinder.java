@@ -25,8 +25,8 @@ import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.dynamic.parameter.MethodParametersAccessor;
 import com.lambdaworks.redis.dynamic.segment.CommandSegment;
-import com.lambdaworks.redis.dynamic.segment.CommandSegment.ArgumentContribution;
 import com.lambdaworks.redis.dynamic.segment.CommandSegments;
+import com.lambdaworks.redis.dynamic.segment.CommandSegment.ArgumentContribution;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
@@ -147,7 +147,7 @@ class ParameterBinder {
      * Composite Arguments).
      */
     @SuppressWarnings("unchecked")
-    private <K, V> void bindArgument(CommandArgs<K, V> args, Object argument) {
+    private static <K, V> void bindArgument(CommandArgs<K, V> args, Object argument) {
 
         if (argument instanceof String) {
             args.add((String) argument);
@@ -230,13 +230,13 @@ class ParameterBinder {
         }
     }
 
-    private <K, V> void bindValueRange(CommandArgs<K, V> args, RedisCodec<K, V> codec, Range<? extends V> range) {
+    private static <K, V> void bindValueRange(CommandArgs<K, V> args, RedisCodec<K, V> codec, Range<? extends V> range) {
 
         args.add(minValue(codec, range));
         args.add(maxValue(codec, range));
     }
 
-    private <K, V> void bindNumericRange(CommandArgs<K, V> args, Range<? extends Number> range) {
+    private static <K, V> void bindNumericRange(CommandArgs<K, V> args, Range<? extends Number> range) {
 
         if (range.getLower().getValue() != null && !(range.getLower().getValue() instanceof Number)) {
             throw new IllegalArgumentException(
@@ -252,7 +252,7 @@ class ParameterBinder {
         args.add(maxNumeric(range));
     }
 
-    private String minNumeric(Range<? extends Number> range) {
+    private static String minNumeric(Range<? extends Number> range) {
 
         Range.Boundary<? extends Number> lower = range.getLower();
 
@@ -268,7 +268,7 @@ class ParameterBinder {
         return lower.getValue().toString();
     }
 
-    private String maxNumeric(Range<? extends Number> range) {
+    private static String maxNumeric(Range<? extends Number> range) {
 
         Range.Boundary<? extends Number> upper = range.getUpper();
 
@@ -284,15 +284,15 @@ class ParameterBinder {
         return upper.getValue().toString();
     }
 
-    private <K, V> byte[] minValue(RedisCodec<K, V> codec, Range<? extends V> range) {
+    private static <K, V> byte[] minValue(RedisCodec<K, V> codec, Range<? extends V> range) {
         return valueRange(range.getLower(), MINUS_BYTES, codec);
     }
 
-    private <K, V> byte[] maxValue(RedisCodec<K, V> codec, Range<? extends V> range) {
+    private static <K, V> byte[] maxValue(RedisCodec<K, V> codec, Range<? extends V> range) {
         return valueRange(range.getUpper(), PLUS_BYTES, codec);
     }
 
-    private <K, V> byte[] valueRange(Range.Boundary<? extends V> boundary, byte[] unbounded, RedisCodec<K, V> codec) {
+    private static <K, V> byte[] valueRange(Range.Boundary<? extends V> boundary, byte[] unbounded, RedisCodec<K, V> codec) {
 
         if (boundary.getValue() == null) {
             return unbounded;
@@ -308,7 +308,7 @@ class ParameterBinder {
         return argument;
     }
 
-    private Object asIterable(Object argument) {
+    private static Object asIterable(Object argument) {
 
         if (argument.getClass().getComponentType().isPrimitive()) {
 

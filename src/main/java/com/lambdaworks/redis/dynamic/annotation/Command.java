@@ -15,9 +15,9 @@
  */
 package com.lambdaworks.redis.dynamic.annotation;
 
-import com.lambdaworks.redis.dynamic.domain.Timeout;
-
 import java.lang.annotation.*;
+
+import com.lambdaworks.redis.dynamic.domain.Timeout;
 
 /**
  * Redis command method annotation specifying a command string. A command string can contain the command name, a sequence of
@@ -28,13 +28,15 @@ import java.lang.annotation.*;
  * {@link com.lambdaworks.redis.codec.RedisCodec} for codec resolution. Additional parameter types such as {@link Timeout}
  * control execution behavior and are not added to command arguments.
  * <p>
- * Usage <code><pre>
-    &#64;Command("SET ?0 ?1")
-    public String setKey(String key, String value)
-
-    &#64;Command("SET :key :value")
-    public String setKeyNamed(@Param("key") String key, @Param("value") String value)
-    </pre></code>
+ * Usage:
+ * 
+ * <pre class="code">
+ *     &#64;Command("SET ?0 ?1")
+ *     public String setKey(String key, String value)
+ * 
+ *     &#64;Command("SET :key :value")
+ *     public String setKeyNamed(@Param("key") String key, @Param("value") String value)
+ * </pre>
  * <p>
  * Implementation notes: A {@link Command#value()} is split into command segments of which each segment is represented as ASCII
  * string or parameter reference.

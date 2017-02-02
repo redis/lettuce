@@ -18,7 +18,7 @@ package com.lambdaworks.redis.dynamic.segment;
 import com.lambdaworks.redis.dynamic.CommandMethod;
 
 /**
- * Strategy interface to create {@link CommandSegments} for a {@link CommandMethod}.l
+ * Strategy interface to create {@link CommandSegments} for a {@link CommandMethod}.
  * 
  * @author Mark Paluch
  * @since 5.0
