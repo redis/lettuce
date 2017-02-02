@@ -128,7 +128,7 @@ public class CommandSegmentCommandFactoryTest {
     }
 
     private CommandMethod methodOf(Class<?> commandInterface, String methodName, Class... args) {
-        return new CommandMethod(ReflectionUtils.findMethod(commandInterface, methodName, args));
+        return DeclaredCommandMethod.create(ReflectionUtils.findMethod(commandInterface, methodName, args));
     }
 
     @SuppressWarnings("unchecked")

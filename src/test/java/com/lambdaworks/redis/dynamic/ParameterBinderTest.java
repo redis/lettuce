@@ -149,7 +149,7 @@ public class ParameterBinderTest {
     @Test
     public void bindsValueRangeCorrectly() {
 
-        CommandMethod commandMethod = new CommandMethod(
+        CommandMethod commandMethod = DeclaredCommandMethod.create(
                 ReflectionUtils.findMethod(MyCommands.class, "valueRange", Range.class));
 
         CommandArgs<String, String> args = bind(commandMethod,
@@ -162,7 +162,7 @@ public class ParameterBinderTest {
     @Test
     public void bindsUnboundedValueRangeCorrectly() {
 
-        CommandMethod commandMethod = new CommandMethod(
+        CommandMethod commandMethod = DeclaredCommandMethod.create(
                 ReflectionUtils.findMethod(MyCommands.class, "valueRange", Range.class));
 
         CommandArgs<String, String> args = bind(commandMethod, Range.unbounded());
@@ -188,7 +188,7 @@ public class ParameterBinderTest {
     }
 
     private CommandArgs<String, String> bind(Object object) {
-        CommandMethod commandMethod = new CommandMethod(
+        CommandMethod commandMethod = DeclaredCommandMethod.create(
                 ReflectionUtils.findMethod(MyCommands.class, "justObject", Object.class));
         return bind(commandMethod, object);
     }

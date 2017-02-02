@@ -17,9 +17,10 @@ package com.lambdaworks.redis.dynamic.segment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.lambdaworks.redis.dynamic.CommandMethod;
 import org.junit.Test;
 
+import com.lambdaworks.redis.dynamic.CommandMethod;
+import com.lambdaworks.redis.dynamic.DeclaredCommandMethod;
 import com.lambdaworks.redis.dynamic.annotation.Command;
 import com.lambdaworks.redis.dynamic.annotation.CommandNaming;
 import com.lambdaworks.redis.dynamic.annotation.CommandNaming.LetterCase;
@@ -36,7 +37,8 @@ public class AnnotationCommandSegmentFactoryTest {
     @Test
     public void notAnnotatedDotAsIs() {
 
-        CommandMethod commandMethod = new CommandMethod(ReflectionUtils.findMethod(CommandMethods.class, "notAnnotated"));
+        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(CommandMethods.class,
+                "notAnnotated"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -47,7 +49,8 @@ public class AnnotationCommandSegmentFactoryTest {
     @Test
     public void uppercaseDot() {
 
-        CommandMethod commandMethod = new CommandMethod(ReflectionUtils.findMethod(CommandMethods.class, "upperCase"));
+        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils
+                .findMethod(CommandMethods.class, "upperCase"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -58,7 +61,8 @@ public class AnnotationCommandSegmentFactoryTest {
     @Test
     public void methodNameAsIs() {
 
-        CommandMethod commandMethod = new CommandMethod(ReflectionUtils.findMethod(CommandMethods.class, "methodName"));
+        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(CommandMethods.class,
+                "methodName"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -69,7 +73,8 @@ public class AnnotationCommandSegmentFactoryTest {
     @Test
     public void splitAsIs() {
 
-        CommandMethod commandMethod = new CommandMethod(ReflectionUtils.findMethod(CommandMethods.class, "clientSetname"));
+        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(CommandMethods.class,
+                "clientSetname"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -80,7 +85,8 @@ public class AnnotationCommandSegmentFactoryTest {
     @Test
     public void commandAnnotation() {
 
-        CommandMethod commandMethod = new CommandMethod(ReflectionUtils.findMethod(CommandMethods.class, "atCommand"));
+        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils
+                .findMethod(CommandMethods.class, "atCommand"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -91,7 +97,8 @@ public class AnnotationCommandSegmentFactoryTest {
     @Test
     public void splitDefault() {
 
-        CommandMethod commandMethod = new CommandMethod(ReflectionUtils.findMethod(Defaulted.class, "clientSetname"));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(Defaulted.class, "clientSetname"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 

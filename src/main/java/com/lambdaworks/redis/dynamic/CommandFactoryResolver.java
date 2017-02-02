@@ -17,11 +17,13 @@ package com.lambdaworks.redis.dynamic;
 
 /**
  * Strategy interface to resolve a {@link CommandFactory}.
+ * 
+ * @since 5.0
  */
 interface CommandFactoryResolver {
 
     /**
-     * Resolve a {@link CommandFactory} given a{@link CommandMethod} and {@link RedisCommandsMetadata}.
+     * Resolve a {@link CommandFactory} given a{@link DeclaredCommandMethod} and {@link RedisCommandsMetadata}.
      * 
      * @param method must not be {@literal null}.
      * @param redisCommandsMetadata must not be {@literal null}.

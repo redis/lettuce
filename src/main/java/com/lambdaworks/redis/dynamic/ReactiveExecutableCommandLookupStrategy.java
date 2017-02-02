@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis.dynamic;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import com.lambdaworks.redis.AbstractRedisReactiveCommands;
@@ -54,17 +53,18 @@ class ReactiveExecutableCommandLookupStrategy implements ExecutableCommandLookup
     }
 
     @Override
-    public ExecutableCommand resolveCommandMethod(Method method, RedisCommandsMetadata commandsMetadata) {
+    public ExecutableCommand resolveCommandMethod(CommandMethod method, RedisCommandsMetadata commandsMetadata) {
 
-        CommandMethod commandMethod = new CommandMethod(method);
+        LettuceAssert.isTrue(!method.isBatchExecution(),
+                String.format("Command batching %s not supported with ReactiveExecutableCommandLookupStrategy", method));
 
-        LettuceAssert.isTrue(commandMethod.isReactiveExecution(),
-                String.format("Command method %s not supported by this command lookup strategy", method));
+        LettuceAssert.isTrue(method.isReactiveExecution(),
+                String.format("Command method %s not supported by ReactiveExecutableCommandLookupStrategy", method));
 
-        ReactiveCommandSegmentCommandFactory commandFactory = commandFactoryResolver.resolveRedisCommandFactory(commandMethod,
+        ReactiveCommandSegmentCommandFactory commandFactory = commandFactoryResolver.resolveRedisCommandFactory(method,
                 commandsMetadata);
 
-        return new ConvertingCommand(conversionService, new ReactiveExecutableCommand(commandMethod, commandFactory,
+        return new ConvertingCommand(conversionService, new ReactiveExecutableCommand(method, commandFactory,
                 redisReactiveCommands));
     }
 

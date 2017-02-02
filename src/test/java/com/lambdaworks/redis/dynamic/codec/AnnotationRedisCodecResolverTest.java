@@ -30,6 +30,7 @@ import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.dynamic.CommandMethod;
+import com.lambdaworks.redis.dynamic.DeclaredCommandMethod;
 import com.lambdaworks.redis.dynamic.annotation.Key;
 import com.lambdaworks.redis.dynamic.annotation.Value;
 import com.lambdaworks.redis.dynamic.support.ReflectionUtils;
@@ -99,14 +100,15 @@ public class AnnotationRedisCodecResolverTest {
         Method method = ReflectionUtils.findMethod(CommandMethods.class, "withWrappers", Range.class,
                 com.lambdaworks.redis.Value.class);
 
-        Set<Class<?>> types = new AnnotationRedisCodecResolver(codecs).findTypes(new CommandMethod(method), Value.class);
+        Set<Class<?>> types = new AnnotationRedisCodecResolver(codecs).findTypes(DeclaredCommandMethod.create(method),
+                Value.class);
 
         assertThat(types).contains(String.class, Number.class);
     }
 
     protected RedisCodec<?, ?> resolve(Method method) {
 
-        CommandMethod commandMethod = new CommandMethod(method);
+        CommandMethod commandMethod = DeclaredCommandMethod.create(method);
         AnnotationRedisCodecResolver resolver = new AnnotationRedisCodecResolver(codecs);
 
         return resolver.resolve(commandMethod);

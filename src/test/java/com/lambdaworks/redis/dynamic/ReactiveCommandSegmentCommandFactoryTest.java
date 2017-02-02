@@ -70,7 +70,7 @@ public class ReactiveCommandSegmentCommandFactoryTest {
 
         Method method = ReflectionUtils.findMethod(interfaceClass, methodName, parameterTypes);
 
-        CommandMethod commandMethod = new CommandMethod(method);
+        CommandMethod commandMethod = DeclaredCommandMethod.create(method);
 
         AnnotationCommandSegmentFactory segmentFactory = new AnnotationCommandSegmentFactory();
         CommandSegments commandSegments = segmentFactory.createCommandSegments(commandMethod);

@@ -18,7 +18,10 @@ package com.lambdaworks.redis.dynamic;
 import com.lambdaworks.redis.dynamic.segment.CommandSegments;
 
 /**
+ * Verifies {@link CommandMethod} declarations by checking available Redis commands.
+ * 
  * @author Mark Paluch
+ * @since 5.0
  */
 interface CommandMethodVerifier {
 

@@ -15,6 +15,7 @@
  */
 package com.lambdaworks.redis.dynamic;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -76,6 +77,16 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
         return !method.isBridge() && !method.isDefault();
     }
 
+    @Override
+    public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
+        return getCommandsInterface().getAnnotation(annotationClass);
+    }
+
+    @Override
+    public boolean hasAnnotation(Class<? extends Annotation> annotationClass) {
+        return getCommandsInterface().getAnnotation(annotationClass) != null;
+    }
+
     /**
      * Given a method, which may come from an interface, and a target class used in the current reflective invocation, find the
      * corresponding target method if there is one. E.g. the method may be {@code IFoo.bar()} and the target class may be
@@ -88,6 +99,7 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
      *         {@code null}
      */
     public static Method getMostSpecificMethod(Method method, Class<?> targetClass) {
+
         if (method != null && isOverridable(method, targetClass) && targetClass != null
                 && targetClass != method.getDeclaringClass()) {
             try {
@@ -109,6 +121,7 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
      * @param targetClass the target class to check against
      */
     private static boolean isOverridable(Method method, Class<?> targetClass) {
+
         if (Modifier.isPrivate(method.getModifiers())) {
             return false;
         }
@@ -125,6 +138,7 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
      * @return the package name, or the empty String if the class is defined in the default package
      */
     private static String getPackageName(Class<?> clazz) {
+
         LettuceAssert.notNull(clazz, "Class must not be null");
         return getPackageName(clazz.getName());
     }
@@ -137,6 +151,7 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
      * @return the package name, or the empty String if the class is defined in the default package
      */
     private static String getPackageName(String fqClassName) {
+
         LettuceAssert.notNull(fqClassName, "Class name must not be null");
         int lastDotIndex = fqClassName.lastIndexOf(PACKAGE_SEPARATOR);
         return (lastDotIndex != -1 ? fqClassName.substring(0, lastDotIndex) : "");

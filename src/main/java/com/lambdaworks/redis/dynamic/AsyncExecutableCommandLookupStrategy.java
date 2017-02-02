@@ -15,28 +15,18 @@
  */
 package com.lambdaworks.redis.dynamic;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.dynamic.codec.AnnotationRedisCodecResolver;
-import com.lambdaworks.redis.dynamic.output.CodecAwareOutputFactoryResolver;
 import com.lambdaworks.redis.dynamic.output.CommandOutputFactoryResolver;
-import com.lambdaworks.redis.dynamic.segment.AnnotationCommandSegmentFactory;
-import com.lambdaworks.redis.dynamic.segment.CommandSegments;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * @author Mark Paluch
  * @since 5.0
  */
-class AsyncExecutableCommandLookupStrategy implements ExecutableCommandLookupStrategy {
-
-    private final List<RedisCodec<?, ?>> redisCodecs;
-    private final CommandOutputFactoryResolver commandOutputFactoryResolver;
-    private final DefaultCommandFactoryResolver commandFactoryResolver;
-    private final CommandMethodVerifier commandMethodVerifier;
+class AsyncExecutableCommandLookupStrategy extends ExecutableCommandLookupStrategySupport {
 
     private final StatefulConnection<Object, Object> connection;
 
@@ -44,53 +34,18 @@ class AsyncExecutableCommandLookupStrategy implements ExecutableCommandLookupStr
             CommandOutputFactoryResolver commandOutputFactoryResolver, CommandMethodVerifier commandMethodVerifier,
             StatefulConnection<Object, Object> connection) {
 
-        this.redisCodecs = redisCodecs;
-        this.commandOutputFactoryResolver = commandOutputFactoryResolver;
-        this.commandMethodVerifier = commandMethodVerifier;
+        super(redisCodecs, commandOutputFactoryResolver, commandMethodVerifier);
         this.connection = connection;
-
-        this.commandFactoryResolver = new DefaultCommandFactoryResolver();
     }
 
     @Override
-    public ExecutableCommand resolveCommandMethod(Method method, RedisCommandsMetadata commandsMetadata) {
+    public ExecutableCommand resolveCommandMethod(CommandMethod method, RedisCommandsMetadata metadata) {
 
-        CommandMethod commandMethod = new CommandMethod(method);
-
-        LettuceAssert.isTrue(!commandMethod.isReactiveExecution(),
+        LettuceAssert.isTrue(!method.isReactiveExecution(),
                 String.format("Command method %s not supported by this command lookup strategy", method));
 
-        CommandFactory commandFactory = commandFactoryResolver.resolveRedisCommandFactory(commandMethod, commandsMetadata);
+        CommandFactory commandFactory = super.resolveCommandFactory(method, metadata);
 
-        return new AsyncExecutableCommand(commandMethod, commandFactory, connection);
-    }
-
-    @SuppressWarnings("unchecked")
-    class DefaultCommandFactoryResolver implements CommandFactoryResolver {
-
-        final AnnotationCommandSegmentFactory commandSegmentFactory = new AnnotationCommandSegmentFactory();
-        final AnnotationRedisCodecResolver codecResolver;
-
-        DefaultCommandFactoryResolver() {
-            codecResolver = new AnnotationRedisCodecResolver(redisCodecs);
-        }
-
-        @Override
-        public CommandFactory resolveRedisCommandFactory(CommandMethod commandMethod, RedisCommandsMetadata commandsMetadata) {
-
-            RedisCodec<?, ?> codec = codecResolver.resolve(commandMethod);
-
-            if (codec == null) {
-                throw new CommandCreationException(commandMethod, "Cannot resolve RedisCodec");
-            }
-
-            CodecAwareOutputFactoryResolver outputFactoryResolver = new CodecAwareOutputFactoryResolver(
-                    commandOutputFactoryResolver, codec);
-            CommandSegments commandSegments = commandSegmentFactory.createCommandSegments(commandMethod);
-
-            commandMethodVerifier.validate(commandSegments, commandMethod);
-
-            return new CommandSegmentCommandFactory(commandSegments, commandMethod, codec, outputFactoryResolver);
-        }
+        return new AsyncExecutableCommand(method, commandFactory, connection);
     }
 }

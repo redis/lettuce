@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.dynamic.CommandMethod;
+import com.lambdaworks.redis.dynamic.DeclaredCommandMethod;
 import com.lambdaworks.redis.dynamic.support.ReflectionUtils;
 import com.lambdaworks.redis.output.*;
 
@@ -87,7 +88,7 @@ public class CodecAwareOutputResolverTest {
     protected CommandOutput<?, ?, ?> getCommandOutput(String methodName) {
 
         Method method = ReflectionUtils.findMethod(CommandMethods.class, methodName);
-        CommandMethod commandMethod = new CommandMethod(method);
+        CommandMethod commandMethod = DeclaredCommandMethod.create(method);
 
         CommandOutputFactory factory = resolver
                 .resolveCommandOutput(new OutputSelector(commandMethod.getReturnType(), new ByteBufferAndStringCodec()));

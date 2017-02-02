@@ -27,6 +27,7 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
+import com.lambdaworks.redis.dynamic.batch.BatchSize;
 import com.lambdaworks.redis.dynamic.intercept.InvocationProxyFactory;
 import com.lambdaworks.redis.dynamic.intercept.MethodInterceptor;
 import com.lambdaworks.redis.dynamic.intercept.MethodInvocation;
@@ -169,14 +170,15 @@ public class RedisCommandFactory {
 
         LettuceAssert.notNull(commandInterface, "Redis Command Interface must not be null");
 
-        RedisCommandsMetadata redisCommandsMetadata = new DefaultRedisCommandsMetadata(commandInterface);
+        RedisCommandsMetadata metadata = new DefaultRedisCommandsMetadata(commandInterface);
 
         InvocationProxyFactory factory = new InvocationProxyFactory();
         factory.addInterface(commandInterface);
 
-        CompositeCommandLookupStrategy lookupStrategy = new CompositeCommandLookupStrategy();
+        BatchAwareCommandLookupStrategy lookupStrategy = new BatchAwareCommandLookupStrategy(
+                new CompositeCommandLookupStrategy(), metadata);
 
-        factory.addInterceptor(new CommandFactoryExecutorMethodInterceptor(redisCommandsMetadata, lookupStrategy));
+        factory.addInterceptor(new CommandFactoryExecutorMethodInterceptor(metadata, lookupStrategy));
         return factory.createProxy(commandInterface.getClassLoader());
     }
 
@@ -186,7 +188,7 @@ public class RedisCommandFactory {
      *
      * @author Mark Paluch
      */
-    class CommandFactoryExecutorMethodInterceptor implements MethodInterceptor {
+    static class CommandFactoryExecutorMethodInterceptor implements MethodInterceptor {
 
         private final Map<Method, ExecutableCommand> commandMethods = new HashMap<>();
 
@@ -195,7 +197,8 @@ public class RedisCommandFactory {
 
             for (Method method : redisCommandsMetadata.getMethods()) {
 
-                ExecutableCommand executableCommand = strategy.resolveCommandMethod(method, redisCommandsMetadata);
+                ExecutableCommand executableCommand = strategy.resolveCommandMethod(DeclaredCommandMethod.create(method),
+                        redisCommandsMetadata);
                 commandMethods.put(method, executableCommand);
             }
         }
@@ -248,13 +251,60 @@ public class RedisCommandFactory {
         }
 
         @Override
-        public ExecutableCommand resolveCommandMethod(Method method, RedisCommandsMetadata commandsMetadata) {
+        public ExecutableCommand resolveCommandMethod(CommandMethod method, RedisCommandsMetadata metadata) {
 
-            if (ReactiveTypes.supports(method.getReturnType())) {
-                return reactive.resolveCommandMethod(method, commandsMetadata);
+            if (method.isReactiveExecution()) {
+                return reactive.resolveCommandMethod(method, metadata);
             }
 
-            return async.resolveCommandMethod(method, commandsMetadata);
+            return async.resolveCommandMethod(method, metadata);
+        }
+    }
+
+    class BatchAwareCommandLookupStrategy implements ExecutableCommandLookupStrategy {
+
+        private final ExecutableCommandLookupStrategy fallbackStrategy;
+        private final boolean globalBatching;
+        private final CommandMethodVerifier verifier;
+        private final long batchSize;
+
+        private Batcher batcher = Batcher.NONE;
+        private BatchExecutableCommandLookupStrategy batchingStrategy;
+
+        public BatchAwareCommandLookupStrategy(ExecutableCommandLookupStrategy fallbackStrategy, RedisCommandsMetadata metadata) {
+
+            this.fallbackStrategy = fallbackStrategy;
+            this.verifier = verifyCommandMethods ? commandMethodVerifier : CommandMethodVerifier.NONE;
+
+            if (metadata.hasAnnotation(BatchSize.class)) {
+
+                BatchSize batchSize = metadata.getAnnotation(BatchSize.class);
+
+                this.globalBatching = true;
+                this.batchSize = batchSize.value();
+
+            } else {
+
+                this.globalBatching = false;
+                this.batchSize = -1;
+            }
+        }
+
+        @Override
+        public ExecutableCommand resolveCommandMethod(CommandMethod method, RedisCommandsMetadata metadata) {
+
+            if (BatchExecutableCommandLookupStrategy.supports(method) || globalBatching) {
+
+                if (batcher == Batcher.NONE) {
+                    batcher = new SimpleBatcher((StatefulConnection) connection, Math.toIntExact(batchSize));
+                    batchingStrategy = new BatchExecutableCommandLookupStrategy(redisCodecs, commandOutputFactoryResolver,
+                            verifier, batcher, (StatefulConnection) connection);
+                }
+
+                return batchingStrategy.resolveCommandMethod(method, metadata);
+            }
+
+            return fallbackStrategy.resolveCommandMethod(method, metadata);
         }
     }
 }

@@ -27,7 +27,7 @@ import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.ScoredValue;
 import com.lambdaworks.redis.Value;
 import com.lambdaworks.redis.codec.StringCodec;
-import com.lambdaworks.redis.dynamic.CommandMethod;
+import com.lambdaworks.redis.dynamic.DeclaredCommandMethod;
 import com.lambdaworks.redis.dynamic.support.ReflectionUtils;
 import com.lambdaworks.redis.output.*;
 
@@ -151,7 +151,7 @@ public class OutputRegistryCommandOutputFactoryResolverTest {
     private OutputSelector getOutputSelector(String methodName) {
 
         Method method = ReflectionUtils.findMethod(CommandMethods.class, methodName);
-        return new OutputSelector(new CommandMethod(method).getActualReturnType(), StringCodec.UTF8);
+        return new OutputSelector(DeclaredCommandMethod.create(method).getActualReturnType(), StringCodec.UTF8);
     }
 
     private static interface CommandMethods {

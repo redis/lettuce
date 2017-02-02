@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,11 @@ package com.lambdaworks.redis.dynamic;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Future;
 
-import org.reactivestreams.Publisher;
-
-import com.lambdaworks.redis.dynamic.parameter.ExecutionSpecificParameters;
 import com.lambdaworks.redis.dynamic.parameter.Parameter;
 import com.lambdaworks.redis.dynamic.parameter.Parameters;
 import com.lambdaworks.redis.dynamic.support.ResolvableType;
-import com.lambdaworks.redis.dynamic.support.TypeInformation;
-import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Abstraction of a method that is designated to execute a Redis command method. Enriches the standard {@link Method} interface
@@ -38,86 +30,27 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  * @author Mark Paluch
  * @since 5.0
  */
-public class CommandMethod {
-
-    private final Method method;
-    private final ResolvableType returnType;
-    private final List<Class<?>> arguments = new ArrayList<>();
-    private final Parameters<? extends Parameter> parameters;
-    private final ResolvableType actualReturnType;
+public interface CommandMethod {
 
     /**
-     * Create a new {@link CommandMethod} given a {@link Method}.
-     * 
-     * @param method must not be null.
-     */
-    public CommandMethod(Method method) {
-        this(method, new ExecutionSpecificParameters(method));
-    }
-
-    /**
-     * Create a new {@link CommandMethod} given a {@link Method} and {@link Parameters}.
-     * 
-     * @param method must not be null.
-     * @param parameters must not be null.
-     */
-    public CommandMethod(Method method, Parameters<?> parameters) {
-
-        LettuceAssert.notNull(method, "Method must not be null");
-        LettuceAssert.notNull(parameters, "Parameters must not be null");
-
-        this.method = method;
-        this.returnType = ResolvableType.forMethodReturnType(method);
-        this.parameters = parameters;
-        Collections.addAll(arguments, method.getParameterTypes());
-
-        ResolvableType actualReturnType = this.returnType;
-
-        while (Future.class.isAssignableFrom(actualReturnType.getRawClass())
-                || ReactiveTypes.supports(actualReturnType.getRawClass())) {
-            ResolvableType[] generics = actualReturnType.getGenerics();
-
-            if (generics.length != 1) {
-                break;
-            }
-
-            actualReturnType = generics[0];
-        }
-
-        this.actualReturnType = actualReturnType;
-    }
-
-    /**
-     *
      * @return the method {@link Parameters}.
      */
-    public Parameters<? extends Parameter> getParameters() {
-        return parameters;
-    }
+    Parameters<? extends Parameter> getParameters();
 
     /**
-     *
      * @return the {@link Method}.
      */
-    public Method getMethod() {
-        return method;
-    }
+    Method getMethod();
 
     /**
-     *
-     * @return declared {@link Method} return {@link TypeInformation}.
+     * @return declared {@link Method} return {@link com.lambdaworks.redis.dynamic.support.TypeInformation}.
      */
-    public ResolvableType getReturnType() {
-        return returnType;
-    }
+    ResolvableType getReturnType();
 
     /**
-     *
-     * @return the actual {@link Method} return {@link TypeInformation} after unwrapping.
+     * @return the actual {@link Method} return {@link com.lambdaworks.redis.dynamic.support.TypeInformation} after unwrapping.
      */
-    public ResolvableType getActualReturnType() {
-        return actualReturnType;
-    }
+    ResolvableType getActualReturnType();
 
     /**
      * Lookup a method annotation.
@@ -125,70 +58,32 @@ public class CommandMethod {
      * @param annotationClass the annotation class.
      * @return the annotation object or {@literal null} if not found.
      */
-    public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-        return method.getAnnotation(annotationClass);
-    }
+    <A extends Annotation> A getAnnotation(Class<A> annotationClass);
 
     /**
-     *
      * @param annotationClass the annotation class.
      * @return {@literal true} if the method is annotated with {@code annotationClass}.
      */
-    public boolean hasAnnotation(Class<? extends Annotation> annotationClass) {
-        return method.getAnnotation(annotationClass) != null;
-    }
+    boolean hasAnnotation(Class<? extends Annotation> annotationClass);
 
     /**
-     *
      * @return the method name.
      */
-    public String getName() {
-        return method.getName();
-    }
+    String getName();
 
     /**
-     *
      * @return {@literal true} if the method uses asynchronous execution declaring {@link Future} as result type.
      */
-    public boolean isFutureExecution() {
-        return Future.class.isAssignableFrom(getReturnType().getRawClass());
-    }
+    boolean isFutureExecution();
 
     /**
-     *
-     * @return {@literal true} if the method uses reactive execution declaring {@link Publisher} as result type.
+     * @return {@literal true} if the method uses reactive execution declaring {@link org.reactivestreams.Publisher} as result
+     *         type.
      */
-    public boolean isReactiveExecution() {
-        return ReactiveTypes.supports(getReturnType().getRawClass());
-    }
+    boolean isReactiveExecution();
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof CommandMethod))
-            return false;
-
-        CommandMethod that = (CommandMethod) o;
-
-        if (method != null ? !method.equals(that.method) : that.method != null)
-            return false;
-        if (returnType != null ? !returnType.equals(that.returnType) : that.returnType != null)
-            return false;
-        return arguments != null ? arguments.equals(that.arguments) : that.arguments == null;
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = method != null ? method.hashCode() : 0;
-        result = 31 * result + (returnType != null ? returnType.hashCode() : 0);
-        result = 31 * result + (arguments != null ? arguments.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return method.toGenericString();
-    }
+    /**
+     * @return {@literal true} if the method defines a {@link com.lambdaworks.redis.dynamic.batch.CommandBatching} argument.
+     */
+    boolean isBatchExecution();
 }

@@ -27,12 +27,12 @@ import reactor.core.publisher.Flux;
 /**
  * @author Mark Paluch
  */
-public class CommandMethodTest {
+public class DeclaredCommandMethodTest {
 
     @Test
     public void shouldResolveConcreteType() throws Exception {
 
-        CommandMethod commandMethod = new CommandMethod(getMethod("getString"));
+        CommandMethod commandMethod = DeclaredCommandMethod.create(getMethod("getString"));
 
         assertThat(commandMethod.getActualReturnType().getType()).isEqualTo(String.class);
         assertThat(commandMethod.getReturnType().getType()).isEqualTo(String.class);
@@ -41,7 +41,7 @@ public class CommandMethodTest {
     @Test
     public void shouldResolveFutureComponentType() throws Exception {
 
-        CommandMethod commandMethod = new CommandMethod(getMethod("getFuture"));
+        CommandMethod commandMethod = DeclaredCommandMethod.create(getMethod("getFuture"));
 
         assertThat(commandMethod.getActualReturnType().getRawClass()).isEqualTo(String.class);
         assertThat(commandMethod.getReturnType().getRawClass()).isEqualTo(Future.class);
@@ -50,7 +50,7 @@ public class CommandMethodTest {
     @Test
     public void shouldResolveFluxComponentType() throws Exception {
 
-        CommandMethod commandMethod = new CommandMethod(getMethod("getFlux"));
+        CommandMethod commandMethod = DeclaredCommandMethod.create(getMethod("getFlux"));
 
         assertThat(commandMethod.getActualReturnType().getRawClass()).isEqualTo(String.class);
         assertThat(commandMethod.getReturnType().getRawClass()).isEqualTo(Flux.class);

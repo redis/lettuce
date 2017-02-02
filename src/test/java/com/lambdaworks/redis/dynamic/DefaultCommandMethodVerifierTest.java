@@ -109,7 +109,7 @@ public class DefaultCommandMethodVerifierTest {
     private void validateMethod(String methodName, Class<?>... parameterTypes) {
 
         Method method = ReflectionUtils.findMethod(MyInterface.class, methodName, parameterTypes);
-        CommandMethod commandMethod = new CommandMethod(method);
+        CommandMethod commandMethod = DeclaredCommandMethod.create(method);
 
         sut.validate(new CommandSegments(Collections.singletonList(CommandSegment.constant(methodName))), commandMethod);
     }
