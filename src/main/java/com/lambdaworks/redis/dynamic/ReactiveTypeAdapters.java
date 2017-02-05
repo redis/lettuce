@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,6 @@ import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 
-import com.lambdaworks.redis.dynamic.ReactiveTypes.ReactiveLibrary;
-import com.lambdaworks.redis.internal.LettuceAssert;
-
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import rx.Completable;
@@ -33,8 +27,16 @@ import rx.RxReactiveStreams;
 import rx.Single;
 import rx.internal.reactivestreams.PublisherAdapter;
 
+import com.lambdaworks.redis.dynamic.ReactiveTypes.ReactiveLibrary;
+import com.lambdaworks.redis.internal.LettuceAssert;
+
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+
 /**
  * @author Mark Paluch
+ * @since 5.0
  */
 class ReactiveTypeAdapters {
 

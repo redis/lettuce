@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,22 @@
  */
 package com.lambdaworks.redis.dynamic;
 
+import java.lang.reflect.Method;
+
 /**
- * Exception thrown if the command syntax is invalid.
+ * Strategy interface to resolve {@link ExecutableCommand} from a {@link Method} and {@link RedisCommandsMetadata}.
  * 
  * @author Mark Paluch
  * @since 5.0
  */
-public class CommandMethodSyntaxException extends CommandCreationException {
+interface ExecutableCommandLookupStrategy {
 
     /**
-     * Create a new {@link CommandMethodSyntaxException} given {@link CommandMethod} and a message.
+     * Resolve a {@link ExecutableCommand} given the {@link Method} and {@link RedisCommandsMetadata}.
      * 
-     * @param commandMethod must not be {@literal null}.
-     * @param msg must not be {@literal null}.
+     * @param method must not be {@literal null}.
+     * @param commandsMetadata must not be {@literal null}.
+     * @return the {@link ExecutableCommand}.
      */
-    public CommandMethodSyntaxException(CommandMethod commandMethod, String msg) {
-        super(commandMethod, msg);
-    }
+    ExecutableCommand resolveCommandMethod(Method method, RedisCommandsMetadata commandsMetadata);
 }

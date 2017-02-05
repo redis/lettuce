@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,16 @@
 package com.lambdaworks.redis.dynamic;
 
 /**
- * Exception thrown if the command syntax is invalid.
- * 
- * @author Mark Paluch
- * @since 5.0
+ * Strategy interface to resolve a {@link CommandFactory}.
  */
-public class CommandMethodSyntaxException extends CommandCreationException {
+interface CommandFactoryResolver {
 
     /**
-     * Create a new {@link CommandMethodSyntaxException} given {@link CommandMethod} and a message.
+     * Resolve a {@link CommandFactory} given a{@link CommandMethod} and {@link RedisCommandsMetadata}.
      * 
-     * @param commandMethod must not be {@literal null}.
-     * @param msg must not be {@literal null}.
+     * @param method must not be {@literal null}.
+     * @param redisCommandsMetadata must not be {@literal null}.
+     * @return the {@link CommandFactory}.
      */
-    public CommandMethodSyntaxException(CommandMethod commandMethod, String msg) {
-        super(commandMethod, msg);
-    }
+    CommandFactory resolveRedisCommandFactory(CommandMethod method, RedisCommandsMetadata redisCommandsMetadata);
 }

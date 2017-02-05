@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,28 @@
  */
 package com.lambdaworks.redis.dynamic;
 
+import java.util.concurrent.ExecutionException;
+
 /**
- * Exception thrown if the command syntax is invalid.
+ * An executable command that can be executed calling {@link #execute(Object[])}.
  * 
  * @author Mark Paluch
  * @since 5.0
  */
-public class CommandMethodSyntaxException extends CommandCreationException {
+interface ExecutableCommand {
 
     /**
-     * Create a new {@link CommandMethodSyntaxException} given {@link CommandMethod} and a message.
+     * Executes the {@link ExecutableCommand} with the given parameters.
      * 
-     * @param commandMethod must not be {@literal null}.
-     * @param msg must not be {@literal null}.
+     * @param parameters
+     * @return
      */
-    public CommandMethodSyntaxException(CommandMethod commandMethod, String msg) {
-        super(commandMethod, msg);
-    }
+    Object execute(Object[] parameters) throws ExecutionException, InterruptedException;
+
+    /**
+     * Returns the {@link CommandMethod}.
+     * 
+     * @return
+     */
+    CommandMethod getCommandMethod();
 }

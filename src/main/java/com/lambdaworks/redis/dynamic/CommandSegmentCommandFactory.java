@@ -23,6 +23,7 @@ import com.lambdaworks.redis.dynamic.parameter.ExecutionSpecificParameters;
 import com.lambdaworks.redis.dynamic.parameter.MethodParametersAccessor;
 import com.lambdaworks.redis.dynamic.segment.CommandSegments;
 import com.lambdaworks.redis.output.CommandOutput;
+import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.RedisCommand;
 
@@ -30,22 +31,23 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * {@link CommandFactory} based on {@link CommandSegments}.
  *
  * @author Mark Paluch
+ * @since 5.0
  */
-class CommandSegmentCommandFactory<K, V> implements CommandFactory {
+class CommandSegmentCommandFactory implements CommandFactory {
 
     private final CommandMethod commandMethod;
     private final CommandSegments segments;
     private final CommandOutputFactoryResolver outputResolver;
-    private final RedisCodec<K, V> redisCodec;
+    private final RedisCodec<Object, Object> redisCodec;
     private final ParameterBinder parameterBinder = new ParameterBinder();
     private final CommandOutputFactory outputFactory;
 
     public CommandSegmentCommandFactory(CommandSegments commandSegments, CommandMethod commandMethod,
-            RedisCodec<K, V> redisCodec, CommandOutputFactoryResolver outputResolver) {
+            RedisCodec<?, ?> redisCodec, CommandOutputFactoryResolver outputResolver) {
 
         this.segments = commandSegments;
         this.commandMethod = commandMethod;
-        this.redisCodec = redisCodec;
+        this.redisCodec = (RedisCodec) redisCodec;
         this.outputResolver = outputResolver;
 
         OutputSelector outputSelector = new OutputSelector(commandMethod.getActualReturnType(), redisCodec);
@@ -78,19 +80,19 @@ class CommandSegmentCommandFactory<K, V> implements CommandFactory {
     }
 
     @Override
-    public RedisCommand<?, ?, ?> createCommand(Object[] parameters) {
+    public RedisCommand<Object, Object, Object> createCommand(Object[] parameters) {
 
         MethodParametersAccessor parametersAccessor = new CodecAwareMethodParametersAccessor(
                 new DefaultMethodParametersAccessor(commandMethod.getParameters(), parameters), redisCodec);
 
-        CommandArgs<K, V> args = new CommandArgs<>(redisCodec);
+        CommandArgs<Object, Object> args = new CommandArgs<>(redisCodec);
 
-        CommandOutput<K, V, ?> output = outputFactory.create(redisCodec);
-        com.lambdaworks.redis.protocol.Command<?, ?, ?> command = new com.lambdaworks.redis.protocol.Command<>(
-                this.segments.getCommandType(), output, args);
+        CommandOutput<Object, Object, ?> output = outputFactory.create(redisCodec);
+        Command<Object, Object, ?> command = new com.lambdaworks.redis.protocol.Command<>(this.segments.getCommandType(),
+                output, args);
 
         parameterBinder.bind(args, redisCodec, segments, parametersAccessor);
 
-        return command;
+        return (Command) command;
     }
 }
