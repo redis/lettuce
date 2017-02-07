@@ -149,6 +149,7 @@ class ReconnectionHandler {
 
     void prepareClose() {
 
+        ChannelFuture currentFuture = this.currentFuture;
         if (currentFuture != null && !currentFuture.isDone()) {
             currentFuture.cancel(true);
         }
