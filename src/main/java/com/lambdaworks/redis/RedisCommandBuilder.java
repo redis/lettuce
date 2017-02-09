@@ -19,16 +19,12 @@ import static com.lambdaworks.redis.LettuceStrings.string;
 import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
-import java.util.*;
 import java.nio.ByteBuffer;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.Command;
@@ -49,6 +45,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static final byte[] MINUS_BYTES = { '-' };
     private static final byte[] PLUS_BYTES = { '+' };
+
+    private final RedisCodec<String, String> STRING_CODEC = new Utf8StringCodec();
 
     public RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
@@ -229,8 +227,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<Object>> command() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        return createCommand(COMMAND, new ArrayOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<K, V>((RedisCodec) STRING_CODEC);
+        return createCommand(COMMAND, new ArrayOutput<K, V>((RedisCodec) STRING_CODEC), args);
     }
 
     public Command<K, V, List<Object>> commandInfo(String... commands) {
@@ -238,14 +236,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notEmpty(commands, "Commands " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(commands, "Commands " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        CommandArgs<K, V> args = new CommandArgs<K, V>((RedisCodec) STRING_CODEC);
         args.add(INFO);
 
         for (String command : commands) {
             args.add(command);
         }
 
-        return createCommand(COMMAND, new ArrayOutput<K, V>(codec), args);
+        return createCommand(COMMAND, new ArrayOutput<K, V>((RedisCodec) STRING_CODEC), args);
     }
 
     public Command<K, V, Long> commandCount() {
@@ -1703,8 +1701,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
-    public Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
-            Limit limit) {
+    public Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
         notNullKey(key);
         notNullRange(range);
         notNullLimit(limit);
@@ -1871,13 +1868,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZREVRANGEBYSCORE, new ScoredValueListOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset,
-            long count) {
+    public Command<K, V, List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
         return zrevrangebyscoreWithScores(key, string(max), string(min), offset, count);
     }
 
-    public Command<K, V, List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset,
-            long count) {
+    public Command<K, V, List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
         notNullKey(key);
         notNullMinMax(min, max);
 
@@ -1954,13 +1949,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZREVRANGEBYSCORE, new ValueStreamingOutput<K, V>(codec, channel), args);
     }
 
-    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max,
-            double min) {
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min) {
         return zrevrangebyscoreWithScores(channel, key, string(max), string(min));
     }
 
-    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max,
-            String min) {
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min) {
         notNullKey(key);
         notNullMinMax(min, max);
         notNull(channel);
@@ -1970,8 +1963,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZREVRANGEBYSCORE, new ScoredValueStreamingOutput<K, V>(codec, channel), args);
     }
 
-    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
-            long offset, long count) {
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max,
+            double min, long offset, long count) {
         notNullKey(key);
         LettuceAssert.notNull(min, "Min " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(max, "Max " + MUST_NOT_BE_NULL);
@@ -1979,8 +1972,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return zrevrangebyscoreWithScores(channel, key, string(max), string(min), offset, count);
     }
 
-    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
-            long offset, long count) {
+    public Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max,
+            String min, long offset, long count) {
         notNullKey(key);
         notNullMinMax(min, max);
         notNull(channel);
@@ -2266,8 +2259,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return hscanStreaming(channel, key, ScanCursor.INITIAL, null);
     }
 
-    public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key,
-            ScanCursor scanCursor) {
+    public Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
         notNullKey(key);
         notNull(channel);
 
@@ -2332,8 +2324,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return zscanStreaming(channel, key, ScanCursor.INITIAL, null);
     }
 
-    public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key,
-            ScanCursor scanCursor) {
+    public Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
         notNullKey(key);
         notNull(channel);
 
@@ -2601,8 +2592,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(lngLatMember, "LngLatMember " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(lngLatMember, "LngLatMember " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(lngLatMember, "LngLatMember " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
-        LettuceAssert.isTrue(lngLatMember.length % 3 == 0, "LngLatMember.length must be a multiple of 3 and contain a "
-                + "sequence of longitude1, latitude1, member1, longitude2, latitude2, member2, ... longitudeN, latitudeN, memberN");
+        LettuceAssert
+                .isTrue(lngLatMember.length % 3 == 0,
+                        "LngLatMember.length must be a multiple of 3 and contain a "
+                                + "sequence of longitude1, latitude1, member1, longitude2, latitude2, member2, ... longitudeN, latitudeN, memberN");
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
 
@@ -2683,8 +2676,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
         geoArgs.build(args);
 
-        return createCommand(GEORADIUSBYMEMBER, new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(),
-                geoArgs.isWithHash(), geoArgs.isWithCoordinates()), args);
+        return createCommand(
+                GEORADIUSBYMEMBER,
+                new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(), geoArgs
+                        .isWithCoordinates()), args);
     }
 
     public Command<K, V, Long> georadiusbymember(K key, V member, double distance, String unit,
@@ -2801,8 +2796,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         Range.Boundary<? extends Number> lower = range.getLower();
 
-        if (lower.getValue() == null
-                || lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
+        if (lower.getValue() == null || lower.getValue() instanceof Double
+                && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
             return "-inf";
         }
 
@@ -2817,8 +2812,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         Range.Boundary<? extends Number> upper = range.getUpper();
 
-        if (upper.getValue() == null
-                || upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
+        if (upper.getValue() == null || upper.getValue() instanceof Double
+                && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
             return "+inf";
         }
 

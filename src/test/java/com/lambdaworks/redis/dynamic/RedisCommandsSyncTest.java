@@ -24,6 +24,8 @@ import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.Value;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.dynamic.annotation.Command;
 import com.lambdaworks.redis.dynamic.domain.Timeout;
 
@@ -35,13 +37,16 @@ public class RedisCommandsSyncTest extends AbstractRedisClientTest {
     @Test
     public void sync() throws Exception {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        StatefulRedisConnection<byte[], byte[]> connection = client.connect(ByteArrayCodec.INSTANCE);
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
         api.setSync(key, value, Timeout.create(10, TimeUnit.SECONDS));
         assertThat(api.get("key")).isEqualTo("value");
         assertThat(api.getAsBytes("key")).isEqualTo("value".getBytes());
+
+        connection.close();
     }
 
     @Test
