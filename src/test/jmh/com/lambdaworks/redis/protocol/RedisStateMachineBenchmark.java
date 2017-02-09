@@ -27,6 +27,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 
 /**
+ * Bechmark for {@link RedisStateMachine}.
+ *
  * @author Mark Paluch
  */
 @State(Scope.Benchmark)

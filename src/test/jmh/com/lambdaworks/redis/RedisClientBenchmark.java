@@ -15,15 +15,28 @@
  */
 package com.lambdaworks.redis;
 
-import com.lambdaworks.redis.codec.ByteArrayCodec;
 import org.openjdk.jmh.annotations.*;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.codec.ByteArrayCodec;
 
 /**
+ * Benchmark for {@link RedisClient}.
+ * <p>
+ * Test cases:
+ * <ul>
+ * <li>synchronous command execution</li>
+ * <li>asynchronous command execution</li>
+ * <li>asynchronous command execution with batching</li>
+ * <li>asynchronous command execution with delayed flushing</li>
+ * <li>reactive command execution</li>
+ * <li>reactive command execution with batching</li>
+ * <li>reactive command execution with delayed flushing</li>
+ * </ul>
+ *
  * @author Mark Paluch
  */
 @State(Scope.Benchmark)

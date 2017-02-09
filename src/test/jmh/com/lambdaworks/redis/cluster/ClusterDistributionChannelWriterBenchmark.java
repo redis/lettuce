@@ -40,6 +40,8 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
 
 /**
+ * Benchmark for {@link ClusterDistributionChannelWriter}.
+ *
  * @author Mark Paluch
  */
 @State(Scope.Benchmark)

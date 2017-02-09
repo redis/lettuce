@@ -27,7 +27,9 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
 
 /**
- * Benchmark for {@link DefaultEndpoint}. Test cases:
+ * Benchmark for {@link DefaultEndpoint}.
+ * <p>
+ * Test cases:
  * <ul>
  * <li>user command writes</li>
  * </ul>

@@ -27,6 +27,17 @@ import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 
 /**
+ * Benchmark for {@link RedisClusterClient}.
+ * <ul>
+ * <li>synchronous command execution</li>
+ * <li>asynchronous command execution</li>
+ * <li>asynchronous command execution with batching</li>
+ * <li>asynchronous command execution with delayed flushing</li>
+ * <li>reactive command execution</li>
+ * <li>reactive command execution with batching</li>
+ * <li>reactive command execution with delayed flushing</li>
+ * </ul>
+ * 
  * @author Mark Paluch
  */
 @State(Scope.Benchmark)

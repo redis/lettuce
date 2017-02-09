@@ -28,6 +28,8 @@ import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.dynamic.batch.BatchSize;
 
 /**
+ * Benchmark for commands executed through {@link RedisCommandFactory}.
+ *
  * @author Mark Paluch
  */
 @State(Scope.Benchmark)

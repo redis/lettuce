@@ -28,6 +28,8 @@ import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.dynamic.batch.BatchSize;
 
 /**
+ * Benchmark for commands executed through {@link StatefulRedisConnection}.
+ *
  * @author Mark Paluch
  */
 @State(Scope.Benchmark)

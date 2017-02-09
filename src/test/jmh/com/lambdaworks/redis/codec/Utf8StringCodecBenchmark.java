@@ -26,6 +26,8 @@ import org.openjdk.jmh.infra.Blackhole;
 import com.lambdaworks.redis.protocol.LettuceCharsets;
 
 /**
+ * Benchmark for {@link Utf8StringCodec}.
+ *
  * @author Mark Paluch
  */
 public class Utf8StringCodecBenchmark {

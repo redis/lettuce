@@ -30,6 +30,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
+ * Benchmark for {@link StringCodec}.
+ * 
  * @author Mark Paluch
  */
 public class StringCodecBenchmark {
