@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@ public class DeclaredCommandMethod implements CommandMethod {
     private final List<Class<?>> arguments = new ArrayList<>();
     private final ExecutionSpecificParameters parameters;
     private final ResolvableType actualReturnType;
+    private final boolean futureExecution;
+    private final boolean reactiveExecution;
 
     /**
      * Create a new {@link DeclaredCommandMethod} given a {@link Method}.
@@ -70,6 +72,8 @@ public class DeclaredCommandMethod implements CommandMethod {
         this.method = method;
         this.returnType = ResolvableType.forMethodReturnType(method);
         this.parameters = parameters;
+        this.futureExecution = Future.class.isAssignableFrom(getReturnType().getRawClass());
+        this.reactiveExecution = ReactiveTypes.supports(getReturnType().getRawClass());
 
         Collections.addAll(arguments, method.getParameterTypes());
 
@@ -163,7 +167,7 @@ public class DeclaredCommandMethod implements CommandMethod {
      */
     @Override
     public boolean isFutureExecution() {
-        return Future.class.isAssignableFrom(getReturnType().getRawClass());
+        return futureExecution;
     }
 
     /**
@@ -171,7 +175,7 @@ public class DeclaredCommandMethod implements CommandMethod {
      */
     @Override
     public boolean isReactiveExecution() {
-        return ReactiveTypes.supports(getReturnType().getRawClass());
+        return reactiveExecution;
     }
 
     /**

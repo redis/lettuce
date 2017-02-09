@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.dynamic;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.dynamic.CodecAwareMethodParametersAccessor.TypeContext;
 import com.lambdaworks.redis.dynamic.output.CommandOutputFactory;
 import com.lambdaworks.redis.dynamic.output.CommandOutputFactoryResolver;
 import com.lambdaworks.redis.dynamic.output.OutputSelector;
@@ -41,6 +42,7 @@ class CommandSegmentCommandFactory implements CommandFactory {
     private final RedisCodec<Object, Object> redisCodec;
     private final ParameterBinder parameterBinder = new ParameterBinder();
     private final CommandOutputFactory outputFactory;
+    private final TypeContext typeContext;
 
     public CommandSegmentCommandFactory(CommandSegments commandSegments, CommandMethod commandMethod,
             RedisCodec<?, ?> redisCodec, CommandOutputFactoryResolver outputResolver) {
@@ -49,6 +51,7 @@ class CommandSegmentCommandFactory implements CommandFactory {
         this.commandMethod = commandMethod;
         this.redisCodec = (RedisCodec) redisCodec;
         this.outputResolver = outputResolver;
+        this.typeContext = new TypeContext(redisCodec);
 
         OutputSelector outputSelector = new OutputSelector(commandMethod.getActualReturnType(), redisCodec);
         CommandOutputFactory factory = resolveCommandOutputFactory(outputSelector);
@@ -83,7 +86,7 @@ class CommandSegmentCommandFactory implements CommandFactory {
     public RedisCommand<Object, Object, Object> createCommand(Object[] parameters) {
 
         MethodParametersAccessor parametersAccessor = new CodecAwareMethodParametersAccessor(
-                new DefaultMethodParametersAccessor(commandMethod.getParameters(), parameters), redisCodec);
+                new DefaultMethodParametersAccessor(commandMethod.getParameters(), parameters), typeContext);
 
         CommandArgs<Object, Object> args = new CommandArgs<>(redisCodec);
 

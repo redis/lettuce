@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@ package com.lambdaworks.redis.dynamic.parameter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.lambdaworks.redis.dynamic.support.*;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceClassUtils;
+
+import io.netty.util.internal.ConcurrentSet;
 
 /**
  * Abstracts a method parameter and exposes access to type and parameter information.
@@ -41,6 +42,9 @@ public class Parameter {
     private final int parameterIndex;
     private final TypeInformation<?> typeInformation;
     private final MethodParameter methodParameter;
+    private final Map<Class<? extends Annotation>, Annotation> annotationCache = new ConcurrentHashMap<>();
+    private final Set<Class<? extends Annotation>> absentCache = new ConcurrentSet<>();
+    private final List<Annotation> annotations;
 
     public Parameter(Method method, int parameterIndex) {
 
@@ -50,6 +54,15 @@ public class Parameter {
         this.methodParameter.initParameterNameDiscovery(discoverer);
         this.name = methodParameter.getParameterName();
         this.typeInformation = ClassTypeInformation.fromMethodParameter(method, parameterIndex);
+
+        Annotation[] annotations = method.getParameterAnnotations()[parameterIndex];
+        List<Annotation> allAnnotations = new ArrayList<>(annotations.length);
+
+        for (Annotation annotation : annotations) {
+            this.annotationCache.put(annotation.getClass(), annotation);
+            allAnnotations.add(annotation);
+        }
+        this.annotations = Collections.unmodifiableList(allAnnotations);
     }
 
     /**
@@ -58,8 +71,21 @@ public class Parameter {
      * @param annotationType the annotation type to look for
      * @return the annotation object, or {@code null} if not found
      */
+    @SuppressWarnings("unchecked")
     public <A extends Annotation> A findAnnotation(Class<A> annotationType) {
-        return methodParameter.getParameterAnnotation(annotationType);
+
+        if (absentCache.contains(annotationType)) {
+            return null;
+        }
+
+        A result = (A) annotationCache.computeIfAbsent(annotationType,
+                key -> methodParameter.getParameterAnnotation(annotationType));
+
+        if (result == null) {
+            absentCache.add(annotationType);
+        }
+
+        return result;
     }
 
     /**
@@ -68,12 +94,7 @@ public class Parameter {
      * @return the {@link List} of annotation objects.
      */
     public List<? extends Annotation> getAnnotations() {
-
-        Annotation[] annotations = method.getParameterAnnotations()[parameterIndex];
-        List<Annotation> result = new ArrayList<>(annotations.length);
-        Collections.addAll(result, annotations);
-
-        return result;
+        return annotations;
     }
 
     /**

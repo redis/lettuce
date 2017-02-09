@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,26 +55,28 @@ class ParameterBinder {
 
         int parameterCount = accessor.getParameterCount();
 
-        Set<Integer> eatenParameters = new HashSet<>();
+        BitSet set = new BitSet(parameterCount);
 
         for (CommandSegment commandSegment : commandSegments) {
 
             ArgumentContribution argumentContribution = commandSegment.contribute(accessor);
             bind(args, codec, argumentContribution.getValue(), argumentContribution.getParameterIndex(), accessor);
 
-            eatenParameters.add(argumentContribution.getParameterIndex());
+            if (argumentContribution.getParameterIndex() != -1) {
+                set.set(argumentContribution.getParameterIndex());
+            }
         }
 
         for (int i = 0; i < parameterCount; i++) {
 
-            if (eatenParameters.contains(i)) {
+            if (set.get(i)) {
                 continue;
             }
 
             Object bindableValue = accessor.getBindableValue(i);
             bind(args, codec, bindableValue, i, accessor);
 
-            eatenParameters.add(i);
+            set.set(i);
         }
 
         return args;
@@ -172,8 +174,8 @@ class ParameterBinder {
         if (argument instanceof ScoredValue) {
 
             ScoredValue<V> scoredValue = (ScoredValue<V>) argument;
-            V value = scoredValue.getValueOrElseThrow(
-                    () -> new IllegalArgumentException("Cannot bind empty ScoredValue to a Redis command."));
+            V value = scoredValue.getValueOrElseThrow(() -> new IllegalArgumentException(
+                    "Cannot bind empty ScoredValue to a Redis command."));
 
             args.add(scoredValue.getScore());
             args.addValue(value);
@@ -183,8 +185,8 @@ class ParameterBinder {
         if (argument instanceof KeyValue) {
 
             KeyValue<K, V> keyValue = (KeyValue<K, V>) argument;
-            V value = keyValue
-                    .getValueOrElseThrow(() -> new IllegalArgumentException("Cannot bind empty KeyValue to a Redis command."));
+            V value = keyValue.getValueOrElseThrow(() -> new IllegalArgumentException(
+                    "Cannot bind empty KeyValue to a Redis command."));
 
             args.addKey(keyValue.getKey());
             args.addValue(value);
@@ -194,8 +196,8 @@ class ParameterBinder {
         if (argument instanceof Value) {
 
             Value<V> valueWrapper = (Value<V>) argument;
-            V value = valueWrapper
-                    .getValueOrElseThrow(() -> new IllegalArgumentException("Cannot bind empty Value to a Redis command."));
+            V value = valueWrapper.getValueOrElseThrow(() -> new IllegalArgumentException(
+                    "Cannot bind empty Value to a Redis command."));
 
             args.addValue(value);
             return;
@@ -256,8 +258,8 @@ class ParameterBinder {
 
         Range.Boundary<? extends Number> lower = range.getLower();
 
-        if (lower.getValue() == null
-                || lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
+        if (lower.getValue() == null || lower.getValue() instanceof Double
+                && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
             return "-inf";
         }
 
@@ -272,8 +274,8 @@ class ParameterBinder {
 
         Range.Boundary<? extends Number> upper = range.getUpper();
 
-        if (upper.getValue() == null
-                || upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
+        if (upper.getValue() == null || upper.getValue() instanceof Double
+                && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
             return "+inf";
         }
 

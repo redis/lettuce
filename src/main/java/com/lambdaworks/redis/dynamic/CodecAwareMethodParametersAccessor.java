@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,16 @@ import com.lambdaworks.redis.dynamic.support.TypeInformation;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
+ * Codec-aware {@link MethodParametersAccessor}. Identifies key and value types by checking value compatibility with
+ * {@link RedisCodec} types.
+ * 
  * @author Mark Paluch
+ * @since 5.0
  */
-public class CodecAwareMethodParametersAccessor implements MethodParametersAccessor {
+class CodecAwareMethodParametersAccessor implements MethodParametersAccessor {
 
     private final MethodParametersAccessor delegate;
-    private final TypeInformation<?> keyType;
-    private final TypeInformation<?> valueType;
+    private final TypeContext typeContext;
 
     public CodecAwareMethodParametersAccessor(MethodParametersAccessor delegate, RedisCodec<?, ?> redisCodec) {
 
@@ -38,12 +41,16 @@ public class CodecAwareMethodParametersAccessor implements MethodParametersAcces
         LettuceAssert.notNull(redisCodec, "RedisCodec must not be null");
 
         this.delegate = delegate;
+        this.typeContext = new TypeContext(redisCodec);
+    }
 
-        ClassTypeInformation<? extends RedisCodec> typeInformation = ClassTypeInformation.from(redisCodec.getClass());
+    public CodecAwareMethodParametersAccessor(MethodParametersAccessor delegate, TypeContext typeContext) {
 
-        this.keyType = typeInformation.getTypeArgument(RedisCodec.class, 0);
-        this.valueType = typeInformation.getTypeArgument(RedisCodec.class, 1);
+        LettuceAssert.notNull(delegate, "MethodParametersAccessor must not be null");
+        LettuceAssert.notNull(typeContext, "TypeContext must not be null");
 
+        this.delegate = delegate;
+        this.typeContext = typeContext;
     }
 
     @Override
@@ -69,7 +76,7 @@ public class CodecAwareMethodParametersAccessor implements MethodParametersAcces
 
         Object bindableValue = getBindableValue(index);
 
-        if (bindableValue != null && keyType.getType().isAssignableFrom(bindableValue.getClass())) {
+        if (bindableValue != null && typeContext.keyType.getType().isAssignableFrom(bindableValue.getClass())) {
             return true;
         }
 
@@ -89,7 +96,7 @@ public class CodecAwareMethodParametersAccessor implements MethodParametersAcces
 
         Object bindableValue = getBindableValue(index);
 
-        if (bindableValue != null && valueType.getType().isAssignableFrom(bindableValue.getClass())) {
+        if (bindableValue != null && typeContext.valueType.getType().isAssignableFrom(bindableValue.getClass())) {
             return true;
         }
 
@@ -109,5 +116,24 @@ public class CodecAwareMethodParametersAccessor implements MethodParametersAcces
     @Override
     public boolean isBindableNullValue(int index) {
         return delegate.isBindableNullValue(index);
+    }
+
+    /**
+     * Cacheable type context for a {@link RedisCodec}.
+     */
+    public static class TypeContext {
+
+        final TypeInformation<?> keyType;
+        final TypeInformation<?> valueType;
+
+        public TypeContext(RedisCodec<?, ?> redisCodec) {
+
+            LettuceAssert.notNull(redisCodec, "RedisCodec must not be null");
+
+            ClassTypeInformation<? extends RedisCodec> typeInformation = ClassTypeInformation.from(redisCodec.getClass());
+
+            this.keyType = typeInformation.getTypeArgument(RedisCodec.class, 0);
+            this.valueType = typeInformation.getTypeArgument(RedisCodec.class, 1);
+        }
     }
 }

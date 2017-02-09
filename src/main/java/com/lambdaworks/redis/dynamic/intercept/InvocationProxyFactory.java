@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class InvocationProxyFactory {
     /**
      * {@link MethodInterceptor}-based {@link InterceptorChainInvocationHandler}.
      */
-    private static class InterceptorChainInvocationHandler extends AbstractInvocationHandler {
+    static class InterceptorChainInvocationHandler extends AbstractInvocationHandler {
 
         private final List<MethodInterceptor> interceptors;
 
@@ -112,6 +112,7 @@ public class InvocationProxyFactory {
 
         private DefaultMethodInvocation getInvocation(final Method method, final Object[] args,
                 final Iterator<MethodInterceptor> iterator) {
+
             return new DefaultMethodInvocation(method, args) {
 
                 @Override
