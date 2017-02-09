@@ -97,7 +97,7 @@ public class ClusterDistributionChannelWriterBenchmark {
         writer.setPartitions(partitions);
     }
 
-    // @Benchmark
+    @Benchmark
     public void writeKeyedCommand() {
         writer.write(KEYED_COMMAND1);
     }
@@ -114,7 +114,7 @@ public class ClusterDistributionChannelWriterBenchmark {
         writer.write(COMMANDS);
     }
 
-    // @Benchmark
+    @Benchmark
     public void writePlainCommand() {
         writer.write(PLAIN_COMMAND);
     }
