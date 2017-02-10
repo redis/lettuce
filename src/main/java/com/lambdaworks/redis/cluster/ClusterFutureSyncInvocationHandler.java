@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -63,12 +64,15 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
     static {
         try {
             LOOKUP_CONSTRUCTOR = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, int.class);
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
+
+        try {
             if (!LOOKUP_CONSTRUCTOR.isAccessible()) {
                 LOOKUP_CONSTRUCTOR.setAccessible(true);
             }
-        } catch (NoSuchMethodException exp) {
-            // should be impossible, but...
-            throw new IllegalStateException(exp);
+        } catch (Throwable jdk9) {
         }
     }
 
@@ -182,24 +186,24 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
                 asyncCommandsInterface, connection.getTimeout(), connection.getTimeoutUnit());
-        return Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(),
-                new Class<?>[] { nodeSelectionCommandsInterface, nodeSelectionInterface }, h);
-    }
-
-    private static MethodHandles.Lookup privateMethodHandleLookup(Class<?> declaringClass) {
-        try {
-            return LOOKUP_CONSTRUCTOR.newInstance(declaringClass, MethodHandles.Lookup.PRIVATE);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new IllegalStateException(e);
-        }
+        return Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(), new Class<?>[] {
+                nodeSelectionCommandsInterface, nodeSelectionInterface }, h);
     }
 
     private static MethodHandle getDefaultMethodHandle(Method method) {
+
         Class<?> declaringClass = method.getDeclaringClass();
+
         try {
-            return privateMethodHandleLookup(declaringClass).unreflectSpecial(method, declaringClass);
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException("Did not pass in an interface method: " + method);
+            if (LOOKUP_CONSTRUCTOR.isAccessible()) {
+                MethodHandles.Lookup result = LOOKUP_CONSTRUCTOR.newInstance(declaringClass, MethodHandles.Lookup.PRIVATE);
+                return result.unreflectSpecial(method, declaringClass);
+            }
+
+            return MethodHandles.lookup().findSpecial(method.getDeclaringClass(), method.getName(),
+                    MethodType.methodType(method.getReturnType(), method.getParameterTypes()), method.getDeclaringClass());
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalArgumentException("Did not pass in an interface method: " + method, e);
         }
     }
 }
