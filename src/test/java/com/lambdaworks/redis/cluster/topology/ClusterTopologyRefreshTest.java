@@ -401,7 +401,7 @@ public class ClusterTopologyRefreshTest {
 
     private static <T> CompletableFuture<T> completedWithException(Exception e) {
 
-        CompletableFuture<T> future = new CompletableFuture<T>();
+        CompletableFuture<T> future = new CompletableFuture<>();
         future.completeExceptionally(e);
         return future;
     }

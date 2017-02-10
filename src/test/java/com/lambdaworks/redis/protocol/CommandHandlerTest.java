@@ -65,7 +65,8 @@ public class CommandHandlerTest {
     private CommandHandler<String, String> sut;
 
     private final Command<String, String, String> command = new Command<>(CommandType.APPEND,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+            new Utf8StringCodec()), null);
 
     @Mock
     private ChannelHandlerContext context;
@@ -127,7 +128,7 @@ public class CommandHandlerTest {
             return new DefaultChannelPromise(channel);
         });
 
-        sut = new CommandHandler<String, String>(ClientOptions.create(), clientResources, q);
+        sut = new CommandHandler<>(ClientOptions.create(), clientResources, q);
         sut.setRedisChannelHandler(channelHandler);
     }
 
@@ -146,7 +147,7 @@ public class CommandHandlerTest {
 
         ClientOptions clientOptions = ClientOptions.builder().cancelCommandsOnReconnectFailure(true).build();
 
-        sut = new CommandHandler<String, String>(clientOptions, clientResources, q);
+        sut = new CommandHandler<>(clientOptions, clientResources, q);
         sut.setRedisChannelHandler(channelHandler);
 
         sut.channelRegistered(context);
@@ -167,10 +168,11 @@ public class CommandHandlerTest {
     public void testChannelActiveWithBufferedAndQueuedCommands() throws Exception {
 
         Command<String, String, String> bufferedCommand = new Command<>(CommandType.GET,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+                new Utf8StringCodec()), null);
 
         Command<String, String, String> pingCommand = new Command<>(CommandType.PING,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+                new StatusOutput<>(new Utf8StringCodec()), null);
         q.add(bufferedCommand);
 
         AtomicLong atomicLong = (AtomicLong) ReflectionTestUtils.getField(sut, "writers");
@@ -202,16 +204,20 @@ public class CommandHandlerTest {
     public void testChannelActiveWithBufferedAndQueuedCommandsRetainsOrder() throws Exception {
 
         Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+                new Utf8StringCodec()), null);
 
         Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+                new Utf8StringCodec()), null);
 
         Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+                new Utf8StringCodec()), null);
 
         Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+                new Utf8StringCodec()), null);
 
         q.add(queuedCommand1);
         q.add(queuedCommand2);
@@ -242,16 +248,20 @@ public class CommandHandlerTest {
     public void testChannelActiveReplayBufferedCommands() throws Exception {
 
         Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+                new Utf8StringCodec()), null);
 
         Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+                new Utf8StringCodec()), null);
 
         Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+                new Utf8StringCodec()), null);
 
         Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(
+                new Utf8StringCodec()), null);
 
         q.add(queuedCommand1);
         q.add(queuedCommand2);
@@ -305,7 +315,7 @@ public class CommandHandlerTest {
     @Test(expected = RedisException.class)
     public void testWriteChannelDisconnectedWithoutReconnect() throws Exception {
 
-        sut = new CommandHandler<String, String>(ClientOptions.builder().autoReconnect(false).build(), clientResources,
+        sut = new CommandHandler<>(ClientOptions.builder().autoReconnect(false).build(), clientResources,
                 q);
         sut.setRedisChannelHandler(channelHandler);
 
@@ -505,7 +515,8 @@ public class CommandHandlerTest {
     public void shouldWriteActiveCommandsInMixedBatch() throws Exception {
 
         Command<String, String, String> command2 = new Command<>(CommandType.APPEND,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+ new StatusOutput<>(new Utf8StringCodec()),
+                null);
 
         command.cancel();
 

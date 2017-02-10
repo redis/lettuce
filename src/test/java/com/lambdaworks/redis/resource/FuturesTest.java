@@ -41,15 +41,15 @@ public class FuturesTest {
 
     @Test(expected = IllegalStateException.class)
     public void notArmed() throws Exception {
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
-                new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE));
-        sut.add(new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE));
+        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<>(new DefaultPromise<>(
+                ImmediateEventExecutor.INSTANCE));
+        sut.add(new DefaultPromise<>(ImmediateEventExecutor.INSTANCE));
     }
 
     @Test(expected = IllegalStateException.class)
     public void expectAfterArmed() throws Exception {
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
-                new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE));
+        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<>(new DefaultPromise<>(
+                ImmediateEventExecutor.INSTANCE));
         sut.arm();
 
         sut.expectMore(1);
@@ -57,21 +57,21 @@ public class FuturesTest {
 
     @Test(expected = IllegalStateException.class)
     public void armTwice() throws Exception {
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
-                new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE));
+        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<>(new DefaultPromise<>(
+                ImmediateEventExecutor.INSTANCE));
         sut.arm();
         sut.arm();
     }
 
     @Test
     public void regularUse() throws Exception {
-        final DefaultPromise<Boolean> target = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
+        final DefaultPromise<Boolean> target = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<>(
                 target);
 
         sut.expectMore(1);
         sut.arm();
-        DefaultPromise<Boolean> part = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
+        DefaultPromise<Boolean> part = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
         sut.add(part);
 
         assertThat(target.isDone()).isFalse();

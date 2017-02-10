@@ -95,7 +95,7 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     @Override
     public void complete(int depth) {
         if (depth == 1) {
-            subscriber.onNext(new GeoWithin<V>(member, distance, geohash, coordinates));
+            subscriber.onNext(new GeoWithin<>(member, distance, geohash, coordinates));
 
             member = null;
             distance = null;

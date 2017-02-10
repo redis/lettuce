@@ -39,8 +39,8 @@ public class AsyncCommandInternalsTest {
 
     @Before
     public final void createCommand() throws Exception {
-        CommandOutput<String, String, String> output = new StatusOutput<String, String>(codec);
-        internal = new Command<String, String, String>(CommandType.INFO, output, null);
+        CommandOutput<String, String, String> output = new StatusOutput<>(codec);
+        internal = new Command<>(CommandType.INFO, output, null);
         sut = new AsyncCommand<>(internal);
     }
 
@@ -126,7 +126,7 @@ public class AsyncCommandInternalsTest {
     @Test
     public void customKeyword() throws Exception {
         sut = new AsyncCommand<>(
-                new Command<String, String, String>(MyKeywords.DUMMY, new StatusOutput<String, String>(codec), null));
+new Command<>(MyKeywords.DUMMY, new StatusOutput<>(codec), null));
 
         assertThat(sut.toString()).contains(MyKeywords.DUMMY.name());
     }
@@ -134,7 +134,7 @@ public class AsyncCommandInternalsTest {
     @Test
     public void customKeywordWithArgs() throws Exception {
         sut = new AsyncCommand<>(
-                new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<String, String>(codec)));
+new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<>(codec)));
         sut.getArgs().add(MyKeywords.DUMMY);
         assertThat(sut.getArgs().toString()).contains(MyKeywords.DUMMY.name());
     }

@@ -37,7 +37,7 @@ public class LettuceFactories {
      * @return a new, empty {@link ConcurrentLinkedDeque}.
      */
     public static final <T> Deque<T> newConcurrentQueue() {
-        return new ConcurrentLinkedDeque<T>();
+        return new ConcurrentLinkedDeque<>();
     }
 
     /**

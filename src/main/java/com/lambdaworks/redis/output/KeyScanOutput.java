@@ -30,7 +30,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 public class KeyScanOutput<K, V> extends ScanOutput<K, V, KeyScanCursor<K>> {
 
     public KeyScanOutput(RedisCodec<K, V> codec) {
-        super(codec, new KeyScanCursor<K>());
+        super(codec, new KeyScanCursor<>());
     }
 
     @Override

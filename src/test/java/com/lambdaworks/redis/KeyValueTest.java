@@ -45,6 +45,6 @@ public class KeyValueTest {
     }
 
     protected KeyValue<String, String> kv(String key, String value) {
-        return new KeyValue<String, String>(key, value);
+        return new KeyValue<>(key, value);
     }
 }

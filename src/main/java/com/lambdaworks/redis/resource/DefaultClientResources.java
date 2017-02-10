@@ -468,9 +468,9 @@ public class DefaultClientResources implements ClientResources {
     public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         shutdownCalled = true;
-        DefaultPromise<Boolean> overall = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        DefaultPromise<Boolean> lastRelease = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
+        DefaultPromise<Boolean> overall = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+        DefaultPromise<Boolean> lastRelease = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<>(
                 overall);
 
         aggregator.expectMore(1);

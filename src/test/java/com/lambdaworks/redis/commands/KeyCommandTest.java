@@ -110,7 +110,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void keysStreaming() throws Exception {
-        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
         assertThat(redis.keys("*")).isEqualTo(list());
         Map<String, String> map = new LinkedHashMap<>();
@@ -333,7 +333,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     @Test
     public void scanStreaming() throws Exception {
         redis.set(key, value);
-        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
         StreamScanCursor cursor = redis.scan(adapter);
 
@@ -346,7 +346,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     @Test
     public void scanStreamingWithCursor() throws Exception {
         redis.set(key, value);
-        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
         StreamScanCursor cursor = redis.scan(adapter, ScanCursor.INITIAL);
 
@@ -358,7 +358,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     @Test
     public void scanStreamingWithCursorAndArgs() throws Exception {
         redis.set(key, value);
-        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
         StreamScanCursor cursor = redis.scan(adapter, ScanCursor.INITIAL, ScanArgs.Builder.limit(5));
 
@@ -370,7 +370,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     @Test
     public void scanStreamingArgs() throws Exception {
         redis.set(key, value);
-        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
         StreamScanCursor cursor = redis.scan(adapter, ScanArgs.Builder.limit(100).match("*"));
 

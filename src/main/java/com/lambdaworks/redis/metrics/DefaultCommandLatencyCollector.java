@@ -15,16 +15,7 @@
  */
 package com.lambdaworks.redis.metrics;
 
-import com.lambdaworks.redis.metrics.CommandMetrics.CommandLatency;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.ProtocolKeyword;
-import io.netty.channel.local.LocalAddress;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-import org.HdrHistogram.Histogram;
-import org.LatencyUtils.LatencyStats;
-import org.LatencyUtils.PauseDetector;
-import org.LatencyUtils.SimplePauseDetector;
+import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
 
 import java.net.SocketAddress;
 import java.util.Collections;
@@ -36,7 +27,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
+import org.HdrHistogram.Histogram;
+import org.LatencyUtils.LatencyStats;
+import org.LatencyUtils.PauseDetector;
+import org.LatencyUtils.SimplePauseDetector;
+
+import com.lambdaworks.redis.metrics.CommandMetrics.CommandLatency;
+import com.lambdaworks.redis.protocol.CommandType;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
+
+import io.netty.channel.local.LocalAddress;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Default implementation of a {@link CommandLatencyCollector} for command latencies.
@@ -163,7 +165,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     }
 
     private Map<Double, Long> getPercentiles(Histogram histogram) {
-        Map<Double, Long> percentiles = new TreeMap<Double, Long>();
+        Map<Double, Long> percentiles = new TreeMap<>();
         for (double targetPercentile : options.targetPercentiles()) {
             percentiles.put(targetPercentile,
                     options.targetUnit().convert(histogram.getValueAtPercentile(targetPercentile), TimeUnit.NANOSECONDS));

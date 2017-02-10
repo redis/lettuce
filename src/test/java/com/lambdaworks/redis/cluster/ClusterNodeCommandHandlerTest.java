@@ -50,7 +50,8 @@ import com.lambdaworks.redis.resource.ClientResources;
 public class ClusterNodeCommandHandlerTest {
 
     private AsyncCommand<String, String, String> command = new AsyncCommand<>(
-            new Command<>(CommandType.APPEND, new StatusOutput<String, String>(new Utf8StringCodec()), null));
+new Command<>(CommandType.APPEND,
+            new StatusOutput<>(new Utf8StringCodec()), null));
 
     private Queue<RedisCommand<String, String, ?>> queue = new LinkedBlockingQueue<>();
 

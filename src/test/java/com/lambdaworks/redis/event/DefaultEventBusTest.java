@@ -42,7 +42,7 @@ public class DefaultEventBusTest {
         TestScheduler testScheduler = Schedulers.test();
         EventBus sut = new DefaultEventBus(testScheduler);
 
-        TestSubscriber<Event> subscriber = new TestSubscriber<Event>();
+        TestSubscriber<Event> subscriber = new TestSubscriber<>();
         sut.get().subscribe(subscriber);
 
         sut.publish(event);

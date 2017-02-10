@@ -79,7 +79,7 @@ public class RequestsTest {
 
         RedisURI redisURI = RedisURI.create("localhost", 6379);
         Requests requests = new Requests();
-        Command<String, String, String> command = new Command<String, String, String>(CommandType.TYPE,
+        Command<String, String, String> command = new Command<>(CommandType.TYPE,
                 new StatusOutput<>(new Utf8StringCodec()));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
 
@@ -93,7 +93,7 @@ public class RequestsTest {
 
         RedisURI redisURI = RedisURI.create("localhost", 6379);
         Requests requests = new Requests();
-        Command<String, String, String> command = new Command<String, String, String>(CommandType.TYPE,
+        Command<String, String, String> command = new Command<>(CommandType.TYPE,
                 new StatusOutput<>(new Utf8StringCodec()));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
 
@@ -104,7 +104,7 @@ public class RequestsTest {
     }
 
     private TimedAsyncCommand getCommand(String response) {
-        Command<String, String, String> command = new Command<String, String, String>(CommandType.TYPE,
+        Command<String, String, String> command = new Command<>(CommandType.TYPE,
                 new StatusOutput<>(new Utf8StringCodec()));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
 

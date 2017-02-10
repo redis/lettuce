@@ -46,7 +46,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
 
     public RedisSentinelReactiveCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
-        commandBuilder = new SentinelCommandBuilder<K, V>(codec);
+        commandBuilder = new SentinelCommandBuilder<>(codec);
     }
 
     @Override
@@ -166,7 +166,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
     }
 
     public <T> Observable<T> createObservable(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return Observable.create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false));
+        return Observable.create(new ReactiveCommandDispatcher<>(commandSupplier, connection, false));
     }
 
     @SuppressWarnings("unchecked")

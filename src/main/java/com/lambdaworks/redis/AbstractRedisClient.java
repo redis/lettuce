@@ -333,7 +333,7 @@ public abstract class AbstractRedisClient {
             });
         });
 
-        return new ConnectionFuture<T>(redisAddress,
+        return new ConnectionFuture<>(redisAddress,
                 channelReadyFuture.thenApply(channel -> (T) connectionBuilder.connection()));
     }
 

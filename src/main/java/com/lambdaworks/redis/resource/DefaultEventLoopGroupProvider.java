@@ -154,7 +154,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         Class<?> key = getKey(release(eventLoopGroup));
 
         if ((key == null && eventLoopGroup.isShuttingDown()) || refCounter.containsKey(eventLoopGroup)) {
-            DefaultPromise<Boolean> promise = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
+            DefaultPromise<Boolean> promise = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
             promise.setSuccess(true);
             return promise;
         }
@@ -192,9 +192,9 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
         Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = new HashMap<>(eventLoopGroups);
 
-        DefaultPromise<Boolean> overall = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        DefaultPromise<Boolean> lastRelease = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
+        DefaultPromise<Boolean> overall = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+        DefaultPromise<Boolean> lastRelease = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<>(
                 overall);
 
         aggregator.expectMore(1 + copy.size());

@@ -33,7 +33,7 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
     private V value;
 
     public ScoredValueScanOutput(RedisCodec<K, V> codec) {
-        super(codec, new ScoredValueScanCursor<V>());
+        super(codec, new ScoredValueScanCursor<>());
     }
 
     @Override
@@ -45,7 +45,7 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
         }
 
         double score = Double.parseDouble(decodeAscii(bytes));
-        output.getValues().add(new ScoredValue<V>(score, value));
+        output.getValues().add(new ScoredValue<>(score, value));
         value = null;
     }
 

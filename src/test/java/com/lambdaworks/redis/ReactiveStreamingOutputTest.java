@@ -15,7 +15,7 @@
  */
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.After;
 import org.junit.Before;
@@ -117,7 +117,7 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
         subscriber.awaitTerminalEvent();
 
         assertThat(subscriber.getOnNextEvents()).hasSize(2).contains(
-                new GeoWithin<String>("value1", null, 3542523898362974L, null),
+new GeoWithin<>("value1", null, 3542523898362974L, null),
                 new GeoWithin<>("value2", null, 3542609801095198L, null));
     }
 

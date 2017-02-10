@@ -19,15 +19,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Supplier;
 
+import rx.Observable;
+import rx.Subscriber;
+
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.StreamingOutput;
 import com.lambdaworks.redis.protocol.CommandWrapper;
 import com.lambdaworks.redis.protocol.RedisCommand;
-
-import rx.Observable;
-import rx.Subscriber;
 
 /**
  * Reactive command dispatcher.
@@ -83,7 +83,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
             StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
 
             if (connection instanceof StatefulRedisConnection<?, ?> && ((StatefulRedisConnection) connection).isMulti()) {
-                streamingOutput.setSubscriber(new DelegatingWrapper<T>(
+                streamingOutput.setSubscriber(new DelegatingWrapper<>(
                         Arrays.asList(new ObservableSubscriberWrapper<>(subscriber), streamingOutput.getSubscriber())));
             } else {
                 streamingOutput.setSubscriber(new ObservableSubscriberWrapper<>(subscriber));

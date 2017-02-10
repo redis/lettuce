@@ -20,10 +20,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Test;
+
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.ListStreamingAdapter;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
 
 /**
  * @author Will Glozer
@@ -134,7 +134,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
         assertThat(redis.lrange(key, 0, 10).isEmpty()).isTrue();
         redis.rpush(key, "one", "two", "three");
 
-        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
         Long count = redis.lrange(adapter, key, 0, 1);
         assertThat(count.longValue()).isEqualTo(2);

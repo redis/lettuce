@@ -15,18 +15,13 @@
  */
 package com.lambdaworks.redis.commands;
 
-import static com.lambdaworks.redis.SortArgs.Builder.alpha;
-import static com.lambdaworks.redis.SortArgs.Builder.asc;
-import static com.lambdaworks.redis.SortArgs.Builder.by;
-import static com.lambdaworks.redis.SortArgs.Builder.desc;
-import static com.lambdaworks.redis.SortArgs.Builder.get;
-import static com.lambdaworks.redis.SortArgs.Builder.limit;
+import static com.lambdaworks.redis.SortArgs.Builder.*;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.ListStreamingAdapter;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
 
 /**
  * @author Will Glozer
@@ -44,7 +39,7 @@ public class SortCommandTest extends AbstractRedisClientTest {
     public void sortStreaming() throws Exception {
         redis.rpush(key, "3", "2", "1");
 
-        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
         Long count = redis.sort(streamingAdapter, key);
 
         assertThat(count.longValue()).isEqualTo(3);

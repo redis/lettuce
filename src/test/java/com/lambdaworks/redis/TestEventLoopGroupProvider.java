@@ -49,7 +49,7 @@ public class TestEventLoopGroupProvider extends DefaultEventLoopGroupProvider {
 
     @Override
     public Promise<Boolean> release(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit) {
-        DefaultPromise<Boolean> result = new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE);
+        DefaultPromise<Boolean> result = new DefaultPromise<>(ImmediateEventExecutor.INSTANCE);
         result.setSuccess(true);
 
         return result;

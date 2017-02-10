@@ -25,7 +25,6 @@ import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.CommandOutput;
-import com.lambdaworks.redis.output.NestedMultiOutput;
 import com.lambdaworks.redis.output.StatusOutput;
 
 /**
@@ -38,7 +37,7 @@ public class CommandInternalsTest {
 
     @Before
     public final void createCommand() throws Exception {
-        CommandOutput<String, String, String> output = new StatusOutput<String, String>(codec);
+        CommandOutput<String, String, String> output = new StatusOutput<>(codec);
         sut = new Command<>(CommandType.INFO, output, null);
     }
 
@@ -85,15 +84,15 @@ public class CommandInternalsTest {
     @Test
     public void customKeyword() throws Exception {
 
-        sut = new Command<String, String, String>(MyKeywords.DUMMY, null, null);
-        sut.setOutput(new StatusOutput<String, String>(codec));
+        sut = new Command<>(MyKeywords.DUMMY, null, null);
+        sut.setOutput(new StatusOutput<>(codec));
 
         assertThat(sut.toString()).contains(MyKeywords.DUMMY.name());
     }
 
     @Test
     public void customKeywordWithArgs() throws Exception {
-        sut = new Command<String, String, String>(MyKeywords.DUMMY, null, new CommandArgs<String, String>(codec));
+        sut = new Command<>(MyKeywords.DUMMY, null, new CommandArgs<>(codec));
         sut.getArgs().add(MyKeywords.DUMMY);
         assertThat(sut.getArgs().toString()).contains(MyKeywords.DUMMY.name());
     }

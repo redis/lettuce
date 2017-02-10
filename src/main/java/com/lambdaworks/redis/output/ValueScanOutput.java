@@ -30,7 +30,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 public class ValueScanOutput<K, V> extends ScanOutput<K, V, ValueScanCursor<V>> {
 
     public ValueScanOutput(RedisCodec<K, V> codec) {
-        super(codec, new ValueScanCursor<V>());
+        super(codec, new ValueScanCursor<>());
     }
 
     @Override

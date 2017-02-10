@@ -25,8 +25,9 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.util.concurrent.TimeUnit;
 
-import io.netty.util.Timer;
 import org.junit.Test;
+
+import rx.observers.TestSubscriber;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
@@ -37,9 +38,9 @@ import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
-import rx.observers.TestSubscriber;
 
 /**
  * @author Mark Paluch
@@ -150,7 +151,7 @@ public class DefaultClientResourcesTest {
 
         EventBus eventBus = sut.eventBus();
 
-        final TestSubscriber<Event> subject = new TestSubscriber<Event>();
+        final TestSubscriber<Event> subject = new TestSubscriber<>();
 
         eventBus.get().subscribe(subject);
 

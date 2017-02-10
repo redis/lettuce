@@ -22,14 +22,15 @@ import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.Set;
 
-import com.lambdaworks.redis.internal.AbstractInvocationHandler;
-import com.lambdaworks.redis.support.ConnectionPoolSupport;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+
+import com.lambdaworks.redis.internal.AbstractInvocationHandler;
+import com.lambdaworks.redis.support.ConnectionPoolSupport;
 
 /**
  * Connection pool for redis connections.
@@ -63,7 +64,7 @@ public class RedisConnectionPool<T> implements Closeable {
         config.setMaxWaitMillis(maxWait);
         config.setTestOnBorrow(true);
 
-        objectPool = new GenericObjectPool<T>(createFactory(redisConnectionProvider), config);
+        objectPool = new GenericObjectPool<>(createFactory(redisConnectionProvider), config);
     }
 
     private PooledObjectFactory<T> createFactory(final RedisConnectionProvider<T> redisConnectionProvider) {
@@ -74,7 +75,7 @@ public class RedisConnectionPool<T> implements Closeable {
             public T create() throws Exception {
 
                 T connection = redisConnectionProvider.createConnection();
-                PooledConnectionInvocationHandler<T> h = new PooledConnectionInvocationHandler<T>(connection,
+                PooledConnectionInvocationHandler<T> h = new PooledConnectionInvocationHandler<>(connection,
                         RedisConnectionPool.this);
 
                 Object proxy = Proxy.newProxyInstance(getClass().getClassLoader(),
@@ -85,7 +86,7 @@ public class RedisConnectionPool<T> implements Closeable {
 
             @Override
             public PooledObject<T> wrap(T obj) {
-                return new DefaultPooledObject<T>(obj);
+                return new DefaultPooledObject<>(obj);
             }
 
             @Override

@@ -242,7 +242,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
 
             for (RedisFuture<Boolean> listRedisFuture : executions.values()) {
-                Boolean b = MultiNodeExecution.execute(() -> listRedisFuture.get());
+                Boolean b = MultiNodeExecution.execute(listRedisFuture::get);
                 if (b == null || !b) {
                     return false;
                 }
@@ -362,7 +362,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             commands.shutdown(save);
 
             Command<K, V, Long> command = new Command<>(CommandType.SHUTDOWN, new IntegerOutput<>(codec), null);
-            AsyncCommand<K, V, Long> async = new AsyncCommand<K, V, Long>(command);
+            AsyncCommand<K, V, Long> async = new AsyncCommand<>(command);
             async.complete();
             return async;
         }, redisClusterNode -> true);

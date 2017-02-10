@@ -33,7 +33,7 @@ public class NestedMultiOutputTest {
     @Test
     public void nestedMultiError() throws Exception {
 
-        NestedMultiOutput<String, String> output = new NestedMultiOutput<String, String>(codec);
+        NestedMultiOutput<String, String> output = new NestedMultiOutput<>(codec);
         output.setError(buffer("Oops!"));
         assertThat(output.getError()).isNotNull();
     }

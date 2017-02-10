@@ -95,7 +95,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     }
 
     private InvocationHandler syncInvocationHandler() {
-        return new ClusterFutureSyncInvocationHandler<K, V>(this, RedisPubSubAsyncCommands.class, PubSubNodeSelection.class,
+        return new ClusterFutureSyncInvocationHandler<>(this, RedisPubSubAsyncCommands.class, PubSubNodeSelection.class,
                 NodeSelectionPubSubCommands.class, async());
     }
 
@@ -106,7 +106,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
 
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisClusterPubSubReactiveCommandsImpl<K, V>(this, codec);
+        return new RedisClusterPubSubReactiveCommandsImpl<>(this, codec);
     }
 
     @Override

@@ -69,8 +69,8 @@ public class StateMachineTest {
 
     @Before
     public final void createStateMachine() throws Exception {
-        output = new StatusOutput<String, String>(codec);
-        rsm = new RedisStateMachine<String, String>();
+        output = new StatusOutput<>(codec);
+        rsm = new RedisStateMachine<>();
     }
 
     @Test
@@ -94,14 +94,14 @@ public class StateMachineTest {
 
     @Test
     public void integer() throws Exception {
-        CommandOutput<String, String, Long> output = new IntegerOutput<String, String>(codec);
+        CommandOutput<String, String, Long> output = new IntegerOutput<>(codec);
         assertThat(rsm.decode(buffer(":1\r\n"), output)).isTrue();
         assertThat((long) output.get()).isEqualTo(1);
     }
 
     @Test
     public void bulk() throws Exception {
-        CommandOutput<String, String, String> output = new ValueOutput<String, String>(codec);
+        CommandOutput<String, String, String> output = new ValueOutput<>(codec);
         assertThat(rsm.decode(buffer("$-1\r\n"), output)).isTrue();
         assertThat(output.get()).isNull();
         assertThat(rsm.decode(buffer("$3\r\nfoo\r\n"), output)).isTrue();
@@ -110,7 +110,7 @@ public class StateMachineTest {
 
     @Test
     public void multi() throws Exception {
-        CommandOutput<String, String, List<String>> output = new ValueListOutput<String, String>(codec);
+        CommandOutput<String, String, List<String>> output = new ValueListOutput<>(codec);
         ByteBuf buffer = buffer("*2\r\n$-1\r\n$2\r\nok\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get()).isEqualTo(Arrays.asList(null, "ok"));
@@ -118,7 +118,7 @@ public class StateMachineTest {
 
     @Test
     public void multiEmptyArray1() throws Exception {
-        CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<String, String>(codec);
+        CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<>(codec);
         ByteBuf buffer = buffer("*2\r\n$3\r\nABC\r\n*0\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get().get(0)).isEqualTo("ABC");
@@ -128,7 +128,7 @@ public class StateMachineTest {
 
     @Test
     public void multiEmptyArray2() throws Exception {
-        CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<String, String>(codec);
+        CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<>(codec);
         ByteBuf buffer = buffer("*2\r\n*0\r\n$3\r\nABC\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get().get(0)).isEqualTo(Arrays.asList());
@@ -138,7 +138,7 @@ public class StateMachineTest {
 
     @Test
     public void multiEmptyArray3() throws Exception {
-        CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<String, String>(codec);
+        CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<>(codec);
         ByteBuf buffer = buffer("*2\r\n*2\r\n$2\r\nAB\r\n$2\r\nXY\r\n*0\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get().get(0)).isEqualTo(Arrays.asList("AB", "XY"));

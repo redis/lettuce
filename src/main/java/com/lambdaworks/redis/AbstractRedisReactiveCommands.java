@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.*;
 import rx.Observable;
 import rx.Subscriber;
 
@@ -32,7 +30,9 @@ import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.rx.*;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.protocol.*;
 
 /**
  * A reactive and thread-safe API for a Redis connection.
@@ -62,7 +62,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
         this.codec = codec;
-        commandBuilder = new RedisCommandBuilder<K, V>(codec);
+        commandBuilder = new RedisCommandBuilder<>(codec);
     }
 
     @Override
@@ -1930,7 +1930,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     public <T> Observable<T> createObservable(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return Observable.create(new ReactiveCommandDispatcher<K, V, T>(commandSupplier, connection, false));
+        return Observable.create(new ReactiveCommandDispatcher<>(commandSupplier, connection, false));
     }
 
     @SuppressWarnings("unchecked")
@@ -1940,7 +1940,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @SuppressWarnings("unchecked")
     public <T, R> R createDissolvingObservable(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
-        return (R) Observable.create(new ReactiveCommandDispatcher<K, V, T>(() -> new Command<>(type, output, args),
+        return (R) Observable
+                .create(new ReactiveCommandDispatcher<>(() -> new Command<>(type, output, args),
                 connection, true));
     }
 

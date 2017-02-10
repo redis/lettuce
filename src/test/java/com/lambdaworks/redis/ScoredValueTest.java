@@ -23,23 +23,23 @@ import org.junit.Test;
 public class ScoredValueTest {
     @Test
     public void equals() throws Exception {
-        ScoredValue<String> sv1 = new ScoredValue<String>(1.0, "a");
-        assertThat(sv1.equals(new ScoredValue<String>(1.0, "a"))).isTrue();
+        ScoredValue<String> sv1 = new ScoredValue<>(1.0, "a");
+        assertThat(sv1.equals(new ScoredValue<>(1.0, "a"))).isTrue();
         assertThat(sv1.equals(null)).isFalse();
-        assertThat(sv1.equals(new ScoredValue<String>(1.1, "a"))).isFalse();
-        assertThat(sv1.equals(new ScoredValue<String>(1.0, "b"))).isFalse();
+        assertThat(sv1.equals(new ScoredValue<>(1.1, "a"))).isFalse();
+        assertThat(sv1.equals(new ScoredValue<>(1.0, "b"))).isFalse();
     }
 
     @Test
     public void testToString() throws Exception {
-        ScoredValue<String> sv1 = new ScoredValue<String>(1.0, "a");
+        ScoredValue<String> sv1 = new ScoredValue<>(1.0, "a");
         assertThat(sv1.toString()).isEqualTo(String.format("(%f, %s)", sv1.score, sv1.value));
     }
 
     @Test
     public void testHashCode() throws Exception {
-        assertThat(new ScoredValue<String>(1.0, "a").hashCode() != 0).isTrue();
-        assertThat(new ScoredValue<String>(0.0, "a").hashCode() != 0).isTrue();
+        assertThat(new ScoredValue<>(1.0, "a").hashCode() != 0).isTrue();
+        assertThat(new ScoredValue<>(0.0, "a").hashCode() != 0).isTrue();
         assertThat(new ScoredValue<String>(0.0, null).hashCode() == 0).isTrue();
     }
 }

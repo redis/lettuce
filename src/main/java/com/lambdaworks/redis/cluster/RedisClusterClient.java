@@ -529,7 +529,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectPubSubToNode(" + nodeId + ")");
         Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, clientResources, queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(handler, codec, timeout,
                 unit);
 
@@ -564,11 +564,11 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
+        CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, clientResources, queue);
 
-        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(clientOptions,
+        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<>(clientOptions,
                 handler, clusterTopologyRefreshScheduler, getResources().eventExecutorGroup());
-        PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
+        PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<>(this,
                 clusterWriter, codec);
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
@@ -627,9 +627,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, clientResources, queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
 
-        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(clientOptions,
+        ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<>(clientOptions,
                 handler, clusterTopologyRefreshScheduler, getResources().eventExecutorGroup());
 
         StatefulRedisClusterPubSubConnectionImpl<K, V> connection = new StatefulRedisClusterPubSubConnectionImpl<>(
@@ -785,8 +785,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
                 logger.debug("Using a new cluster topology");
 
-                List<RedisClusterNode> before = new ArrayList<RedisClusterNode>(getPartitions());
-                List<RedisClusterNode> after = new ArrayList<RedisClusterNode>(loadedPartitions);
+                List<RedisClusterNode> before = new ArrayList<>(getPartitions());
+                List<RedisClusterNode> after = new ArrayList<>(loadedPartitions);
 
                 getResources().eventBus().publish(new ClusterTopologyChangedEvent(before, after));
             }

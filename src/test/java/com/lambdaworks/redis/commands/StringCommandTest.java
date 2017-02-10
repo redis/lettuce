@@ -25,7 +25,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.lambdaworks.redis.codec.ByteArrayCodec;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -94,7 +93,7 @@ public class StringCommandTest extends AbstractRedisClientTest {
     public void mgetStreaming() throws Exception {
         setupMget();
 
-        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
         Long count = redis.mget(streamingAdapter, "one", "two");
         assertThat(count.intValue()).isEqualTo(2);
 

@@ -50,7 +50,7 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
 
     public RedisSentinelAsyncCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
-        commandBuilder = new SentinelCommandBuilder<K, V>(codec);
+        commandBuilder = new SentinelCommandBuilder<>(codec);
     }
 
     @Override

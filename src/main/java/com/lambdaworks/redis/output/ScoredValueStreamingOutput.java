@@ -45,7 +45,7 @@ public class ScoredValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> 
         }
 
         double score = Double.parseDouble(decodeAscii(bytes));
-        channel.onValue(new ScoredValue<V>(score, value));
+        channel.onValue(new ScoredValue<>(score, value));
         value = null;
         output = output.longValue() + 1;
     }

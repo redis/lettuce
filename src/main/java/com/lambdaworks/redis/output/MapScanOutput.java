@@ -32,7 +32,7 @@ public class MapScanOutput<K, V> extends ScanOutput<K, V, MapScanCursor<K, V>> {
     private K key;
 
     public MapScanOutput(RedisCodec<K, V> codec) {
-        super(codec, new MapScanCursor<K, V>());
+        super(codec, new MapScanCursor<>());
     }
 
     @Override

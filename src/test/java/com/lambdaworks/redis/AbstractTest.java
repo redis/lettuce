@@ -59,7 +59,7 @@ public class AbstractTest {
     }
 
     public static ScoredValue<String> sv(double score, String value) {
-        return new ScoredValue<String>(score, value);
+        return new ScoredValue<>(score, value);
     }
 
     public static Set<String> set(String... args) {

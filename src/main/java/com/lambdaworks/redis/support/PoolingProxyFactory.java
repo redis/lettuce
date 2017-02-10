@@ -48,7 +48,7 @@ public class PoolingProxyFactory {
     public static <T> T create(RedisConnectionPool<T> connectionPool) {
         Class<?> componentType = connectionPool.getComponentType();
 
-        TransparentPoolingInvocationHandler<T> h = new TransparentPoolingInvocationHandler<T>(connectionPool);
+        TransparentPoolingInvocationHandler<T> h = new TransparentPoolingInvocationHandler<>(connectionPool);
 
         Object o = Proxy.newProxyInstance(PoolingProxyFactory.class.getClassLoader(), new Class<?>[] { componentType }, h);
 

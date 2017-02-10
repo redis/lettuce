@@ -83,7 +83,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     public void mgetStreaming() throws Exception {
         setupMget();
 
-        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
         Long count = redis.mget(streamingAdapter, "one", "two");
 
         assertThat(LettuceSets.newHashSet(streamingAdapter.getList())).isEqualTo(LettuceSets.newHashSet(list("1", "2")));

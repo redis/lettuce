@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
+
 import io.netty.util.concurrent.*;
 
 /**
@@ -38,7 +39,7 @@ class Futures {
      *         the cause wil be transported.
      */
     static Promise<Boolean> toBooleanPromise(Future<?> future) {
-        final DefaultPromise<Boolean> result = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
+        final DefaultPromise<Boolean> result = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
 
         future.addListener(new GenericFutureListener<Future<Object>>() {
             @Override

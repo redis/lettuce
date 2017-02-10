@@ -46,7 +46,7 @@ public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, Strea
         }
 
         double score = Double.parseDouble(decodeAscii(bytes));
-        channel.onValue(new ScoredValue<V>(score, value));
+        channel.onValue(new ScoredValue<>(score, value));
         value = null;
         output.setCount(output.getCount() + 1);
     }

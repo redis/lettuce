@@ -24,34 +24,23 @@ import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
-import io.netty.handler.codec.EncoderException;
-import io.netty.util.Version;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.Wait;
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.ClientOptions;
-import com.lambdaworks.redis.RedisChannelHandler;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisFuture;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.IntegerOutput;
 import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.protocol.AsyncCommand;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.*;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.handler.codec.EncoderException;
+import io.netty.util.Version;
 
 /**
  * @author Mark Paluch
@@ -145,15 +134,15 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         RedisChannelWriter<String, String> channelWriter = getRedisChannelHandler(connection).getChannelWriter();
 
         connection.set(key, "1");
-        AsyncCommand<String, String, String> working = new AsyncCommand<>(new Command<String, String, String>(CommandType.INCR,
-                new IntegerOutput(CODEC), new CommandArgs<String, String>(CODEC).addKey(key)));
+        AsyncCommand<String, String, String> working = new AsyncCommand<>(new Command<>(CommandType.INCR, new IntegerOutput(
+                CODEC), new CommandArgs<>(CODEC).addKey(key)));
         channelWriter.write(working);
         assertThat(working.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(connection.get(key)).isEqualTo("2");
 
         AsyncCommand<String, String, Object> command = new AsyncCommand<String, String, Object>(
-                new Command<String, String, Object>(CommandType.INCR, new IntegerOutput(CODEC),
-                        new CommandArgs<String, String>(CODEC).addKey(key))) {
+new Command<>(CommandType.INCR,
+                new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
 
             @Override
             public void encode(ByteBuf buf) {

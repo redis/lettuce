@@ -20,26 +20,25 @@ import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.AbstractRedisClientTest.client;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.metrics.CommandLatencyId;
-import com.lambdaworks.redis.metrics.CommandMetrics;
-import org.junit.*;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.google.code.tempusfugit.temporal.Condition;
+import rx.Subscription;
+import rx.observers.TestSubscriber;
+
 import com.google.code.tempusfugit.temporal.WaitFor;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.event.Event;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.metrics.CommandLatencyEvent;
 import com.lambdaworks.redis.event.metrics.MetricEventPublisher;
-
-import rx.Subscription;
-import rx.functions.Func1;
-import rx.observers.TestSubscriber;
-
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import com.lambdaworks.redis.metrics.CommandLatencyId;
+import com.lambdaworks.redis.metrics.CommandMetrics;
 
 /**
  * @author Mark Paluch
@@ -71,7 +70,7 @@ public class ClientMetricsTest extends AbstractTest {
                 "metricEventPublisher");
         publisher.emitMetricsEvent();
 
-        TestSubscriber<CommandLatencyEvent> subscriber = new TestSubscriber<CommandLatencyEvent>();
+        TestSubscriber<CommandLatencyEvent> subscriber = new TestSubscriber<>();
         Subscription subscription = eventBus.get().filter(redisEvent -> redisEvent instanceof CommandLatencyEvent).cast(CommandLatencyEvent.class).subscribe(subscriber);
 
         generateTestData();
@@ -92,7 +91,7 @@ public class ClientMetricsTest extends AbstractTest {
                 "metricEventPublisher");
         publisher.emitMetricsEvent();
 
-        TestSubscriber<CommandLatencyEvent> subscriber = new TestSubscriber<CommandLatencyEvent>();
+        TestSubscriber<CommandLatencyEvent> subscriber = new TestSubscriber<>();
         Subscription subscription = eventBus.get().filter(redisEvent -> redisEvent instanceof CommandLatencyEvent).cast(CommandLatencyEvent.class).subscribe(subscriber);
 
         generateTestData();

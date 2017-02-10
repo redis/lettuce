@@ -60,7 +60,7 @@ class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubReactiveCo
     @Override
     public PubSubReactiveNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate) {
 
-        PubSubReactiveNodeSelection<K, V> selection = new StaticPubSubReactiveNodeSelection<K, V>(getStatefulConnection(),
+        PubSubReactiveNodeSelection<K, V> selection = new StaticPubSubReactiveNodeSelection<>(getStatefulConnection(),
                 predicate);
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,

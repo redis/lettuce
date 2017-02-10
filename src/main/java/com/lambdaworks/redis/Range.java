@@ -47,7 +47,7 @@ public class Range<T> {
      * @return new {@link Range}
      */
     public static <T> Range<T> create(T lower, T upper) {
-        return new Range<T>(Boundary.including(lower), Boundary.including(upper));
+        return new Range<>(Boundary.including(lower), Boundary.including(upper));
     }
 
     /**
@@ -59,7 +59,7 @@ public class Range<T> {
      * @return new {@link Range}
      */
     public static <T> Range<T> from(Boundary<T> lower, Boundary<T> upper) {
-        return new Range<T>(lower, upper);
+        return new Range<>(lower, upper);
     }
 
     /**
@@ -67,7 +67,7 @@ public class Range<T> {
      * @return new {@link Range} with {@code lower} and {@code upper} set to {@link Boundary#unbounded()}.
      */
     public static <T> Range<T> unbounded() {
-        return new Range<T>(Boundary.unbounded(), Boundary.unbounded());
+        return new Range<>(Boundary.unbounded(), Boundary.unbounded());
     }
 
     /**

@@ -77,7 +77,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hgetallStreaming() throws Exception {
 
-        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
 
         assertThat(redis.hgetall(key).isEmpty()).isTrue();
         redis.hset(key, "one", "1");
@@ -114,7 +114,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hkeysStreaming() throws Exception {
         setup();
-        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
 
         Long count = redis.hkeys(streamingAdapter, key);
         assertThat(count.longValue()).isEqualTo(2);
@@ -162,7 +162,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     public void hmgetStreaming() throws Exception {
         setupHmget();
 
-        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
         Long count = redis.hmget(streamingAdapter, key, "one", "two");
         List<String> values = streamingAdapter.getList();
         assertThat(count.intValue()).isEqualTo(2);
@@ -220,7 +220,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
         redis.hset(key, "one", "1");
         redis.hset(key, "two", "2");
 
-        ListStreamingAdapter<String> channel = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> channel = new ListStreamingAdapter<>();
         Long count = redis.hvals(channel, key);
         assertThat(count.intValue()).isEqualTo(2);
         assertThat(channel.getList()).hasSize(2);
@@ -262,7 +262,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hscanStreaming() throws Exception {
         redis.hset(key, key, value);
-        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
 
         StreamScanCursor cursor = redis.hscan(adapter, key, ScanArgs.Builder.limit(100).match("*"));
 
@@ -275,7 +275,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hscanStreamingWithCursor() throws Exception {
         redis.hset(key, key, value);
-        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
 
         StreamScanCursor cursor = redis.hscan(adapter, key, ScanCursor.INITIAL);
 
@@ -287,7 +287,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hscanStreamingWithCursorAndArgs() throws Exception {
         redis.hset(key, key, value);
-        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
 
         StreamScanCursor cursor3 = redis.hscan(adapter, key, ScanCursor.INITIAL, ScanArgs.Builder.limit(100).match("*"));
 
@@ -299,7 +299,7 @@ public class HashCommandTest extends AbstractRedisClientTest {
     @Test
     public void hscanStreamingWithArgs() throws Exception {
         redis.hset(key, key, value);
-        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<String, String>();
+        KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
 
         StreamScanCursor cursor = redis.hscan(adapter, key);
 

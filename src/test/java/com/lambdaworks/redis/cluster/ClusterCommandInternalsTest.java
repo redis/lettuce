@@ -42,12 +42,12 @@ public class ClusterCommandInternalsTest {
     private RedisChannelWriter<String, String> writerMock;
 
     private ClusterCommand<String, String, String> sut;
-    private Command<String, String, String> command = new Command<String, String, String>(CommandType.TYPE,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+    private Command<String, String, String> command = new Command<>(CommandType.TYPE,
+            new StatusOutput<>(new Utf8StringCodec()), null);
 
     @Before
     public void before() throws Exception {
-        sut = new ClusterCommand<String, String, String>(command, writerMock, 1);
+        sut = new ClusterCommand<>(command, writerMock, 1);
     }
 
     @Test

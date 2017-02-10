@@ -15,7 +15,7 @@
  */
 package com.lambdaworks.redis;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 import java.util.Map;
@@ -30,8 +30,8 @@ public class GeoModelTest {
     @Test
     public void geoWithin() throws Exception {
 
-        GeoWithin<String> sut = new GeoWithin<String>("me", 1.0, 1234L, new GeoCoordinates(1, 2));
-        GeoWithin<String> equalsToSut = new GeoWithin<String>("me", 1.0, 1234L, new GeoCoordinates(1, 2));
+        GeoWithin<String> sut = new GeoWithin<>("me", 1.0, 1234L, new GeoCoordinates(1, 2));
+        GeoWithin<String> equalsToSut = new GeoWithin<>("me", 1.0, 1234L, new GeoCoordinates(1, 2));
 
         Map<GeoWithin<String>, String> map = Collections.singletonMap(sut, "value");
 
@@ -45,8 +45,8 @@ public class GeoModelTest {
     @Test
     public void geoWithinSlightlyDifferent() throws Exception {
 
-        GeoWithin<String> sut = new GeoWithin<String>("me", 1.0, 1234L, new GeoCoordinates(1, 2));
-        GeoWithin<String> slightlyDifferent = new GeoWithin<String>("me", 1.0, 1234L, new GeoCoordinates(1.1, 2));
+        GeoWithin<String> sut = new GeoWithin<>("me", 1.0, 1234L, new GeoCoordinates(1, 2));
+        GeoWithin<String> slightlyDifferent = new GeoWithin<>("me", 1.0, 1234L, new GeoCoordinates(1.1, 2));
 
         Map<GeoWithin<String>, String> map = Collections.singletonMap(sut, "value");
 
@@ -55,15 +55,15 @@ public class GeoModelTest {
         assertThat(sut.hashCode()).isNotEqualTo(slightlyDifferent.hashCode());
         assertThat(sut.toString()).isNotEqualTo(slightlyDifferent.toString());
 
-        slightlyDifferent = new GeoWithin<String>("me1", 1.0, 1234L, new GeoCoordinates(1, 2));
+        slightlyDifferent = new GeoWithin<>("me1", 1.0, 1234L, new GeoCoordinates(1, 2));
         assertThat(sut).isNotEqualTo(slightlyDifferent);
     }
 
     @Test
     public void geoWithinEmpty() throws Exception {
 
-        GeoWithin<String> sut = new GeoWithin<String>(null, null, null, null);
-        GeoWithin<String> equalsToSut = new GeoWithin<String>(null, null, null, null);
+        GeoWithin<String> sut = new GeoWithin<>(null, null, null, null);
+        GeoWithin<String> equalsToSut = new GeoWithin<>(null, null, null, null);
 
         assertThat(sut).isEqualTo(equalsToSut);
         assertThat(sut.hashCode()).isEqualTo(equalsToSut.hashCode());

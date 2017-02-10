@@ -25,10 +25,10 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.junit.*;
 
+import rx.Observable;
+
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
-
-import rx.Observable;
 
 /**
  * @author Mark Paluch
@@ -82,7 +82,7 @@ public class LettucePerformanceTest {
         // set -Dio.netty.eventLoopThreads=...
         // END OF TWEAK ME
 
-        executor = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(totalCalls));
+        executor = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<>(totalCalls));
 
         List<Future<List<CompletableFuture<String>>>> futurama = new ArrayList<>();
 
@@ -171,7 +171,7 @@ public class LettucePerformanceTest {
         // set -Dio.netty.eventLoopThreads=...
         // END OF TWEAK ME
 
-        executor = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(totalCalls));
+        executor = new ThreadPoolExecutor(threads, threads, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<>(totalCalls));
 
         List<Future<List<Observable<String>>>> futurama = new ArrayList<>();
 

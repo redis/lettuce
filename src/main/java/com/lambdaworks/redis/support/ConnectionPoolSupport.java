@@ -117,7 +117,7 @@ public abstract class ConnectionPoolSupport {
 
         AtomicReference<ObjectPool<T>> poolRef = new AtomicReference<>();
 
-        GenericObjectPool<T> pool = new GenericObjectPool<T>(new RedisPooledObjectFactory<T>(connectionSupplier), config) {
+        GenericObjectPool<T> pool = new GenericObjectPool<T>(new RedisPooledObjectFactory<>(connectionSupplier), config) {
 
             @Override
             public synchronized T borrowObject() throws Exception {
@@ -195,7 +195,7 @@ public abstract class ConnectionPoolSupport {
     @SuppressWarnings("unchecked")
     private static <T> T wrapConnection(T connection, ObjectPool<T> pool) {
 
-        ReturnObjectOnCloseInvocationHandler<T> handler = new ReturnObjectOnCloseInvocationHandler<T>(connection, pool);
+        ReturnObjectOnCloseInvocationHandler<T> handler = new ReturnObjectOnCloseInvocationHandler<>(connection, pool);
 
         Class<?>[] implementedInterfaces = connection.getClass().getInterfaces();
         Class[] interfaces = new Class[implementedInterfaces.length + 1];

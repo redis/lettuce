@@ -64,7 +64,7 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
         this.codec = codec;
-        commandBuilder = new RedisCommandBuilder<K, V>(codec);
+        commandBuilder = new RedisCommandBuilder<>(codec);
     }
 
     @Override

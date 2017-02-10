@@ -33,8 +33,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * @author Mark Paluch
  */
 public class ArrayOutput<K, V> extends CommandOutput<K, V, List<Object>> {
-    private Deque<Integer> counts = new ArrayDeque<Integer>();
-    private Deque<List<Object>> stack = new ArrayDeque<List<Object>>();
+    private Deque<Integer> counts = new ArrayDeque<>();
+    private Deque<List<Object>> stack = new ArrayDeque<>();
 
     public ArrayOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<>());

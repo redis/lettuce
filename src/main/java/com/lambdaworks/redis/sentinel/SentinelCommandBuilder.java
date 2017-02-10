@@ -41,101 +41,101 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<V>> getMasterAddrByKey(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("get-master-addr-by-name").addKey(key);
-        return createCommand(SENTINEL, new ValueListOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("get-master-addr-by-name").addKey(key);
+        return createCommand(SENTINEL, new ValueListOutput<>(codec), args);
     }
 
     public Command<K, V, List<Map<K, V>>> masters() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("masters");
-        return createCommand(SENTINEL, new ListOfMapsOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("masters");
+        return createCommand(SENTINEL, new ListOfMapsOutput<>(codec), args);
     }
 
     public Command<K, V, Map<K, V>> master(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add("master").addKey(key);
-        return createCommand(SENTINEL, new MapOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("master").addKey(key);
+        return createCommand(SENTINEL, new MapOutput<>(codec), args);
     }
 
     public Command<K, V, List<Map<K, V>>> slaves(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SLAVES).addKey(key);
-        return createCommand(SENTINEL, new ListOfMapsOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SLAVES).addKey(key);
+        return createCommand(SENTINEL, new ListOfMapsOutput<>(codec), args);
     }
 
     public Command<K, V, Long> reset(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(RESET).addKey(key);
-        return createCommand(SENTINEL, new IntegerOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(RESET).addKey(key);
+        return createCommand(SENTINEL, new IntegerOutput<>(codec), args);
     }
 
     public Command<K, V, String> failover(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(FAILOVER).addKey(key);
-        return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FAILOVER).addKey(key);
+        return createCommand(SENTINEL, new StatusOutput<>(codec), args);
     }
 
     public Command<K, V, String> monitor(K key, String ip, int port, int quorum) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(MONITOR).addKey(key).add(ip).add(port).add(quorum);
-        return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(MONITOR).addKey(key).add(ip).add(port).add(quorum);
+        return createCommand(SENTINEL, new StatusOutput<>(codec), args);
     }
 
     public Command<K, V, String> set(K key, String option, V value) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SET).addKey(key).add(option).addValue(value);
-        return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SET).addKey(key).add(option).addValue(value);
+        return createCommand(SENTINEL, new StatusOutput<>(codec), args);
     }
 
     public Command<K, V, K> clientGetname() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GETNAME);
-        return createCommand(CLIENT, new KeyOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(GETNAME);
+        return createCommand(CLIENT, new KeyOutput<>(codec), args);
     }
 
     public Command<K, V, String> clientSetname(K name) {
         LettuceAssert.notNull(name, "Name must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(SETNAME).addKey(name);
-        return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SETNAME).addKey(name);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
     public Command<K, V, String> clientKill(String addr) {
         LettuceAssert.notNull(addr, "Addr must not be null");
         LettuceAssert.notEmpty(addr, "Addr must not be empty");
 
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KILL).add(addr);
-        return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(KILL).add(addr);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
     public Command<K, V, Long> clientKill(KillArgs killArgs) {
         LettuceAssert.notNull(killArgs, "KillArgs must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(KILL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(KILL);
         killArgs.build(args);
-        return createCommand(CLIENT, new IntegerOutput<K, V>(codec), args);
+        return createCommand(CLIENT, new IntegerOutput<>(codec), args);
     }
 
     public Command<K, V, String> clientPause(long timeout) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(PAUSE).add(timeout);
-        return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(PAUSE).add(timeout);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
     public Command<K, V, String> clientList() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(LIST);
-        return createCommand(CLIENT, new StatusOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(LIST);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
     public Command<K, V, String> info() {
-        return createCommand(INFO, new StatusOutput<K, V>(codec));
+        return createCommand(INFO, new StatusOutput<>(codec));
     }
 
     public Command<K, V, String> info(String section) {
         LettuceAssert.notNull(section, "Section must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(section);
-        return createCommand(INFO, new StatusOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(section);
+        return createCommand(INFO, new StatusOutput<>(codec), args);
     }
 
     public Command<K, V, String> ping() {
-        return createCommand(PING, new StatusOutput<K, V>(codec));
+        return createCommand(PING, new StatusOutput<>(codec));
     }
 
     public Command<K, V, String> remove(K key) {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(CommandKeyword.REMOVE).addKey(key);
-        return createCommand(SENTINEL, new StatusOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.REMOVE).addKey(key);
+        return createCommand(SENTINEL, new StatusOutput<>(codec), args);
     }
 
 }

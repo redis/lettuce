@@ -134,7 +134,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public static final Map<String, TimeUnit> TIME_UNIT_MAP;
 
     static {
-        Map<String, TimeUnit> unitMap = new HashMap<String, TimeUnit>();
+        Map<String, TimeUnit> unitMap = new HashMap<>();
         unitMap.put("ns", TimeUnit.NANOSECONDS);
         unitMap.put("us", TimeUnit.MICROSECONDS);
         unitMap.put("ms", TimeUnit.MILLISECONDS);

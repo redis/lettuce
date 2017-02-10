@@ -15,10 +15,10 @@
  */
 package com.lambdaworks.redis.output;
 
+import java.nio.ByteBuffer;
+
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.codec.RedisCodec;
-
-import java.nio.ByteBuffer;
 
 /**
  * Key-value pair output.
@@ -42,7 +42,7 @@ public class KeyValueOutput<K, V> extends CommandOutput<K, V, KeyValue<K, V>> {
                 key = codec.decodeKey(bytes);
             } else {
                 V value = codec.decodeValue(bytes);
-                output = new KeyValue<K, V>(key, value);
+                output = new KeyValue<>(key, value);
             }
         }
     }

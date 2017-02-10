@@ -22,8 +22,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandHandler;
 import com.lambdaworks.redis.protocol.RedisCommand;
-
 import com.lambdaworks.redis.resource.ClientResources;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -73,7 +73,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
 
         while (rsm.decode(buffer, output)) {
             ctx.fireChannelRead(output);
-            output = new PubSubOutput<K, V, V>(codec);
+            output = new PubSubOutput<>(codec);
             buffer.discardReadBytes();
         }
     }
