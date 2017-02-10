@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
-import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -39,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -48,13 +46,14 @@ import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
+import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import edu.umd.cs.mtc.MultithreadedTestCase;
 import edu.umd.cs.mtc.TestFramework;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
@@ -73,9 +72,6 @@ public class CommandHandlerTest {
 
     @Mock
     private Channel channel;
-
-    @Mock
-    private ByteBufAllocator byteBufAllocator;
 
     @Mock
     private ChannelPipeline pipeline;
@@ -107,8 +103,8 @@ public class CommandHandlerTest {
 
     @Before
     public void before() throws Exception {
+
         when(context.channel()).thenReturn(channel);
-        when(context.alloc()).thenReturn(byteBufAllocator);
         when(channel.pipeline()).thenReturn(pipeline);
         when(channel.eventLoop()).thenReturn(eventLoop);
         when(eventLoop.submit(any(Runnable.class))).thenAnswer(invocation -> {
@@ -119,19 +115,6 @@ public class CommandHandlerTest {
 
         when(clientResources.commandLatencyCollector()).thenReturn(new DefaultCommandLatencyCollector(
                 DefaultCommandLatencyCollectorOptions.create()));
-
-        when(channel.write(any())).thenAnswer(invocation -> {
-
-            if (invocation.getArguments()[0] instanceof RedisCommand) {
-                q.add((RedisCommand) invocation.getArguments()[0]);
-            }
-
-            if (invocation.getArguments()[0] instanceof Collection) {
-                q.addAll((Collection) invocation.getArguments()[0]);
-            }
-
-            return new DefaultChannelPromise(channel);
-        });
 
         when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
             if (invocation.getArguments()[0] instanceof RedisCommand) {

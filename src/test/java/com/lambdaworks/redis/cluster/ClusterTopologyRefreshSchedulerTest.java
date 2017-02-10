@@ -27,7 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.lambdaworks.redis.resource.ClientResources;
 
@@ -98,7 +98,6 @@ public class ClusterTopologyRefreshSchedulerTest {
     @Test
     public void shouldNotSubmitIfExecutorIsShuttingDown() throws Exception {
 
-        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
         when(eventExecutors.isShuttingDown()).thenReturn(true);
 
         sut.run();
@@ -108,7 +107,6 @@ public class ClusterTopologyRefreshSchedulerTest {
     @Test
     public void shouldNotSubmitIfExecutorIsShutdown() throws Exception {
 
-        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
         when(eventExecutors.isShutdown()).thenReturn(true);
 
         sut.run();
@@ -118,7 +116,6 @@ public class ClusterTopologyRefreshSchedulerTest {
     @Test
     public void shouldNotSubmitIfExecutorIsTerminated() throws Exception {
 
-        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
         when(eventExecutors.isTerminated()).thenReturn(true);
 
         sut.run();

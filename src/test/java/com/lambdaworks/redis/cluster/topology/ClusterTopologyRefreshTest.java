@@ -34,7 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
@@ -47,8 +47,6 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.DnsResolvers;
-
-import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
  * @author Mark Paluch
@@ -93,7 +91,6 @@ public class ClusterTopologyRefreshTest {
     public void before() throws Exception {
 
         when(clientResources.dnsResolver()).thenReturn(DnsResolvers.JVM_DEFAULT);
-        when(clientResources.eventExecutorGroup()).thenReturn(ImmediateEventExecutor.INSTANCE);
         when(connection1.async()).thenReturn(asyncCommands1);
         when(connection2.async()).thenReturn(asyncCommands2);
 
