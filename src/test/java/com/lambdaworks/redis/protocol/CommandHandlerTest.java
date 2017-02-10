@@ -38,7 +38,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.redis.ConnectionEvents;
@@ -60,8 +60,8 @@ public class CommandHandlerTest {
 
     private CommandHandler sut;
 
-    private final Command<String, String, String> command = new Command<>(CommandType.APPEND,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+    private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<>(
+            new Utf8StringCodec()), null);
 
     @Mock
     private ChannelHandlerContext context;
@@ -102,6 +102,7 @@ public class CommandHandlerTest {
 
     @Before
     public void before() throws Exception {
+
         when(context.channel()).thenReturn(channel);
         when(context.alloc()).thenReturn(byteBufAllocator);
         when(channel.pipeline()).thenReturn(pipeline);
@@ -112,32 +113,8 @@ public class CommandHandlerTest {
             return null;
         });
 
-        when(clientResources.commandLatencyCollector())
-                .thenReturn(new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
-
-        when(channel.write(any())).thenAnswer(invocation -> {
-
-            if (invocation.getArguments()[0] instanceof RedisCommand) {
-                q.add((RedisCommand) invocation.getArguments()[0]);
-            }
-
-            if (invocation.getArguments()[0] instanceof Collection) {
-                q.addAll((Collection) invocation.getArguments()[0]);
-            }
-
-            return new DefaultChannelPromise(channel);
-        });
-
-        when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
-            if (invocation.getArguments()[0] instanceof RedisCommand) {
-                q.add((RedisCommand) invocation.getArguments()[0]);
-            }
-
-            if (invocation.getArguments()[0] instanceof Collection) {
-                q.addAll((Collection) invocation.getArguments()[0]);
-            }
-            return new DefaultChannelPromise(channel);
-        });
+        when(clientResources.commandLatencyCollector()).thenReturn(
+                new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
 
         sut = new CommandHandler(clientResources, endpoint);
         q = (Queue) ReflectionTestUtils.getField(sut, "queue");
@@ -156,8 +133,6 @@ public class CommandHandlerTest {
     public void testExceptionChannelActive() throws Exception {
         sut.setState(CommandHandler.LifecycleState.ACTIVE);
 
-        when(channel.isActive()).thenReturn(true);
-
         sut.channelActive(context);
         sut.exceptionCaught(context, new Exception());
     }
@@ -165,8 +140,6 @@ public class CommandHandlerTest {
     @Test
     public void testIOExceptionChannelActive() throws Exception {
         sut.setState(CommandHandler.LifecycleState.ACTIVE);
-
-        when(channel.isActive()).thenReturn(true);
 
         sut.channelActive(context);
         sut.exceptionCaught(context, new IOException("Connection timed out"));
@@ -185,7 +158,6 @@ public class CommandHandlerTest {
         q.clear();
 
         sut.channelActive(context);
-        when(channel.isActive()).thenReturn(true);
 
         q.add(command);
         sut.exceptionCaught(context, new Exception());
@@ -350,8 +322,8 @@ public class CommandHandlerTest {
     @Test
     public void shouldWriteActiveCommandsInMixedBatch() throws Exception {
 
-        Command<String, String, String> command2 = new Command<>(CommandType.APPEND,
-                new StatusOutput<String, String>(new Utf8StringCodec()), null);
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<String, String>(
+                new Utf8StringCodec()), null);
 
         command.cancel();
 

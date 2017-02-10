@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
@@ -62,7 +62,6 @@ public class MasterSlaveConnectionProviderTest {
         sut = new MasterSlaveConnectionProvider<>(clientMock, CODEC, RedisURI.create("localhost", 1), Collections.emptyMap());
         sut.setKnownNodes(Arrays.asList(new RedisMasterSlaveNode("localhost", 1, RedisURI.create("localhost", 1),
                 RedisInstance.Role.MASTER)));
-        when(nodeConnectionMock.sync()).thenReturn(commandsMock);
     }
 
     @Test

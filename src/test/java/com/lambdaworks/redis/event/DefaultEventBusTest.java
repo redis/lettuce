@@ -15,16 +15,14 @@
  */
 package com.lambdaworks.redis.event;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.concurrent.TimeUnit;
-
-import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
+
 import reactor.core.scheduler.Schedulers;
+
+import com.lambdaworks.redis.reactive.TestSubscriber;
 
 /**
  * @author Mark Paluch
