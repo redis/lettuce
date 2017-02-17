@@ -73,7 +73,8 @@ public class SynchronizingClusterConnectionProviderTest {
                 redisURI.setUnit(TimeUnit.SECONDS);
 
                 ConnectionFuture<StatefulRedisConnection<String, String>> future = redisClient.connectToNodeAsync(
-                        StringCodec.UTF8, "", null, () -> new InetSocketAddress("localhost", serverSocket.getLocalPort()));
+                        StringCodec.UTF8, "", null,
+                        () -> new InetSocketAddress(connectionKey.host, serverSocket.getLocalPort()));
 
                 connectInitiated.countDown();
 
@@ -95,7 +96,8 @@ public class SynchronizingClusterConnectionProviderTest {
     @Test
     public void shouldCreateConnection() throws IOException {
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "");
+        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
+                TestSettings.port());
         StatefulRedisConnection<String, String> connection = sut.getConnection(connectionKey);
 
         assertThat(sut.getConnection(connectionKey)).isSameAs(connection);
@@ -106,7 +108,8 @@ public class SynchronizingClusterConnectionProviderTest {
     @Test
     public void shouldMaintainConnectionCount() throws IOException {
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "");
+        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
+                TestSettings.port());
 
         assertThat(sut.getConnectionCount()).isEqualTo(0);
 
@@ -121,7 +124,8 @@ public class SynchronizingClusterConnectionProviderTest {
     @Test
     public void shouldCloseConnectionByKey() throws IOException {
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "");
+        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
+                TestSettings.port());
 
         sut.getConnection(connectionKey);
         sut.close(connectionKey);
@@ -135,7 +139,8 @@ public class SynchronizingClusterConnectionProviderTest {
     @Test
     public void shouldCloseConnections() throws IOException {
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "");
+        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
+                TestSettings.port());
 
         sut.getConnection(connectionKey);
         sut.close();
@@ -156,7 +161,7 @@ public class SynchronizingClusterConnectionProviderTest {
 
         redisClient.setOptions(clientOptions);
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "");
+        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "8.8.8.8", TestSettings.port());
 
         StopWatch stopWatch = new StopWatch();
 
@@ -194,7 +199,7 @@ public class SynchronizingClusterConnectionProviderTest {
 
         redisClient.setOptions(clientOptions);
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "");
+        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "8.8.8.8", TestSettings.port());
 
         Thread t1 = new Thread(() -> {
             sut.getConnection(connectionKey);
@@ -233,7 +238,8 @@ public class SynchronizingClusterConnectionProviderTest {
 
         redisClient.setOptions(clientOptions);
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "");
+        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
+                TestSettings.port());
 
         CompletableFuture<StatefulRedisConnection<String, String>> createdConnection = new CompletableFuture<>();
         Thread t1 = new Thread(() -> {
