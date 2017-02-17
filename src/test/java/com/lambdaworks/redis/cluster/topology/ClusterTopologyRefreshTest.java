@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis.cluster.topology;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
@@ -36,8 +35,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import com.lambdaworks.Futures;
+import com.lambdaworks.redis.ConnectionFuture;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
@@ -168,8 +170,8 @@ public class ClusterTopologyRefreshTest {
         Requests clusterNodesRequests = createClusterNodesRequests(1, nodes1);
         Requests clientRequests = createClientListRequests(1, "c1\nc2\n");
 
-        NodeTopologyViews nodeSpecificViews = sut.getNodeSpecificViews(clusterNodesRequests, clientRequests,
-                COMMAND_TIMEOUT_NS);
+        NodeTopologyViews nodeSpecificViews = sut
+                .getNodeSpecificViews(clusterNodesRequests, clientRequests, COMMAND_TIMEOUT_NS);
 
         List<Partitions> values = new ArrayList<>(nodeSpecificViews.toMap().values());
 
@@ -194,8 +196,8 @@ public class ClusterTopologyRefreshTest {
 
         Requests clientRequests = createClientListRequests(5, "c1\nc2\n").mergeWith(createClientListRequests(1, "c1\nc2\n"));
 
-        NodeTopologyViews nodeSpecificViews = sut.getNodeSpecificViews(clusterNodesRequests, clientRequests,
-                COMMAND_TIMEOUT_NS);
+        NodeTopologyViews nodeSpecificViews = sut
+                .getNodeSpecificViews(clusterNodesRequests, clientRequests, COMMAND_TIMEOUT_NS);
         List<Partitions> values = new ArrayList<>(nodeSpecificViews.toMap().values());
 
         assertThat(values).hasSize(2);
@@ -305,8 +307,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByClientCount(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(seed.get(0),
-                RedisURI.create("127.0.0.1", 7381));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
+                .containsSequence(seed.get(0), RedisURI.create("127.0.0.1", 7381));
     }
 
     @Test
@@ -325,8 +327,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByClientCount(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(RedisURI.create("127.0.0.1", 7381),
-                seed.get(0));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
+                .containsSequence(RedisURI.create("127.0.0.1", 7381), seed.get(0));
     }
 
     @Test
@@ -343,8 +345,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByLatency(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(seed.get(0),
-                RedisURI.create("127.0.0.1", 7381));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
+                .containsSequence(seed.get(0), RedisURI.create("127.0.0.1", 7381));
     }
 
     @Test
@@ -363,8 +365,8 @@ public class ClusterTopologyRefreshTest {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByLatency(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(RedisURI.create("127.0.0.1", 7381),
-                seed.get(0));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
+                .containsSequence(RedisURI.create("127.0.0.1", 7381), seed.get(0));
     }
 
     protected Requests createClusterNodesRequests(int duration, String nodes) {
@@ -399,10 +401,16 @@ public class ClusterTopologyRefreshTest {
         return requests;
     }
 
-    private static <T> CompletableFuture<T> completedWithException(Exception e) {
+    private static <T> ConnectionFuture<T> completedFuture(T value) {
+        return Futures.createConnectionFuture(InetSocketAddress.createUnresolved(TestSettings.host(), TestSettings.port()),
+                CompletableFuture.completedFuture(value));
+    }
+
+    private static <T> ConnectionFuture<T> completedWithException(Exception e) {
 
         CompletableFuture<T> future = new CompletableFuture<>();
         future.completeExceptionally(e);
-        return future;
+        return Futures.createConnectionFuture(InetSocketAddress.createUnresolved(TestSettings.host(), TestSettings.port()),
+                future);
     }
 }

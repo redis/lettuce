@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Redis Future, extends a Listenable Future (Notification on Complete). The execution of the notification happens either on
- * finish of the future execution or, if the future is completed already, immediately.
- * 
+ * A {@code RedisFuture} represents the result of an asynchronous computation, extending {@link CompletionStage}. The execution
+ * of the notification happens either on finish of the future execution or, if the future is completed already, immediately.
+ *
  * @param <V> Value type.
  * @author Mark Paluch
  * @since 3.0
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public interface RedisFuture<V> extends CompletionStage<V>, Future<V> {
 
     /**
-     * 
+     *
      * @return error text, if any error occured.
      */
     String getError();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.lambdaworks.redis.cluster.topology;
 
 import java.net.SocketAddress;
-import java.util.concurrent.CompletableFuture;
 
+import com.lambdaworks.redis.ConnectionFuture;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
 
@@ -50,6 +50,6 @@ public interface NodeConnectionFactory {
      * @return a new {@link StatefulRedisConnection}
      * @since 4.4
      */
-    <K, V> CompletableFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec,
+    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec,
             SocketAddress socketAddress);
 }

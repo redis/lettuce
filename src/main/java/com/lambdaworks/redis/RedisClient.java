@@ -84,7 +84,7 @@ public class RedisClient extends AbstractRedisClient {
 
     /**
      * Create a new client that connects to the supplied host on the default port.
-     * 
+     *
      * @param host Server hostname.
      * @deprecated Use the factory method {@link #create(String)}
      */
@@ -96,7 +96,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Create a new client that connects to the supplied host and port. Connection attempts and non-blocking commands will
      * {@link #setDefaultTimeout timeout} after 60 seconds.
-     * 
+     *
      * @param host Server hostname.
      * @param port Server port.
      * @deprecated Use the factory method {@link #create(RedisURI)}
@@ -109,7 +109,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Create a new client that connects to the supplied host and port. Connection attempts and non-blocking commands will
      * {@link #setDefaultTimeout timeout} after 60 seconds.
-     * 
+     *
      * @param redisURI Redis URI.
      * @deprecated Use the factory method {@link #create(RedisURI)}
      */
@@ -201,7 +201,7 @@ public class RedisClient extends AbstractRedisClient {
      * Creates a connection pool for synchronous connections. 5 max idle connections and 20 max active connections. Please keep
      * in mind to free all collections and close the pool once you do not need it anymore. Requires Apache commons-pool2
      * dependency.
-     * 
+     *
      * @return a new {@link RedisConnectionPool} instance
      * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
@@ -213,7 +213,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore. Requires Apache commons-pool2 dependency.
-     * 
+     *
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
@@ -227,7 +227,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Creates a connection pool for synchronous connections. Please keep in mind to free all collections and close the pool
      * once you do not need it anymore. Requires Apache commons-pool2 dependency.
-     * 
+     *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
@@ -445,7 +445,9 @@ public class RedisClient extends AbstractRedisClient {
         return getConnection(future);
     }
 
-    private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
+    @SuppressWarnings("unused")
+    // Required by ReflectiveNodeConnectionFactory.
+    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
             RedisURI redisURI) {
         return connectStandaloneAsync(codec, redisURI, Timeout.from(redisURI));
     }
@@ -925,7 +927,7 @@ public class RedisClient extends AbstractRedisClient {
     /**
      * Resolve a {@link RedisURI} to a {@link SocketAddress}. Resolution is performed either using Redis Sentinel (if the
      * {@link RedisURI} is configured with Sentinels) or via DNS resolution.
-     * 
+     *
      * @param redisURI must not be {@literal null}.
      * @return the resolved {@link SocketAddress}.
      * @throws InterruptedException
