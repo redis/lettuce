@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,17 +104,16 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
                         RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider
                                 .getConnection(ClusterConnectionProvider.Intent.WRITE, target.getHostText(), target.getPort());
 
-                        if (asking) {
-                            // set asking bit
-                        StatefulRedisConnection<K, V> statefulRedisConnection = (StatefulRedisConnection<K, V>) connection;
-                        statefulRedisConnection.async().asking();
-                    }
+                        if (asking) { // set asking bit
+                            StatefulRedisConnection<K, V> statefulRedisConnection = (StatefulRedisConnection<K, V>) connection;
+                            statefulRedisConnection.async().asking();
+                        }
 
-                    connection.getChannelWriter().write(command);
-                } catch (Exception e) {
-                    command.completeExceptionally(e);
-                }
-            })  ;
+                        connection.getChannelWriter().write(command);
+                    } catch (Exception e) {
+                        command.completeExceptionally(e);
+                    }
+                });
 
                 return command;
             }
@@ -200,7 +199,6 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             clusterConnectionProvider.close();
             clusterConnectionProvider = null;
         }
-
     }
 
     @Override
