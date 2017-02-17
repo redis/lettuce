@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.api.async.RedisServerAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser;
@@ -79,7 +80,7 @@ public class ClusterRule implements TestRule {
     }
 
     /**
-     * 
+     *
      * @return true if the cluster state is {@code ok} and there are no failing nodes
      */
     public boolean isStable() {
@@ -123,13 +124,14 @@ public class ClusterRule implements TestRule {
      * Cluster reset on all nodes.
      */
     public void clusterReset() {
+        onAllConnections(RedisServerAsyncCommands::flushall, true);
         onAllConnections(c -> c.clusterReset(true));
         onAllConnections(RedisClusterAsyncCommands::clusterFlushslots);
     }
 
     /**
      * Meet on all nodes.
-     * 
+     *
      * @param host
      * @param port
      */
@@ -161,7 +163,6 @@ public class ClusterRule implements TestRule {
             throw new IllegalStateException(e);
         }
     }
-
 
     private void await(List<Future<?>> futures, boolean ignoreExecutionException) throws InterruptedException,
             java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {

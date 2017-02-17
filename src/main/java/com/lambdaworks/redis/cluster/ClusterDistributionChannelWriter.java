@@ -104,17 +104,16 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
                         RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider
                                 .getConnection(Intent.WRITE, target.getHostText(), target.getPort());
 
-                        if (asking) {
-                            // set asking bit
-                        StatefulRedisConnection<K, V> statefulRedisConnection = (StatefulRedisConnection<K, V>) connection;
-                        statefulRedisConnection.async().asking();
-                    }
+                        if (asking) { // set asking bit
+                            StatefulRedisConnection<K, V> statefulRedisConnection = (StatefulRedisConnection<K, V>) connection;
+                            statefulRedisConnection.async().asking();
+                        }
 
-                    connection.getChannelWriter().write(command);
-                } catch (Exception e) {
-                    command.completeExceptionally(e);
-                }
-            })  ;
+                        connection.getChannelWriter().write(command);
+                    } catch (Exception e) {
+                        command.completeExceptionally(e);
+                    }
+                });
 
                 return command;
             }

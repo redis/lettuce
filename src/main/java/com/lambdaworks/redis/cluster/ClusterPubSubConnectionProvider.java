@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2015-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,16 @@
  */
 package com.lambdaworks.redis.cluster;
 
+import com.lambdaworks.redis.ConnectionFuture;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.cluster.pubsub.RedisClusterPubSubListener;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.pubsub.RedisPubSubAdapter;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
+import com.lambdaworks.redis.resource.ClientResources;
 
 /**
  * {@link ClusterConnectionProvider} to provide {@link StatefulRedisPubSubConnection}s for Redis Cluster use.
@@ -40,7 +44,7 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
 
     /**
      * Creates a new {@link ClusterPubSubConnectionProvider}.
-     * 
+     *
      * @param redisClusterClient must not be {@literal null}.
      * @param clusterWriter must not be {@literal null}.
      * @param redisCodec must not be {@literal null}.
@@ -58,35 +62,65 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
     }
 
     @Override
-    protected ClusterNodeConnectionFactory<K, V> getConnectionFactory() {
-        return new PubSubConnectionFactory();
+    protected ClusterNodeConnectionFactory<K, V> getConnectionFactory(RedisClusterClient redisClusterClient) {
+        return new DecoratingClusterNodeConnectionFactory(new PubSubNodeConnectionFactory(redisClusterClient.getResources()));
     }
 
-    private class PubSubConnectionFactory implements ClusterNodeConnectionFactory<K, V> {
+    @SuppressWarnings("unchecked")
+    private class PubSubNodeConnectionFactory extends AbstractClusterNodeConnectionFactory<K, V> {
+
+        public PubSubNodeConnectionFactory(ClientResources clientResources) {
+            super(clientResources);
+        }
 
         @Override
-        public StatefulRedisPubSubConnection<K, V> apply(ConnectionKey key) {
-
-            StatefulRedisPubSubConnection<K, V> connection = null;
+        public ConnectionFuture<StatefulRedisConnection<K, V>> apply(ConnectionKey key) {
 
             if (key.nodeId != null) {
 
                 // NodeId connections do not provide command recovery due to cluster reconfiguration
-                connection = redisClusterClient.connectPubSubToNode(redisCodec, key.nodeId, getSocketAddressSupplier(key));
-
-                connection.addListener(new DelegatingRedisClusterPubSubListener(key.nodeId));
-            }
-
-            if (key.host != null) {
-
-                // Host and port connections do provide command recovery due to cluster reconfiguration
-                connection = redisClusterClient.connectPubSubToNode(redisCodec, key.host + ":" + key.port,
+                return redisClusterClient.connectPubSubToNodeAsync((RedisCodec) redisCodec, key.nodeId,
                         getSocketAddressSupplier(key));
-
-                connection.addListener(new DelegatingRedisClusterPubSubListener(key.host, key.port));
             }
 
-            return connection;
+            // Host and port connections do provide command recovery due to cluster reconfiguration
+            return redisClusterClient.connectPubSubToNodeAsync((RedisCodec) redisCodec, key.host + ":" + key.port,
+                    getSocketAddressSupplier(key));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private class DecoratingClusterNodeConnectionFactory implements ClusterNodeConnectionFactory<K, V> {
+
+        private final ClusterNodeConnectionFactory<K, V> delegate;
+
+        public DecoratingClusterNodeConnectionFactory(ClusterNodeConnectionFactory<K, V> delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void setPartitions(Partitions partitions) {
+            delegate.setPartitions(partitions);
+        }
+
+        @Override
+        public ConnectionFuture<StatefulRedisConnection<K, V>> apply(ConnectionKey key) {
+
+            ConnectionFuture<StatefulRedisConnection<K, V>> future = delegate.apply(key);
+            if (key.nodeId != null) {
+                return future.thenApply(connection -> {
+                    ((StatefulRedisPubSubConnection) connection).addListener(new DelegatingRedisClusterPubSubListener(
+                            key.nodeId));
+                    return connection;
+                });
+            }
+
+            return future.thenApply(connection -> {
+                ((StatefulRedisPubSubConnection) connection).addListener(new DelegatingRedisClusterPubSubListener(key.host,
+                        key.port));
+
+                return connection;
+            });
         }
     }
 

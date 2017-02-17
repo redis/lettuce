@@ -405,7 +405,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value type
      * @return A new connection
      */
-    private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec, String nodeId,
+    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec, String nodeId,
             RedisChannelWriter clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
 
         assertNotNull(codec);
@@ -440,7 +440,22 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return A new connection
      */
     <K, V> StatefulRedisPubSubConnection<K, V> connectPubSubToNode(RedisCodec<K, V> codec, String nodeId,
-            final Supplier<SocketAddress> socketAddressSupplier) {
+            Supplier<SocketAddress> socketAddressSupplier) {
+        return getConnection(connectPubSubToNodeAsync(codec, nodeId, socketAddressSupplier));
+    }
+
+    /**
+     * Create a pub/sub connection to a redis socket address.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param nodeId the nodeId
+     * @param socketAddressSupplier supplier for the socket address
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
+     */
+    <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubToNodeAsync(RedisCodec<K, V> codec,
+            String nodeId, Supplier<SocketAddress> socketAddressSupplier) {
 
         assertNotNull(codec);
         assertNotEmpty(initialUris);
@@ -453,15 +468,13 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, endpoint, codec,
                 timeout, unit);
 
-        try {
-            connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<K, V>(
-                    clientResources, codec, endpoint));
-        } catch (RedisException e) {
-            connection.close();
-            throw e;
-        }
-        return connection;
-
+        ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
+                getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<K, V>(clientResources, codec, endpoint));
+        return connectionFuture.whenComplete((conn, throwable) -> {
+            if (throwable != null) {
+                connection.close();
+            }
+        });
     }
 
     /**
