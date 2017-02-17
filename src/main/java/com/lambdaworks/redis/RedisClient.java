@@ -204,7 +204,9 @@ public class RedisClient extends AbstractRedisClient {
         return getConnection(future);
     }
 
-    private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
+    @SuppressWarnings("unused")
+    // Required by ReflectiveNodeConnectionFactory.
+    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
             RedisURI redisURI) {
         return connectStandaloneAsync(codec, redisURI, Timeout.from(redisURI));
     }

@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis.cluster.topology;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
@@ -36,8 +35,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import com.lambdaworks.Futures;
+import com.lambdaworks.redis.ConnectionFuture;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.RedisClusterClient;
@@ -400,10 +402,16 @@ public class ClusterTopologyRefreshTest {
         return requests;
     }
 
-    private static <T> CompletableFuture<T> completedWithException(Exception e) {
+    private static <T> ConnectionFuture<T> completedFuture(T value) {
+        return Futures.createConnectionFuture(InetSocketAddress.createUnresolved(TestSettings.host(), TestSettings.port()),
+                CompletableFuture.completedFuture(value));
+    }
+
+    private static <T> ConnectionFuture<T> completedWithException(Exception e) {
 
         CompletableFuture<T> future = new CompletableFuture<T>();
         future.completeExceptionally(e);
-        return future;
+        return Futures.createConnectionFuture(InetSocketAddress.createUnresolved(TestSettings.host(), TestSettings.port()),
+                future);
     }
 }

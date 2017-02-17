@@ -23,10 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import com.lambdaworks.redis.LettuceStrings;
-import com.lambdaworks.redis.RedisCommandInterruptedException;
-import com.lambdaworks.redis.RedisConnectionException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
@@ -148,9 +145,9 @@ public class ClusterTopologyRefresh {
                             }
 
                             // record latency for later partition ordering
-                            latencies.put(partition.getNodeId(), nodeTopologyView.getLatency());
-                            clientCountByNodeId.put(partition.getNodeId(), nodeTopologyView.getConnectedClients());
-                        });
+                                latencies.put(partition.getNodeId(), nodeTopologyView.getLatency());
+                                clientCountByNodeId.put(partition.getNodeId(), nodeTopologyView.getConnectedClients());
+                            });
 
                 allNodes.addAll(nodeWithStats);
 
@@ -207,7 +204,7 @@ public class ClusterTopologyRefresh {
             try {
                 SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
 
-                CompletableFuture<StatefulRedisConnection<String, String>> connectionFuture = nodeConnectionFactory
+                ConnectionFuture<StatefulRedisConnection<String, String>> connectionFuture = nodeConnectionFactory
                         .connectToNodeAsync(CODEC, socketAddress);
 
                 CompletableFuture<StatefulRedisConnection<String, String>> sync = new CompletableFuture<>();
