@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,16 +236,16 @@ public abstract class AbstractRedisClient {
     @SuppressWarnings("unchecked")
     protected <K, V, T extends RedisChannelHandler<K, V>> T initializeChannel(ConnectionBuilder connectionBuilder) {
 
-    RedisChannelHandler<?, ?> connection = connectionBuilder . connection ();
+        RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
         SocketAddress redisAddress = connectionBuilder.socketAddress();
         try {
 
             logger.debug("Connecting to Redis at {}", redisAddress);
 
-        Bootstrap redisBootstrap = connectionBuilder.bootstrap();
-        RedisChannelInitializer initializer = connectionBuilder.build();
-        redisBootstrap.handler(initializer);
-        ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
+            Bootstrap redisBootstrap = connectionBuilder.bootstrap();
+            RedisChannelInitializer initializer = connectionBuilder.build();
+            redisBootstrap.handler(initializer);
+            ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
 
             connectFuture.await();
 
@@ -259,8 +259,8 @@ public abstract class AbstractRedisClient {
             try {
                 initializer.channelInitialized().get(connectionBuilder.getTimeout(), connectionBuilder.getTimeUnit());
             } catch (TimeoutException e) {
-                throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout() + " "
-                        + connectionBuilder.getTimeUnit(), e);
+                throw new RedisConnectionException("Could not initialize channel within " + connectionBuilder.getTimeout()
+                        + " " + connectionBuilder.getTimeUnit(), e);
             }
             connection.registerCloseables(closeableResources, connection);
 

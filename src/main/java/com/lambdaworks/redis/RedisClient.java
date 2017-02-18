@@ -15,6 +15,19 @@
  */
 package com.lambdaworks.redis;
 
+import static com.lambdaworks.redis.LettuceStrings.isEmpty;
+import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
+import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
+
+import java.net.ConnectException;
+import java.net.SocketAddress;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
+
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -33,19 +46,6 @@ import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.support.ConnectionPoolSupport;
-
-import java.net.ConnectException;
-import java.net.SocketAddress;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
-
-import static com.lambdaworks.redis.LettuceStrings.isEmpty;
-import static com.lambdaworks.redis.LettuceStrings.isNotEmpty;
-import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
 
 /**
  * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
@@ -204,7 +204,7 @@ public class RedisClient extends AbstractRedisClient {
      * dependency.
      *
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public RedisConnectionPool<RedisCommands<String, String>> pool() {
@@ -218,7 +218,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public RedisConnectionPool<RedisCommands<String, String>> pool(int maxIdle, int maxActive) {
@@ -235,7 +235,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key type
      * @param <V> Value type
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @SuppressWarnings("unchecked")
     @Deprecated
@@ -277,7 +277,7 @@ public class RedisClient extends AbstractRedisClient {
      * dependency.
      *
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public RedisConnectionPool<RedisAsyncCommands<String, String>> asyncPool() {
@@ -291,7 +291,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param maxIdle max idle connections in pool
      * @param maxActive max active connections in pool
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public RedisConnectionPool<RedisAsyncCommands<String, String>> asyncPool(int maxIdle, int maxActive) {
@@ -308,7 +308,7 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key type
      * @param <V> Value type
      * @return a new {@link RedisConnectionPool} instance
-     * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
+     * @deprecated Will be removed in future versions. Use {@link ConnectionPoolSupport}.
      */
     @Deprecated
     public <K, V> RedisConnectionPool<RedisAsyncCommands<K, V>> asyncPool(final RedisCodec<K, V> codec, int maxIdle,
@@ -550,8 +550,7 @@ public class RedisClient extends AbstractRedisClient {
         return connectPubSub(codec, redisURI, Timeout.from(redisURI));
     }
 
-    private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI,
-            Timeout timeout) {
+    private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI, Timeout timeout) {
 
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
@@ -879,8 +878,8 @@ public class RedisClient extends AbstractRedisClient {
         return clientResources;
     }
 
-    protected SocketAddress getSocketAddress(RedisURI redisURI)
-            throws InterruptedException, TimeoutException, ExecutionException {
+    protected SocketAddress getSocketAddress(RedisURI redisURI) throws InterruptedException, TimeoutException,
+            ExecutionException {
         SocketAddress redisAddress;
 
         if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
@@ -889,8 +888,8 @@ public class RedisClient extends AbstractRedisClient {
             redisAddress = lookupRedis(redisURI);
 
             if (redisAddress == null) {
-                throw new RedisConnectionException(
-                        "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId());
+                throw new RedisConnectionException("Cannot provide redisAddress using sentinel for masterId "
+                        + redisURI.getSentinelMasterId());
             }
 
         } else {
@@ -947,8 +946,9 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private void checkForRedisURI() {
-        LettuceAssert.assertState(this.redisURI != EMPTY_URI,
-                "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
+        LettuceAssert
+                .assertState(this.redisURI != EMPTY_URI,
+                        "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
         checkValidRedisURI(this.redisURI);
     }
 
