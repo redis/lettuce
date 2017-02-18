@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -467,7 +467,6 @@ public class RedisClient extends AbstractRedisClient {
             connectionBuilder = ConnectionBuilder.connectionBuilder();
         }
 
-
         connectionBuilder.clientOptions(clientOptions);
         connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
@@ -481,7 +480,13 @@ public class RedisClient extends AbstractRedisClient {
             }
         }
 
-        initializeChannel(connectionBuilder);
+        try {
+            initializeChannel(connectionBuilder);
+        } catch (RuntimeException e) {
+
+            connection.close();
+            throw e;
+        }
 
         if (!clientOptions.isPingBeforeActivateConnection() && hasPassword(redisURI)) {
             connection.async().auth(new String(redisURI.getPassword()));
@@ -692,41 +697,46 @@ public class RedisClient extends AbstractRedisClient {
             connectionBuilder.enablePingBeforeConnect();
         }
 
-        if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
-            channelType(connectionBuilder, redisURI);
-            initializeChannel(connectionBuilder);
-        } else {
-            boolean connected = false;
-            boolean first = true;
-            Exception causingException = null;
-            validateUrisAreOfSameConnectionType(redisURI.getSentinels());
-            for (RedisURI uri : redisURI.getSentinels()) {
-                if (first) {
-                    channelType(connectionBuilder, uri);
-                    first = false;
-                }
-                connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
+        try {
+            if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
+                channelType(connectionBuilder, redisURI);
+                initializeChannel(connectionBuilder);
+            } else {
+                boolean connected = false;
+                boolean first = true;
+                Exception causingException = null;
+                validateUrisAreOfSameConnectionType(redisURI.getSentinels());
+                for (RedisURI uri : redisURI.getSentinels()) {
+                    if (first) {
+                        channelType(connectionBuilder, uri);
+                        first = false;
+                    }
+                    connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
 
-                if (logger.isDebugEnabled()) {
-                    SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
-                    logger.debug("Connecting to Sentinel, address: " + socketAddress);
-                }
-                try {
-                    initializeChannel(connectionBuilder);
-                    connected = true;
-                    break;
-                } catch (Exception e) {
-                    logger.warn("Cannot connect sentinel at " + uri + ": " + e.toString());
-                    causingException = e;
-                    if (e instanceof ConnectException) {
-                        continue;
+                    if (logger.isDebugEnabled()) {
+                        SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
+                        logger.debug("Connecting to Sentinel, address: " + socketAddress);
+                    }
+                    try {
+                        initializeChannel(connectionBuilder);
+                        connected = true;
+                        break;
+                    } catch (Exception e) {
+                        logger.warn("Cannot connect sentinel at " + uri + ": " + e.toString());
+                        causingException = e;
+                        if (e instanceof ConnectException) {
+                            continue;
+                        }
                     }
                 }
+                if (!connected) {
+                    throw new RedisConnectionException("Cannot connect to a sentinel: " + redisURI.getSentinels(),
+                            causingException);
+                }
             }
-            if (!connected) {
-                throw new RedisConnectionException("Cannot connect to a sentinel: " + redisURI.getSentinels(),
-                        causingException);
-            }
+        } catch (RedisConnectionException e) {
+            connection.close();
+            throw e;
         }
 
         return connection;
