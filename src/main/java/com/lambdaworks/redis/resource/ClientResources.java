@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,31 +26,32 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
 /**
- * Client Configuration. The client configuration provides heavy-weight resources such as thread pools. {@link ClientResources}
- * can be shared across different client instances. Shared instances are not shut down by the client, only dedicated instances
- * are shut down.
- * <p>
- * This interface defines the contract. See the {@link DefaultClientResources} class for the default implementation.
- * </p>
- * <p>
- * The {@link ClientResources} instance is stateful. You have to shutdown the instance if you're no longer using it.
- * </p>
+ * Strategy interface to provide all the infrastructure building blocks like environment settings and thread pools so that the
+ * client can work with it properly. {@link ClientResources} can be shared amongst multiple client instances if created outside
+ * the client creation. Implementations of {@link ClientResources} are stateful and must be {@link #shutdown()} after they are
+ * no longer in use.
  *
- * {@link ClientResources} provide:
+ * {@link ClientResources} provides in particular:
  * <ul>
- * <li>An instance of {@link EventLoopGroupProvider} to obtain particular {@link io.netty.channel.EventLoopGroup
- * EventLoopGroups}</li>
- * <li>An instance of {@link EventExecutorGroup} for performing internal computation tasks</li>
+ * <li>{@link EventLoopGroupProvider} to obtain particular {@link io.netty.channel.EventLoopGroup EventLoopGroups}</li>
+ * <li>{@link EventExecutorGroup} to perform internal computation tasks</li>
+ * <li>{@link Timer} for scheduling</li>
+ * <li>{@link EventBus} for client event dispatching</li>
+ * <li>{@link EventPublisherOptions}</li>
+ * <li>{@link CommandLatencyCollector} to collect latency details. Requires the {@literal HdrHistogram} library.</li>
+ * <li>{@link DnsResolver} to collect latency details. Requires the {@literal LatencyUtils} library.</li>
+ * <li>Reconnect {@link Delay}.</li>
  * </ul>
  *
  * @author Mark Paluch
  * @since 3.4
+ * @see DefaultClientResources
  */
 public interface ClientResources {
 
     /**
      * Shutdown the {@link ClientResources}.
-     * 
+     *
      * @return eventually the success/failure of the shutdown without errors.
      */
     Future<Boolean> shutdown();
@@ -73,16 +74,16 @@ public interface ClientResources {
      *
      * You can use {@link DefaultEventLoopGroupProvider} as default implementation or implement an own
      * {@link EventLoopGroupProvider} to share existing {@link io.netty.channel.EventLoopGroup EventLoopGroup's} with lettuce.
-     * 
-     * @return the {@link EventLoopGroupProvider} which provides access to the particular {@link io.netty.channel.EventLoopGroup
-     *         event loop groups}
+     *
+     * @return the {@link EventLoopGroupProvider} which provides access to the particular
+     *         {@link io.netty.channel.EventLoopGroup event loop groups}
      */
     EventLoopGroupProvider eventLoopGroupProvider();
 
     /**
      * Returns the computation pool used for internal operations. Such tasks are periodic Redis Cluster and Redis Sentinel
      * topology updates and scheduling of connection reconnection by {@link com.lambdaworks.redis.protocol.ConnectionWatchdog}.
-     * 
+     *
      * @return the computation pool used for internal operations
      */
     EventExecutorGroup eventExecutorGroup();
@@ -106,28 +107,28 @@ public interface ClientResources {
      * Returns the {@link Timer} to schedule events. A timer object may run single- or multi-threaded but must be used for
      * scheduling of short-running jobs only. Long-running jobs should be scheduled and executed using
      * {@link #eventExecutorGroup()}.
-     * 
+     *
      * @return the timer.
      */
     Timer timer();
 
     /**
      * Returns the event bus used to publish events.
-     * 
+     *
      * @return the event bus
      */
     EventBus eventBus();
 
     /**
      * Returns the {@link EventPublisherOptions} for latency event publishing.
-     * 
+     *
      * @return the {@link EventPublisherOptions} for latency event publishing
      */
     EventPublisherOptions commandLatencyPublisherOptions();
 
     /**
      * Returns the {@link CommandLatencyCollector}.
-     * 
+     *
      * @return the command latency collector
      */
     CommandLatencyCollector commandLatencyCollector();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,37 @@ import com.lambdaworks.redis.sentinel.api.async.RedisSentinelAsyncCommands;
 import com.lambdaworks.redis.support.ConnectionPoolSupport;
 
 /**
- * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
- * blocking and transactional operations such as BLPOP and MULTI/EXEC. {@link RedisClient} is an expensive resource. It holds a
- * set of netty's {@link io.netty.channel.EventLoopGroup}'s that consist of up to {@code Number of CPU's * 4} threads. Reuse
- * this instance as much as possible.
+ * A scalable and thread-safe <a href="http://redis.io/">Redis</a> client supporting synchronous, asynchronous and reactive
+ * execution models. Multiple threads may share one connection if they avoid blocking and transactional operations such as BLPOP
+ * and MULTI/EXEC.
+ * <p>
+ * {@link RedisClient} can be used with:
+ * <ul>
+ * <li>Redis Standalone</li>
+ * <li>Redis Pub/Sub</li>
+ * <li>Redis Sentinel, Sentinel connections</li>
+ * <li>Redis Sentinel, Master connections</li>
+ * </ul>
+ *
+ * Redis Cluster is used through {@link com.lambdaworks.redis.cluster.RedisClusterClient}. Master/Slave connections through
+ * {@link com.lambdaworks.redis.masterslave.MasterSlave} provide connections to Redis Master/Slave setups which run either in a
+ * static Master/Slave setup or are managed by Redis Sentinel.
+ * <p>
+ * {@link RedisClient} is an expensive resource. It holds a set of netty's {@link io.netty.channel.EventLoopGroup}'s that use
+ * multiple threads. Reuse this instance as much as possible or share a {@link ClientResources} instance amongst multiple client
+ * instances.
  *
  * @author Will Glozer
  * @author Mark Paluch
+ * @see RedisURI
+ * @see StatefulRedisConnection
+ * @see RedisFuture
+ * @see rx.Observable
+ * @see RedisCodec
+ * @see ClientOptions
+ * @see ClientResources
+ * @see com.lambdaworks.redis.masterslave.MasterSlave
+ * @see com.lambdaworks.redis.cluster.RedisClusterClient
  */
 public class RedisClient extends AbstractRedisClient {
 
@@ -447,8 +471,7 @@ public class RedisClient extends AbstractRedisClient {
 
     @SuppressWarnings("unused")
     // Required by ReflectiveNodeConnectionFactory.
-    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
-            RedisURI redisURI) {
+    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
         return connectStandaloneAsync(codec, redisURI, Timeout.from(redisURI));
     }
 
@@ -588,8 +611,7 @@ public class RedisClient extends AbstractRedisClient {
         return connectPubSub(codec, redisURI, Timeout.from(redisURI));
     }
 
-    private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI,
-            Timeout timeout) {
+    private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI, Timeout timeout) {
 
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
@@ -937,8 +959,8 @@ public class RedisClient extends AbstractRedisClient {
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
      */
-    protected SocketAddress getSocketAddress(RedisURI redisURI)
-            throws InterruptedException, TimeoutException, ExecutionException {
+    protected SocketAddress getSocketAddress(RedisURI redisURI) throws InterruptedException, TimeoutException,
+            ExecutionException {
         SocketAddress redisAddress;
 
         if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
@@ -947,8 +969,8 @@ public class RedisClient extends AbstractRedisClient {
             redisAddress = lookupRedis(redisURI);
 
             if (redisAddress == null) {
-                throw new RedisConnectionException(
-                        "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId());
+                throw new RedisConnectionException("Cannot provide redisAddress using sentinel for masterId "
+                        + redisURI.getSentinelMasterId());
             }
 
         } else {
@@ -1043,8 +1065,9 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private void checkForRedisURI() {
-        LettuceAssert.assertState(this.redisURI != EMPTY_URI,
-                "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
+        LettuceAssert
+                .assertState(this.redisURI != EMPTY_URI,
+                        "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
         checkValidRedisURI(this.redisURI);
     }
 
