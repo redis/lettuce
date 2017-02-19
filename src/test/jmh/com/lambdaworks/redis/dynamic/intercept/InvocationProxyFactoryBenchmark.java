@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,55 +15,40 @@
  */
 package com.lambdaworks.redis.dynamic.intercept;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import org.junit.Test;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.infra.Blackhole;
 
 /**
  * @author Mark Paluch
  */
-public class InvocationProxyFactoryTest {
+@State(Scope.Benchmark)
+public class InvocationProxyFactoryBenchmark {
 
-    @Test
-    public void shouldDelegateCallsToInterceptor() {
+    private final InvocationProxyFactory factory = new InvocationProxyFactory();
+    private BenchmarkInterface proxy;
 
-        InvocationProxyFactory factory = new InvocationProxyFactory();
-        factory.addInterface(TargetWithBooleanMethod.class);
-        factory.addInterceptor(new ReturnValue(Boolean.TRUE));
+    @Setup
+    public void setup() {
 
-        TargetWithBooleanMethod target = factory.createProxy(getClass().getClassLoader());
-
-        assertThat(target.someMethod()).isTrue();
-    }
-
-    @Test
-    public void shouldNotFailWithoutFurtherInterceptors() {
-
-        InvocationProxyFactory factory = new InvocationProxyFactory();
-        factory.addInterface(TargetWithBooleanMethod.class);
-
-        TargetWithBooleanMethod target = factory.createProxy(getClass().getClassLoader());
-
-        assertThat(target.someMethod()).isNull();
-    }
-
-    @Test
-    public void shouldCallInterceptorsInOrder() throws InterruptedException {
-
-        InvocationProxyFactory factory = new InvocationProxyFactory();
-        factory.addInterface(TargetWithStringMethod.class);
+        factory.addInterface(BenchmarkInterface.class);
         factory.addInterceptor(new StringAppendingMethodInterceptor("-foo"));
         factory.addInterceptor(new StringAppendingMethodInterceptor("-bar"));
         factory.addInterceptor(new ReturnValue("actual"));
 
-        TargetWithStringMethod target = factory.createProxy(getClass().getClassLoader());
-
-        assertThat(target.run()).isEqualTo("actual-bar-foo");
+        proxy = factory.createProxy(getClass().getClassLoader());
     }
 
-    private interface TargetWithBooleanMethod {
+    @Benchmark
+    public void run(Blackhole blackhole) {
+        blackhole.consume(proxy.run());
+    }
 
-        Boolean someMethod();
+    private interface BenchmarkInterface {
+
+        String run();
     }
 
     private static class ReturnValue implements MethodInterceptor {
@@ -78,11 +63,7 @@ public class InvocationProxyFactoryTest {
         public Object invoke(MethodInvocation invocation) {
             return value;
         }
-    }
 
-    private interface TargetWithStringMethod {
-
-        String run();
     }
 
     private static class StringAppendingMethodInterceptor implements MethodInterceptor {
@@ -98,4 +79,5 @@ public class InvocationProxyFactoryTest {
             return invocation.proceed().toString() + toAppend;
         }
     }
+
 }

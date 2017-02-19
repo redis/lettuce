@@ -18,12 +18,10 @@ package com.lambdaworks.redis.dynamic.intercept;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.lambdaworks.redis.internal.AbstractInvocationHandler;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.internal.LettuceLists;
 
 /**
  * Factory to create invocation proxies.
@@ -47,7 +45,7 @@ public class InvocationProxyFactory {
 
     /**
      * Create a proxy instance give a {@link ClassLoader}.
-     * 
+     *
      * @param classLoader must not be {@literal null}.
      * @param <T> inferred result type.
      * @return the invocation proxy instance.
@@ -64,7 +62,7 @@ public class InvocationProxyFactory {
 
     /**
      * Add a interface type that should be implemented by the resulting invocation proxy.
-     * 
+     *
      * @param ifc must not be {@literal null} and must be an interface type.
      */
     public void addInterface(Class<?> ifc) {
@@ -77,7 +75,7 @@ public class InvocationProxyFactory {
 
     /**
      * Add a {@link MethodInterceptor} to the interceptor chain.
-     * 
+     *
      * @param interceptor notNull
      */
     public void addInterceptor(MethodInterceptor interceptor) {
@@ -92,38 +90,15 @@ public class InvocationProxyFactory {
      */
     static class InterceptorChainInvocationHandler extends AbstractInvocationHandler {
 
-        private final List<MethodInterceptor> interceptors;
+        private final MethodInterceptorChain.Head context;
 
         InterceptorChainInvocationHandler(List<MethodInterceptor> interceptors) {
-            this.interceptors = LettuceLists.newList(interceptors);
+            this.context = MethodInterceptorChain.from(interceptors);
         }
 
         @Override
         protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
-
-            Iterator<MethodInterceptor> iterator = interceptors.iterator();
-
-            if (iterator.hasNext()) {
-                return iterator.next().invoke(getInvocation(method, args, iterator));
-            }
-
-            return null;
-        }
-
-        private DefaultMethodInvocation getInvocation(final Method method, final Object[] args,
-                final Iterator<MethodInterceptor> iterator) {
-
-            return new DefaultMethodInvocation(method, args) {
-
-                @Override
-                public Object proceed() throws Throwable {
-
-                    if (iterator.hasNext()) {
-                        return iterator.next().invoke(getInvocation(method, args, iterator));
-                    }
-                    return null;
-                }
-            };
+            return context.invoke(method, args);
         }
     }
 }
