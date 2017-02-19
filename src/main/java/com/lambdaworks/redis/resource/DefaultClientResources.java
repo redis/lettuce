@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,8 +88,10 @@ public class DefaultClientResources implements ClientResources {
     public static final Supplier<Delay> DEFAULT_RECONNECT_DELAY = Delay::exponential;
 
     static {
-        int threads = Math.max(1, SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
-                Math.max(MIN_IO_THREADS, Runtime.getRuntime().availableProcessors())));
+        int threads = Math.max(
+                1,
+                SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
+                        Math.max(MIN_IO_THREADS, Runtime.getRuntime().availableProcessors())));
 
         DEFAULT_IO_THREADS = threads;
         DEFAULT_COMPUTATION_THREADS = threads;
@@ -169,8 +171,7 @@ public class DefaultClientResources implements ClientResources {
                 if (builder.commandLatencyCollectorOptions != null) {
                     commandLatencyCollector = new DefaultCommandLatencyCollector(builder.commandLatencyCollectorOptions);
                 } else {
-                    commandLatencyCollector = new DefaultCommandLatencyCollector(
-                            DefaultCommandLatencyCollectorOptions.create());
+                    commandLatencyCollector = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
                 }
             } else {
                 logger.debug("LatencyUtils/HdrUtils are not available, metrics are disabled");

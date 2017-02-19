@@ -41,13 +41,38 @@ import com.lambdaworks.redis.sentinel.StatefulRedisSentinelConnectionImpl;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
- * A scalable thread-safe <a href="http://redis.io/">Redis</a> client. Multiple threads may share one connection if they avoid
- * blocking and transactional operations such as BLPOP and MULTI/EXEC. {@link RedisClient} is an expensive resource. It holds a
- * set of netty's {@link io.netty.channel.EventLoopGroup}'s that consist of up to {@code Number of CPU's * 4} threads. Reuse
- * this instance as much as possible.
+ * A scalable and thread-safe <a href="http://redis.io/">Redis</a> client supporting synchronous, asynchronous and reactive
+ * execution models. Multiple threads may share one connection if they avoid blocking and transactional operations such as BLPOP
+ * and MULTI/EXEC.
+ * <p>
+ * {@link RedisClient} can be used with:
+ * <ul>
+ * <li>Redis Standalone</li>
+ * <li>Redis Pub/Sub</li>
+ * <li>Redis Sentinel, Sentinel connections</li>
+ * <li>Redis Sentinel, Master connections</li>
+ * </ul>
+ *
+ * Redis Cluster is used through {@link com.lambdaworks.redis.cluster.RedisClusterClient}. Master/Slave connections through
+ * {@link com.lambdaworks.redis.masterslave.MasterSlave} provide connections to Redis Master/Slave setups which run either in a
+ * static Master/Slave setup or are managed by Redis Sentinel.
+ * <p>
+ * {@link RedisClient} is an expensive resource. It holds a set of netty's {@link io.netty.channel.EventLoopGroup}'s that use
+ * multiple threads. Reuse this instance as much as possible or share a {@link ClientResources} instance amongst multiple client
+ * instances.
  *
  * @author Will Glozer
  * @author Mark Paluch
+ * @see RedisURI
+ * @see StatefulRedisConnection
+ * @see RedisFuture
+ * @see reactor.core.publisher.Mono
+ * @see reactor.core.publisher.Flux
+ * @see RedisCodec
+ * @see ClientOptions
+ * @see ClientResources
+ * @see com.lambdaworks.redis.masterslave.MasterSlave
+ * @see com.lambdaworks.redis.cluster.RedisClusterClient
  */
 public class RedisClient extends AbstractRedisClient {
 
@@ -206,8 +231,7 @@ public class RedisClient extends AbstractRedisClient {
 
     @SuppressWarnings("unused")
     // Required by ReflectiveNodeConnectionFactory.
-    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
-            RedisURI redisURI) {
+    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
         return connectStandaloneAsync(codec, redisURI, Timeout.from(redisURI));
     }
 

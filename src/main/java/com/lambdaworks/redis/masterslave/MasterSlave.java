@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,14 +33,14 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * Master-Slave connection API.
  * <p>
- * This API allows connections to Redis Master/Slave setups which run either Redis Standalone or are managed by Redis Sentinel.
- * Master-Slave connections can discover topologies and select a source for read operations using
+ * This API allows connections to Redis Master/Slave setups which run either in a static Master/Slave setup or are managed by
+ * Redis Sentinel. Master-Slave connections can discover topologies and select a source for read operations using
  * {@link com.lambdaworks.redis.ReadFrom}.
  * </p>
  * <p>
  *
  * Connections can be obtained by providing the {@link RedisClient}, a {@link RedisURI} and a {@link RedisCodec}.
- * 
+ *
  * <pre>
  *  &#064;code
  *   RedisClient client = RedisClient.create();
@@ -53,6 +53,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *   client.shutdown();
  *   }
  * </pre>
+ *
  * </p>
  * <h3>Topology Discovery</h3>
  * <p>
@@ -282,8 +283,8 @@ public class MasterSlave {
     private static RedisNodeDescription getConnectedNode(RedisURI redisURI, List<RedisNodeDescription> nodes) {
 
         Optional<RedisNodeDescription> first = nodes.stream().filter(n -> equals(redisURI, n)).findFirst();
-        return first.orElseThrow(
-                () -> new IllegalStateException("Cannot lookup node descriptor for connected node at " + redisURI));
+        return first.orElseThrow(() -> new IllegalStateException("Cannot lookup node descriptor for connected node at "
+                + redisURI));
     }
 
     private static boolean equals(RedisURI redisURI, RedisNodeDescription node) {

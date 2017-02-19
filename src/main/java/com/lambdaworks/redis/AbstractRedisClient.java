@@ -57,6 +57,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  * @since 3.0
+ * @see ClientResources
  */
 public abstract class AbstractRedisClient {
 
