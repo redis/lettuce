@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
-import io.reactivex.Observable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.reactivex.Observable;
 
 /**
  * @author Mark Paluch
@@ -67,7 +67,7 @@ public class ConversionServiceTest {
         sut.addConverter(new MonoToObservableConverter());
 
         Observable<String> observable = sut.convert(Mono.just("hello"), Observable.class);
-        assertThat(observable.blockingFirst()).isEqualTo("world");
+        observable.test().assertValue("world").assertComplete();
     }
 
     private class FluxToObservableConverter implements Function<Flux<?>, Observable<?>> {

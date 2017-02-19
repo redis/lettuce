@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,18 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.util.concurrent.TimeUnit;
 
-import io.netty.util.Timer;
 import org.junit.Test;
+
+import reactor.test.StepVerifier;
 
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.event.Event;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
-import com.lambdaworks.redis.reactive.TestSubscriber;
 
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
@@ -106,8 +107,7 @@ public class DefaultClientResourcesTest {
 
         DefaultClientResources sut = DefaultClientResources.builder().eventExecutorGroup(executorMock)
                 .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
-                .commandLatencyCollector(latencyCollectorMock)
-                .build();
+                .commandLatencyCollector(latencyCollectorMock).build();
 
         assertThat(sut.eventExecutorGroup()).isSameAs(executorMock);
         assertThat(sut.eventLoopGroupProvider()).isSameAs(groupProviderMock);
@@ -144,17 +144,9 @@ public class DefaultClientResourcesTest {
         DefaultClientResources sut = DefaultClientResources.create();
 
         EventBus eventBus = sut.eventBus();
-
-        final TestSubscriber<Event> testSubscriber = TestSubscriber.create();
-
-        eventBus.get().subscribe(testSubscriber);
-
         Event event = mock(Event.class);
-        eventBus.publish(event);
 
-        testSubscriber.awaitAndAssertNextValuesWith(receivedEvent -> {
-            assertThat(receivedEvent).isEqualTo(event);
-        });
+        StepVerifier.create(eventBus.get()).then(() -> eventBus.publish(event)).expectNext(event).thenCancel().verify();
 
         assertThat(sut.shutdown(0, 0, TimeUnit.MILLISECONDS).get()).isTrue();
     }

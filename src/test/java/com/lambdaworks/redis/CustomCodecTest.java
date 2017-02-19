@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,20 @@ package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 
 import org.junit.Test;
 
+import reactor.test.StepVerifier;
+
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.reactive.TestSubscriber;
-import org.junit.Test;
-
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.CompressionCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
  * @author Will Glozer
@@ -61,23 +54,18 @@ public class CustomCodecTest extends AbstractRedisClientTest {
 
     @Test
     public void testJavaSerializerReactive() throws Exception {
+
         StatefulRedisConnection<String, Object> redisConnection = client.connect(new SerializedObjectCodec());
         List<String> list = list("one", "two");
 
-        TestSubscriber<String> subscriber = TestSubscriber.create();
-
-        redisConnection.reactive().set(key, list, SetArgs.Builder.ex(1)).subscribe(subscriber);
-        subscriber.awaitAndAssertNextValues("OK").assertComplete().assertNoError();
-
+        StepVerifier.create(redisConnection.reactive().set(key, list, SetArgs.Builder.ex(1))).expectNext("OK").verifyComplete();
         redisConnection.close();
     }
 
     @Test
     public void testDeflateCompressedJavaSerializer() throws Exception {
-        RedisCommands<String, Object> connection = client
-                .connect(
-                        CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.DEFLATE))
-                .sync();
+        RedisCommands<String, Object> connection = client.connect(
+                CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.DEFLATE)).sync();
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
@@ -87,9 +75,8 @@ public class CustomCodecTest extends AbstractRedisClientTest {
 
     @Test
     public void testGzipompressedJavaSerializer() throws Exception {
-        RedisCommands<String, Object> connection = client
-                .connect(CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP))
-                .sync();
+        RedisCommands<String, Object> connection = client.connect(
+                CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP)).sync();
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
@@ -132,7 +119,6 @@ public class CustomCodecTest extends AbstractRedisClientTest {
 
         connection.getStatefulConnection().close();
     }
-
 
     public class SerializedObjectCodec implements RedisCodec<String, Object> {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 package com.lambdaworks.redis.event;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.concurrent.ArrayBlockingQueue;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import reactor.core.Disposable;
 import reactor.core.scheduler.Schedulers;
-
-import com.lambdaworks.redis.reactive.TestSubscriber;
+import reactor.test.StepVerifier;
 
 /**
  * @author Mark Paluch
@@ -38,12 +42,7 @@ public class DefaultEventBusTest {
 
         EventBus sut = new DefaultEventBus(Schedulers.immediate());
 
-        TestSubscriber<Event> subscriber = TestSubscriber.create();
-        sut.get().subscribe(subscriber);
-
-        sut.publish(event);
-
-        subscriber.awaitAndAssertNextValues(event);
+        StepVerifier.create(sut.get()).then(() -> sut.publish(event)).expectNext(event).thenCancel().verify();
     }
 
     @Test
@@ -51,14 +50,14 @@ public class DefaultEventBusTest {
 
         EventBus sut = new DefaultEventBus(Schedulers.immediate());
 
-        TestSubscriber<Event> subscriber1 = TestSubscriber.create();
-        TestSubscriber<Event> subscriber2 = TestSubscriber.create();
-        sut.get().subscribe(subscriber1);
-        sut.get().subscribe(subscriber2);
+        ArrayBlockingQueue<Event> arrayQueue = new ArrayBlockingQueue<>(5);
 
-        sut.publish(event);
+        Disposable disposable1 = sut.get().doOnNext(arrayQueue::add).subscribe();
+        StepVerifier.create(sut.get().doOnNext(arrayQueue::add)).then(() -> sut.publish(event)).expectNext(event).thenCancel()
+                .verify();
 
-        subscriber1.awaitAndAssertNextValues(event);
-        subscriber2.awaitAndAssertNextValues(event);
+        assertThat(arrayQueue.take()).isEqualTo(event);
+        assertThat(arrayQueue.take()).isEqualTo(event);
+        disposable1.dispose();
     }
 }

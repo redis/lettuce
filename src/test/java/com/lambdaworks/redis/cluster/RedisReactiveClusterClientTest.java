@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,20 @@ import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
-import java.util.List;
 
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
+import reactor.test.StepVerifier;
+
 import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-
-import reactor.core.publisher.Mono;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -79,11 +77,12 @@ public class RedisReactiveClusterClientTest extends AbstractClusterTest {
 
     @Test
     public void testClusterCommandRedirection() throws Exception {
+
         // Command on node within the default connection
-        assertThat(block(reactive.set(KEY_B, "myValue1"))).isEqualTo("OK");
+        StepVerifier.create(reactive.set(KEY_B, "myValue1")).expectNext("OK").verifyComplete();
 
         // gets redirection to node 3
-        assertThat(block(reactive.set(KEY_A, "myValue1"))).isEqualTo("OK");
+        StepVerifier.create(reactive.set(KEY_A, "myValue1")).expectNext("OK").verifyComplete();
     }
 
     @Test
@@ -92,11 +91,8 @@ public class RedisReactiveClusterClientTest extends AbstractClusterTest {
         sync.set(KEY_A, value);
         sync.set(KEY_B, value);
 
-        List<String> keysA = block(reactive.clusterGetKeysInSlot(SLOT_A, 10).collectList());
-        assertThat(keysA).isEqualTo(Collections.singletonList(KEY_A));
-
-        List<String> keysB = block(reactive.clusterGetKeysInSlot(SLOT_B, 10).collectList());
-        assertThat(keysB).isEqualTo(Collections.singletonList(KEY_B));
+        StepVerifier.create(reactive.clusterGetKeysInSlot(SLOT_A, 10)).expectNext(KEY_A).verifyComplete();
+        StepVerifier.create(reactive.clusterGetKeysInSlot(SLOT_B, 10)).expectNext(KEY_B).verifyComplete();
     }
 
     @Test
@@ -105,45 +101,36 @@ public class RedisReactiveClusterClientTest extends AbstractClusterTest {
         sync.set(KEY_A, value);
         sync.set(KEY_B, value);
 
-        Long result = block(reactive.clusterCountKeysInSlot(SLOT_A));
-        assertThat(result).isEqualTo(1L);
-
-        result = block(reactive.clusterCountKeysInSlot(SLOT_B));
-        assertThat(result).isEqualTo(1L);
+        StepVerifier.create(reactive.clusterCountKeysInSlot(SLOT_A)).expectNext(1L).verifyComplete();
+        StepVerifier.create(reactive.clusterCountKeysInSlot(SLOT_B)).expectNext(1L).verifyComplete();
 
         int slotZZZ = SlotHash.getSlot("ZZZ".getBytes());
-        result = block(reactive.clusterCountKeysInSlot(slotZZZ));
-        assertThat(result).isEqualTo(0L);
+        StepVerifier.create(reactive.clusterCountKeysInSlot(slotZZZ)).expectNext(0L).verifyComplete();
     }
 
     @Test
     public void testClusterCountFailureReports() throws Exception {
         RedisClusterNode ownPartition = getOwnPartition(sync);
-        assertThat(block(reactive.clusterCountFailureReports(ownPartition.getNodeId()))).isGreaterThanOrEqualTo(0);
+        StepVerifier.create(reactive.clusterCountFailureReports(ownPartition.getNodeId())).consumeNextWith(actual -> {
+            assertThat(actual).isGreaterThanOrEqualTo(0);
+        }).verifyComplete();
     }
 
     @Test
     public void testClusterKeyslot() throws Exception {
-        assertThat(block(reactive.clusterKeyslot(KEY_A))).isEqualTo(SLOT_A);
+        StepVerifier.create(reactive.clusterKeyslot(KEY_A)).expectNext((long) SLOT_A).verifyComplete();
         assertThat(SlotHash.getSlot(KEY_A)).isEqualTo(SLOT_A);
     }
 
     @Test
     public void testClusterSaveconfig() throws Exception {
-        assertThat(block(reactive.clusterSaveconfig())).isEqualTo("OK");
+        StepVerifier.create(reactive.clusterSaveconfig()).expectNext("OK").verifyComplete();
     }
 
     @Test
     public void testClusterSetConfigEpoch() throws Exception {
-        try {
-            block(reactive.clusterSetConfigEpoch(1L));
-        } catch (RedisException e) {
+        StepVerifier.create(reactive.clusterSetConfigEpoch(1L)).consumeErrorWith(e -> {
             assertThat(e).hasMessageContaining("ERR The user can assign a config epoch only");
-        }
+        }).verify();
     }
-
-    private <T> T block(Mono<T> mono) {
-        return mono.block();
-    }
-
 }

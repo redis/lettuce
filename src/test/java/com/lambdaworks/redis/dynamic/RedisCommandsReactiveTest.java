@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.lambdaworks.redis.dynamic;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.Test;
+
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.dynamic.annotation.Command;
-
-import reactor.core.publisher.Mono;
 
 /**
  * @author Mark Paluch
@@ -36,8 +35,7 @@ public class RedisCommandsReactiveTest extends AbstractRedisClientTest {
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
-        Mono<String> set = api.setReactive(key, value);
-        assertThat(set.block()).isEqualTo("OK");
+        StepVerifier.create(api.setReactive(key, value)).expectNext("OK").verifyComplete();
     }
 
     static interface MultipleExecutionModels extends Commands {

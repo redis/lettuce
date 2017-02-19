@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import com.lambdaworks.TestClientResources;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
+import reactor.test.StepVerifier;
+
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
@@ -32,8 +34,6 @@ import com.lambdaworks.redis.cluster.api.reactive.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
 import com.lambdaworks.redis.internal.LettuceLists;
-
-import reactor.core.publisher.Mono;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -48,7 +48,8 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     public static void setupClient() throws Exception {
         setupClusterClient();
         client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(TestClientResources.get(), LettuceLists.unmodifiableList(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                LettuceLists.unmodifiableList(RedisURI.Builder.redis(host, port1).build()));
 
     }
 
@@ -75,52 +76,38 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
 
     @Test
     public void testClusterBumpEpoch() throws Exception {
-
-        String result = block(reactive.clusterBumpepoch());
-
-        assertThat(result).matches("(BUMPED|STILL).*");
+        StepVerifier.create(reactive.clusterBumpepoch())
+                .consumeNextWith(actual -> assertThat(actual).matches("(BUMPED|STILL).*")).verifyComplete();
     }
 
     @Test
     public void testClusterInfo() throws Exception {
 
-        String status = block(reactive.clusterInfo());
-
-        assertThat(status).contains("cluster_known_nodes:");
-        assertThat(status).contains("cluster_slots_fail:0");
-        assertThat(status).contains("cluster_state:");
+        StepVerifier.create(reactive.clusterInfo()).consumeNextWith(actual -> {
+            assertThat(actual).contains("cluster_known_nodes:");
+            assertThat(actual).contains("cluster_slots_fail:0");
+            assertThat(actual).contains("cluster_state:");
+        }).verifyComplete();
     }
 
     @Test
     public void testClusterNodes() throws Exception {
 
-        String string = block(reactive.clusterNodes());
-
-        assertThat(string).contains("connected");
-        assertThat(string).contains("master");
-        assertThat(string).contains("myself");
-    }
-
-    @Test
-    public void testClusterNodesSync() throws Exception {
-
-        String string = block(reactive.clusterNodes());
-
-        assertThat(string).contains("connected");
-        assertThat(string).contains("master");
-        assertThat(string).contains("myself");
+        StepVerifier.create(reactive.clusterNodes()).consumeNextWith(actual -> {
+            assertThat(actual).contains("connected");
+            assertThat(actual).contains("master");
+            assertThat(actual).contains("myself");
+        }).verifyComplete();
     }
 
     @Test
     public void testClusterSlaves() throws Exception {
-
-        Long replication = block(reactive.waitForReplication(1, 5));
-        assertThat(replication).isNotNull();
+        StepVerifier.create(reactive.waitForReplication(1, 5)).expectNextCount(1).verifyComplete();
     }
 
     @Test
     public void testAsking() throws Exception {
-        assertThat(block(reactive.asking())).isEqualTo("OK");
+        StepVerifier.create(reactive.asking()).expectNext("OK").verifyComplete();
     }
 
     @Test
@@ -147,9 +134,4 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
 
         assertThat(result.size()).isGreaterThan(0);
     }
-
-    private <T> T block(Mono<T> mono) {
-        return mono.block();
-    }
-
 }

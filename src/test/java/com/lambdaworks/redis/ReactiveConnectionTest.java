@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ import static com.lambdaworks.redis.ClientOptions.DisconnectedBehavior.REJECT_CO
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -36,13 +34,12 @@ import org.reactivestreams.Subscription;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import reactor.test.StepVerifier;
 
 import com.lambdaworks.Delay;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
-import com.lambdaworks.redis.reactive.TestSubscriber;
 
 public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
@@ -76,7 +73,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void fireCommandAfterObserve() throws Exception {
-        assertThat(reactive.set(key, value).block()).isEqualTo("OK");
+        StepVerifier.create(reactive.set(key, value)).expectNext("OK").verifyComplete();
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
@@ -94,7 +91,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     public void testCancelCommand() throws Exception {
 
         List<Object> result = new ArrayList<>();
-        reactive.clientPause(2000).subscribe(TestSubscriber.create());
+        reactive.clientPause(2000).subscribe();
         Delay.delay(millis(100));
 
         reactive.set(key, value).subscribe(new CompletionSubscriber(result));
@@ -106,8 +103,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void testEcho() throws Exception {
-        String result = reactive.echo("echo").block();
-        assertThat(result).isEqualTo("echo");
+        StepVerifier.create(reactive.echo("echo")).expectNext("echo").verifyComplete();
     }
 
     @Test
@@ -179,38 +175,20 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void reactiveChain() throws Exception {
-
-        Map<String, String> map = new HashMap<>();
-        map.put(key, value);
-        map.put("key1", "value1");
-
-        reactive.mset(map).block();
-
-        List<String> values = reactive.keys("*").flatMap(s -> reactive.get(s)).collectList()
-                .subscribeOn(Schedulers.immediate()).block();
-
-        assertThat(values).hasSize(2).contains(value, "value1");
-    }
-
-    @Test
     public void auth() throws Exception {
-        List<Throwable> errors = new ArrayList<>();
-        reactive.auth("error").doOnError(errors::add).subscribe(TestSubscriber.create());
-        Delay.delay(millis(50));
-        assertThat(errors).hasSize(1);
+        StepVerifier.create(reactive.auth("error")).expectError().verify();
     }
 
     @Test
     public void subscriberCompletingWithExceptionShouldBeHandledSafely() throws Exception {
 
-        Flux.concat(reactive.set("keyA", "valueA"), reactive.set("keyB", "valueB")).collectList().block();
+        StepVerifier.create(Flux.concat(reactive.set("keyA", "valueA"), reactive.set("keyB", "valueB"))).expectNextCount(2)
+                .verifyComplete();
 
         reactive.get("keyA").subscribe(createSubscriberWithExceptionOnComplete());
         reactive.get("keyA").subscribe(createSubscriberWithExceptionOnComplete());
 
-        String valueB = reactive.get("keyB").block();
-        assertThat(valueB).isEqualTo("valueB");
+        StepVerifier.create(reactive.get("keyB")).expectNext("valueB").verifyComplete();
     }
 
     @Test
@@ -218,22 +196,21 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
         client.setOptions(ClientOptions.builder().disconnectedBehavior(REJECT_COMMANDS).autoReconnect(false).build());
 
-        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+        StatefulRedisConnection<String, String> connection = client.connect();
 
-            connection.async().quit();
-            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+        connection.async().quit();
+        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
-            Mono<String> ping = connection.reactive().ping();
+        StepVerifier
+                .create(connection.reactive().ping())
+                .consumeErrorWith(
+                        throwable -> {
+                            assertThat(throwable).isInstanceOf(RedisException.class).hasMessageContaining(
+                                    "not connected. Commands are rejected");
 
-            ping.subscribeWith(TestSubscriber.create())
-                    .assertErrorWith(
-                            throwable -> {
+                        }).verify();
 
-                                assertThat(throwable).isInstanceOf(RedisException.class).hasMessageContaining(
-                                        "not connected. Commands are rejected");
-
-                            }).await();
-        }
+        connection.close();
     }
 
     private static Subscriber<String> createSubscriberWithExceptionOnComplete() {

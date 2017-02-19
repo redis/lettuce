@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import static com.lambdaworks.redis.BitFieldArgs.typeWidthBasedOffset;
 import static com.lambdaworks.redis.BitFieldArgs.OverflowType.FAIL;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
-
 import org.junit.Test;
+
+import reactor.test.StepVerifier;
 
 import com.lambdaworks.redis.BitFieldArgs;
 import com.lambdaworks.redis.Value;
@@ -54,9 +54,9 @@ public class BitReactiveCommandTest extends BitCommandTest {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).set(5, 1).incrBy(2, 3).get().get(2);
 
-        List<Value<Long>> values = reactive.bitfield(key, bitFieldArgs).collectList().block();
+        StepVerifier.create(reactive.bitfield(key, bitFieldArgs))
+                .expectNext(Value.just(0L), Value.just(32L), Value.just(3L), Value.just(0L), Value.just(3L)).verifyComplete();
 
-        assertThat(values).containsExactly(Value.just(0L), Value.just(32L), Value.just(3L), Value.just(0L), Value.just(3L));
         assertThat(bitstring.get(key)).isEqualTo("0000000000010011");
     }
 
@@ -65,9 +65,8 @@ public class BitReactiveCommandTest extends BitCommandTest {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).get(signed(2), typeWidthBasedOffset(1));
 
-        List<Value<Long>> values = reactive.bitfield(key, bitFieldArgs).collectList().block();
+        StepVerifier.create(reactive.bitfield(key, bitFieldArgs)).expectNext(Value.just(0L), Value.just(0L)).verifyComplete();
 
-        assertThat(values).containsExactly(Value.just(0L), Value.just(0L));
         assertThat(bitstring.get(key)).isEqualTo("10000000");
     }
 
@@ -76,20 +75,22 @@ public class BitReactiveCommandTest extends BitCommandTest {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).set(5);
 
-        List<Value<Long>> values = reactive.bitfield(key, bitFieldArgs).collectList().block();
+        StepVerifier.create(reactive.bitfield(key, bitFieldArgs)).expectNext(Value.just(0L), Value.just(5L)).verifyComplete();
 
-        assertThat(values).containsExactly(Value.just(0L), Value.just(5L));
         assertThat(bitstring.get(key)).isEqualTo("10100000");
     }
 
     @Test
     public void bitfieldWithOffsetSet() throws Exception {
 
-        reactive.bitfield(key, BitFieldArgs.Builder.set(signed(8), typeWidthBasedOffset(2), 5)).last().block();
+        StepVerifier.create(reactive.bitfield(key, BitFieldArgs.Builder.set(signed(8), typeWidthBasedOffset(2), 5)))
+                .expectNextCount(1).verifyComplete();
+
         assertThat(bitstring.get(key)).isEqualTo("000000000000000010100000");
 
         redis.del(key);
-        reactive.bitfield(key, BitFieldArgs.Builder.set(signed(8), offset(2), 5)).last().block();
+        StepVerifier.create(reactive.bitfield(key, BitFieldArgs.Builder.set(signed(8), offset(2), 5))).expectNextCount(1)
+                .verifyComplete();
         assertThat(bitstring.get(key)).isEqualTo("1000000000000010");
     }
 
@@ -98,20 +99,18 @@ public class BitReactiveCommandTest extends BitCommandTest {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).incrBy(1);
 
-        List<Value<Long>> values = reactive.bitfield(key, bitFieldArgs).collectList().block();
+        StepVerifier.create(reactive.bitfield(key, bitFieldArgs)).expectNext(Value.just(0L), Value.just(6L)).verifyComplete();
 
-        assertThat(values).containsExactly(Value.just(0L), Value.just(6L));
         assertThat(bitstring.get(key)).isEqualTo("01100000");
     }
 
     @Test
     public void bitfieldOverflow() throws Exception {
 
-        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.overflow(FAIL).set(signed(8), 9, 5).incrBy(signed(8),
-                Integer.MAX_VALUE);
+        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.overflow(FAIL).set(signed(8), 9, 5)
+                .incrBy(signed(8), Integer.MAX_VALUE);
 
-        List<Value<Long>> values = reactive.bitfield(key, bitFieldArgs).collectList().block();
-
-        assertThat(values).contains(Value.empty());
+        StepVerifier.create(reactive.bitfield(key, bitFieldArgs)).expectNext(Value.just(0L)).expectNext(Value.empty())
+                .verifyComplete();
     }
 }

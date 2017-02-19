@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,20 @@ package com.lambdaworks.redis.commands.reactive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import reactor.test.StepVerifier;
+
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.TransactionResult;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.TransactionCommandTest;
-import com.lambdaworks.redis.reactive.TestSubscriber;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * @author Mark Paluch
@@ -66,12 +61,13 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
 
     @Test
     public void discard() throws Exception {
-        assertThat(block(commands.multi())).isEqualTo("OK");
 
-        commands.set(key, value);
+        StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
-        assertThat(block(commands.discard())).isEqualTo("OK");
-        assertThat(block(commands.get(key))).isNull();
+        commands.set(key, value).subscribe();
+
+        StepVerifier.create(commands.discard()).expectNext("OK").verifyComplete();
+        StepVerifier.create(commands.get(key)).verifyComplete();
     }
 
     @Test
@@ -81,88 +77,80 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
 
         otherConnection.sync().set(key, value);
 
-        assertThat(block(commands.watch(key))).isEqualTo("OK");
-        assertThat(block(commands.multi())).isEqualTo("OK");
+        StepVerifier.create(commands.watch(key)).expectNext("OK").verifyComplete();
+        StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
-        commands.set(key, value);
+        commands.set(key, value).subscribe();
 
         otherConnection.sync().del(key);
 
-        TransactionResult transactionResult = block(commands.exec());
-        assertThat(transactionResult).isNotNull();
-        assertThat(transactionResult.wasRolledBack()).isTrue();
+        StepVerifier.create(commands.exec()).consumeNextWith(actual -> {
+            assertThat(actual).isNotNull();
+            assertThat(actual.wasRolledBack()).isTrue();
+        });
     }
 
     @Test
     public void execSingular() throws Exception {
 
-        assertThat(block(commands.multi())).isEqualTo("OK");
+        StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
         redis.set(key, value);
 
-        assertThat(block(commands.exec())).contains("OK");
-        assertThat(block(commands.get(key))).isEqualTo(value);
+        StepVerifier.create(commands.exec()).consumeNextWith(actual -> assertThat(actual).contains("OK")).verifyComplete();
+        StepVerifier.create(commands.get(key)).expectNext(value).verifyComplete();
     }
 
     @Test
     public void errorInMulti() throws Exception {
-        commands.multi().subscribe(TestSubscriber.create());
-        commands.set(key, value).subscribe(TestSubscriber.create());
-        commands.lpop(key).subscribe(TestSubscriber.create());
-        commands.get(key).subscribe(TestSubscriber.create());
 
-        TransactionResult values = block(commands.exec());
-        assertThat((String) values.get(0)).isEqualTo("OK");
-        assertThat(values.get(1) instanceof RedisException).isTrue();
-        assertThat((String) values.get(2)).isEqualTo(value);
+        commands.multi().subscribe();
+        commands.set(key, value).subscribe();
+        commands.lpop(key).subscribe();
+        commands.get(key).subscribe();
+
+        StepVerifier.create(commands.exec()).consumeNextWith(actual -> {
+
+            assertThat((String) actual.get(0)).isEqualTo("OK");
+            assertThat(actual.get(1) instanceof RedisException).isTrue();
+            assertThat((String) actual.get(2)).isEqualTo(value);
+        }).verifyComplete();
     }
 
     @Test
     public void resultOfMultiIsContainedInCommandFlux() throws Exception {
 
-        TestSubscriber<String> set1 = TestSubscriber.create();
-        TestSubscriber<String> set2 = TestSubscriber.create();
-        TestSubscriber<KeyValue<String, String>> mget = TestSubscriber.create();
-        TestSubscriber<Long> llen = TestSubscriber.create();
-        TestSubscriber<Object> exec = TestSubscriber.create();
-
         commands.multi().subscribe();
-        commands.set("key1", "value1").subscribe(set1);
-        commands.set("key2", "value2").subscribe(set2);
-        commands.mget("key1", "key2").subscribe(mget);
-        commands.llen("something").subscribe(llen);
-        commands.exec().subscribe(exec);
 
-        exec.await();
+        StepVerifier.Step<String> set1 = StepVerifier.create(commands.set("key1", "value1")).expectNext("OK").thenAwait();
+        StepVerifier.Step<String> set2 = StepVerifier.create(commands.set("key2", "value2")).expectNext("OK").thenAwait();
+        StepVerifier.Step<KeyValue<String, String>> mget = StepVerifier.create(commands.mget("key1", "key2"))
+                .expectNext(KeyValue.just("key1", "value1"), KeyValue.just("key2", "value2")).thenAwait();
+        StepVerifier.Step<Long> llen = StepVerifier.create(commands.llen("something")).expectNext(0L).thenAwait();
 
-        set1.awaitAndAssertNextValues("OK");
-        set2.awaitAndAssertNextValues("OK");
-        mget.assertValues(KeyValue.just("key1", "value1"), KeyValue.just("key2", "value2"));
-        llen.awaitAndAssertNextValues(0L);
+        StepVerifier.create(commands.exec()).then(() -> {
+
+            set1.verifyComplete();
+            set2.verifyComplete();
+            mget.verifyComplete();
+            llen.verifyComplete();
+
+        }).expectNextCount(1).verifyComplete();
     }
 
     @Test
     public void resultOfMultiIsContainedInExecObservable() throws Exception {
-
-        TestSubscriber<TransactionResult> exec = TestSubscriber.create();
 
         commands.multi().subscribe();
         commands.set("key1", "value1").subscribe();
         commands.set("key2", "value2").subscribe();
         commands.mget("key1", "key2").subscribe();
         commands.llen("something").subscribe();
-        commands.exec().subscribe(exec);
 
-        exec.awaitAndAssertNextValuesWith(object -> {
-            assertThat(object).hasSize(4).containsExactly("OK", "OK", list(kv("key1", "value1"), kv("key2", "value2")), 0L);
-        }).assertNoError();
-    }
+        StepVerifier.create(commands.exec()).consumeNextWith(actual -> {
 
-    protected <T> T block(Mono<T> mono) {
-        return mono.block();
-    }
+            assertThat(actual).contains("OK", "OK", list(kv("key1", "value1"), kv("key2", "value2")), 0L);
 
-    protected <T> List<T> all(Flux<T> flux) {
-        return flux.collectList().block();
+        }).verifyComplete();
     }
 }

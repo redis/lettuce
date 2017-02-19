@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.dynamic.annotation.Command;
-
 import rx.Observable;
 import rx.Single;
+
+import com.lambdaworks.redis.AbstractRedisClientTest;
+import com.lambdaworks.redis.dynamic.annotation.Command;
 
 /**
  * @author Mark Paluch
@@ -62,28 +62,28 @@ public class ReactiveTypeAdaptionTest extends AbstractRedisClientTest {
     public void rxJava2Single() throws Exception {
 
         io.reactivex.Single<String> single = rxjava2.getRxJava2Single(key);
-        assertThat(single.blockingGet()).isEqualTo(value);
+        single.test().await().assertResult(value).assertComplete();
     }
 
     @Test
     public void rxJava2Maybe() throws Exception {
 
         io.reactivex.Maybe<String> maybe = rxjava2.getRxJava2Maybe(key);
-        assertThat(maybe.blockingGet()).isEqualTo(value);
+        maybe.test().await().assertResult(value).assertComplete();
     }
 
     @Test
     public void rxJava2Observable() throws Exception {
 
         io.reactivex.Observable<String> observable = rxjava2.getRxJava2Observable(key);
-        assertThat(observable.blockingFirst()).isEqualTo(value);
+        observable.test().await().assertResult(value).assertComplete();
     }
 
     @Test
     public void rxJava2Flowable() throws Exception {
 
         io.reactivex.Flowable<String> flowable = rxjava2.getRxJava2Flowable(key);
-        assertThat(flowable.blockingFirst()).isEqualTo(value);
+        flowable.test().await().assertResult(value).assertComplete();
     }
 
     static interface RxJava1Types extends Commands {

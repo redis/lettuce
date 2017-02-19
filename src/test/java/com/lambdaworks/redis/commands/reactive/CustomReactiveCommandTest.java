@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package com.lambdaworks.redis.commands.reactive;
 
 import org.junit.Test;
 
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.CustomCommandTest;
@@ -24,10 +27,7 @@ import com.lambdaworks.redis.output.ValueListOutput;
 import com.lambdaworks.redis.output.ValueOutput;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.reactive.TestSubscriber;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
-
-import reactor.core.publisher.Flux;
 
 /**
  * @author Mark Paluch
@@ -45,11 +45,10 @@ public class CustomReactiveCommandTest extends CustomCommandTest {
         redis.set(key, value);
         RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
 
-        Flux<String> flux = reactive.dispatch(CommandType.GET, new ValueOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey(key));
+        Flux<String> flux = reactive.dispatch(CommandType.GET, new ValueOutput<>(utf8StringCodec), new CommandArgs<>(
+                utf8StringCodec).addKey(key));
 
-        TestSubscriber<String> testSubscriber = TestSubscriber.subscribe(flux);
-        testSubscriber.awaitAndAssertNextValues(value).assertComplete().assertNoError();
+        StepVerifier.create(flux).expectNext(value).verifyComplete();
     }
 
     @Test
@@ -58,10 +57,9 @@ public class CustomReactiveCommandTest extends CustomCommandTest {
         redis.rpush(key, "a", "b", "c");
         RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
 
-        Flux<String> flux = reactive.dispatch(CommandType.LRANGE, new ValueListOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey(key).add(0).add(-1));
+        Flux<String> flux = reactive.dispatch(CommandType.LRANGE, new ValueListOutput<>(utf8StringCodec), new CommandArgs<>(
+                utf8StringCodec).addKey(key).add(0).add(-1));
 
-        TestSubscriber<String> testSubscriber = TestSubscriber.subscribe(flux);
-        testSubscriber.awaitAndAssertNextValues("a", "b", "c").assertComplete().assertNoError();
+        StepVerifier.create(flux).expectNext("a", "b", "c").verifyComplete();
     }
 }

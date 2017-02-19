@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package com.lambdaworks.redis.commands.reactive;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.Test;
+
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import com.lambdaworks.redis.KeyValue;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.StringCommandTest;
 import com.lambdaworks.util.ReactiveSyncInvocationHandler;
-
-import reactor.core.publisher.Flux;
 
 /**
  * @author Mark Paluch
@@ -47,8 +46,7 @@ public class StringReactiveCommandTest extends StringCommandTest {
         connection.sync().set("key2", value);
 
         Flux<KeyValue<String, String>> mget = connection.reactive().mget(key, "key1", "key2");
-        KeyValue<String, String> first = mget.next().block();
-        assertThat(first).isEqualTo(KeyValue.just(key, value));
+        StepVerifier.create(mget.next()).expectNext(KeyValue.just(key, value)).thenCancel().verify();
 
         connection.close();
     }
@@ -61,8 +59,7 @@ public class StringReactiveCommandTest extends StringCommandTest {
         connection.sync().set(key, value);
 
         Flux<KeyValue<String, String>> mget = connection.reactive().mget("unknown");
-        KeyValue<String, String> first = mget.next().block();
-        assertThat(first).isEqualTo(KeyValue.empty("unknown"));
+        StepVerifier.create(mget.next()).expectNext(KeyValue.empty("unknown")).thenCancel().verify();
 
         connection.close();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,15 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import reactor.core.Cancellation;
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import com.lambdaworks.Delay;
 import com.lambdaworks.TestClientResources;
@@ -41,10 +46,6 @@ import com.lambdaworks.redis.pubsub.api.reactive.ChannelMessage;
 import com.lambdaworks.redis.pubsub.api.reactive.PatternMessage;
 import com.lambdaworks.redis.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
-
-import reactor.core.Cancellation;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * @author Mark Paluch
@@ -87,19 +88,17 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
         block(pubsub.subscribe(channel));
 
         BlockingQueue<ChannelMessage<String, String>> channelMessages = LettuceFactories.newBlockingQueue();
-        TestSubscriber<ChannelMessage<String, String>> testSubscriber = TestSubscriber.create();
 
-        pubsub.observeChannels().doOnNext(channelMessages::add).subscribe(testSubscriber);
+        Disposable disposable = pubsub.observeChannels().doOnNext(channelMessages::add).subscribe();
 
         redis.publish(channel, message);
         redis.publish(channel, message);
         redis.publish(channel, message);
 
-        testSubscriber.awaitAndAssertNextValueCount(3);
-        Wait.untilEquals(3, () -> channelMessages.size()).waitOrTimeout();
+        Wait.untilEquals(3, channelMessages::size).waitOrTimeout();
         assertThat(channelMessages).hasSize(3);
 
-        testSubscriber.cancel();
+        disposable.dispose();
         redis.publish(channel, message);
         Delay.delay(millis(500));
         assertThat(channelMessages).hasSize(3);
@@ -228,10 +227,10 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test
     public void pubsubMultipleChannels() throws Exception {
 
-        block(pubsub.subscribe(channel, "channel1", "channel3"));
+        pubsub.subscribe(channel, "channel1", "channel3").subscribe();
 
-        List<String> result = all(pubsub2.pubsubChannels());
-        assertThat(result).contains(channel, "channel1", "channel3");
+        StepVerifier.create(pubsub2.pubsubChannels().collectList())
+                .consumeNextWith(actual -> assertThat(actual).contains(channel, "channel1", "channel3")).verifyComplete();
     }
 
     @Test

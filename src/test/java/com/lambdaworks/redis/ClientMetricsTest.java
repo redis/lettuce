@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.Wait;
-import com.lambdaworks.redis.reactive.TestSubscriber;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
 import com.lambdaworks.TestClientResources;
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.metrics.CommandLatencyEvent;
@@ -70,20 +73,17 @@ public class ClientMetricsTest extends AbstractTest {
                 "metricEventPublisher");
         publisher.emitMetricsEvent();
 
-        TestSubscriber<CommandLatencyEvent> subscriber = TestSubscriber.create();
-        eventBus.get().filter(redisEvent -> redisEvent instanceof CommandLatencyEvent).cast(CommandLatencyEvent.class)
-                .doOnNext(events::add).subscribe(subscriber);
+        Disposable disposable = eventBus.get().filter(redisEvent -> redisEvent instanceof CommandLatencyEvent)
+                .cast(CommandLatencyEvent.class).doOnNext(events::add).subscribe();
 
         generateTestData();
         publisher.emitMetricsEvent();
 
-        subscriber.request(1);
         Wait.untilTrue(() -> !events.isEmpty()).waitOrTimeout();
 
         assertThat(events).isNotEmpty();
 
-        subscriber.assertNotComplete();
-        subscriber.cancel();
+        disposable.dispose();
     }
 
     @Test
@@ -92,25 +92,25 @@ public class ClientMetricsTest extends AbstractTest {
         EventBus eventBus = client.getResources().eventBus();
         MetricEventPublisher publisher = (MetricEventPublisher) ReflectionTestUtils.getField(client.getResources(),
                 "metricEventPublisher");
-        publisher.emitMetricsEvent();
 
-        TestSubscriber<CommandLatencyEvent> subscriber = TestSubscriber.create();
-        eventBus.get().filter(redisEvent -> redisEvent instanceof CommandLatencyEvent).cast(CommandLatencyEvent.class)
-                .subscribe(subscriber);
+        Flux<CommandLatencyEvent> flux = eventBus.get().filter(redisEvent -> redisEvent instanceof CommandLatencyEvent)
+                .cast(CommandLatencyEvent.class);
 
-        generateTestData();
-        publisher.emitMetricsEvent();
+        StepVerifier.create(flux).then(() -> {
+            generateTestData();
+            publisher.emitMetricsEvent();
+        }).consumeNextWith(actual -> {
+            // just consume
+            }).consumeNextWith(actual -> {
 
-        subscriber.awaitAndAssertNextValuesWith(event -> {
-
-            Set<CommandLatencyId> ids = event.getLatencies().keySet();
-            CommandMetrics commandMetrics = event.getLatencies().get(ids.iterator().next());
+            Set<CommandLatencyId> ids = actual.getLatencies().keySet();
+            CommandMetrics commandMetrics = actual.getLatencies().get(ids.iterator().next());
             assertThat(commandMetrics.getCompletion().getMin()).isBetween(0L, TimeUnit.MILLISECONDS.toMicros(100));
             assertThat(commandMetrics.getCompletion().getMax()).isBetween(0L, TimeUnit.MILLISECONDS.toMicros(200));
 
             assertThat(commandMetrics.getFirstResponse().getMin()).isBetween(0L, TimeUnit.MILLISECONDS.toMicros(100));
             assertThat(commandMetrics.getFirstResponse().getMax()).isBetween(0L, TimeUnit.MILLISECONDS.toMicros(200));
-        });
+        }).thenCancel().verify();
 
     }
 

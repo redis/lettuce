@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@ package com.lambdaworks.redis.commands.reactive;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.offset;
 
-import java.util.List;
-
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.lambdaworks.redis.GeoCoordinates;
-import com.lambdaworks.redis.Value;
+import reactor.test.StepVerifier;
+
 import com.lambdaworks.redis.api.reactive.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.GeoCommandTest;
@@ -48,12 +46,14 @@ public class GeoReactiveCommandTest extends GeoCommandTest {
 
         prepareGeo();
 
-        List<Value<GeoCoordinates>> geopos = reactive.geopos(key, "Weinheim", "foobar", "Bahn").collectList().block();
+        StepVerifier.create(reactive.geopos(key, "Weinheim", "foobar", "Bahn")).consumeNextWith(actual -> {
+            assertThat(actual.getValue().getX().doubleValue()).isEqualTo(8.6638, offset(0.001));
 
-        assertThat(geopos).hasSize(3);
-        assertThat(geopos.get(0).getValue().getX().doubleValue()).isEqualTo(8.6638, offset(0.001));
-        assertThat(geopos.get(1).hasValue()).isFalse();
-        assertThat(geopos.get(2).hasValue()).isTrue();
+        }).consumeNextWith(actual -> {
+            assertThat(actual.hasValue()).isFalse();
+        }).consumeNextWith(actual -> {
+            assertThat(actual.hasValue()).isTrue();
+        }).verifyComplete();
     }
 
     @Test
