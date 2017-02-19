@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ class ReconnectionHandler {
             long start = System.nanoTime();
 
             logger.debug("Reconnecting to Redis at {}", remoteAddress);
-            currentFuture = bootstrap.connect(remoteAddress);
+            ChannelFuture currentFuture = this.currentFuture = bootstrap.connect(remoteAddress);
             if (!currentFuture.await(timeLeft, TimeUnit.NANOSECONDS)) {
                 if (currentFuture.isCancellable()) {
                     currentFuture.cancel(true);
@@ -123,7 +123,7 @@ class ReconnectionHandler {
                 }
             }
         } finally {
-            currentFuture = null;
+            this.currentFuture = null;
         }
 
         return false;
@@ -161,6 +161,7 @@ class ReconnectionHandler {
 
     public void prepareClose() {
 
+        ChannelFuture currentFuture = this.currentFuture;
         if (currentFuture != null && !currentFuture.isDone()) {
             currentFuture.cancel(true);
         }
