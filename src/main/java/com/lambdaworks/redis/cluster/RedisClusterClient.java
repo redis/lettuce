@@ -58,18 +58,16 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * A scalable thread-safe <a href="http://redis.io/">Redis</a> cluster client. Multiple threads may share one connection. The
- * cluster client handles command routing based on the first key of the command and maintains a view of the cluster that is
- * available when calling the {@link #getPartitions()} method.
+ * A scalable and thread-safe <a href="http://redis.io/">Redis</a> cluster client supporting synchronous, asynchronous and
+ * reactive execution models. Multiple threads may share one connection. The cluster client handles command routing based on the
+ * first key of the command and maintains a view of the cluster that is available when calling the {@link #getPartitions()}
+ * method.
  *
  * <p>
  * Connections to the cluster members are opened on the first access to the cluster node and managed by the
  * {@link StatefulRedisClusterConnection}. You should not use transactional commands on cluster connections since {@code MULTI},
- * {@code EXEC} and {@code DISCARD} have no key and cannot be assigned to a particular node.
- * </p>
- * <p>
- * The Redis cluster client provides a {@link RedisAdvancedClusterCommands sync}, {@link RedisAdvancedClusterAsyncCommands
- * async} and {@link com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands reactive} API.
+ * {@code EXEC} and {@code DISCARD} have no key and cannot be assigned to a particular node. A cluster connection uses a default
+ * connection to run non-keyed commands.
  * </p>
  *
  * <p>
@@ -119,10 +117,16 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </pre></code>
  * </p>
  *
- * {@link RedisClusterClient} is an expensive resource. Reuse this instance or the {@link ClientResources} as much as possible.
+ * {@link RedisClusterClient} is an expensive resource. Reuse this instance or share external {@link ClientResources} as much as
+ * possible.
  *
  * @author Mark Paluch
  * @since 3.0
+ * @see RedisURI
+ * @see StatefulRedisClusterConnection
+ * @see RedisCodec
+ * @see ClusterClientOptions
+ * @see ClientResources
  */
 public class RedisClusterClient extends AbstractRedisClient {
 
