@@ -20,6 +20,7 @@ import static com.lambdaworks.ConnectionTestUtil.getConnectionWatchdog;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.net.ServerSocket;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -174,6 +175,26 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
         }
     }
 
+    @Test(timeout = 2000)
+    public void pingBeforeConnectTimeout() throws Exception {
+
+        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
+
+            RedisURI redisURI = RedisURI.builder().redis(TestSettings.host(), serverSocket.getLocalPort())
+                    .withTimeout(500, TimeUnit.MILLISECONDS).build();
+
+            try {
+                client.connect(redisURI);
+                fail("Missing RedisConnectionException");
+            } catch (RedisException e) {
+                assertThat(e).isInstanceOf(RedisConnectionException.class).hasRootCauseInstanceOf(
+                        RedisCommandTimeoutException.class);
+            }
+        }
+    }
+
     @Test
     public void pingBeforeConnectWithAuthentication() throws Exception {
 
@@ -193,6 +214,32 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
                     connection.getStatefulConnection().close();
                 }
 
+            }
+        };
+    }
+
+    @Test(timeout = 2000)
+    public void pingBeforeConnectWithAuthenticationTimeout() throws Exception {
+
+        new WithPasswordRequired() {
+            @Override
+            protected void run(RedisClient client) throws Exception {
+
+                client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+
+                try (ServerSocket serverSocket = new ServerSocket(0)) {
+
+                    RedisURI redisURI = RedisURI.builder().redis(TestSettings.host(), serverSocket.getLocalPort())
+                            .withPassword(passwd).withTimeout(500, TimeUnit.MILLISECONDS).build();
+
+                    try {
+                        client.connect(redisURI);
+                        fail("Missing RedisConnectionException");
+                    } catch (RedisException e) {
+                        assertThat(e).isInstanceOf(RedisConnectionException.class).hasRootCauseInstanceOf(
+                                RedisCommandTimeoutException.class);
+                    }
+                }
             }
         };
     }
@@ -234,8 +281,8 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
                 try {
                     client.connect(redisURI);
                     fail("Missing RedisConnectionException");
-                } catch (RedisConnectionException e) {
-                    assertThat(e).hasRootCauseInstanceOf(RedisCommandExecutionException.class);
+                } catch (RedisException e) {
+                    assertThat(e).isInstanceOf(RedisConnectionException.class);
                 }
             }
         };
@@ -254,8 +301,9 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
                 try {
                     client.connect(redisURI);
                     fail("Missing RedisConnectionException");
-                } catch (RedisConnectionException e) {
-                    assertThat(e).hasRootCauseInstanceOf(RedisCommandExecutionException.class);
+                } catch (RedisException e) {
+                    assertThat(e).isInstanceOf(RedisConnectionException.class).hasRootCauseInstanceOf(
+                            RedisCommandExecutionException.class);
                 }
             }
         };

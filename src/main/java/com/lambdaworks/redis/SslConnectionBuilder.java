@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,17 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import javax.net.ssl.*;
 
-import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.connection.ConnectedEvent;
 import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
 import com.lambdaworks.redis.event.connection.DisconnectedEvent;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -75,8 +76,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     @Override
     public RedisChannelInitializer build() {
 
-        return new SslChannelInitializer(getPingCommandSupplier(), this::buildHandlers, redisURI, clientResources().eventBus(),
-                clientOptions().getSslOptions());
+        return new SslChannelInitializer(getPingCommandSupplier(), this::buildHandlers, redisURI, clientResources(),
+                getTimeout(), getTimeUnit(), clientOptions().getSslOptions());
     }
 
     /**
@@ -87,18 +88,23 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;
         private final Supplier<List<ChannelHandler>> handlers;
         private final RedisURI redisURI;
-        private final EventBus eventBus;
+        private final ClientResources clientResources;
+        private final long timeout;
+        private final TimeUnit timeUnit;
         private final SslOptions sslOptions;
 
         private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
 
         public SslChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier,
-                Supplier<List<ChannelHandler>> handlers, RedisURI redisURI, EventBus eventBus, SslOptions sslOptions) {
+                Supplier<List<ChannelHandler>> handlers, RedisURI redisURI, ClientResources clientResources, long timeout,
+                TimeUnit timeUnit, SslOptions sslOptions) {
 
             this.pingCommandSupplier = pingCommandSupplier;
             this.handlers = handlers;
             this.redisURI = redisURI;
-            this.eventBus = eventBus;
+            this.clientResources = clientResources;
+            this.timeout = timeout;
+            this.timeUnit = timeUnit;
             this.sslOptions = sslOptions;
         }
 
@@ -131,13 +137,13 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
                     @Override
                     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                        eventBus.publish(new ConnectedEvent(local(ctx), remote(ctx)));
+                        clientResources.eventBus().publish(new ConnectedEvent(local(ctx), remote(ctx)));
                         super.channelActive(ctx);
                     }
 
                     @Override
                     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                        eventBus.publish(new DisconnectedEvent(local(ctx), remote(ctx)));
+                        clientResources.eventBus().publish(new DisconnectedEvent(local(ctx), remote(ctx)));
                         super.channelInactive(ctx);
                     }
                 });
@@ -178,7 +184,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                             if (event.isSuccess()) {
                                 if (pingCommandSupplier != PlainChannelInitializer.NO_PING) {
                                     pingCommand = pingCommandSupplier.get();
-                                    pingBeforeActivate(pingCommand, initializedFuture, ctx);
+                                    pingBeforeActivate(pingCommand, initializedFuture, ctx, clientResources, timeout, timeUnit);
                                 } else {
                                     ctx.fireChannelActive();
                                 }
@@ -190,7 +196,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                         if (evt instanceof ConnectionEvents.Activated) {
                             if (!initializedFuture.isDone()) {
                                 initializedFuture.complete(true);
-                                eventBus.publish(new ConnectionActivatedEvent(local(ctx), remote(ctx)));
+                                clientResources.eventBus().publish(new ConnectionActivatedEvent(local(ctx), remote(ctx)));
                             }
                         }
 
@@ -234,6 +240,5 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             return trustManagerFactory;
         }
-
     }
 }
