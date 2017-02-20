@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,20 @@ import static com.lambdaworks.redis.ConnectionEventTrigger.remote;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.connection.ConnectedEvent;
 import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
 import com.lambdaworks.redis.event.connection.DisconnectedEvent;
 import com.lambdaworks.redis.protocol.AsyncCommand;
+import com.lambdaworks.redis.resource.ClientResources;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
+import io.netty.util.Timeout;
 
 /**
  * @author Mark Paluch
@@ -41,15 +44,20 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
     private final List<ChannelHandler> handlers;
     private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;
-    private final EventBus eventBus;
+    private final ClientResources clientResources;
+    private final long timeout;
+    private final TimeUnit timeUnit;
 
     private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
 
     PlainChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier, List<ChannelHandler> handlers,
-                            EventBus eventBus) {
+            ClientResources clientResources, long timeout, TimeUnit timeUnit) {
+
         this.pingCommandSupplier = pingCommandSupplier;
         this.handlers = handlers;
-        this.eventBus = eventBus;
+        this.clientResources = clientResources;
+        this.timeout = timeout;
+        this.timeUnit = timeUnit;
     }
 
     @Override
@@ -69,7 +77,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 @Override
                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
-                    eventBus.publish(new DisconnectedEvent(local(ctx), remote(ctx)));
+                    clientResources.eventBus().publish(new DisconnectedEvent(local(ctx), remote(ctx)));
                     initializedFuture = new CompletableFuture<>();
                     pingCommand = null;
                     super.channelInactive(ctx);
@@ -86,7 +94,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                     if (evt instanceof ConnectionEvents.Activated) {
                         if (!initializedFuture.isDone()) {
                             initializedFuture.complete(true);
-                            eventBus.publish(new ConnectionActivatedEvent(local(ctx), remote(ctx)));
+                            clientResources.eventBus().publish(new ConnectionActivatedEvent(local(ctx), remote(ctx)));
                         }
                     }
                     super.userEventTriggered(ctx, evt);
@@ -95,11 +103,11 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 @Override
                 public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 
-                    eventBus.publish(new ConnectedEvent(local(ctx), remote(ctx)));
+                    clientResources.eventBus().publish(new ConnectedEvent(local(ctx), remote(ctx)));
 
                     if (pingCommandSupplier != NO_PING) {
                         pingCommand = pingCommandSupplier.get();
-                        pingBeforeActivate(pingCommand, initializedFuture, ctx, handlers);
+                        pingBeforeActivate(pingCommand, initializedFuture, ctx, clientResources, timeout, timeUnit);
                     } else {
                         super.channelActive(ctx);
                     }
@@ -121,19 +129,43 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         }
     }
 
-    static void pingBeforeActivate(final AsyncCommand<?, ?, ?> cmd, final CompletableFuture<Boolean> initializedFuture,
-            final ChannelHandlerContext ctx, final List<ChannelHandler> handlers) throws Exception {
-        cmd.handle((o, throwable) -> {
+    static void pingBeforeActivate(AsyncCommand<?, ?, ?> cmd, CompletableFuture<Boolean> initializedFuture,
+            ChannelHandlerContext ctx, ClientResources clientResources, long timeout, TimeUnit timeUnit) throws Exception {
+
+        ctx.channel().writeAndFlush(cmd);
+
+        Runnable timeoutGuard = () -> {
+
+            if (cmd.isDone() || initializedFuture.isDone()) {
+                return;
+            }
+
+            initializedFuture.completeExceptionally(new RedisCommandTimeoutException(String.format(
+                    "Cannot initialize channel (PING before activate) within %d %s", timeout, timeUnit)));
+        };
+
+        Timeout timeoutHandle = clientResources.timer().newTimeout(t -> {
+
+            if (clientResources.eventExecutorGroup().isShuttingDown()) {
+                timeoutGuard.run();
+                return;
+            }
+
+            clientResources.eventExecutorGroup().submit(timeoutGuard);
+        }, timeout, timeUnit);
+
+        cmd.whenComplete((o, throwable) -> {
+
+            timeoutHandle.cancel();
+
             if (throwable == null) {
                 ctx.fireChannelActive();
                 initializedFuture.complete(true);
             } else {
                 initializedFuture.completeExceptionally(throwable);
             }
-            return null;
         });
 
-        ctx.channel().writeAndFlush(cmd);
     }
 
     static void removeIfExists(ChannelPipeline pipeline, Class<? extends ChannelHandler> handlerClass) {
