@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class ConnectionBuilder {
     }
 
     public RedisChannelInitializer build() {
-        return new PlainChannelInitializer(pingCommandSupplier, buildHandlers(), clientResources.eventBus());
+        return new PlainChannelInitializer(pingCommandSupplier, buildHandlers(), clientResources, timeout, timeUnit);
     }
 
     public ConnectionBuilder socketAddressSupplier(Supplier<SocketAddress> socketAddressSupplier) {
