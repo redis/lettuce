@@ -182,7 +182,7 @@ public class SynchronizingClusterConnectionProviderTest {
 
         stopWatch.stop();
 
-        assertThat(stopWatch.getLastTaskTimeMillis()).isBetween(999L, 1200L);
+        assertThat(stopWatch.getLastTaskTimeMillis()).isBetween(0L, 1200L);
 
         sut.close();
 
@@ -222,7 +222,7 @@ public class SynchronizingClusterConnectionProviderTest {
 
         stopWatch.stop();
 
-        assertThat(stopWatch.getLastTaskTimeMillis()).isBetween(999L, 1300L);
+        assertThat(stopWatch.getLastTaskTimeMillis()).isBetween(0L, 1300L);
 
         sut.close();
         socket.close();
