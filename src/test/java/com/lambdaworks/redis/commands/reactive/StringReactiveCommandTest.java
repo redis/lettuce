@@ -46,7 +46,7 @@ public class StringReactiveCommandTest extends StringCommandTest {
         connection.sync().set("key2", value);
 
         Flux<KeyValue<String, String>> mget = connection.reactive().mget(key, "key1", "key2");
-        StepVerifier.create(mget.next()).expectNext(KeyValue.just(key, value)).thenCancel().verify();
+        StepVerifier.create(mget.next()).expectNext(KeyValue.just(key, value)).verifyComplete();
 
         connection.close();
     }
@@ -59,7 +59,7 @@ public class StringReactiveCommandTest extends StringCommandTest {
         connection.sync().set(key, value);
 
         Flux<KeyValue<String, String>> mget = connection.reactive().mget("unknown");
-        StepVerifier.create(mget.next()).expectNext(KeyValue.empty("unknown")).thenCancel().verify();
+        StepVerifier.create(mget.next()).expectNext(KeyValue.empty("unknown")).verifyComplete();
 
         connection.close();
     }
