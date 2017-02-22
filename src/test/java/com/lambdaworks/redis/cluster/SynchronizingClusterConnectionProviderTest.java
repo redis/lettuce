@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -230,6 +231,8 @@ public class SynchronizingClusterConnectionProviderTest {
 
     @Test
     public void shouldCloseAsync() throws Exception {
+
+        assumeTrue(System.getProperty("os.name").toLowerCase().contains("mac"));
 
         Socket socket = new Socket("localhost", serverSocket.getLocalPort());
 
