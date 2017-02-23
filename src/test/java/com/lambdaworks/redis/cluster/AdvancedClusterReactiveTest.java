@@ -174,9 +174,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     }
 
     @Test
-    @Ignore("Multi-node-execution signals two errors")
     public void clientSetnameRunOnError() throws Exception {
-        StepVerifier.create(commands.clientSetname("not allowed")).expectError(RedisCommandExecutionException.class).verify();
+        StepVerifier.create(commands.clientSetname("not allowed")).expectError().verify();
     }
 
     @Test
