@@ -28,9 +28,8 @@
   <body>
     <section name="Spring Batch">
       <p>
-        As of version 1.1.0 MyBatis-Spring provides two beans for building Spring Batch applications: the <code>MyBatisPagingItemReader</code> 
-        and the <code>MyBatisBatchItemWriter</code>. Both beans and this documentation are ports of their corresponding iBATIS 2.x versions 
-        that are provided by default by in the Spring Batch bundle.
+        As of version 1.1.0 MyBatis-Spring provides three beans for building Spring Batch applications: the <code>MyBatisPagingItemReader</code>,
+        <code>MyBatisCursorItemReader</code> and the <code>MyBatisBatchItemWriter</code>. 
       </p>
       
       <p>
@@ -40,7 +39,7 @@
       
       <subsection name="MyBatisPagingItemReader">
         <p>
-          This bean is an <code>IteamReader</code> that reads records from a database using MyBatis in a paging fashion.
+          This bean is an <code>IteamReader</code> that reads records from a database in a paging fashion.
         </p>
         
         <p>
@@ -114,6 +113,41 @@
           <li><code>pageSize</code>: If the batch flow is configured with chunk size, it is relevant to pass this
             information to the reader as well, which is done via this property.</li>
         </ul>
+
+      </subsection>
+
+      <subsection name="MyBatisCursorItemReader">
+        <p>
+          This bean is an <code>IteamReader</code> that reads records from a database using a cursor.
+        </p>
+
+      <p>
+        <span class="label important">NOTE</span> To use this bean you need at least MyBatis 3.4.0 or a newer version.
+      </p>
+        
+        <p>
+          It executes the query specified as the <code>setQueryId</code> property to retrieve requested data
+          by using the method <code>selectCursor()</code>.
+          Each time a <code>read()</code> method is called it will return the next element of the cursor until no more
+          elements are left.
+        </p>
+        
+        <p>
+          The reader will use a separate connection so the select statement does no participate in any transactions created 
+          as part of the step processing.
+        </p>
+
+        <p>When using the cursor you can just execute a regular query:</p>
+        <source><![CDATA[<select id="getEmployee" resultMap="employeeBatchResult">
+  SELECT id, name, job FROM employees ORDER BY id ASC
+</select>]]></source>
+
+        <p>Follows below a sample configuration snippet:</p>
+        
+        <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+  <property name="queryId" value="getEmployee" />
+</bean>]]></source>
 
       </subsection>
 
