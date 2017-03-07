@@ -1,1 +1,1 @@
-com.lambdaworks.redis.support.LettuceCdiExtension
+io.lettuce.core.support.LettuceCdiExtension

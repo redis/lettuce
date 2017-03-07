@@ -18,8 +18,8 @@ package biz.paluch.redis.extensibility;
 import java.util.List;
 import java.util.Set;
 
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.sync.RedisCommands;
+import io.lettuce.core.*;
+import io.lettuce.core.api.sync.RedisCommands;
 
 public class LettuceGeoDemo {
 

@@ -2,7 +2,7 @@
        xsi:schemaLocation="
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-    <bean id="redisClient" class="com.lambdaworks.redis.support.RedisClientFactoryBean">
+    <bean id="redisClient" class="io.lettuce.core.support.RedisClientFactoryBean">
         <property name="password" value="mypassword" />
         <!-- Redis Uri Format: redis://host[:port]/database -->
         <!-- Redis Uri: Specify Database as Path -->

@@ -11,7 +11,6 @@ Supports advanced Redis features such as Sentinel, Cluster, Pipelining, Auto-Rec
 
 This version of lettuce has been tested against the latest Redis source-build.
 
-* lettuce 3.x works with Java 6, 7 and 8, lettuce 4.x requires Java 8
 * [synchronous](https://github.com/mp911de/lettuce/wiki/Basic-usage), [asynchronous](https://github.com/mp911de/lettuce/wiki/Asynchronous-API-%284.0%29) and [reactive](https://github.com/mp911de/lettuce/wiki/Reactive-API-%284.0%29) usage
 * [Redis Sentinel](https://github.com/mp911de/lettuce/wiki/Redis-Sentinel)
 * [Redis Cluster](https://github.com/mp911de/lettuce/wiki/Redis-Cluster)
@@ -50,24 +49,24 @@ Example for Maven:
 
 ```xml
 <dependency>
-  <groupId>biz.paluch.redis</groupId>
-  <artifactId>lettuce</artifactId>
+  <groupId>io.lettuce</groupId>
+  <artifactId>lettuce-core</artifactId>
   <version>x.y.z</version>
 </dependency>
 ```
 
-Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` package to prevent version conflicts)
+Shaded JAR-File (packaged dependencies  and relocated to the `io.lettuce.core` package to prevent version conflicts)
 
 ```xml
 <dependency>
-  <groupId>biz.paluch.redis</groupId>
-  <artifactId>lettuce</artifactId>
+  <groupId>io.lettuce</groupId>
+  <artifactId>lettuce-core</artifactId>
   <version>x.y.z</version>
   <classifier>shaded</classifier>
   <exclusions>
     <exclusion>
-      <groupId>io.reactivex</groupId>
-      <artifactId>rxjava</artifactId>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
     </exclusion>
     <exclusion>
       <groupId>org.latencyutils</groupId>
@@ -88,10 +87,6 @@ Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` p
     <exclusion>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
     </exclusion>
     <exclusion>
       <groupId>io.netty</groupId>

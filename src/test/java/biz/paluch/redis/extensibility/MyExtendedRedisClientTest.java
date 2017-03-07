@@ -21,13 +21,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.TestSettings;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.pubsub.RedisPubSubAsyncCommandsImpl;
-import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
-import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
+import io.lettuce.core.FastShutdown;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSettings;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
+import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 
 /**
  * Test for override/extensability of RedisClient

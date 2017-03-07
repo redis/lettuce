@@ -1,10 +1,10 @@
 <body>
 <a href="http://github.com/mp911de/lettuce">lettuce</a> is a scalable thread-safe Java
-{@link com.lambdaworks.redis.RedisClient RedisClient} providing
-{@link com.lambdaworks.redis.api.sync.RedisCommands synchronous},
-{@link com.lambdaworks.redis.api.async.RedisAsyncCommands asynchronous} and
-{@link com.lambdaworks.redis.api.reactive.RedisReactiveCommands reactive} APIs for Redis Standalone, PubSub,
-Redis Sentinel and {@link com.lambdaworks.redis.cluster.RedisClusterClient Redis Cluster}.
+{@link io.lettuce.core.RedisClient RedisClient} providing
+{@link io.lettuce.core.api.sync.RedisCommands synchronous},
+{@link io.lettuce.core.api.async.RedisAsyncCommands asynchronous} and
+{@link io.lettuce.core.api.reactive.RedisReactiveCommands reactive} APIs for Redis Standalone, PubSub,
+Redis Sentinel and {@link io.lettuce.core.cluster.RedisClusterClient Redis Cluster}.
 
 Multiple threads may share one connection if they avoid blocking and transactional
   operations such as <a href="http://redis.io/commands/blpop">BLPOP</a> and
@@ -16,8 +16,8 @@ Multiple threads may share one connection if they avoid blocking and transaction
     Each redis command is implemented by one or more methods with names identical to the lowercase
     redis command name. Complex commands with multiple modifiers that change the result type include
     the CamelCased modifier as part of the command name, e.g.
-    {@link com.lambdaworks.redis.api.sync.RedisCommands#zrangebyscore zrangebyscore} and
-    {@link com.lambdaworks.redis.api.sync.RedisCommands#zrangebyscoreWithScores zrangebyscoreWithScores}.
+    {@link io.lettuce.core.api.sync.RedisCommands#zrangebyscore zrangebyscore} and
+    {@link io.lettuce.core.api.sync.RedisCommands#zrangebyscoreWithScores zrangebyscoreWithScores}.
   </p>
 
   <p>
@@ -27,10 +27,10 @@ Multiple threads may share one connection if they avoid blocking and transaction
   </p>
 
   <p>
-    All connections inherit a default timeout from their {@link com.lambdaworks.redis.RedisClient}
-    and will throw a {@link com.lambdaworks.redis.RedisException} when non-blocking commands fail
+    All connections inherit a default timeout from their {@link io.lettuce.core.RedisClient}
+    and will throw a {@link io.lettuce.core.RedisException} when non-blocking commands fail
     to return a result before the timeout expires. The timeout defaults to 60 seconds and
-    may be changed via {@link com.lambdaworks.redis.RedisClient#setDefaultTimeout} or for
+    may be changed via {@link io.lettuce.core.RedisClient#setDefaultTimeout} or for
     each individual connection.
   </p>
 </body>

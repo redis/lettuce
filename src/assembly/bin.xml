@@ -12,7 +12,7 @@
     <dependencySets>
         <dependencySet>
             <includes>
-                <include>biz.paluch.redis:lettuce:jar:${project.version}</include>
+                <include>io.lettuce:lettuce-core:jar:${project.version}</include>
             </includes>
             <outputDirectory></outputDirectory>
             <unpack>false</unpack>
@@ -41,7 +41,7 @@
         </dependencySet>
         <dependencySet>
             <includes>
-                <include>biz.paluch.redis:lettuce:*:javadoc</include>
+                <include>io.lettuce:lettuce-core:*:javadoc</include>
             </includes>
             <outputDirectory>apidocs</outputDirectory>
             <unpack>true</unpack>

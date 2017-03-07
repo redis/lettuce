@@ -18,12 +18,12 @@ package biz.paluch.redis.extensibility;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandType;
-import com.lambdaworks.redis.protocol.RedisCommand;
-import com.lambdaworks.redis.pubsub.PubSubEndpoint;
-import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.pubsub.PubSubEndpoint;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
 
 /**
  * Demo code for extending a RedisPubSubConnectionImpl.

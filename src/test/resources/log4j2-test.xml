@@ -13,9 +13,9 @@
 
     <Loggers>
         <Logger name="io.netty" level="INFO"/>
-        <Logger name="com.lambdaworks.redis" level="INFO"/>
-        <Logger name="com.lambdaworks.redis.cluster" level="INFO"/>
-        <Logger name="com.lambdaworks.redis.protocol" level="INFO"/>
+        <Logger name="io.lettuce.core" level="INFO"/>
+        <Logger name="io.lettuce.core.cluster" level="INFO"/>
+        <Logger name="io.lettuce.core.protocol" level="INFO"/>
         <Logger name="io.netty" level="INFO"/>
         <Root level="INFO">
             <AppenderRef ref="Console"/>

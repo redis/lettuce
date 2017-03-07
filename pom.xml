@@ -8,13 +8,13 @@
         <version>9</version>
     </parent>
 
-    <groupId>biz.paluch.redis</groupId>
-    <artifactId>lettuce</artifactId>
-    <version>5.0.0-SNAPSHOT</version>
+    <groupId>io.lettuce</groupId>
+    <artifactId>lettuce-core</artifactId>
+    <version>5.0.0.BUILD-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>lettuce</name>
-    <url>http://github.com/mp911de/lettuce/wiki</url>
+    <url>http://github.com/lettuce-io/lettuce-core</url>
     <description>Advanced and thread-safe Java Redis client for synchronous, asynchronous, and
         reactive usage. Supports Cluster, Sentinel, Pipelining, Auto-Reconnect, Codecs
         and much more.
@@ -30,12 +30,12 @@
 
     <ciManagement>
         <system>Travis CI</system>
-        <url>https://travis-ci.org/mp911de/lettuce</url>
+        <url>https://travis-ci.org/lettuce-io/lettuce-core</url>
     </ciManagement>
 
     <issueManagement>
         <system>Github</system>
-        <url>https://github.com/mp911de/lettuce/issues</url>
+        <url>https://github.com/lettuce-io/lettuce-core/issues</url>
     </issueManagement>
 
     <developers>
@@ -63,9 +63,9 @@
     </properties>
 
     <scm>
-        <connection>scm:git:https://github.com/mp911de/lettuce.git</connection>
-        <developerConnection>scm:git:https://github.com/mp911de/lettuce.git</developerConnection>
-        <url>http://github.com/mp911de/lettuce</url>
+        <connection>scm:git:https://github.com/lettuce-io/lettuce-core.git</connection>
+        <developerConnection>scm:git:https://github.com/lettuce-io/lettuce-core.git</developerConnection>
+        <url>http://github.com/lettuce-io/lettuce-core</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -670,79 +670,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.4</version>
-                <configuration>
-                    <relativizeDecorationLinks>false</relativizeDecorationLinks>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.doxia</groupId>
-                        <artifactId>doxia-module-markdown</artifactId>
-                        <version>1.6</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.maven.scm</groupId>
-                        <artifactId>maven-scm-provider-gitexe</artifactId>
-                        <version>1.9</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-publish-plugin</artifactId>
-                <version>1.1</version>
-                <configuration>
-                    <scmBranch>gh-pages</scmBranch>
-                    <content>${project.build.directory}/site</content>
-                    <skipCheckin>${github.site.upload.skip}</skipCheckin>
-                    <skipDeletedFiles>true</skipDeletedFiles>
-                    <pubScmUrl>scm:git:ssh://git@github.com/mp911de/redis.paluch.biz.git</pubScmUrl>
-                    <excludes>apidocs/**</excludes>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
-
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.7</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>index</report>
-                            <report>plugin-management</report>
-                            <report>distribution-management</report>
-                            <report>dependency-info</report>
-                            <report>dependencies</report>
-                            <report>scm</report>
-                            <report>issue-tracking</report>
-                            <report>cim</report>
-                            <report>dependency-management</report>
-                            <report>project-team</report>
-                            <report>summary</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
-
-    <repositories>
-        <repository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/libs-snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>

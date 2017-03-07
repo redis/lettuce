@@ -19,17 +19,17 @@ import java.util.concurrent.TimeUnit;
 
 import javax.enterprise.inject.Alternative;
 
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.RedisURI;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.pubsub.PubSubEndpoint;
-import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
-import com.lambdaworks.redis.resource.ClientResources;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.pubsub.PubSubEndpoint;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
+import io.lettuce.core.resource.ClientResources;
 
 /**
  * Demo code for extending a RedisClient.
- * 
+ *
  * @author Mark Paluch
  */
 @Alternative
