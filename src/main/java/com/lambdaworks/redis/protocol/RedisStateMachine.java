@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Helly Guo
  */
 public class RedisStateMachine<K, V> {
 
@@ -50,15 +51,16 @@ public class RedisStateMachine<K, V> {
     private static final Class LONG_PROCESSOR_CLASS;
 
     static {
+
         Version nettyBufferVersion = Version.identify().get("netty-buffer");
 
-        USE_NETTY40_BYTEBUF_COMPATIBILITY =
-                nettyBufferVersion != null && nettyBufferVersion.artifactVersion().startsWith("4.0");
+        USE_NETTY40_BYTEBUF_COMPATIBILITY = nettyBufferVersion != null
+                && nettyBufferVersion.artifactVersion().startsWith("4.0");
         if (!USE_NETTY40_BYTEBUF_COMPATIBILITY) {
             try {
                 LONG_PROCESSOR_CLASS = Class.forName("com.lambdaworks.redis.protocol.RedisStateMachine$Netty41LongProcessor");
             } catch (ClassNotFoundException e) {
-                throw new RedisException("Cannot create Netty41ToLongProcessor instance", e);
+                throw new RedisException("Cannot load Netty41LongProcessor class", e);
             }
         } else {
             LONG_PROCESSOR_CLASS = null;
@@ -88,11 +90,12 @@ public class RedisStateMachine<K, V> {
     public RedisStateMachine() {
 
         LongProcessor longProcessor;
+
         if (!USE_NETTY40_BYTEBUF_COMPATIBILITY) {
             try {
                 longProcessor = (LongProcessor) LONG_PROCESSOR_CLASS.newInstance();
             } catch (ReflectiveOperationException e) {
-                throw new RedisException("Cannot create Netty41ToLongProcessor instance", e);
+                throw new RedisException("Cannot create Netty41LongProcessor instance", e);
             }
         } else {
             longProcessor = new LongProcessor();
@@ -240,7 +243,7 @@ public class RedisStateMachine<K, V> {
      * Close the state machine to free resources.
      */
     public void close() {
-        if(closed.compareAndSet(false, true)) {
+        if (closed.compareAndSet(false, true)) {
             responseElementBuffer.release();
         }
     }
