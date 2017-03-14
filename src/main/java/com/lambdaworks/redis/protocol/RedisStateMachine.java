@@ -44,6 +44,25 @@ public class RedisStateMachine {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisStateMachine.class);
     private static final ByteBuffer QUEUED = buffer("QUEUED");
 
+    private static final boolean USE_NETTY40_BYTEBUF_COMPATIBILITY;
+    private static final Class LONG_PROCESSOR_CLASS;
+
+    static {
+        Version nettyBufferVersion = Version.identify().get("netty-buffer");
+
+        USE_NETTY40_BYTEBUF_COMPATIBILITY =
+                nettyBufferVersion != null && nettyBufferVersion.artifactVersion().startsWith("4.0");
+        if (!USE_NETTY40_BYTEBUF_COMPATIBILITY) {
+            try {
+                LONG_PROCESSOR_CLASS = Class.forName("com.lambdaworks.redis.protocol.RedisStateMachine$Netty41LongProcessor");
+            } catch (ClassNotFoundException e) {
+                throw new RedisException("Cannot create Netty41ToLongProcessor instance", e);
+            }
+        } else {
+            LONG_PROCESSOR_CLASS = null;
+        }
+    }
+
     static class State {
         enum Type {
             SINGLE, ERROR, INTEGER, BULK, MULTI, BYTES
@@ -66,18 +85,10 @@ public class RedisStateMachine {
      */
     public RedisStateMachine() {
 
-        Version nettyBufferVersion = Version.identify().get("netty-buffer");
-
-        boolean useNetty40ByteBufCompatibility = false;
-        if (nettyBufferVersion != null) {
-            useNetty40ByteBufCompatibility = nettyBufferVersion.artifactVersion().startsWith("4.0");
-        }
-
         LongProcessor longProcessor;
-        if (!useNetty40ByteBufCompatibility) {
+        if (!USE_NETTY40_BYTEBUF_COMPATIBILITY) {
             try {
-                longProcessor = (LongProcessor) Class
-                        .forName("com.lambdaworks.redis.protocol.RedisStateMachine$Netty41LongProcessor").newInstance();
+                longProcessor = (LongProcessor) LONG_PROCESSOR_CLASS.newInstance();
             } catch (ReflectiveOperationException e) {
                 throw new RedisException("Cannot create Netty41ToLongProcessor instance", e);
             }
