@@ -203,11 +203,17 @@ public class SynchronizingClusterConnectionProviderTest {
         ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "8.8.8.8", TestSettings.port());
 
         Thread t1 = new Thread(() -> {
-            sut.getConnection(connectionKey);
+            try {
+                sut.getConnection(connectionKey);
+            } catch (Exception e) {
+            }
         });
 
         Thread t2 = new Thread(() -> {
-            sut.getConnection(connectionKey);
+            try {
+                sut.getConnection(connectionKey);
+            } catch (Exception e) {
+            }
         });
 
         t1.start();
