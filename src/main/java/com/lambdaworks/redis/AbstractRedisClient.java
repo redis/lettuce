@@ -169,15 +169,14 @@ public abstract class AbstractRedisClient {
 
         redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
                 (int) socketOptions.getConnectTimeoutUnit().toMillis(socketOptions.getConnectTimeout()));
-        redisBootstrap.option(ChannelOption.SO_KEEPALIVE, socketOptions.isKeepAlive());
-        redisBootstrap.option(ChannelOption.TCP_NODELAY, socketOptions.isTcpNoDelay());
 
-        if (redisURI == null) {
-            connectionBuilder.timeout(timeout, unit);
-        } else {
-            connectionBuilder.timeout(redisURI.getTimeout(), redisURI.getUnit());
-            connectionBuilder.password(redisURI.getPassword());
+        if (LettuceStrings.isEmpty(redisURI.getSocket())) {
+            redisBootstrap.option(ChannelOption.SO_KEEPALIVE, socketOptions.isKeepAlive());
+            redisBootstrap.option(ChannelOption.TCP_NODELAY, socketOptions.isTcpNoDelay());
         }
+
+        connectionBuilder.timeout(redisURI.getTimeout(), redisURI.getUnit());
+        connectionBuilder.password(redisURI.getPassword());
 
         connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
