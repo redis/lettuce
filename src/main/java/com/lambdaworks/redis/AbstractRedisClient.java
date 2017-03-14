@@ -327,7 +327,8 @@ public abstract class AbstractRedisClient {
             }
 
             if (!sharedResources) {
-                clientResources.shutdown(quietPeriod, timeout, timeUnit);
+                Future<?> groupCloseFuture = clientResources.shutdown(quietPeriod, timeout, timeUnit);
+                closeFutures.add(groupCloseFuture);
             } else {
                 for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
                     Future<?> groupCloseFuture = clientResources.eventLoopGroupProvider().release(eventExecutors, quietPeriod,
