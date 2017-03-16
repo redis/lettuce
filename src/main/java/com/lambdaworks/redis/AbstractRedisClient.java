@@ -18,6 +18,7 @@ package com.lambdaworks.redis;
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -313,6 +314,32 @@ public abstract class AbstractRedisClient {
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
+        try {
+            final CompletableFuture<Void> future = shutdownAsync(quietPeriod, timeout, timeUnit);
+            future.get();
+        } catch (Exception e) {
+            throw new RedisException(e);
+        }
+    }
+
+    /**
+     * Shutdown this client and close all open connections asynchronously. The client should be discarded
+     * after calling shutdown. The shutdown has 2 secs quiet time and a timeout of 15 secs.
+     */
+    public CompletableFuture<Void> shutdownAsync() {
+        return shutdownAsync(2, 15, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Shutdown this client and close all open connections asynchronously. The client should be discarded
+     * after calling shutdown.
+     *
+     * @param quietPeriod the quiet period as described in the documentation
+     * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
+     *        during the quiet period
+     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
+     */
+    public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         if (shutdown.compareAndSet(false, true)) {
 
@@ -326,7 +353,7 @@ public abstract class AbstractRedisClient {
                 closeableResources.remove(closeableResource);
             }
 
-            List<Future<?>> closeFutures = new ArrayList<>();
+            List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
 
             for (Channel c : channels) {
                 ChannelPipeline pipeline = c.pipeline();
@@ -338,29 +365,25 @@ public abstract class AbstractRedisClient {
             }
 
             try {
-                closeFutures.add(channels.close());
+                closeFutures.add(toCompletableFuture(channels.close()));
             } catch (Exception e) {
                 logger.debug("Cannot close channels", e);
             }
 
             if (!sharedResources) {
                 Future<?> groupCloseFuture = clientResources.shutdown(quietPeriod, timeout, timeUnit);
-                closeFutures.add(groupCloseFuture);
+                closeFutures.add(toCompletableFuture(groupCloseFuture));
             } else {
                 for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
                     Future<?> groupCloseFuture = clientResources.eventLoopGroupProvider().release(eventExecutors, quietPeriod,
                             timeout, timeUnit);
-                    closeFutures.add(groupCloseFuture);
+                    closeFutures.add(toCompletableFuture(groupCloseFuture));
                 }
             }
 
-            for (Future<?> future : closeFutures) {
-                try {
-                    future.get();
-                } catch (Exception e) {
-                    throw new RedisException(e);
-                }
-            }
+            return CompletableFuture.allOf(toArray(closeFutures));
+        } else {
+            return CompletableFuture.completedFuture(null);
         }
     }
 
@@ -414,5 +437,22 @@ public abstract class AbstractRedisClient {
     protected void setOptions(ClientOptions clientOptions) {
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         this.clientOptions = clientOptions;
+    }
+
+    private static CompletableFuture<Void> toCompletableFuture(Future<?> future) {
+        final CompletableFuture<Void> promise = new CompletableFuture<>();
+        future.addListener(f -> {
+            if (f.isSuccess()) {
+                promise.complete(null);
+            } else {
+                promise.completeExceptionally(f.cause());
+            }
+        });
+        return promise;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <T> CompletableFuture<T>[] toArray(Collection<CompletableFuture<T>> collection) {
+        return collection.stream().toArray(CompletableFuture[]::new);
     }
 }

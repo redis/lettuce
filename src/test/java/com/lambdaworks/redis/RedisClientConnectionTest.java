@@ -18,7 +18,9 @@ package com.lambdaworks.redis;
 import static com.lambdaworks.redis.RedisURI.Builder.redis;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -96,6 +98,37 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
     @Test(expected = IllegalArgumentException.class)
     public void connectcodecSentinelMissingHostAndSocketUri() throws Exception {
         client.connect(CODEC, invalidSentinel());
+    }
+
+    /*
+     * Client shutdown sync/async test.
+     */
+    @Test(expected = TimeoutException.class)
+    public void shutdownSyncInRedisFutureTest() throws Exception {
+        RedisClient redisClient = RedisClient.create();
+        StatefulRedisConnection<String, String> connection = redisClient.connect(redis(host, port).build());
+        CompletableFuture<String> f = connection.async()
+                                                .get("key1")
+                                                .whenComplete((result, e) -> {
+                                                    connection.close();
+                                                    redisClient.shutdown(); // deadlock.
+                                                })
+                                                .toCompletableFuture();
+        f.get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void shutdownAsyncInRedisFutureTest() throws Exception {
+        RedisClient redisClient = RedisClient.create();
+        StatefulRedisConnection<String, String> connection = redisClient.connect(redis(host, port).build());
+        CompletableFuture<Void> f = connection.async()
+                                              .get("key1")
+                                              .thenCompose(result -> {
+                                                  connection.close();
+                                                  return redisClient.shutdownAsync();
+                                              })
+                                              .toCompletableFuture();
+        f.get(5, TimeUnit.SECONDS);
     }
 
     /*
