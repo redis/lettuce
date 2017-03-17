@@ -19,19 +19,22 @@ import io.netty.channel.local.LocalAddress;
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultCommandLatencyCollectorTest {
 
-    private static CommandLatencyCollectorOptions options = DefaultCommandLatencyCollectorOptions.create();
-
-    private DefaultCommandLatencyCollector sut = new DefaultCommandLatencyCollector(options);
+    private DefaultCommandLatencyCollector sut;
 
     @Test
-    public void shutdown() throws Exception {
+    public void shutdown() {
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
+
         sut.shutdown();
 
         assertThat(sut.isEnabled()).isFalse();
     }
 
     @Test
-    public void verifyMetrics() throws Exception {
+    public void verifyMetrics() {
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
 
         setupData();
 
@@ -54,6 +57,19 @@ public class DefaultCommandLatencyCollectorTest {
 
         assertThat(metrics.getTimeUnit()).isEqualTo(MICROSECONDS);
 
+        assertThat(sut.retrieveMetrics()).isEmpty();
+    }
+
+    @Test
+    public void verifyCummulativeMetrics() {
+
+        sut = new DefaultCommandLatencyCollector(new DefaultCommandLatencyCollectorOptions.Builder()
+                .resetLatenciesAfterEvent(false).build());
+
+        setupData();
+
+        assertThat(sut.retrieveMetrics()).hasSize(1);
+        assertThat(sut.retrieveMetrics()).hasSize(1);
     }
 
     private void setupData() {

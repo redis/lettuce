@@ -1,5 +1,7 @@
 package com.lambdaworks.redis.metrics;
 
+import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
+
 import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.Map;
@@ -8,8 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
 import org.LatencyUtils.PauseDetector;
@@ -18,9 +18,10 @@ import org.LatencyUtils.SimplePauseDetector;
 import com.google.common.collect.Maps;
 import com.lambdaworks.redis.metrics.CommandMetrics.CommandLatency;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
-import io.netty.channel.local.LocalAddress;
 
-import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
+import io.netty.channel.local.LocalAddress;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Default implementation of a {@link CommandLatencyCollector} for command latencies.
@@ -72,13 +73,17 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                 }
             }
 
-            latencies = new Latencies(PAUSE_DETECTOR.get().pauseDetector);
+            if (options.resetLatenciesAfterEvent()) {
+                latencies = new Latencies(PAUSE_DETECTOR.get().pauseDetector);
+            } else {
+                latencies = new CummulativeLatencies(PAUSE_DETECTOR.get().pauseDetector);
+            }
+
             latencyMetrics.put(id, latencies);
         }
 
         latencies.firstResponse.recordLatency(rangify(firstResponseLatency));
         latencies.completion.recordLatency(rangify(completionLatency));
-
     }
 
     private CommandLatencyId createId(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType) {
@@ -96,6 +101,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     @Override
     public void shutdown() {
+
         if (latencyMetrics != null) {
             latencyMetrics.clear();
             latencyMetrics = null;
@@ -104,22 +110,25 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     @Override
     public Map<CommandLatencyId, CommandMetrics> retrieveMetrics() {
-        Map<CommandLatencyId, Latencies> copy = Maps.newHashMap();
-        copy.putAll(latencyMetrics);
+
+        Map<CommandLatencyId, Latencies> copy = Maps.newHashMap(latencyMetrics);
         if (options.resetLatenciesAfterEvent()) {
             latencyMetrics.clear();
         }
 
-        Map<CommandLatencyId, CommandMetrics> latencies = getMetrics(copy);
-        return latencies;
+        return getMetrics(copy);
     }
 
     private Map<CommandLatencyId, CommandMetrics> getMetrics(Map<CommandLatencyId, Latencies> latencyMetrics) {
-        Map<CommandLatencyId, CommandMetrics> latencies = Maps.newTreeMap();
+
+        Map<CommandLatencyId, CommandMetrics> result = Maps.newTreeMap();
 
         for (Map.Entry<CommandLatencyId, Latencies> entry : latencyMetrics.entrySet()) {
-            Histogram firstResponse = entry.getValue().firstResponse.getIntervalHistogram();
-            Histogram completion = entry.getValue().completion.getIntervalHistogram();
+
+            Latencies latencies = entry.getValue();
+
+            Histogram firstResponse = latencies.getFirstResponseHistogram();
+            Histogram completion = latencies.getCompletionHistogram();
 
             if (firstResponse.getTotalCount() == 0 && completion.getTotalCount() == 0) {
                 continue;
@@ -131,27 +140,29 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             CommandMetrics metrics = new CommandMetrics(firstResponse.getTotalCount(), options.targetUnit(),
                     firstResponseLatency, completionLatency);
 
-            latencies.put(entry.getKey(), metrics);
+            result.put(entry.getKey(), metrics);
         }
-        return latencies;
+
+        return result;
     }
 
     private CommandLatency getMetric(Histogram histogram) {
+
         Map<Double, Long> percentiles = getPercentiles(histogram);
 
         TimeUnit timeUnit = options.targetUnit();
-        CommandLatency metric = new CommandLatency(timeUnit.convert(histogram.getMinValue(), TimeUnit.NANOSECONDS),
-                timeUnit.convert(histogram.getMaxValue(), TimeUnit.NANOSECONDS), percentiles);
-
-        return metric;
+        return new CommandLatency(timeUnit.convert(histogram.getMinValue(), TimeUnit.NANOSECONDS), timeUnit.convert(
+                histogram.getMaxValue(), TimeUnit.NANOSECONDS), percentiles);
     }
 
     private Map<Double, Long> getPercentiles(Histogram histogram) {
+
         Map<Double, Long> percentiles = new TreeMap<Double, Long>();
         for (double targetPercentile : options.targetPercentiles()) {
             percentiles.put(targetPercentile,
                     options.targetUnit().convert(histogram.getValueAtPercentile(targetPercentile), TimeUnit.NANOSECONDS));
         }
+
         return percentiles;
     }
 
@@ -195,17 +206,54 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     private static class Latencies {
 
-        public final LatencyStats firstResponse;
-        public final LatencyStats completion;
+        private final LatencyStats firstResponse;
+        private final LatencyStats completion;
 
-        public Latencies(PauseDetector pauseDetector) {
+        Latencies(PauseDetector pauseDetector) {
             firstResponse = LatencyStats.Builder.create().pauseDetector(pauseDetector).build();
             completion = LatencyStats.Builder.create().pauseDetector(pauseDetector).build();
+        }
+
+        public Histogram getFirstResponseHistogram() {
+            return firstResponse.getIntervalHistogram();
+        }
+
+        public Histogram getCompletionHistogram() {
+            return completion.getIntervalHistogram();
+        }
+    }
+
+    private static class CummulativeLatencies extends Latencies {
+
+        private final Histogram firstResponse;
+        private final Histogram completion;
+
+        CummulativeLatencies(PauseDetector pauseDetector) {
+            super(pauseDetector);
+
+            firstResponse = super.firstResponse.getIntervalHistogram();
+            completion = super.completion.getIntervalHistogram();
+        }
+
+        @Override
+        public Histogram getFirstResponseHistogram() {
+
+            firstResponse.add(super.getFirstResponseHistogram());
+            return firstResponse;
+        }
+
+        @Override
+        public Histogram getCompletionHistogram() {
+
+            completion.add(super.getFirstResponseHistogram());
+            return completion;
         }
     }
 
     private static class PauseDetectorWrapper {
-        public final static AtomicLong counter = new AtomicLong();
+
+        private static final AtomicLong counter = new AtomicLong();
+
         PauseDetector pauseDetector;
 
         public void initialize() {
