@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,19 +35,22 @@ import io.netty.channel.local.LocalAddress;
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultCommandLatencyCollectorTest {
 
-    private static CommandLatencyCollectorOptions options = DefaultCommandLatencyCollectorOptions.create();
-
-    private DefaultCommandLatencyCollector sut = new DefaultCommandLatencyCollector(options);
+    private DefaultCommandLatencyCollector sut;
 
     @Test
-    public void shutdown() throws Exception {
+    public void shutdown() {
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
+
         sut.shutdown();
 
         assertThat(sut.isEnabled()).isFalse();
     }
 
     @Test
-    public void verifyMetrics() throws Exception {
+    public void verifyMetrics() {
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
 
         setupData();
 
@@ -70,6 +73,19 @@ public class DefaultCommandLatencyCollectorTest {
 
         assertThat(metrics.getTimeUnit()).isEqualTo(MICROSECONDS);
 
+        assertThat(sut.retrieveMetrics()).isEmpty();
+    }
+
+    @Test
+    public void verifyCummulativeMetrics() {
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.builder()
+                .resetLatenciesAfterEvent(false).build());
+
+        setupData();
+
+        assertThat(sut.retrieveMetrics()).hasSize(1);
+        assertThat(sut.retrieveMetrics()).hasSize(1);
     }
 
     private void setupData() {
