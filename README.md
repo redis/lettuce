@@ -55,6 +55,26 @@ Example for Maven:
 </dependency>
 ```
 
+Using Snapshots:
+
+```xml
+<dependency>
+  <groupId>biz.paluch.redis</groupId>
+  <artifactId>lettuce</artifactId>
+  <version>x.y.z</version>
+</dependency>
+
+<repositories>
+  <repository>
+    <id>sonatype-nexus-snapshots</id>
+    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    <snapshots>
+      <enabled>true</enabled>
+    </snapshots>
+  </repository>
+</repositories>
+```
+
 Shaded JAR-File (packaged dependencies  and relocated to the `com.lambdaworks` package to prevent version conflicts)
 
 ```xml
