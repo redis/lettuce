@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -98,6 +98,41 @@
            마이바티스의 타입핸들러가 제대로 설정이 되었다면 JodaTime날짜를 맵을 사용해서 파라미터로 넘길수 있다. </li>
           <li><code>pageSize</code>: 배치가 청크크기가 지정된 형태로 처리가 되면 reader에 이 값을 전달하는게 적절하다. </li>
         </ul>
+
+      </subsection>
+
+      <subsection name="MyBatisCursorItemReader">
+        <p>
+          This bean is an <code>IteamReader</code> that reads records from a database using a cursor.
+        </p>
+
+        <p>
+          <span class="label important">NOTE</span> To use this bean you need at least MyBatis 3.4.0 or a newer version.
+        </p>
+        
+        <p>
+          It executes the query specified as the <code>setQueryId</code> property to retrieve requested data
+          by using the method <code>selectCursor()</code>.
+          Each time a <code>read()</code> method is called it will return the next element of the cursor until no more
+          elements are left.
+        </p>
+        
+        <p>
+          The reader will use a separate connection so the select statement does no participate in any transactions created 
+          as part of the step processing.
+        </p>
+
+        <p>When using the cursor you can just execute a regular query:</p>
+        <source><![CDATA[<select id="getEmployee" resultMap="employeeBatchResult">
+  SELECT id, name, job FROM employees ORDER BY id ASC
+</select>]]></source>
+
+        <p>Follows below a sample configuration snippet:</p>
+        
+        <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+  <property name="queryId" value="getEmployee" />
+</bean>]]></source>
 
       </subsection>
 

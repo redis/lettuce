@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@
       
       <subsection name="MyBatisPagingItemReader">
         <p>
-          Este bean es un <code>IteamReader</code> que lee registros de una base de datos usando MyBatis de forma paginada.
+          Este bean es un <code>IteamReader</code> que lee registros de una base de datos usando paginación.
         </p>
         
         <p>
@@ -51,7 +51,7 @@
           Al llamar al método <code>read()</code> éste devuelve el objeto que corresponde a la posición actual 
           y solicita más páginas si es necesario.
 
-          El reader pasa algunos parametros estándar y la SQL deberá hacer uso de algunos de ellos para construir un resultset 
+          El reader recibe algunos parametros estándar y la SQL deberá hacer uso de algunos de ellos para construir un resultset 
           del tamaño requerido. Los parametros son:
         </p>
 
@@ -115,6 +115,41 @@
           <li><code>pageSize</code>: Si le flujo batch está configurado con un tamaño de bloque (chunk size), 
             es importante pasar esta información al reader, y eso se hace mediante esta propiedad.</li>
         </ul>
+
+      </subsection>
+
+      <subsection name="MyBatisCursorItemReader">
+        <p>
+          Este bean es un <code>IteamReader</code> que lee registros de la base de datos usando un cursor.
+        </p>
+
+        <p>
+          <span class="label important">NOTA</span> Para usar este bean necesitas al menos MyBatis 3.4.0 o superior.
+        </p>
+        
+        <p>
+          Ejecuta la sentencia especificada mediante la propiedad <code>setQueryId</code> para obtener los datos
+          usando el método <code>selectCursor()</code>.
+          Al llamar al método <code>read()</code> se devolverá el siguiente elemento del cursor 
+          hasta que no quede ninguno por devolver.
+        </p>
+        
+        <p>
+          El reader usa una conexión separada para que la sentencia no participe en ninguna transacción creada como parte
+          del proceso del step.
+        </p>
+
+        <p>Cuando se usar un cursor puedes usar una sentencia convencional:</p>
+        <source><![CDATA[<select id="getEmployee" resultMap="employeeBatchResult">
+  SELECT id, name, job FROM employees ORDER BY id ASC
+</select>]]></source>
+
+        <p>A continuación se muestra un ejemplo de configuración:</p>
+        
+        <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+  <property name="queryId" value="getEmployee" />
+</bean>]]></source>
 
       </subsection>
 
