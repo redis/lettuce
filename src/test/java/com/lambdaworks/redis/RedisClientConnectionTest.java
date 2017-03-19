@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -34,6 +35,7 @@ import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
  * @author Mark Paluch
+ * @author Jongyeol Choi
  */
 public class RedisClientConnectionTest extends AbstractRedisClientTest {
 
@@ -136,34 +138,31 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
         client.connect(CODEC, invalidSentinel());
     }
 
-    /*
-     * Client shutdown sync/async test.
-     */
     @Test(expected = TimeoutException.class)
+    @Ignore("Non-deterministic behavior. Can cause a deadlock")
     public void shutdownSyncInRedisFutureTest() throws Exception {
+
         RedisClient redisClient = RedisClient.create();
         StatefulRedisConnection<String, String> connection = redisClient.connect(redis(host, port).build());
-        CompletableFuture<String> f = connection.async()
-                                                .get("key1")
-                                                .whenComplete((result, e) -> {
-                                                    connection.close();
-                                                    redisClient.shutdown(); // deadlock.
-                                                })
-                                                .toCompletableFuture();
-        f.get(5, TimeUnit.SECONDS);
+
+        CompletableFuture<String> f = connection.async().get("key1").whenComplete((result, e) -> {
+            connection.close();
+            redisClient.shutdown(0, 0, TimeUnit.SECONDS); // deadlock expected.
+            }).toCompletableFuture();
+
+        f.get(1, TimeUnit.SECONDS);
     }
 
     @Test
     public void shutdownAsyncInRedisFutureTest() throws Exception {
+
         RedisClient redisClient = RedisClient.create();
         StatefulRedisConnection<String, String> connection = redisClient.connect(redis(host, port).build());
-        CompletableFuture<Void> f = connection.async()
-                                              .get("key1")
-                                              .thenCompose(result -> {
-                                                  connection.close();
-                                                  return redisClient.shutdownAsync();
-                                              })
-                                              .toCompletableFuture();
+        CompletableFuture<Void> f = connection.async().get("key1").thenCompose(result -> {
+            connection.close();
+            return redisClient.shutdownAsync(0, 0, TimeUnit.SECONDS);
+        }).toCompletableFuture();
+
         f.get(5, TimeUnit.SECONDS);
     }
 
