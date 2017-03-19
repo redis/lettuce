@@ -18,7 +18,6 @@ package com.lambdaworks.redis;
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +56,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </p>
  *
  * @author Mark Paluch
+ * @author Jongyeol Choi
  * @since 3.0
  * @see ClientResources
  */
@@ -314,30 +314,28 @@ public abstract class AbstractRedisClient {
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
-        try {
-            final CompletableFuture<Void> future = shutdownAsync(quietPeriod, timeout, timeUnit);
-            future.get();
-        } catch (Exception e) {
-            throw new RedisException(e);
-        }
+        LettuceFutures.translateException(() -> shutdownAsync(quietPeriod, timeout, timeUnit).get(), () -> null);
     }
 
     /**
-     * Shutdown this client and close all open connections asynchronously. The client should be discarded
-     * after calling shutdown. The shutdown has 2 secs quiet time and a timeout of 15 secs.
+     * Shutdown this client and close all open connections asynchronously. The client should be discarded after calling
+     * shutdown. The shutdown has 2 secs quiet time and a timeout of 15 secs.
+     *
+     * @since 4.4
      */
     public CompletableFuture<Void> shutdownAsync() {
         return shutdownAsync(2, 15, TimeUnit.SECONDS);
     }
 
     /**
-     * Shutdown this client and close all open connections asynchronously. The client should be discarded
-     * after calling shutdown.
+     * Shutdown this client and close all open connections asynchronously. The client should be discarded after calling
+     * shutdown.
      *
      * @param quietPeriod the quiet period as described in the documentation
      * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
      *        during the quiet period
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
+     * @since 4.4
      */
     public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
@@ -356,6 +354,7 @@ public abstract class AbstractRedisClient {
             List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
 
             for (Channel c : channels) {
+
                 ChannelPipeline pipeline = c.pipeline();
 
                 ConnectionWatchdog commandHandler = pipeline.get(ConnectionWatchdog.class);
@@ -381,10 +380,10 @@ public abstract class AbstractRedisClient {
                 }
             }
 
-            return CompletableFuture.allOf(toArray(closeFutures));
-        } else {
-            return CompletableFuture.completedFuture(null);
+            return CompletableFuture.allOf(closeFutures.toArray(new CompletableFuture[closeFutures.size()]));
         }
+
+        return CompletableFuture.completedFuture(null);
     }
 
     protected int getResourceCount() {
@@ -440,7 +439,9 @@ public abstract class AbstractRedisClient {
     }
 
     private static CompletableFuture<Void> toCompletableFuture(Future<?> future) {
-        final CompletableFuture<Void> promise = new CompletableFuture<>();
+
+        CompletableFuture<Void> promise = new CompletableFuture<>();
+
         future.addListener(f -> {
             if (f.isSuccess()) {
                 promise.complete(null);
@@ -448,11 +449,7 @@ public abstract class AbstractRedisClient {
                 promise.completeExceptionally(f.cause());
             }
         });
-        return promise;
-    }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public static <T> CompletableFuture<T>[] toArray(Collection<CompletableFuture<T>> collection) {
-        return collection.stream().toArray(CompletableFuture[]::new);
+        return promise;
     }
 }
