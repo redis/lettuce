@@ -59,7 +59,7 @@
         <lettuce-release-version>4.3.1.Final</lettuce-release-version>
         <lettuce3-release-version>3.5.0.Final</lettuce3-release-version>
         <lettuce5-release-version>5.0.0.Beta1</lettuce5-release-version>
-        <netty-version>4.1.8.Final</netty-version>
+        <netty-version>4.1.9.Final</netty-version>
         <spring-version>4.3.6.RELEASE</spring-version>
     </properties>
 
