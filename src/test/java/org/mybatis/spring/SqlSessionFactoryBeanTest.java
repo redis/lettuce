@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -36,7 +36,7 @@ import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeException;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.mybatis.spring.type.DummyTypeAlias;
 import org.mybatis.spring.type.DummyTypeHandler;
@@ -70,24 +70,24 @@ public final class SqlSessionFactoryBeanTest {
 
   // DataSource is the only required property that does not have a default value, so test for both
   // not setting it at all and setting it to null
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testNullDataSource() throws Exception {
     factoryBean = new SqlSessionFactoryBean();
-    factoryBean.getObject();
+    assertThrows(IllegalArgumentException.class, factoryBean::getObject);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testSetNullDataSource() throws Exception {
     factoryBean = new SqlSessionFactoryBean();
     factoryBean.setDataSource(null);
-    factoryBean.getObject();
+    assertThrows(IllegalArgumentException.class, factoryBean::getObject);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testNullSqlSessionFactoryBuilder() throws Exception {
     setupFactoryBean();
     factoryBean.setSqlSessionFactoryBuilder(null);
-    factoryBean.getObject();
+    assertThrows(IllegalArgumentException.class, factoryBean::getObject);
   }
 
   @Test
@@ -278,13 +278,8 @@ public final class SqlSessionFactoryBeanTest {
     factoryBean.setConfigLocation(new org.springframework.core.io.ClassPathResource(
             "org/mybatis/spring/mybatis-config.xml"));
 
-    try {
-      factoryBean.getObject();
-      fail();
-    } catch (IllegalStateException e) {
-      assertEquals("Property 'configuration' and 'configLocation' can not specified with together", e.getMessage());
-    }
-
+    Throwable e = assertThrows(IllegalStateException.class, factoryBean::getObject);
+    assertEquals("Property 'configuration' and 'configLocation' can not specified with together", e.getMessage());
   }
 
   @Test
@@ -364,19 +359,8 @@ public final class SqlSessionFactoryBeanTest {
     typeAliasRegistry.resolveAlias("testAlias2");
     typeAliasRegistry.resolveAlias("superType");
 
-    try {
-        typeAliasRegistry.resolveAlias("testAlias");
-        fail();
-    } catch (TypeException e) {
-        // expected
-    }
-
-    try {
-        typeAliasRegistry.resolveAlias("dummyTypeHandler");
-        fail();
-    } catch (TypeException e) {
-        // expected
-    }
+    assertThrows(TypeException.class, () -> typeAliasRegistry.resolveAlias("testAlias"));
+    assertThrows(TypeException.class, () -> typeAliasRegistry.resolveAlias("dummyTypeHandler"));
   }
 
   @Test

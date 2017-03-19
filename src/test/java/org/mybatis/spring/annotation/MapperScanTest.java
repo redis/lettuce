@@ -15,13 +15,13 @@
  */
 package org.mybatis.spring.annotation;
 
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.AnnotatedMapper;
@@ -49,7 +49,7 @@ import com.mockrunner.mock.jdbc.MockDataSource;
 public final class MapperScanTest {
   private AnnotationConfigApplicationContext applicationContext;
 
-  @Before
+  @BeforeEach
   public void setupContext() {
     applicationContext = new AnnotationConfigApplicationContext();
 
@@ -68,7 +68,7 @@ public final class MapperScanTest {
     applicationContext.getBean("sqlSessionFactory");
   }
 
-  @After
+  @AfterEach
   public void assertNoMapperClass() {
     // concrete classes should always be ignored by MapperScannerPostProcessor
     assertBeanNotLoaded("mapperClass");
@@ -188,7 +188,7 @@ public final class MapperScanTest {
 
     startContext();
 
-    assertSame("scanner should not overwite existing bean definition", applicationContext.getBean("mapperInterface").getClass(), Object.class);
+    assertSame(Object.class, applicationContext.getBean("mapperInterface").getClass(), "scanner should not overwrite existing bean definition");
   }
 
   private void setupSqlSessionFactory(String name) {

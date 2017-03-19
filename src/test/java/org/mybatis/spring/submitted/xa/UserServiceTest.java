@@ -15,17 +15,19 @@
  */
 package org.mybatis.spring.submitted.xa;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import javax.transaction.UserTransaction;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@RunWith(value = SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = "classpath:org/mybatis/spring/submitted/xa/applicationContext.xml")
+@ExtendWith(SpringExtension.class)
+@SpringJUnitConfig(locations = "classpath:org/mybatis/spring/submitted/xa/applicationContext.xml")
 public class UserServiceTest {
 
   @Autowired UserTransaction userTransaction;
@@ -37,7 +39,7 @@ public class UserServiceTest {
   public void testCommit() {
     User user = new User(1, "Pocoyo");
     userService.saveWithNoFailure(user);
-    Assert.assertTrue(userService.checkUserExists(user.getId()));
+    assertTrue(userService.checkUserExists(user.getId()));
   }
   
   @Test
@@ -48,7 +50,7 @@ public class UserServiceTest {
     } catch (RuntimeException ignore) {
       // ignored
     }
-    Assert.assertFalse(userService.checkUserExists(user.getId()));
+    assertFalse(userService.checkUserExists(user.getId()));
   }
 
   @Test
@@ -57,7 +59,7 @@ public class UserServiceTest {
     User user = new User(3, "Pocoyo");
     userService.saveWithNoFailure(user);
     userTransaction.commit();
-    Assert.assertTrue(userService.checkUserExists(user.getId()));
+    assertTrue(userService.checkUserExists(user.getId()));
   }
 
   // TODO when the outer JTA tx is rolledback, 
@@ -70,7 +72,7 @@ public class UserServiceTest {
     User user = new User(5, "Pocoyo");
     userService.saveWithNoFailure(user);
     userTransaction.rollback();
-    Assert.assertFalse(userService.checkUserExists(user.getId()));
+    assertFalse(userService.checkUserExists(user.getId()));
   }
   
 }

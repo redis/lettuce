@@ -15,17 +15,20 @@
  */
 package org.mybatis.spring;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.sql.SQLException;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -38,9 +41,17 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
 
   private static SqlSession sqlSessionTemplate;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupSqlTemplate() {
     sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
+  }
+
+  @AfterEach
+  public void tearDown() {
+    try {
+      connection.close();
+    } catch (SQLException ignored) {
+    }
   }
 
   @Test
@@ -69,31 +80,19 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
     }
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+  @Test
   public void testCommit() throws SQLException {
-    try {
-      sqlSessionTemplate.commit();
-    } finally {
-      connection.close();
-    }
+    assertThrows(UnsupportedOperationException.class, sqlSessionTemplate::commit);
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+  @Test
   public void testClose() throws SQLException {
-    try {
-      sqlSessionTemplate.close();
-    } finally {
-      connection.close();
-    }
+    assertThrows(UnsupportedOperationException.class, sqlSessionTemplate::close);
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+  @Test
   public void testRollback() throws SQLException {
-    try {
-      sqlSessionTemplate.rollback();
-    } finally {
-      connection.close();
-    }
+    assertThrows(UnsupportedOperationException.class, sqlSessionTemplate::rollback);
   }
 
   @Test

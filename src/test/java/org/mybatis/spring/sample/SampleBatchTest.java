@@ -15,12 +15,12 @@
  */
 package org.mybatis.spring.sample;
 
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
  * Example of MyBatis-Spring batch integration usage.
  */
-@ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-batch.xml" })
+@SpringJUnitConfig(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-batch.xml" })
 public class SampleBatchTest extends AbstractSampleTest {
   // Note this does not actually test batch functionality since FooService
   // only calls one DAO method. This class and associated Spring context

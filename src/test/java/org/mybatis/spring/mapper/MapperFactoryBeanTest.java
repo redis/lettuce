@@ -15,15 +15,16 @@
  */
 package org.mybatis.spring.mapper;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mybatis.spring.AbstractMyBatisSpringTest;
 import org.mybatis.spring.MyBatisSystemException;
 import org.mybatis.spring.SqlSessionFactoryBean;
@@ -40,7 +41,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
   private static SqlSessionTemplate sqlSessionTemplate;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupSqlTemplate() {
     sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
   }
@@ -74,7 +75,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
   }
 
   // will fail because TestDao's mapper config is never loaded
-  @Test(expected = org.apache.ibatis.binding.BindingException.class)
+  @Test
   public void testAddToConfigFalse() throws Throwable {
     try {
       // the default SqlSessionFactory in AbstractMyBatisSpringTest is created with an explicitly
@@ -86,8 +87,10 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
       SqlSessionFactory sqlSessionFactory = factoryBean.getObject();
 
-      find(new SqlSessionTemplate(sqlSessionFactory), false);
-      fail("TestDao's mapper xml should not be loaded");
+      assertThrows(org.apache.ibatis.binding.BindingException.class, () ->
+        find(new SqlSessionTemplate(sqlSessionFactory), false)
+      );
+//      fail("TestDao's mapper xml should not be loaded");
     } catch (MyBatisSystemException mbse) {
       // unwrap exception so the exact MyBatis exception can be tested
       throw mbse.getCause();
@@ -132,7 +135,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
   // active transaction using the DataSource, but without a SpringTransactionFactory
   // this should error
-  @Test(expected = TransientDataAccessResourceException.class)
+  @Test
   public void testNonSpringTxMgrWithTx() throws Exception {
     Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
     Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
@@ -146,6 +149,9 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
       find();
 
       fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+    } catch (TransientDataAccessResourceException e) {
+      assertEquals("SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use" +
+          " Spring transaction synchronization", e.getMessage());
     } finally {
       // rollback required to close connection
       txManager.rollback(status);
@@ -182,8 +188,8 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
       // SqlSessionTemplate uses its own connection
       MockConnection mockConnection = (MockConnection) mockDataSource.getConnection();
-      assertEquals("should call commit on Connection", 1, mockConnection.getNumberCommits());
-      assertEquals("should not call rollback on Connection", 0, mockConnection.getNumberRollbacks());
+      assertEquals(1, mockConnection.getNumberCommits(), "should call commit on Connection");
+      assertEquals(0, mockConnection.getNumberRollbacks(), "should not call rollback on Connection");
       assertCommitSession();
     } finally {
 
