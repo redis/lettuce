@@ -253,7 +253,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null
                 && remote() != null) {
 
-            long firstResponseLatency = nanoTime() - withLatency.getFirstResponse();
+            long firstResponseLatency = withLatency.getSent() - withLatency.getFirstResponse();
             long completionLatency = nanoTime() - withLatency.getSent();
 
             clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
