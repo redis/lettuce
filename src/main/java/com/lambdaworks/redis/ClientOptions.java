@@ -16,6 +16,7 @@
 package com.lambdaworks.redis;
 
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
 
@@ -34,6 +35,8 @@ public class ClientOptions implements Serializable {
     public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
     public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
     public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
+    public static final long DEFAULT_WRITE_TIMEOUT = 0;
+    public static final TimeUnit DEFAULT_WRITE_TIMEOUT_UNIT = TimeUnit.SECONDS;
 
     private final boolean pingBeforeActivateConnection;
     private final boolean autoReconnect;
@@ -43,6 +46,8 @@ public class ClientOptions implements Serializable {
     private final DisconnectedBehavior disconnectedBehavior;
     private final SocketOptions socketOptions;
     private final SslOptions sslOptions;
+    private final long writeTimeout;
+    private final TimeUnit writeTimeoutUnit;
 
     protected ClientOptions(Builder builder) {
         pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
@@ -53,6 +58,8 @@ public class ClientOptions implements Serializable {
         disconnectedBehavior = builder.disconnectedBehavior;
         socketOptions = builder.socketOptions;
         sslOptions = builder.sslOptions;
+        writeTimeout = builder.writeTimeout;
+        writeTimeoutUnit = builder.writeTimeoutUnit;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -64,6 +71,8 @@ public class ClientOptions implements Serializable {
         this.disconnectedBehavior = original.getDisconnectedBehavior();
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
+        this.writeTimeout = original.getWriteTimeout();
+        this.writeTimeoutUnit = original.getWriteTimeoutUnit();
     }
 
     /**
@@ -107,6 +116,8 @@ public class ClientOptions implements Serializable {
         private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
         private SslOptions sslOptions = DEFAULT_SSL_OPTIONS;
+        private long writeTimeout = DEFAULT_WRITE_TIMEOUT;
+        private TimeUnit writeTimeoutUnit = DEFAULT_WRITE_TIMEOUT_UNIT;
 
         /**
          * @deprecated Use {@link ClientOptions#builder()}
@@ -220,6 +231,20 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Sets the write timeout. The connection is closed when a write operation cannot finish in writeTimeout time.
+         * And, if writeTimeout is zero or negative, it'll not used.
+         *
+         * @param writeTimeout write timeout.
+         * @param writeTimeoutUnit write timeout time unit.
+         * @return {@code this}
+         */
+        public Builder writeTimeout(long writeTimeout, TimeUnit writeTimeoutUnit) {
+            this.writeTimeout = writeTimeout;
+            this.writeTimeoutUnit = writeTimeoutUnit;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link ClientOptions}.
          * 
          * @return new instance of {@link ClientOptions}
@@ -310,6 +335,24 @@ public class ClientOptions implements Serializable {
      */
     public SslOptions getSslOptions() {
         return sslOptions;
+    }
+
+    /**
+     * Returns the write timeout. If writeTimeout is {@code 0} or negative, it'll not used.
+     *
+     * @return the write timeout.
+     */
+    public long getWriteTimeout() {
+        return writeTimeout;
+    }
+
+    /**
+     * Returns the write timeout unit.
+     *
+     * @return the write timeout unit.
+     */
+    public TimeUnit getWriteTimeoutUnit() {
+        return writeTimeoutUnit;
     }
 
     /**

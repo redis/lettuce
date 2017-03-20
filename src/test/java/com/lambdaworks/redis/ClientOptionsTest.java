@@ -22,19 +22,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.net.ServerSocket;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 
 import com.lambdaworks.Wait;
+import com.lambdaworks.redis.ClientOptions.DisconnectedBehavior;
+import com.lambdaworks.redis.RedisURI.Builder;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.resource.ClientResources;
+import com.lambdaworks.redis.resource.DefaultClientResources;
+import com.lambdaworks.redis.resource.Delay;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
+import io.netty.handler.timeout.WriteTimeoutException;
 
 /**
  * @author Mark Paluch
@@ -157,6 +168,63 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
         Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
         connection.get(key);
         connection.close();
+    }
+
+    @Test
+    public void disconnectedWriteTimeoutExceptionAndReconnectTest() throws Exception {
+
+        AtomicBoolean networkIsStable = new AtomicBoolean(true);
+        Delay reconnectDelay = Delay.exponential(1, 100, TimeUnit.MILLISECONDS, 2);
+
+        ClientResources resources = DefaultClientResources.builder().reconnectDelay(reconnectDelay).build();
+        RedisURI redisUri = Builder.redis(TestSettings.host(), TestSettings.port()).build();
+        RedisClient client = RedisClient.create(resources, redisUri);
+
+        try {
+            ClientOptions clientOptions =
+                    ClientOptions.builder()
+                                 .autoReconnect(true)
+                                 .disconnectedBehavior(DisconnectedBehavior.ACCEPT_COMMANDS)
+                                 .writeTimeout(100, TimeUnit.MILLISECONDS)
+                                 .build();
+
+            client.setOptions(clientOptions);
+
+            StatefulRedisConnection<String, String> redisConnection = client.connect();
+            RedisAsyncCommands<String, String> connection = redisConnection.async();
+            Channel channel = getChannel(redisConnection);
+
+            channel.pipeline().addFirst(new ChannelOutboundHandlerAdapter() {
+                @Override
+                public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
+                        throws Exception {
+                    if (networkIsStable.get()) {
+                        ctx.write(msg, promise);
+                    }
+                }
+            });
+
+            RedisFuture<String> future1 = connection.get("key1");
+            future1.get(2, TimeUnit.SECONDS);
+
+            // To trigger WriteTimeoutException to simulate network is unstable.
+            networkIsStable.set(false);
+            RedisFuture<String> future2 = connection.get("key2");
+
+            try {
+                future2.get(1, TimeUnit.SECONDS);
+                fail("Exception was not occured.");
+            } catch (ExecutionException e) {
+                if (!(e.getCause() instanceof WriteTimeoutException)) {
+                    fail("Unexpected exception: " + e.getCause());
+                }
+            }
+
+            Thread.sleep(1_000); // wait for WatchDog's reconnection.
+            assertThat(connection.isOpen()).isTrue();
+        } finally {
+            client.shutdown();
+        }
     }
 
     @Test(timeout = 10000)

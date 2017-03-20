@@ -77,6 +77,7 @@ public class ConnectionBuilder {
 
         handlers.add(new ChannelGroupListener(channelGroup));
         handlers.add(new CommandEncoder());
+        handlers.add(new ReusableWriteTimeoutHandler(clientOptions.getWriteTimeout(), clientOptions.getWriteTimeoutUnit()));
         handlers.add(commandHandler);
         handlers.add(connection);
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
