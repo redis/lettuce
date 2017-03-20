@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,16 @@ import com.lambdaworks.redis.RedisFuture;
 
 /**
  * Pipelining for commands that are executed on multiple cluster nodes. Merges results and emits one composite result.
- * 
+ *
  * @author Mark Paluch
  */
 class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFuture<V> {
 
     private final CountDownLatch latch = new CountDownLatch(1);
+
+    public PipelinedRedisFuture(CompletionStage<V> completionStage) {
+        this(completionStage, v -> v);
+    }
 
     public PipelinedRedisFuture(CompletionStage<V> completionStage, Function<V, V> converter) {
         completionStage.thenAccept(v -> complete(converter.apply(v)))
@@ -41,7 +45,7 @@ class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFutur
                 });
     }
 
-    public PipelinedRedisFuture(Map<?, ? extends RedisFuture<?>> executions, Function<PipelinedRedisFuture<V>, V> converter) {
+    public PipelinedRedisFuture(Map<?, ? extends CompletionStage<?>> executions, Function<PipelinedRedisFuture<V>, V> converter) {
 
         CompletableFuture.allOf(executions.values().toArray(new CompletableFuture<?>[executions.size()]))
                 .thenRun(() -> complete(converter.apply(this))).exceptionally(throwable -> {

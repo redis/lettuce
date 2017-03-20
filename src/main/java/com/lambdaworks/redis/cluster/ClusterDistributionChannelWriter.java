@@ -17,6 +17,8 @@ package com.lambdaworks.redis.cluster;
 
 import static com.lambdaworks.redis.cluster.SlotHash.getSlot;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
@@ -40,6 +42,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
 class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V> {
 
     private final RedisChannelWriter<K, V> defaultWriter;
+    private final CompletableFuture<RedisChannelWriter<K, V>> defaultWriterFuture;
     private final ClusterEventListener clusterEventListener;
     private final EventExecutorGroup eventExecutors;
     private final int executionLimit;
@@ -60,6 +63,8 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         this.defaultWriter = defaultWriter;
         this.clusterEventListener = clusterEventListener;
         this.eventExecutors = eventExecutors;
+
+        this.defaultWriterFuture = CompletableFuture.completedFuture(defaultWriter);
     }
 
     @Override
@@ -119,34 +124,47 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             }
         }
 
-        RedisChannelWriter<K, V> channelWriter = null;
+        CompletableFuture<RedisChannelWriter<K, V>> channelWriter = defaultWriterFuture;
 
         if (args != null && args.getFirstEncodedKey() != null) {
             int hash = getSlot(args.getFirstEncodedKey());
             ClusterConnectionProvider.Intent intent = getIntent(command.getType());
 
-            RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider.getConnection(intent,
-                    hash);
-
-            channelWriter = connection.getChannelWriter();
+            channelWriter = ((AsyncClusterConnectionProvider) clusterConnectionProvider)
+                    .<K, V> getConnectionAsync(intent, hash).thenApply(o -> (RedisChannelHandler<K, V>) o)
+                    .thenApply(RedisChannelHandler::getChannelWriter);
         }
 
-        if (channelWriter instanceof ClusterDistributionChannelWriter) {
-            ClusterDistributionChannelWriter<K, V> writer = (ClusterDistributionChannelWriter<K, V>) channelWriter;
-            channelWriter = writer.defaultWriter;
-        }
+        RedisCommand<K, V, T> fnCommandToSend = commandToSend;
 
-        if (command.getOutput() != null) {
-            commandToSend.getOutput().setError((String) null);
-        }
+        channelWriter.thenApply(writer -> {
 
-        if (channelWriter != null && channelWriter != this && channelWriter != defaultWriter) {
-            return channelWriter.write((C) commandToSend);
-        }
+            if (writer instanceof ClusterDistributionChannelWriter) {
+                return ((ClusterDistributionChannelWriter<K, V>) writer).defaultWriter;
+            }
 
-        defaultWriter.write((C) commandToSend);
+            return writer;
+        }).handle((writer, throwable) -> {
 
-        return command;
+            if (throwable != null) {
+
+                fnCommandToSend.completeExceptionally(throwable);
+                return null;
+            }
+
+            try {
+                if (command.getOutput() != null) {
+                    fnCommandToSend.getOutput().setError((String) null);
+                }
+                writer.write((C) fnCommandToSend);
+            } catch (Exception e) {
+                fnCommandToSend.completeExceptionally(e);
+            }
+
+            return null;
+        });
+
+        return (C) commandToSend;
     }
 
     private ClusterConnectionProvider.Intent getIntent(ProtocolKeyword type) {

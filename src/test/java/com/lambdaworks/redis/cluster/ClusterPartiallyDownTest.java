@@ -95,7 +95,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
         try {
             connection.sync().get(key_10439);
             fail("Missing RedisException");
-        } catch (RedisConnectionException e) {
+        } catch (RedisException e) {
             assertThat(e).hasRootCauseInstanceOf(ConnectException.class);
         }
 

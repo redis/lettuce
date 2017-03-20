@@ -185,7 +185,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         String key = mset.keySet().iterator().next();
         Map<String, String> submap = Collections.singletonMap(key, mset.get(key));
-        
+
         assertThat(commands.msetnx(submap).get()).isTrue();
         assertThat(commands.msetnx(mset).get()).isFalse();
 
@@ -621,7 +621,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         syncCommands.set(KEY_ON_NODE_1, value);
         syncCommands.set(KEY_ON_NODE_2, value);
     }
-    
+
     protected Map<String, String> prepareMset() {
         Map<String, String> mset = new HashMap<>();
         for (char c = 'a'; c < 'z'; c++) {

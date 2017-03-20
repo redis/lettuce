@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.lambdaworks.redis;
 
+import java.net.SocketAddress;
+
 /**
  * Exception for connection failures.
- * 
+ *
  * @author Mark Paluch
  */
 @SuppressWarnings("serial")
@@ -31,4 +33,15 @@ public class RedisConnectionException extends RedisException {
         super(msg, e);
     }
 
+    /**
+     * Create a new {@link RedisConnectionException} given {@link SocketAddress} and the {@link Throwable cause}.
+     *
+     * @param remoteAddress
+     * @param cause
+     * @return
+     * @since 4.4
+     */
+    public static RedisConnectionException create(SocketAddress remoteAddress, Throwable cause) {
+        return new RedisConnectionException(String.format("Unable to connect to %s", remoteAddress), cause);
+    }
 }

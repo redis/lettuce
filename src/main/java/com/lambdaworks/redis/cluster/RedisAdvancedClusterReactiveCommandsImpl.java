@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,27 @@ import static com.lambdaworks.redis.cluster.ClusterScanSupport.reactiveClusterSt
 import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.lambdaworks.redis.internal.LettuceLists;
 import rx.Observable;
+import rx.Single;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisKeyReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisScriptingReactiveCommands;
 import com.lambdaworks.redis.api.rx.RedisServerReactiveCommands;
 import com.lambdaworks.redis.api.rx.Success;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
+import com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent;
 import com.lambdaworks.redis.cluster.api.rx.RedisAdvancedClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
@@ -203,52 +206,57 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Observable<Boolean> msetnx(Map<K, V> map) {
 
-        return pipeliningWithMap(map, kvMap -> super.msetnx(kvMap),
+        return pipeliningWithMap(map, super::msetnx,
                 booleanObservable -> booleanObservable.reduce((accu, next) -> accu && next));
     }
 
     @Override
     public Observable<String> mset(Map<K, V> map) {
-        return pipeliningWithMap(map, kvMap -> super.mset(kvMap), Observable::last);
+        return pipeliningWithMap(map, super::mset, Observable::last);
     }
 
     @Override
     public Observable<K> clusterGetKeysInSlot(int slot, int count) {
-        RedisClusterReactiveCommands<K, V> connectionBySlot = findConnectionBySlot(slot);
 
-        if (connectionBySlot != null) {
-            return connectionBySlot.clusterGetKeysInSlot(slot, count);
-        }
+        Single<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
 
-        return super.clusterGetKeysInSlot(slot, count);
+        return connectionBySlot.flatMapObservable(conn -> conn.clusterGetKeysInSlot(slot, count));
     }
 
     @Override
     public Observable<Long> clusterCountKeysInSlot(int slot) {
-        RedisClusterReactiveCommands<K, V> connectionBySlot = findConnectionBySlot(slot);
 
-        if (connectionBySlot != null) {
-            return connectionBySlot.clusterCountKeysInSlot(slot);
-        }
+        Single<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
 
-        return super.clusterCountKeysInSlot(slot);
+        return connectionBySlot.flatMapObservable(cmd -> cmd.clusterCountKeysInSlot(slot));
     }
 
     @Override
     public Observable<String> clientSetname(K name) {
+
         List<Observable<String>> observables = new ArrayList<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
-            RedisClusterReactiveCommands<K, V> byNodeId = getConnection(redisClusterNode.getNodeId());
-            if (byNodeId.isOpen()) {
-                observables.add(byNodeId.clientSetname(name));
-            }
+            Single<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
 
-            RedisClusterReactiveCommands<K, V> byHost = getConnection(redisClusterNode.getUri().getHost(), redisClusterNode
-                    .getUri().getPort());
-            if (byHost.isOpen()) {
-                observables.add(byHost.clientSetname(name));
-            }
+            observables.add(byNodeId.flatMapObservable(conn -> {
+
+                if (conn.isOpen()) {
+                    return conn.clientSetname(name);
+                }
+                return Observable.empty();
+            }));
+
+            Single<RedisClusterReactiveCommands<K, V>> byHost = getConnectionReactive(redisClusterNode.getUri().getHost(),
+                    redisClusterNode.getUri().getPort());
+
+            observables.add(byHost.flatMapObservable(conn -> {
+
+                if (conn.isOpen()) {
+                    return conn.clientSetname(name);
+                }
+                return Observable.empty();
+            }));
         }
 
         return Observable.merge(observables).last();
@@ -290,8 +298,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         Partitions partitions = getStatefulConnection().getPartitions();
         int index = random.nextInt(partitions.size());
 
-        RedisClusterReactiveCommands<K, V> connection = getConnection(partitions.getPartition(index).getNodeId());
-        return connection.randomkey();
+        Single<RedisClusterReactiveCommands<K, V>> connection = getConnectionReactive(partitions.getPartition(index)
+                .getNodeId());
+        return connection.flatMapObservable(RedisKeyReactiveCommands::randomkey);
     }
 
     @Override
@@ -340,7 +349,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Run a command on all available masters,
-     * 
+     *
      * @param function function producing the command
      * @param <T> result type
      * @return map of a key (counter) and commands.
@@ -352,7 +361,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Run a command on all available nodes that match {@code filter}.
-     * 
+     *
      * @param function function producing the command
      * @param filter filter function for the node selection
      * @param <T> result type
@@ -360,6 +369,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      */
     protected <T> Map<String, Observable<T>> executeOnNodes(
             Function<RedisClusterReactiveCommands<K, V>, Observable<T>> function, Function<RedisClusterNode, Boolean> filter) {
+
         Map<String, Observable<T>> executions = new HashMap<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
@@ -369,26 +379,26 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             }
 
             RedisURI uri = redisClusterNode.getUri();
-            RedisClusterReactiveCommands<K, V> connection = getConnection(uri.getHost(), uri.getPort());
-            if (connection.isOpen()) {
-                executions.put(redisClusterNode.getNodeId(), function.apply(connection));
-            }
+            Single<RedisClusterReactiveCommands<K, V>> connection = getConnectionReactive(uri.getHost(), uri.getPort());
+
+            executions.put(redisClusterNode.getNodeId(), connection.flatMapObservable(function::apply));
         }
         return executions;
     }
 
-    private RedisClusterReactiveCommands<K, V> findConnectionBySlot(int slot) {
+    private Single<RedisClusterReactiveCommands<K, V>> findConnectionBySlotReactive(int slot) {
+
         RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
         if (node != null) {
-            return getConnection(node.getUri().getHost(), node.getUri().getPort());
+            return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort());
         }
 
-        return null;
+        return Single.error(new RedisException("No partition for slot " + slot));
     }
 
     @Override
-    public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
-        return (StatefulRedisClusterConnection<K, V>) connection;
+    public StatefulRedisClusterConnectionImpl<K, V> getStatefulConnection() {
+        return (StatefulRedisClusterConnectionImpl<K, V>) connection;
     }
 
     @Override
@@ -396,9 +406,24 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return getStatefulConnection().getConnection(nodeId).reactive();
     }
 
+    private Single<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String nodeId) {
+        return getSingle(getConnectionProvider().<K, V> getConnectionAsync(Intent.WRITE, nodeId)).map(
+                StatefulRedisConnection::reactive);
+    }
+
     @Override
     public RedisClusterReactiveCommands<K, V> getConnection(String host, int port) {
         return getStatefulConnection().getConnection(host, port).reactive();
+    }
+
+    private Single<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String host, int port) {
+        return getSingle(getConnectionProvider().<K, V> getConnectionAsync(Intent.WRITE, host, port)).map(
+                StatefulRedisConnection::reactive);
+    }
+
+    private AsyncClusterConnectionProvider getConnectionProvider() {
+        return (AsyncClusterConnectionProvider) getStatefulConnection().getClusterDistributionChannelWriter()
+                .getClusterConnectionProvider();
     }
 
     @Override
@@ -420,7 +445,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Observable<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor), reactiveClusterKeyScanCursorMapper());
+        return clusterScan(scanCursor, RedisKeyReactiveCommands::scan, reactiveClusterKeyScanCursorMapper());
     }
 
     @Override
@@ -447,6 +472,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
                 reactiveClusterStreamScanCursorMapper());
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends ScanCursor> Observable<T> clusterScan(ScanCursor cursor,
             BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Observable<T>> scanFunction,
             ClusterScanSupport.ScanCursorMapper<Observable<T>> resultMapper) {
@@ -456,9 +482,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Perform a SCAN in the cluster.
-     * 
+     *
      */
-    static <T extends ScanCursor, K, V> Observable<T> clusterScan(StatefulRedisClusterConnection<K, V> connection,
+    static <T extends ScanCursor, K, V> Observable<T> clusterScan(StatefulRedisClusterConnectionImpl<K, V> connection,
             ScanCursor cursor, BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Observable<T>> scanFunction,
             ClusterScanSupport.ScanCursorMapper<Observable<T>> mapper) {
 
@@ -466,7 +492,11 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         String currentNodeId = ClusterScanSupport.getCurrentNodeId(cursor, nodeIds);
         ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
 
-        Observable<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).reactive(), continuationCursor);
+        AsyncClusterConnectionProvider connectionProvider = (AsyncClusterConnectionProvider) connection
+                .getClusterDistributionChannelWriter().getClusterConnectionProvider();
+
+        Observable<T> scanCursor = getSingle(connectionProvider.<K, V> getConnectionAsync(Intent.WRITE, currentNodeId))
+                .flatMapObservable(conn -> scanFunction.apply(conn.reactive(), continuationCursor));
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
 
@@ -492,8 +522,22 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         @Override
         public Observable<T> call(Observable<Iterable<T>> source) {
-            return source.flatMap(values -> Observable.from(values));
+            return source.flatMap(Observable::from);
         }
     }
 
+    private static <T> Single<T> getSingle(CompletableFuture<T> future) {
+
+        return Single.create(singleSubscriber -> {
+
+            future.whenComplete((connection, throwable) -> {
+
+                if (throwable != null) {
+                    singleSubscriber.onError(throwable);
+                } else {
+                    singleSubscriber.onSuccess(connection);
+                }
+            });
+        });
+    }
 }

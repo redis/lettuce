@@ -19,13 +19,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.*;
 
-import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.Connections;
 import com.lambdaworks.Wait;
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.server.RandomResponseServer;
 
@@ -258,6 +258,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
         Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
         connection.close();
+        Thread.sleep(100);
 
         assertThat(connectionWatchdog.isReconnectSuspended()).isTrue();
         assertThat(connectionWatchdog.isListenOnChannelInactive()).isFalse();
