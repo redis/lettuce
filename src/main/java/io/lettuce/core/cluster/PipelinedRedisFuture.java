@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,10 @@ class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFutur
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
+    public PipelinedRedisFuture(CompletionStage<V> completionStage) {
+        this(completionStage, v -> v);
+    }
+
     public PipelinedRedisFuture(CompletionStage<V> completionStage, Function<V, V> converter) {
         completionStage.thenAccept(v -> complete(converter.apply(v)))
                 .exceptionally(throwable -> {
@@ -41,7 +45,7 @@ class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFutur
                 });
     }
 
-    public PipelinedRedisFuture(Map<?, ? extends RedisFuture<?>> executions, Function<PipelinedRedisFuture<V>, V> converter) {
+    public PipelinedRedisFuture(Map<?, ? extends CompletionStage<?>> executions, Function<PipelinedRedisFuture<V>, V> converter) {
 
         CompletableFuture.allOf(executions.values().toArray(new CompletableFuture<?>[executions.size()]))
                 .thenRun(() -> complete(converter.apply(this))).exceptionally(throwable -> {

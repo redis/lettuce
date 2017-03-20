@@ -30,7 +30,6 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -209,20 +208,18 @@ public abstract class AbstractRedisClient {
      */
     protected <T> T getConnection(ConnectionFuture<T> connectionFuture) {
 
-        String msg = String.format("Unable to connect to %s", connectionFuture.getRemoteAddress());
-
         try {
             return connectionFuture.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RedisConnectionException(msg, e);
+            throw RedisConnectionException.create(connectionFuture.getRemoteAddress(), e);
         } catch (Exception e) {
 
             if (e instanceof ExecutionException) {
-                throw new RedisConnectionException(msg, e.getCause());
+                throw RedisConnectionException.create(connectionFuture.getRemoteAddress(), e.getCause());
             }
 
-            throw new RedisConnectionException(msg, e);
+            throw RedisConnectionException.create(connectionFuture.getRemoteAddress(), e);
         }
     }
 

@@ -107,10 +107,6 @@ public class LettuceFutures {
                 throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
             }
 
-            if (e.getCause() instanceof RedisException) {
-                throw (RedisException) e.getCause();
-            }
-
             throw new RedisException(e.getCause());
         } catch (InterruptedException e) {
 

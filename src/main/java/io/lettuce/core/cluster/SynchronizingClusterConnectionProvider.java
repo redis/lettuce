@@ -16,7 +16,9 @@
 package io.lettuce.core.cluster;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.BiConsumer;
@@ -68,6 +70,30 @@ class SynchronizingClusterConnectionProvider<K, V> {
      * @throws CompletionException
      */
     public StatefulRedisConnection<K, V> getConnection(ConnectionKey key) {
+        return getConnectionSync(key).getConnection();
+    }
+
+    /**
+     * Obtain a {@link CompletableFuture}-wrapped connection to a cluster node given {@link ConnectionKey}.
+     *
+     * @param key the {@link ConnectionKey}.
+     * @return
+     * @throws RedisException if a {@link RedisException} occured
+     * @throws CompletionException
+     */
+    public CompletionStage<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionKey key) {
+        return getConnectionSync(key).getConnectionAsync();
+    }
+
+    /**
+     * Obtain a {@link StatefulRedisConnection} to a cluster node given {@link ConnectionKey}.
+     *
+     * @param key the {@link ConnectionKey}.
+     * @return
+     * @throws RedisException if a {@link RedisException} occured
+     * @throws CompletionException
+     */
+    private Sync<K, V> getConnectionSync(ConnectionKey key) {
 
         if (closed) {
             throw new IllegalStateException("AsyncClusterConnectionProvider is already closed");
@@ -85,7 +111,7 @@ class SynchronizingClusterConnectionProvider<K, V> {
             return createdSync;
         });
 
-        return sync.getConnection();
+        return sync;
     }
 
     /**
@@ -161,6 +187,8 @@ class SynchronizingClusterConnectionProvider<K, V> {
          */
         StatefulRedisConnection<K, V> getConnection();
 
+        CompletionStage<StatefulRedisConnection<K, V>> getConnectionAsync();
+
         /**
          * Apply a {@link Consumer} callback to the {@link StatefulConnection}.
          *
@@ -179,16 +207,23 @@ class SynchronizingClusterConnectionProvider<K, V> {
     static class Finished<K, V> implements Sync<K, V> {
 
         private final ConnectionKey key;
-        private StatefulRedisConnection<K, V> connection;
+        private final StatefulRedisConnection<K, V> connection;
+        private final CompletableFuture<StatefulRedisConnection<K, V>> future;
 
         public Finished(ConnectionKey key, StatefulRedisConnection<K, V> connection) {
             this.key = key;
             this.connection = connection;
+            this.future = CompletableFuture.completedFuture(connection);
         }
 
         @Override
         public StatefulRedisConnection<K, V> getConnection() {
             return connection;
+        }
+
+        @Override
+        public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync() {
+            return future;
         }
 
         @Override
@@ -226,24 +261,28 @@ class SynchronizingClusterConnectionProvider<K, V> {
             this.connections = connections;
         }
 
+        @Override
+        public CompletionStage<StatefulRedisConnection<K, V>> getConnectionAsync() {
+
+            return future.whenComplete((connection, throwable) -> {
+
+                if (REMOVE.compareAndSet(this, 0, ST_FINISHED)) {
+
+                    if (throwable == null) {
+                        connections.replace(key, this, new Finished<>(key, connection));
+                    } else {
+                        connections.remove(key);
+                    }
+                }
+            });
+        }
+
         public StatefulRedisConnection<K, V> getConnection() {
 
             try {
-                return future.whenComplete((connection, throwable) -> {
-
-                    if (REMOVE.compareAndSet(this, 0, ST_FINISHED)) {
-
-                        if (throwable == null) {
-                            connections.replace(key, this, new Finished<>(key, connection));
-                        } else {
-                            connections.remove(key);
-                        }
-                    }
-
-                }).join();
+                return getConnectionAsync().toCompletableFuture().join();
             } catch (CompletionException e) {
-                String msg = String.format("Unable to connect to %s", future.getRemoteAddress());
-                throw new RedisConnectionException(msg, e.getCause());
+                throw RedisConnectionException.create(future.getRemoteAddress(), e.getCause());
             }
         }
 

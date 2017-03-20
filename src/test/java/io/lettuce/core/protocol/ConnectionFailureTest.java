@@ -84,7 +84,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
         try {
             RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection.getStatefulConnection());
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
+                    .getConnectionWatchdog(connection.getStatefulConnection());
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
             assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
@@ -120,8 +121,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     @Test(timeout = 120000)
     public void pingBeforeConnectFailOnReconnectShouldSendEvents() throws Exception {
 
-        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true)
-                .suspendReconnectOnProtocolFailure(false).build());
+        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).suspendReconnectOnProtocolFailure(false)
+                .build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -133,7 +134,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
             final BlockingQueue<ConnectionEvents.Reconnect> events = new LinkedBlockingDeque<>();
 
             RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection.getStatefulConnection());
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
+                    .getConnectionWatchdog(connection.getStatefulConnection());
 
             ReconnectionListener reconnectionListener = new ReconnectionListener() {
                 @Override
@@ -172,17 +174,18 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
     @Test(timeout = 10000)
     public void cancelCommandsOnReconnectFailure() throws Exception {
 
-        client.setOptions(
-                ClientOptions.builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true).build());
+        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true)
+                .build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
         RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
 
         try {
-            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
-                    .connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection.getStatefulConnection());
+            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client.connect(
+                    redisUri).async();
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
+                    .getConnectionWatchdog(connection.getStatefulConnection());
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
 
@@ -239,8 +242,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
         client.setOptions(ClientOptions.create());
 
-        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port())
-                .withTimeout(10, TimeUnit.MINUTES).build();
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).withTimeout(10, TimeUnit.MINUTES)
+                .build();
 
         StatefulRedisConnection<String, String> connection = client.connect(redisUri);
 
@@ -257,6 +260,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
         Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
         connection.close();
+        Thread.sleep(100);
 
         assertThat(connectionWatchdog.isReconnectSuspended()).isTrue();
         assertThat(connectionWatchdog.isListenOnChannelInactive()).isFalse();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,15 @@
  */
 package io.lettuce.core.cluster;
 
-import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
 
 import io.lettuce.core.RedisCommandInterruptedException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisFuture;
-import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.cluster.api.NodeSelectionSupport;
-import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.cluster.api.sync.NodeSelection;
-import io.lettuce.core.cluster.api.sync.NodeSelectionCommands;
-import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 
 /**
  * Utility to perform and synchronize command executions on multiple cluster nodes.
@@ -54,11 +46,12 @@ class MultiNodeExecution {
      * @param executions mapping of a key to the future
      * @return future producing an aggregation result
      */
-    protected static RedisFuture<Long> aggregateAsync(Map<?, RedisFuture<Long>> executions) {
+    protected static RedisFuture<Long> aggregateAsync(Map<?, ? extends CompletionStage<Long>> executions) {
+
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             AtomicLong result = new AtomicLong();
-            for (RedisFuture<Long> future : executions.values()) {
-                Long value = execute(() -> future.get());
+            for (CompletionStage<Long> future : executions.values()) {
+                Long value = execute(() -> future.toCompletableFuture().get());
                 if (value != null) {
                     result.getAndAdd(value);
                 }
@@ -75,14 +68,15 @@ class MultiNodeExecution {
      * @param <T> result type
      * @return future returning the first result.
      */
-    protected static <T> RedisFuture<T> firstOfAsync(Map<?, RedisFuture<T>> executions) {
+    protected static <T> RedisFuture<T> firstOfAsync(Map<?, ? extends CompletionStage<T>> executions) {
+
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             // make sure, that all futures are executed before returning the result.
-                for (RedisFuture<T> future : executions.values()) {
-                    execute(() -> future.get());
+                for (CompletionStage<T> future : executions.values()) {
+                    execute(() -> future.toCompletableFuture().get());
                 }
-                for (RedisFuture<T> future : executions.values()) {
-                    return execute(() -> future.get());
+                for (CompletionStage<T> future : executions.values()) {
+                    return execute(() -> future.toCompletableFuture().get());
                 }
                 return null;
             });
@@ -94,12 +88,13 @@ class MultiNodeExecution {
      * @param executions mapping of a key to the future
      * @return future returning the first result.
      */
-    protected static RedisFuture<String> alwaysOkOfAsync(Map<?, RedisFuture<String>> executions) {
+    protected static RedisFuture<String> alwaysOkOfAsync(Map<?, ? extends CompletionStage<String>> executions) {
+
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             // make sure, that all futures are executed before returning the result.
-                for (RedisFuture<String> future : executions.values()) {
+                for (CompletionStage<String> future : executions.values()) {
                     try {
-                        future.get();
+                        future.toCompletableFuture().get();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         throw new RedisCommandInterruptedException(e);
@@ -108,6 +103,7 @@ class MultiNodeExecution {
             }
         }
         return "OK";
+
     }   );
     }
 }
