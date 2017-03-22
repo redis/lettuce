@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <name>lettuce</name>
-    <url>http://github.com/mp911de/lettuce/wiki</url>
+    <url>https://github.com/lettuce-io/lettuce-core/wiki</url>
     <description>Advanced and thread-safe Java Redis client for synchronous, asynchronous, and
         reactive usage. Supports Cluster, Sentinel, Pipelining, Auto-Reconnect, Codecs
         and much more.
@@ -30,12 +30,12 @@
 
     <ciManagement>
         <system>Travis CI</system>
-        <url>https://travis-ci.org/mp911de/lettuce</url>
+        <url>https://travis-ci.org/lettuce-io/lettuce-core</url>
     </ciManagement>
 
     <issueManagement>
         <system>Github</system>
-        <url>https://github.com/mp911de/lettuce/issues</url>
+        <url>https://github.com/lettuce-io/lettuce-core/issues</url>
     </issueManagement>
 
     <developers>
@@ -64,9 +64,9 @@
     </properties>
 
     <scm>
-        <connection>scm:git:https://github.com/mp911de/lettuce.git</connection>
-        <developerConnection>scm:git:https://github.com/mp911de/lettuce.git</developerConnection>
-        <url>http://github.com/mp911de/lettuce</url>
+        <connection>scm:git:https://github.com/lettuce-io/lettuce-core.git</connection>
+        <developerConnection>scm:git:https://github.com/lettuce-io/lettuce-core.git</developerConnection>
+        <url>http://github.com/lettuce-io/lettuce-core</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -655,20 +655,6 @@
                         <version>1.9</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-publish-plugin</artifactId>
-                <version>1.1</version>
-                <configuration>
-                    <scmBranch>gh-pages</scmBranch>
-                    <content>${project.build.directory}/site</content>
-                    <skipCheckin>${github.site.upload.skip}</skipCheckin>
-                    <skipDeletedFiles>true</skipDeletedFiles>
-                    <pubScmUrl>scm:git:ssh://git@github.com/mp911de/redis.paluch.biz.git</pubScmUrl>
-                    <excludes>apidocs/**</excludes>
-                </configuration>
             </plugin>
 
             <plugin>
