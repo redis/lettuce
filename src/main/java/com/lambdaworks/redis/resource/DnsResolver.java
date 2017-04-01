@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.net.UnknownHostException;
 
 /**
  * Users may implement this interface to override the normal DNS lookup offered by the OS.
- * 
+ *
  * @author Mark Paluch
  * @since 4.2
  */
@@ -28,9 +28,11 @@ public interface DnsResolver {
 
     /**
      * Returns the IP address for the specified host name.
-     * 
+     *
      * @param host the hostname, must not be empty or {@literal null}.
-     * @return array of one or more {@link InetAddress adresses}
+     * @return array of one or more {@link InetAddress adresses}. An empty array indicates that DNS resolution is not supported
+     *         by this {@link DnsResolver} and should happen by netty, see
+     *         {@link java.net.InetSocketAddress#createUnresolved(String, int)}.
      * @throws UnknownHostException if the given host is not recognized or the associated IP address cannot be used to build an
      *         {@link InetAddress} instance
      */

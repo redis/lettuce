@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,14 @@ import com.lambdaworks.redis.RedisURI;
 
 /**
  * Resolves a {@link com.lambdaworks.redis.RedisURI} to a {@link java.net.SocketAddress}.
- * 
+ *
  * @author Mark Paluch
  */
 public class SocketAddressResolver {
 
     /**
      * Resolves a {@link com.lambdaworks.redis.RedisURI} to a {@link java.net.SocketAddress}.
-     * 
+     *
      * @param redisURI must not be {@literal null}
      * @param dnsResolver must not be {@literal null}
      * @return the resolved {@link SocketAddress}
@@ -43,8 +43,13 @@ public class SocketAddressResolver {
         }
 
         try {
-            InetAddress inetAddress = dnsResolver.resolve(redisURI.getHost())[0];
-            return new InetSocketAddress(inetAddress, redisURI.getPort());
+            InetAddress[] inetAddress = dnsResolver.resolve(redisURI.getHost());
+
+            if (inetAddress.length == 0) {
+                return InetSocketAddress.createUnresolved(redisURI.getHost(), redisURI.getPort());
+            }
+
+            return new InetSocketAddress(inetAddress[0], redisURI.getPort());
         } catch (UnknownHostException e) {
             return redisURI.getResolvedAddress();
         }
