@@ -36,6 +36,7 @@ import com.lambdaworks.redis.resource.Delay.StatefulDelay;
 
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
+import io.netty.util.Version;
 import io.netty.util.concurrent.*;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
@@ -86,6 +87,8 @@ public class DefaultClientResources implements ClientResources {
      */
     public static final Supplier<Delay> DEFAULT_RECONNECT_DELAY = Delay::exponential;
 
+    private static final boolean NETTY_DNS_RESOLVER_SUPPORTED;
+
     static {
         int threads = Math.max(
                 1,
@@ -97,6 +100,9 @@ public class DefaultClientResources implements ClientResources {
         if (logger.isDebugEnabled()) {
             logger.debug("-Dio.netty.eventLoopThreads: {}", threads);
         }
+
+        Version version = Version.identify().get("netty-common");
+        NETTY_DNS_RESOLVER_SUPPORTED = version != null && version.artifactVersion().startsWith("4.1");
     }
 
     private final boolean sharedEventLoopGroupProvider;
@@ -194,7 +200,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         if (builder.dnsResolver == null) {
-            dnsResolver = DnsResolvers.JVM_DEFAULT;
+            dnsResolver = NETTY_DNS_RESOLVER_SUPPORTED ? DnsResolvers.UNRESOLVED : DnsResolvers.JVM_DEFAULT;
         } else {
             dnsResolver = builder.dnsResolver;
         }
@@ -234,7 +240,7 @@ public class DefaultClientResources implements ClientResources {
         private CommandLatencyCollectorOptions commandLatencyCollectorOptions = DefaultCommandLatencyCollectorOptions.create();
         private CommandLatencyCollector commandLatencyCollector;
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
-        private DnsResolver dnsResolver = DnsResolvers.JVM_DEFAULT;
+        private DnsResolver dnsResolver = NETTY_DNS_RESOLVER_SUPPORTED ? DnsResolvers.UNRESOLVED : DnsResolvers.JVM_DEFAULT;
         private Supplier<Delay> reconnectDelay = DEFAULT_RECONNECT_DELAY;
 
         /**
