@@ -16,8 +16,8 @@
 package org.mybatis.spring.type;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.mybatis.logging.Logger;
+import org.mybatis.logging.LoggerFactory;
 import org.mybatis.spring.mapper.MapperFactoryBean;
 
 import java.lang.reflect.Proxy;
@@ -33,7 +33,7 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
     super(mapperInterface);
   }
 
-  private static final Logger LOGGER = LogManager.getLogger(DummyMapperFactoryBean.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DummyMapperFactoryBean.class);
 
   private static final AtomicInteger mapperInstanceCount = new AtomicInteger(0);
 
@@ -42,7 +42,7 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
     super.checkDaoConfig();
     // make something more
     if (isAddToConfig()) {
-      LOGGER.debug("register mapper for interface : " + getMapperInterface());
+      LOGGER.debug(() -> "register mapper for interface : " + getMapperInterface());
     }
   }
 

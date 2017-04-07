@@ -22,9 +22,9 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.transaction.Transaction;
+import org.mybatis.logging.Logger;
+import org.mybatis.logging.LoggerFactory;
 import org.springframework.jdbc.datasource.ConnectionHolder;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -44,7 +44,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  */
 public class SpringManagedTransaction implements Transaction {
 
-  private static final Log LOGGER = LogFactory.getLog(SpringManagedTransaction.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SpringManagedTransaction.class);
 
   private final DataSource dataSource;
 
@@ -83,14 +83,12 @@ public class SpringManagedTransaction implements Transaction {
     this.autoCommit = this.connection.getAutoCommit();
     this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.connection, this.dataSource);
 
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug(
-          "JDBC Connection ["
-              + this.connection
-              + "] will"
-              + (this.isConnectionTransactional ? " " : " not ")
-              + "be managed by Spring");
-    }
+    LOGGER.debug(() ->
+        "JDBC Connection ["
+            + this.connection
+            + "] will"
+            + (this.isConnectionTransactional ? " " : " not ")
+            + "be managed by Spring");
   }
 
   /**
@@ -99,9 +97,7 @@ public class SpringManagedTransaction implements Transaction {
   @Override
   public void commit() throws SQLException {
     if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Committing JDBC Connection [" + this.connection + "]");
-      }
+      LOGGER.debug(() -> "Committing JDBC Connection [" + this.connection + "]");
       this.connection.commit();
     }
   }
@@ -112,9 +108,7 @@ public class SpringManagedTransaction implements Transaction {
   @Override
   public void rollback() throws SQLException {
     if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Rolling back JDBC Connection [" + this.connection + "]");
-      }
+      LOGGER.debug(() -> "Rolling back JDBC Connection [" + this.connection + "]");
       this.connection.rollback();
     }
   }
