@@ -99,9 +99,20 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
     scanner.setSqlSessionFactoryBeanName(annoAttrs.getString("sqlSessionFactoryRef"));
 
     List<String> basePackages = new ArrayList<>();
-    basePackages.addAll(Arrays.stream(annoAttrs.getStringArray("value")).filter(StringUtils::hasText).collect(Collectors.toList()));
-    basePackages.addAll(Arrays.stream(annoAttrs.getStringArray("basePackages")).filter(StringUtils::hasText).collect(Collectors.toList()));
-    basePackages.addAll(Arrays.stream(annoAttrs.getClassArray("basePackageClasses")).map(ClassUtils::getPackageName).collect(Collectors.toList()));
+    basePackages.addAll(
+        Arrays.stream(annoAttrs.getStringArray("value"))
+            .filter(StringUtils::hasText)
+            .collect(Collectors.toList()));
+
+    basePackages.addAll(
+        Arrays.stream(annoAttrs.getStringArray("basePackages"))
+            .filter(StringUtils::hasText)
+            .collect(Collectors.toList()));
+
+    basePackages.addAll(
+        Arrays.stream(annoAttrs.getClassArray("basePackageClasses"))
+            .map(ClassUtils::getPackageName)
+            .collect(Collectors.toList()));
 
     scanner.registerFilters();
     scanner.doScan(StringUtils.toStringArray(basePackages));

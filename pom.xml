@@ -23,7 +23,7 @@
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
     <version>28</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <artifactId>mybatis-spring</artifactId>
@@ -39,7 +39,7 @@
       <name>Alex Rykov</name>
       <email>Alex.Rykov@gmail.com</email>
     </contributor>
-  
+
     <contributor>
       <name>Andrius Juozapaitis</name>
       <email>andriusj@gmail.com</email>
@@ -225,12 +225,12 @@
       <scope>test</scope>
       <exclusions>
         <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
         </exclusion>
         <exclusion>
-            <groupId>com.kirkk</groupId>
-            <artifactId>jaranalyzer</artifactId>
+          <groupId>com.kirkk</groupId>
+          <artifactId>jaranalyzer</artifactId>
         </exclusion>
         <exclusion>
           <groupId>jdom</groupId>
