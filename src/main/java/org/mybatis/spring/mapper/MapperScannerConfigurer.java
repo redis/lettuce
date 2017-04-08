@@ -68,7 +68,7 @@ import org.springframework.util.StringUtils;
  * <p>
  * Passing in an actual object which may require placeholders (i.e. DB user password) will fail. 
  * Using bean names defers actual object creation until later in the startup
- * process, after all placeholder substituation is completed. However, note that this configurer
+ * process, after all placeholder substitution is completed. However, note that this configurer
  * does support property placeholders of its <em>own</em> properties. The <code>basePackage</code>
  * and bean name properties all support <code>${property}</code> style substitution.
  * <p>

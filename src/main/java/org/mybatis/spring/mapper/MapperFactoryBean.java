@@ -138,7 +138,7 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
    * If it is true, the mapper will be added to MyBatis in the case it is not already
    * registered.
    * <p/>
-   * By default addToCofig is true.
+   * By default addToConfig is true.
    *
    * @param addToConfig
    */

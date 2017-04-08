@@ -111,7 +111,7 @@ public final class SqlSessionUtils {
    * 
    * @param sessionFactory sqlSessionFactory used for registration.
    * @param executorType executorType used for registration.
-   * @param exceptionTranslator persistenceExceptionTranslater used for registration.
+   * @param exceptionTranslator persistenceExceptionTranslator used for registration.
    * @param session sqlSession used for registration.
    */
   private static void registerSessionHolder(SqlSessionFactory sessionFactory, ExecutorType executorType,
@@ -139,6 +139,7 @@ public final class SqlSessionUtils {
     } else {
       LOGGER.debug(() -> "SqlSession [" + session + "] was not registered for synchronization because synchronization is not active");
     }
+
 }
 
   private static SqlSession sessionHolder(ExecutorType executorType, SqlSessionHolder holder) {
