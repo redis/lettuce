@@ -18,9 +18,7 @@ package org.mybatis.spring.batch;
 import static org.springframework.util.Assert.isTrue;
 import static org.springframework.util.Assert.notNull;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.ExecutorType;
@@ -137,13 +135,13 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
 
         int[] updateCounts = results.get(0).getUpdateCounts();
 
-        IntStream.of(updateCounts)
-            .filter(i -> updateCounts[i] == 0)
-            .findAny()
-            .ifPresent(i -> {
-              throw new EmptyResultDataAccessException("Item " + i + " of " + updateCounts.length
-                  + " did not update any rows: [" + items.get(i) + "]", 1);
-            });
+        for (int i = 0; i < updateCounts.length; i++) {
+          int value = updateCounts[i];
+          if (value == 0) {
+            throw new EmptyResultDataAccessException("Item " + i + " of " + updateCounts.length
+                + " did not update any rows: [" + items.get(i) + "]", 1);
+          }
+        }
       }
     }
   }
