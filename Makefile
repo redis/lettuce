@@ -48,22 +48,22 @@ endef
 
 define REDIS_CLUSTER_CONFIG_SSL_1
 27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7479@17479 myself,master - 0 1434887920102 1 connected 0-10000
-1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected 
-2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 master  - 0 0 2 connected 10001-16384 
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 master  - 0 0 2 connected 10001-16384
 vars currentEpoch 3 lastVoteEpoch 0
 endef
 
 define REDIS_CLUSTER_CONFIG_SSL_2
 27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7479@17479 master - 0 1434887920102 1 connected 0-10000
-1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 myself,slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected 
-2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 master  - 0 0 2 connected 10001-16384 
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 myself,slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 master  - 0 0 2 connected 10001-16384
 vars currentEpoch 3 lastVoteEpoch 0
 endef
 
 define REDIS_CLUSTER_CONFIG_SSL_3
 27f88788f03a86296b7d860152f4ae24ee59c8c9 127.0.0.1:7479@17479 master - 0 1434887920102 1 connected 0-10000
-1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected 
-2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 myself,master  - 0 0 2 connected 10001-16384 
+1c541b6daf98719769e6aacf338a7d81f108a180 127.0.0.1:7480@17480 slave 27f88788f03a86296b7d860152f4ae24ee59c8c9 0 1434887920102 3 connected
+2c07344ffa94ede5ea57a2367f190af6144c1adb 127.0.0.1:7481@17481 myself,master  - 0 0 2 connected 10001-16384
 vars currentEpoch 3 lastVoteEpoch 0
 endef
 
@@ -246,19 +246,19 @@ work/stunnel.conf:
 	@echo cert=$(ROOT_DIR)/work/localhost.pem >> $@
 	@echo capath=$(ROOT_DIR)/work/localhost.pem >> $@
 	@echo cafile=$(ROOT_DIR)/work/localhost.pem >> $@
-	
+
 	@echo [ssl-cluster-node-1] >> $@
 	@echo accept = 127.0.0.1:7443 >> $@
 	@echo connect = 127.0.0.1:7479 >> $@
-		
+
 	@echo [ssl-cluster-node-2] >> $@
 	@echo accept = 127.0.0.1:7444 >> $@
-	@echo connect = 127.0.0.1:7480 >> $@	
-	
+	@echo connect = 127.0.0.1:7480 >> $@
+
 	@echo [ssl-cluster-node-3] >> $@
 	@echo accept = 127.0.0.1:7445 >> $@
 	@echo connect = 127.0.0.1:7481 >> $@
-	
+
 
 work/stunnel.pid: work/stunnel.conf ssl-keys
 	which stunnel4 >/dev/null 2>&1 && stunnel4 $(ROOT_DIR)/work/stunnel.conf || stunnel $(ROOT_DIR)/work/stunnel.conf
@@ -326,6 +326,10 @@ stop:
 
 test-coveralls: start
 	mvn -B -DskipTests=false clean compile test jacoco:report coveralls:report -P$(PROFILE)
+	$(MAKE) stop
+
+test-coverage: start
+	mvn -B -DskipTests=false clean compile test jacoco:report -P$(PROFILE)
 	$(MAKE) stop
 
 test: start
