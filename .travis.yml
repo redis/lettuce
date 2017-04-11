@@ -1,24 +1,36 @@
 dist: trusty
+
 language: java
+
 jdk:
   - oraclejdk8
+
 env:
   matrix:
     - PROFILE=netty-40
     - PROFILE=netty-41
     - PROFILE=jmh
+
 sudo: false
+
 before_install:
   - if [[ ! -f stunnel.tar.gz ]]; then wget -O stunnel.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.33.tar.gz; fi
   - if [[ ! -f ./stunnel-5.33/configure ]]; then tar -xzf stunnel.tar.gz; fi
   - if [[ ! -f ./stunnel-5.33/src/stunnel ]]; then cd ./stunnel-5.33; ./configure; make; cd ..; fi
   - export PATH="$PATH:$(pwd)/stunnel-5.33/src"
+
 install: make prepare ssl-keys
-script: make test-coveralls PROFILE=${PROFILE}
+
+script: make test-coverage PROFILE=${PROFILE}
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
 cache:
   directories:
     - '$HOME/.m2/repository'
     - '$TRAVIS_BUILD_DIR/stunnel-5.33'
+
 notifications:
   webhooks:
     urls:
