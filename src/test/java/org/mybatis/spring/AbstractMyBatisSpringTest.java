@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.SQLException;
@@ -71,13 +71,13 @@ public abstract class AbstractMyBatisSpringTest {
   }
 
   protected void assertNoCommitJdbc() {
-    assertEquals(0, connection.getNumberCommits(), "should not call commit on Connection");
-    assertEquals(0, connection.getNumberRollbacks(), "should not call rollback on Connection");
+    assertThat(connection.getNumberCommits()).as("should not call commit on Connection").isEqualTo(0);
+    assertThat(connection.getNumberRollbacks()).as("should not call rollback on Connection").isEqualTo(0);
   }
 
   protected void assertNoCommitSession() {
-    assertEquals(0, executorInterceptor.getCommitCount(), "should not call commit on SqlSession");
-    assertEquals(0, executorInterceptor.getRollbackCount(), "should not call rollback on SqlSession");
+    assertThat(executorInterceptor.getCommitCount()).as("should not call commit on SqlSession").isEqualTo(0);
+    assertThat(executorInterceptor.getRollbackCount()).as("should not call rollback on SqlSession").isEqualTo(0);
   }
 
   protected void assertCommit() {
@@ -86,29 +86,29 @@ public abstract class AbstractMyBatisSpringTest {
   }
 
   protected void assertCommitJdbc() {
-    assertEquals(1, connection.getNumberCommits(), "should call commit on Connection");
-    assertEquals(0, connection.getNumberRollbacks(), "should not call rollback on Connection");
+    assertThat(connection.getNumberCommits()).as("should call commit on Connection").isEqualTo(1);
+    assertThat(connection.getNumberRollbacks()).as("should not call rollback on Connection").isEqualTo(0);
   }
 
   protected void assertCommitSession() {
-    assertEquals(1, executorInterceptor.getCommitCount(), "should call commit on SqlSession");
-    assertEquals(0, executorInterceptor.getRollbackCount(), "should not call rollback on SqlSession");
+    assertThat(executorInterceptor.getCommitCount()).as("should call commit on SqlSession").isEqualTo(1);
+    assertThat(executorInterceptor.getRollbackCount()).as("should not call rollback on SqlSession").isEqualTo(0);
   }
 
   protected void assertRollback() {
-    assertEquals(0, connection.getNumberCommits(), "should not call commit on Connection");
-    assertEquals(1, connection.getNumberRollbacks(), "should call rollback on Connection");
-    assertEquals(0, executorInterceptor.getCommitCount(), "should not call commit on SqlSession");
-    assertEquals(1, executorInterceptor.getRollbackCount(), "should call rollback on SqlSession");
+    assertThat(connection.getNumberCommits()).as("should not call commit on Connection").isEqualTo(0);
+    assertThat(connection.getNumberRollbacks()).as("should call rollback on Connection").isEqualTo(1);
+    assertThat(executorInterceptor.getCommitCount()).as("should not call commit on SqlSession").isEqualTo(0);
+    assertThat(executorInterceptor.getRollbackCount()).as("should call rollback on SqlSession").isEqualTo(1);
   }
 
   protected void assertSingleConnection() {
-    assertEquals(1, dataSource.getConnectionCount(), "should only call DataSource.getConnection() once");
+    assertThat(dataSource.getConnectionCount()).as("should only call DataSource.getConnection() once").isEqualTo(1);
   }
 
   protected void assertExecuteCount(int count) {
-    assertEquals(count, connection.getPreparedStatementResultSetHandler().getExecutedStatements().size(),
-        "should have executed " + count + " SQL statements");
+    assertThat(connection.getPreparedStatementResultSetHandler().getExecutedStatements().size()).as(
+        "should have executed %d SQL statements", count).isEqualTo(count);
   }
 
   protected void assertConnectionClosed(MockConnection connection) {

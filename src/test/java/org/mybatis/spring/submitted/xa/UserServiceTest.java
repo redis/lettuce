@@ -15,8 +15,7 @@
  */
 package org.mybatis.spring.submitted.xa;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import javax.transaction.UserTransaction;
 
@@ -39,7 +38,7 @@ public class UserServiceTest {
   public void testCommit() {
     User user = new User(1, "Pocoyo");
     userService.saveWithNoFailure(user);
-    assertTrue(userService.checkUserExists(user.getId()));
+    assertThat(userService.checkUserExists(user.getId())).isTrue();
   }
   
   @Test
@@ -50,7 +49,7 @@ public class UserServiceTest {
     } catch (RuntimeException ignore) {
       // ignored
     }
-    assertFalse(userService.checkUserExists(user.getId()));
+    assertThat(userService.checkUserExists(user.getId())).isFalse();
   }
 
   @Test
@@ -59,7 +58,7 @@ public class UserServiceTest {
     User user = new User(3, "Pocoyo");
     userService.saveWithNoFailure(user);
     userTransaction.commit();
-    assertTrue(userService.checkUserExists(user.getId()));
+    assertThat(userService.checkUserExists(user.getId())).isTrue();
   }
 
   // TODO when the outer JTA tx is rolledback, 
@@ -72,7 +71,7 @@ public class UserServiceTest {
     User user = new User(5, "Pocoyo");
     userService.saveWithNoFailure(user);
     userTransaction.rollback();
-    assertFalse(userService.checkUserExists(user.getId()));
+    assertThat(userService.checkUserExists(user.getId())).isFalse();
   }
   
 }

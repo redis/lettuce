@@ -18,7 +18,7 @@
  */
 package org.mybatis.spring.sample;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import javax.sql.DataSource;
 
@@ -105,7 +105,7 @@ public class SampleConfigurationTest {
   @Test
   public void test() {
     User user = fooService.doSomeBusinessStuff("u1");
-    assertEquals("Pocoyo", user.getName());
+    assertThat(user.getName()).isEqualTo("Pocoyo");
   }
 
 }

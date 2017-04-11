@@ -28,8 +28,8 @@ import org.springframework.transaction.support.TransactionSynchronization;
  * For use as ByteMan helper
  * 
  * @author Alex Rykov
- * 
  */
+@SuppressWarnings("unused")
 public class AsyncAfterCompletionHelper {
   /**
    * 
@@ -39,11 +39,11 @@ public class AsyncAfterCompletionHelper {
    * @author Alex Rykov
    * 
    */
-  static class AsynchAfterCompletionInvocationHandler implements InvocationHandler {
+  static class AsyncAfterCompletionInvocationHandler implements InvocationHandler {
 
     private Object target;
 
-    AsynchAfterCompletionInvocationHandler(Object target) {
+    AsyncAfterCompletionInvocationHandler(Object target) {
       this.target = target;
     }
 
@@ -87,14 +87,14 @@ public class AsyncAfterCompletionHelper {
   public TransactionSynchronization createSynchronizationWithAsyncAfterComplete(
       TransactionSynchronization synchronization) {
     if (Proxy.isProxyClass(synchronization.getClass())
-        && Proxy.getInvocationHandler(synchronization) instanceof AsynchAfterCompletionInvocationHandler) {
+        && Proxy.getInvocationHandler(synchronization) instanceof AsyncAfterCompletionInvocationHandler) {
       // avoiding double wrapping just in case
       return synchronization;
     }
     Class<?>[] interfaces = { TransactionSynchronization.class };
     return (TransactionSynchronization) Proxy.newProxyInstance(synchronization
         .getClass().getClassLoader(), interfaces,
-        new AsynchAfterCompletionInvocationHandler(synchronization));
+        new AsyncAfterCompletionInvocationHandler(synchronization));
 
   }
 

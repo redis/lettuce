@@ -15,8 +15,7 @@
  */
 package org.mybatis.spring.sample;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,8 +39,8 @@ public abstract class AbstractSampleTest {
   @Test
   public final void testFooService() {
     User user = this.fooService.doSomeBusinessStuff("u1");
-    assertNotNull(user);
-    assertEquals("Pocoyo", user.getName());
+    assertThat(user).isNotNull();
+    assertThat(user.getName()).isEqualTo("Pocoyo");
   }
 
 }

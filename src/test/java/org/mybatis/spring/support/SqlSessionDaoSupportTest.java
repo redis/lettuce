@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring.support;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.sql.SQLException;
@@ -52,7 +52,7 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
     sqlSessionDaoSupport.setSqlSessionTemplate(sessionTemplate);
     sqlSessionDaoSupport.afterPropertiesSet();
 
-    assertEquals(sessionTemplate, sqlSessionDaoSupport.getSqlSession(), "should store the Template");
+    assertThat(sqlSessionDaoSupport.getSqlSession()).as("should store the Template").isEqualTo(sessionTemplate);
   }
 
   @Test
@@ -60,8 +60,9 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
     sqlSessionDaoSupport.setSqlSessionFactory(sqlSessionFactory);
     sqlSessionDaoSupport.afterPropertiesSet();
 
-    assertEquals(sqlSessionFactory, ((SqlSessionTemplate) sqlSessionDaoSupport.getSqlSession()).getSqlSessionFactory(),
-        "should store the Factory");
+    assertThat(((SqlSessionTemplate) sqlSessionDaoSupport.getSqlSession()).getSqlSessionFactory())
+        .as("should store the Factory")
+        .isEqualTo(sqlSessionFactory);
   }
 
   @Test
@@ -71,7 +72,7 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
     sqlSessionDaoSupport.setSqlSessionFactory(sqlSessionFactory);
     sqlSessionDaoSupport.afterPropertiesSet();
 
-    assertEquals(sessionTemplate, sqlSessionDaoSupport.getSqlSession(), "should ignore the Factory");
+    assertThat(sqlSessionDaoSupport.getSqlSession()).as("should ignore the Factory").isEqualTo(sessionTemplate);
   }
 
   @Test

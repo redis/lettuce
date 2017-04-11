@@ -23,14 +23,14 @@
 
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xmlns:mybatis="http://mybatis.org/schema/mybatis-spring"
-     xsi:schemaLocation="
-     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-     http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring.xsd">
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mybatis="http://mybatis.org/schema/mybatis-spring"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring.xsd">
 
-    <!-- Scan for mappers and let them be autowired; notice there is no
-         UserDaoImplementation needed. The required SqlSessionFactory will be
-         autowired. -->
-    <mybatis:scan base-package="org.mybatis.spring.mapper" factory-ref="sqlSessionFactory" />
+  <!-- Scan for mappers and let them be autowired; notice there is no
+       UserDaoImplementation needed. The required SqlSessionFactory will be
+       autowired. -->
+  <mybatis:scan base-package="org.mybatis.spring.mapper" factory-ref="sqlSessionFactory"/>
 </beans>

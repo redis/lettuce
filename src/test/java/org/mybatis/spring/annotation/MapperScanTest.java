@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring.annotation;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -188,7 +188,9 @@ public final class MapperScanTest {
 
     startContext();
 
-    assertSame(Object.class, applicationContext.getBean("mapperInterface").getClass(), "scanner should not overwrite existing bean definition");
+    assertThat(applicationContext.getBean("mapperInterface").getClass())
+        .as("scanner should not overwrite existing bean definition")
+        .isSameAs(Object.class);
   }
 
   private void setupSqlSessionFactory(String name) {

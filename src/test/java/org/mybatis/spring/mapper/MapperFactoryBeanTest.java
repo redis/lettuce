@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring.mapper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -150,8 +150,8 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
       fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
     } catch (TransientDataAccessResourceException e) {
-      assertEquals("SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use" +
-          " Spring transaction synchronization", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("SqlSessionFactory must be using a SpringManagedTransactionFactory in order to use" +
+          " Spring transaction synchronization");
     } finally {
       // rollback required to close connection
       txManager.rollback(status);
@@ -173,7 +173,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
     SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
 
-    TransactionStatus status = null;
+    TransactionStatus status;
 
     try {
       status = txManager.getTransaction(new DefaultTransactionDefinition());
@@ -188,8 +188,8 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
       // SqlSessionTemplate uses its own connection
       MockConnection mockConnection = (MockConnection) mockDataSource.getConnection();
-      assertEquals(1, mockConnection.getNumberCommits(), "should call commit on Connection");
-      assertEquals(0, mockConnection.getNumberRollbacks(), "should not call rollback on Connection");
+      assertThat(mockConnection.getNumberCommits()).as("should call commit on Connection").isEqualTo(1);
+      assertThat(mockConnection.getNumberRollbacks()).as("should not call rollback on Connection").isEqualTo(0);
       assertCommitSession();
     } finally {
 

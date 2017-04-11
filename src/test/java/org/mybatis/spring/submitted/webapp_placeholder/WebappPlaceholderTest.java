@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring.submitted.webapp_placeholder;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +34,6 @@ public class WebappPlaceholderTest {
 
   @Test
   public void testName() throws Exception {
-    assertNotNull(mapper);
+    assertThat(mapper).isNotNull();
   }
 }

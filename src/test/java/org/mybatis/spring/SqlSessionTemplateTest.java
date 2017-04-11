@@ -15,9 +15,7 @@
  */
 package org.mybatis.spring;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -56,11 +54,11 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
 
   @Test
   public void testGetConnection() throws java.sql.SQLException {
-    java.sql.Connection con = sqlSessionTemplate.getConnection();
+    java.sql.Connection conn = sqlSessionTemplate.getConnection();
 
     // outside of an explicit tx, getConnection() will start a tx, get an open connection then
     // end the tx, which closes the connection
-    assertTrue(con.isClosed());
+    assertThat(conn.isClosed()).isTrue();
   }
 
   @Test
@@ -70,9 +68,9 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
     try {
       status = txManager.getTransaction(new DefaultTransactionDefinition());
 
-      java.sql.Connection con = sqlSessionTemplate.getConnection();
+      java.sql.Connection conn = sqlSessionTemplate.getConnection();
 
-      assertFalse(con.isClosed());
+      assertThat(conn.isClosed()).isFalse();
 
     } finally {
       // rollback required to close connection
@@ -98,7 +96,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   @Test
   public void testExecutorType() {
     SqlSessionTemplate template = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
-    assertEquals(ExecutorType.BATCH, template.getExecutorType());
+    assertThat(template.getExecutorType()).isEqualTo(ExecutorType.BATCH);
 
     DataSourceTransactionManager manager = new DataSourceTransactionManager(dataSource);
 
@@ -113,7 +111,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
       SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager
           .getResource(sqlSessionFactory);
 
-      assertEquals(ExecutorType.BATCH, holder.getExecutorType());
+      assertThat(holder.getExecutorType()).isEqualTo(ExecutorType.BATCH);
     } finally {
       // rollback required to close connection
       txManager.rollback(status);

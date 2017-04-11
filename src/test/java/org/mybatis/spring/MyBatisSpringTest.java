@@ -34,7 +34,9 @@ import com.mockrunner.mock.jdbc.MockConnection;
 import com.mockrunner.mock.jdbc.MockDataSource;
 import com.mockrunner.mock.jdbc.MockPreparedStatement;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
@@ -191,7 +193,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), mockDataSource);
     sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
 
-    TransactionStatus status = null;
+    TransactionStatus status;
 
     try {
       status = txManager.getTransaction(new DefaultTransactionDefinition());
@@ -207,10 +209,10 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
       assertSingleConnection();
 
       // SqlSession uses its own connection
-      // that connection will not have commited since no SQL was executed by the session
+      // that connection will not have committed since no SQL was executed by the session
       MockConnection mockConnection = (MockConnection) mockDataSource.getConnection();
-      assertEquals(0, mockConnection.getNumberCommits(), "should call commit on Connection");
-      assertEquals(0, mockConnection.getNumberRollbacks(), "should not call rollback on Connection");
+      assertThat(mockConnection.getNumberCommits()).as("should call commit on Connection").isEqualTo(0);
+      assertThat(mockConnection.getNumberRollbacks()).as("should not call rollback on Connection").isEqualTo(0);
       assertCommitSession();
     } finally {
       SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
@@ -325,10 +327,10 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
       assertCommitSession();
 
       MockConnection mockConnection = (MockConnection) mockDataSource.getConnection();
-      assertEquals(0, mockConnection.getNumberCommits(), "should call commit on Connection");
-      assertEquals(0, mockConnection.getNumberRollbacks(), "should not call rollback on Connection");
+      assertThat(mockConnection.getNumberCommits()).as("should call commit on Connection").isEqualTo(0);
+      assertThat(mockConnection.getNumberRollbacks()).as("should not call rollback on Connection").isEqualTo(0);
 
-      assertEquals(0, dataSource.getConnectionCount(), "should not call DataSource.getConnection()");
+      assertThat(dataSource.getConnectionCount()).as("should not call DataSource.getConnection()").isEqualTo(0);
 
     } finally {
       SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
@@ -413,10 +415,10 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
     // Connection should be committed once, but we explicitly called commit on the SqlSession,
     // so it should be committed twice
-    assertEquals(1, connection.getNumberCommits(), "should call commit on Connection");
-    assertEquals(0, connection.getNumberRollbacks(), "should not call rollback on Connection");
-    assertEquals(2, executorInterceptor.getCommitCount(), "should call commit on SqlSession");
-    assertEquals(0, executorInterceptor.getRollbackCount(), "should not call rollback on SqlSession");
+    assertThat(connection.getNumberCommits()).as("should call commit on Connection").isEqualTo(1);
+    assertThat(connection.getNumberRollbacks()).as("should not call rollback on Connection").isEqualTo(0);
+    assertThat(executorInterceptor.getCommitCount()).as("should call commit on SqlSession").isEqualTo(2);
+    assertThat(executorInterceptor.getRollbackCount()).as("should not call rollback on SqlSession").isEqualTo(0);
 
     assertSingleConnection();
   }
@@ -439,15 +441,15 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     // SpringManagedTransaction (from SqlSession.commit()) should not interfere with tx
     txManager.commit(status);
 
-    // two DB connections should have completed, each using their own Connection
-    assertEquals(2, dataSource.getConnectionCount(), "should call DataSource.getConnection() twice");
+    // two transactions should have completed, each using their own Connection
+    assertThat(dataSource.getConnectionCount()).as("should call DataSource.getConnection() twice").isEqualTo(2);
 
     // both connections should be committed
-    assertEquals(1, connection.getNumberCommits(), "should call commit on Connection 1");
-    assertEquals(0, connection.getNumberRollbacks(), "should not call rollback on Connection 1");
+    assertThat(connection.getNumberCommits()).as("should call commit on Connection 1").isEqualTo(1);
+    assertThat(connection.getNumberRollbacks()).as("should not call rollback on Connection 1").isEqualTo(0);
 
-    assertEquals(1, connectionTwo.getNumberCommits(), "should call commit on Connection 2");
-    assertEquals(0, connectionTwo.getNumberRollbacks(), "should not call rollback on Connection 2");
+    assertThat(connectionTwo.getNumberCommits()).as("should call commit on Connection 2").isEqualTo(1);
+    assertThat(connectionTwo.getNumberRollbacks()).as("should not call rollback on Connection 2").isEqualTo(0);
 
     // the SqlSession should have also committed and executed twice
     assertCommitSession();
@@ -473,7 +475,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
       SqlSession session2 = SqlSessionUtils.getSqlSession(sqlSessionFactory);
 
-      assertNotSame(session, session2, "getSqlSession() should not return suspended SqlSession");
+      assertThat(session).as("getSqlSession() should not return suspended SqlSession").isNotSameAs(session2);
 
       SqlSessionUtils.closeSqlSession(session2, sqlSessionFactory);
       txManager.commit(status2);
@@ -484,18 +486,18 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
       txManager.commit(status);
 
       // two transactions should have completed, each using their own Connection
-      assertEquals(2, dataSource.getConnectionCount(), "should call DataSource.getConnection() twice");
+      assertThat(dataSource.getConnectionCount()).as("should call DataSource.getConnection() twice").isEqualTo(2);
 
       // both connections and should be committed
-      assertEquals(1, connection.getNumberCommits(), "should call commit on Connection 1");
-      assertEquals(0, connection.getNumberRollbacks(), "should not call rollback on Connection 1");
+      assertThat(connection.getNumberCommits()).as("should call commit on Connection 1").isEqualTo(1);
+      assertThat(connection.getNumberRollbacks()).as("should not call rollback on Connection 1").isEqualTo(0);
 
-      assertEquals(1, connectionTwo.getNumberCommits(), "should call commit on Connection 2");
-      assertEquals(0, connectionTwo.getNumberRollbacks(), "should not call rollback on Connection 2");
+      assertThat(connectionTwo.getNumberCommits()).as("should call commit on Connection 2").isEqualTo(1);
+      assertThat(connectionTwo.getNumberRollbacks()).as("should not call rollback on Connection 2").isEqualTo(0);
 
       // the SqlSession should have also committed twice
-      assertEquals(2, executorInterceptor.getCommitCount(), "should call commit on SqlSession");
-      assertEquals(0, executorInterceptor.getRollbackCount(), "should call rollback on SqlSession");
+      assertThat(executorInterceptor.getCommitCount()).as("should call commit on SqlSession").isEqualTo(2);
+      assertThat(executorInterceptor.getRollbackCount()).as("should call rollback on SqlSession").isEqualTo(0);
 
       assertConnectionClosed(connection);
       assertConnectionClosed(connectionTwo);

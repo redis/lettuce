@@ -18,8 +18,7 @@ package org.mybatis.spring.batch;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.assertj.core.api.Assertions.*;
 
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;
@@ -66,8 +65,8 @@ public class SpringBatchTest {
     }
     writer.write(employees);
 
-    assertEquals(Integer.valueOf(20000), session.selectOne("checkSalarySum"));
-    assertEquals(Integer.valueOf(employees.size()), session.selectOne("checkEmployeeCount"));
+    assertThat((Integer) session.selectOne("checkSalarySum")).isEqualTo(20000);
+    assertThat((Integer) session.selectOne("checkEmployeeCount")).isEqualTo(employees.size());
   }
 
   @Test
@@ -84,7 +83,7 @@ public class SpringBatchTest {
     writer.write(employees);
 
     // Assert that we have a WRONG employee count
-    assertNotEquals(Integer.valueOf(employees.size()), session.selectOne("checkEmployeeCount"));
+    assertThat((Integer) session.selectOne("checkEmployeeCount")).isNotEqualTo(employees.size());
   }
 
   @Test
@@ -101,8 +100,8 @@ public class SpringBatchTest {
       }
       writer.write(employees);
 
-      assertEquals(Integer.valueOf(20000), session.selectOne("checkSalarySum"));
-      assertEquals(Integer.valueOf(employees.size()), session.selectOne("checkEmployeeCount"));
+      assertThat((Integer) session.selectOne("checkSalarySum")).isEqualTo(20000);
+      assertThat((Integer) session.selectOne("checkEmployeeCount")).isEqualTo(employees.size());
     } finally {
       cursorNoNestedItemReader.doClose();
     }
@@ -122,8 +121,8 @@ public class SpringBatchTest {
       }
       writer.write(employees);
 
-      assertEquals(Integer.valueOf(20000), session.selectOne("checkSalarySum"));
-      assertEquals(Integer.valueOf(employees.size()), session.selectOne("checkEmployeeCount"));
+      assertThat((Integer) session.selectOne("checkSalarySum")).isEqualTo(20000);
+      assertThat((Integer) session.selectOne("checkEmployeeCount")).isEqualTo(employees.size());
     } finally {
       cursorNestedItemReader.doClose();
     }

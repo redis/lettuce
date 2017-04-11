@@ -15,6 +15,7 @@
  */
 package org.mybatis.spring;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
@@ -132,8 +133,8 @@ public final class SqlSessionFactoryBeanTest {
 
     SqlSessionFactory factory = factoryBean.getObject();
     assertConfig(factory, SpringManagedTransactionFactory.class);
-    assertEquals(1, factory.getConfiguration().getVariables().size());
-    assertEquals("dev", factory.getConfiguration().getVariables().get("username"));
+    assertThat(factory.getConfiguration().getVariables().size()).isEqualTo(1);
+    assertThat(factory.getConfiguration().getVariables().get("username")).isEqualTo("dev");
   }
 
   @Test
@@ -149,14 +150,14 @@ public final class SqlSessionFactoryBeanTest {
 
     SqlSessionFactory factory = factoryBean.getObject();
 
-    assertEquals(factory.getConfiguration().getEnvironment().getId(), SqlSessionFactoryBean.class.getSimpleName());
-    assertSame(factory.getConfiguration().getEnvironment().getDataSource(), dataSource);
-    assertSame(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass(), SpringManagedTransactionFactory.class);
-    assertSame(factory.getConfiguration().getVfsImpl(), JBoss6VFS.class);
+    assertThat(factory.getConfiguration().getEnvironment().getId()).isEqualTo(SqlSessionFactoryBean.class.getSimpleName());
+    assertThat(factory.getConfiguration().getEnvironment().getDataSource()).isSameAs(dataSource);
+    assertThat(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass()).isSameAs(SpringManagedTransactionFactory.class);
+    assertThat(factory.getConfiguration().getVfsImpl()).isSameAs(JBoss6VFS.class);
 
-    assertFalse(factory.getConfiguration().isCacheEnabled());
-    assertTrue(factory.getConfiguration().isUseGeneratedKeys());
-    assertSame(factory.getConfiguration().getDefaultExecutorType(), ExecutorType.REUSE);
+    assertThat(factory.getConfiguration().isCacheEnabled()).isFalse();
+    assertThat(factory.getConfiguration().isUseGeneratedKeys()).isTrue();
+    assertThat(factory.getConfiguration().getDefaultExecutorType()).isSameAs(ExecutorType.REUSE);
   }
 
   @Test
@@ -173,8 +174,8 @@ public final class SqlSessionFactoryBeanTest {
 
     SqlSessionFactory factory = factoryBean.getObject();
 
-    assertEquals(1, factory.getConfiguration().getVariables().size());
-    assertEquals("sa", factory.getConfiguration().getVariables().get("username"));
+    assertThat(factory.getConfiguration().getVariables().size()).isEqualTo(1);
+    assertThat(factory.getConfiguration().getVariables().get("username")).isEqualTo("sa");
   }
 
   @Test
@@ -195,10 +196,10 @@ public final class SqlSessionFactoryBeanTest {
 
     SqlSessionFactory factory = factoryBean.getObject();
 
-    assertEquals(3, factory.getConfiguration().getVariables().size());
-    assertEquals("jdbc:localhost/test", factory.getConfiguration().getVariables().get("url"));
-    assertEquals("dev", factory.getConfiguration().getVariables().get("username"));
-    assertEquals("Passw0rd", factory.getConfiguration().getVariables().get("password"));
+    assertThat(factory.getConfiguration().getVariables().size()).isEqualTo(3);
+    assertThat(factory.getConfiguration().getVariables().get("url")).isEqualTo("jdbc:localhost/test");
+    assertThat(factory.getConfiguration().getVariables().get("username")).isEqualTo("dev");
+    assertThat(factory.getConfiguration().getVariables().get("password")).isEqualTo("Passw0rd");
   }
 
   @Test
@@ -215,8 +216,8 @@ public final class SqlSessionFactoryBeanTest {
 
     SqlSessionFactory factory = factoryBean.getObject();
 
-    assertEquals(1, factory.getConfiguration().getVariables().size());
-    assertEquals("dev", factory.getConfiguration().getVariables().get("username"));
+    assertThat(factory.getConfiguration().getVariables().size()).isEqualTo(1);
+    assertThat(factory.getConfiguration().getVariables().get("username")).isEqualTo("dev");
   }
 
   @Test
@@ -231,7 +232,7 @@ public final class SqlSessionFactoryBeanTest {
 
     SqlSessionFactory factory = factoryBean.getObject();
 
-    assertNull(factory.getConfiguration().getVariables());
+    assertThat(factory.getConfiguration().getVariables()).isNull();
   }
 
   @Test
@@ -252,22 +253,22 @@ public final class SqlSessionFactoryBeanTest {
 
     SqlSessionFactory factory = factoryBean.getObject();
 
-    assertEquals(factory.getConfiguration().getEnvironment().getId(), SqlSessionFactoryBean.class.getSimpleName());
-    assertSame(factory.getConfiguration().getEnvironment().getDataSource(), dataSource);
-    assertSame(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass(),
-        org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
-    assertSame(factory.getConfiguration().getVfsImpl(), JBoss6VFS.class);
+    assertThat(factory.getConfiguration().getEnvironment().getId()).isEqualTo(SqlSessionFactoryBean.class.getSimpleName());
+    assertThat(factory.getConfiguration().getEnvironment().getDataSource()).isSameAs(dataSource);
+    assertThat(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass())
+        .isSameAs(org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
+    assertThat(factory.getConfiguration().getVfsImpl()).isSameAs(JBoss6VFS.class);
 
     // properties explicitly set differently than the defaults in the config xml
-    assertFalse(factory.getConfiguration().isCacheEnabled());
-    assertTrue(factory.getConfiguration().isUseGeneratedKeys());
-    assertSame(factory.getConfiguration().getDefaultExecutorType(), org.apache.ibatis.session.ExecutorType.REUSE);
+    assertThat(factory.getConfiguration().isCacheEnabled()).isFalse();
+    assertThat(factory.getConfiguration().isUseGeneratedKeys()).isTrue();
+    assertThat(factory.getConfiguration().getDefaultExecutorType()).isSameAs(org.apache.ibatis.session.ExecutorType.REUSE);
 
     // for each statement in the xml file: org.mybatis.spring.TestMapper.xxx & xxx
-    assertEquals(8, factory.getConfiguration().getMappedStatementNames().size());
+    assertThat(factory.getConfiguration().getMappedStatementNames().size()).isEqualTo(8);
 
-    assertEquals(0, factory.getConfiguration().getResultMapNames().size());
-    assertEquals(0, factory.getConfiguration().getParameterMapNames().size());
+    assertThat(factory.getConfiguration().getResultMapNames().size()).isEqualTo(0);
+    assertThat(factory.getConfiguration().getParameterMapNames().size()).isEqualTo(0);
   }
 
   @Test
@@ -279,7 +280,7 @@ public final class SqlSessionFactoryBeanTest {
             "org/mybatis/spring/mybatis-config.xml"));
 
     Throwable e = assertThrows(IllegalStateException.class, factoryBean::getObject);
-    assertEquals("Property 'configuration' and 'configLocation' can not specified with together", e.getMessage());
+    assertThat(e.getMessage()).isEqualTo("Property 'configuration' and 'configLocation' can not specified with together");
   }
 
   @Test
@@ -291,7 +292,7 @@ public final class SqlSessionFactoryBeanTest {
     SqlSessionFactory factory = factoryBean.getObject();
 
     // one for 'includedSql' and another for 'org.mybatis.spring.TestMapper.includedSql'
-    assertEquals(2, factory.getConfiguration().getSqlFragments().size());
+    assertThat(factory.getConfiguration().getSqlFragments().size()).isEqualTo(2);
   }
 
   @Test
@@ -325,7 +326,7 @@ public final class SqlSessionFactoryBeanTest {
     factoryBean.setTypeHandlers(new TypeHandler[] { new DummyTypeHandler() });
 
     TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
-    assertTrue(typeHandlerRegistry.hasTypeHandler(BigInteger.class));
+    assertThat(typeHandlerRegistry.hasTypeHandler(BigInteger.class)).isTrue();
   }
 
   @Test
@@ -369,8 +370,8 @@ public final class SqlSessionFactoryBeanTest {
     factoryBean.setTypeHandlersPackage("org/mybatis/spring/type");
 
     TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
-    assertTrue(typeHandlerRegistry.hasTypeHandler(BigInteger.class));
-    assertTrue(typeHandlerRegistry.hasTypeHandler(BigDecimal.class));
+    assertThat(typeHandlerRegistry.hasTypeHandler(BigInteger.class)).isTrue();
+    assertThat(typeHandlerRegistry.hasTypeHandler(BigDecimal.class)).isTrue();
   }
 
   @Test
@@ -379,7 +380,7 @@ public final class SqlSessionFactoryBeanTest {
     factoryBean.setObjectFactory(new TestObjectFactory());
 
     ObjectFactory objectFactory = factoryBean.getObject().getConfiguration().getObjectFactory();
-    assertTrue(objectFactory instanceof TestObjectFactory);
+    assertThat(objectFactory).isInstanceOf(TestObjectFactory.class);
   }
 
   @Test
@@ -388,7 +389,7 @@ public final class SqlSessionFactoryBeanTest {
     factoryBean.setObjectWrapperFactory(new TestObjectWrapperFactory());
 
     ObjectWrapperFactory objectWrapperFactory = factoryBean.getObject().getConfiguration().getObjectWrapperFactory();
-    assertTrue(objectWrapperFactory instanceof TestObjectWrapperFactory);
+    assertThat(objectWrapperFactory).isInstanceOf(TestObjectWrapperFactory.class);
   }
 
   @Test
@@ -396,13 +397,13 @@ public final class SqlSessionFactoryBeanTest {
     setupFactoryBean();
     PerpetualCache cache = new PerpetualCache("test-cache");
     this.factoryBean.setCache(cache);
-    assertEquals("test-cache", this.factoryBean.getCache().getId());
+    assertThat(this.factoryBean.getCache().getId()).isEqualTo("test-cache");
   }
 
   private void assertDefaultConfig(SqlSessionFactory factory) {
     assertConfig(factory, SqlSessionFactoryBean.class.getSimpleName(),
         org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
-    assertEquals(0, factory.getConfiguration().getVariables().size());
+    assertThat(factory.getConfiguration().getVariables().size()).isEqualTo(0);
   }
 
   private void assertConfig(SqlSessionFactory factory, Class<? extends TransactionFactory> transactionFactoryClass) {
@@ -411,15 +412,14 @@ public final class SqlSessionFactoryBeanTest {
 
   private void assertConfig(SqlSessionFactory factory, String environment,
       Class<? extends TransactionFactory> transactionFactoryClass) {
-    assertEquals(factory.getConfiguration().getEnvironment().getId(), environment);
-    assertSame(factory.getConfiguration().getEnvironment().getDataSource(), dataSource);
-    assertSame(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass(),
-        transactionFactoryClass);
+    assertThat(factory.getConfiguration().getEnvironment().getId()).isEqualTo(environment);
+    assertThat(factory.getConfiguration().getEnvironment().getDataSource()).isSameAs(dataSource);
+    assertThat(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass()).isSameAs(transactionFactoryClass);
 
     // no mappers configured => no mapped statements or other parsed elements
-    assertEquals(factory.getConfiguration().getMappedStatementNames().size(), 0);
-    assertEquals(factory.getConfiguration().getResultMapNames().size(), 0);
-    assertEquals(factory.getConfiguration().getParameterMapNames().size(), 0);
-    assertEquals(factory.getConfiguration().getSqlFragments().size(), 0);
+    assertThat(factory.getConfiguration().getMappedStatementNames().size()).isEqualTo(0);
+    assertThat(factory.getConfiguration().getResultMapNames().size()).isEqualTo(0);
+    assertThat(factory.getConfiguration().getParameterMapNames().size()).isEqualTo(0);
+    assertThat(factory.getConfiguration().getSqlFragments().size()).isEqualTo(0);
   }
 }

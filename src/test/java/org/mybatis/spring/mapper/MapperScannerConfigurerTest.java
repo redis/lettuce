@@ -15,7 +15,7 @@
  */
 package org.mybatis.spring.mapper;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Properties;
@@ -210,8 +210,9 @@ public final class MapperScannerConfigurerTest {
 
     startContext();
 
-    assertSame(Object.class, applicationContext.getBean("mapperInterface").getClass(),
-        "scanner should not overwrite existing bean definition");
+    assertThat(applicationContext.getBean("mapperInterface").getClass())
+        .as("scanner should not overwrite existing bean definition")
+        .isSameAs(Object.class);
   }
 
   @Test
@@ -248,7 +249,7 @@ public final class MapperScannerConfigurerTest {
     // mybatis-config.xml changes the executor from the default SIMPLE type
     SqlSessionFactory sessionFactory = (SqlSessionFactory) applicationContext
         .getBean("sqlSessionFactory");
-    assertSame(ExecutorType.REUSE, sessionFactory.getConfiguration().getDefaultExecutorType());
+    assertThat(sessionFactory.getConfiguration().getDefaultExecutorType()).isSameAs(ExecutorType.REUSE);
   }
 
   private void setupSqlSessionFactory(String name) {
