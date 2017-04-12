@@ -71,7 +71,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
             StatefulRedisPubSubConnection<K, V> statefulConnection = getStatefulConnection();
             statefulConnection.addListener(listener);
 
-            sink.setCancellation(() -> {
+            sink.onDispose(() -> {
                 statefulConnection.removeListener(listener);
             });
 
@@ -99,7 +99,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
             StatefulRedisPubSubConnection<K, V> statefulConnection = getStatefulConnection();
             statefulConnection.addListener(listener);
 
-            sink.setCancellation(() -> {
+            sink.onDispose(() -> {
                 statefulConnection.removeListener(listener);
             });
 

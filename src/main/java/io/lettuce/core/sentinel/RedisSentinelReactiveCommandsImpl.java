@@ -56,14 +56,14 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
         return flux.collectList().flatMap(list -> {
 
             if (list.isEmpty()) {
-                return Flux.empty();
+                return Mono.empty();
             }
 
             LettuceAssert.isTrue(list.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
             String hostname = (String) list.get(0);
             String port = (String) list.get(1);
             return Mono.just(new InetSocketAddress(hostname, Integer.parseInt(port)));
-        }).cast(SocketAddress.class).next();
+        }).cast(SocketAddress.class);
     }
 
     @Override

@@ -28,7 +28,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import reactor.core.Cancellation;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
@@ -144,7 +144,7 @@ public class ReactiveBackpressurePropagationTest {
         CountDownLatch buildPressure = new CountDownLatch(1);
         CountDownLatch waitForPressureReduced = new CountDownLatch(2);
 
-        Cancellation cancellation = Flux.from(publisher).limitRate(2).publishOn(Schedulers.single()).doOnNext(s -> {
+        Disposable cancellation = Flux.from(publisher).limitRate(2).publishOn(Schedulers.single()).doOnNext(s -> {
 
             try {
                 pressureArrived.countDown();

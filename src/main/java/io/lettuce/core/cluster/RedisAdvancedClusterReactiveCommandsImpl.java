@@ -178,11 +178,10 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
                 offset += entry.getValue().size();
             }
 
-            List<KeyValue<K, V>> objects = new ArrayList<>(Arrays.asList(values));
-            return objects;
+            return Arrays.asList(values);
         });
 
-        return map.flatMap(Flux::fromIterable);
+        return map.flatMapIterable(keyValues -> keyValues);
     }
 
     @Override

@@ -28,7 +28,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import reactor.core.Cancellation;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -153,7 +152,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
 
         BlockingQueue<PatternMessage<String, String>> patternMessages = LettuceFactories.newBlockingQueue();
 
-        Cancellation subscription = pubsub.observePatterns().doOnNext(patternMessages::add).subscribe();
+        Disposable subscription = pubsub.observePatterns().doOnNext(patternMessages::add).subscribe();
 
         redis.publish(channel, message);
         redis.publish(channel, message);
