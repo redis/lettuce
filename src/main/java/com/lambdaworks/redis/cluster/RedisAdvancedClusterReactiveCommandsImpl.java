@@ -21,6 +21,7 @@ import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.N
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,7 +54,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
         RedisAdvancedClusterReactiveCommands<K, V> {
 
-    private final Random random = new Random();
+    private final Random random = ThreadLocalRandom.current();
 
     /**
      * Initialize a new connection.

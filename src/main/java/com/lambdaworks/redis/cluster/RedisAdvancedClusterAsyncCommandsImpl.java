@@ -23,6 +23,7 @@ import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.N
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -60,7 +61,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
         RedisAdvancedClusterAsyncConnection<K, V>, RedisAdvancedClusterAsyncCommands<K, V> {
 
-    private final Random random = new Random();
+    private final Random random = ThreadLocalRandom.current();
 
     /**
      * Initialize a new connection.
