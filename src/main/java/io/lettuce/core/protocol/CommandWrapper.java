@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Consumer;
 
 import io.lettuce.core.output.CommandOutput;
@@ -29,8 +28,14 @@ import io.netty.buffer.ByteBuf;
  */
 public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
+    private final static AtomicReferenceFieldUpdater<CommandWrapper, Consumer[]> ONCOMPLETE = AtomicReferenceFieldUpdater
+            .newUpdater(CommandWrapper.class, Consumer[].class, "onComplete");
+    private final static Consumer<?>[] EMPTY = new Consumer[0];
+
     protected final RedisCommand<K, V, T> command;
-    private final List<Consumer<? super T>> onComplete = new ArrayList<>();
+
+    // accessed via AtomicReferenceFieldUpdater.
+    private volatile Consumer<?>[] onComplete = EMPTY;
 
     public CommandWrapper(RedisCommand<K, V, T> command) {
         this.command = command;
@@ -42,15 +47,20 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void complete() {
 
         command.complete();
 
-        for (Consumer<? super T> consumer : onComplete) {
-            if (getOutput() != null) {
-                consumer.accept(getOutput().get());
-            } else {
-                consumer.accept(null);
+        Consumer[] consumers = ONCOMPLETE.get(this);
+        if (consumers != EMPTY && ONCOMPLETE.compareAndSet(this, consumers, EMPTY)) {
+
+            for (Consumer<? super T> consumer : consumers) {
+                if (getOutput() != null) {
+                    consumer.accept(getOutput().get());
+                } else {
+                    consumer.accept(null);
+                }
             }
         }
     }
@@ -92,7 +102,18 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
 
     @Override
     public void onComplete(Consumer<? super T> action) {
-        onComplete.add(action);
+
+        for (;;) {
+
+            Consumer[] existing = ONCOMPLETE.get(this);
+            Consumer[] updated = new Consumer[existing.length + 1];
+            System.arraycopy(existing, 0, updated, 0, existing.length);
+            updated[existing.length] = action;
+
+            if (ONCOMPLETE.compareAndSet(this, existing, updated)) {
+                return;
+            }
+        }
     }
 
     @Override
