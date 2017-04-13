@@ -250,6 +250,8 @@ public abstract class AbstractRedisClient {
 
         RedisChannelInitializer initializer = connectionBuilder.build();
         redisBootstrap.handler(initializer);
+
+        clientResources.nettyCustomizer().afterBootstrapInitialized(redisBootstrap);
         ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
 
         connectFuture.addListener(future -> {

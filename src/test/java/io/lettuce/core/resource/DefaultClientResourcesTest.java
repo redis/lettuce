@@ -104,15 +104,19 @@ public class DefaultClientResourcesTest {
         Timer timerMock = mock(Timer.class);
         EventBus eventBusMock = mock(EventBus.class);
         CommandLatencyCollector latencyCollectorMock = mock(CommandLatencyCollector.class);
+        NettyCustomizer nettyCustomizer = mock(NettyCustomizer.class);
 
         DefaultClientResources sut = DefaultClientResources.builder().eventExecutorGroup(executorMock)
                 .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
-                .commandLatencyCollector(latencyCollectorMock).build();
+                .commandLatencyCollector(latencyCollectorMock)
+                .nettyCustomizer(nettyCustomizer)
+                .build();
 
         assertThat(sut.eventExecutorGroup()).isSameAs(executorMock);
         assertThat(sut.eventLoopGroupProvider()).isSameAs(groupProviderMock);
         assertThat(sut.timer()).isSameAs(timerMock);
         assertThat(sut.eventBus()).isSameAs(eventBusMock);
+        assertThat(sut.nettyCustomizer()).isSameAs(nettyCustomizer);
 
         assertThat(sut.shutdown().get()).isTrue();
 

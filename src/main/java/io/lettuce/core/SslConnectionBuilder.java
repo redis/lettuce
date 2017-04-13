@@ -216,6 +216,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             for (ChannelHandler handler : handlers.get()) {
                 channel.pipeline().addLast(handler);
             }
+
+            clientResources.nettyCustomizer().afterChannelInitialized(channel);
         }
 
         @Override
