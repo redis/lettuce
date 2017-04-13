@@ -54,8 +54,6 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
         RedisAdvancedClusterReactiveCommands<K, V> {
 
-    private final Random random = ThreadLocalRandom.current();
-
     /**
      * Initialize a new connection.
      *
@@ -297,7 +295,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Observable<V> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();
-        int index = random.nextInt(partitions.size());
+        int index = ThreadLocalRandom.current().nextInt(partitions.size());
 
         Single<RedisClusterReactiveCommands<K, V>> connection = getConnectionReactive(partitions.getPartition(index)
                 .getNodeId());
