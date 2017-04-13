@@ -22,10 +22,7 @@ import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.EventPublisherOptions;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
-import com.lambdaworks.redis.resource.ClientResources;
-import com.lambdaworks.redis.resource.Delay;
-import com.lambdaworks.redis.resource.DnsResolver;
-import com.lambdaworks.redis.resource.EventLoopGroupProvider;
+import com.lambdaworks.redis.resource.*;
 
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -99,6 +96,11 @@ public class EmptyClientResources implements ClientResources {
 
     @Override
     public Delay reconnectDelay() {
+        return null;
+    }
+
+    @Override
+    public NettyCustomizer nettyCustomizer() {
         return null;
     }
 }
