@@ -52,7 +52,6 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
         RedisAdvancedClusterReactiveCommands<K, V> {
 
-    private final Random random = ThreadLocalRandom.current();
     private final RedisCodec<K, V> codec;
 
     /**
@@ -310,7 +309,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Mono<V> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();
-        int index = random.nextInt(partitions.size());
+        int index = ThreadLocalRandom.current().nextInt(partitions.size());
 
         Mono<RedisClusterReactiveCommands<K, V>> connection = getConnectionReactive(partitions.getPartition(index).getNodeId());
         return connection.flatMap(RedisKeyReactiveCommands::randomkey);

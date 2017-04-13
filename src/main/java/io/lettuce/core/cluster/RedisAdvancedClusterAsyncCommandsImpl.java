@@ -61,7 +61,6 @@ import io.lettuce.core.protocol.CommandType;
 public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
         RedisAdvancedClusterAsyncCommands<K, V> {
 
-    private final Random random = ThreadLocalRandom.current();
     private final RedisCodec<K, V> codec;
 
     /**
@@ -355,7 +354,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     public RedisFuture<V> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();
-        int index = random.nextInt(partitions.size());
+        int index = ThreadLocalRandom.current().nextInt(partitions.size());
         RedisClusterNode partition = partitions.getPartition(index);
 
         CompletableFuture<V> future = getConnectionAsync(partition.getUri().getHost(), partition.getUri().getPort())
