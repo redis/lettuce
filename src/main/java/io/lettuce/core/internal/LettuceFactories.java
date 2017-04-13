@@ -36,8 +36,8 @@ public class LettuceFactories {
      * @param <T>
      * @return a new, empty {@link ConcurrentLinkedDeque}.
      */
-    public static final <T> Deque<T> newConcurrentQueue() {
-        return new ConcurrentLinkedDeque<T>();
+    public static <T> Deque<T> newConcurrentQueue() {
+        return new FastCountingDeque<>(new ConcurrentLinkedDeque<>());
     }
 
     /**
@@ -46,17 +46,17 @@ public class LettuceFactories {
      * @param <T>
      * @return a new, empty {@link ArrayDeque}.
      */
-    public static final <T> Deque<T> newSpScQueue() {
+    public static <T> Deque<T> newSpScQueue() {
         return new ArrayDeque<>();
     }
 
     /**
      * Creates a new {@link BlockingQueue}.
      *
-     * @param <E>
+     * @param <T>
      * @return a new, empty {@link BlockingQueue}.
      */
-    public static <E> BlockingQueue<E> newBlockingQueue() {
+    public static <T> LinkedBlockingQueue<T> newBlockingQueue() {
         return new LinkedBlockingQueue<>();
     }
 }
