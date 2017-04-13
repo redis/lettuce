@@ -23,6 +23,7 @@ import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFla
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -60,7 +61,7 @@ import io.lettuce.core.protocol.CommandType;
 public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
         RedisAdvancedClusterAsyncCommands<K, V> {
 
-    private final Random random = new Random();
+    private final Random random = ThreadLocalRandom.current();
     private final RedisCodec<K, V> codec;
 
     /**

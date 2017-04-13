@@ -21,6 +21,7 @@ import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFla
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -51,7 +52,7 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
         RedisAdvancedClusterReactiveCommands<K, V> {
 
-    private final Random random = new Random();
+    private final Random random = ThreadLocalRandom.current();
     private final RedisCodec<K, V> codec;
 
     /**
