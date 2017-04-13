@@ -109,6 +109,7 @@ public interface ClientResources {
      * {@link #eventExecutorGroup()}.
      *
      * @return the timer.
+     * @since 4.3
      */
     Timer timer();
 
@@ -137,6 +138,7 @@ public interface ClientResources {
      * Returns the {@link DnsResolver}.
      *
      * @return the DNS resolver
+     * @since 4.3
      */
     DnsResolver dnsResolver();
 
@@ -144,6 +146,15 @@ public interface ClientResources {
      * Returns the {@link Delay} for reconnect attempts. May return a different instance on each call.
      *
      * @return the reconnect {@link Delay}.
+     * @since 4.3
      */
     Delay reconnectDelay();
+
+    /**
+     * Returns the {@link NettyCustomizer} to customize netty components.
+     *
+     * @return the configured {@link NettyCustomizer}.
+     * @since 4.4
+     */
+    NettyCustomizer nettyCustomizer();
 }

@@ -227,6 +227,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                 removeIfExists(channel.pipeline(), handler.getClass());
                 channel.pipeline().addLast(handler);
             }
+
+            clientResources.nettyCustomizer().afterChannelInitialized(channel);
         }
 
         @Override

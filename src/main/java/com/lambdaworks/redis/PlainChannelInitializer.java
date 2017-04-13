@@ -127,6 +127,8 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
             removeIfExists(channel.pipeline(), handler.getClass());
             channel.pipeline().addLast(handler);
         }
+
+        clientResources.nettyCustomizer().afterChannelInitialized(channel);
     }
 
     static void pingBeforeActivate(AsyncCommand<?, ?, ?> cmd, CompletableFuture<Boolean> initializedFuture,

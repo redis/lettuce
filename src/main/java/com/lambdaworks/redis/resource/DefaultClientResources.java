@@ -60,6 +60,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@link com.lambdaworks.redis.metrics.CommandLatencyCollector}.</li>
  * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
  * <li>a {@code timer} that is a provided instance of {@link io.netty.util.HashedWheelTimer}.</li>
+ * <li>a {@code nettyCustomizer} that is a provided instance of {@link NettyCustomizer}.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -87,9 +88,15 @@ public class DefaultClientResources implements ClientResources {
      */
     public static final Supplier<Delay> DEFAULT_RECONNECT_DELAY = Delay::exponential;
 
+    /**
+     * Default (no-op) {@link NettyCustomizer}.
+     */
+    public static final NettyCustomizer DEFAULT_NETTY_CUSTOMIZER = DefaultNettyCustomizer.INSTANCE;
+
     private static final boolean NETTY_DNS_RESOLVER_SUPPORTED;
 
     static {
+
         int threads = Math.max(
                 1,
                 SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
@@ -118,6 +125,7 @@ public class DefaultClientResources implements ClientResources {
     private final MetricEventPublisher metricEventPublisher;
     private final DnsResolver dnsResolver;
     private final Supplier<Delay> reconnectDelay;
+    private final NettyCustomizer nettyCustomizer;
 
     private volatile boolean shutdownCalled = false;
 
@@ -206,6 +214,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         reconnectDelay = builder.reconnectDelay;
+        nettyCustomizer = builder.nettyCustomizer;
     }
 
     /**
@@ -242,6 +251,7 @@ public class DefaultClientResources implements ClientResources {
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
         private DnsResolver dnsResolver = NETTY_DNS_RESOLVER_SUPPORTED ? DnsResolvers.UNRESOLVED : DnsResolvers.JVM_DEFAULT;
         private Supplier<Delay> reconnectDelay = DEFAULT_RECONNECT_DELAY;
+        private NettyCustomizer nettyCustomizer = DEFAULT_NETTY_CUSTOMIZER;
 
         /**
          * @deprecated Use {@link DefaultClientResources#builder()}
@@ -255,7 +265,7 @@ public class DefaultClientResources implements ClientResources {
          * thread pool size is only effective if no {@code eventLoopGroupProvider} is provided.
          *
          * @param ioThreadPoolSize the thread pool size, must be greater {@code 0}.
-         * @return this
+         * @return {@code this} {@link Builder}.
          */
         public Builder ioThreadPoolSize(int ioThreadPoolSize) {
 
@@ -272,7 +282,7 @@ public class DefaultClientResources implements ClientResources {
          * take care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
          * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@literal null}.
-         * @return this
+         * @return {@code this} {@link Builder}.
          */
         public Builder eventLoopGroupProvider(EventLoopGroupProvider eventLoopGroupProvider) {
 
@@ -287,7 +297,7 @@ public class DefaultClientResources implements ClientResources {
          * CPUs). The thread pool size is only effective if no {@code eventExecutorGroup} is provided.
          *
          * @param computationThreadPoolSize the thread pool size, must be greater {@code 0}.
-         * @return this
+         * @return {@code this} {@link Builder}.
          */
         public Builder computationThreadPoolSize(int computationThreadPoolSize) {
 
@@ -304,7 +314,7 @@ public class DefaultClientResources implements ClientResources {
          * care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
          * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@literal null}.
-         * @return this
+         * @return {@code this} {@link Builder}.
          */
         public Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup) {
 
@@ -321,7 +331,8 @@ public class DefaultClientResources implements ClientResources {
          * should only be used if you know what you are doing.
          *
          * @param timer the shared {@link Timer}, must not be {@literal null}.
-         * @return this
+         * @return {@code this} {@link Builder}.
+         * @since 4.3
          */
         public Builder timer(Timer timer) {
 
@@ -335,7 +346,7 @@ public class DefaultClientResources implements ClientResources {
          * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
          *
          * @param eventBus the event bus, must not be {@literal null}.
-         * @return this
+         * @return {@code this} {@link Builder}.
          */
         public Builder eventBus(EventBus eventBus) {
 
@@ -350,7 +361,7 @@ public class DefaultClientResources implements ClientResources {
          *
          * @param commandLatencyPublisherOptions the {@link EventPublisherOptions} to publish command latency metrics using the
          *        {@link EventBus}, must not be {@literal null}.
-         * @return this
+         * @return {@code this} {@link Builder}.
          */
         public Builder commandLatencyPublisherOptions(EventPublisherOptions commandLatencyPublisherOptions) {
 
@@ -365,7 +376,7 @@ public class DefaultClientResources implements ClientResources {
          * RedisClient. The options are only effective if no {@code commandLatencyCollector} is provided.
          *
          * @param commandLatencyCollectorOptions the command latency collector options, must not be {@link null}.
-         * @return this
+         * @return {@code this} {@link Builder}.
          */
         public Builder commandLatencyCollectorOptions(CommandLatencyCollectorOptions commandLatencyCollectorOptions) {
 
@@ -379,7 +390,7 @@ public class DefaultClientResources implements ClientResources {
          * Sets the {@link CommandLatencyCollector} that can that can be used across different instances of the RedisClient.
          *
          * @param commandLatencyCollector the command latency collector, must not be {@literal null}.
-         * @return this
+         * @return {@code this} {@link Builder}.
          */
         public Builder commandLatencyCollector(CommandLatencyCollector commandLatencyCollector) {
 
@@ -394,7 +405,8 @@ public class DefaultClientResources implements ClientResources {
          * {@link DnsResolvers#JVM_DEFAULT}
          *
          * @param dnsResolver the DNS resolver, must not be {@link null}.
-         * @return this
+         * @return {@code this} {@link Builder}.
+         * @since 4.3
          */
         public Builder dnsResolver(DnsResolver dnsResolver) {
 
@@ -410,6 +422,7 @@ public class DefaultClientResources implements ClientResources {
          *
          * @param reconnectDelay the reconnect delay, must not be {@literal null}.
          * @return this
+         * @since 4.3
          */
         public Builder reconnectDelay(Delay reconnectDelay) {
 
@@ -425,12 +438,28 @@ public class DefaultClientResources implements ClientResources {
          *
          * @param reconnectDelay the reconnect delay, must not be {@literal null}.
          * @return this
+         * @since 4.3
          */
         public Builder reconnectDelay(Supplier<Delay> reconnectDelay) {
 
             LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
 
             this.reconnectDelay = reconnectDelay;
+            return this;
+        }
+
+        /**
+         * Sets the {@link NettyCustomizer} instance to customize netty components during connection.
+         *
+         * @param nettyCustomizer the netty customizer instance, must not be {@literal null}.
+         * @return this
+         * @since 4.4
+         */
+        public Builder nettyCustomizer(NettyCustomizer nettyCustomizer) {
+
+            LettuceAssert.notNull(nettyCustomizer, "NettyCustomizer must not be null");
+
+            this.nettyCustomizer = nettyCustomizer;
             return this;
         }
 
@@ -571,5 +600,10 @@ public class DefaultClientResources implements ClientResources {
     @Override
     public Delay reconnectDelay() {
         return reconnectDelay.get();
+    }
+
+    @Override
+    public NettyCustomizer nettyCustomizer() {
+        return nettyCustomizer;
     }
 }
