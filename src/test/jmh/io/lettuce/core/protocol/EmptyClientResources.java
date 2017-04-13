@@ -25,13 +25,8 @@ import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.CommandLatencyId;
 import io.lettuce.core.metrics.CommandMetrics;
-import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.Delay;
-import io.lettuce.core.resource.DnsResolver;
-import io.lettuce.core.resource.EventLoopGroupProvider;
+import io.lettuce.core.resource.*;
 import io.netty.util.Timer;
-import io.netty.util.concurrent.*;
-
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
@@ -103,6 +98,11 @@ public class EmptyClientResources implements ClientResources {
 
     @Override
     public Delay reconnectDelay() {
+        return null;
+    }
+
+    @Override
+    public NettyCustomizer nettyCustomizer() {
         return null;
     }
 
