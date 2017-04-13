@@ -72,7 +72,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     // all access to the commandBuffer is synchronized
     protected final Deque<RedisCommand<K, V, ?>> commandBuffer = LettuceFactories.newConcurrentQueue();
-    protected final Deque<RedisCommand<K, V, ?>> transportBuffer = LettuceFactories.newConcurrentQueue();
+    protected final Collection<RedisCommand<K, V, ?>> transportBuffer = LettuceFactories.newConcurrentCollection();
     protected final ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(8192 * 8);
     protected final RedisStateMachine<K, V> rsm = new RedisStateMachine<>();
     protected volatile Channel channel;
