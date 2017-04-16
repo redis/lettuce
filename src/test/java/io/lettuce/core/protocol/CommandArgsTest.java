@@ -22,10 +22,8 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import com.lambdaworks.redis.codec.ByteArrayCodec;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 

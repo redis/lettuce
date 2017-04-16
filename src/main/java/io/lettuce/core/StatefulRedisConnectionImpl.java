@@ -32,7 +32,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.MultiOutput;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.*;
+import  io.lettuce.core.protocol.*;
 
 /**
  * A thread-safe connection to a Redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
@@ -180,16 +180,22 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
-                if ("OK".equals(status) && cmd.getArgs().getFirstString() != null) {
-                    this.password = cmd.getArgs().getFirstString().toCharArray();
+                if ("OK".equals(status)) {
+                    String password = CommandArgsAccessor.getFirstString(cmd.getArgs());
+                    if (password != null) {
+                        this.password = password.toCharArray();
+                    }
                 }
             });
         }
 
         if (local.getType().name().equals(SELECT.name())) {
             local = attachOnComplete(local, status -> {
-                if ("OK".equals(status) && cmd.getArgs().getFirstInteger() != null) {
-                    this.db = cmd.getArgs().getFirstInteger().intValue();
+                if ("OK".equals(status)) {
+                    Long db = CommandArgsAccessor.getFirstInteger(cmd.getArgs());
+                    if (db != null) {
+                        this.db = db.intValue();
+                    }
                 }
             });
         }

@@ -55,11 +55,8 @@ public class CommandArgs<K, V> {
     static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
     protected final RedisCodec<K, V> codec;
-    private final List<SingularArgument> singularArguments = new ArrayList<>(10);
-    private Long firstInteger;
-    private String firstString;
-    private ByteBuffer firstEncodedKey;
-    private K firstKey;
+
+    final List<SingularArgument> singularArguments = new ArrayList<>(10);
 
     /**
      * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
@@ -85,10 +82,6 @@ public class CommandArgs<K, V> {
      * @return the command args.
      */
     public CommandArgs<K, V> addKey(K key) {
-
-        if (firstKey == null) {
-            firstKey = key;
-        }
 
         singularArguments.add(KeyArgument.of(key, codec));
         return this;
@@ -195,10 +188,6 @@ public class CommandArgs<K, V> {
      */
     public CommandArgs<K, V> add(String s) {
 
-        if (firstString == null) {
-            firstString = s;
-        }
-
         singularArguments.add(StringArgument.of(s));
         return this;
     }
@@ -210,10 +199,6 @@ public class CommandArgs<K, V> {
      * @return the command args.
      */
     public CommandArgs<K, V> add(long n) {
-
-        if (firstInteger == null) {
-            firstInteger = n;
-        }
 
         singularArguments.add(IntegerArgument.of(n));
         return this;
@@ -316,8 +301,9 @@ public class CommandArgs<K, V> {
      *
      * @return the first integer argument or {@literal null}.
      */
+    @Deprecated
     public Long getFirstInteger() {
-        return firstInteger;
+        return CommandArgsAccessor.getFirstInteger(this);
     }
 
     /**
@@ -325,8 +311,9 @@ public class CommandArgs<K, V> {
      *
      * @return the first string argument or {@literal null}.
      */
+    @Deprecated
     public String getFirstString() {
-        return firstString;
+        return CommandArgsAccessor.getFirstString(this);
     }
 
     /**
@@ -335,16 +322,7 @@ public class CommandArgs<K, V> {
      * @return the first key argument in its byte-encoded representation or {@literal null}.
      */
     public ByteBuffer getFirstEncodedKey() {
-
-        if (firstKey == null) {
-            return null;
-        }
-
-        if (firstEncodedKey == null) {
-            firstEncodedKey = codec.encodeKey(firstKey);
-        }
-
-        return firstEncodedKey.duplicate();
+        return CommandArgsAccessor.encodeFirstKey(this);
     }
 
     /**

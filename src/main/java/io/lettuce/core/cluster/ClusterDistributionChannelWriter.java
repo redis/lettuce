@@ -107,7 +107,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
         if (args != null) {
 
-            ByteBuffer encodedKey = CommandArgsAccessor.encodeFirstKey(args);
+            ByteBuffer encodedKey = args.getFirstEncodedKey();
             if (encodedKey != null) {
 
                 int hash = getSlot(encodedKey);

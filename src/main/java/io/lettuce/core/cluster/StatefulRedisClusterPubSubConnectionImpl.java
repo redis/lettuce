@@ -43,8 +43,8 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 /**
  * @author Mark Paluch
  */
-class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSubConnectionImpl<K, V>
-        implements StatefulRedisClusterPubSubConnection<K, V> {
+class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSubConnectionImpl<K, V> implements
+        StatefulRedisClusterPubSubConnection<K, V> {
 
     private final PubSubClusterEndpoint<K, V> endpoint;
     private volatile Partitions partitions;
@@ -83,8 +83,8 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     @Override
     protected RedisPubSubCommands<K, V> newRedisSyncCommandsImpl() {
 
-        return (RedisPubSubCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
-                new Class<?>[] { RedisClusterPubSubCommands.class, RedisPubSubCommands.class }, syncInvocationHandler());
+        return (RedisPubSubCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), new Class<?>[] {
+                RedisClusterPubSubCommands.class, RedisPubSubCommands.class }, syncInvocationHandler());
     }
 
     private InvocationHandler syncInvocationHandler() {
