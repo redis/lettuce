@@ -25,7 +25,10 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.internal.HostAndPort;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.*;
+import com.lambdaworks.redis.protocol.CommandArgs;
+import com.lambdaworks.redis.protocol.CommandKeyword;
+import com.lambdaworks.redis.protocol.ProtocolKeyword;
+import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * Channel writer for cluster operation. This writer looks up the right partition by hash/slot for the operation.
@@ -106,7 +109,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
         if (args != null) {
 
-            ByteBuffer encodedKey = CommandArgsAccessor.encodeFirstKey(args);
+            ByteBuffer encodedKey = args.getFirstEncodedKey();
             if (encodedKey != null) {
 
                 int hash = getSlot(encodedKey);

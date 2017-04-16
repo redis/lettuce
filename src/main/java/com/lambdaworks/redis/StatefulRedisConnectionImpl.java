@@ -15,13 +15,7 @@
  */
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.AUTH;
-import static com.lambdaworks.redis.protocol.CommandType.DISCARD;
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
-import static com.lambdaworks.redis.protocol.CommandType.MULTI;
-import static com.lambdaworks.redis.protocol.CommandType.READONLY;
-import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
-import static com.lambdaworks.redis.protocol.CommandType.SELECT;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -36,6 +30,7 @@ import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.output.MultiOutput;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
+
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -43,7 +38,7 @@ import io.netty.channel.ChannelHandler;
  *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -109,7 +104,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     /**
      * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
-     * 
+     *
      * @return a new instance
      */
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
@@ -155,16 +150,22 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
-                if ("OK".equals(status) && cmd.getArgs().getFirstString() != null) {
-                    this.password = cmd.getArgs().getFirstString().toCharArray();
+                if ("OK".equals(status)) {
+                    String password = CommandArgsAccessor.getFirstString(cmd.getArgs());
+                    if (password != null) {
+                        this.password = password.toCharArray();
+                    }
                 }
             });
         }
 
         if (local.getType().name().equals(SELECT.name())) {
             local = attachOnComplete(local, status -> {
-                if ("OK".equals(status) && cmd.getArgs().getFirstInteger() != null) {
-                    this.db = cmd.getArgs().getFirstInteger().intValue();
+                if ("OK".equals(status)) {
+                    Long db = CommandArgsAccessor.getFirstInteger(cmd.getArgs());
+                    if (db != null) {
+                        this.db = db.intValue();
+                    }
                 }
             });
         }
@@ -227,8 +228,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public void setClientName(String clientName) {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
-        AsyncCommand<String, String, String> async = new AsyncCommand<>(
-                new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.CLIENT, new StatusOutput<>(
+                StringCodec.UTF8), args));
         this.clientName = clientName;
 
         dispatch((RedisCommand) async);

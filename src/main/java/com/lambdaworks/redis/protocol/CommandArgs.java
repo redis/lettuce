@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
-import com.lambdaworks.redis.codec.ToByteBufEncoder;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.ToByteBufEncoder;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 import io.netty.buffer.ByteBuf;
@@ -36,13 +36,13 @@ import io.netty.buffer.UnpooledByteBufAllocator;
  * <p>
  * Usage
  * </p>
- * 
+ *
  * <pre>
  *     <code>
  *         new CommandArgs<>(codec).addKey(key).addValue(value).add(CommandKeyword.FORCE);
  *     </code>
  * </pre>
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
@@ -53,11 +53,8 @@ public class CommandArgs<K, V> {
     static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
 
     protected final RedisCodec<K, V> codec;
-    private final List<SingularArgument> singularArguments = new ArrayList<>(10);
-    private Long firstInteger;
-    private String firstString;
-    private ByteBuffer firstEncodedKey;
-    private K firstKey;
+
+    final List<SingularArgument> singularArguments = new ArrayList<>(10);
 
     /**
      *
@@ -79,15 +76,11 @@ public class CommandArgs<K, V> {
 
     /**
      * Adds a key argument.
-     * 
+     *
      * @param key the key
      * @return the command args.
      */
     public CommandArgs<K, V> addKey(K key) {
-
-        if (firstKey == null) {
-            firstKey = key;
-        }
 
         singularArguments.add(KeyArgument.of(key, codec));
         return this;
@@ -95,7 +88,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add multiple key arguments.
-     * 
+     *
      * @param keys must not be {@literal null}.
      * @return the command args.
      */
@@ -111,7 +104,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add multiple key arguments.
-     * 
+     *
      * @param keys must not be {@literal null}.
      * @return the command args.
      */
@@ -127,7 +120,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add a value argument.
-     * 
+     *
      * @param value the value
      * @return the command args.
      */
@@ -139,7 +132,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add multiple value arguments.
-     * 
+     *
      * @param values must not be {@literal null}.
      * @return the command args.
      */
@@ -155,7 +148,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add multiple value arguments.
-     * 
+     *
      * @param values must not be {@literal null}.
      * @return the command args.
      */
@@ -171,7 +164,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add a map (hash) argument.
-     * 
+     *
      * @param map the map, must not be {@literal null}.
      * @return the command args.
      */
@@ -188,15 +181,11 @@ public class CommandArgs<K, V> {
 
     /**
      * Add a string argument. The argument is represented as bulk string.
-     * 
+     *
      * @param s the string.
      * @return the command args.
      */
     public CommandArgs<K, V> add(String s) {
-
-        if (firstString == null) {
-            firstString = s;
-        }
 
         singularArguments.add(StringArgument.of(s));
         return this;
@@ -204,15 +193,11 @@ public class CommandArgs<K, V> {
 
     /**
      * Add an 64-bit integer (long) argument.
-     * 
+     *
      * @param n the argument.
      * @return the command args.
      */
     public CommandArgs<K, V> add(long n) {
-
-        if (firstInteger == null) {
-            firstInteger = n;
-        }
 
         singularArguments.add(IntegerArgument.of(n));
         return this;
@@ -220,7 +205,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add a double argument.
-     * 
+     *
      * @param n the double argument.
      * @return the command args.
      */
@@ -232,7 +217,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add a byte-array argument. The argument is represented as bulk string.
-     * 
+     *
      * @param value the byte-array.
      * @return the command args.
      */
@@ -244,7 +229,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add a {@link CommandKeyword} argument. The argument is represented as bulk string.
-     * 
+     *
      * @param keyword must not be {@literal null}.
      * @return the command args.
      */
@@ -256,7 +241,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add a {@link CommandType} argument. The argument is represented as bulk string.
-     * 
+     *
      * @param type must not be {@literal null}.
      * @return the command args.
      */
@@ -268,7 +253,7 @@ public class CommandArgs<K, V> {
 
     /**
      * Add a {@link ProtocolKeyword} argument. The argument is represented as bulk string.
-     * 
+     *
      * @param keyword the keyword, must not be {@literal null}
      * @return the command args.
      */
@@ -299,43 +284,36 @@ public class CommandArgs<K, V> {
 
     /**
      * Returns the first integer argument.
-     * 
+     *
      * @return the first integer argument or {@literal null}.
      */
+    @Deprecated
     public Long getFirstInteger() {
-        return firstInteger;
+        return CommandArgsAccessor.getFirstInteger(this);
     }
 
     /**
      * Returns the first string argument.
-     * 
+     *
      * @return the first string argument or {@literal null}.
      */
+    @Deprecated
     public String getFirstString() {
-        return firstString;
+        return CommandArgsAccessor.getFirstString(this);
     }
 
     /**
      * Returns the first key argument in its byte-encoded representation.
-     * 
+     *
      * @return the first key argument in its byte-encoded representation or {@literal null}.
      */
     public ByteBuffer getFirstEncodedKey() {
-
-        if (firstKey == null) {
-            return null;
-        }
-
-        if (firstEncodedKey == null) {
-            firstEncodedKey = codec.encodeKey(firstKey);
-        }
-
-        return firstEncodedKey.duplicate();
+        return CommandArgsAccessor.encodeFirstKey(this);
     }
 
     /**
      * Encode the {@link CommandArgs} and write the arguments to the {@link ByteBuf}.
-     * 
+     *
      * @param buf the target buffer.
      */
     public void encode(ByteBuf buf) {
@@ -352,7 +330,7 @@ public class CommandArgs<K, V> {
 
         /**
          * Encode the argument and write it to the {@code buffer}.
-         * 
+         *
          * @param buffer
          */
         abstract void encode(ByteBuf buffer);
