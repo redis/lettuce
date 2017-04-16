@@ -116,7 +116,10 @@ public class CommandHandlerTest {
         when(clientResources.commandLatencyCollector()).thenReturn(
                 new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
 
-        when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
+        when(channel.newPromise()).then(invocationOnMock -> new DefaultChannelPromise(channel));
+
+        when(channel.writeAndFlush(any(), any(ChannelPromise.class))).thenAnswer(invocation -> {
+
             if (invocation.getArguments()[0] instanceof RedisCommand) {
                 q.add((RedisCommand) invocation.getArguments()[0]);
             }
@@ -124,7 +127,8 @@ public class CommandHandlerTest {
             if (invocation.getArguments()[0] instanceof Collection) {
                 q.addAll((Collection) invocation.getArguments()[0]);
             }
-            return new DefaultChannelPromise(channel);
+
+            return null;
         });
 
         sut = new CommandHandler<>(ClientOptions.create(), clientResources, q);
@@ -221,7 +225,7 @@ public class CommandHandlerTest {
         buffer.add(bufferedCommand2);
 
         reset(channel);
-        when(channel.writeAndFlush(any())).thenAnswer(invocation -> new DefaultChannelPromise(channel));
+        when(channel.newPromise()).thenAnswer(invocation -> new DefaultChannelPromise(channel));
         when(channel.eventLoop()).thenReturn(eventLoop);
         when(channel.pipeline()).thenReturn(pipeline);
 
@@ -232,7 +236,7 @@ public class CommandHandlerTest {
         assertThat(buffer).isEmpty();
 
         ArgumentCaptor<Object> objectArgumentCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(channel).writeAndFlush(objectArgumentCaptor.capture());
+        verify(channel).writeAndFlush(objectArgumentCaptor.capture(), any(ChannelPromise.class));
 
         assertThat((Collection) objectArgumentCaptor.getValue()).containsSequence(queuedCommand1, queuedCommand2,
                 bufferedCommand1, bufferedCommand2);

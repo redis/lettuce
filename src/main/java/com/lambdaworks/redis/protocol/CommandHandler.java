@@ -83,6 +83,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     // If DEBUG level logging has been enabled at startup.
     private final boolean debugEnabled;
+
+    // If WARN level logging has been enabled at startup.
+    private final boolean warnEnabled;
+
     private final Reliability reliability;
 
     private volatile LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
@@ -110,6 +114,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         this.queue = queue;
         this.traceEnabled = logger.isTraceEnabled();
         this.debugEnabled = logger.isDebugEnabled();
+        this.warnEnabled = logger.isWarnEnabled();
         this.reliability = clientOptions.isAutoReconnect() ? Reliability.AT_LEAST_ONCE : Reliability.AT_MOST_ONCE;
         this.latencyMetricsEnabled = clientResources.commandLatencyCollector().isEnabled();
     }
@@ -339,12 +344,17 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         if (reliability == Reliability.AT_MOST_ONCE) {
             // cancel on exceptions and remove from queue, because there is no housekeeping
-            writeAndFlush(command).addListener(new AtMostOnceWriteListener(command, queue));
+            writeAndFlush(command, channel.newPromise()).addListener(new AtMostOnceWriteListener(command, queue));
         }
 
         if (reliability == Reliability.AT_LEAST_ONCE) {
             // commands are ok to stay within the queue, reconnect will retrigger them
-            writeAndFlush(command).addListener(WRITE_LOG_LISTENER);
+
+            if (warnEnabled) {
+                writeAndFlush(command, channel.newPromise()).addListener(WRITE_LOG_LISTENER);
+            } else {
+                writeAndFlush(command, channel.voidPromise());
+            }
         }
     }
 
@@ -486,34 +496,44 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
             if (reliability == Reliability.AT_MOST_ONCE) {
                 // cancel on exceptions and remove from queue, because there is no housekeeping
-                writeAndFlush(queuedCommands).addListener(new AtMostOnceWriteListener(queuedCommands, this.queue));
+                writeAndFlush(queuedCommands, channel.newPromise()).addListener(
+                        new AtMostOnceWriteListener(queuedCommands, this.queue));
             }
 
             if (reliability == Reliability.AT_LEAST_ONCE) {
                 // commands are ok to stay within the queue, reconnect will retrigger them
-                writeAndFlush(queuedCommands).addListener(WRITE_LOG_LISTENER);
+
+                if (warnEnabled) {
+                    writeAndFlush(queuedCommands, channel.newPromise()).addListener(WRITE_LOG_LISTENER);
+                } else {
+                    writeAndFlush(queuedCommands, channel.voidPromise());
+                }
             }
         }
     }
 
-    private <C extends RedisCommand<K, V, ?>> ChannelFuture writeAndFlush(List<C> commands) {
+    private <C extends RedisCommand<K, V, ?>> ChannelFuture writeAndFlush(List<C> commands, ChannelPromise channelPromise) {
 
         if (debugEnabled) {
             logger.debug("{} write() writeAndFlush commands {}", logPrefix(), commands);
         }
 
         transportBuffer.addAll(commands);
-        return channel.writeAndFlush(commands);
+        channel.writeAndFlush(commands, channelPromise);
+
+        return channelPromise;
     }
 
-    private <C extends RedisCommand<K, V, ?>> ChannelFuture writeAndFlush(C command) {
+    private <C extends RedisCommand<K, V, ?>> ChannelFuture writeAndFlush(C command, ChannelPromise channelPromise) {
 
         if (debugEnabled) {
             logger.debug("{} write() writeAndFlush command {}", logPrefix(), command);
         }
 
         transportBuffer.add(command);
-        return channel.writeAndFlush(command);
+        channel.writeAndFlush(command, channelPromise);
+
+        return channelPromise;
     }
 
     /**
@@ -857,6 +877,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             toCancel.addAll(commandBuffer);
             commandBuffer.clear();
         }
+
         return toCancel;
     }
 
