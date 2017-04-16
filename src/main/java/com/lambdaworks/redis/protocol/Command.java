@@ -21,8 +21,8 @@ import com.lambdaworks.redis.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 
 /**
- * A Redis command with a {@link ProtocolKeyword command type}, {@link CommandArgs arguments} and an optional {@link CommandOutput
- * output}. All successfully executed commands will eventually return a {@link CommandOutput} object.
+ * A Redis command with a {@link ProtocolKeyword command type}, {@link CommandArgs arguments} and an optional
+ * {@link CommandOutput output}. All successfully executed commands will eventually return a {@link CommandOutput} object.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -33,13 +33,16 @@ import io.netty.buffer.ByteBuf;
  */
 public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency {
 
+    protected final static byte ST_INITIAL = 0;
+    protected final static byte ST_COMPLETED = 1;
+    protected final static byte ST_CANCELLED = 2;
+
     private final ProtocolKeyword type;
 
     protected CommandArgs<K, V> args;
     protected CommandOutput<K, V, T> output;
     protected Throwable exception;
-    protected boolean cancelled = false;
-    protected boolean completed = false;
+    protected volatile byte status = ST_INITIAL;
     protected long sentNs = -1;
     protected long firstResponseNs = -1;
     protected long completedNs = -1;
@@ -93,12 +96,12 @@ public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency {
      */
     @Override
     public void complete() {
-        completed = true;
+        this.status = ST_COMPLETED;
     }
 
     @Override
     public void cancel() {
-        cancelled = true;
+        this.status = ST_CANCELLED;
     }
 
     /**
@@ -152,7 +155,7 @@ public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency {
     }
 
     public void setOutput(CommandOutput<K, V, T> output) {
-        if (isCancelled() || completed) {
+        if (this.status != ST_INITIAL) {
             throw new IllegalStateException("Command is completed/cancelled. Cannot set a new output");
         }
         this.output = output;
@@ -165,12 +168,12 @@ public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency {
 
     @Override
     public boolean isCancelled() {
-        return cancelled;
+        return status == ST_CANCELLED;
     }
 
     @Override
     public boolean isDone() {
-        return completed;
+        return status == ST_COMPLETED;
     }
 
     @Override
