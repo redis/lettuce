@@ -15,9 +15,8 @@
  */
 package com.lambdaworks.redis.cluster;
 
-import java.net.SocketAddress;
 import java.util.HashSet;
-import java.util.function.Supplier;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -27,11 +26,9 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
 import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
-import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.ValueOutput;
 import com.lambdaworks.redis.protocol.Command;
 import com.lambdaworks.redis.protocol.CommandArgs;
@@ -57,6 +54,7 @@ public class ClusterDistributionChannelWriterBenchmark {
     private ClusterDistributionChannelWriter writer;
 
     @Setup
+    @SuppressWarnings({ "unchecked", "rawrypes" })
     public void setup() {
 
         writer = new ClusterDistributionChannelWriter(CLIENT_OPTIONS, EMPTY_WRITER, ClusterEventListener.NO_OP, null);
@@ -70,16 +68,16 @@ public class ClusterDistributionChannelWriterBenchmark {
                 .range(8192, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList()), new HashSet<>()));
 
         partitions.updateCache();
+        CompletableFuture<EmptyStatefulRedisConnection> connectionFuture = CompletableFuture.completedFuture(CONNECTION);
 
         writer.setPartitions(partitions);
-        writer.setClusterConnectionProvider(new PooledClusterConnectionProvider<>(new RedisClusterClient() {
-
+        writer.setClusterConnectionProvider(new PooledClusterConnectionProvider(new EmptyRedisClusterClient(RedisURI.create(
+                "localhost", 7379)), EMPTY_WRITER, ByteArrayCodec.INSTANCE) {
             @Override
-            <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId,
-                    RedisChannelWriter<K, V> clusterWriter, Supplier<SocketAddress> socketAddressSupplier) {
-                return CONNECTION;
+            public CompletableFuture getConnectionAsync(Intent intent, int slot) {
+                return connectionFuture;
             }
-        }, EMPTY_WRITER, ByteArrayCodec.INSTANCE));
+        });
 
         writer.setPartitions(partitions);
     }
