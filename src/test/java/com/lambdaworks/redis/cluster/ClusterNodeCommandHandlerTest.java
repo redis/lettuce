@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisChannelWriter;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
+import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.AsyncCommand;
 import com.lambdaworks.redis.protocol.Command;
@@ -49,8 +50,7 @@ import com.lambdaworks.redis.resource.ClientResources;
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterNodeCommandHandlerTest {
 
-    private AsyncCommand<String, String, String> command = new AsyncCommand<>(
-new Command<>(CommandType.APPEND,
+    private AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.APPEND,
             new StatusOutput<>(new Utf8StringCodec()), null));
 
     private Queue<RedisCommand<String, String, ?>> queue = new LinkedBlockingQueue<>();
@@ -69,6 +69,7 @@ new Command<>(CommandType.APPEND,
     @Before
     public void before() throws Exception {
 
+        when(clientResources.commandLatencyCollector()).thenReturn(DefaultCommandLatencyCollector.disabled());
         sut = new ClusterNodeCommandHandler(clientOptions, clientResources, queue, clusterChannelWriter);
     }
 

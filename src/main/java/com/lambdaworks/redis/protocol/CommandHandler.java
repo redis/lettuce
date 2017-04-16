@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.lambdaworks.redis.protocol;
 
 import java.io.IOException;
@@ -69,6 +68,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     protected final Queue<RedisCommand<K, V, ?>> queue;
     protected final AtomicLong writers = new AtomicLong();
     protected final Object stateLock = new Object();
+    private final boolean latencyMetricsEnabled;
 
     // all access to the commandBuffer is synchronized
     protected final Deque<RedisCommand<K, V, ?>> commandBuffer = LettuceFactories.newConcurrentQueue();
@@ -111,6 +111,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         this.traceEnabled = logger.isTraceEnabled();
         this.debugEnabled = logger.isDebugEnabled();
         this.reliability = clientOptions.isAutoReconnect() ? Reliability.AT_LEAST_ONCE : Reliability.AT_MOST_ONCE;
+        this.latencyMetricsEnabled = clientResources.commandLatencyCollector().isEnabled();
     }
 
     /**
@@ -211,13 +212,25 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
             }
 
-            WithLatency withLatency = getWithLatency(command);
+            if (latencyMetricsEnabled && command instanceof WithLatency) {
 
-            if (!rsm.decode(buffer, command, command.getOutput())) {
-                return;
+                WithLatency withLatency = (WithLatency) command;
+                if (withLatency.getFirstResponse() == -1) {
+                    withLatency.firstResponse(nanoTime());
+                }
+
+                if (!rsm.decode(buffer, command, command.getOutput())) {
+                    return;
+                }
+
+                recordLatency(withLatency, command.getType());
+
+            } else {
+
+                if (!rsm.decode(buffer, command, command.getOutput())) {
+                    return;
+                }
             }
-
-            recordLatency(withLatency, command.getType());
 
             queue.poll();
 
@@ -233,31 +246,15 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
-    private WithLatency getWithLatency(RedisCommand<K, V, ?> command) {
-        WithLatency withLatency = null;
-
-        if (clientResources.commandLatencyCollector().isEnabled()) {
-            RedisCommand<K, V, ?> unwrappedCommand = CommandWrapper.unwrap(command);
-            if (unwrappedCommand instanceof WithLatency) {
-                withLatency = (WithLatency) unwrappedCommand;
-                if (withLatency.getFirstResponse() == -1) {
-                    withLatency.firstResponse(nanoTime());
-                }
-            }
-        }
-        return withLatency;
-    }
-
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
 
-        if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null
-                && remote() != null) {
+        if (withLatency != null && latencyMetricsEnabled && channel != null && remote() != null) {
 
             long firstResponseLatency = withLatency.getSent() - withLatency.getFirstResponse();
             long completionLatency = nanoTime() - withLatency.getSent();
 
-            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
-                    completionLatency);
+            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType,
+                    firstResponseLatency, completionLatency);
         }
     }
 
@@ -294,7 +291,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 throw new RedisException("Currently not connected. Commands are rejected.");
             }
 
-            /**
+            /*
              * This lock causes safety for connection activation and somehow netty gets more stable and predictable performance
              * than without a lock and all threads are hammering towards writeAndFlush.
              */
@@ -602,15 +599,26 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 command.complete();
             } else {
 
-                queue.add(command);
+                if (latencyMetricsEnabled) {
 
-                if (clientResources.commandLatencyCollector().isEnabled()) {
-                    RedisCommand<K, V, ?> unwrappedCommand = CommandWrapper.unwrap(command);
-                    if (unwrappedCommand instanceof WithLatency) {
-                        WithLatency withLatency = (WithLatency) unwrappedCommand;
+                    if (command instanceof WithLatency) {
+
+                        WithLatency withLatency = (WithLatency) command;
+
                         withLatency.firstResponse(-1);
                         withLatency.sent(nanoTime());
+
+                        queue.add(command);
+                    } else {
+
+                        LatencyMeteredCommand<K, V, ?> latencyMeteredCommand = new LatencyMeteredCommand<>(command);
+                        latencyMeteredCommand.firstResponse(-1);
+                        latencyMeteredCommand.sent(nanoTime());
+
+                        queue.add(latencyMeteredCommand);
                     }
+                } else {
+                    queue.add(command);
                 }
             }
             transportBuffer.remove(command);

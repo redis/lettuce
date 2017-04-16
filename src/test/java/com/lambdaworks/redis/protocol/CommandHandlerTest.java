@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,7 @@ public class CommandHandlerTest {
 
     private CommandHandler<String, String> sut;
 
-    private final Command<String, String, String> command = new Command<>(CommandType.APPEND,
- new StatusOutput<>(
+    private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<>(
             new Utf8StringCodec()), null);
 
     @Mock
@@ -114,8 +113,8 @@ public class CommandHandlerTest {
             return null;
         });
 
-        when(clientResources.commandLatencyCollector()).thenReturn(new DefaultCommandLatencyCollector(
-                DefaultCommandLatencyCollectorOptions.create()));
+        when(clientResources.commandLatencyCollector()).thenReturn(
+                new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
 
         when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
             if (invocation.getArguments()[0] instanceof RedisCommand) {
@@ -167,8 +166,7 @@ public class CommandHandlerTest {
     @Test
     public void testChannelActiveWithBufferedAndQueuedCommands() throws Exception {
 
-        Command<String, String, String> bufferedCommand = new Command<>(CommandType.GET,
- new StatusOutput<>(
+        Command<String, String, String> bufferedCommand = new Command<>(CommandType.GET, new StatusOutput<>(
                 new Utf8StringCodec()), null);
 
         Command<String, String, String> pingCommand = new Command<>(CommandType.PING,
@@ -203,20 +201,16 @@ public class CommandHandlerTest {
     @Test
     public void testChannelActiveWithBufferedAndQueuedCommandsRetainsOrder() throws Exception {
 
-        Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET,
- new StatusOutput<>(
+        Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET, new StatusOutput<>(
                 new Utf8StringCodec()), null);
 
-        Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET,
- new StatusOutput<>(
+        Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET, new StatusOutput<>(
                 new Utf8StringCodec()), null);
 
-        Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING,
- new StatusOutput<>(
+        Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING, new StatusOutput<>(
                 new Utf8StringCodec()), null);
 
-        Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH,
- new StatusOutput<>(
+        Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH, new StatusOutput<>(
                 new Utf8StringCodec()), null);
 
         q.add(queuedCommand1);
@@ -247,20 +241,16 @@ public class CommandHandlerTest {
     @Test
     public void testChannelActiveReplayBufferedCommands() throws Exception {
 
-        Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET,
- new StatusOutput<>(
+        Command<String, String, String> bufferedCommand1 = new Command<>(CommandType.SET, new StatusOutput<>(
                 new Utf8StringCodec()), null);
 
-        Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET,
- new StatusOutput<>(
+        Command<String, String, String> bufferedCommand2 = new Command<>(CommandType.GET, new StatusOutput<>(
                 new Utf8StringCodec()), null);
 
-        Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING,
- new StatusOutput<>(
+        Command<String, String, String> queuedCommand1 = new Command<>(CommandType.PING, new StatusOutput<>(
                 new Utf8StringCodec()), null);
 
-        Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH,
- new StatusOutput<>(
+        Command<String, String, String> queuedCommand2 = new Command<>(CommandType.AUTH, new StatusOutput<>(
                 new Utf8StringCodec()), null);
 
         q.add(queuedCommand1);
@@ -315,8 +305,7 @@ public class CommandHandlerTest {
     @Test(expected = RedisException.class)
     public void testWriteChannelDisconnectedWithoutReconnect() throws Exception {
 
-        sut = new CommandHandler<>(ClientOptions.builder().autoReconnect(false).build(), clientResources,
-                q);
+        sut = new CommandHandler<>(ClientOptions.builder().autoReconnect(false).build(), clientResources, q);
         sut.setRedisChannelHandler(channelHandler);
 
         when(channel.isActive()).thenReturn(true);
@@ -488,7 +477,8 @@ public class CommandHandlerTest {
         sut.write(context, command, null);
 
         verify(context).write(command, null);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).hasSize(1).allMatch(
+                o -> o instanceof LatencyMeteredCommand);
     }
 
     @Test
@@ -508,14 +498,14 @@ public class CommandHandlerTest {
         sut.write(context, commands, null);
 
         verify(context).write(commands, null);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).hasSize(1);
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldWriteActiveCommandsInMixedBatch() throws Exception {
 
-        Command<String, String, String> command2 = new Command<>(CommandType.APPEND,
- new StatusOutput<>(new Utf8StringCodec()),
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
                 null);
 
         command.cancel();
@@ -526,7 +516,9 @@ public class CommandHandlerTest {
         verify(context).write(captor.capture(), any());
 
         assertThat(captor.getValue()).containsOnly(command2);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command2);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).hasSize(1)
+                .allMatch(o -> o instanceof LatencyMeteredCommand)
+                .allMatch(o -> CommandWrapper.unwrap((RedisCommand) o) == command2);
     }
 
     @Test
@@ -538,15 +530,6 @@ public class CommandHandlerTest {
         sut.channelRead(context, byteBufMock);
 
         verify(byteBufMock, never()).release();
-    }
-
-    @Test
-    public void shouldSetLatency() throws Exception {
-
-        sut.write(context, Arrays.asList(command), null);
-
-        assertThat(command.sentNs).isNotEqualTo(-1);
-        assertThat(command.firstResponseNs).isEqualTo(-1);
     }
 
     @Test
@@ -575,9 +558,8 @@ public class CommandHandlerTest {
         private List<Thread> entryThreadOrder = Collections.synchronizedList(new ArrayList<>());
         private List<Thread> exitThreadOrder = Collections.synchronizedList(new ArrayList<>());
 
-        public MTCConcurrentWriteThenReset(ClientResources clientResources,
-                                           Queue<RedisCommand<String, String, ?>> queue,
-                                           Command<String, String, String> command) {
+        public MTCConcurrentWriteThenReset(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue,
+                Command<String, String, String> command) {
             this.command = command;
             handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
 
@@ -660,9 +642,8 @@ public class CommandHandlerTest {
         private List<Thread> entryThreadOrder = Collections.synchronizedList(new ArrayList<>());
         private List<Thread> exitThreadOrder = Collections.synchronizedList(new ArrayList<>());
 
-        public MTCConcurrentResetThenWrite(ClientResources clientResources,
-                                           Queue<RedisCommand<String, String, ?>> queue,
-                                           Command<String, String, String> command) {
+        public MTCConcurrentResetThenWrite(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue,
+                Command<String, String, String> command) {
             this.command = command;
             handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
 
@@ -741,9 +722,8 @@ public class CommandHandlerTest {
         private final Command<String, String, String> command;
         private TestableCommandHandler handler;
 
-        public MTCConcurrentConcurrentWrite(ClientResources clientResources,
-                                            Queue<RedisCommand<String, String, ?>> queue,
-                                            Command<String, String, String> command) {
+        public MTCConcurrentConcurrentWrite(ClientResources clientResources, Queue<RedisCommand<String, String, ?>> queue,
+                Command<String, String, String> command) {
             this.command = command;
             handler = new TestableCommandHandler(ClientOptions.create(), clientResources, queue) {
 
@@ -775,7 +755,7 @@ public class CommandHandlerTest {
 
     static class TestableCommandHandler extends CommandHandler<String, String> {
         public TestableCommandHandler(ClientOptions clientOptions, ClientResources clientResources,
-                                      Queue<RedisCommand<String, String, ?>> queue) {
+                Queue<RedisCommand<String, String, ?>> queue) {
             super(clientOptions, clientResources, queue);
         }
     }

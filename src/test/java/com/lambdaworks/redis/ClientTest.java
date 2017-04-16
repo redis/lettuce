@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import org.junit.runners.MethodSorters;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandWrapper;
-import com.lambdaworks.redis.protocol.RedisCommand;
 
 /**
  * @author Will Glozer
@@ -159,6 +156,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
     @Test(timeout = 20000)
     public void reset() throws Exception {
+
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisAsyncCommands<String, String> async = connection.async();
 
@@ -169,9 +167,7 @@ public class ClientTest extends AbstractRedisClientTest {
 
         RedisFuture<KeyValue<String, String>> eval = async.blpop(5, key);
 
-        Command unwrapped = (Command) CommandWrapper.unwrap((RedisCommand) eval);
-
-        Wait.untilNotEquals(0L, unwrapped::getSent).waitOrTimeout();
+        Thread.sleep(500);
 
         assertThat(eval.isDone()).isFalse();
         assertThat(eval.isCancelled()).isFalse();
