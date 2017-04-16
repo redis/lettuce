@@ -57,7 +57,7 @@ public class ClusterDistributionChannelWriterBenchmark {
     @SuppressWarnings({ "unchecked", "rawrypes" })
     public void setup() {
 
-        writer = new ClusterDistributionChannelWriter(CLIENT_OPTIONS, EMPTY_WRITER, ClusterEventListener.NO_OP, null);
+        writer = new ClusterDistributionChannelWriter(CLIENT_OPTIONS, EMPTY_WRITER, ClusterEventListener.NO_OP);
 
         Partitions partitions = new Partitions();
 

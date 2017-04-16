@@ -16,11 +16,8 @@
 package com.lambdaworks.redis.cluster;
 
 import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandKeyword;
-import com.lambdaworks.redis.protocol.CommandWrapper;
-import com.lambdaworks.redis.protocol.ProtocolKeyword;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.*;
+
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -55,7 +52,7 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
             boolean retryCommand = maxRedirections > redirections;
             redirections++;
 
-            if(retryCommand) {
+            if (retryCommand) {
                 try {
                     retry.write(this);
                 } catch (Exception e) {
@@ -69,17 +66,20 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
     }
 
     public boolean isMoved() {
-        if (command.getOutput() != null && command.getOutput().getError() != null
-                && command.getOutput().getError().startsWith(CommandKeyword.MOVED.name())) {
+
+        if (getError() != null && getError().startsWith(CommandKeyword.MOVED.name())) {
             return true;
         }
+
         return false;
     }
 
     public boolean isAsk() {
+
         if (getError() != null && getError().startsWith(CommandKeyword.ASK.name())) {
             return true;
         }
+
         return false;
     }
 
