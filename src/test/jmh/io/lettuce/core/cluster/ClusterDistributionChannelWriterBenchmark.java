@@ -72,7 +72,7 @@ public class ClusterDistributionChannelWriterBenchmark {
     @Setup
     public void setup() {
 
-        writer = new ClusterDistributionChannelWriter(CLIENT_OPTIONS, EMPTY_WRITER, ClusterEventListener.NO_OP, null);
+        writer = new ClusterDistributionChannelWriter(CLIENT_OPTIONS, EMPTY_WRITER, ClusterEventListener.NO_OP);
 
         Partitions partitions = new Partitions();
 

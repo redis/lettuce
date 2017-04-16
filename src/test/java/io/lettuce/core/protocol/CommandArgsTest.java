@@ -22,6 +22,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.lambdaworks.redis.codec.ByteArrayCodec;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 
@@ -40,7 +41,7 @@ public class CommandArgsTest {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec);
 
-        assertThat(args.getFirstInteger()).isNull();
+        assertThat(CommandArgsAccessor.getFirstInteger(args)).isNull();
     }
 
     @Test
@@ -48,7 +49,7 @@ public class CommandArgsTest {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec).add(1L).add(127).add(128).add(129).add(0).add(-1);
 
-        assertThat(args.getFirstInteger()).isEqualTo(1L);
+        assertThat(CommandArgsAccessor.getFirstInteger(args)).isEqualTo(1L);
     }
 
     @Test
@@ -56,7 +57,7 @@ public class CommandArgsTest {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec);
 
-        assertThat(args.getFirstString()).isNull();
+        assertThat(CommandArgsAccessor.getFirstString(args)).isNull();
     }
 
     @Test
@@ -64,7 +65,7 @@ public class CommandArgsTest {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec).add("one").add("two");
 
-        assertThat(args.getFirstString()).isEqualTo("one");
+        assertThat(CommandArgsAccessor.getFirstString(args)).isEqualTo("one");
     }
 
     @Test
@@ -72,7 +73,7 @@ public class CommandArgsTest {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec);
 
-        assertThat(args.getFirstString()).isNull();
+        assertThat(CommandArgsAccessor.getFirstString(args)).isNull();
     }
 
     @Test
@@ -80,7 +81,7 @@ public class CommandArgsTest {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec).addKey("one").addKey("two");
 
-        assertThat(args.getFirstEncodedKey()).isEqualTo(ByteBuffer.wrap("one".getBytes()));
+        assertThat(CommandArgsAccessor.encodeFirstKey(args)).isEqualTo(ByteBuffer.wrap("one".getBytes()));
     }
 
     @Test

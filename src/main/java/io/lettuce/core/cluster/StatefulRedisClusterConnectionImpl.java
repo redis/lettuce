@@ -53,8 +53,8 @@ import io.lettuce.core.protocol.*;
  * @author Mark Paluch
  * @since 4.0
  */
-public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V>
-        implements StatefulRedisClusterConnection<K, V> {
+public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
+        StatefulRedisClusterConnection<K, V> {
 
     private Partitions partitions;
 
@@ -125,15 +125,15 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             throw new RedisException("NodeId " + nodeId + " does not belong to the cluster");
         }
 
-        return getClusterDistributionChannelWriter().getClusterConnectionProvider()
-                .getConnection(ClusterConnectionProvider.Intent.WRITE, nodeId);
+        return getClusterDistributionChannelWriter().getClusterConnectionProvider().getConnection(
+                ClusterConnectionProvider.Intent.WRITE, nodeId);
     }
 
     @Override
     public StatefulRedisConnection<K, V> getConnection(String host, int port) {
 
-        return getClusterDistributionChannelWriter().getClusterConnectionProvider()
-                .getConnection(ClusterConnectionProvider.Intent.WRITE, host, port);
+        return getClusterDistributionChannelWriter().getClusterConnectionProvider().getConnection(
+                ClusterConnectionProvider.Intent.WRITE, host, port);
     }
 
     public ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {
@@ -161,8 +161,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     void setClientName(String clientName) {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
-        AsyncCommand<String, String, String> async = new AsyncCommand<>(
-                new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.CLIENT, new StatusOutput<>(
+                StringCodec.UTF8), args));
         this.clientName = clientName;
 
         dispatch((RedisCommand) async);
@@ -190,8 +190,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
-                if (status.equals("OK") && command.getArgs().getFirstString() != null) {
-                    this.password = command.getArgs().getFirstString().toCharArray();
+                if (status.equals("OK")) {
+                    String password = CommandArgsAccessor.getFirstString(cmd.getArgs());
+                    if (password != null) {
+                        this.password = password.toCharArray();
+                    }
                 }
             });
         }
