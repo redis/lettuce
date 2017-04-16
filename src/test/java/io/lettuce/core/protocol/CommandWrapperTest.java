@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.protocol;
+package io.lettuce.core.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,9 +26,6 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.Command;
-import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.protocol.CommandWrapper;
 
 /**
  * @author Mark Paluch

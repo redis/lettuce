@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import io.netty.buffer.ByteBuf;
  * @author Will Glozer
  * @author Mark Paluch
  */
-public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency {
+public class Command<K, V, T> implements RedisCommand<K, V, T> {
 
     protected final static byte ST_INITIAL = 0;
     protected final static byte ST_COMPLETED = 1;
@@ -43,9 +43,6 @@ public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency {
     protected CommandOutput<K, V, T> output;
     protected Throwable exception;
     protected volatile byte status = ST_INITIAL;
-    protected long sentNs = -1;
-    protected long firstResponseNs = -1;
-    protected long completedNs = -1;
 
     /**
      * Create a new command with the supplied type.
@@ -174,37 +171,5 @@ public class Command<K, V, T> implements RedisCommand<K, V, T>, WithLatency {
     @Override
     public boolean isDone() {
         return status == ST_COMPLETED;
-    }
-
-    @Override
-    public void sent(long timeNs) {
-        sentNs = timeNs;
-        firstResponseNs = -1;
-        completedNs = -1;
-    }
-
-    @Override
-    public void firstResponse(long timeNs) {
-        firstResponseNs = timeNs;
-    }
-
-    @Override
-    public void completed(long timeNs) {
-        completedNs = timeNs;
-    }
-
-    @Override
-    public long getSent() {
-        return sentNs;
-    }
-
-    @Override
-    public long getFirstResponse() {
-        return firstResponseNs;
-    }
-
-    @Override
-    public long getCompleted() {
-        return completedNs;
     }
 }

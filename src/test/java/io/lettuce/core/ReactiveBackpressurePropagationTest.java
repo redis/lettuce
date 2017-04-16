@@ -26,19 +26,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
-
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.channel.local.LocalAddress;
@@ -67,8 +65,6 @@ public class ReactiveBackpressurePropagationTest {
     @Before
     public void before() throws Exception {
 
-        commandHandler = new CommandHandler(clientResources, endpoint);
-
         when(clientResources.commandLatencyCollector()).thenReturn(latencyCollector);
         when(statefulConnection.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 
@@ -76,6 +72,8 @@ public class ReactiveBackpressurePropagationTest {
             embeddedChannel.writeOutbound(command);
             return command;
         });
+
+        commandHandler = new CommandHandler(clientResources, endpoint);
 
         embeddedChannel = new EmbeddedChannel(commandHandler);
         embeddedChannel.connect(new LocalAddress("remote"));

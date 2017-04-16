@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
@@ -296,7 +295,8 @@ public class CommandHandlerTest {
         sut.write(context, command, null);
 
         verify(context).write(command, null);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).hasSize(1).allMatch(
+                o -> o instanceof LatencyMeteredCommand);
     }
 
     @Test
@@ -316,14 +316,15 @@ public class CommandHandlerTest {
         sut.write(context, commands, null);
 
         verify(context).write(commands, null);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).hasSize(1);
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldWriteActiveCommandsInMixedBatch() throws Exception {
 
-        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<String, String>(
-                new Utf8StringCodec()), null);
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
+                null);
 
         command.cancel();
 
@@ -333,7 +334,9 @@ public class CommandHandlerTest {
         verify(context).write(captor.capture(), any());
 
         assertThat(captor.getValue()).containsOnly(command2);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).containsOnly(command2);
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).hasSize(1)
+                .allMatch(o -> o instanceof LatencyMeteredCommand)
+                .allMatch(o -> CommandWrapper.unwrap((RedisCommand) o) == command2);
     }
 
     @Test
@@ -346,14 +349,4 @@ public class CommandHandlerTest {
 
         verify(byteBufMock, never()).release();
     }
-
-    @Test
-    public void shouldSetLatency() throws Exception {
-
-        sut.write(context, Arrays.asList(command), null);
-
-        assertThat(command.sentNs).isNotEqualTo(-1);
-        assertThat(command.firstResponseNs).isEqualTo(-1);
-    }
-
 }

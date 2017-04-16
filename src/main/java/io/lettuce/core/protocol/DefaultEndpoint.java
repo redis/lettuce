@@ -30,7 +30,6 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
-
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -534,6 +533,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
 
         RedisCommand<?, ?, ?> cmd;
         while ((cmd = source.poll()) != null) {
+
+            if (cmd instanceof LatencyMeteredCommand<?, ?, ?>) {
+                cmd = ((LatencyMeteredCommand<?, ?, ?>) cmd).getDelegate();
+            }
             target.add(cmd);
         }
 

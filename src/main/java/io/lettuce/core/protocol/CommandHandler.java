@@ -30,7 +30,6 @@ import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
@@ -62,6 +61,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final RedisStateMachine rsm = new RedisStateMachine();
     private final boolean traceEnabled = logger.isTraceEnabled();
     private final boolean debugEnabled = logger.isDebugEnabled();
+    private final boolean latencyMetricsEnabled;
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
     private final ClientResources clientResources;
@@ -85,6 +85,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         this.clientResources = clientResources;
         this.endpoint = endpoint;
+        this.latencyMetricsEnabled = clientResources.commandLatencyCollector().isEnabled();
     }
 
     /**
@@ -311,31 +312,28 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
             }
 
-            WithLatency withLatency = getWithLatency(command);
+            if (latencyMetricsEnabled && command instanceof WithLatency) {
 
-            if (!rsm.decode(buffer, command, command.getOutput())) {
-
-                if (command instanceof DemandAware.Sink) {
-
-                    DemandAware.Sink sink = (DemandAware.Sink) command;
-                    sink.setSource(backpressureSource);
-
-                    if (!sink.hasDemand()) {
-                        ctx.channel().config().setAutoRead(false);
-                    }
+                WithLatency withLatency = (WithLatency) command;
+                if (withLatency.getFirstResponse() == -1) {
+                    withLatency.firstResponse(nanoTime());
                 }
 
-                return;
-            }
+                if (!decode(ctx, buffer, command)) {
+                    return;
+                }
 
-            if (!ctx.channel().config().isAutoRead()) {
-                ctx.channel().config().setAutoRead(true);
-            }
+                recordLatency(withLatency, command.getType());
 
-            recordLatency(withLatency, command.getType());
+            } else {
+
+                if (!decode(ctx, buffer, command)) {
+                    return;
+                }
+
+            }
 
             queue.poll();
-
             try {
                 command.complete();
             } catch (Exception e) {
@@ -348,25 +346,28 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
-    private WithLatency getWithLatency(RedisCommand<?, ?, ?> command) {
+    private boolean decode(ChannelHandlerContext ctx, ByteBuf buffer, RedisCommand<?, ?, ?> command) {
 
-        WithLatency withLatency = null;
+        if (!rsm.decode(buffer, command, command.getOutput())) {
 
-        if (clientResources.commandLatencyCollector().isEnabled()) {
+            if (command instanceof DemandAware.Sink) {
 
-            RedisCommand<?, ?, ?> unwrappedCommand = CommandWrapper.unwrap(command);
+                DemandAware.Sink sink = (DemandAware.Sink) command;
+                sink.setSource(backpressureSource);
 
-            if (unwrappedCommand instanceof WithLatency) {
-
-                withLatency = (WithLatency) unwrappedCommand;
-
-                if (withLatency.getFirstResponse() == -1) {
-                    withLatency.firstResponse(nanoTime());
+                if (!sink.hasDemand()) {
+                    ctx.channel().config().setAutoRead(false);
                 }
             }
+
+            return false;
         }
 
-        return withLatency;
+        if (!ctx.channel().config().isAutoRead()) {
+            ctx.channel().config().setAutoRead(true);
+        }
+
+        return true;
     }
 
     protected boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output) {
@@ -459,15 +460,26 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 command.complete();
             } else {
 
-                queue.add(command);
+                if (latencyMetricsEnabled) {
 
-                if (clientResources.commandLatencyCollector().isEnabled()) {
-                    RedisCommand<?, ?, ?> unwrappedCommand = CommandWrapper.unwrap(command);
-                    if (unwrappedCommand instanceof WithLatency) {
-                        WithLatency withLatency = (WithLatency) unwrappedCommand;
+                    if (command instanceof WithLatency) {
+
+                        WithLatency withLatency = (WithLatency) command;
+
                         withLatency.firstResponse(-1);
                         withLatency.sent(nanoTime());
+
+                        queue.add(command);
+                    } else {
+
+                        LatencyMeteredCommand<?, ?, ?> latencyMeteredCommand = new LatencyMeteredCommand<>(command);
+                        latencyMeteredCommand.firstResponse(-1);
+                        latencyMeteredCommand.sent(nanoTime());
+
+                        queue.add(latencyMeteredCommand);
                     }
+                } else {
+                    queue.add(command);
                 }
             }
         } catch (Exception e) {
