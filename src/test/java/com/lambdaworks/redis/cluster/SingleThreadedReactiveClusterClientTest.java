@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.Before;
@@ -31,6 +32,7 @@ import com.lambdaworks.redis.resource.DefaultClientResources;
 import com.lambdaworks.redis.resource.EventLoopGroupProvider;
 
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -47,12 +49,22 @@ public class SingleThreadedReactiveClusterClientTest {
     @Before
     public void before() {
 
-        NioEventLoopGroup nioEventLoopGroup = new NioEventLoopGroup(1);
+        AtomicReference<EventLoopGroup> ref = new AtomicReference<>();
         DefaultClientResources clientResources = DefaultClientResources.builder()
                 .eventExecutorGroup(ImmediateEventExecutor.INSTANCE).eventLoopGroupProvider(new EventLoopGroupProvider() {
                     @Override
                     public <T extends EventLoopGroup> T allocate(Class<T> type) {
-                        return (T) nioEventLoopGroup;
+
+                        if (ref.get() == null) {
+
+                            if (type == EpollEventLoopGroup.class) {
+                                ref.set(new EpollEventLoopGroup(1));
+                            } else {
+                                ref.set(new NioEventLoopGroup(1));
+                            }
+                        }
+
+                        return (T) ref.get();
                     }
 
                     @Override
@@ -68,7 +80,7 @@ public class SingleThreadedReactiveClusterClientTest {
 
                     @Override
                     public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
-                        nioEventLoopGroup.shutdownGracefully(quietPeriod, timeout, timeUnit);
+                        ref.get().shutdownGracefully(quietPeriod, timeout, timeUnit);
                         return new SucceededFuture<>(ImmediateEventExecutor.INSTANCE, true);
                     }
 
