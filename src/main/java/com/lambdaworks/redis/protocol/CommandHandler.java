@@ -46,6 +46,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Jongyeol Choi
  */
 @ChannelHandler.Sharable
 public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisChannelWriter<K, V> {
@@ -217,24 +218,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
             }
 
-            if (latencyMetricsEnabled && command instanceof WithLatency) {
-
-                WithLatency withLatency = (WithLatency) command;
-                if (withLatency.getFirstResponse() == -1) {
-                    withLatency.firstResponse(nanoTime());
-                }
-
-                if (!rsm.decode(buffer, command, command.getOutput())) {
+            try {
+                if (!decode(buffer, command)) {
                     return;
                 }
+            } catch (Exception e) {
 
-                recordLatency(withLatency, command.getType());
-
-            } else {
-
-                if (!rsm.decode(buffer, command, command.getOutput())) {
-                    return;
-                }
+                ctx.close();
+                throw e;
             }
 
             queue.poll();
@@ -249,6 +240,27 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 buffer.discardReadBytes();
             }
         }
+    }
+
+    private boolean decode(ByteBuf buffer, RedisCommand<K, V, ?> command) {
+
+        if (latencyMetricsEnabled && command instanceof WithLatency) {
+
+            WithLatency withLatency = (WithLatency) command;
+            if (withLatency.getFirstResponse() == -1) {
+                withLatency.firstResponse(nanoTime());
+            }
+
+            if (!rsm.decode(buffer, command, command.getOutput())) {
+                return false;
+            }
+
+            recordLatency(withLatency, command.getType());
+
+            return true;
+        }
+
+        return rsm.decode(buffer, command, command.getOutput());
     }
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
@@ -885,7 +897,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 logger.debug("{} Storing exception in {}", logPrefix(), command);
             }
             logLevel = InternalLogLevel.DEBUG;
-            command.completeExceptionally(cause);
+            try {
+                command.completeExceptionally(cause);
+            } catch (Exception ex) {
+                logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(), ex);
+            }
         }
 
         if (channel == null || !channel.isActive() || !isConnected()) {
