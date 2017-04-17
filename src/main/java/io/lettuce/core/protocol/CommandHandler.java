@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Jongyeol Choi
  */
 public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCommands {
 
@@ -161,7 +162,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 logger.debug("{} Storing exception in {}", logPrefix(), command);
             }
             logLevel = InternalLogLevel.DEBUG;
-            command.completeExceptionally(cause);
+
+            try {
+                command.completeExceptionally(cause);
+            } catch (Exception ex) {
+                logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(), ex);
+            }
         }
 
         if (channel == null || !channel.isActive() || !isConnected()) {
@@ -312,25 +318,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 logger.debug("{} Queue contains: {} commands", logPrefix(), queue.size());
             }
 
-            if (latencyMetricsEnabled && command instanceof WithLatency) {
-
-                WithLatency withLatency = (WithLatency) command;
-                if (withLatency.getFirstResponse() == -1) {
-                    withLatency.firstResponse(nanoTime());
-                }
-
+            try {
                 if (!decode(ctx, buffer, command)) {
                     return;
                 }
+            } catch (Exception e) {
 
-                recordLatency(withLatency, command.getType());
-
-            } else {
-
-                if (!decode(ctx, buffer, command)) {
-                    return;
-                }
-
+                ctx.close();
+                throw e;
             }
 
             queue.poll();
@@ -347,6 +342,27 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     private boolean decode(ChannelHandlerContext ctx, ByteBuf buffer, RedisCommand<?, ?, ?> command) {
+
+        if (latencyMetricsEnabled && command instanceof WithLatency) {
+
+            WithLatency withLatency = (WithLatency) command;
+            if (withLatency.getFirstResponse() == -1) {
+                withLatency.firstResponse(nanoTime());
+            }
+
+            if (!decode0(ctx, buffer, command)) {
+                return false;
+            }
+
+            recordLatency(withLatency, command.getType());
+
+            return true;
+        }
+
+        return decode0(ctx, buffer, command);
+    }
+
+    private boolean decode0(ChannelHandlerContext ctx, ByteBuf buffer, RedisCommand<?, ?, ?> command) {
 
         if (!rsm.decode(buffer, command, command.getOutput())) {
 
