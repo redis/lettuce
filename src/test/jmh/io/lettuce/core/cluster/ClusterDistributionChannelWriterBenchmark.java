@@ -15,11 +15,10 @@
  */
 package io.lettuce.core.cluster;
 
-import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -29,11 +28,9 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
 import io.lettuce.core.*;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.ByteArrayCodec;
-import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.ValueOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -84,16 +81,15 @@ public class ClusterDistributionChannelWriterBenchmark {
 
         partitions.updateCache();
 
+        CompletableFuture<EmptyStatefulRedisConnection> connectionFuture = CompletableFuture.completedFuture(CONNECTION);
+
         writer.setPartitions(partitions);
-        writer.setClusterConnectionProvider(new PooledClusterConnectionProvider<>(new RedisClusterClient() {
-
-            @Override
-            <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId,
-                    RedisChannelWriter clusterWriter, Supplier<SocketAddress> socketAddressSupplier) {
-                return CONNECTION;
+        writer.setClusterConnectionProvider(new PooledClusterConnectionProvider(new EmptyRedisClusterClient(RedisURI.create(
+                "localhost", 7379)), EMPTY_WRITER, ByteArrayCodec.INSTANCE) {
+            public CompletableFuture getConnectionAsync(Intent intent, int slot) {
+                return connectionFuture;
             }
-        }, EMPTY_WRITER, ByteArrayCodec.INSTANCE));
-
+        });
         writer.setPartitions(partitions);
     }
 
