@@ -213,8 +213,20 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
             WithLatency withLatency = getWithLatency(command);
 
-            if (!rsm.decode(buffer, command, command.getOutput())) {
-                return;
+            try {
+                if (!rsm.decode(buffer, command, command.getOutput())) {
+                    return;
+                }
+            } catch (Exception e) {
+                recordLatency(withLatency, command.getType());
+                queue.poll();
+                try {
+                    command.completeExceptionally(e);
+                } catch (Exception ex) {
+                    logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(), ex);
+                }
+                ctx.close();
+                throw e;
             }
 
             recordLatency(withLatency, command.getType());

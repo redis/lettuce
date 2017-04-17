@@ -292,6 +292,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-redis</artifactId>
+            <version>${netty-version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <profiles>
