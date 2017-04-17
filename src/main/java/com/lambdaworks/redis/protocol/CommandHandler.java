@@ -47,6 +47,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Jongyeol Choi
  */
 @ChannelHandler.Sharable
 public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisChannelWriter<K, V> {
@@ -213,8 +214,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
             WithLatency withLatency = getWithLatency(command);
 
-            if (!rsm.decode(buffer, command, command.getOutput())) {
-                return;
+            try {
+                if (!rsm.decode(buffer, command, command.getOutput())) {
+                    return;
+                }
+            } catch (Exception e) {
+
+                ctx.close();
+                throw e;
             }
 
             recordLatency(withLatency, command.getType());
@@ -250,14 +257,13 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
 
-        if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null
-                && remote() != null) {
+        if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null && remote() != null) {
 
             long firstResponseLatency = withLatency.getSent() - withLatency.getFirstResponse();
             long completionLatency = nanoTime() - withLatency.getSent();
 
-            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
-                    completionLatency);
+            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType,
+                    firstResponseLatency, completionLatency);
         }
     }
 
@@ -863,7 +869,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 logger.debug("{} Storing exception in {}", logPrefix(), command);
             }
             logLevel = InternalLogLevel.DEBUG;
-            command.completeExceptionally(cause);
+            try {
+                command.completeExceptionally(cause);
+            } catch (Exception ex) {
+                logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(), ex);
+            }
         }
 
         if (channel == null || !channel.isActive() || !isConnected()) {
