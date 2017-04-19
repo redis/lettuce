@@ -32,7 +32,6 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -252,7 +251,7 @@ public class MasterSlaveConnectionProvider<K, V> {
             RedisURI.Builder builder = RedisURI.Builder.redis(key.host, key.port);
 
             if (initialRedisUri.getPassword() != null && initialRedisUri.getPassword().length != 0) {
-                builder.withPassword(new String(initialRedisUri.getPassword()));
+                builder.withPassword(initialRedisUri.getPassword());
             }
 
             if (initialRedisUri.getClientName() != null) {

@@ -69,11 +69,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
     @Override
     public String auth(String password) {
-        AsyncCommand<K, V, String> cmd = authAsync(password);
+
+        LettuceAssert.notNull(password, "Password must not be null");
+        AsyncCommand<K, V, String> cmd = authAsync(password.toCharArray());
         return LettuceFutures.awaitOrCancel(cmd, connection.getTimeout(), connection.getTimeoutUnit());
     }
 
-    public AsyncCommand<K, V, String> authAsync(String password) {
+    public AsyncCommand<K, V, String> authAsync(char[] password) {
         return dispatch(commandBuilder.auth(password));
     }
 

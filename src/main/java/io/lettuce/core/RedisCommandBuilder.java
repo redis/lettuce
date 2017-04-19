@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     public Command<K, V, String> auth(String password) {
         LettuceAssert.notNull(password, "Password " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(password, "Password " + MUST_NOT_BE_EMPTY);
+
+        return auth(password.toCharArray());
+    }
+
+    public Command<K, V, String> auth(char[] password) {
+        LettuceAssert.notNull(password, "Password " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(password.length > 0, "Password " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(password);
         return createCommand(AUTH, new StatusOutput<K, V>(codec), args);

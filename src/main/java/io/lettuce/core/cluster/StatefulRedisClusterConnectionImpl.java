@@ -75,8 +75,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      * @param timeout Maximum time to wait for a response.
      * @param unit Unit of time for the timeout.
      */
-    public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout,
-            TimeUnit unit) {
+    public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
         super(writer, timeout, unit);
         this.codec = codec;
 
@@ -146,7 +145,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            async.authAsync(new String(password));
+            async.authAsync(password);
         }
 
         if (clientName != null) {
@@ -191,9 +190,16 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
                 if (status.equals("OK")) {
-                    String password = CommandArgsAccessor.getFirstString(command.getArgs());
+                    char[] password = CommandArgsAccessor.getFirstCharArray(command.getArgs());
+
                     if (password != null) {
-                        this.password = password.toCharArray();
+                        this.password = password;
+                    } else {
+
+                        String stringPassword = CommandArgsAccessor.getFirstString(command.getArgs());
+                        if (stringPassword != null) {
+                            this.password = stringPassword.toCharArray();
+                        }
                     }
                 }
             });

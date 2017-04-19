@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,16 +49,15 @@ import io.lettuce.core.protocol.LettuceCharsets;
  * <p>
  * {@code RedisURI.Builder.redis("localhost", 6379).withPassword("password").withDatabase(1).build(); }
  * </p>
- * See {@link io.lettuce.core.RedisURI.Builder#redis(String)} and
- * {@link io.lettuce.core.RedisURI.Builder#sentinel(String)} for more options.</li>
+ * See {@link io.lettuce.core.RedisURI.Builder#redis(String)} and {@link io.lettuce.core.RedisURI.Builder#sentinel(String)} for
+ * more options.</li>
  * <li>Construct your own instance:
  * <p>
  * {@code new RedisURI("localhost", 6379, 60, TimeUnit.SECONDS);}
  * </p>
  * or
  * <p>
- * {@code RedisURI uri = new RedisURI();
- *     uri.setHost("localhost");
+ * {@code RedisURI uri = new RedisURI(); uri.setHost("localhost");
  *     }
  * </p>
  * </li>
@@ -331,6 +330,18 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         LettuceAssert.notNull(password, "Password must not be null");
         this.password = password.toCharArray();
+    }
+
+    /**
+     * Sets the password. Use empty char array to skip authentication.
+     *
+     * @param password the password, must not be {@literal null}.
+     * @since 4.4
+     */
+    public void setPassword(char[] password) {
+
+        LettuceAssert.notNull(password, "Password must not be null");
+        this.password = Arrays.copyOf(password, password.length);
     }
 
     /**
@@ -1170,7 +1181,21 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             LettuceAssert.notNull(password, "Password must not be null");
 
-            this.password = password.toCharArray();
+            return withPassword(password.toCharArray());
+        }
+
+        /**
+         * Configures authentication.
+         *
+         * @param password the password
+         * @return the builder
+         * @since 4.4
+         */
+        public Builder withPassword(char[] password) {
+
+            LettuceAssert.notNull(password, "Password must not be null");
+
+            this.password = Arrays.copyOf(password, password.length);
             return this;
         }
 
@@ -1218,7 +1243,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
             RedisURI redisURI = new RedisURI();
             redisURI.setHost(host);
             redisURI.setPort(port);
-            redisURI.password = password;
+            if (password != null) {
+                redisURI.setPassword(password);
+            }
             redisURI.setDatabase(database);
             redisURI.setClientName(clientName);
 

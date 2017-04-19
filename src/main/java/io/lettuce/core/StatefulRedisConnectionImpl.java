@@ -32,7 +32,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.MultiOutput;
 import io.lettuce.core.output.StatusOutput;
-import  io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.*;
 
 /**
  * A thread-safe connection to a Redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
@@ -127,7 +127,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            async.authAsync(new String(password));
+            async.authAsync(password);
         }
 
         if (db != 0) {
@@ -174,16 +174,24 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return super.dispatch(sentCommands);
     }
 
-    protected <T> RedisCommand<K, V, T> preProcessCommand(RedisCommand<K, V, T> cmd) {
+    protected <T> RedisCommand<K, V, T> preProcessCommand(RedisCommand<K, V, T> command) {
 
-        RedisCommand<K, V, T> local = cmd;
+        RedisCommand<K, V, T> local = command;
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
-                    String password = CommandArgsAccessor.getFirstString(cmd.getArgs());
+
+                    char[] password = CommandArgsAccessor.getFirstCharArray(command.getArgs());
+
                     if (password != null) {
-                        this.password = password.toCharArray();
+                        this.password = password;
+                    } else {
+
+                        String stringPassword = CommandArgsAccessor.getFirstString(command.getArgs());
+                        if (stringPassword != null) {
+                            this.password = stringPassword.toCharArray();
+                        }
                     }
                 }
             });
@@ -192,7 +200,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         if (local.getType().name().equals(SELECT.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
-                    Long db = CommandArgsAccessor.getFirstInteger(cmd.getArgs());
+                    Long db = CommandArgsAccessor.getFirstInteger(command.getArgs());
                     if (db != null) {
                         this.db = db.intValue();
                     }
