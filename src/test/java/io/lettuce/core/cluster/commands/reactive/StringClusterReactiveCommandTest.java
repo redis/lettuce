@@ -27,7 +27,7 @@ import org.junit.Test;
 
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
-
+import io.lettuce.TestClientResources;
 import io.lettuce.core.FastShutdown;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisURI;
@@ -49,8 +49,8 @@ public class StringClusterReactiveCommandTest extends StringCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900))
-                .build());
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass

@@ -26,6 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+import io.lettuce.TestClientResources;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -42,7 +43,8 @@ public class SentinelServerCommandTest extends AbstractSentinelTest {
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = RedisClient.create(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        sentinelClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder
+                .sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     @Before

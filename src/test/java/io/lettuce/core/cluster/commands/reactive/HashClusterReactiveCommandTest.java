@@ -19,6 +19,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import io.lettuce.TestClientResources;
 import io.lettuce.core.FastShutdown;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSettings;
@@ -39,7 +40,8 @@ public class HashClusterReactiveCommandTest extends HashCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass

@@ -15,11 +15,14 @@
  */
 package io.lettuce.core.cluster.commands.reactive;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.lettuce.TestClientResources;
 import io.lettuce.core.FastShutdown;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSettings;
@@ -30,8 +33,6 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.commands.ListCommandTest;
 import io.lettuce.util.ReactiveSyncInvocationHandler;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * @author Mark Paluch
  */
@@ -41,7 +42,8 @@ public class ListClusterReactiveCommandTest extends ListCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass

@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.lettuce.TestClientResources;
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.FastShutdown;
 import io.lettuce.core.RedisURI;
@@ -41,8 +42,8 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = RedisClusterClient
-                .create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass

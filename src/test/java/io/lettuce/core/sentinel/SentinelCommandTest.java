@@ -24,12 +24,12 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.TestClientResources;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+import io.lettuce.TestClientResources;
 import io.lettuce.Wait;
 import io.lettuce.core.*;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -46,7 +46,8 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = RedisClient.create(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        sentinelClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder
+                .sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     @Before
@@ -134,8 +135,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
         RedisClient client = DefaultRedisClient.get();
 
         RedisURI redisURI = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build();
-        RedisSentinelCommands<String, String> connection = client
-                .connectSentinel(redisURI).sync();
+        RedisSentinelCommands<String, String> connection = client.connectSentinel(redisURI).sync();
         assertThat(connection.ping()).isEqualTo("PONG");
 
         connection.getStatefulConnection().close();
