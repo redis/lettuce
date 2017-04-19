@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,11 +74,13 @@ public abstract class AbstractRedisAsyncCommands<K, V>
 
     @Override
     public String auth(String password) {
-        AsyncCommand<K, V, String> cmd = authAsync(password);
+
+        LettuceAssert.notNull(password, "Password must not be null");
+        AsyncCommand<K, V, String> cmd = authAsync(password.toCharArray());
         return LettuceFutures.awaitOrCancel(cmd, connection.getTimeout(), connection.getTimeoutUnit());
     }
 
-    public AsyncCommand<K, V, String> authAsync(String password) {
+    public AsyncCommand<K, V, String> authAsync(char[] password) {
         return dispatch(commandBuilder.auth(password));
     }
 

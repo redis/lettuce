@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * </p>
  * or
  * <p>
- * {@code RedisURI uri = new RedisURI();
- *     uri.setHost("localhost");
+ * {@code RedisURI uri = new RedisURI(); uri.setHost("localhost");
  *     }
  * </p>
  * </li>
@@ -111,7 +110,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
  * </p>
  *
  * RedisURI supports Redis Standalone, Redis Sentinel and Redis Cluster with plain, SSL, TLS and unix domain socket connections.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -243,7 +242,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns the host.
-     * 
+     *
      * @return the host.
      */
     public String getHost() {
@@ -252,7 +251,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets the Redis host.
-     * 
+     *
      * @param host the host
      */
     public void setHost(String host) {
@@ -261,7 +260,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns the Sentinel Master Id.
-     * 
+     *
      * @return the Sentinel Master Id.
      */
     public String getSentinelMasterId() {
@@ -270,7 +269,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets the Sentinel Master Id.
-     * 
+     *
      * @param sentinelMasterId the Sentinel Master Id.
      */
     public void setSentinelMasterId(String sentinelMasterId) {
@@ -279,7 +278,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns the Redis port.
-     * 
+     *
      * @return the Redis port
      */
     public int getPort() {
@@ -288,7 +287,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets the Redis port. Defaults to {@link #DEFAULT_REDIS_PORT}.
-     * 
+     *
      * @param port the Redis port
      */
     public void setPort(int port) {
@@ -297,7 +296,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns the Unix Domain Socket path.
-     * 
+     *
      * @return the Unix Domain Socket path.
      */
     public String getSocket() {
@@ -306,7 +305,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets the Unix Domain Socket path.
-     * 
+     *
      * @param socket the Unix Domain Socket path.
      */
     public void setSocket(String socket) {
@@ -315,7 +314,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns the password.
-     * 
+     *
      * @return the password
      */
     public char[] getPassword() {
@@ -324,7 +323,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets the password. Use empty string to skip authentication.
-     * 
+     *
      * @param password the password, must not be {@literal null}.
      */
     public void setPassword(String password) {
@@ -334,8 +333,20 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
+     * Sets the password. Use empty char array to skip authentication.
+     *
+     * @param password the password, must not be {@literal null}.
+     * @since 4.4
+     */
+    public void setPassword(char[] password) {
+
+        LettuceAssert.notNull(password, "Password must not be null");
+        this.password = Arrays.copyOf(password, password.length);
+    }
+
+    /**
      * Returns the command timeout for synchronous command execution.
-     * 
+     *
      * @return the Timeout
      */
     public long getTimeout() {
@@ -344,7 +355,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets the command timeout for synchronous command execution.
-     * 
+     *
      * @param timeout the command timeout for synchronous command execution.
      */
     public void setTimeout(long timeout) {
@@ -353,7 +364,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns the {@link TimeUnit} for the command timeout.
-     * 
+     *
      * @return the {@link TimeUnit} for the command timeout.
      */
     public TimeUnit getUnit() {
@@ -362,7 +373,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets the {@link TimeUnit} for the command timeout.
-     * 
+     *
      * @param unit the {@link TimeUnit} for the command timeout, must not be {@literal null}
      */
     public void setUnit(TimeUnit unit) {
@@ -373,7 +384,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns the Redis database number. Databases are only available for Redis Standalone and Redis Master/Slave.
-     * 
+     *
      * @return
      */
     public int getDatabase() {
@@ -382,7 +393,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets the Redis database number. Databases are only available for Redis Standalone and Redis Master/Slave.
-     * 
+     *
      * @param database the Redis database number.
      */
     public void setDatabase(int database) {
@@ -414,7 +425,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns {@literal true} if SSL mode is enabled.
-     * 
+     *
      * @return {@literal true} if SSL mode is enabled.
      */
     public boolean isSsl() {
@@ -423,7 +434,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets whether to use SSL model.
-     * 
+     *
      * @param ssl
      */
     public void setSsl(boolean ssl) {
@@ -432,7 +443,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets whether to verify peers when using {@link #isSsl() SSL}.
-     * 
+     *
      * @return {@literal true} to verify peers when using {@link #isSsl() SSL}.
      */
     public boolean isVerifyPeer() {
@@ -441,7 +452,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Sets whether to verify peers when using {@link #isSsl() SSL}.
-     * 
+     *
      * @param verifyPeer {@literal true} to verify peers when using {@link #isSsl() SSL}.
      */
     public void setVerifyPeer(boolean verifyPeer) {
@@ -450,7 +461,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns {@literal true} if StartTLS is enabled.
-     * 
+     *
      * @return {@literal true} if StartTLS is enabled.
      */
     public boolean isStartTls() {
@@ -459,7 +470,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Returns whether StartTLS is enabled.
-     * 
+     *
      * @param startTls {@literal true} if StartTLS is enabled.
      */
     public void setStartTls(boolean startTls) {
@@ -476,7 +487,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Creates an URI based on the RedisURI.
-     * 
+     *
      * @return URI based on the RedisURI
      */
     public URI toURI() {
@@ -658,7 +669,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * URL encode the {@code str} without slash escaping {@code %2F}
-     * 
+     *
      * @param str
      * @return the URL-encoded string
      */
@@ -1174,7 +1185,21 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             LettuceAssert.notNull(password, "Password must not be null");
 
-            this.password = password.toCharArray();
+            return withPassword(password.toCharArray());
+        }
+
+        /**
+         * Configures authentication.
+         *
+         * @param password the password
+         * @return the builder
+         * @since 4.4
+         */
+        public Builder withPassword(char[] password) {
+
+            LettuceAssert.notNull(password, "Password must not be null");
+
+            this.password = Arrays.copyOf(password, password.length);
             return this;
         }
 
@@ -1197,7 +1222,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         /**
          * Configures a sentinel master Id.
-         * 
+         *
          * @param sentinelMasterId sentinel master id, must not be empty or {@literal null}
          * @return the builder
          */
@@ -1222,7 +1247,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
             RedisURI redisURI = new RedisURI();
             redisURI.setHost(host);
             redisURI.setPort(port);
-            redisURI.password = password;
+            if (password != null) {
+                redisURI.setPassword(password);
+            }
             redisURI.setDatabase(database);
             redisURI.setClientName(clientName);
 

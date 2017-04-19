@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            async.authAsync(new String(password));
+            async.authAsync(password);
         }
 
         if (db != 0) {
@@ -144,16 +144,24 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     @Override
-    public <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
+    public <T, C extends RedisCommand<K, V, T>> C dispatch(C command) {
 
-        RedisCommand<K, V, T> local = cmd;
+        RedisCommand<K, V, T> local = command;
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
-                    String password = CommandArgsAccessor.getFirstString(cmd.getArgs());
+
+                    char[] password = CommandArgsAccessor.getFirstCharArray(command.getArgs());
+
                     if (password != null) {
-                        this.password = password.toCharArray();
+                        this.password = password;
+                    } else {
+
+                        String stringPassword = CommandArgsAccessor.getFirstString(command.getArgs());
+                        if (stringPassword != null) {
+                            this.password = stringPassword.toCharArray();
+                        }
                     }
                 }
             });
@@ -162,7 +170,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         if (local.getType().name().equals(SELECT.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
-                    Long db = CommandArgsAccessor.getFirstInteger(cmd.getArgs());
+                    Long db = CommandArgsAccessor.getFirstInteger(command.getArgs());
                     if (db != null) {
                         this.db = db.intValue();
                     }
@@ -210,7 +218,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         try {
             return (C) super.dispatch(local);
         } finally {
-            if (cmd.getType().name().equals(MULTI.name())) {
+            if (command.getType().name().equals(MULTI.name())) {
                 multi = (multi == null ? new MultiOutput<>(codec) : multi);
             }
         }

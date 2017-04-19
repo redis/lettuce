@@ -152,7 +152,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            async.authAsync(new String(password));
+            async.authAsync(password);
         }
 
         if (clientName != null) {
@@ -175,16 +175,23 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     @Override
-    public <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
+    public <T, C extends RedisCommand<K, V, T>> C dispatch(C command) {
 
-        RedisCommand<K, V, T> local = cmd;
+        RedisCommand<K, V, T> local = command;
 
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
                 if (status.equals("OK")) {
-                    String password = CommandArgsAccessor.getFirstString(cmd.getArgs());
+                    char[] password = CommandArgsAccessor.getFirstCharArray(command.getArgs());
+
                     if (password != null) {
-                        this.password = password.toCharArray();
+                        this.password = password;
+                    } else {
+
+                        String stringPassword = CommandArgsAccessor.getFirstString(command.getArgs());
+                        if (stringPassword != null) {
+                            this.password = stringPassword.toCharArray();
+                        }
                     }
                 }
             });

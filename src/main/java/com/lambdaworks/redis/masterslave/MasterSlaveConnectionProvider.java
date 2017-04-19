@@ -261,7 +261,7 @@ public class MasterSlaveConnectionProvider<K, V> {
             RedisURI.Builder builder = RedisURI.Builder.redis(key.host, key.port);
 
             if (initialRedisUri.getPassword() != null && initialRedisUri.getPassword().length != 0) {
-                builder.withPassword(new String(initialRedisUri.getPassword()));
+                builder.withPassword(initialRedisUri.getPassword());
             }
 
             if (initialRedisUri.getClientName() != null) {

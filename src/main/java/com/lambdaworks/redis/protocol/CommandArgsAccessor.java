@@ -17,6 +17,7 @@ package com.lambdaworks.redis.protocol;
 
 import java.nio.ByteBuffer;
 
+import com.lambdaworks.redis.protocol.CommandArgs.CharArrayArgument;
 import com.lambdaworks.redis.protocol.CommandArgs.KeyArgument;
 import com.lambdaworks.redis.protocol.CommandArgs.SingularArgument;
 import com.lambdaworks.redis.protocol.CommandArgs.StringArgument;
@@ -62,6 +63,25 @@ public class CommandArgsAccessor {
 
             if (singularArgument instanceof StringArgument) {
                 return ((StringArgument) singularArgument).val;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the first {@link char}-array argument.
+     *
+     * @param commandArgs must not be null.
+     * @return the first {@link String} argument or {@literal null}.
+     */
+    @SuppressWarnings("unchecked")
+    public static <K, V> char[] getFirstCharArray(CommandArgs<K, V> commandArgs) {
+
+        for (SingularArgument singularArgument : commandArgs.singularArguments) {
+
+            if (singularArgument instanceof CharArrayArgument) {
+                return ((CharArrayArgument) singularArgument).val;
             }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,6 +188,18 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> add(String s) {
 
         singularArguments.add(StringArgument.of(s));
+        return this;
+    }
+
+    /**
+     * Add a string as char-array. The argument is represented as bulk string.
+     *
+     * @param cs the string.
+     * @return the command args.
+     */
+    public CommandArgs<K, V> add(char[] cs) {
+
+        singularArguments.add(CharArrayArgument.of(cs));
         return this;
     }
 
@@ -486,6 +498,42 @@ public class CommandArgs<K, V> {
                 target.writeByte((byte) value.charAt(i));
             }
             target.writeBytes(CRLF);
+        }
+    }
+
+    static class CharArrayArgument extends SingularArgument {
+
+        final char[] val;
+
+        private CharArrayArgument(char[] val) {
+            this.val = val;
+        }
+
+        static CharArrayArgument of(char[] val) {
+            return new CharArrayArgument(val);
+        }
+
+        @Override
+        void encode(ByteBuf target) {
+            writeString(target, val);
+        }
+
+        static void writeString(ByteBuf target, char[] value) {
+
+            target.writeByte('$');
+
+            IntegerArgument.writeInteger(target, value.length);
+            target.writeBytes(CRLF);
+
+            for (int i = 0; i < value.length; i++) {
+                target.writeByte((byte) value[i]);
+            }
+            target.writeBytes(CRLF);
+        }
+
+        @Override
+        public String toString() {
+            return new String(val);
         }
     }
 
