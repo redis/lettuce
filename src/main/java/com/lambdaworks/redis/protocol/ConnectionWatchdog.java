@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
- * 
+ *
  * @author Will Glozer
  * @author Mark Paluch
  */
@@ -71,7 +71,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
-     * 
+     *
      * @param reconnectDelay reconnect delay, must not be {@literal null}
      * @param clientOptions client options for the current connection, must not be {@literal null}
      * @param bootstrap Configuration for new channels, must not be {@literal null}
@@ -114,7 +114,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             }
         };
 
-        this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier);
+        this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier, timer,
+                reconnectWorkers);
 
         resetReconnectDelay();
     }
@@ -212,20 +213,18 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             final int attempt = attempts;
             int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempt));
             logger.debug("Reconnect attempt {}, delay {}ms", attempt, timeout);
-            this.reconnectScheduleTimeout = timer.newTimeout(new TimerTask() {
-                @Override
-                public void run(final Timeout timeout) throws Exception {
 
-                    if (!isEventLoopGroupActive()) {
-                        logger.debug("isEventLoopGroupActive() == false");
-                        return;
-                    }
+            this.reconnectScheduleTimeout = timer.newTimeout(it -> {
 
-                    reconnectWorkers.submit(() -> {
-                        ConnectionWatchdog.this.run(timeout);
-                        return null;
-                    });
+                if (!isEventLoopGroupActive()) {
+                    logger.debug("isEventLoopGroupActive() == false");
+                    return;
                 }
+
+                reconnectWorkers.submit(() -> {
+                    ConnectionWatchdog.this.run(it);
+                    return null;
+                });
             }, timeout, TimeUnit.MILLISECONDS);
         } else {
             logger.debug("{} Skipping scheduleReconnect() because I have an active channel", logPrefix());
@@ -235,7 +234,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     /**
      * Reconnect to the remote address that the closed channel was connected to. This creates a new {@link ChannelPipeline} with
      * the same handler instances contained in the old channel's pipeline.
-     * 
+     *
      * @param timeout Timer task handle.
      *
      * @throws Exception when reconnection fails.
@@ -267,24 +266,35 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             infoLevel = InternalLogLevel.DEBUG;
         }
 
+        InternalLogLevel warnLevelToUse = warnLevel;
+
         try {
             reconnectionListener.onReconnect(new ConnectionEvents.Reconnect(attempts));
-            reconnect(infoLevel, warnLevel);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw e;
+            logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
+
+            ChannelFuture future = reconnectionHandler.reconnect();
+
+            future.addListener(it -> {
+
+                if (it.isSuccess() || it.cause() == null) {
+                    return;
+                }
+
+                Throwable throwable = it.cause();
+
+                if (ReconnectionHandler.isExecutionException(throwable)) {
+                    logger.log(warnLevelToUse, "Cannot reconnect: {}", throwable.toString());
+                } else {
+                    logger.log(warnLevelToUse, "Cannot reconnect: {}", throwable.toString(), throwable);
+                }
+
+                if (!isReconnectSuspended()) {
+                    scheduleReconnect();
+                }
+            });
         } catch (Exception e) {
-            logger.log(warnLevel, "Cannot connect: {}", e.toString());
-            if (!isReconnectSuspended()) {
-                scheduleReconnect();
-            }
+            logger.log(warnLevel, "Cannot reconnect: {}", e.toString());
         }
-    }
-
-    protected void reconnect(InternalLogLevel infoLevel, InternalLogLevel warnLevel) throws Exception {
-
-        logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
-        reconnectionHandler.reconnect(infoLevel);
     }
 
     private boolean isEventLoopGroupActive() {
@@ -296,9 +306,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         return true;
     }
 
-    private boolean isEventLoopGroupActive(EventExecutorGroup executorService) {
+    private static boolean isEventLoopGroupActive(EventExecutorGroup executorService) {
 
-        if (executorService.isShutdown() || executorService.isTerminated() || executorService.isShuttingDown()) {
+        if (executorService.isShuttingDown()) {
             return false;
         }
 
@@ -309,11 +319,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         long quietUntil = lastReconnectionLogging + LOGGING_QUIET_TIME_MS;
 
-        if (quietUntil > System.currentTimeMillis()) {
-            return false;
-        }
-
-        return true;
+        return quietUntil <= System.currentTimeMillis();
     }
 
     public void setListenOnChannelInactive(boolean listenOnChannelInactive) {
