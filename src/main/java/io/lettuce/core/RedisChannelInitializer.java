@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 import io.netty.channel.ChannelHandler;
 
@@ -28,8 +28,7 @@ import io.netty.channel.ChannelHandler;
 public interface RedisChannelInitializer extends ChannelHandler {
 
     /**
-     *
      * @return future to synchronize channel initialization. Returns a new future for every reconnect.
      */
-    Future<Boolean> channelInitialized();
+    CompletableFuture<Boolean> channelInitialized();
 }

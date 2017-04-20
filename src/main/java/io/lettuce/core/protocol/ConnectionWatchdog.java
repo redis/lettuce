@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,11 @@ import io.lettuce.core.ConnectionEvents;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.Delay;
 import io.lettuce.core.resource.Delay.StatefulDelay;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
-import io.netty.util.TimerTask;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
@@ -113,8 +111,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             }
         };
 
-        this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier,
-                connectionFacade);
+        this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier, timer,
+                reconnectWorkers, connectionFacade);
 
         resetReconnectDelay();
     }
@@ -203,20 +201,18 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             final int attempt = attempts;
             int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempt));
             logger.debug("{} Reconnect attempt {}, delay {}ms", logPrefix(), attempt, timeout);
-            this.reconnectScheduleTimeout = timer.newTimeout(new TimerTask() {
-                @Override
-                public void run(final Timeout timeout) throws Exception {
 
-                    if (!isEventLoopGroupActive()) {
-                        logger.debug("isEventLoopGroupActive() == false");
-                        return;
-                    }
+            this.reconnectScheduleTimeout = timer.newTimeout(it -> {
 
-                    reconnectWorkers.submit(() -> {
-                        ConnectionWatchdog.this.run(attempt);
-                        return null;
-                    });
+                if (!isEventLoopGroupActive()) {
+                    logger.debug("isEventLoopGroupActive() == false");
+                    return;
                 }
+
+                reconnectWorkers.submit(() -> {
+                    ConnectionWatchdog.this.run(attempt);
+                    return null;
+                });
             }, timeout, TimeUnit.MILLISECONDS);
         } else {
             logger.debug("{} Skipping scheduleReconnect() because I have an active channel", logPrefix());
@@ -257,24 +253,35 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             infoLevel = InternalLogLevel.DEBUG;
         }
 
+        InternalLogLevel warnLevelToUse = warnLevel;
+
         try {
             reconnectionListener.onReconnect(new ConnectionEvents.Reconnect(attempt));
-            reconnect(infoLevel, warnLevel);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw e;
+            logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
+
+            ChannelFuture future = reconnectionHandler.reconnect();
+
+            future.addListener(it -> {
+
+                if (it.isSuccess() || it.cause() == null) {
+                    return;
+                }
+
+                Throwable throwable = it.cause();
+
+                if (ReconnectionHandler.isExecutionException(throwable)) {
+                    logger.log(warnLevelToUse, "Cannot reconnect: {}", throwable.toString());
+                } else {
+                    logger.log(warnLevelToUse, "Cannot reconnect: {}", throwable.toString(), throwable);
+                }
+
+                if (!isReconnectSuspended()) {
+                    scheduleReconnect();
+                }
+            });
         } catch (Exception e) {
-            logger.log(warnLevel, "Cannot connect: {}", e.toString());
-            if (!isReconnectSuspended()) {
-                scheduleReconnect();
-            }
+            logger.log(warnLevel, "Cannot reconnect: {}", e.toString());
         }
-    }
-
-    protected void reconnect(InternalLogLevel infoLevel, InternalLogLevel warnLevel) throws Exception {
-
-        logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
-        reconnectionHandler.reconnect(infoLevel);
     }
 
     private boolean isEventLoopGroupActive() {
@@ -286,8 +293,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         return true;
     }
 
-    private boolean isEventLoopGroupActive(EventExecutorGroup executorService) {
-        return !(executorService.isShutdown() || executorService.isTerminated() || executorService.isShuttingDown());
+    private static boolean isEventLoopGroupActive(EventExecutorGroup executorService) {
+        return !(executorService.isShuttingDown());
     }
 
     private boolean shouldLog() {
