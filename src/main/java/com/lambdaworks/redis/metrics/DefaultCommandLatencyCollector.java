@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
@@ -47,7 +48,11 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
-    private static final AtomicReference<PauseDetectorWrapper> PAUSE_DETECTOR = new AtomicReference<>();
+    private static final AtomicReferenceFieldUpdater<DefaultCommandLatencyCollector, PauseDetectorWrapper> PAUSE_DETECTOR_UPDATER = AtomicReferenceFieldUpdater
+            .newUpdater(DefaultCommandLatencyCollector.class, PauseDetectorWrapper.class, "pauseDetectorWrapper");
+
+    private static final PauseDetectorWrapper GLOBAL_PAUSE_DETECTOR = new PauseDetectorWrapper();
+
     private static final boolean LATENCY_UTILS_AVAILABLE = isPresent("org.LatencyUtils.PauseDetector");
     private static final boolean HDR_UTILS_AVAILABLE = isPresent("org.HdrHistogram.Histogram");
 
@@ -55,6 +60,10 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
 
     private final CommandLatencyCollectorOptions options;
+
+    // Updated via PAUSE_DETECTOR_UPDATER
+    private volatile PauseDetectorWrapper pauseDetectorWrapper;
+
     private final AtomicReference<Map<CommandLatencyId, Latencies>> latencyMetricsRef = new AtomicReference<>(
             createNewLatencyMap());
 
@@ -82,19 +91,18 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
         Latencies latencies = latencyMetricsRef.get().computeIfAbsent(createId(local, remote, commandType), id -> {
 
-            PauseDetectorWrapper wrapper = PAUSE_DETECTOR.get();
-            if (wrapper == null) {
-                wrapper = new PauseDetectorWrapper();
-
-                if (PAUSE_DETECTOR.compareAndSet(null, wrapper)) {
-                    wrapper.initialize();
+            if (PAUSE_DETECTOR_UPDATER.get(this) == null) {
+                if (PAUSE_DETECTOR_UPDATER.compareAndSet(this, null, GLOBAL_PAUSE_DETECTOR)) {
+                    PAUSE_DETECTOR_UPDATER.get(this).retain();
                 }
             }
+            PauseDetector pauseDetector = PAUSE_DETECTOR_UPDATER.get(this).getPauseDetector();
 
             if (options.resetLatenciesAfterEvent()) {
-                return new Latencies(PAUSE_DETECTOR.get().pauseDetector);
+                return new Latencies(pauseDetector);
             }
-            return new CummulativeLatencies(PAUSE_DETECTOR.get().pauseDetector);
+
+            return new CummulativeLatencies(pauseDetector);
         });
 
         latencies.firstResponse.recordLatency(rangify(firstResponseLatency));
@@ -118,6 +126,11 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     public void shutdown() {
 
         stopped = true;
+
+        PauseDetectorWrapper pauseDetectorWrapper = PAUSE_DETECTOR_UPDATER.get(this);
+        if (pauseDetectorWrapper != null && PAUSE_DETECTOR_UPDATER.compareAndSet(this, pauseDetectorWrapper, null)) {
+            pauseDetectorWrapper.release();
+        }
 
         Map<CommandLatencyId, Latencies> latenciesMap = latencyMetricsRef.get();
         if (latencyMetricsRef.compareAndSet(latenciesMap, Collections.emptyMap())) {
@@ -284,26 +297,67 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         }
     }
 
-    private static class PauseDetectorWrapper {
+    /**
+     * Reference-counted wrapper for {@link PauseDetector} instances.
+     */
+    static class PauseDetectorWrapper {
 
-        private static final AtomicLong counter = new AtomicLong();
+        private static final AtomicLong instanceCounter = new AtomicLong();
 
-        PauseDetector pauseDetector;
+        private final AtomicLong counter = new AtomicLong();
 
-        public void initialize() {
+        private volatile PauseDetector pauseDetector;
 
-            if (counter.getAndIncrement() > 0) {
-                InternalLogger instance = InternalLoggerFactory.getInstance(getClass());
-                instance.info("Initialized PauseDetectorWrapper more than once.");
+        /**
+         * Creates or initializes a {@link PauseDetector} instance.
+         *
+         * @return
+         */
+        public PauseDetector getPauseDetector() {
+
+            while (pauseDetector == null) {
+
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return pauseDetector;
+                }
             }
 
-            pauseDetector = new SimplePauseDetector(TimeUnit.MILLISECONDS.toNanos(10), TimeUnit.MILLISECONDS.toNanos(10), 3);
-            Runtime.getRuntime().addShutdownHook(new Thread("ShutdownHook for SimplePauseDetector") {
-                @Override
-                public void run() {
-                    pauseDetector.shutdown();
+            return pauseDetector;
+        }
+
+        public void retain() {
+
+            if (counter.incrementAndGet() == 1) {
+
+                if (instanceCounter.getAndIncrement() > 0) {
+                    InternalLogger instance = InternalLoggerFactory.getInstance(getClass());
+                    instance.info("Initialized PauseDetectorWrapper more than once.");
                 }
-            });
+
+                pauseDetector = new SimplePauseDetector(TimeUnit.MILLISECONDS.toNanos(10), TimeUnit.MILLISECONDS.toNanos(10), 3);
+                Runtime.getRuntime().addShutdownHook(new Thread("ShutdownHook for SimplePauseDetector") {
+                    @Override
+                    public void run() {
+                        if (pauseDetector != null) {
+                            pauseDetector.shutdown();
+                        }
+                    }
+                });
+            }
+        }
+
+        public void release() {
+
+            if (counter.decrementAndGet() == 0) {
+
+                instanceCounter.decrementAndGet();
+                pauseDetector.shutdown();
+                pauseDetector = null;
+
+            }
         }
     }
 }
