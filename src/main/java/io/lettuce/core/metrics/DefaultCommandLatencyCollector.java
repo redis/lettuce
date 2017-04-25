@@ -15,16 +15,7 @@
  */
 package io.lettuce.core.metrics;
 
-import io.lettuce.core.metrics.CommandMetrics.CommandLatency;
-import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.protocol.ProtocolKeyword;
-import io.netty.channel.local.LocalAddress;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-import org.HdrHistogram.Histogram;
-import org.LatencyUtils.LatencyStats;
-import org.LatencyUtils.PauseDetector;
-import org.LatencyUtils.SimplePauseDetector;
+import static io.lettuce.core.internal.LettuceClassUtils.isPresent;
 
 import java.net.SocketAddress;
 import java.util.Collections;
@@ -36,7 +27,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.lettuce.core.internal.LettuceClassUtils.isPresent;
+import org.HdrHistogram.Histogram;
+import org.LatencyUtils.LatencyStats;
+import org.LatencyUtils.PauseDetector;
+import org.LatencyUtils.SimplePauseDetector;
+
+import io.lettuce.core.metrics.CommandMetrics.CommandLatency;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.netty.channel.local.LocalAddress;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Default implementation of a {@link CommandLatencyCollector} for command latencies.
@@ -53,7 +54,10 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
 
     private final CommandLatencyCollectorOptions options;
-    private Map<CommandLatencyId, Latencies> latencyMetrics = new ConcurrentHashMap<>(CommandType.values().length);
+    private final AtomicReference<Map<CommandLatencyId, Latencies>> latencyMetricsRef = new AtomicReference<>(
+            createNewLatencyMap());
+
+    private volatile boolean stopped;
 
     public DefaultCommandLatencyCollector(CommandLatencyCollectorOptions options) {
         this.options = options;
@@ -75,7 +79,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             return;
         }
 
-        Latencies latencies = latencyMetrics.computeIfAbsent(createId(local, remote, commandType), id -> {
+        Latencies latencies = latencyMetricsRef.get().computeIfAbsent(createId(local, remote, commandType), id -> {
 
             PauseDetectorWrapper wrapper = PAUSE_DETECTOR.get();
             if (wrapper == null) {
@@ -106,28 +110,37 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     @Override
     public boolean isEnabled() {
-        return latencyMetrics != null && options.isEnabled();
+        return options.isEnabled() && !stopped;
     }
 
     @Override
     public void shutdown() {
 
-        if (latencyMetrics != null) {
-            latencyMetrics.clear();
-            latencyMetrics = null;
+        stopped = true;
+
+        Map<CommandLatencyId, Latencies> latenciesMap = latencyMetricsRef.get();
+        if (latencyMetricsRef.compareAndSet(latenciesMap, Collections.emptyMap())) {
+            latenciesMap.values().forEach(Latencies::stop);
         }
     }
 
     @Override
     public Map<CommandLatencyId, CommandMetrics> retrieveMetrics() {
 
-        Map<CommandLatencyId, Latencies> copy = new HashMap<>(latencyMetrics);
+        Map<CommandLatencyId, Latencies> latenciesMap = latencyMetricsRef.get();
+        Map<CommandLatencyId, Latencies> metricsToUse;
 
         if (options.resetLatenciesAfterEvent()) {
-            latencyMetrics.clear();
+
+            metricsToUse = latenciesMap;
+            latencyMetricsRef.set(createNewLatencyMap());
+
+            metricsToUse.values().forEach(Latencies::stop);
+        } else {
+            metricsToUse = new HashMap<>(latenciesMap);
         }
 
-        return getMetrics(copy);
+        return getMetrics(metricsToUse);
     }
 
     private Map<CommandLatencyId, CommandMetrics> getMetrics(Map<CommandLatencyId, Latencies> latencyMetrics) {
@@ -186,6 +199,10 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         return LATENCY_UTILS_AVAILABLE && HDR_UTILS_AVAILABLE;
     }
 
+    private static ConcurrentHashMap<CommandLatencyId, Latencies> createNewLatencyMap() {
+        return new ConcurrentHashMap<>(CommandType.values().length);
+    }
+
     /**
      * Returns a disabled no-op {@link CommandLatencyCollector}.
      *
@@ -231,6 +248,11 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
         public Histogram getCompletionHistogram() {
             return completion.getIntervalHistogram();
+        }
+
+        public void stop() {
+            firstResponse.stop();
+            completion.stop();
         }
     }
 
