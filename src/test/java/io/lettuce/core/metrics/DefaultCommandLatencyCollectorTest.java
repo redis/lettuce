@@ -24,9 +24,10 @@ import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import io.lettuce.core.metrics.DefaultCommandLatencyCollector.PauseDetectorWrapper;
 import io.lettuce.core.protocol.CommandType;
-
 import io.netty.channel.local.LocalAddress;
 
 /**
@@ -45,6 +46,48 @@ public class DefaultCommandLatencyCollectorTest {
         sut.shutdown();
 
         assertThat(sut.isEnabled()).isFalse();
+    }
+
+    @Test
+    public void simpleCreateShouldNotInitializePauseDetector() {
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
+        PauseDetectorWrapper wrapper = (PauseDetectorWrapper) ReflectionTestUtils.getField(sut, "pauseDetectorWrapper");
+
+        assertThat(wrapper).isNull();
+    }
+
+    @Test
+    public void latencyRecordShouldInitializePauseDetectorWrapper() {
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
+
+        setupData();
+
+        PauseDetectorWrapper wrapper = (PauseDetectorWrapper) ReflectionTestUtils.getField(sut, "pauseDetectorWrapper");
+        assertThat(wrapper).isNotNull();
+
+        sut.shutdown();
+
+        wrapper = (PauseDetectorWrapper) ReflectionTestUtils.getField(sut, "pauseDetectorWrapper");
+        assertThat(wrapper).isNull();
+    }
+
+    @Test
+    public void shutdownShouldReleasePauseDetector() {
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
+        PauseDetectorWrapper wrapper = (PauseDetectorWrapper) ReflectionTestUtils.getField(sut, "pauseDetectorWrapper");
+
+        assertThat(wrapper).isNull();
+
+        setupData();
+
+        wrapper = (PauseDetectorWrapper) ReflectionTestUtils.getField(sut, "pauseDetectorWrapper");
+
+        assertThat(wrapper).isNotNull();
+
+        sut.shutdown();
     }
 
     @Test
@@ -77,6 +120,8 @@ public class DefaultCommandLatencyCollectorTest {
         assertThat(metrics.getTimeUnit()).isEqualTo(MICROSECONDS);
 
         assertThat(sut.retrieveMetrics()).isEmpty();
+
+        sut.shutdown();
     }
 
     @Test
@@ -89,6 +134,8 @@ public class DefaultCommandLatencyCollectorTest {
 
         assertThat(sut.retrieveMetrics()).hasSize(1);
         assertThat(sut.retrieveMetrics()).hasSize(1);
+
+        sut.shutdown();
     }
 
     private void setupData() {
