@@ -15,6 +15,8 @@
  */
 package com.lambdaworks.redis.protocol;
 
+import java.util.concurrent.TimeUnit;
+
 import com.lambdaworks.redis.event.DefaultEventPublisherOptions;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.EventPublisherOptions;
@@ -23,9 +25,12 @@ import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.Delay;
 import com.lambdaworks.redis.resource.DnsResolver;
 import com.lambdaworks.redis.resource.EventLoopGroupProvider;
-import io.netty.util.concurrent.*;
 
-import java.util.concurrent.TimeUnit;
+import io.netty.util.Timer;
+import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.concurrent.SucceededFuture;
 
 /**
  * @author Mark Paluch
@@ -63,6 +68,11 @@ public class EmptyClientResources implements ClientResources {
     @Override
     public int computationThreadPoolSize() {
         return 0;
+    }
+
+    @Override
+    public Timer timer() {
+        return null;
     }
 
     @Override
