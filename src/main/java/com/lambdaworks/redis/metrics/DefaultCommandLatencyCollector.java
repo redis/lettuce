@@ -55,7 +55,10 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
 
     private final CommandLatencyCollectorOptions options;
-    private Map<CommandLatencyId, Latencies> latencyMetrics = new ConcurrentHashMap<>(CommandType.values().length);
+    private final AtomicReference<Map<CommandLatencyId, Latencies>> latencyMetricsRef = new AtomicReference<>(
+            createNewLatencyMap());
+
+    private volatile boolean stopped;
 
     public DefaultCommandLatencyCollector(CommandLatencyCollectorOptions options) {
         this.options = options;
@@ -77,7 +80,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             return;
         }
 
-        Latencies latencies = latencyMetrics.computeIfAbsent(createId(local, remote, commandType), id -> {
+        Latencies latencies = latencyMetricsRef.get().computeIfAbsent(createId(local, remote, commandType), id -> {
 
             PauseDetectorWrapper wrapper = PAUSE_DETECTOR.get();
             if (wrapper == null) {
@@ -108,28 +111,37 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     @Override
     public boolean isEnabled() {
-        return latencyMetrics != null && options.isEnabled();
+        return options.isEnabled() && !stopped;
     }
 
     @Override
     public void shutdown() {
 
-        if (latencyMetrics != null) {
-            latencyMetrics.clear();
-            latencyMetrics = null;
+        stopped = true;
+
+        Map<CommandLatencyId, Latencies> latenciesMap = latencyMetricsRef.get();
+        if (latencyMetricsRef.compareAndSet(latenciesMap, Collections.emptyMap())) {
+            latenciesMap.values().forEach(Latencies::stop);
         }
     }
 
     @Override
     public Map<CommandLatencyId, CommandMetrics> retrieveMetrics() {
 
-        Map<CommandLatencyId, Latencies> copy = new HashMap<>(latencyMetrics);
+        Map<CommandLatencyId, Latencies> latenciesMap = latencyMetricsRef.get();
+        Map<CommandLatencyId, Latencies> metricsToUse;
 
         if (options.resetLatenciesAfterEvent()) {
-            latencyMetrics.clear();
+
+            metricsToUse = latenciesMap;
+            latencyMetricsRef.set(createNewLatencyMap());
+
+            metricsToUse.values().forEach(Latencies::stop);
+        } else {
+            metricsToUse = new HashMap<>(latenciesMap);
         }
 
-        return getMetrics(copy);
+        return getMetrics(metricsToUse);
     }
 
     private Map<CommandLatencyId, CommandMetrics> getMetrics(Map<CommandLatencyId, Latencies> latencyMetrics) {
@@ -188,6 +200,10 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         return LATENCY_UTILS_AVAILABLE && HDR_UTILS_AVAILABLE;
     }
 
+    private static ConcurrentHashMap<CommandLatencyId, Latencies> createNewLatencyMap() {
+        return new ConcurrentHashMap<>(CommandType.values().length);
+    }
+
     /**
      * Returns a disabled no-op {@link CommandLatencyCollector}.
      *
@@ -233,6 +249,11 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
         public Histogram getCompletionHistogram() {
             return completion.getIntervalHistogram();
+        }
+
+        public void stop() {
+            firstResponse.stop();
+            completion.stop();
         }
     }
 
