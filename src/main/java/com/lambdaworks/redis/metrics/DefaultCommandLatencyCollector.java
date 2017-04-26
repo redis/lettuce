@@ -51,10 +51,9 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     private static final AtomicReferenceFieldUpdater<DefaultCommandLatencyCollector, PauseDetectorWrapper> PAUSE_DETECTOR_UPDATER = AtomicReferenceFieldUpdater
             .newUpdater(DefaultCommandLatencyCollector.class, PauseDetectorWrapper.class, "pauseDetectorWrapper");
 
-    private static final PauseDetectorWrapper GLOBAL_PAUSE_DETECTOR = new PauseDetectorWrapper();
-
     private static final boolean LATENCY_UTILS_AVAILABLE = isPresent("org.LatencyUtils.PauseDetector");
     private static final boolean HDR_UTILS_AVAILABLE = isPresent("org.HdrHistogram.Histogram");
+    private static final PauseDetectorWrapper GLOBAL_PAUSE_DETECTOR = PauseDetectorWrapper.create();
 
     private static final long MIN_LATENCY = 1000;
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
@@ -96,7 +95,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                     PAUSE_DETECTOR_UPDATER.get(this).retain();
                 }
             }
-            PauseDetector pauseDetector = PAUSE_DETECTOR_UPDATER.get(this).getPauseDetector();
+            PauseDetector pauseDetector = ((DefaultPauseDetectorWrapper) PAUSE_DETECTOR_UPDATER.get(this)).getPauseDetector();
 
             if (options.resetLatenciesAfterEvent()) {
                 return new Latencies(pauseDetector);
@@ -298,9 +297,47 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     }
 
     /**
+     * Wrapper for initialization of {@link PauseDetector}. Encapsulates absence of LatencyUtils.
+     */
+    interface PauseDetectorWrapper {
+
+        /**
+         * No-operation {@link PauseDetectorWrapper} implementation.
+         */
+        PauseDetectorWrapper NO_OP = new PauseDetectorWrapper() {
+            @Override
+            public void release() {
+            }
+
+            @Override
+            public void retain() {
+            }
+        };
+
+        static PauseDetectorWrapper create() {
+
+            if (HDR_UTILS_AVAILABLE && LATENCY_UTILS_AVAILABLE) {
+                return new DefaultPauseDetectorWrapper();
+            }
+
+            return NO_OP;
+        }
+
+        /**
+         * Retain reference to {@link PauseDetectorWrapper} and increment reference counter.
+         */
+        void retain();
+
+        /**
+         * Release reference to {@link PauseDetectorWrapper} and decrement reference counter.
+         */
+        void release();
+    }
+
+    /**
      * Reference-counted wrapper for {@link PauseDetector} instances.
      */
-    static class PauseDetectorWrapper {
+    static class DefaultPauseDetectorWrapper implements PauseDetectorWrapper {
 
         private static final AtomicLong instanceCounter = new AtomicLong();
 
@@ -313,7 +350,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          *
          * @return
          */
-        public PauseDetector getPauseDetector() {
+        PauseDetector getPauseDetector() {
 
             while (pauseDetector == null) {
 
