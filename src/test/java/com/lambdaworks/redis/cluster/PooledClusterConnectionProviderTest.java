@@ -38,10 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.lambdaworks.Futures;
-import com.lambdaworks.redis.ReadFrom;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -195,6 +192,68 @@ public class PooledClusterConnectionProviderTest {
         sut.getConnection(Intent.READ, 1);
 
         verify(clientMock, times(2)).connectToNodeAsync(eq(CODEC), eq("localhost:2"), any(), any());
+    }
+
+    @Test
+    public void shouldSelectSuccessfulConnectionIfOtherNodesFailed() {
+
+        CompletableFuture<StatefulRedisConnection<String, String>> failed = new CompletableFuture<>();
+        failed.completeExceptionally(new IllegalStateException());
+
+        when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:1"), any(), any())).thenReturn(
+                Futures.createConnectionFuture(socketAddressMock, failed));
+
+        when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:2"), any(), any())).thenReturn(
+                Futures.createConnectionFuture(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<String, String, String>(
+                CommandType.READONLY, null, null));
+        async.complete("OK");
+
+        when(asyncCommandsMock.readOnly()).thenReturn(async);
+
+        sut.setReadFrom(ReadFrom.MASTER_PREFERRED);
+
+        assertThat(sut.getConnection(Intent.READ, 1)).isNotNull().isSameAs(nodeConnectionMock);
+
+        // cache access
+        assertThat(sut.getConnection(Intent.READ, 1)).isNotNull().isSameAs(nodeConnectionMock);
+
+        verify(clientMock).connectToNodeAsync(eq(CODEC), eq("localhost:1"), any(), any());
+        verify(clientMock).connectToNodeAsync(eq(CODEC), eq("localhost:2"), any(), any());
+    }
+
+    @Test
+    public void shouldFailIfAllReadCandidateNodesFail() {
+
+        CompletableFuture<StatefulRedisConnection<String, String>> failed1 = new CompletableFuture<>();
+        failed1.completeExceptionally(new IllegalStateException());
+
+        CompletableFuture<StatefulRedisConnection<String, String>> failed2 = new CompletableFuture<>();
+        failed2.completeExceptionally(new IllegalStateException());
+
+        when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:1"), any(), any())).thenReturn(
+                Futures.createConnectionFuture(socketAddressMock, failed2));
+
+        when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:2"), any(), any())).thenReturn(
+                Futures.createConnectionFuture(socketAddressMock, failed2));
+
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<String, String, String>(
+                CommandType.READONLY, null, null));
+        async.complete("OK");
+
+        sut.setReadFrom(ReadFrom.MASTER_PREFERRED);
+
+        try {
+            sut.getConnection(Intent.READ, 1);
+            fail("Missing RedisException");
+        } catch (RedisException e) {
+            assertThat(e).hasCauseInstanceOf(RedisConnectionException.class).hasRootCauseExactlyInstanceOf(
+                    IllegalStateException.class);
+        }
+
+        verify(clientMock).connectToNodeAsync(eq(CODEC), eq("localhost:1"), any(), any());
+        verify(clientMock).connectToNodeAsync(eq(CODEC), eq("localhost:2"), any(), any());
     }
 
     @Test
