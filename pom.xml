@@ -647,7 +647,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -655,6 +655,19 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.springframework:*</exclude>
+                                    <exclude>javax.inject:*</exclude>
+                                    <exclude>javax.enterprise:*</exclude>
+                                    <exclude>org.jboss.interceptor:*</exclude>
+                                    <exclude>javax.annotation:*</exclude>
+                                    <exclude>com.google.code.findbugs:*</exclude>
+                                    <exclude>org.slf4j:*</exclude>
+                                    <exclude>io.netty:netty-tcnative</exclude>
+                                    <exclude>io.netty:netty-transport-native-epoll</exclude>
+                                </excludes>
+                            </artifactSet>
                             <filters>
                                 <filter>
                                     <artifact>com.google.guava:guava</artifact>
