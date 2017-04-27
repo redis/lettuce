@@ -15,7 +15,8 @@
  */
 package io.lettuce.core.cluster.api.async;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
@@ -29,13 +30,13 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface AsyncExecutions<T> extends Iterable<CompletionStage<T>> {
+public interface AsyncExecutions<T> extends Iterable<CompletableFuture<T>> {
 
     /**
      *
      * @return map between {@link RedisClusterNode} and the {@link CompletionStage}
      */
-    Map<RedisClusterNode, CompletionStage<T>> asMap();
+    Map<RedisClusterNode, CompletableFuture<T>> asMap();
 
     /**
      *
@@ -57,27 +58,9 @@ public interface AsyncExecutions<T> extends Iterable<CompletionStage<T>> {
     CompletableFuture<T>[] futures();
 
     /**
-     *
-     * @return iterator over the {@link CompletionStage}s
-     */
-    @Override
-    default Iterator<CompletionStage<T>> iterator() {
-        return asMap().values().iterator();
-    }
-
-    /**
-     *
-     * @return a {@code Spliterator} over the {@link CompletionStage CompletionStages} in this collection
-     */
-    @Override
-    default Spliterator<CompletionStage<T>> spliterator() {
-        return Spliterators.spliterator(iterator(), nodes().size(), 0);
-    }
-
-    /**
      * @return a sequential {@code Stream} over the {@link CompletionStage CompletionStages} in this collection
      */
-    default Stream<CompletionStage<T>> stream() {
+    default Stream<CompletableFuture<T>> stream() {
         return StreamSupport.stream(spliterator(), false);
     }
 }

@@ -15,12 +15,8 @@
  */
 package io.lettuce.core.cluster;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 import io.lettuce.core.cluster.api.async.AsyncExecutions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -30,15 +26,20 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
  */
 class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
 
-    private Map<RedisClusterNode, CompletionStage<T>> executions;
+    private Map<RedisClusterNode, CompletableFuture<T>> executions;
 
-    public AsyncExecutionsImpl(Map<RedisClusterNode, CompletionStage<T>> executions) {
+    public AsyncExecutionsImpl(Map<RedisClusterNode, CompletableFuture<T>> executions) {
         this.executions = Collections.unmodifiableMap(new HashMap<>(executions));
     }
 
     @Override
-    public Map<RedisClusterNode, CompletionStage<T>> asMap() {
+    public Map<RedisClusterNode, CompletableFuture<T>> asMap() {
         return executions;
+    }
+
+    @Override
+    public Iterator<CompletableFuture<T>> iterator() {
+        return asMap().values().iterator();
     }
 
     @Override
@@ -47,12 +48,12 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     }
 
     @Override
-    public CompletionStage<T> get(RedisClusterNode redisClusterNode) {
+    public CompletableFuture<T> get(RedisClusterNode redisClusterNode) {
         return executions.get(redisClusterNode);
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public CompletableFuture<T>[] futures() {
         return executions.values().toArray(new CompletableFuture[executions.size()]);
     }
