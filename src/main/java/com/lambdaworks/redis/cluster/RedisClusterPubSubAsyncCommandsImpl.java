@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@ package com.lambdaworks.redis.cluster;
 import static com.lambdaworks.redis.cluster.NodeSelectionInvocationHandler.ExecutionModel.ASYNC;
 
 import java.lang.reflect.Proxy;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -39,8 +38,8 @@ import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 /**
  * @author Mark Paluch
  */
-class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommandsImpl<K, V>
-        implements RedisClusterPubSubAsyncCommands<K, V> {
+class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommandsImpl<K, V> implements
+        RedisClusterPubSubAsyncCommands<K, V> {
 
     /**
      * Initialize a new connection.
@@ -69,9 +68,9 @@ class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommands
                 new Class<?>[] { NodeSelectionPubSubAsyncCommands.class, PubSubAsyncNodeSelection.class }, h);
     }
 
-    private static class StaticPubSubAsyncNodeSelection<K, V>
-            extends AbstractNodeSelection<RedisPubSubAsyncCommands<K, V>, NodeSelectionPubSubAsyncCommands<K, V>, K, V>
-            implements PubSubAsyncNodeSelection<K, V> {
+    private static class StaticPubSubAsyncNodeSelection<K, V> extends
+            AbstractNodeSelection<RedisPubSubAsyncCommands<K, V>, NodeSelectionPubSubAsyncCommands<K, V>, K, V> implements
+            PubSubAsyncNodeSelection<K, V> {
 
         private final List<RedisClusterNode> redisClusterNodes;
         private final ClusterDistributionChannelWriter<K, V> writer;
@@ -86,8 +85,8 @@ class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommands
         }
 
         @Override
-        protected RedisPubSubAsyncCommands<K, V> getApi(RedisClusterNode redisClusterNode) {
-            return getConnection(redisClusterNode).async();
+        protected CompletableFuture<RedisPubSubAsyncCommands<K, V>> getApi(RedisClusterNode redisClusterNode) {
+            return getConnection(redisClusterNode).thenApply(StatefulRedisPubSubConnection::async);
         }
 
         protected List<RedisClusterNode> nodes() {
@@ -95,10 +94,13 @@ class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommands
         }
 
         @SuppressWarnings("unchecked")
-        protected StatefulRedisPubSubConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
+        protected CompletableFuture<StatefulRedisPubSubConnection<K, V>> getConnection(RedisClusterNode redisClusterNode) {
+
             RedisURI uri = redisClusterNode.getUri();
-            return (StatefulRedisPubSubConnection<K, V>) writer.getClusterConnectionProvider()
-                    .getConnection(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort());
+            AsyncClusterConnectionProvider async = (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
+
+            return async.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort()).thenApply(
+                    it -> (StatefulRedisPubSubConnection<K, V>) it);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@ package com.lambdaworks.redis.cluster;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+
+import rx.Observable;
+import rx.Subscriber;
 
 import com.lambdaworks.redis.cluster.api.rx.ReactiveExecutions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-
-import rx.Observable;
 
 /**
  * Default implementation of {@link ReactiveExecutions}.
@@ -31,19 +34,78 @@ import rx.Observable;
  */
 class ReactiveExecutionsImpl<T> implements ReactiveExecutions<T> {
 
-    private Map<RedisClusterNode, Observable<T>> executions;
+    private Map<RedisClusterNode, CompletableFuture<Observable<T>>> executions;
 
-    public ReactiveExecutionsImpl(Map<RedisClusterNode, Observable<T>> executions) {
+    public ReactiveExecutionsImpl(Map<RedisClusterNode, CompletableFuture<Observable<T>>> executions) {
         this.executions = executions;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Observable<T> observable() {
-        return Observable.merge(executions.values());
+        return Observable.create(new FromCompletableFuture(executions.values())).flatMap(observable -> observable);
     }
 
     @Override
     public Collection<RedisClusterNode> nodes() {
         return executions.keySet();
+    }
+
+    static class FromCompletableFuture<T> implements Observable.OnSubscribe<Observable<T>> {
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final AtomicIntegerFieldUpdater<FromCompletableFuture> LATCH_UPDATER = AtomicIntegerFieldUpdater
+                .newUpdater(FromCompletableFuture.class, "latch");
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final AtomicIntegerFieldUpdater<FromCompletableFuture> TERMINATED_UPDATER = AtomicIntegerFieldUpdater
+                .newUpdater(FromCompletableFuture.class, "terminated");
+
+        private final Collection<CompletableFuture<Observable<T>>> futures;
+
+        private volatile int latch;
+        private volatile int terminated;
+
+        public FromCompletableFuture(Collection<CompletableFuture<Observable<T>>> futures) {
+
+            this.futures = futures;
+            LATCH_UPDATER.set(this, futures.size());
+
+        }
+
+        @Override
+        public void call(Subscriber<? super Observable<T>> subscriber) {
+
+            subscriber.onStart();
+
+            for (CompletableFuture<Observable<T>> future : futures) {
+
+                future.whenComplete((observable, throwable) -> {
+
+                    if (throwable != null) {
+
+                        if (TERMINATED_UPDATER.compareAndSet(this, 0, 1)) {
+                            subscriber.onError(throwable);
+                        }
+
+                        return;
+                    }
+
+                    if (TERMINATED_UPDATER.get(this) == 1) {
+                        return;
+                    }
+
+                    subscriber.onNext(observable);
+
+                    if (LATCH_UPDATER.decrementAndGet(this) == 0) {
+                        subscriber.onCompleted();
+                    }
+                });
+            }
+
+            if (futures.isEmpty()) {
+                subscriber.onCompleted();
+            }
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
 package com.lambdaworks.redis.cluster;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * Dynamic selection of nodes.
- * 
+ *
  * @param <API> API type.
  * @param <CMD> Command command interface type to invoke multi-node operations.
  * @param <K> Key type.
@@ -51,15 +51,17 @@ class DynamicNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CM
     }
 
     @Override
-    protected StatefulRedisConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
+    protected CompletableFuture<StatefulRedisConnection<K, V>> getConnection(RedisClusterNode redisClusterNode) {
 
         RedisURI uri = redisClusterNode.getUri();
-        return writer.getClusterConnectionProvider().getConnection(intent, uri.getHost(), uri.getPort());
+        AsyncClusterConnectionProvider async = (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
+
+        return async.getConnectionAsync(intent, uri.getHost(), uri.getPort());
     }
 
     @Override
-    protected API getApi(RedisClusterNode redisClusterNode) {
-        return apiExtractor.apply(getConnection(redisClusterNode));
+    protected CompletableFuture<API> getApi(RedisClusterNode redisClusterNode) {
+        return getConnection(redisClusterNode).thenApply(apiExtractor);
     }
 
     @Override

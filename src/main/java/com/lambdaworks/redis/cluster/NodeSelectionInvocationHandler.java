@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,10 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     private final Map<Method, Method> connectionMethod = new ConcurrentHashMap<>();
     private final Class<?> commandsInterface;
 
-    private AbstractNodeSelection<?, ?, ?, ?> selection;
-    private ExecutionModel executionModel;
-    private long timeout;
-    private TimeUnit unit;
+    private final AbstractNodeSelection<?, ?, ?, ?> selection;
+    private final ExecutionModel executionModel;
+    private final long timeout;
+    private final TimeUnit unit;
 
     static {
         try {
@@ -90,57 +90,89 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
         try {
-            Method targetMethod = findMethod(commandsInterface, method, connectionMethod);
-
-            Map<RedisClusterNode, StatefulRedisConnection<?, ?>> connections = new HashMap<>(selection.size(), 1);
-            connections.putAll(selection.statefulMap());
-
-            if (targetMethod != null) {
-
-                Map<RedisClusterNode, Object> executions = new HashMap<>();
-
-                for (Map.Entry<RedisClusterNode, StatefulRedisConnection<?, ?>> entry : connections.entrySet()) {
-
-                    StatefulRedisConnection<?, ?> connection = entry.getValue();
-                    Object result = targetMethod.invoke(
-                            executionModel == ExecutionModel.REACTIVE ? connection.reactive() : connection.async(), args);
-
-                    executions.put(entry.getKey(), result);
-                }
-
-                if (executionModel == ExecutionModel.SYNC) {
-
-                    Map<RedisClusterNode, CompletionStage<?>> asyncExecutions = (Map) executions;
-                    if (!awaitAll(timeout, unit, asyncExecutions.values())) {
-                        throw createTimeoutException(asyncExecutions);
-                    }
-
-                    if (atLeastOneFailed(asyncExecutions)) {
-                        throw createExecutionException(asyncExecutions);
-                    }
-
-                    return new SyncExecutionsImpl(asyncExecutions);
-                }
-
-                if (executionModel == ExecutionModel.REACTIVE) {
-                    return new ReactiveExecutionsImpl(executions);
-
-                }
-                return new AsyncExecutionsImpl(executions);
-            }
 
             if (method.getName().equals("commands") && args.length == 0) {
                 return proxy;
             }
 
-            targetMethod = findMethod(NodeSelectionSupport.class, method, nodeSelectionMethods);
-            return targetMethod.invoke(selection, args);
+            Method targetMethod = findMethod(commandsInterface, method, connectionMethod);
+
+            if (targetMethod == null) {
+
+                Method nodeSelectionMethod = findMethod(NodeSelectionSupport.class, method, nodeSelectionMethods);
+                return nodeSelectionMethod.invoke(selection, args);
+            }
+
+            Map<RedisClusterNode, CompletableFuture<? extends StatefulRedisConnection<?, ?>>> connections = new LinkedHashMap<>(
+                    selection.size(), 1);
+            connections.putAll(selection.statefulMap());
+            Map<RedisClusterNode, Object> executions = new LinkedHashMap<>(selection.size(), 1);
+
+            for (Map.Entry<RedisClusterNode, CompletableFuture<? extends StatefulRedisConnection<?, ?>>> entry : connections
+                    .entrySet()) {
+
+                CompletableFuture<? extends StatefulRedisConnection<?, ?>> connection = entry.getValue();
+
+                CompletableFuture<Object> result = connection.thenCompose(it -> {
+
+                    try {
+
+                        Object resultValue = targetMethod.invoke(
+                                executionModel == ExecutionModel.REACTIVE ? it.reactive() : it.async(), args);
+
+                        if (resultValue instanceof CompletionStage<?>) {
+                            return (CompletionStage<Object>) resultValue;
+                        }
+
+                        return CompletableFuture.completedFuture(resultValue);
+                    } catch (InvocationTargetException e) {
+
+                        CompletableFuture<Object> future = new CompletableFuture<>();
+                        future.completeExceptionally(e.getTargetException());
+                        return future;
+                    } catch (Exception e) {
+
+                        CompletableFuture<Object> future = new CompletableFuture<>();
+                        future.completeExceptionally(e);
+                        return future;
+                    }
+                });
+
+                executions.put(entry.getKey(), result);
+            }
+
+            return getExecutions(executions);
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
     }
 
-    public static boolean awaitAll(long timeout, TimeUnit unit, Collection<CompletionStage<?>> futures) {
+    @SuppressWarnings("unchecked")
+    private Object getExecutions(Map<RedisClusterNode, Object> executions) throws ExecutionException, InterruptedException {
+
+        if (executionModel == ExecutionModel.SYNC) {
+
+            Map<RedisClusterNode, CompletionStage<?>> asyncExecutions = (Map) executions;
+            if (!awaitAll(timeout, unit, asyncExecutions.values())) {
+                throw createTimeoutException(asyncExecutions);
+            }
+
+            if (atLeastOneFailed(asyncExecutions)) {
+                throw createExecutionException(asyncExecutions);
+            }
+
+            return new SyncExecutionsImpl(asyncExecutions);
+        }
+
+        if (executionModel == ExecutionModel.REACTIVE) {
+            return new ReactiveExecutionsImpl(executions);
+        }
+
+        return new AsyncExecutionsImpl(executions);
+    }
+
+    private static boolean awaitAll(long timeout, TimeUnit unit, Collection<CompletionStage<?>> futures) {
+
         boolean complete;
 
         try {
@@ -177,17 +209,20 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     }
 
     private RedisCommandTimeoutException createTimeoutException(Map<RedisClusterNode, CompletionStage<?>> executions) {
+
         List<RedisClusterNode> notFinished = new ArrayList<>();
         executions.forEach((redisClusterNode, completionStage) -> {
             if (!completionStage.toCompletableFuture().isDone()) {
                 notFinished.add(redisClusterNode);
             }
         });
+
         String description = getNodeDescription(notFinished);
         return new RedisCommandTimeoutException("Command timed out for node(s): " + description);
     }
 
     private RedisCommandExecutionException createExecutionException(Map<RedisClusterNode, CompletionStage<?>> executions) {
+
         List<RedisClusterNode> failed = new ArrayList<>();
         executions.forEach((redisClusterNode, completionStage) -> {
             if (!completionStage.toCompletableFuture().isCompletedExceptionally()) {
@@ -221,6 +256,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     }
 
     private String getDescriptor(RedisClusterNode redisClusterNode) {
+
         StringBuffer buffer = new StringBuffer(redisClusterNode.getNodeId());
         buffer.append(" (");
 
