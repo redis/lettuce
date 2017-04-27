@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -64,8 +65,8 @@
         <connection>scm:git:https://github.com/mp911de/lettuce.git</connection>
         <developerConnection>scm:git:https://github.com/mp911de/lettuce.git</developerConnection>
         <url>http://github.com/mp911de/lettuce</url>
-      <tag>4.3.0.Final</tag>
-  </scm>
+        <tag>4.3.0.Final</tag>
+    </scm>
 
     <prerequisites>
         <maven>3.0</maven>
@@ -78,7 +79,7 @@
         <dependency>
             <groupId>io.reactivex</groupId>
             <artifactId>rxjava</artifactId>
-            <version>1.2.1</version>
+            <version>1.2.10</version>
         </dependency>
 
         <!-- Netty -->
@@ -437,7 +438,7 @@
                                     <classpathScope>test</classpathScope>
                                     <arguments>
                                         <argument>-classpath</argument>
-                                        <classpath />
+                                        <classpath/>
                                         <argument>org.openjdk.jmh.Main</argument>
                                         <argument>.*</argument>
                                     </arguments>
