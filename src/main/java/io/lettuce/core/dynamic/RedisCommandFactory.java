@@ -18,8 +18,6 @@ package io.lettuce.core.dynamic;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import org.springframework.util.Assert;
-
 import io.lettuce.core.AbstractRedisReactiveCommands;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -49,7 +47,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * analyze method declarations and derive from those factories to create and execute {@link RedisCommand}s.
  *
  * <h3>Example</h3> <code><pre>
-public interface MyRedisCommands {
+public interface MyRedisCommands extends Commands {
 
     String get(String key); // Synchronous Execution of GET
 
@@ -241,7 +239,7 @@ public class RedisCommandFactory {
                 reactive = (AbstractRedisReactiveCommands) ((StatefulRedisClusterConnection) connection).reactive();
             }
 
-            Assert.state(reactive != null, "Reactive commands is null");
+            LettuceAssert.isTrue(reactive != null, "Reactive commands is null");
 
             this.async = new AsyncExecutableCommandLookupStrategy(redisCodecs, commandOutputFactoryResolver, verifier,
                     (StatefulConnection) connection);
