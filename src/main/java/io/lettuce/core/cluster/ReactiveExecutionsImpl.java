@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@ package io.lettuce.core.cluster;
 
 import java.util.Collection;
 import java.util.Map;
-
-import io.lettuce.core.cluster.api.reactive.ReactiveExecutions;
-import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import java.util.concurrent.CompletableFuture;
 
 import org.reactivestreams.Publisher;
+
 import reactor.core.publisher.Flux;
-import rx.Observable;
+import reactor.core.publisher.Mono;
+import io.lettuce.core.cluster.api.reactive.ReactiveExecutions;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 
 /**
  * Default implementation of {@link ReactiveExecutions}.
@@ -33,15 +34,16 @@ import rx.Observable;
  */
 class ReactiveExecutionsImpl<T> implements ReactiveExecutions<T> {
 
-    private Map<RedisClusterNode, ? extends Publisher<T>> executions;
+    private Map<RedisClusterNode, CompletableFuture<? extends Publisher<T>>> executions;
 
-    public ReactiveExecutionsImpl(Map<RedisClusterNode, ? extends Publisher<T>> executions) {
+    public ReactiveExecutionsImpl(Map<RedisClusterNode, CompletableFuture<? extends Publisher<T>>> executions) {
         this.executions = executions;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Flux<T> flux() {
-        return Flux.merge(executions.values());
+        return Flux.fromIterable(executions.values()).flatMap(Mono::fromCompletionStage).flatMap(f -> f);
     }
 
     @Override

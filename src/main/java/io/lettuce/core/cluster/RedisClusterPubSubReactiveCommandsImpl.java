@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import static io.lettuce.core.cluster.NodeSelectionInvocationHandler.ExecutionMo
 
 import java.lang.reflect.Proxy;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -37,8 +38,8 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 /**
  * @author Mark Paluch
  */
-class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubReactiveCommandsImpl<K, V>
-        implements RedisClusterPubSubReactiveCommands<K, V> {
+class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubReactiveCommandsImpl<K, V> implements
+        RedisClusterPubSubReactiveCommands<K, V> {
 
     /**
      * Initialize a new connection.
@@ -46,8 +47,7 @@ class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubReactiveCo
      * @param connection the connection .
      * @param codec Codec used to encode/decode keys and values.
      */
-    public RedisClusterPubSubReactiveCommandsImpl(StatefulRedisClusterPubSubConnection<K, V> connection,
-            RedisCodec<K, V> codec) {
+    public RedisClusterPubSubReactiveCommandsImpl(StatefulRedisClusterPubSubConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
     }
 
@@ -69,9 +69,9 @@ class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubReactiveCo
                 new Class<?>[] { NodeSelectionPubSubReactiveCommands.class, PubSubReactiveNodeSelection.class }, h);
     }
 
-    private static class StaticPubSubReactiveNodeSelection<K, V>
-            extends AbstractNodeSelection<RedisPubSubReactiveCommands<K, V>, NodeSelectionPubSubReactiveCommands<K, V>, K, V>
-            implements PubSubReactiveNodeSelection<K, V> {
+    private static class StaticPubSubReactiveNodeSelection<K, V> extends
+            AbstractNodeSelection<RedisPubSubReactiveCommands<K, V>, NodeSelectionPubSubReactiveCommands<K, V>, K, V> implements
+            PubSubReactiveNodeSelection<K, V> {
 
         private final List<RedisClusterNode> redisClusterNodes;
         private final ClusterDistributionChannelWriter writer;
@@ -86,8 +86,8 @@ class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubReactiveCo
         }
 
         @Override
-        protected RedisPubSubReactiveCommands<K, V> getApi(RedisClusterNode redisClusterNode) {
-            return getConnection(redisClusterNode).reactive();
+        protected CompletableFuture<RedisPubSubReactiveCommands<K, V>> getApi(RedisClusterNode redisClusterNode) {
+            return getConnection(redisClusterNode).thenApply(StatefulRedisPubSubConnection::reactive);
         }
 
         protected List<RedisClusterNode> nodes() {
@@ -95,10 +95,13 @@ class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubReactiveCo
         }
 
         @SuppressWarnings("unchecked")
-        protected StatefulRedisPubSubConnection<K, V> getConnection(RedisClusterNode redisClusterNode) {
+        protected CompletableFuture<StatefulRedisPubSubConnection<K, V>> getConnection(RedisClusterNode redisClusterNode) {
             RedisURI uri = redisClusterNode.getUri();
-            return (StatefulRedisPubSubConnection<K, V>) writer.getClusterConnectionProvider()
-                    .getConnection(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort());
+
+            AsyncClusterConnectionProvider async = (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
+
+            return async.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort()).thenApply(
+                    it -> (StatefulRedisPubSubConnection<K, V>) it);
         }
     }
 }

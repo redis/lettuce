@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package io.lettuce.core.cluster;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -40,10 +42,10 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
     @Override
     public Map<RedisClusterNode, API> asMap() {
 
-        List<RedisClusterNode> list = nodes().stream().collect(Collectors.toList());
-        Map<RedisClusterNode, API> map = new HashMap<>();
+        List<RedisClusterNode> list = new ArrayList<>(nodes());
+        Map<RedisClusterNode, API> map = new HashMap<>(list.size(), 1);
 
-        list.forEach((key) -> map.put(key, getApi(key)));
+        list.forEach((key) -> map.put(key, getApi(key).join()));
 
         return map;
     }
@@ -66,14 +68,14 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
 
     @Override
     public API commands(int index) {
-        return getApi(node(index));
+        return getApi(node(index)).join();
     }
 
     /**
      *
      * @return {@link Map} between a {@link RedisClusterNode} to its actual {@link StatefulRedisConnection}.
      */
-    protected  Map<RedisClusterNode, ? extends StatefulRedisConnection<K, V>> statefulMap() {
+    protected Map<RedisClusterNode, CompletableFuture<? extends StatefulRedisConnection<K, V>>> statefulMap() {
         return nodes().stream().collect(Collectors.toMap(redisClusterNode -> redisClusterNode, this::getConnection));
     }
 
@@ -83,7 +85,8 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
      * @param redisClusterNode must not be {@literal null}.
      * @return
      */
-    protected abstract StatefulRedisConnection<K, V> getConnection(RedisClusterNode redisClusterNode);
+    protected abstract CompletableFuture<? extends StatefulRedisConnection<K, V>> getConnection(
+            RedisClusterNode redisClusterNode);
 
     /**
      * Template method to be implemented by implementing classes to obtain a the API object given a {@link RedisClusterNode}.
@@ -91,7 +94,7 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
      * @param redisClusterNode must not be {@literal null}.
      * @return
      */
-    protected  abstract API getApi(RedisClusterNode redisClusterNode);
+    protected abstract CompletableFuture<API> getApi(RedisClusterNode redisClusterNode);
 
     /**
      * @return List of involved nodes
