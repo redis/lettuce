@@ -493,7 +493,7 @@
                     <links>
                         <link>http://netty.io/4.1/api/</link>
                         <link>http://commons.apache.org/proper/commons-pool/api-2.4.2/</link>
-                        <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
+                        <link>https://google.github.io/guava/releases/19.0/api/docs/</link>
                         <link>http://reactivex.io/RxJava/javadoc/</link>
                     </links>
                     <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax</additionalparam>
@@ -596,20 +596,6 @@
                         <version>1.9</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-publish-plugin</artifactId>
-                <version>1.1</version>
-                <configuration>
-                    <scmBranch>gh-pages</scmBranch>
-                    <content>${project.build.directory}/site</content>
-                    <skipCheckin>${github.site.upload.skip}</skipCheckin>
-                    <skipDeletedFiles>true</skipDeletedFiles>
-                    <pubScmUrl>scm:git:ssh://git@github.com/mp911de/redis.paluch.biz.git</pubScmUrl>
-                    <excludes>apidocs/**</excludes>
-                </configuration>
             </plugin>
 
             <plugin>
