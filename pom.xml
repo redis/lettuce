@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <name>lettuce</name>
-    <url>http://github.com/mp911de/lettuce/wiki</url>
+    <url>https://github.com/lettuce-io/lettuce-core/wiki</url>
     <description>Advanced and thread-safe Java Redis client for synchronous, asynchronous, and
         reactive usage. Supports Cluster, Sentinel, Pipelining, Auto-Reconnect, Codecs
         and much more.
@@ -30,12 +30,12 @@
 
     <ciManagement>
         <system>Travis CI</system>
-        <url>https://travis-ci.org/mp911de/lettuce</url>
+        <url>https://travis-ci.org/lettuce-io/lettuce-core</url>
     </ciManagement>
 
     <issueManagement>
         <system>Github</system>
-        <url>https://github.com/mp911de/lettuce/issues</url>
+        <url>https://github.com/lettuce-io/lettuce-core/issues</url>
     </issueManagement>
 
     <developers>
@@ -62,10 +62,9 @@
     </properties>
 
     <scm>
-        <connection>scm:git:https://github.com/mp911de/lettuce.git</connection>
-        <developerConnection>scm:git:https://github.com/mp911de/lettuce.git</developerConnection>
-        <url>http://github.com/mp911de/lettuce</url>
-        <tag>4.3.0.Final</tag>
+        <connection>scm:git:https://github.com/lettuce-io/lettuce-core.git</connection>
+        <developerConnection>scm:git:https://github.com/lettuce-io/lettuce-core.git</developerConnection>
+        <url>http://github.com/lettuce-io/lettuce-core</url>
     </scm>
 
     <prerequisites>
@@ -565,15 +564,9 @@
             </plugin>
 
             <plugin>
-                <groupId>org.eluder.coveralls</groupId>
-                <artifactId>coveralls-maven-plugin</artifactId>
-                <version>3.1.0</version>
-            </plugin>
-
-            <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.5.201505241946</version>
+                <version>0.7.9</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
