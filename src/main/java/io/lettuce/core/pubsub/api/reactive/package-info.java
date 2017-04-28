@@ -1,4 +1,4 @@
 /**
- * Pub/Sub Redis API for commands executed in a reactive manner.
+ * Pub/Sub Redis API for reactive command execution.
  */
 package io.lettuce.core.pubsub.api.reactive;

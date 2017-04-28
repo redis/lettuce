@@ -1,4 +1,4 @@
 /**
- * Standalone Redis API for commands executed in a reactive manner.
+ * Standalone Redis API for reactive command execution.
  */
 package io.lettuce.core.api.reactive;

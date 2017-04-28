@@ -26,7 +26,6 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -41,17 +40,14 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * Connections can be obtained by providing the {@link RedisClient}, a {@link RedisURI} and a {@link RedisCodec}.
  *
- * <pre>
- *  &#064;code
- *   RedisClient client = RedisClient.create();
- *   StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(client,
- *                                                                      RedisURI.create("redis://localhost"),
- *                                                                      new Utf8StringCodec());
- *   // ...
+ * <pre class="code">
+ * RedisClient client = RedisClient.create();
+ * StatefulRedisMasterSlaveConnection&lt;String, String&gt; connection = MasterSlave.connect(client,
+ *         RedisURI.create(&quot;redis://localhost&quot;), StringCodec.UTF8);
+ * // ...
  *
- *   connection.close();
- *   client.shutdown();
- *   }
+ * connection.close();
+ * client.shutdown();
  * </pre>
  *
  * </p>

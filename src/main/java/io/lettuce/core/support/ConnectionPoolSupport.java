@@ -57,13 +57,13 @@ import io.lettuce.core.internal.LettuceAssert;
  * Transactions and command batching affect connection state. Blocking commands won't propagate queued commands to Redis until
  * the blocking command is resolved.
  *
- * <h2>Example usage</h2>
+ * <h3>Example</h3>
  *
- * <pre>
+ * <pre class="code">
  * // application initialization
  * RedisClusterClient clusterClient = RedisClusterClient.create(RedisURI.create(host, port));
- * GenericObjectPool&lt;StatefulRedisClusterConnection&lt;String, String&gt;&gt; pool = ConnectionPoolSupport
- *         .createGenericObjectPool(() -&gt; clusterClient.connect(), new GenericObjectPoolConfig());
+ * GenericObjectPool&lt;StatefulRedisClusterConnection&lt;String, String&gt;&gt; pool = ConnectionPoolSupport.createGenericObjectPool(
+ *         () -&gt; clusterClient.connect(), new GenericObjectPoolConfig());
  *
  * // executing work
  * try (StatefulRedisClusterConnection&lt;String, String&gt; connection = pool.borrowObject()) {
@@ -285,23 +285,25 @@ public abstract class ConnectionPoolSupport {
 
             try {
 
-                if (method.getName().equals("sync") || method.getName().equals("async")
-                        || method.getName().equals("reactive")) {
-                    return connectionProxies.computeIfAbsent(method, m -> {
+                if (method.getName().equals("sync") || method.getName().equals("async") || method.getName().equals("reactive")) {
+                    return connectionProxies.computeIfAbsent(
+                            method,
+                            m -> {
 
-                        try {
-                            Object result = method.invoke(connection, args);
+                                try {
+                                    Object result = method.invoke(connection, args);
 
-                            result = Proxy.newProxyInstance(getClass().getClassLoader(), result.getClass().getInterfaces(),
-                                    new DelegateCloseToConnectionInvocationHandler((AutoCloseable) proxiedConnection, result));
+                                    result = Proxy.newProxyInstance(getClass().getClassLoader(), result.getClass()
+                                            .getInterfaces(), new DelegateCloseToConnectionInvocationHandler(
+                                            (AutoCloseable) proxiedConnection, result));
 
-                            return result;
-                        } catch (IllegalAccessException e) {
-                            throw new RedisException(e);
-                        } catch (InvocationTargetException e) {
-                            throw new RedisException(e.getTargetException());
-                        }
-                    });
+                                    return result;
+                                } catch (IllegalAccessException e) {
+                                    throw new RedisException(e);
+                                } catch (InvocationTargetException e) {
+                                    throw new RedisException(e.getTargetException());
+                                }
+                            });
                 }
 
                 return method.invoke(connection, args);

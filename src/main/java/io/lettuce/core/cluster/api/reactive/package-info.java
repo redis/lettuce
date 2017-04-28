@@ -1,4 +1,4 @@
 /**
- * Redis Cluster API for commands executed in a reactive manner.
+ * Redis Cluster API for reactive command execution.
  */
 package io.lettuce.core.cluster.api.reactive;

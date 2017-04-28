@@ -34,14 +34,10 @@ import io.netty.buffer.UnpooledByteBufAllocator;
  * encoded using the {@link RedisCodec} to their byte representation. {@link CommandArgs} provides a fluent style of adding
  * multiple arguments. A {@link CommandArgs} instance can be reused across multiple commands and invocations.
  *
- * <p>
- * Usage
- * </p>
+ * <h3>Example</h3>
  *
- * <pre>
- *     <code>
- *         new CommandArgs<>(codec).addKey(key).addValue(value).add(CommandKeyword.FORCE);
- *     </code>
+ * <pre class="code">
+ * new CommandArgs&lt;&gt;(codec).addKey(key).addValue(value).add(CommandKeyword.FORCE);
  * </pre>
  *
  * @param <K> Key type.

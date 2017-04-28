@@ -35,15 +35,13 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
  * messages are broadcasted across the cluster and a client can connect to any arbitrary node to participate with a
  * subscription.
  *
- * <pre>
- *     <code>
+ * <pre class="code">
  *  StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub();
  *  connection.addListener(…);
  *
  *  RedisClusterPubSubCommands<String, String> sync = connection.sync();
  *  sync.subscribe("channel");
  *  sync.publish("channel", "message");
- *     </code>
  * </pre>
  *
  * <h3>Keyspace notifications</h3> Redis clients can subscribe to user-space Pub/Sub messages and Redis keyspace notifications.

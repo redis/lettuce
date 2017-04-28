@@ -46,33 +46,37 @@ import io.lettuce.core.protocol.RedisCommand;
  * interfaces provide a dynamic API that are declared in userland code. {@link RedisCommandFactory} and its supportive classes
  * analyze method declarations and derive from those factories to create and execute {@link RedisCommand}s.
  *
- * <h3>Example</h3> <code><pre>
-public interface MyRedisCommands extends Commands {
-
-    String get(String key); // Synchronous Execution of GET
-
-    &#64;Command("GET")
-    byte[] getAsBytes(String key); // Synchronous Execution of GET returning data as byte array
-
-    &#64;Command("SET") // synchronous execution applying a Timeout
-    String setSync(String key, String value, Timeout timeout);
-
-    Future<String> set(String key, String value); // asynchronous SET execution
-
-    &#64;Command("SET")
-    Mono<String> setReactive(String key, String value, SetArgs setArgs); // reactive SET execution using SetArgs
-
-    &#64;CommandNaming(split = DOT) // support for Redis Module command notation -> NR.RUN
-    double nrRun(String key, int... indexes);
-}
-
- RedisCommandFactory factory = new RedisCommandFactory(connection);
-
- MyRedisCommands commands = factory.getCommands(MyRedisCommands.class);
-
- String value = commands.get("key");
-
- * </pre></code>
+ * <h3>Example</h3>
+ *
+ * <pre class="code">
+ * public interface MyRedisCommands extends Commands {
+ *
+ *     String get(String key); // Synchronous Execution of GET
+ *
+ *     &#064;Command(&quot;GET&quot;)
+ *     byte[] getAsBytes(String key); // Synchronous Execution of GET returning data as byte array
+ *
+ *     &#064;Command(&quot;SET&quot;)
+ *     // synchronous execution applying a Timeout
+ *     String setSync(String key, String value, Timeout timeout);
+ *
+ *     Future&lt;String&gt; set(String key, String value); // asynchronous SET execution
+ *
+ *     &#064;Command(&quot;SET&quot;)
+ *     Mono&lt;String&gt; setReactive(String key, String value, SetArgs setArgs); // reactive SET execution using SetArgs
+ *
+ *     &#064;CommandNaming(split = DOT)
+ *     // support for Redis Module command notation -&gt; NR.RUN
+ *     double nrRun(String key, int... indexes);
+ * }
+ *
+ * RedisCommandFactory factory = new RedisCommandFactory(connection);
+ *
+ * MyRedisCommands commands = factory.getCommands(MyRedisCommands.class);
+ *
+ * String value = commands.get(&quot;key&quot;);
+ *
+ * </pre>
  *
  * @author Mark Paluch
  * @since 5.0

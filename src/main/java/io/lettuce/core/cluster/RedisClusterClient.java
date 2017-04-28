@@ -53,7 +53,6 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.SocketAddressResolver;
-
 import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -115,11 +114,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Cluster commands can be issued to multiple hosts in parallel by using the {@link NodeSelectionSupport} API. A set of nodes is
  * selected using a {@link java.util.function.Predicate} and commands can be issued to the node selection
  *
- * <code><pre>
- * AsyncExecutions<String> ping = commands.masters().commands().ping();
- * Collection<RedisClusterNode> nodes = ping.nodes();
+ * <pre class="code">
+ * AsyncExecutions&lt;String&gt; ping = commands.masters().commands().ping();
+ * Collection&lt;RedisClusterNode&gt; nodes = ping.nodes();
  * nodes.stream().forEach(redisClusterNode -&gt; ping.get(redisClusterNode));
- * </pre></code>
+ * </pre>
+ *
  * </p>
  *
  * {@link RedisClusterClient} is an expensive resource. Reuse this instance or share external {@link ClientResources} as much as

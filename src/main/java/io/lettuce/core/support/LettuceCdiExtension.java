@@ -18,8 +18,8 @@ package io.lettuce.core.support;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.enterprise.event.Observes;
@@ -31,7 +31,6 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -42,19 +41,16 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * shared across multiple client instances (Standalone, Cluster) by providing a {@link ClientResources} bean with the same
  * qualifiers as the {@link RedisURI}.
  *
- * <p>
- * <strong>Example:</strong>
- * </p>
+ * <h3>Example</h3>
  *
- * <pre>
- * <code>
- *  public class Producers {
- *     &#64;Produces
+ * <pre class="code">
+ * public class Producers {
+ *     &#064;Produces
  *     public RedisURI redisURI() {
- *         return RedisURI.Builder.redis("localhost", 6379).build();
+ *         return RedisURI.Builder.redis(&quot;localhost&quot;, 6379).build();
  *     }
  *
- *     &#64;Produces
+ *     &#064;Produces
  *     public ClientResources clientResources() {
  *         return DefaultClientResources.create()
  *     }
@@ -63,20 +59,17 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *         clientResources.shutdown().get();
  *     }
  * }
- * </code>
  * </pre>
  *
  *
- * <pre>
- *  <code>
- *   public class Consumer {
- *      &#64;Inject
- *      private RedisClient client;
+ * <pre class="code">
+ * public class Consumer {
+ *     &#064;Inject
+ *     private RedisClient client;
  *
- *      &#64;Inject
- *      private RedisClusterClient clusterClient;
+ *     &#064;Inject
+ *     private RedisClusterClient clusterClient;
  * }
- *  </code>
  * </pre>
  *
  * @author Mark Paluch

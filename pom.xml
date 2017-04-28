@@ -762,7 +762,6 @@
                 </executions>
                 <configuration>
                     <level>public</level>
-                    <overview>src/javadoc/overview.html</overview>
                     <author>true</author>
                     <header>Lettuce</header>
                     <stylesheetfile>src/main/javadoc/stylesheet.css</stylesheetfile>
