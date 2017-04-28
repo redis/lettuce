@@ -59,12 +59,9 @@
 
     <repositories>
         <repository>
-            <id>spring-snapshots</id>
-            <name>Spring Snapshots</name>
-            <url>https://repo.spring.io/libs-snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/libs-milestone</url>
         </repository>
     </repositories>
 
@@ -74,9 +71,6 @@
         <skipSigning>true</skipSigning>
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
-        <github.site.upload.skip>true</github.site.upload.skip>
-        <lettuce-release-version>4.2.2.Final</lettuce-release-version>
-        <lettuce3-release-version>3.5.0.Final</lettuce3-release-version>
         <netty-version>4.1.9.Final</netty-version>
         <spring-version>4.3.6.RELEASE</spring-version>
     </properties>
@@ -232,7 +226,7 @@
         <dependency>
             <groupId>io.projectreactor.addons</groupId>
             <artifactId>reactor-test</artifactId>
-            <version>3.1.0.BUILD-SNAPSHOT</version>
+            <version>3.1.0.M1</version>
             <scope>test</scope>
         </dependency>
 
