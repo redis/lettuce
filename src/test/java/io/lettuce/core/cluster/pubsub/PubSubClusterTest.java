@@ -123,7 +123,6 @@ public class PubSubClusterTest extends AbstractClusterTest {
         assertThat(masters.size()).isEqualTo(2);
         assertThat(connectionListener.getMessages().take()).isEqualTo("message");
         assertThat(connectionListener.getMessages().take()).isEqualTo("message");
-        assertThat(connectionListener.getMessages().poll()).isNull();
     }
 
     @Test
@@ -141,7 +140,6 @@ public class PubSubClusterTest extends AbstractClusterTest {
         assertThat(masters.size()).isEqualTo(2);
         assertThat(connectionListener.getMessages().take()).isEqualTo("message");
         assertThat(connectionListener.getMessages().take()).isEqualTo("message");
-        assertThat(connectionListener.getMessages().poll()).isNull();
     }
 
     @Test
