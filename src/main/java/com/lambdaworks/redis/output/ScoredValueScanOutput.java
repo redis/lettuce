@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@ package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
 
+import com.lambdaworks.redis.LettuceStrings;
 import com.lambdaworks.redis.ScoredValue;
 import com.lambdaworks.redis.ScoredValueScanCursor;
 import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
  * {@link com.lambdaworks.redis.ScoredValueScanCursor} for scan cursor output.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -44,7 +45,7 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
             return;
         }
 
-        double score = Double.parseDouble(decodeAscii(bytes));
+        double score = LettuceStrings.toDouble(decodeAscii(bytes));
         output.getValues().add(new ScoredValue<V>(score, value));
         value = null;
     }
