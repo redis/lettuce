@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.lambdaworks.codec.Base16;
 
 /**
  * Helper for {@link String} checks. This class is part of the internal API and may change without further notice.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -38,7 +38,7 @@ public class LettuceStrings {
 
     /**
      * Checks if a CharSequence is empty ("") or null.
-     * 
+     *
      * @param cs the char sequence
      * @return true if empty
      */
@@ -48,18 +48,19 @@ public class LettuceStrings {
 
     /**
      * Checks if a CharSequence is not empty ("") and not null.
-     * 
+     *
      * @param cs the char sequence
      * @return true if not empty
-     * 
+     *
      */
     public static boolean isNotEmpty(final CharSequence cs) {
         return !isEmpty(cs);
     }
 
     /**
-     * Convert double to string. If double is infinite, returns positive/negative infinity {@code +inf} and {@code -inf}.
-     * 
+     * Convert {@code double} to {@link String}. If {@code n} is infinite, returns positive/negative infinity {@code +inf} and
+     * {@code -inf}.
+     *
      * @param n the double.
      * @return string representation of {@code n}
      */
@@ -71,8 +72,29 @@ public class LettuceStrings {
     }
 
     /**
+     * Convert {@link String} to {@code double}. If {@code s} is {@literal +inf}/{@literal -inf}, returns positive/negative
+     * infinity.
+     *
+     * @param s string representation of the number
+     * @return the {@code double} value.
+     * @since 4.3.3
+     */
+    public static double toDouble(String s) {
+
+        if ("+inf".equals(s) || "inf".equals(s)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        if ("-inf".equals(s)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        return Double.parseDouble(s);
+    }
+
+    /**
      * Create SHA1 digest from Lua script.
-     * 
+     *
      * @param script the script
      * @return the Base16 encoded SHA1 value
      */
@@ -82,7 +104,7 @@ public class LettuceStrings {
 
     /**
      * Create SHA1 digest from Lua script.
-     * 
+     *
      * @param script the script
      * @return the Base16 encoded SHA1 value
      */
