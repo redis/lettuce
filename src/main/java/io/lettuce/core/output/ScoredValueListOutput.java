@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.lettuce.core.LettuceStrings;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
@@ -30,8 +31,9 @@ import io.lettuce.core.internal.LettuceAssert;
  * @param <V> Value type.
  * @author Will Glozer
  */
-public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<ScoredValue<V>>>
-        implements StreamingOutput<ScoredValue<V>> {
+public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<ScoredValue<V>>> implements
+        StreamingOutput<ScoredValue<V>> {
+
     private V value;
     private Subscriber<ScoredValue<V>> subscriber;
 
@@ -47,7 +49,7 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
             return;
         }
 
-        double score = Double.parseDouble(decodeAscii(bytes));
+        double score = LettuceStrings.toDouble(decodeAscii(bytes));
         subscriber.onNext(ScoredValue.fromNullable(score, value));
         value = null;
     }

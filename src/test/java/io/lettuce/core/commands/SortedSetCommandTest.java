@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.commands;
 
+import static io.lettuce.core.Range.Boundary.including;
 import static io.lettuce.core.ZStoreArgs.Builder.max;
 import static io.lettuce.core.ZStoreArgs.Builder.min;
 import static io.lettuce.core.ZStoreArgs.Builder.sum;
@@ -146,7 +147,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zcount(key, Range.create(1.0, 2.0))).isEqualTo(2);
         assertThat(redis.zcount(key, Range.create(NEGATIVE_INFINITY, POSITIVE_INFINITY))).isEqualTo(3);
 
-        assertThat(redis.zcount(key, Range.from(Boundary.excluding(1.0), Boundary.including(3.0)))).isEqualTo(2);
+        assertThat(redis.zcount(key, Range.from(Boundary.excluding(1.0), including(3.0)))).isEqualTo(2);
         assertThat(redis.zcount(key, Range.unbounded())).isEqualTo(3);
     }
 
@@ -219,7 +220,8 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zrangebyscore(key, "-inf", "+inf", 2, 2)).isEqualTo(list("c", "d"));
 
         assertThat(redis.zrangebyscore(key, Range.create(2.0, 3.0))).isEqualTo(list("b", "c"));
-        assertThat(redis.zrangebyscore(key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrangebyscore(key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(
+                list("b", "c"));
         assertThat(redis.zrangebyscore(key, Range.unbounded())).isEqualTo(list("a", "b", "c", "d"));
         assertThat(redis.zrangebyscore(key, Range.create(0.0, 4.0), Limit.create(1, 3))).isEqualTo(list("b", "c", "d"));
         assertThat(redis.zrangebyscore(key, Range.unbounded(), Limit.create(2, 2))).isEqualTo(list("c", "d"));
@@ -239,7 +241,8 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zrangebyscore(streamingAdapter, key, "-inf", "+inf", 2, 2)).isEqualTo(2);
 
         assertThat(redis.zrangebyscore(streamingAdapter, key, Range.create(2.0, 3.0))).isEqualTo(2);
-        assertThat(redis.zrangebyscore(streamingAdapter, key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(2);
+        assertThat(redis.zrangebyscore(streamingAdapter, key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0))))
+                .isEqualTo(2);
         assertThat(redis.zrangebyscore(streamingAdapter, key, Range.unbounded())).isEqualTo(4);
         assertThat(redis.zrangebyscore(streamingAdapter, key, Range.create(0.0, 4.0), Limit.create(1, 3))).isEqualTo(3);
         assertThat(redis.zrangebyscore(streamingAdapter, key, Range.unbounded(), Limit.create(2, 2))).isEqualTo(2);
@@ -262,12 +265,30 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zrangebyscoreWithScores(key, "-inf", "+inf", 2, 2)).isEqualTo(svlist(sv(3.0, "c"), sv(4.0, "d")));
 
         assertThat(redis.zrangebyscoreWithScores(key, Range.create(2.0, 3.0))).isEqualTo(svlist(sv(2.0, "b"), sv(3.0, "c")));
-        assertThat(redis.zrangebyscoreWithScores(key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(svlist(sv(2.0, "b"), sv(3.0, "c")));
+        assertThat(redis.zrangebyscoreWithScores(key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(
+                svlist(sv(2.0, "b"), sv(3.0, "c")));
         assertThat(redis.zrangebyscoreWithScores(key, Range.unbounded())).isEqualTo(
                 svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")));
         assertThat(redis.zrangebyscoreWithScores(key, Range.create(0.0, 4.0), Limit.create(1, 3))).isEqualTo(
                 svlist(sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "d")));
-        assertThat(redis.zrangebyscoreWithScores(key, Range.unbounded(), Limit.create(2, 2))).isEqualTo(svlist(sv(3.0, "c"), sv(4.0, "d")));
+        assertThat(redis.zrangebyscoreWithScores(key, Range.unbounded(), Limit.create(2, 2))).isEqualTo(
+                svlist(sv(3.0, "c"), sv(4.0, "d")));
+    }
+
+    @Test
+    @SuppressWarnings({ "unchecked" })
+    public void zrangebyscoreWithScoresInfinity() throws Exception {
+
+        redis.zadd(key, Double.POSITIVE_INFINITY, "a", Double.NEGATIVE_INFINITY, "b");
+
+        assertThat(redis.zrangebyscoreWithScores(key, "-inf", "+inf")).hasSize(2);
+
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
+
+        Range<Double> range = Range.from(including(Double.NEGATIVE_INFINITY), including(Double.POSITIVE_INFINITY));
+        redis.zrangebyscoreWithScores(streamingAdapter, key, range);
+
+        assertThat(streamingAdapter.getList()).hasSize(2);
     }
 
     @Test
@@ -284,11 +305,14 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zrangebyscoreWithScores(streamingAdapter, key, 0.0, 4.0, 1, 3).longValue()).isEqualTo(3);
         assertThat(redis.zrangebyscoreWithScores(streamingAdapter, key, "-inf", "+inf", 2, 2).longValue()).isEqualTo(2);
 
-        assertThat(redis.zrangebyscoreWithScores(streamingAdapter,key, Range.create(2.0, 3.0))).isEqualTo(2);
-        assertThat(redis.zrangebyscoreWithScores(streamingAdapter,key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(2);
-        assertThat(redis.zrangebyscoreWithScores(streamingAdapter,key, Range.unbounded())).isEqualTo(4);
-        assertThat(redis.zrangebyscoreWithScores(streamingAdapter,key, Range.create(0.0, 4.0), Limit.create(1, 3))).isEqualTo(3);
-        assertThat(redis.zrangebyscoreWithScores(streamingAdapter,key, Range.unbounded(), Limit.create(2, 2))).isEqualTo(2);
+        assertThat(redis.zrangebyscoreWithScores(streamingAdapter, key, Range.create(2.0, 3.0))).isEqualTo(2);
+        assertThat(
+                redis.zrangebyscoreWithScores(streamingAdapter, key,
+                        Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(2);
+        assertThat(redis.zrangebyscoreWithScores(streamingAdapter, key, Range.unbounded())).isEqualTo(4);
+        assertThat(redis.zrangebyscoreWithScores(streamingAdapter, key, Range.create(0.0, 4.0), Limit.create(1, 3))).isEqualTo(
+                3);
+        assertThat(redis.zrangebyscoreWithScores(streamingAdapter, key, Range.unbounded(), Limit.create(2, 2))).isEqualTo(2);
 
     }
 
@@ -380,8 +404,9 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
         assertThat(redis.zrevrangebylex(key, Range.unbounded())).hasSize(100);
         assertThat(redis.zrevrangebylex(key, Range.create("value", "zzz"))).hasSize(100);
-        assertThat(redis.zrevrangebylex(key, Range.from(Boundary.including("value98"), Boundary.including("value99")))).containsSequence("value99", "value98");
-        assertThat(redis.zrevrangebylex(key, Range.from(Boundary.including("value99"), Boundary.unbounded()))).hasSize(1);
+        assertThat(redis.zrevrangebylex(key, Range.from(including("value98"), including("value99")))).containsSequence(
+                "value99", "value98");
+        assertThat(redis.zrevrangebylex(key, Range.from(including("value99"), Boundary.unbounded()))).hasSize(1);
         assertThat(redis.zrevrangebylex(key, Range.from(Boundary.excluding("value99"), Boundary.unbounded()))).hasSize(0);
     }
 
@@ -398,7 +423,8 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zrevrangebyscore(key, "+inf", "-inf", 2, 2)).isEqualTo(list("b", "a"));
 
         assertThat(redis.zrevrangebyscore(key, Range.create(2.0, 3.0))).isEqualTo(list("c", "b"));
-        assertThat(redis.zrevrangebyscore(key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(list("c", "b"));
+        assertThat(redis.zrevrangebyscore(key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(
+                list("c", "b"));
         assertThat(redis.zrevrangebyscore(key, Range.unbounded())).isEqualTo(list("d", "c", "b", "a"));
         assertThat(redis.zrevrangebyscore(key, Range.create(0.0, 4.0), Limit.create(1, 3))).isEqualTo(list("c", "b", "a"));
         assertThat(redis.zrevrangebyscore(key, Range.unbounded(), Limit.create(2, 2))).isEqualTo(list("b", "a"));
@@ -420,12 +446,14 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zrevrangebyscoreWithScores(key, "+inf", "-inf", 2, 2)).isEqualTo(svlist(sv(2.0, "b"), sv(1.0, "a")));
 
         assertThat(redis.zrevrangebyscoreWithScores(key, Range.create(2.0, 3.0))).isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
-        assertThat(redis.zrevrangebyscoreWithScores(key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))).isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
+        assertThat(redis.zrevrangebyscoreWithScores(key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0))))
+                .isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
         assertThat(redis.zrevrangebyscoreWithScores(key, Range.unbounded())).isEqualTo(
                 svlist(sv(4.0, "d"), sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")));
         assertThat(redis.zrevrangebyscoreWithScores(key, Range.create(0.0, 4.0), Limit.create(1, 3))).isEqualTo(
                 svlist(sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")));
-        assertThat(redis.zrevrangebyscoreWithScores(key, Range.unbounded(), Limit.create(2, 2))).isEqualTo(svlist(sv(2.0, "b"), sv(1.0, "a")));
+        assertThat(redis.zrevrangebyscoreWithScores(key, Range.unbounded(), Limit.create(2, 2))).isEqualTo(
+                svlist(sv(2.0, "b"), sv(1.0, "a")));
     }
 
     @Test
@@ -442,10 +470,14 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zrevrangebyscore(streamingAdapter, key, "+inf", "-inf", 2, 2).longValue()).isEqualTo(2);
 
         assertThat(redis.zrevrangebyscore(streamingAdapter, key, Range.create(2.0, 3.0)).longValue()).isEqualTo(2);
-        assertThat(redis.zrevrangebyscore(streamingAdapter, key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0))).longValue()).isEqualTo(2);
+        assertThat(
+                redis.zrevrangebyscore(streamingAdapter, key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0)))
+                        .longValue()).isEqualTo(2);
         assertThat(redis.zrevrangebyscore(streamingAdapter, key, Range.unbounded()).longValue()).isEqualTo(4);
-        assertThat(redis.zrevrangebyscore(streamingAdapter, key, Range.create(0.0, 4.0), Limit.create(1, 3)).longValue()).isEqualTo(3);
-        assertThat(redis.zrevrangebyscore(streamingAdapter, key, Range.unbounded(), Limit.create(2, 2)).longValue()).isEqualTo(2);
+        assertThat(redis.zrevrangebyscore(streamingAdapter, key, Range.create(0.0, 4.0), Limit.create(1, 3)).longValue())
+                .isEqualTo(3);
+        assertThat(redis.zrevrangebyscore(streamingAdapter, key, Range.unbounded(), Limit.create(2, 2)).longValue()).isEqualTo(
+                2);
     }
 
     @Test
@@ -463,10 +495,15 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
         assertThat(redis.zrevrangebyscoreWithScores(streamingAdapter, key, "+inf", "-inf", 2, 2)).isEqualTo(2);
 
         assertThat(redis.zrevrangebyscoreWithScores(streamingAdapter, key, Range.create(2.0, 3.0)).longValue()).isEqualTo(2);
-        assertThat(redis.zrevrangebyscoreWithScores(streamingAdapter, key, Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0))).longValue()).isEqualTo(2);
+        assertThat(
+                redis.zrevrangebyscoreWithScores(streamingAdapter, key,
+                        Range.from(Boundary.excluding(1.0), Boundary.excluding(4.0))).longValue()).isEqualTo(2);
         assertThat(redis.zrevrangebyscoreWithScores(streamingAdapter, key, Range.unbounded()).longValue()).isEqualTo(4);
-        assertThat(redis.zrevrangebyscoreWithScores(streamingAdapter, key, Range.create(0.0, 4.0), Limit.create(1, 3)).longValue()).isEqualTo(3);
-        assertThat(redis.zrevrangebyscoreWithScores(streamingAdapter, key, Range.unbounded(), Limit.create(2, 2)).longValue()).isEqualTo(2);
+        assertThat(
+                redis.zrevrangebyscoreWithScores(streamingAdapter, key, Range.create(0.0, 4.0), Limit.create(1, 3)).longValue())
+                .isEqualTo(3);
+        assertThat(redis.zrevrangebyscoreWithScores(streamingAdapter, key, Range.unbounded(), Limit.create(2, 2)).longValue())
+                .isEqualTo(2);
     }
 
     @Test
@@ -656,7 +693,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
         assertThat(redis.zlexcount(key, Range.unbounded())).isEqualTo(100);
         assertThat(redis.zlexcount(key, Range.create("value", "zzz"))).isEqualTo(100);
-        assertThat(redis.zlexcount(key, Range.from(Boundary.including("value99"), Boundary.unbounded()))).isEqualTo(1);
+        assertThat(redis.zlexcount(key, Range.from(including("value99"), Boundary.unbounded()))).isEqualTo(1);
         assertThat(redis.zlexcount(key, Range.from(Boundary.excluding("value99"), Boundary.unbounded()))).isEqualTo(0);
     }
 
@@ -669,8 +706,9 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
         assertThat(redis.zrangebylex(key, Range.unbounded())).hasSize(100);
         assertThat(redis.zrangebylex(key, Range.create("value", "zzz"))).hasSize(100);
-        assertThat(redis.zrangebylex(key, Range.from(Boundary.including("value98"), Boundary.including("value99")))).containsSequence("value98", "value99");
-        assertThat(redis.zrangebylex(key, Range.from(Boundary.including("value99"), Boundary.unbounded()))).hasSize(1);
+        assertThat(redis.zrangebylex(key, Range.from(including("value98"), including("value99")))).containsSequence("value98",
+                "value99");
+        assertThat(redis.zrangebylex(key, Range.from(including("value99"), Boundary.unbounded()))).hasSize(1);
         assertThat(redis.zrangebylex(key, Range.from(Boundary.excluding("value99"), Boundary.unbounded()))).hasSize(0);
     }
 

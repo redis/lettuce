@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ public class LettuceStrings {
     }
 
     /**
-     * Convert double to string. If double is infinite, returns positive/negative infinity {@code +inf} and {@code -inf}.
+     * Convert {@code double} to {@link String}. If {@code n} is infinite, returns positive/negative infinity {@code +inf} and
+     * {@code -inf}.
      *
      * @param n the double.
      * @return string representation of {@code n}
@@ -70,6 +71,27 @@ public class LettuceStrings {
             return (n > 0) ? "+inf" : "-inf";
         }
         return Double.toString(n);
+    }
+
+    /**
+     * Convert {@link String} to {@code double}. If {@code s} is {@literal +inf}/{@literal -inf}, returns positive/negative
+     * infinity.
+     *
+     * @param s string representation of the number
+     * @return the {@code double} value.
+     * @since 4.3.3
+     */
+    public static double toDouble(String s) {
+
+        if ("+inf".equals(s) || "inf".equals(s)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        if ("-inf".equals(s)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        return Double.parseDouble(s);
     }
 
     /**
