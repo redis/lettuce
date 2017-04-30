@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,18 +58,18 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  * the blocking command is resolved.
  *
  * <h2>Example usage</h2>
- * 
+ *
  * <pre>
  * // application initialization
  * RedisClusterClient clusterClient = RedisClusterClient.create(RedisURI.create(host, port));
- * GenericObjectPool&lt;StatefulRedisClusterConnection&lt;String, String&gt;&gt; pool = ConnectionPoolSupport
- *         .createGenericObjectPool(() -&gt; clusterClient.connect(), new GenericObjectPoolConfig());
- * 
+ * GenericObjectPool&lt;StatefulRedisClusterConnection&lt;String, String&gt;&gt; pool = ConnectionPoolSupport.createGenericObjectPool(
+ *         () -&gt; clusterClient.connect(), new GenericObjectPoolConfig());
+ *
  * // executing work
  * try (StatefulRedisClusterConnection&lt;String, String&gt; connection = pool.borrowObject()) {
  *     // perform some work
  * }
- * 
+ *
  * // terminating
  * pool.close();
  * clusterClient.shutdown();
@@ -120,12 +120,12 @@ public abstract class ConnectionPoolSupport {
         GenericObjectPool<T> pool = new GenericObjectPool<T>(new RedisPooledObjectFactory<>(connectionSupplier), config) {
 
             @Override
-            public synchronized T borrowObject() throws Exception {
+            public T borrowObject() throws Exception {
                 return wrapConnections ? wrapConnection(super.borrowObject(), this) : super.borrowObject();
             }
 
             @Override
-            public synchronized void returnObject(T obj) {
+            public void returnObject(T obj) {
 
                 if (wrapConnections && obj instanceof HasTargetConnection) {
                     super.returnObject((T) ((HasTargetConnection) obj).getTargetConnection());
@@ -173,12 +173,12 @@ public abstract class ConnectionPoolSupport {
 
         SoftReferenceObjectPool<T> pool = new SoftReferenceObjectPool<T>(new RedisPooledObjectFactory<>(connectionSupplier)) {
             @Override
-            public synchronized T borrowObject() throws Exception {
+            public T borrowObject() throws Exception {
                 return wrapConnections ? wrapConnection(super.borrowObject(), this) : super.borrowObject();
             }
 
             @Override
-            public synchronized void returnObject(T obj) throws Exception {
+            public void returnObject(T obj) throws Exception {
 
                 if (wrapConnections && obj instanceof HasTargetConnection) {
                     super.returnObject((T) ((HasTargetConnection) obj).getTargetConnection());
