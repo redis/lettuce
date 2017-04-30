@@ -108,7 +108,11 @@
     <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
+
     <spring.version>5.0.0.M5</spring.version>
+    <spring-batch.version>4.0.0.M1</spring-batch.version>
+    <junit-platform.version>1.0.0-M4</junit-platform.version>
+    <junit.version>5.0.0-M4</junit.version>
 
     <!-- Override: Animal Sniffer Signature -->
     <signature.group>org.codehaus.mojo.signature</signature.group>
@@ -121,7 +125,7 @@
     <dependency>
       <groupId>org.mybatis</groupId>
       <artifactId>mybatis</artifactId>
-      <version>3.4.2</version>
+      <version>3.4.4</version>
       <scope>provided</scope>
     </dependency>
 
@@ -172,20 +176,20 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.0.0-M4</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-runner</artifactId>
-      <version>1.0.0-M4</version>
+      <version>${junit-platform.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.jboss.byteman</groupId>
       <artifactId>byteman-bmunit</artifactId>
-      <version>3.0.7</version>
+      <version>3.0.8</version>
       <scope>test</scope>
     </dependency>
 
@@ -211,9 +215,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <version>2.7</version>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
       <scope>test</scope>
     </dependency>
 
@@ -324,12 +328,12 @@
           <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-surefire-provider</artifactId>
-            <version>1.0.0-M3</version>
+            <version>${junit-platform.version}</version>
           </dependency>
           <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.0.0-M3</version>
+            <version>${junit.version}</version>
           </dependency>
         </dependencies>
       </plugin>
