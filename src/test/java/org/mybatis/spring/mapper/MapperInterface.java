@@ -19,5 +19,5 @@ package org.mybatis.spring.mapper;
 // when used as a marker interface,
 // this class should be ignored even though it has methods
 public interface MapperInterface {
-  public void method();
+  void method();
 }

@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,11 +15,9 @@
  */
 package org.mybatis.spring.transaction;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mybatis.spring.AbstractMyBatisSpringTest;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -37,8 +35,8 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     transaction.getConnection();
     transaction.commit();
     transaction.close();
-    assertEquals("should not call commit on Connection", 0, connection.getNumberCommits());
-    assertFalse("should not close the Connection", connection.isClosed());
+    assertThat(connection.getNumberCommits()).as("should not call commit on Connection").isEqualTo(0);
+    assertThat(connection.isClosed()).as("should not close the Connection").isFalse();
 
     txManager.commit(status);
   }
@@ -66,8 +64,8 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     transaction.getConnection();
     transaction.commit();
     transaction.close();
-    assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
-    assertTrue("should close the Connection", connection.isClosed());
+    assertThat(connection.getNumberCommits()).as("should call commit on Connection").isEqualTo(1);
+    assertThat(connection.isClosed()).as("should close the Connection").isTrue();
   }
 
   @Test
@@ -78,8 +76,8 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     transaction.getConnection();
     transaction.commit();
     transaction.close();
-    assertEquals("should not call commit on a Connection with autocommit", 0, connection.getNumberCommits());
-    assertTrue("should close the Connection", connection.isClosed());
+    assertThat(connection.getNumberCommits()).as("should not call commit on a Connection with autocommit").isEqualTo(0);
+    assertThat(connection.isClosed()).as("should close the Connection").isTrue();
   }
 
   @Test
@@ -89,8 +87,8 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
     transaction.getConnection();
     transaction.commit();
     transaction.close();
-    assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
-    assertTrue("should close the Connection", connection.isClosed());
+    assertThat(connection.getNumberCommits()).as("should call commit on Connection").isEqualTo(1);
+    assertThat(connection.isClosed()).as("should close the Connection").isTrue();
   }
 
 }

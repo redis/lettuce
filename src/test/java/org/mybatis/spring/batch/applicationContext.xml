@@ -21,74 +21,75 @@
     MyBatis-Spring sample contexts.
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xmlns:tx="http://www.springframework.org/schema/tx"
-     xmlns:jdbc="http://www.springframework.org/schema/jdbc"
-     xsi:schemaLocation="
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xsi:schemaLocation="
      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
      http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
 
-    <!-- in-memory database and a datasource -->
-    <jdbc:embedded-database id="dataSource">
-        <jdbc:script location="classpath:org/mybatis/spring/batch/db/database-schema.sql"/>
-        <jdbc:script location="classpath:org/mybatis/spring/batch/db/database-test-data.sql"/>
-    </jdbc:embedded-database>
+  <!-- in-memory database and a datasource -->
+  <jdbc:embedded-database id="dataSource">
+    <jdbc:script location="classpath:org/mybatis/spring/batch/db/database-schema.sql"/>
+    <jdbc:script location="classpath:org/mybatis/spring/batch/db/database-test-data.sql"/>
+  </jdbc:embedded-database>
 
-    <!-- transaction manager, use JtaTransactionManager for global tx -->
-    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-        <property name="dataSource" ref="dataSource" />
-    </bean>
-    
-    <!-- enable transaction demarcation with annotations -->
-    <tx:annotation-driven />
-    
-    <!-- simplest possible SqlSessionFactory configuration -->
-    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-        <property name="dataSource" ref="dataSource" />
-        <!-- Directly specify the location of the MyBatis mapper xml file. This
-             is NOT required when using MapperScannerConfigurer or
-             MapperFactoryBean; they will load the xml automatically if it is
-             in the same classpath location as the DAO interface. Rather than
-             directly referencing the xml files, the 'configLocation' property
-             could also be used to specify the location of a MyBatis config
-             file. This config file could, in turn, contain &ltmapper&gt
-             elements that point to the correct mapper xml files.
-         -->
-        <property name="mapperLocations" value="classpath:/org/mybatis/spring/batch/dao/*.xml" />
-    </bean>
-    
-    <!-- item reader  -->
-    <bean id="pagingNoNestedItemReader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
-        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-        <property name="queryId" value="getEmployeeNoNestedPaging" />
-        <property name="pageSize" value="5"/>
-    </bean>
+  <!-- transaction manager, use JtaTransactionManager for global tx -->
+  <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <property name="dataSource" ref="dataSource"/>
+  </bean>
 
-    <bean id="pagingNestedItemReader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
-        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-        <property name="queryId" value="getEmployeeNestedPaging" />
-        <property name="pageSize" value="5"/>
-    </bean>
+  <!-- enable transaction demarcation with annotations -->
+  <tx:annotation-driven/>
 
-    <bean id="cursorNoNestedItemReader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
-        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-        <property name="queryId" value="getEmployeeNoNestedCursor" />
-    </bean>
+  <!-- simplest possible SqlSessionFactory configuration -->
+  <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    <property name="dataSource" ref="dataSource"/>
+    <!--
+     Directly specify the location of the MyBatis mapper xml file. This
+     is NOT required when using MapperScannerConfigurer or
+     MapperFactoryBean; they will load the xml automatically if it is
+     in the same classpath location as the DAO interface. Rather than
+     directly referencing the xml files, the 'configLocation' property
+     could also be used to specify the location of a MyBatis config
+     file. This config file could, in turn, contain &ltmapper&gt
+     elements that point to the correct mapper xml files.
+     -->
+    <property name="mapperLocations" value="classpath:/org/mybatis/spring/batch/dao/*.xml"/>
+  </bean>
 
-    <bean id="cursorNestedItemReader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
-        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-        <property name="queryId" value="getEmployeeNestedCursor" />
-    </bean>
+  <!-- item reader  -->
+  <bean id="pagingNoNestedItemReader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
+    <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    <property name="queryId" value="getEmployeeNoNestedPaging"/>
+    <property name="pageSize" value="5"/>
+  </bean>
 
-    <bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
-        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-        <property name="statementId" value="updateEmployee" />
-    </bean>
+  <bean id="pagingNestedItemReader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
+    <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    <property name="queryId" value="getEmployeeNestedPaging"/>
+    <property name="pageSize" value="5"/>
+  </bean>
 
-	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
-		<constructor-arg index="0" ref="sqlSessionFactory" />
-		<constructor-arg index="1" value="BATCH" />
-	</bean>
+  <bean id="cursorNoNestedItemReader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
+    <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    <property name="queryId" value="getEmployeeNoNestedCursor"/>
+  </bean>
+
+  <bean id="cursorNestedItemReader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
+    <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    <property name="queryId" value="getEmployeeNestedCursor"/>
+  </bean>
+
+  <bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
+    <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+    <property name="statementId" value="updateEmployee"/>
+  </bean>
+
+  <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+    <constructor-arg index="0" ref="sqlSessionFactory"/>
+    <constructor-arg index="1" value="BATCH"/>
+  </bean>
 
 </beans>

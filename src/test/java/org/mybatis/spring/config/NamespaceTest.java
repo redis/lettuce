@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package org.mybatis.spring.config;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.AnnotatedMapper;
@@ -54,7 +54,7 @@ public final class NamespaceTest {
     applicationContext.getBean("sqlSessionFactory");
   }
 
-  @After
+  @AfterEach
   public void assertNoMapperClass() {
     // concrete classes should always be ignored by MapperScannerPostProcessor
     assertBeanNotLoaded("mapperClass");

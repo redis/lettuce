@@ -50,5 +50,4 @@ public class User {
     buf.append("}");
     return buf.toString();
   }
-
 }

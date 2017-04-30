@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2015 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import org.springframework.transaction.support.TransactionSynchronization;
  * For use as ByteMan helper
  * 
  * @author Alex Rykov
- * 
  */
+@SuppressWarnings("unused")
 public class AsyncAfterCompletionHelper {
   /**
    * 
@@ -39,12 +39,11 @@ public class AsyncAfterCompletionHelper {
    * @author Alex Rykov
    * 
    */
-  static class AsynchAfterCompletionInvocationHandler implements
-      InvocationHandler {
+  static class AsyncAfterCompletionInvocationHandler implements InvocationHandler {
 
     private Object target;
 
-    AsynchAfterCompletionInvocationHandler(Object target) {
+    AsyncAfterCompletionInvocationHandler(Object target) {
       this.target = target;
     }
 
@@ -52,24 +51,19 @@ public class AsyncAfterCompletionHelper {
     public Object invoke(final Object proxy, final Method method,
         final Object[] args) throws Throwable {
       if ("afterCompletion".equals(method.getName())) {
-        final Set<Object> retValSet = new HashSet<Object>();
-        final Set<Throwable> exceptionSet = new HashSet<Throwable>();
-        Thread thread = new Thread() {
-          @Override
-          public void run() {
-            try {
-              retValSet.add(method.invoke(target, args));
-            } catch (InvocationTargetException ite) {
-              exceptionSet.add(ite.getCause());
+        final Set<Object> retValSet = new HashSet<>();
+        final Set<Throwable> exceptionSet = new HashSet<>();
+        Thread thread = new Thread(() -> {
+          try {
+            retValSet.add(method.invoke(target, args));
+          } catch (InvocationTargetException ite) {
+            exceptionSet.add(ite.getCause());
 
-            } catch (IllegalArgumentException e) {
-              exceptionSet.add(e);
+          } catch (IllegalArgumentException | IllegalAccessException e) {
+            exceptionSet.add(e);
 
-            } catch (IllegalAccessException e) {
-              exceptionSet.add(e);
-            }
           }
-        };
+        });
         thread.start();
         thread.join();
         if (exceptionSet.isEmpty()) {
@@ -93,14 +87,14 @@ public class AsyncAfterCompletionHelper {
   public TransactionSynchronization createSynchronizationWithAsyncAfterComplete(
       TransactionSynchronization synchronization) {
     if (Proxy.isProxyClass(synchronization.getClass())
-        && Proxy.getInvocationHandler(synchronization) instanceof AsynchAfterCompletionInvocationHandler) {
+        && Proxy.getInvocationHandler(synchronization) instanceof AsyncAfterCompletionInvocationHandler) {
       // avoiding double wrapping just in case
       return synchronization;
     }
     Class<?>[] interfaces = { TransactionSynchronization.class };
     return (TransactionSynchronization) Proxy.newProxyInstance(synchronization
         .getClass().getClassLoader(), interfaces,
-        new AsynchAfterCompletionInvocationHandler(synchronization));
+        new AsyncAfterCompletionInvocationHandler(synchronization));
 
   }
 

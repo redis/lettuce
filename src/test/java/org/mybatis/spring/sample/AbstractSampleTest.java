@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package org.mybatis.spring.sample;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mybatis.spring.sample.domain.User;
 import org.mybatis.spring.sample.service.FooService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext
 public abstract class AbstractSampleTest {
 
@@ -40,8 +39,8 @@ public abstract class AbstractSampleTest {
   @Test
   public final void testFooService() {
     User user = this.fooService.doSomeBusinessStuff("u1");
-    assertNotNull(user);
-    assertEquals("Pocoyo", user.getName());
+    assertThat(user).isNotNull();
+    assertThat(user.getName()).isEqualTo("Pocoyo");
   }
 
 }

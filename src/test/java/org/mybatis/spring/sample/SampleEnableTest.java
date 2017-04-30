@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.mybatis.spring.sample;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
  * Test to ensure that the {@link MapperScan}
@@ -26,7 +26,7 @@ import org.springframework.test.context.ContextConfiguration;
  *
  * @since 1.2.0
  */
-@ContextConfiguration
+@SpringJUnitConfig
 public class SampleEnableTest extends AbstractSampleTest {
 
 	@Configuration

@@ -95,7 +95,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 
   @Override
   protected void doReadPage() {
-    Map<String, Object> parameters = new HashMap<String, Object>();
+    Map<String, Object> parameters = new HashMap<>();
     if (parameterValues != null) {
       parameters.putAll(parameterValues);
     }
@@ -103,11 +103,11 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
     parameters.put("_pagesize", getPageSize());
     parameters.put("_skiprows", getPage() * getPageSize());
     if (results == null) {
-      results = new CopyOnWriteArrayList<T>();
+      results = new CopyOnWriteArrayList<>();
     } else {
       results.clear();
     }
-    results.addAll(sqlSessionTemplate.<T> selectList(queryId, parameters));
+    results.addAll(sqlSessionTemplate.selectList(queryId, parameters));
   }
 
   @Override

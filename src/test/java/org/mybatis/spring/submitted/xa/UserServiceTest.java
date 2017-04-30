@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2015 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package org.mybatis.spring.submitted.xa;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import javax.transaction.UserTransaction;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@RunWith(value = SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = "classpath:org/mybatis/spring/submitted/xa/applicationContext.xml")
+@ExtendWith(SpringExtension.class)
+@SpringJUnitConfig(locations = "classpath:org/mybatis/spring/submitted/xa/applicationContext.xml")
 public class UserServiceTest {
 
   @Autowired UserTransaction userTransaction;
@@ -37,7 +38,7 @@ public class UserServiceTest {
   public void testCommit() {
     User user = new User(1, "Pocoyo");
     userService.saveWithNoFailure(user);
-    Assert.assertTrue(userService.checkUserExists(user.getId()));
+    assertThat(userService.checkUserExists(user.getId())).isTrue();
   }
   
   @Test
@@ -48,7 +49,7 @@ public class UserServiceTest {
     } catch (RuntimeException ignore) {
       // ignored
     }
-    Assert.assertFalse(userService.checkUserExists(user.getId()));
+    assertThat(userService.checkUserExists(user.getId())).isFalse();
   }
 
   @Test
@@ -57,7 +58,7 @@ public class UserServiceTest {
     User user = new User(3, "Pocoyo");
     userService.saveWithNoFailure(user);
     userTransaction.commit();
-    Assert.assertTrue(userService.checkUserExists(user.getId()));
+    assertThat(userService.checkUserExists(user.getId())).isTrue();
   }
 
   // TODO when the outer JTA tx is rolledback, 
@@ -70,7 +71,7 @@ public class UserServiceTest {
     User user = new User(5, "Pocoyo");
     userService.saveWithNoFailure(user);
     userTransaction.rollback();
-    Assert.assertFalse(userService.checkUserExists(user.getId()));
+    assertThat(userService.checkUserExists(user.getId())).isFalse();
   }
   
 }

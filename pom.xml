@@ -23,11 +23,11 @@
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
     <version>28</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <artifactId>mybatis-spring</artifactId>
-  <version>1.3.2-SNAPSHOT</version>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>mybatis-spring</name>
@@ -35,12 +35,11 @@
   <url>http://www.mybatis.org/spring/</url>
 
   <contributors>
-
     <contributor>
       <name>Alex Rykov</name>
       <email>Alex.Rykov@gmail.com</email>
     </contributor>
-  
+
     <contributor>
       <name>Andrius Juozapaitis</name>
       <email>andriusj@gmail.com</email>
@@ -103,9 +102,22 @@
     <clirr.comparisonVersion>1.2.2</clirr.comparisonVersion>
     <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.mapper.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
     <gcu.product>Spring</gcu.product>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.testSource>1.8</maven.compiler.testSource>
+    <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
-    <spring.version>4.3.8.RELEASE</spring.version>
+
+    <spring.version>5.0.0.M5</spring.version>
+    <spring-batch.version>4.0.0.M1</spring-batch.version>
+    <junit-platform.version>1.0.0-M4</junit-platform.version>
+    <junit.version>5.0.0-M4</junit.version>
+
+    <!-- Override: Animal Sniffer Signature -->
+    <signature.group>org.codehaus.mojo.signature</signature.group>
+    <signature.artifact>java18</signature.artifact>
+    <signature.version>1.0</signature.version>
   </properties>
 
   <dependencies>
@@ -133,7 +145,7 @@
     <dependency>
       <groupId>org.springframework.batch</groupId>
       <artifactId>spring-batch-infrastructure</artifactId>
-      <version>3.0.7.RELEASE</version>
+      <version>4.0.0.M1</version>
       <scope>provided</scope>
     </dependency>
 
@@ -143,22 +155,35 @@
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-jdbc</artifactId>
-      <version>4.0.3</version>
+      <version>4.0.4</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.derby</groupId>
       <artifactId>derby</artifactId>
-      <version>10.12.1.1</version>
+      <version>10.13.1.1</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.0.0-M4</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-runner</artifactId>
+      <version>${junit-platform.version}</version>
     </dependency>
 
     <dependency>
@@ -196,20 +221,32 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>2.7.22</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>3.6.2</version>
+    </dependency>
+
     <!-- Using version 1.0.1, versions higher require only jdk7 -->
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-core</artifactId>
-      <version>1.0.1</version>
+      <version>1.1.2</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
         </exclusion>
         <exclusion>
-            <groupId>com.kirkk</groupId>
-            <artifactId>jaranalyzer</artifactId>
+          <groupId>com.kirkk</groupId>
+          <artifactId>jaranalyzer</artifactId>
         </exclusion>
         <exclusion>
           <groupId>jdom</groupId>
@@ -224,7 +261,7 @@
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-ejb</artifactId>
-      <version>1.0.1</version>
+      <version>1.1.2</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -240,28 +277,38 @@
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-jdbc</artifactId>
-      <version>1.0.1</version>
+      <version>1.1.2</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>javax.transaction</groupId>
-      <artifactId>transaction-api</artifactId>
-      <version>1.1</version>
+      <artifactId>javax.transaction-api</artifactId>
+      <version>1.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
-      <version>3.0.1</version>
+      <version>3.1.0</version>
       <scope>test</scope>
     </dependency>
 
   </dependencies>
 
+  <repositories>
+    <repository>
+      <id>spring-milestones</id>
+      <name>Spring Milestones</name>
+      <url>https://repo.spring.io/libs-milestone</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <build>
     <plugins>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -275,10 +322,21 @@
               <name>com.atomikos.icatch.log_base_dir</name>
               <value>${project.build.directory}</value>
             </property>
-        </systemProperties>
+          </systemProperties>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-surefire-provider</artifactId>
+            <version>${junit-platform.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>

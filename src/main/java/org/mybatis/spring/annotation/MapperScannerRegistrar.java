@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package org.mybatis.spring.annotation;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.mybatis.spring.mapper.ClassPathMapperScanner;
 import org.mybatis.spring.mapper.MapperFactoryBean;
@@ -40,6 +42,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Michael Lanyon
  * @author Eduardo Macarron
+ * @author Putthiphong Boonphong
  * 
  * @see MapperFactoryBean
  * @see ClassPathMapperScanner
@@ -48,6 +51,14 @@ import org.springframework.util.StringUtils;
 public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
 
   private ResourceLoader resourceLoader;
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void setResourceLoader(ResourceLoader resourceLoader) {
+    this.resourceLoader = resourceLoader;
+  }
 
   /**
    * {@inheritDoc}
@@ -86,30 +97,24 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
     scanner.setSqlSessionTemplateBeanName(annoAttrs.getString("sqlSessionTemplateRef"));
     scanner.setSqlSessionFactoryBeanName(annoAttrs.getString("sqlSessionFactoryRef"));
 
-    List<String> basePackages = new ArrayList<String>();
-    for (String pkg : annoAttrs.getStringArray("value")) {
-      if (StringUtils.hasText(pkg)) {
-        basePackages.add(pkg);
-      }
-    }
-    for (String pkg : annoAttrs.getStringArray("basePackages")) {
-      if (StringUtils.hasText(pkg)) {
-        basePackages.add(pkg);
-      }
-    }
-    for (Class<?> clazz : annoAttrs.getClassArray("basePackageClasses")) {
-      basePackages.add(ClassUtils.getPackageName(clazz));
-    }
+    List<String> basePackages = new ArrayList<>();
+    basePackages.addAll(
+        Arrays.stream(annoAttrs.getStringArray("value"))
+            .filter(StringUtils::hasText)
+            .collect(Collectors.toList()));
+
+    basePackages.addAll(
+        Arrays.stream(annoAttrs.getStringArray("basePackages"))
+            .filter(StringUtils::hasText)
+            .collect(Collectors.toList()));
+
+    basePackages.addAll(
+        Arrays.stream(annoAttrs.getClassArray("basePackageClasses"))
+            .map(ClassUtils::getPackageName)
+            .collect(Collectors.toList()));
+
     scanner.registerFilters();
     scanner.doScan(StringUtils.toStringArray(basePackages));
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void setResourceLoader(ResourceLoader resourceLoader) {
-    this.resourceLoader = resourceLoader;
   }
 
 }

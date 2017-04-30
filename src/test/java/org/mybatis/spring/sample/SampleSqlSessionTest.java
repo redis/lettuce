@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package org.mybatis.spring.sample;
 
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
  * Example of basic MyBatis-Spring integration usage with a manual DAO
  * implementation that subclasses SqlSessionDaoSupport.
  */
-@ContextConfiguration(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-sqlsession.xml" })
+@SpringJUnitConfig(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-sqlsession.xml" })
 public class SampleSqlSessionTest extends AbstractSampleTest {
 }

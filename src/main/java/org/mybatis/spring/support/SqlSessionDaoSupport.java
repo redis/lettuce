@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -29,10 +29,9 @@ import org.springframework.dao.support.DaoSupport;
  * This class needs a SqlSessionTemplate or a SqlSessionFactory.
  * If both are set the SqlSessionFactory will be ignored.
  * <p>
- * {code Autowired} was removed from setSqlSessionTemplate and setSqlSessionFactory
- * in version 1.2.0.
  * 
- * @author Putthibong Boonbong
+ * @author Putthiphong Boonphong
+ * @author Eduardo Macarron
  *
  * @see #setSqlSessionFactory
  * @see #setSqlSessionTemplate
@@ -40,19 +39,47 @@ import org.springframework.dao.support.DaoSupport;
  */
 public abstract class SqlSessionDaoSupport extends DaoSupport {
 
-  private SqlSession sqlSession;
+  private SqlSessionTemplate sqlSessionTemplate;
 
-  private boolean externalSqlSession;
-
+  /**
+   * Set MyBatis SqlSessionFactory to be used by this DAO.
+   * Will automatically create SqlSessionTemplate for the given SqlSessionFactory.
+   */
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-    if (!this.externalSqlSession) {
-      this.sqlSession = new SqlSessionTemplate(sqlSessionFactory);
+    if (this.sqlSessionTemplate == null || sqlSessionFactory != this.sqlSessionTemplate.getSqlSessionFactory()) {
+      this.sqlSessionTemplate = createSqlSessionTemplate(sqlSessionFactory);
     }
   }
 
+  /**
+   * Create a SqlSessionTemplate for the given SqlSessionFactory.
+   * Only invoked if populating the DAO with a SqlSessionFactory reference!
+   * <p>Can be overridden in subclasses to provide a SqlSessionTemplate instance
+   * with different configuration, or a custom SqlSessionTemplate subclass.
+   * @param sqlSessionFactory the MyBatis SqlSessionFactory to create a SqlSessionTemplate for
+   * @return the new SqlSessionTemplate instance
+   * @see #setSqlSessionFactory
+   */
+  @SuppressWarnings("WeakerAccess")
+  protected SqlSessionTemplate createSqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
+    return new SqlSessionTemplate(sqlSessionFactory);
+  }
+
+  /**
+   * Return the MyBatis SqlSessionFactory used by this DAO.
+   */
+  public final SqlSessionFactory getSqlSessionFactory() {
+    return (this.sqlSessionTemplate != null ? this.sqlSessionTemplate.getSqlSessionFactory() : null);
+  }
+
+
+  /**
+   * Set the SqlSessionTemplate for this DAO explicitly,
+   * as an alternative to specifying a SqlSessionFactory.
+   * @see #setSqlSessionFactory
+   */
   public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
-    this.sqlSession = sqlSessionTemplate;
-    this.externalSqlSession = true;
+    this.sqlSessionTemplate = sqlSessionTemplate;
   }
 
   /**
@@ -63,7 +90,21 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
    * @return Spring managed thread safe SqlSession
    */
   public SqlSession getSqlSession() {
-    return this.sqlSession;
+    return this.sqlSessionTemplate;
+  }
+
+  /**
+   * Return the SqlSessionTemplate for this DAO,
+   * pre-initialized with the SessionFactory or set explicitly.
+   * <p><b>Note: The returned SqlSessionTemplate is a shared instance.</b>
+   * You may introspect its configuration, but not modify the configuration
+   * (other than from within an {@link #initDao} implementation).
+   * Consider creating a custom SqlSessionTemplate instance via
+   * {@code new SqlSessionTemplate(getSqlSessionFactory())}, in which case
+   * you're allowed to customize the settings on the resulting instance.
+   */
+  public SqlSessionTemplate getSqlSessionTemplate() {
+    return this.sqlSessionTemplate;
   }
 
   /**
@@ -71,7 +112,7 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
    */
   @Override
   protected void checkDaoConfig() {
-    notNull(this.sqlSession, "Property 'sqlSessionFactory' or 'sqlSessionTemplate' are required");
+    notNull(this.sqlSessionTemplate, "Property 'sqlSessionFactory' or 'sqlSessionTemplate' are required");
   }
 
 }

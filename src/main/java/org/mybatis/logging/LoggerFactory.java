@@ -13,8 +13,23 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.submitted.autowire;
+package org.mybatis.logging;
 
-public interface BarMapper extends IBar {
-  String executeBar();
+import org.apache.ibatis.logging.LogFactory;
+
+/**
+ * LoggerFactory is a wrapper around {@link LogFactory} to support {@link Logger}.
+ *
+ * @author Putthiphong Boonphong
+ */
+public class LoggerFactory {
+
+  public static Logger getLogger(Class<?> aClass) {
+    return new Logger(LogFactory.getLog(aClass));
+  }
+
+  public static Logger getLogger(String logger) {
+    return new Logger(LogFactory.getLog(logger));
+  }
+
 }

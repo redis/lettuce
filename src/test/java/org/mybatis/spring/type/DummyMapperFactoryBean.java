@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2015 the original author or authors.
+ *    Copyright 2010-2016 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 package org.mybatis.spring.type;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.log4j.Logger;
+import org.mybatis.logging.Logger;
+import org.mybatis.logging.LoggerFactory;
 import org.mybatis.spring.mapper.MapperFactoryBean;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,7 +33,7 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
     super(mapperInterface);
   }
 
-  private static final Logger LOGGER = Logger.getLogger(DummyMapperFactoryBean.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DummyMapperFactoryBean.class);
 
   private static final AtomicInteger mapperInstanceCount = new AtomicInteger(0);
 
@@ -43,13 +42,13 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
     super.checkDaoConfig();
     // make something more
     if (isAddToConfig()) {
-      LOGGER.debug("register mapper for interface : " + getMapperInterface());
+      LOGGER.debug(() -> "register mapper for interface : " + getMapperInterface());
     }
   }
 
   @Override
   public T getObject() throws Exception {
-    MapperFactoryBean<T> mapperFactoryBean = new MapperFactoryBean<T>();
+    MapperFactoryBean<T> mapperFactoryBean = new MapperFactoryBean<>();
     mapperFactoryBean.setMapperInterface(getMapperInterface());
     mapperFactoryBean.setAddToConfig(isAddToConfig());
     mapperFactoryBean.setSqlSessionFactory(getCustomSessionFactoryForClass());
@@ -65,19 +64,17 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
     return (SqlSessionFactory) Proxy.newProxyInstance(
         SqlSessionFactory.class.getClassLoader(),
         new Class[]{SqlSessionFactory.class},
-        new InvocationHandler() {
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        (proxy, method, args) -> {
             if ("getConfiguration".equals(method.getName())) {
               return getSqlSession().getConfiguration();
             }
             // dummy
             return null;
-          }
-        });
+        }
+    );
   }
 
-  public static final int getMapperCount(){
+  public static int getMapperCount(){
     return mapperInstanceCount.get();
   }
 }

@@ -59,7 +59,7 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 
   @Override
   protected void doOpen() throws Exception {
-    Map<String, Object> parameters = new HashMap<String, Object>();
+    Map<String, Object> parameters = new HashMap<>();
     if (parameterValues != null) {
       parameters.putAll(parameterValues);
     }
