@@ -151,7 +151,6 @@
 
     <!-- Test dependencies -->
 
-    <!-- Using version 4.0.3, versions higher require only jdk7 -->
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-jdbc</artifactId>
@@ -233,7 +232,6 @@
       <version>3.6.2</version>
     </dependency>
 
-    <!-- Using version 1.0.1, versions higher require only jdk7 -->
     <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-core</artifactId>
