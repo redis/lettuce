@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,17 @@
  */
 package io.lettuce.core;
 
-import java.lang.reflect.Constructor;
 import java.net.SocketAddress;
-import java.util.Locale;
 import java.util.concurrent.ThreadFactory;
 
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.internal.LettuceClassUtils;
-
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
@@ -42,29 +43,26 @@ public class EpollProvider {
 
     private static final String EPOLL_ENABLED_KEY = "io.lettuce.core.epoll";
     private static final boolean EPOLL_ENABLED = Boolean.parseBoolean(SystemPropertyUtil.get(EPOLL_ENABLED_KEY, "true"));
-    private static final boolean EPOLL_COMPATIBLE = SystemPropertyUtil.get("os.name").toLowerCase(Locale.UK).trim()
-            .startsWith("linux");
-    private static final Class<EventLoopGroup> epollEventLoopGroupClass;
-    private static final Class<Channel> epollDomainSocketChannelClass;
-    private static final Class<Channel> epollSocketChannelClass;
-    private static final Class<SocketAddress> domainSocketAddressClass;
+
+    private static final boolean EPOLL_AVAILABLE;
 
     static {
 
-        epollEventLoopGroupClass = getClass("io.netty.channel.epoll.EpollEventLoopGroup");
-        epollDomainSocketChannelClass = getClass("io.netty.channel.epoll.EpollDomainSocketChannel");
-        epollSocketChannelClass = getClass("io.netty.channel.epoll.EpollSocketChannel");
-        domainSocketAddressClass = getClass("io.netty.channel.unix.DomainSocketAddress");
+        boolean availability = false;
+        try {
 
-        if (epollDomainSocketChannelClass == null || epollEventLoopGroupClass == null || epollSocketChannelClass == null) {
-            logger.debug("Starting without optional Epoll library");
-        } else {
+            Class.forName("io.netty.channel.epoll.Epoll");
+            availability = Epoll.isAvailable();
+        } catch (ClassNotFoundException e) {
+        }
 
+        EPOLL_AVAILABLE = availability;
+
+        if (EPOLL_AVAILABLE) {
             logger.debug("Starting with Epoll library");
 
-            if (!EPOLL_COMPATIBLE) {
-                logger.debug(String.format("Epoll not compatible with %s", SystemPropertyUtil.get("os.name")));
-            }
+        } else {
+            logger.debug("Starting without optional Epoll library");
         }
     }
 
@@ -76,7 +74,7 @@ public class EpollProvider {
 
         LettuceAssert.notNull(type, "EventLoopGroup type must not be null");
 
-        return type.equals(epollEventLoopGroupClass);
+        return type.equals(EpollEventLoopGroup.class);
     }
 
     /**
@@ -87,45 +85,35 @@ public class EpollProvider {
      * @return the {@link EventLoopGroup}.
      */
     public static EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-
-        try {
-            Constructor<EventLoopGroup> constructor = epollEventLoopGroupClass.getConstructor(Integer.TYPE,
-                    ThreadFactory.class);
-            return constructor.newInstance(nThreads, threadFactory);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        return new EpollEventLoopGroup(nThreads, threadFactory);
     }
 
     /**
      * @return {@literal true} if epoll is available.
      */
     public static boolean isAvailable() {
-        return domainSocketAddressClass != null && epollDomainSocketChannelClass != null && EPOLL_ENABLED && EPOLL_COMPATIBLE;
+        return EPOLL_AVAILABLE && EPOLL_ENABLED;
     }
 
     /**
-     *
      * @return the {@link io.netty.channel.epoll.EpollDomainSocketChannel} class.
      */
     static Class<? extends Channel> domainSocketChannelClass() {
-        return epollDomainSocketChannelClass;
+        return EpollDomainSocketChannel.class;
     }
 
     /**
-     *
      * @return the {@link io.netty.channel.epoll.EpollSocketChannel} class.
      */
     static Class<? extends Channel> socketChannelClass() {
-        return epollSocketChannelClass;
+        return EpollSocketChannel.class;
     }
 
     /**
-     *
      * @return the {@link io.netty.channel.epoll.EpollEventLoopGroup} class.
      */
     static Class<? extends EventLoopGroup> eventLoopGroupClass() {
-        return epollEventLoopGroupClass;
+        return EpollEventLoopGroup.class;
     }
 
     /**
@@ -136,35 +124,15 @@ public class EpollProvider {
      */
     static void checkForEpollLibrary() {
 
-        LettuceAssert.assertState(EPOLL_ENABLED && EPOLL_COMPATIBLE,
+        LettuceAssert.assertState(EPOLL_ENABLED,
                 String.format("epoll use is disabled via System properties (%s)", EPOLL_ENABLED_KEY));
-        LettuceAssert.assertState(isAvailable(),
-                "Cannot connect using sockets without the optional netty-transport-native-epoll library on the class path");
+        LettuceAssert
+                .assertState(
+                        isAvailable(),
+                        "Cannot connect using sockets without Epoll support. Make sure netty-transport-native-epoll library on the class path and supported by your operating system.");
     }
 
     static SocketAddress newSocketAddress(String socketPath) {
-
-        try {
-            Constructor<SocketAddress> constructor = domainSocketAddressClass.getConstructor(String.class);
-            return constructor.newInstance(socketPath);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    /**
-     * Try to load class {@literal className}.
-     *
-     * @param className
-     * @param <T> Expected return type for casting.
-     * @return instance of {@literal className} or null
-     */
-    private static <T> Class<T> getClass(String className) {
-        try {
-            return (Class) LettuceClassUtils.forName(className);
-        } catch (ClassNotFoundException e) {
-            logger.debug("Cannot load class " + className, e);
-        }
-        return null;
+        return new DomainSocketAddress(socketPath);
     }
 }
