@@ -21,17 +21,18 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadFactory;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
-
 import com.lambdaworks.redis.internal.LettuceClassUtils;
+
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Wraps and provides Epoll classes. This is to protect the user from {@link ClassNotFoundException}'s caused by the absence of
  * the {@literal netty-transport-native-epoll} library during runtime. Internal API.
- * 
+ *
  * @author Mark Paluch
  */
 public class EpollProvider {
@@ -47,14 +48,14 @@ public class EpollProvider {
         epollEventLoopGroupClass = getClass("io.netty.channel.epoll.EpollEventLoopGroup");
         epollDomainSocketChannelClass = getClass("io.netty.channel.epoll.EpollDomainSocketChannel");
         domainSocketAddressClass = getClass("io.netty.channel.unix.DomainSocketAddress");
-        if (epollDomainSocketChannelClass == null || epollEventLoopGroupClass == null) {
-            logger.debug("Starting without optional Epoll library");
+        if (epollDomainSocketChannelClass == null || epollEventLoopGroupClass == null || !Epoll.isAvailable()) {
+            logger.debug("Starting without optional Epoll support");
         }
     }
 
     /**
      * Try to load class {@literal className}.
-     * 
+     *
      * @param className
      * @param <T> Expected return type for casting.
      * @return instance of {@literal className} or null
@@ -70,14 +71,14 @@ public class EpollProvider {
 
     /**
      * Check whether the Epoll library is available on the class path.
-     * 
+     *
      * @throws IllegalStateException if the {@literal netty-transport-native-epoll} library is not available
-     * 
+     *
      */
     static void checkForEpollLibrary() {
 
-        LettuceAssert.assertState(domainSocketAddressClass != null && epollDomainSocketChannelClass != null,
-                "Cannot connect using sockets without the optional netty-transport-native-epoll library on the class path");
+        LettuceAssert.assertState(domainSocketAddressClass != null && epollDomainSocketChannelClass != null
+                && Epoll.isAvailable(), "Cannot connect using sockets without the optional netty-transport-native-epoll library and native library on the class path");
     }
 
     static SocketAddress newSocketAddress(String socketPath) {
