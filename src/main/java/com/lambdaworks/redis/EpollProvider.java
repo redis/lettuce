@@ -42,10 +42,11 @@ public class EpollProvider {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(EpollProvider.class);
 
-    private static final String EPOLL_ENABLED_KEY = "biz.paluch.redis.lettuce.epoll";
+    private static final String EPOLL_ENABLED_KEY = "io.lettuce.core.epoll";
     private static final boolean EPOLL_ENABLED = Boolean.parseBoolean(SystemPropertyUtil.get(EPOLL_ENABLED_KEY, "true"));
 
     private static final boolean EPOLL_AVAILABLE;
+    private static final EpollResources epollResources;
 
     static {
 
@@ -60,33 +61,13 @@ public class EpollProvider {
         EPOLL_AVAILABLE = availability;
 
         if (EPOLL_AVAILABLE) {
-            logger.debug("Starting with Epoll library");
+            logger.warn("Starting with Epoll library");
+            epollResources = AvailableEpollResources.INSTANCE;
 
         } else {
-            logger.debug("Starting without optional Epoll library");
+            logger.warn("Starting without optional Epoll library");
+            epollResources = UnavailableEpollResources.INSTANCE;
         }
-    }
-
-    /**
-     * @param type must not be {@literal null}.
-     * @return {@literal true} if {@code type} is a {@link io.netty.channel.epoll.EpollEventLoopGroup}.
-     */
-    public static boolean isEventLoopGroup(Class<? extends EventExecutorGroup> type) {
-
-        LettuceAssert.notNull(type, "EventLoopGroup type must not be null");
-
-        return type.equals(EpollEventLoopGroup.class);
-    }
-
-    /**
-     * Create a new {@link io.netty.channel.epoll.EpollEventLoopGroup}.
-     *
-     * @param nThreads
-     * @param threadFactory
-     * @return the {@link EventLoopGroup}.
-     */
-    public static EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-        return new EpollEventLoopGroup(nThreads, threadFactory);
     }
 
     /**
@@ -97,41 +78,200 @@ public class EpollProvider {
     }
 
     /**
+     * Check whether the Epoll library is available on the class path.
+     *
+     * @throws IllegalStateException if the {@literal netty-transport-native-epoll} library is not available
+     */
+    static void checkForEpollLibrary() {
+
+        LettuceAssert.assertState(EPOLL_ENABLED,
+                String.format("epoll use is disabled via System properties (%s)", EPOLL_ENABLED_KEY));
+        LettuceAssert
+                .assertState(
+                        isAvailable(),
+                        "Cannot connect using sockets without Epoll support. Make sure netty-transport-native-epoll library on the class path and supported by your operating system.");
+    }
+
+    /**
+     * @param type must not be {@literal null}.
+     * @return {@literal true} if {@code type} is a {@link io.netty.channel.epoll.EpollEventLoopGroup}.
+     */
+    public static boolean isEventLoopGroup(Class<? extends EventExecutorGroup> type) {
+        return epollResources.isEventLoopGroup(type);
+    }
+
+    /**
+     * Create a new {@link io.netty.channel.epoll.EpollEventLoopGroup}.
+     *
+     * @param nThreads
+     * @param threadFactory
+     * @return the {@link EventLoopGroup}.
+     */
+    public static EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
+        return epollResources.newEventLoopGroup(nThreads, threadFactory);
+    }
+
+    /**
      * @return the {@link io.netty.channel.epoll.EpollDomainSocketChannel} class.
      */
     static Class<? extends Channel> domainSocketChannelClass() {
-        return EpollDomainSocketChannel.class;
+        return epollResources.domainSocketChannelClass();
     }
 
     /**
      * @return the {@link io.netty.channel.epoll.EpollSocketChannel} class.
      */
     static Class<? extends Channel> socketChannelClass() {
-        return EpollSocketChannel.class;
+        return epollResources.socketChannelClass();
     }
 
     /**
      * @return the {@link io.netty.channel.epoll.EpollEventLoopGroup} class.
      */
     static Class<? extends EventLoopGroup> eventLoopGroupClass() {
-        return EpollEventLoopGroup.class;
-    }
-
-    /**
-     * Check whether the Epoll library is available on the class path.
-     *
-     * @throws IllegalStateException if the {@literal netty-transport-native-epoll} library is not available
-     *
-     */
-    static void checkForEpollLibrary() {
-
-        LettuceAssert.assertState(EPOLL_ENABLED,
-                String.format("epoll use is disabled via System properties (%s)", EPOLL_ENABLED_KEY));
-        LettuceAssert.assertState(isAvailable(),
-                "Cannot connect using sockets without Epoll support. Make sure netty-transport-native-epoll library on the class path and supported by your operating system.");
+        return epollResources.eventLoopGroupClass();
     }
 
     static SocketAddress newSocketAddress(String socketPath) {
-        return new DomainSocketAddress(socketPath);
+        return epollResources.newSocketAddress(socketPath);
+    }
+
+    /**
+     * @author Mark Paluch
+     */
+    public interface EpollResources {
+
+        /**
+         * @param type must not be {@literal null}.
+         * @return {@literal true} if {@code type} is a {@link EpollEventLoopGroup}.
+         */
+        boolean isEventLoopGroup(Class<? extends EventExecutorGroup> type);
+
+        /**
+         * Create a new {@link EpollEventLoopGroup}.
+         *
+         * @param nThreads
+         * @param threadFactory
+         * @return the {@link EventLoopGroup}.
+         */
+        EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory);
+
+        /**
+         * @return the {@link EpollDomainSocketChannel} class.
+         */
+        Class<? extends Channel> domainSocketChannelClass();
+
+        /**
+         * @return the {@link EpollSocketChannel} class.
+         */
+        Class<? extends Channel> socketChannelClass();
+
+        /**
+         * @return the {@link EpollEventLoopGroup} class.
+         */
+        Class<? extends EventLoopGroup> eventLoopGroupClass();
+
+        SocketAddress newSocketAddress(String socketPath);
+    }
+
+    /**
+     * {@link EpollResources} for unavailable EPoll.
+     */
+    enum UnavailableEpollResources implements EpollResources {
+
+        INSTANCE;
+
+        @Override
+        public Class<? extends Channel> domainSocketChannelClass() {
+
+            checkForEpollLibrary();
+            return null;
+        }
+
+        @Override
+        public Class<? extends EventLoopGroup> eventLoopGroupClass() {
+
+            checkForEpollLibrary();
+            return null;
+        }
+
+        @Override
+        public boolean isEventLoopGroup(Class<? extends EventExecutorGroup> type) {
+
+            checkForEpollLibrary();
+            return false;
+        }
+
+        @Override
+        public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
+
+            checkForEpollLibrary();
+            return null;
+        }
+
+        @Override
+        public SocketAddress newSocketAddress(String socketPath) {
+
+            checkForEpollLibrary();
+            return null;
+        }
+
+        @Override
+        public Class<? extends Channel> socketChannelClass() {
+
+            checkForEpollLibrary();
+            return null;
+        }
+    }
+
+    /**
+     * {@link EpollResources} for available Epoll.
+     */
+    enum AvailableEpollResources implements EpollResources {
+
+        INSTANCE;
+
+        @Override
+        public boolean isEventLoopGroup(Class<? extends EventExecutorGroup> type) {
+
+            LettuceAssert.notNull(type, "EventLoopGroup type must not be null");
+
+            return type.equals(EpollEventLoopGroup.class);
+        }
+
+        @Override
+        public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
+
+            checkForEpollLibrary();
+            return new EpollEventLoopGroup(nThreads, threadFactory);
+        }
+
+        @Override
+        public Class<? extends Channel> domainSocketChannelClass() {
+
+            checkForEpollLibrary();
+            return EpollDomainSocketChannel.class;
+        }
+
+        @Override
+        public Class<? extends Channel> socketChannelClass() {
+
+            checkForEpollLibrary();
+            return EpollSocketChannel.class;
+        }
+
+        @Override
+        public Class<? extends EventLoopGroup> eventLoopGroupClass() {
+
+            checkForEpollLibrary();
+            return EpollEventLoopGroup.class;
+        }
+
+        @Override
+        public SocketAddress newSocketAddress(String socketPath) {
+
+            checkForEpollLibrary();
+            return new DomainSocketAddress(socketPath);
+        }
     }
 }
