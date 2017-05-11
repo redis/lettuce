@@ -34,7 +34,7 @@ class Transports {
      */
     static Class<? extends EventLoopGroup> eventLoopGroupClass() {
 
-        if (NativeTransports.isSocketSupport()) {
+        if (NativeTransports.isSocketSupported()) {
             return NativeTransports.eventLoopGroupClass();
         }
 
@@ -46,7 +46,7 @@ class Transports {
      */
     static Class<? extends Channel> socketChannelClass() {
 
-        if (NativeTransports.isSocketSupport()) {
+        if (NativeTransports.isSocketSupported()) {
             return NativeTransports.socketChannelClass();
         }
 
@@ -61,7 +61,7 @@ class Transports {
         /**
          * @return {@literal true} if a native transport is available.
          */
-        static boolean isSocketSupport() {
+        static boolean isSocketSupported() {
             return EpollProvider.isAvailable();
         }
 
