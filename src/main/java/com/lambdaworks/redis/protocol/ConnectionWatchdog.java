@@ -162,8 +162,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         reconnectScheduleTimeout = null;
         channel = ctx.channel();
-        logger.debug("{} channelActive({})", logPrefix(), ctx);
         remoteAddress = channel.remoteAddress();
+        logger.debug("{} channelActive({})", logPrefix(), ctx);
 
         super.channelActive(ctx);
     }
@@ -343,8 +343,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         }
 
         StringBuilder buffer = new StringBuilder(64);
-        buffer.append('[').append("Last known addr=").append(remoteAddress).append(", ")
-                .append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
+        buffer.append('[')
+                .append(ChannelLogDescriptor.logDescriptor(channel)).append(", last known addr=").append(remoteAddress).append(']');
         return logPrefix = buffer.toString();
     }
 }
