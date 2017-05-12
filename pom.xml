@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -25,7 +26,6 @@
         <name>lettuce.io</name>
         <url>https://lettuce.io</url>
     </organization>
-
 
     <licenses>
         <license>
@@ -66,8 +66,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- Not every build should be signed, disabled by default -->
-        <skipSigning>true</skipSigning>
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
         <netty-version>4.1.11.Final</netty-version>
@@ -81,13 +79,10 @@
         <tag>HEAD</tag>
     </scm>
 
-    <prerequisites>
-        <maven>3.0</maven>
-    </prerequisites>
-
     <dependencies>
 
         <!-- Start of Core Dependencies -->
+
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
@@ -95,6 +90,7 @@
         </dependency>
 
         <!-- Netty -->
+
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-common</artifactId>
@@ -339,7 +335,8 @@
     <profiles>
 
         <profile>
-            <id>netty-40</id>
+
+        <id>netty-40</id>
 
             <properties>
                 <netty-version>4.0.47.Final</netty-version>
@@ -347,11 +344,15 @@
         </profile>
 
         <profile>
-            <id>netty-41</id>
+
+        <id>netty-41</id>
+
         </profile>
 
         <profile>
-            <id>java9</id>
+
+        <id>java9</id>
+
             <activation>
                 <jdk>9</jdk>
             </activation>
@@ -375,6 +376,59 @@
 
             <build>
                 <plugins>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.10.4</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <level>public</level>
+                            <author>true</author>
+                            <header>Lettuce</header>
+                            <stylesheetfile>src/main/javadoc/stylesheet.css</stylesheetfile>
+                            <links>
+                                <link>http://netty.io/4.1/api/</link>
+                                <link>http://commons.apache.org/proper/commons-pool/api-2.4.2/</link>
+                                <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
+                                <link>http://reactivex.io/RxJava/javadoc/</link>
+                                <link>https://docs.spring.io/spring/docs/current/javadoc-api/</link>
+                            </links>
+                            <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax -Xdoclint:-missing
+                            </additionalparam>
+                            <quiet>true</quiet>
+                            <tags>
+                                <tag>
+                                    <name>generated</name>
+                                    <placement>a</placement>
+                                    <head>Generated class:</head>
+                                </tag>
+                            </tags>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
@@ -520,7 +574,7 @@
                                     <arguments>
                                         <argument>-Xmx2G</argument>
                                         <argument>-classpath</argument>
-                                        <classpath />
+                                        <classpath/>
                                         <argument>org.openjdk.jmh.Main</argument>
                                         <argument>.*</argument>
                                         <argument>-tu</argument>
@@ -591,7 +645,9 @@
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <target>
-                                        <copy failonerror="false" file="${project.build.directory}/generated-docs/index.pdf" tofile="target/site/reference/pdf/lettuce-reference.pdf" />
+                                        <copy failonerror="false"
+                                              file="${project.build.directory}/generated-docs/index.pdf"
+                                              tofile="target/site/reference/pdf/lettuce-reference.pdf"/>
                                     </target>
                                 </configuration>
                                 <goals>
@@ -608,7 +664,6 @@
                     </plugin>
 
                 </plugins>
-
 
                 <pluginManagement>
                     <plugins>
@@ -674,9 +729,9 @@
                                     <toclevels>3</toclevels>
                                     <numbered>true</numbered>
                                     <ext-doc>https://raw.githubusercontent.com/wiki/mp911de/lettuce/</ext-doc>
-                                    <allow-uri-read />
-                                    <docinfo />
-                                    <toc2 />
+                                    <allow-uri-read/>
+                                    <docinfo/>
+                                    <toc2/>
                                     <icons>font</icons>
                                     <source-highlighter>coderay</source-highlighter>
                                 </attributes>
@@ -741,45 +796,6 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <level>public</level>
-                    <author>true</author>
-                    <header>Lettuce</header>
-                    <stylesheetfile>src/main/javadoc/stylesheet.css</stylesheetfile>
-                    <links>
-                        <link>http://netty.io/4.1/api/</link>
-                        <link>http://commons.apache.org/proper/commons-pool/api-2.4.2/</link>
-                        <link>https://docs.oracle.com/javase/8/docs/api/</link>
-                        <link>https://projectreactor.io/docs/core/release/api/</link>
-                        <link>http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/</link>
-                        <link>http://reactivex.io/RxJava/javadoc/</link>
-                        <link>http://reactivex.io/RxJava/2.x/javadoc/</link>
-                        <link>https://docs.spring.io/spring/docs/current/javadoc-api/</link>
-                    </links>
-                    <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax -Xdoclint:-missing
-                    </additionalparam>
-                    <tags>
-                        <tag>
-                            <name>generated</name>
-                            <placement>a</placement>
-                            <head>Generated class:</head>
-                        </tag>
-                    </tags>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.17</version>
                 <configuration>
@@ -802,29 +818,10 @@
                 <version>2.5</version>
                 <configuration>
                     <releaseProfiles>sonatype-oss-release,documentation</releaseProfiles>
-                    <arguments>-DskipSigning=false</arguments>
                     <goals>deploy</goals>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>@{project.version}</tagNameFormat>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
-                <configuration>
-                    <skip>${skipSigning}</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
