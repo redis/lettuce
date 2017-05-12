@@ -70,7 +70,7 @@
         <skipSigning>true</skipSigning>
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
-        <netty-version>4.1.10.Final</netty-version>
+        <netty-version>4.1.11.Final</netty-version>
         <spring-version>4.3.6.RELEASE</spring-version>
     </properties>
 
@@ -342,7 +342,7 @@
             <id>netty-40</id>
 
             <properties>
-                <netty-version>4.0.46.Final</netty-version>
+                <netty-version>4.0.47.Final</netty-version>
             </properties>
         </profile>
 
