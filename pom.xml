@@ -417,8 +417,7 @@
                                 <link>http://reactivex.io/RxJava/javadoc/</link>
                                 <link>https://docs.spring.io/spring/docs/current/javadoc-api/</link>
                             </links>
-                            <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax -Xdoclint:-missing
-                            </additionalparam>
+                            <additionalparam>-Xdoclint:none</additionalparam>
                             <quiet>true</quiet>
                             <tags>
                                 <tag>
