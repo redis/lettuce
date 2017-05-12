@@ -36,6 +36,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * the {@literal netty-transport-native-epoll} library during runtime. Internal API.
  *
  * @author Mark Paluch
+ * @since 4.4
  */
 public class EpollProvider {
 
@@ -88,7 +89,7 @@ public class EpollProvider {
         LettuceAssert
                 .assertState(
                         isAvailable(),
-                        "Cannot connect using sockets without Epoll support. Make sure netty-transport-native-epoll library on the class path and supported by your operating system.");
+                        "netty-transport-native-epoll is not available. Make sure netty-transport-native-epoll library on the class path and supported by your operating system.");
     }
 
     /**

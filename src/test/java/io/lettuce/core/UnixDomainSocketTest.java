@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
-import io.lettuce.TestClientResources;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -31,11 +30,12 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+import io.lettuce.TestClientResources;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.sentinel.SentinelRule;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
-
 import io.netty.util.internal.SystemPropertyUtil;
 
 /**
@@ -43,32 +43,35 @@ import io.netty.util.internal.SystemPropertyUtil;
  */
 public class UnixDomainSocketTest {
 
-    public static final String MASTER_ID = "mymaster";
+    private static final String MASTER_ID = "mymaster";
 
     private static RedisClient sentinelClient;
+    private static ClientResources clientResources;
 
     @Rule
     public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
 
-    protected Logger log = LogManager.getLogger(getClass());
-
-    protected String key = "key";
-    protected String value = "value";
+    private Logger log = LogManager.getLogger(getClass());
+    private String key = "key";
+    private String value = "value";
 
     @BeforeClass
     public static void setupClient() {
+
+        clientResources = TestClientResources.create();
         sentinelClient = getRedisSentinelClient();
     }
 
     @AfterClass
     public static void shutdownClient() {
         FastShutdown.shutdown(sentinelClient);
+        FastShutdown.shutdown(clientResources);
     }
 
     @Test
-    public void standalone_Linux_x86_64_RedisClientWithSocket() throws Exception {
+    public void standalone_RedisClientWithSocket() throws Exception {
 
-        linuxOnly();
+        assumeTestSupported();
 
         RedisURI redisURI = getSocketRedisUri();
 
@@ -83,9 +86,9 @@ public class UnixDomainSocketTest {
     }
 
     @Test
-    public void standalone_Linux_x86_64_ConnectToSocket() throws Exception {
+    public void standalone_ConnectToSocket() throws Exception {
 
-        linuxOnly();
+        assumeTestSupported();
 
         RedisURI redisURI = getSocketRedisUri();
 
@@ -99,25 +102,10 @@ public class UnixDomainSocketTest {
         FastShutdown.shutdown(redisClient);
     }
 
-    private void linuxOnly() {
-        String osName = SystemPropertyUtil.get("os.name").toLowerCase(Locale.UK).trim();
-        assumeTrue("Only supported on Linux, your os is " + osName, osName.startsWith("linux"));
-    }
-
-    private RedisURI getSocketRedisUri() throws IOException {
-        File file = new File(TestSettings.socket()).getCanonicalFile();
-        return RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://" + file.getCanonicalPath());
-    }
-
-    private RedisURI getSentinelSocketRedisUri() throws IOException {
-        File file = new File(TestSettings.sentinelSocket()).getCanonicalFile();
-        return RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://" + file.getCanonicalPath());
-    }
-
     @Test
-    public void sentinel_Linux_x86_64_RedisClientWithSocket() throws Exception {
+    public void sentinel_RedisClientWithSocket() throws Exception {
 
-        linuxOnly();
+        assumeTestSupported();
 
         RedisURI uri = new RedisURI();
         uri.getSentinels().add(getSentinelSocketRedisUri());
@@ -140,9 +128,9 @@ public class UnixDomainSocketTest {
     }
 
     @Test
-    public void sentinel_Linux_x86_64_ConnectToSocket() throws Exception {
+    public void sentinel_ConnectToSocket() throws Exception {
 
-        linuxOnly();
+        assumeTestSupported();
 
         RedisURI uri = new RedisURI();
         uri.getSentinels().add(getSentinelSocketRedisUri());
@@ -165,10 +153,10 @@ public class UnixDomainSocketTest {
     }
 
     @Test
-    public void sentinel_Linux_x86_64_socket_and_inet() throws Exception {
+    public void sentinel_socket_and_inet() throws Exception {
 
         sentinelRule.waitForMaster(MASTER_ID);
-        linuxOnly();
+        assumeTestSupported();
 
         RedisURI uri = new RedisURI();
         uri.getSentinels().add(getSentinelSocketRedisUri());
@@ -199,7 +187,23 @@ public class UnixDomainSocketTest {
         assertThat(result).isEqualTo(value);
     }
 
-    protected static RedisClient getRedisSentinelClient() {
+    private static RedisClient getRedisSentinelClient() {
         return RedisClient.create(TestClientResources.get(), RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
+
+    private void assumeTestSupported() {
+        String osName = SystemPropertyUtil.get("os.name").toLowerCase(Locale.UK).trim();
+        assumeTrue("Only supported on Linux, your os is " + osName, osName.startsWith("linux"));
+    }
+
+    private static RedisURI getSocketRedisUri() throws IOException {
+        File file = new File(TestSettings.socket()).getCanonicalFile();
+        return RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://" + file.getCanonicalPath());
+    }
+
+    private static RedisURI getSentinelSocketRedisUri() throws IOException {
+        File file = new File(TestSettings.sentinelSocket()).getCanonicalFile();
+        return RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://" + file.getCanonicalPath());
+    }
+
 }

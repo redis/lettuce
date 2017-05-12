@@ -18,8 +18,6 @@ package io.lettuce.core.cluster;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.Before;
@@ -29,14 +27,9 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.resource.DefaultClientResources;
-import io.lettuce.core.resource.EventLoopGroupProvider;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
-import io.netty.util.concurrent.Future;
+import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
+
 import io.netty.util.concurrent.ImmediateEventExecutor;
-import io.netty.util.concurrent.SucceededFuture;
 
 /**
  * @author Mark Paluch
@@ -48,42 +41,10 @@ public class SingleThreadedReactiveClusterClientTest {
     @Before
     public void before() {
 
-        AtomicReference<EventLoopGroup> ref = new AtomicReference<>();
         DefaultClientResources clientResources = DefaultClientResources.builder()
-                .eventExecutorGroup(ImmediateEventExecutor.INSTANCE).eventLoopGroupProvider(new EventLoopGroupProvider() {
-                    @Override
-                    public <T extends EventLoopGroup> T allocate(Class<T> type) {
-
-                        if (ref.get() == null) {
-
-                            if (type == EpollEventLoopGroup.class) {
-                                ref.set(new EpollEventLoopGroup(1));
-                            } else {
-                                ref.set(new NioEventLoopGroup(1));
-                            }
-                        }
-
-                        return (T) ref.get();
-                    }
-
-                    @Override
-                    public int threadPoolSize() {
-                        return 0;
-                    }
-
-                    @Override
-                    public Future<Boolean> release(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout,
-                            TimeUnit unit) {
-                        return new SucceededFuture<>(ImmediateEventExecutor.INSTANCE, true);
-                    }
-
-                    @Override
-                    public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
-                        ref.get().shutdownGracefully(quietPeriod, timeout, timeUnit);
-                        return new SucceededFuture<>(ImmediateEventExecutor.INSTANCE, true);
-                    }
-
-                }).commandLatencyCollectorOptions(DefaultCommandLatencyCollectorOptions.disabled()).build();
+                .eventExecutorGroup(ImmediateEventExecutor.INSTANCE)
+                .eventLoopGroupProvider(new DefaultEventLoopGroupProvider(1))
+                .commandLatencyCollectorOptions(DefaultCommandLatencyCollectorOptions.disabled()).build();
 
         client = RedisClusterClient.create(clientResources, RedisURI.create("localhost", 7379));
     }

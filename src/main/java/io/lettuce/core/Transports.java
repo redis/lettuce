@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -62,13 +63,18 @@ class Transports {
          * @return {@literal true} if a native transport is available.
          */
         static boolean isSocketSupported() {
-            return EpollProvider.isAvailable();
+            return EpollProvider.isAvailable() || KqueueProvider.isAvailable();
         }
 
         /**
          * @return the native transport socket {@link Channel} class.
          */
         static Class<? extends Channel> socketChannelClass() {
+
+            if (KqueueProvider.isAvailable()) {
+                return KqueueProvider.socketChannelClass();
+            }
+
             return EpollProvider.socketChannelClass();
         }
 
@@ -76,6 +82,11 @@ class Transports {
          * @return the native transport domain socket {@link Channel} class.
          */
         static Class<? extends Channel> domainSocketChannelClass() {
+
+            if (KqueueProvider.isAvailable()) {
+                return KqueueProvider.domainSocketChannelClass();
+            }
+
             return EpollProvider.domainSocketChannelClass();
         }
 
@@ -83,7 +94,18 @@ class Transports {
          * @return the native transport {@link EventLoopGroup} class.
          */
         static Class<? extends EventLoopGroup> eventLoopGroupClass() {
+
+            if (KqueueProvider.isAvailable()) {
+                return KqueueProvider.eventLoopGroupClass();
+            }
+
             return EpollProvider.eventLoopGroupClass();
+        }
+
+        static void assertAvailable() {
+
+            LettuceAssert.assertState(NativeTransports.isSocketSupported(),
+                    "A unix domain socket connections requires epoll or kqueue and neither is available");
         }
     }
 }
