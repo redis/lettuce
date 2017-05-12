@@ -341,7 +341,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
+                        <version>2.10.4</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -378,7 +378,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -393,7 +393,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.4</version>
+                        <version>3.0.0</version>
                         <executions>
                             <execution>
                                 <id>src</id>
@@ -402,7 +402,6 @@
                                     <goal>single</goal>
                                 </goals>
                                 <configuration>
-                                    <finalName>${project.artifactId}-${project.version}</finalName>
                                     <descriptors>
                                         <descriptor>src/assembly/src.xml</descriptor>
                                     </descriptors>
@@ -413,7 +412,6 @@
                             <execution>
                                 <id>bin</id>
                                 <configuration>
-                                    <finalName>${project.artifactId}-${project.version}</finalName>
                                     <descriptors>
                                         <descriptor>src/assembly/bin.xml</descriptor>
                                     </descriptors>
@@ -431,7 +429,7 @@
                     <plugin>
                         <groupId>net.ju-n.maven.plugins</groupId>
                         <artifactId>checksum-maven-plugin</artifactId>
-                        <version>1.2</version>
+                        <version>1.4</version>
                         <configuration>
                             <algorithms>
                                 <algorithm>MD5</algorithm>
@@ -502,7 +500,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>1.7</version>
+                        <version>3.0.0</version>
                         <executions>
                             <execution>
                                 <id>add-source</id>
@@ -521,7 +519,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.5.0</version>
+                        <version>1.6.0</version>
                         <executions>
                             <execution>
                                 <id>run-benchmarks</id>
@@ -574,7 +572,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.1</version>
                 <configuration>
                     <compilerArgument>-Xlint:all,-deprecation,-unchecked</compilerArgument>
                     <testCompilerArgument>-Xlint:none</testCompilerArgument>
@@ -588,7 +586,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.17</version>
+                <version>2.20</version>
                 <configuration>
                     <systemProperties>
                         <io.netty.eventLoopThreads>4</io.netty.eventLoopThreads>
@@ -599,7 +597,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
+                <version>2.5.3</version>
                 <configuration>
                     <releaseProfiles>sonatype-oss-release</releaseProfiles>
                     <goals>deploy</goals>
@@ -611,7 +609,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.3</version>
+                <version>3.0.1</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
