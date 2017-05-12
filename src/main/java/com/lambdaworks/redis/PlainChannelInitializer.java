@@ -159,8 +159,8 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
             timeoutHandle.cancel();
 
             if (throwable == null) {
-                initializedFuture.complete(true);
                 ctx.fireChannelActive();
+                initializedFuture.complete(true);
             } else {
                 initializedFuture.completeExceptionally(throwable);
             }
