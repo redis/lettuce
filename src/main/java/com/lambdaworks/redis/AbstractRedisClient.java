@@ -185,7 +185,7 @@ public abstract class AbstractRedisClient {
         connectionBuilder.bootstrap().group(getEventLoopGroup(connectionPoint));
 
         if (connectionPoint.getSocket() != null) {
-            checkForEpollLibrary();
+            NativeTransports.assertAvailable();
             connectionBuilder.bootstrap().channel(NativeTransports.domainSocketChannelClass());
         } else {
             connectionBuilder.bootstrap().channel(Transports.socketChannelClass());
@@ -201,7 +201,7 @@ public abstract class AbstractRedisClient {
 
         if (connectionPoint.getSocket() != null) {
 
-            checkForEpollLibrary();
+            NativeTransports.assertAvailable();
 
             Class<? extends EventLoopGroup> eventLoopGroupClass = NativeTransports.eventLoopGroupClass();
 
@@ -216,15 +216,11 @@ public abstract class AbstractRedisClient {
         }
 
         if (connectionPoint.getSocket() != null) {
-            checkForEpollLibrary();
+            NativeTransports.assertAvailable();
             return eventLoopGroups.get(NativeTransports.eventLoopGroupClass());
         }
 
         throw new IllegalStateException("This should not have happened in a binary decision. Please file a bug.");
-    }
-
-    private void checkForEpollLibrary() {
-        EpollProvider.checkForEpollLibrary();
     }
 
     /**

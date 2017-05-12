@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.EpollProvider;
+import com.lambdaworks.redis.KqueueProvider;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -33,7 +34,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Default implementation which manages one event loop group instance per type.
- * 
+ *
  * @author Mark Paluch
  * @since 3.4
  */
@@ -50,7 +51,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     /**
      * Creates a new instance of {@link DefaultEventLoopGroupProvider}.
-     * 
+     *
      * @param numberOfThreads number of threads (pool size)
      */
     public DefaultEventLoopGroupProvider(int numberOfThreads) {
@@ -66,9 +67,9 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     private <T extends ExecutorService> T addReference(T reference) {
 
-        synchronized (refCounter){
+        synchronized (refCounter) {
             long counter = 0;
-            if(refCounter.containsKey(reference)){
+            if (refCounter.containsKey(reference)) {
                 counter = refCounter.get(reference);
             }
 
@@ -124,7 +125,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * <li>NioEventLoopGroup</li>
      * <li>EpollEventLoopGroup</li>
      * </ul>
-     * 
+     *
      * @param type the type
      * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}
      * @param <T> type parameter
@@ -145,7 +146,11 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             return EpollProvider.newEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-epollEventLoop", true));
         }
 
-        throw new IllegalArgumentException("Type " + type.getName() + " not supported");
+        if (KqueueProvider.isAvailable() && KqueueProvider.isEventLoopGroup(type)) {
+            return KqueueProvider.newEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-kqueueEventLoop", true));
+        }
+
+        throw new IllegalArgumentException(String.format("Type %s not supported", type.getName()));
     }
 
     @Override
@@ -194,8 +199,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
         DefaultPromise<Boolean> overall = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
         DefaultPromise<Boolean> lastRelease = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<>(
-                overall);
+        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<>(overall);
 
         aggregator.expectMore(1 + copy.size());
 

@@ -109,6 +109,8 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- netty-transport-native-kqueue is included with the netty-41 profile -->
+
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative</artifactId>
@@ -307,6 +309,20 @@
         <profile>
 
             <id>netty-41</id>
+
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <dependencies>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-transport-native-kqueue</artifactId>
+                    <version>${netty-version}</version>
+                    <classifier>osx-x86_64</classifier>
+                    <optional>true</optional>
+                </dependency>
+            </dependencies>
 
         </profile>
 
@@ -656,6 +672,7 @@
                                     <exclude>org.slf4j:*</exclude>
                                     <exclude>io.netty:netty-tcnative</exclude>
                                     <exclude>io.netty:netty-transport-native-epoll</exclude>
+                                    <exclude>io.netty:netty-transport-native-kqueue</exclude>
                                 </excludes>
                             </artifactSet>
                             <filters>

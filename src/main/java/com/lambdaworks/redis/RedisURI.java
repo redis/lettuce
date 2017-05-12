@@ -686,12 +686,17 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @return the resolved {@link SocketAddress} based either on host/port or the socket.
      */
     public SocketAddress getResolvedAddress() {
+
         if (getSocket() != null) {
+
+            if (KqueueProvider.isAvailable()) {
+                return KqueueProvider.newSocketAddress(getSocket());
+            }
+
             return EpollProvider.newSocketAddress(getSocket());
         }
-        InetSocketAddress socketAddress = new InetSocketAddress(host, port);
 
-        return socketAddress;
+        return new InetSocketAddress(host, port);
     }
 
     @Override
