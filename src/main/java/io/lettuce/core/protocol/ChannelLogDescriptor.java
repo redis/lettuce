@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class ChannelLogDescriptor {
         buffer.append("channel=").append(getId(channel)).append(", ");
 
         if (channel.localAddress() != null && channel.remoteAddress() != null) {
-            buffer.append(channel.localAddress()).append(" -> ");
+            buffer.append(channel.localAddress()).append(" -> ").append(channel.remoteAddress());
         } else {
             buffer.append(channel);
         }

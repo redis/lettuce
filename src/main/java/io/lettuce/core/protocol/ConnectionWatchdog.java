@@ -346,8 +346,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         }
 
         StringBuilder buffer = new StringBuilder(64);
-        buffer.append('[').append("Last known addr=").append(remoteAddress).append(", ")
-                .append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
+        buffer.append('[')
+                .append(ChannelLogDescriptor.logDescriptor(channel)).append(", last known addr=").append(remoteAddress).append(']');
         return logPrefix = buffer.toString();
     }
 

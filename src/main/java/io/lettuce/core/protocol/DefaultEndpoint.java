@@ -570,8 +570,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, HasQueuedC
         }
 
         StringBuffer buffer = new StringBuffer(64);
-        buffer.append('[').append("epid=0x").append(Long.toHexString(endpointId)).append(", ")
-                .append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
+        buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(", ")
+                .append("epid=0x").append(Long.toHexString(endpointId)).append(']');
         return logPrefix = buffer.toString();
     }
 
