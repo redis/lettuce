@@ -41,18 +41,17 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import edu.umd.cs.mtc.MultithreadedTestCase;
+import edu.umd.cs.mtc.TestFramework;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
-
-import edu.umd.cs.mtc.MultithreadedTestCase;
-import edu.umd.cs.mtc.TestFramework;
 import io.netty.channel.Channel;
 import io.netty.channel.DefaultChannelPromise;
 
@@ -63,8 +62,8 @@ public class DefaultEndpointTest {
 
     private DefaultEndpoint sut;
 
-    private final Command<String, String, String> command = new Command<>(CommandType.APPEND,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null);
+    private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<String, String>(
+            new Utf8StringCodec()), null);
 
     @Mock
     private Channel channel;
@@ -97,19 +96,6 @@ public class DefaultEndpointTest {
     @Before
     public void before() throws Exception {
 
-        when(channel.write(any())).thenAnswer(invocation -> {
-
-            if (invocation.getArguments()[0] instanceof RedisCommand) {
-                q.add((RedisCommand) invocation.getArguments()[0]);
-            }
-
-            if (invocation.getArguments()[0] instanceof Collection) {
-                q.addAll((Collection) invocation.getArguments()[0]);
-            }
-
-            return new DefaultChannelPromise(channel);
-        });
-
         when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
             if (invocation.getArguments()[0] instanceof RedisCommand) {
                 q.add((RedisCommand) invocation.getArguments()[0]);
@@ -129,7 +115,6 @@ public class DefaultEndpointTest {
     public void writeConnectedShouldWriteCommandToChannel() throws Exception {
 
         when(channel.isActive()).thenReturn(true);
-        when(channel.isWritable()).thenReturn(true);
 
         sut.notifyChannelActive(channel);
         sut.write(command);
@@ -140,9 +125,6 @@ public class DefaultEndpointTest {
 
     @Test
     public void writeDisconnectedShouldBufferCommands() throws Exception {
-
-        when(channel.isActive()).thenReturn(true);
-        when(channel.isWritable()).thenReturn(true);
 
         sut.write(command);
 
@@ -212,7 +194,6 @@ public class DefaultEndpointTest {
     public void notifyDrainQueuedCommandsShouldWriteCommands() throws Exception {
 
         when(channel.isActive()).thenReturn(true);
-        when(channel.isWritable()).thenReturn(true);
 
         Queue<RedisCommand<?, ?, ?>> q = LettuceFactories.newConcurrentQueue();
         q.add(command);

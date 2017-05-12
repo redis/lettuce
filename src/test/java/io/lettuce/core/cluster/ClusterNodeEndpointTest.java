@@ -35,7 +35,6 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.Utf8StringCodec;
-import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
@@ -68,7 +67,6 @@ public class ClusterNodeEndpointTest {
     @Before
     public void before() throws Exception {
 
-        when(clientResources.commandLatencyCollector()).thenReturn(DefaultCommandLatencyCollector.disabled());
         sut = new ClusterNodeEndpoint(clientOptions, clientResources, clusterChannelWriter);
         queue = (Queue) sut.getQueue();
     }
@@ -83,7 +81,6 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithQueuedCommands() throws Exception {
 
-        when(clientOptions.isAutoReconnect()).thenReturn(true);
         queue.add(command);
 
         sut.close();
@@ -94,7 +91,6 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithCancelledQueuedCommands() throws Exception {
 
-        when(clientOptions.isAutoReconnect()).thenReturn(true);
         queue.add(command);
         command.cancel();
 
@@ -106,7 +102,6 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithQueuedCommandsFails() throws Exception {
 
-        when(clientOptions.isAutoReconnect()).thenReturn(true);
         queue.add(command);
         when(clusterChannelWriter.write(any(RedisCommand.class))).thenThrow(new RedisException("meh"));
 
@@ -126,7 +121,6 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithBufferedCommands() throws Exception {
 
-        when(clientOptions.isAutoReconnect()).thenReturn(true);
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
         sut.write(command);
@@ -139,7 +133,6 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithCancelledBufferedCommands() throws Exception {
 
-        when(clientOptions.isAutoReconnect()).thenReturn(true);
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
         sut.write(command);
@@ -153,7 +146,6 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithBufferedCommandsFails() throws Exception {
 
-        when(clientOptions.isAutoReconnect()).thenReturn(true);
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
         sut.write(command);
