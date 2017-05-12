@@ -14,11 +14,18 @@
     <packaging>jar</packaging>
 
     <name>lettuce</name>
-    <url>https://github.com/lettuce-io/lettuce-core/wiki</url>
+
     <description>Advanced and thread-safe Java Redis client for synchronous, asynchronous, and
         reactive usage. Supports Cluster, Sentinel, Pipelining, Auto-Reconnect, Codecs
         and much more.
     </description>
+
+    <url>http://github.com/lettuce-io/lettuce-core</url>
+
+    <organization>
+        <name>lettuce.io</name>
+        <url>https://lettuce.io</url>
+    </organization>
 
     <licenses>
         <license>
@@ -51,14 +58,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- Not every build should be signed, disabled by default -->
-        <skipSigning>true</skipSigning>
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
-        <github.site.upload.skip>true</github.site.upload.skip>
-        <lettuce-release-version>4.3.1.Final</lettuce-release-version>
-        <lettuce3-release-version>3.5.0.Final</lettuce3-release-version>
-        <lettuce5-release-version>5.0.0.Beta1</lettuce5-release-version>
         <netty-version>4.1.11.Final</netty-version>
         <spring-version>4.3.6.RELEASE</spring-version>
     </properties>
@@ -69,10 +70,6 @@
         <url>http://github.com/lettuce-io/lettuce-core</url>
         <tag>HEAD</tag>
     </scm>
-
-    <prerequisites>
-        <maven>3.0</maven>
-    </prerequisites>
 
     <dependencies>
 
@@ -85,6 +82,7 @@
         </dependency>
 
         <!-- Netty -->
+
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-common</artifactId>
@@ -296,19 +294,26 @@
     </dependencies>
 
     <profiles>
+
         <profile>
+
             <id>netty-40</id>
+
             <properties>
                 <netty-version>4.0.47.Final</netty-version>
             </properties>
         </profile>
 
         <profile>
+
             <id>netty-41</id>
+
         </profile>
 
         <profile>
+
             <id>java9</id>
+
             <activation>
                 <jdk>9</jdk>
             </activation>
@@ -327,9 +332,64 @@
         </profile>
 
         <profile>
+
             <id>sonatype-oss-release</id>
+
             <build>
                 <plugins>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <level>public</level>
+                            <author>true</author>
+                            <header>Lettuce</header>
+                            <stylesheetfile>src/main/javadoc/stylesheet.css</stylesheetfile>
+                            <links>
+                                <link>http://netty.io/4.1/api/</link>
+                                <link>http://commons.apache.org/proper/commons-pool/api-2.4.2/</link>
+                                <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
+                                <link>http://reactivex.io/RxJava/javadoc/</link>
+                                <link>https://docs.spring.io/spring/docs/current/javadoc-api/</link>
+                            </links>
+                            <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax -Xdoclint:-missing
+                            </additionalparam>
+                            <quiet>true</quiet>
+                            <tags>
+                                <tag>
+                                    <name>generated</name>
+                                    <placement>a</placement>
+                                    <head>Generated class:</head>
+                                </tag>
+                            </tags>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
@@ -411,7 +471,9 @@
                 </plugins>
             </build>
         </profile>
+
         <profile>
+
             <id>jmh</id>
 
             <dependencies>
@@ -494,6 +556,7 @@
                 </plugins>
             </build>
         </profile>
+
     </profiles>
 
     <build>
@@ -524,38 +587,6 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <level>public</level>
-                    <links>
-                        <link>http://netty.io/4.1/api/</link>
-                        <link>http://commons.apache.org/proper/commons-pool/api-2.4.2/</link>
-                        <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
-                        <link>http://reactivex.io/RxJava/javadoc/</link>
-                    </links>
-                    <additionalparam>-Xdoclint:all -Xdoclint:-html -Xdoclint:-syntax -Xdoclint:-missing
-                    </additionalparam>
-                    <tags>
-                        <tag>
-                            <name>generated</name>
-                            <placement>a</placement>
-                            <head>Generated class:</head>
-                        </tag>
-                    </tags>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.17</version>
                 <configuration>
@@ -571,29 +602,10 @@
                 <version>2.5</version>
                 <configuration>
                     <releaseProfiles>sonatype-oss-release</releaseProfiles>
-                    <arguments>-DskipSigning=false</arguments>
                     <goals>deploy</goals>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>@{project.version}</tagNameFormat>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
-                <configuration>
-                    <skip>${skipSigning}</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
@@ -622,27 +634,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.4</version>
-                <configuration>
-                    <relativizeDecorationLinks>false</relativizeDecorationLinks>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.doxia</groupId>
-                        <artifactId>doxia-module-markdown</artifactId>
-                        <version>1.6</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.maven.scm</groupId>
-                        <artifactId>maven-scm-provider-gitexe</artifactId>
-                        <version>1.9</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
             <plugin>
@@ -722,31 +713,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.7</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>index</report>
-                            <report>plugin-management</report>
-                            <report>distribution-management</report>
-                            <report>dependency-info</report>
-                            <report>dependencies</report>
-                            <report>scm</report>
-                            <report>issue-tracking</report>
-                            <report>cim</report>
-                            <report>dependency-management</report>
-                            <report>project-team</report>
-                            <report>summary</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
 </project>
