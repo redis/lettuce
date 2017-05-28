@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import io.netty.handler.ssl.OpenSsl;
 public class SslTest extends AbstractTest {
 
     private static final String KEYSTORE = "work/keystore.jks";
-    private static final String LOCALHOST_KEYSTORE = "work/keystore-localhost.jks";
+    private static final String TRUSTSTORE = "work/truststore.jks";
     private static final RedisClient redisClient = DefaultRedisClient.get();
 
     private static final RedisURI URI_NO_VERIFY = RedisURI.Builder.redis(host(), sslPort()) //
@@ -56,18 +56,22 @@ public class SslTest extends AbstractTest {
             .withVerifyPeer(true) //
             .build();
 
+    private static final RedisURI URI_CLIENT_CERT_AUTH = RedisURI.Builder.redis(host(), sslPort(2)) //
+            .withSsl(true) //
+            .withVerifyPeer(true) //
+            .build();
+
     @Before
-    public void before() throws Exception {
+    public void before() {
 
         assumeTrue("Assume that stunnel runs on port 6443", Sockets.isOpen(host(), sslPort()));
-        assertThat(new File(KEYSTORE)).exists();
+        assertThat(new File(TRUSTSTORE)).exists();
 
-        System.setProperty("javax.net.ssl.trustStore", KEYSTORE);
         redisClient.setOptions(ClientOptions.create());
     }
 
     @Test
-    public void standaloneWithSsl() throws Exception {
+    public void standaloneWithSsl() {
 
         RedisCommands<String, String> connection = redisClient.connect(URI_NO_VERIFY).sync();
         connection.set("key", "value");
@@ -76,11 +80,11 @@ public class SslTest extends AbstractTest {
     }
 
     @Test
-    public void standaloneWithJdkSsl() throws Exception {
+    public void standaloneWithJdkSsl() {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(new File(LOCALHOST_KEYSTORE)) //
+                .truststore(new File(TRUSTSTORE)) //
                 .build();
         setOptions(sslOptions);
 
@@ -92,11 +96,36 @@ public class SslTest extends AbstractTest {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(new File(LOCALHOST_KEYSTORE).toURI().toURL()) //
+                .truststore(new File(TRUSTSTORE)) //
                 .build();
         setOptions(sslOptions);
 
         verifyConnection(URI_VERIFY);
+    }
+
+    @Test
+    public void standaloneWithClientCertificates() throws Exception {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .keystore(new File(KEYSTORE), "changeit".toCharArray()) //
+                .truststore(new File(TRUSTSTORE)) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyConnection(URI_CLIENT_CERT_AUTH);
+    }
+
+    @Test(expected = RedisConnectionException.class)
+    public void standaloneWithClientCertificatesWithoutKeystore() throws Exception {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(new File(TRUSTSTORE)) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyConnection(URI_CLIENT_CERT_AUTH);
     }
 
     @Test(expected = RedisConnectionException.class)
@@ -104,7 +133,7 @@ public class SslTest extends AbstractTest {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(new File(LOCALHOST_KEYSTORE).toURI().toURL(), "knödel") //
+                .truststore(new File(TRUSTSTORE), "knödel") //
                 .build();
         setOptions(sslOptions);
 
@@ -112,7 +141,7 @@ public class SslTest extends AbstractTest {
     }
 
     @Test(expected = RedisConnectionException.class)
-    public void standaloneWithJdkSslFailsWithWrongTruststore() throws Exception {
+    public void standaloneWithJdkSslFailsWithWrongTruststore() {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
@@ -123,13 +152,13 @@ public class SslTest extends AbstractTest {
     }
 
     @Test
-    public void standaloneWithOpenSsl() throws Exception {
+    public void standaloneWithOpenSsl() {
 
         assumeTrue(OpenSsl.isAvailable());
 
         SslOptions sslOptions = SslOptions.builder() //
                 .openSslProvider() //
-                .truststore(new File(LOCALHOST_KEYSTORE)) //
+                .truststore(new File(TRUSTSTORE)) //
                 .build();
         setOptions(sslOptions);
 
@@ -137,7 +166,7 @@ public class SslTest extends AbstractTest {
     }
 
     @Test(expected = RedisConnectionException.class)
-    public void standaloneWithOpenSslFailsWithWrongTruststore() throws Exception {
+    public void standaloneWithOpenSslFailsWithWrongTruststore() {
 
         assumeTrue(OpenSsl.isAvailable());
 
@@ -150,7 +179,7 @@ public class SslTest extends AbstractTest {
     }
 
     @Test
-    public void pingBeforeActivate() throws Exception {
+    public void pingBeforeActivate() {
 
         redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
@@ -160,7 +189,6 @@ public class SslTest extends AbstractTest {
     @Test
     public void regularSslWithReconnect() throws Exception {
 
-
         RedisCommands<String, String> connection = redisClient.connect(URI_NO_VERIFY).sync();
         connection.quit();
         Thread.sleep(200);
@@ -169,7 +197,7 @@ public class SslTest extends AbstractTest {
     }
 
     @Test(expected = RedisConnectionException.class)
-    public void sslWithVerificationWillFail() throws Exception {
+    public void sslWithVerificationWillFail() {
 
         RedisURI redisUri = RedisURI.create("rediss://" + host() + ":" + sslPort());
         redisClient.connect(redisUri).sync();
@@ -200,8 +228,7 @@ public class SslTest extends AbstractTest {
     @Test(timeout = 10000)
     public void pubSubSslAndBreakConnection() throws Exception {
 
-        RedisURI redisURI = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false)
-                .build();
+        RedisURI redisURI = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
         redisClient.setOptions(ClientOptions.builder().suspendReconnectOnProtocolFailure(true).build());
 
         RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub(redisURI).async();
