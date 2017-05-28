@@ -69,7 +69,7 @@
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
         <netty-version>4.1.11.Final</netty-version>
-        <spring-version>4.3.6.RELEASE</spring-version>
+        <spring-version>5.0.0.RC1</spring-version>
     </properties>
 
     <scm>
@@ -186,6 +186,20 @@
             <artifactId>spring-context</artifactId>
             <version>${spring-version}</version>
             <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>${spring-version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <version>${spring-version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- CDI -->

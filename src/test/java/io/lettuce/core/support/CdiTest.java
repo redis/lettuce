@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ import static org.mockito.Mockito.mock;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 
-import io.lettuce.core.AbstractRedisClientTest;
-import io.lettuce.core.FastShutdown;
 import org.apache.webbeans.cditest.CdiTestContainer;
 import org.apache.webbeans.cditest.CdiTestContainerLoader;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.FastShutdown;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.resource.ClientResources;
@@ -56,8 +56,13 @@ public class CdiTest {
     }
 
     @Produces
-    @PersonDB
     public ClientResources clientResources() {
+        return DefaultClientResources.create();
+    }
+
+    @Produces
+    @PersonDB
+    public ClientResources personClientResources() {
         return DefaultClientResources.create();
     }
 
