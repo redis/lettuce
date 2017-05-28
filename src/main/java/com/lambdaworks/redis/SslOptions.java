@@ -235,18 +235,10 @@ public class SslOptions {
             LettuceAssert.isTrue(truststore.isFile(), String.format("Truststore file %s is not a file", truststore));
 
             try {
-                this.truststore = truststore.toURI().toURL();
+                return truststore(truststore.toURI().toURL(), truststorePassword);
             } catch (MalformedURLException e) {
                 throw new IllegalArgumentException(e);
             }
-
-            if (LettuceStrings.isNotEmpty(truststorePassword)) {
-                this.truststorePassword = truststorePassword.toCharArray();
-            } else {
-                this.truststorePassword = new char[0];
-            }
-
-            return this;
         }
 
         /**
@@ -273,6 +265,7 @@ public class SslOptions {
         public Builder truststore(URL truststore, String truststorePassword) {
 
             LettuceAssert.notNull(truststore, "Truststore must not be null");
+
             this.truststore = truststore;
 
             if (LettuceStrings.isNotEmpty(truststorePassword)) {
