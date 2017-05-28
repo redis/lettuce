@@ -266,7 +266,6 @@ work/stunnel.conf:
 	@echo cert=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
 	@echo key=$(ROOT_DIR)/work/ca/private/localhost.decrypted.key.pem >> $@
 	@echo cafile=$(ROOT_DIR)/work/ca/certs/ca.cert.pem >> $@
-	@echo verifyChain=yes >> $@
 	@echo verify=2 >> $@
 
 
