@@ -20,6 +20,7 @@ This version of lettuce has been tested against the latest Redis source-build.
 * [CDI](https://github.com/mp911de/lettuce/wiki/CDI-Support) and [Spring](https://github.com/mp911de/lettuce/wiki/Spring-Support) integration
 * [Codecs](https://github.com/mp911de/lettuce/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
 * multiple [Command Interfaces](https://github.com/mp911de/lettuce/wiki/Command-Interfaces-%284.0%29)
+* Compatible with Java 8 and 9 (automatic module w/o descriptors)
 
 See the [Wiki](https://github.com/mp911de/lettuce/wiki) for more docs.
 
