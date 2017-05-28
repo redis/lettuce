@@ -56,14 +56,6 @@
         </developer>
     </developers>
 
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/libs-milestone</url>
-        </repository>
-    </repositories>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
@@ -78,6 +70,16 @@
         <url>http://github.com/lettuce-io/lettuce-core</url>
         <tag>HEAD</tag>
     </scm>
+
+    <!-- Required for Spring RC artifacts -->
+
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/libs-milestone</url>
+        </repository>
+    </repositories>
 
     <dependencies>
 
