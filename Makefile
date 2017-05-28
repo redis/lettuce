@@ -228,10 +228,10 @@ cluster-start: work/cluster-node-7379.pid work/cluster-node-7380.pid work/cluste
 work/stunnel.conf:
 	@mkdir -p $(@D)
 
-	@echo cert=$(ROOT_DIR)/work/cert.pem >> $@
-	@echo key=$(ROOT_DIR)/work/key.pem >> $@
-	@echo capath=$(ROOT_DIR)/work/cert.pem >> $@
-	@echo cafile=$(ROOT_DIR)/work/cert.pem >> $@
+	@echo cert=$(ROOT_DIR)/work/ca/certs/foo-host.cert.pem >> $@
+	@echo key=$(ROOT_DIR)/work/ca/private/foo-host.decrypted.key.pem >> $@
+	@echo capath=$(ROOT_DIR)/work/ca/certs/ca.cert.pem >> $@
+	@echo cafile=$(ROOT_DIR)/work/ca/certs/ca.cert.pem >> $@
 	@echo delay=yes >> $@
 	@echo pid=$(ROOT_DIR)/work/stunnel.pid >> $@
 	@echo foreground = no >> $@
@@ -243,9 +243,10 @@ work/stunnel.conf:
 	@echo [stunnel-2] >> $@
 	@echo accept = 127.0.0.1:6444 >> $@
 	@echo connect = 127.0.0.1:6479 >> $@
-	@echo cert=$(ROOT_DIR)/work/localhost.pem >> $@
-	@echo capath=$(ROOT_DIR)/work/localhost.pem >> $@
-	@echo cafile=$(ROOT_DIR)/work/localhost.pem >> $@
+	@echo cert=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
+	@echo key=$(ROOT_DIR)/work/ca/private/localhost.decrypted.key.pem >> $@
+	@echo capath=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
+	@echo cafile=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
 
 	@echo [ssl-cluster-node-1] >> $@
 	@echo accept = 127.0.0.1:7443 >> $@
@@ -258,6 +259,15 @@ work/stunnel.conf:
 	@echo [ssl-cluster-node-3] >> $@
 	@echo accept = 127.0.0.1:7445 >> $@
 	@echo connect = 127.0.0.1:7481 >> $@
+
+	@echo [stunnel-client-cert] >> $@
+	@echo accept = 127.0.0.1:6445 >> $@
+	@echo connect = 127.0.0.1:6479 >> $@
+	@echo cert=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
+	@echo key=$(ROOT_DIR)/work/ca/private/localhost.decrypted.key.pem >> $@
+	@echo cafile=$(ROOT_DIR)/work/ca/certs/ca.cert.pem >> $@
+	@echo verifyChain=yes >> $@
+	@echo verify=2 >> $@
 
 
 work/stunnel.pid: work/stunnel.conf ssl-keys
@@ -301,23 +311,13 @@ cleanup: stop
 # SSL Keys
 #  - remove Java keystore as becomes stale
 ##########
-work/key.pem work/cert.pem:
-	@mkdir -p $(@D)
-	openssl genrsa -out work/key.pem 4096
-	openssl req -new -x509 -key work/key.pem -out work/cert.pem -days 365 -subj "/O=lettuce/ST=Some-State/C=DE/CN=lettuce-test"
-	openssl req -new -x509 -key work/key.pem -out work/localhost.pem -days 365 -subj "/O=lettuce/ST=Some-State/C=DE/CN=localhost"
-	chmod go-rwx work/key.pem
-	chmod go-rwx work/cert.pem
-	chmod go-rwx work/localhost.pem
-	- rm -f work/keystore.jks
-	- rm -f work/keystore-localhost.jks
-
 work/keystore.jks:
 	@mkdir -p $(@D)
-	$$JAVA_HOME/bin/keytool -importcert -keystore work/keystore.jks -file work/cert.pem -noprompt -storepass changeit
-	$$JAVA_HOME/bin/keytool -importcert -keystore work/keystore-localhost.jks -file work/localhost.pem -noprompt -storepass different
+	- rm -f work/*.jks
+	- rm -Rf work/ca
+	src/test/bash/create_certificates.sh
 
-ssl-keys: work/key.pem work/cert.pem work/keystore.jks
+ssl-keys: work/keystore.jks
 
 stop:
 	pkill stunnel || true

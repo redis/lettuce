@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.TestSettings.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assume.*;
+import static com.lambdaworks.redis.TestSettings.host;
+import static com.lambdaworks.redis.TestSettings.hostAddr;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
-import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,11 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.lambdaworks.Sockets;
-import com.lambdaworks.redis.AbstractTest;
-import com.lambdaworks.redis.FastShutdown;
-import com.lambdaworks.redis.RedisCommandExecutionException;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.sync.Executions;
@@ -42,8 +38,6 @@ import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
  * @author Mark Paluch
  */
 public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
-
-    public static final String KEYSTORE = "work/keystore.jks";
 
     public static final int CLUSTER_PORT_SSL_1 = 7443;
     public static final int CLUSTER_PORT_SSL_2 = 7444;
@@ -61,8 +55,6 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
         assumeTrue("Assume that stunnel runs on port 7443", Sockets.isOpen(host(), CLUSTER_PORT_SSL_1));
         assumeTrue("Assume that stunnel runs on port 7444", Sockets.isOpen(host(), CLUSTER_PORT_SSL_2));
         assumeTrue("Assume that stunnel runs on port 7445", Sockets.isOpen(host(), CLUSTER_PORT_SSL_3));
-        assertThat(new File(KEYSTORE)).exists();
-        System.setProperty("javax.net.ssl.trustStore", KEYSTORE);
     }
 
     @AfterClass
@@ -136,8 +128,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
     @Test
     public void connectionWithoutPasswordShouldFail() throws Exception {
 
-        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false)
-                .build();
+        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(redisURI);
 
         try {
@@ -152,8 +143,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
     @Test
     public void connectionWithoutPasswordShouldFail2() throws Exception {
 
-        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false)
-                .build();
+        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(redisURI);
 
         try {

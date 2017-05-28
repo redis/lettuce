@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -120,6 +123,13 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                 sslParams.setEndpointIdentificationAlgorithm("HTTPS");
             } else {
                 sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+            }
+
+            if (sslOptions.getKeystore() != null) {
+                try (InputStream is = sslOptions.getKeystore().openStream()) {
+                    sslContextBuilder.keyManager(createKeyManagerFactory(is,
+                            sslOptions.getKeystorePassword().length == 0 ? null : sslOptions.getKeystorePassword()));
+                }
             }
 
             if (sslOptions.getTruststore() != null) {
@@ -236,16 +246,33 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             return initializedFuture;
         }
 
-        private static TrustManagerFactory createTrustManagerFactory(InputStream inputStream, char[] storePassword)
+        private static KeyManagerFactory createKeyManagerFactory(InputStream inputStream, char[] storePassword)
                 throws GeneralSecurityException, IOException {
 
-            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            KeyStore keyStore = getKeyStore(inputStream, storePassword);
+
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, storePassword == null ? new char[0] : storePassword);
+
+            return keyManagerFactory;
+        }
+
+        private static KeyStore getKeyStore(InputStream inputStream, char[] storePassword) throws KeyStoreException,
+                IOException, NoSuchAlgorithmException, CertificateException {
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 
             try {
-                trustStore.load(inputStream, storePassword);
+                keyStore.load(inputStream, storePassword);
             } finally {
                 inputStream.close();
             }
+            return keyStore;
+        }
+
+        private static TrustManagerFactory createTrustManagerFactory(InputStream inputStream, char[] storePassword)
+                throws GeneralSecurityException, IOException {
+
+            KeyStore trustStore = getKeyStore(inputStream, storePassword);
 
             TrustManagerFactory trustManagerFactory = TrustManagerFactory
                     .getInstance(TrustManagerFactory.getDefaultAlgorithm());
