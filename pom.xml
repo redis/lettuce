@@ -71,6 +71,16 @@
         <tag>HEAD</tag>
     </scm>
 
+    <!-- Required for Spring RC artifacts -->
+
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/libs-milestone</url>
+        </repository>
+    </repositories>
+
     <dependencies>
 
         <!-- Start of Core Dependencies -->
