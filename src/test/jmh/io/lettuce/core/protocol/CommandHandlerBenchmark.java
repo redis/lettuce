@@ -46,7 +46,7 @@ public class CommandHandlerBenchmark {
     @Setup
     public void setup() {
 
-        commandHandler = new CommandHandler(EmptyClientResources.INSTANCE, new DefaultEndpoint(CLIENT_OPTIONS));
+        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new DefaultEndpoint(CLIENT_OPTIONS));
         command = new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
 
         commandHandler.setState(CommandHandler.LifecycleState.CONNECTED);
@@ -58,6 +58,6 @@ public class CommandHandlerBenchmark {
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, null);
 
         // Prevent OOME
-        commandHandler.getQueue().clear();
+        commandHandler.getStack().clear();
     }
 }

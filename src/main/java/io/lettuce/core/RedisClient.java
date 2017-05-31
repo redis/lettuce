@@ -248,7 +248,7 @@ public class RedisClient extends AbstractRedisClient {
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(endpoint, codec, timeout.timeout,
                 timeout.timeUnit);
         ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
-                () -> new CommandHandler(clientResources, endpoint));
+                () -> new CommandHandler(clientOptions, clientResources, endpoint));
 
         future.whenComplete((channelHandler, throwable) -> {
 
@@ -386,7 +386,7 @@ public class RedisClient extends AbstractRedisClient {
                 timeout.timeout, timeout.timeUnit);
 
         ConnectionFuture<StatefulRedisConnectionImpl<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
-                () -> new PubSubCommandHandler<>(clientResources, codec, endpoint));
+                () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
 
         getConnection(future.whenComplete((conn, throwable) -> {
 
@@ -462,7 +462,7 @@ public class RedisClient extends AbstractRedisClient {
 
         logger.debug("Trying to get a Redis Sentinel connection for one of: " + redisURI.getSentinels());
 
-        connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientResources, endpoint))
+        connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientOptions, clientResources, endpoint))
                 .connection(connection);
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
 

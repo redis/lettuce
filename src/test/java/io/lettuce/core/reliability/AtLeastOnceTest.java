@@ -34,7 +34,6 @@ import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.EncoderException;
@@ -102,7 +101,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connection.set(key, "1");
 
-        assertThat(ConnectionTestUtil.getQueue(connection.getStatefulConnection())).isEmpty();
+        assertThat(ConnectionTestUtil.getStack(connection.getStatefulConnection())).isEmpty();
         assertThat(ConnectionTestUtil.getCommandBuffer(connection.getStatefulConnection())).isEmpty();
 
         connection.getStatefulConnection().close();
@@ -134,14 +133,14 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
         RedisCommands<String, String> verificationConnection = client.connect().sync();
 
         connection.set(key, "1");
-        AsyncCommand<String, String, String> working = new AsyncCommand<>(
-                new Command<>(CommandType.INCR, new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key)));
+        AsyncCommand<String, String, String> working = new AsyncCommand<>(new Command<>(CommandType.INCR, new IntegerOutput(
+                CODEC), new CommandArgs<>(CODEC).addKey(key)));
         channelWriter.write(working);
         assertThat(working.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(connection.get(key)).isEqualTo("2");
 
-        AsyncCommand<String, String, Object> command = new AsyncCommand(
-                new Command<>(CommandType.INCR, new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
+        AsyncCommand<String, String, Object> command = new AsyncCommand(new Command<>(CommandType.INCR,
+                new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
 
             @Override
             public void encode(ByteBuf buf) {
@@ -157,7 +156,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
 
-        assertThat(ConnectionTestUtil.getQueue(connection.getStatefulConnection())).isNotEmpty();
+        assertThat(ConnectionTestUtil.getStack(connection.getStatefulConnection())).isNotEmpty();
 
         connection.getStatefulConnection().close();
     }
@@ -198,7 +197,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get(key)).isEqualTo("1");
 
-        assertThat(ConnectionTestUtil.getQueue(connection)).isEmpty();
+        assertThat(ConnectionTestUtil.getStack(connection)).isEmpty();
         assertThat(ConnectionTestUtil.getCommandBuffer(connection)).isNotEmpty().contains(command);
 
         connection.close();
@@ -245,7 +244,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
 
-        assertThat(ConnectionTestUtil.getQueue(sync.getStatefulConnection())).isEmpty();
+        assertThat(ConnectionTestUtil.getStack(sync.getStatefulConnection())).isEmpty();
         assertThat(ConnectionTestUtil.getCommandBuffer(sync.getStatefulConnection())).isEmpty();
 
         sync.getStatefulConnection().close();
@@ -253,8 +252,8 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     protected AsyncCommand<String, String, Object> getBlockOnEncodeCommand(final CountDownLatch block) {
-        return new AsyncCommand<String, String, Object>(
-                new Command<>(CommandType.INCR, new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
+        return new AsyncCommand<String, String, Object>(new Command<>(CommandType.INCR, new IntegerOutput(CODEC),
+                new CommandArgs<>(CODEC).addKey(key))) {
 
             @Override
             public void encode(ByteBuf buf) {
@@ -276,8 +275,8 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connection.set(key, "1");
 
-        AsyncCommand<String, String, String> command = new AsyncCommand(
-                new Command<>(CommandType.INCR, new StatusOutput<>(CODEC), new CommandArgs<>(CODEC).addKey(key)));
+        AsyncCommand<String, String, String> command = new AsyncCommand(new Command<>(CommandType.INCR, new StatusOutput<>(
+                CODEC), new CommandArgs<>(CODEC).addKey(key)));
 
         channelWriter.write(command);
 
@@ -316,13 +315,14 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get("key")).isEqualTo("1");
 
-        assertThat(ConnectionTestUtil.getQueue(connection)).isEmpty();
-        assertThat(ConnectionTestUtil.getCommandBuffer(connection).size()).isGreaterThan(0);
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(connection).size()).isGreaterThan(0);
+        assertThat(ConnectionTestUtil.getCommandBuffer(connection)).isEmpty();
 
         connectionWatchdog.setListenOnChannelInactive(true);
         connectionWatchdog.scheduleReconnect();
 
-        while (!ConnectionTestUtil.getCommandBuffer(connection).isEmpty() || !ConnectionTestUtil.getQueue(connection).isEmpty()) {
+        while (!ConnectionTestUtil.getCommandBuffer(connection).isEmpty()
+                || !ConnectionTestUtil.getDisconnectedBuffer(connection).isEmpty()) {
             Thread.sleep(10);
         }
 
@@ -352,13 +352,14 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get("key")).isEqualTo("1");
 
-        assertThat(ConnectionTestUtil.getQueue(connection)).isEmpty();
-        assertThat(ConnectionTestUtil.getCommandBuffer(connection).size()).isGreaterThan(0);
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(connection).size()).isGreaterThan(0);
+        assertThat(ConnectionTestUtil.getCommandBuffer(connection)).isEmpty();
 
         connectionWatchdog.setListenOnChannelInactive(true);
         connectionWatchdog.scheduleReconnect();
 
-        while (!ConnectionTestUtil.getCommandBuffer(connection).isEmpty() || !ConnectionTestUtil.getQueue(connection).isEmpty()) {
+        while (!ConnectionTestUtil.getCommandBuffer(connection).isEmpty()
+                || !ConnectionTestUtil.getDisconnectedBuffer(connection).isEmpty()) {
             Thread.sleep(10);
         }
 

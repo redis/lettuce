@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
+import java.util.Collection;
 import java.util.Queue;
 
 /**
@@ -23,12 +24,7 @@ import java.util.Queue;
  *
  * @author Mark Paluch
  */
-public interface HasQueuedCommands {
+interface HasQueuedCommands {
 
-    /**
-     * The queue holding commands.
-     *
-     * @return the queue
-     */
-    Queue<RedisCommand<?, ?, ?>> getQueue();
+    Collection<RedisCommand<?,?,?>> drainQueue();
 }

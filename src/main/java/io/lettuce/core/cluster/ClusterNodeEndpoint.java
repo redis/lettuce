@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,14 @@
  */
 package io.lettuce.core.cluster;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
-import io.lettuce.core.protocol.ConnectionWatchdog;
-import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -56,18 +53,6 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
     }
 
     /**
-     * Prepare the closing of the channel.
-     */
-    public void prepareClose() {
-        if (channel != null) {
-            ConnectionWatchdog connectionWatchdog = channel.pipeline().get(ConnectionWatchdog.class);
-            if (connectionWatchdog != null) {
-                connectionWatchdog.setReconnectSuspended(true);
-            }
-        }
-    }
-
-    /**
      * Move queued and buffered commands from the inactive connection to the master command writer. This is done only if the
      * current connection is disconnected and auto-reconnect is enabled (command-retries). If the connection would be open, we
      * could get into a race that the commands we're moving are right now in processing. Alive connections can handle redirects
@@ -79,9 +64,7 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
         logger.debug("{} close()", logPrefix());
 
         if (clusterChannelWriter != null) {
-
-            Collection<RedisCommand<?, ?, ?>> commands = shiftCommands(getQueue());
-            retriggerCommands(commands);
+            retriggerCommands(doExclusive(this::drainCommands));
         }
 
         super.close();
@@ -90,7 +73,6 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
     protected void retriggerCommands(Collection<RedisCommand<?, ?, ?>> commands) {
 
         for (RedisCommand<?, ?, ?> queuedCommand : commands) {
-
             if (queuedCommand == null || queuedCommand.isCancelled()) {
                 continue;
             }
@@ -101,20 +83,6 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
                 queuedCommand.completeExceptionally(e);
             }
         }
-    }
-
-    /**
-     * Retrieve commands within a lock to prevent concurrent modification
-     */
-    private Collection<RedisCommand<?, ?, ?>> shiftCommands(Collection<? extends RedisCommand<?, ?, ?>> source) {
-
-        return doExclusive(() -> {
-            try {
-                return new ArrayList<>(source);
-            } finally {
-                source.clear();
-            }
-        });
     }
 
 }

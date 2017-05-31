@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
@@ -49,9 +50,9 @@ import io.lettuce.core.resource.ClientResources;
 public class ClusterNodeEndpointTest {
 
     private AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.APPEND,
-            new StatusOutput<String, String>(new Utf8StringCodec()), null));
+            new StatusOutput<>(new Utf8StringCodec()), null));
 
-    private Queue<RedisCommand<String, String, ?>> queue;
+    private Queue<RedisCommand<String, String, ?>> disconnectedBuffer;
 
     @Mock
     private ClientOptions clientOptions;
@@ -65,10 +66,12 @@ public class ClusterNodeEndpointTest {
     private ClusterNodeEndpoint sut;
 
     @Before
-    public void before() throws Exception {
+    public void before() {
+
+        when(clientOptions.getRequestQueueSize()).thenReturn(1000);
 
         sut = new ClusterNodeEndpoint(clientOptions, clientResources, clusterChannelWriter);
-        queue = (Queue) sut.getQueue();
+        disconnectedBuffer = (Queue) ReflectionTestUtils.getField(sut, "disconnectedBuffer");
     }
 
     @Test
@@ -81,7 +84,7 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithQueuedCommands() throws Exception {
 
-        queue.add(command);
+        disconnectedBuffer.add(command);
 
         sut.close();
 
@@ -91,7 +94,7 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithCancelledQueuedCommands() throws Exception {
 
-        queue.add(command);
+        disconnectedBuffer.add(command);
         command.cancel();
 
         sut.close();
@@ -102,7 +105,7 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithQueuedCommandsFails() throws Exception {
 
-        queue.add(command);
+        disconnectedBuffer.add(command);
         when(clusterChannelWriter.write(any(RedisCommand.class))).thenThrow(new RedisException("meh"));
 
         sut.close();
@@ -121,7 +124,6 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithBufferedCommands() throws Exception {
 
-        when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
         sut.write(command);
 
@@ -133,7 +135,6 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithCancelledBufferedCommands() throws Exception {
 
-        when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
         sut.write(command);
         command.cancel();
@@ -146,7 +147,6 @@ public class ClusterNodeEndpointTest {
     @Test
     public void closeWithBufferedCommandsFails() throws Exception {
 
-        when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
         sut.write(command);
         when(clusterChannelWriter.write(any(RedisCommand.class))).thenThrow(new RedisException(""));

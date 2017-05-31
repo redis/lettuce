@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ package io.lettuce.core;
 
 import java.net.SocketAddress;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
+import io.lettuce.core.protocol.RedisCommand;
 import io.netty.util.internal.ConcurrentSet;
 
 /**
- * Close Events Facility. Can register/unregister CloseListener and fire a closed event to all registered listeners.
+ * Close Events Facility. Can register/unregister CloseListener and fire a closed event to all registered listeners. This class
+ * is part of the internal API and may change without further notice.
  *
  * @author Mark Paluch
  * @since 3.0
@@ -67,6 +68,22 @@ public class ConnectionEvents {
      * Internal event when a channel is activated.
      */
     public static class Activated {
+    }
+
+    /**
+     * Internal event when a channel is activated.
+     */
+    public static class PingBeforeActivate {
+
+        private final RedisCommand<?, ?, ?> command;
+
+        public PingBeforeActivate(RedisCommand<?, ?, ?> command) {
+            this.command = command;
+        }
+
+        public RedisCommand<?, ?, ?> getCommand() {
+            return command;
+        }
     }
 
     /**

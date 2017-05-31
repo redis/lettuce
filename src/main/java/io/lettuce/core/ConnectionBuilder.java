@@ -18,7 +18,6 @@ package io.lettuce.core;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -26,7 +25,6 @@ import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.group.ChannelGroup;
@@ -83,8 +81,6 @@ public class ConnectionBuilder {
 
         if (clientOptions.isAutoReconnect()) {
             handlers.add(createConnectionWatchdog());
-        } else {
-            endpoint.registerConnectionWatchdog(Optional.empty());
         }
 
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
@@ -117,7 +113,7 @@ public class ConnectionBuilder {
         ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap, timer,
                 clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener, connection);
 
-        endpoint.registerConnectionWatchdog(Optional.of(watchdog));
+        endpoint.registerConnectionWatchdog(watchdog);
 
         connectionWatchdog = watchdog;
         return watchdog;

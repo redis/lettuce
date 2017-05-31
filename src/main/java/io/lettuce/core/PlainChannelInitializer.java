@@ -23,12 +23,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import io.lettuce.core.ConnectionEvents.PingBeforeActivate;
 import io.lettuce.core.event.connection.ConnectedEvent;
 import io.lettuce.core.event.connection.ConnectionActivatedEvent;
 import io.lettuce.core.event.connection.DisconnectedEvent;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -126,7 +126,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
     static void pingBeforeActivate(AsyncCommand<?, ?, ?> cmd, CompletableFuture<Boolean> initializedFuture,
             ChannelHandlerContext ctx, ClientResources clientResources, long timeout, TimeUnit timeUnit) throws Exception {
 
-        ctx.channel().writeAndFlush(cmd);
+        ctx.fireUserEventTriggered(new PingBeforeActivate(cmd));
 
         Runnable timeoutGuard = () -> {
 

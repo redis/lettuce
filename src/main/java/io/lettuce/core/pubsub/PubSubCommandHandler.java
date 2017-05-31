@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package io.lettuce.core.pubsub;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -42,31 +42,33 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
     /**
      * Initialize a new instance.
      *
+     * @param clientOptions client options for this connection, must not be {@literal null}
      * @param clientResources client resources for this connection
      * @param codec Codec.
      * @param endpoint the Pub/Sub endpoint for Pub/Sub callback.
      */
-    public PubSubCommandHandler(ClientResources clientResources, RedisCodec<K, V> codec, PubSubEndpoint<K, V> endpoint) {
+    public PubSubCommandHandler(ClientOptions clientOptions, ClientResources clientResources, RedisCodec<K, V> codec,
+            PubSubEndpoint<K, V> endpoint) {
 
-        super(clientResources, endpoint);
+        super(clientOptions, clientResources, endpoint);
 
+        this.endpoint = endpoint;
         this.codec = codec;
         this.output = new PubSubOutput<>(codec);
-        this.endpoint = endpoint;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
 
-        while (output.type() == null && !getQueue().isEmpty()) {
-            CommandOutput<?, ?, ?> currentOutput = getQueue().peek().getOutput();
+        while (output.type() == null && canDecode(buffer)) {
+            CommandOutput<?, ?, ?> currentOutput = getStack().peek().getOutput();
 
             if (!super.decode(buffer, currentOutput)) {
                 return;
             }
 
-            getQueue().poll().complete();
+            getStack().poll().complete();
 
             buffer.discardReadBytes();
 

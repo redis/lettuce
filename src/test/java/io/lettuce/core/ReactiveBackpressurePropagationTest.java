@@ -73,7 +73,7 @@ public class ReactiveBackpressurePropagationTest {
             return command;
         });
 
-        commandHandler = new CommandHandler(clientResources, endpoint);
+        commandHandler = new CommandHandler(ClientOptions.create(), clientResources, endpoint);
 
         embeddedChannel = new EmbeddedChannel(commandHandler);
         embeddedChannel.connect(new LocalAddress("remote"));

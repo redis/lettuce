@@ -428,7 +428,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(endpoint, codec, timeout, unit);
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
-                getFirstUri(), socketAddressSupplier, () -> new CommandHandler(clientResources, endpoint));
+                getFirstUri(), socketAddressSupplier, () -> new CommandHandler(clientOptions, clientResources, endpoint));
 
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
@@ -477,7 +477,8 @@ public class RedisClusterClient extends AbstractRedisClient {
                 timeout, unit);
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
-                getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<K, V>(clientResources, codec, endpoint));
+                getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<K, V>(clientOptions, clientResources,
+                        codec, endpoint));
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
                 connection.close();
@@ -527,7 +528,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         for (int i = 0; i < connectionAttempts; i++) {
             try {
                 connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier, () -> new CommandHandler(
-                        clientResources, endpoint));
+                        clientOptions, clientResources, endpoint));
                 connected = true;
                 break;
             } catch (RedisException e) {
@@ -590,7 +591,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         for (int i = 0; i < connectionAttempts; i++) {
             try {
                 connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier,
-                        () -> new PubSubCommandHandler<K, V>(clientResources, codec, endpoint));
+                        () -> new PubSubCommandHandler<K, V>(clientOptions, clientResources, codec, endpoint));
                 connected = true;
                 break;
             } catch (RedisException e) {

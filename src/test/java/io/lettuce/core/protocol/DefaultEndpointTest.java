@@ -19,14 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -46,6 +44,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import edu.umd.cs.mtc.MultithreadedTestCase;
 import edu.umd.cs.mtc.TestFramework;
+import io.lettuce.ConnectionTestUtil;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.Utf8StringCodec;
@@ -58,7 +57,7 @@ import io.netty.channel.DefaultChannelPromise;
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultEndpointTest {
 
-    private Queue<RedisCommand<String, String, ?>> q = LettuceFactories.newConcurrentQueue();
+    private Queue<RedisCommand<String, String, ?>> queue = LettuceFactories.newConcurrentQueue(1000);
 
     private DefaultEndpoint sut;
 
@@ -94,15 +93,15 @@ public class DefaultEndpointTest {
     }
 
     @Before
-    public void before() throws Exception {
+    public void before() {
 
         when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
             if (invocation.getArguments()[0] instanceof RedisCommand) {
-                q.add((RedisCommand) invocation.getArguments()[0]);
+                queue.add((RedisCommand) invocation.getArguments()[0]);
             }
 
             if (invocation.getArguments()[0] instanceof Collection) {
-                q.addAll((Collection) invocation.getArguments()[0]);
+                queue.addAll((Collection) invocation.getArguments()[0]);
             }
             return new DefaultChannelPromise(channel);
         });
@@ -112,29 +111,29 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void writeConnectedShouldWriteCommandToChannel() throws Exception {
+    public void writeConnectedShouldWriteCommandToChannel() {
 
         when(channel.isActive()).thenReturn(true);
 
         sut.notifyChannelActive(channel);
         sut.write(command);
 
-        assertThat(sut.getQueue()).isEmpty();
+        assertThat(ConnectionTestUtil.getQueueSize(sut)).isEqualTo(1);
         verify(channel).writeAndFlush(command);
     }
 
     @Test
-    public void writeDisconnectedShouldBufferCommands() throws Exception {
+    public void writeDisconnectedShouldBufferCommands() {
 
         sut.write(command);
 
-        assertThat(sut.getQueue()).contains(command);
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(sut)).contains(command);
 
-        verify(channel, never()).writeAndFlush(anyObject(), any());
+        verify(channel, never()).writeAndFlush(any());
     }
 
     @Test
-    public void notifyChannelActiveActivatesFacade() throws Exception {
+    public void notifyChannelActiveActivatesFacade() {
 
         sut.notifyChannelActive(channel);
 
@@ -142,9 +141,9 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void notifyChannelActiveArmsConnectionWatchdog() throws Exception {
+    public void notifyChannelActiveArmsConnectionWatchdog() {
 
-        sut.registerConnectionWatchdog(Optional.of(connectionWatchdog));
+        sut.registerConnectionWatchdog(connectionWatchdog);
 
         sut.notifyChannelActive(channel);
 
@@ -152,7 +151,7 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void notifyChannelInactiveDeactivatesFacade() throws Exception {
+    public void notifyChannelInactiveDeactivatesFacade() {
 
         sut.notifyChannelInactive(channel);
 
@@ -160,7 +159,7 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void notifyExceptionShouldStoreException() throws Exception {
+    public void notifyExceptionShouldStoreException() {
 
         sut.notifyException(new IllegalStateException());
         sut.write(command);
@@ -169,7 +168,7 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void notifyChannelActiveClearsStoredException() throws Exception {
+    public void notifyChannelActiveClearsStoredException() {
 
         sut.notifyException(new IllegalStateException());
         sut.notifyChannelActive(channel);
@@ -179,34 +178,33 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void notifyDrainQueuedCommandsShouldBufferCommands() throws Exception {
+    public void notifyDrainQueuedCommandsShouldBufferCommands() {
 
-        Queue<RedisCommand<?, ?, ?>> q = LettuceFactories.newConcurrentQueue();
+        Queue<RedisCommand<?, ?, ?>> q = LettuceFactories.newConcurrentQueue(100);
         q.add(command);
 
         sut.notifyDrainQueuedCommands(() -> q);
 
-        assertThat(q).isEmpty();
-        assertThat(sut.getQueue()).contains(command);
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(sut)).contains(command);
+        verify(channel, never()).writeAndFlush(any());
     }
 
     @Test
-    public void notifyDrainQueuedCommandsShouldWriteCommands() throws Exception {
+    public void notifyDrainQueuedCommandsShouldWriteCommands() {
 
         when(channel.isActive()).thenReturn(true);
 
-        Queue<RedisCommand<?, ?, ?>> q = LettuceFactories.newConcurrentQueue();
+        Queue<RedisCommand<?, ?, ?>> q = LettuceFactories.newConcurrentQueue(100);
         q.add(command);
 
         sut.notifyChannelActive(channel);
         sut.notifyDrainQueuedCommands(() -> q);
 
-        assertThat(q).isEmpty();
         verify(channel).writeAndFlush(eq(Arrays.asList(command)));
     }
 
     @Test
-    public void writeShouldRejectCommandsInDisconnectedState() throws Exception {
+    public void writeShouldRejectCommandsInDisconnectedState() {
 
         sut = new DefaultEndpoint(ClientOptions.builder() //
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS) //
@@ -221,7 +219,7 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void writeShouldRejectCommandsInClosedState() throws Exception {
+    public void writeShouldRejectCommandsInClosedState() {
 
         sut.close();
 
@@ -234,7 +232,7 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void writeWithoutAutoReconnectShouldRejectCommandsInDisconnectedState() throws Exception {
+    public void writeWithoutAutoReconnectShouldRejectCommandsInDisconnectedState() {
 
         sut = new DefaultEndpoint(ClientOptions.builder() //
                 .autoReconnect(false) //
@@ -250,10 +248,10 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void closeCleansUpResources() throws Exception {
+    public void closeCleansUpResources() {
 
         sut.notifyChannelActive(channel);
-        sut.registerConnectionWatchdog(Optional.of(connectionWatchdog));
+        sut.registerConnectionWatchdog(connectionWatchdog);
 
         sut.close();
 
@@ -262,10 +260,10 @@ public class DefaultEndpointTest {
     }
 
     @Test
-    public void closeAllowsOnlyOneCall() throws Exception {
+    public void closeAllowsOnlyOneCall() {
 
         sut.notifyChannelActive(channel);
-        sut.registerConnectionWatchdog(Optional.of(connectionWatchdog));
+        sut.registerConnectionWatchdog(connectionWatchdog);
 
         sut.close();
         sut.close();
@@ -294,7 +292,7 @@ public class DefaultEndpointTest {
             handler = new TestableEndpoint(ClientOptions.create()) {
 
                 @Override
-                protected void bufferCommand(RedisCommand<?, ?, ?> command) {
+                protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
 
                     waitForTick(2);
 
@@ -302,7 +300,7 @@ public class DefaultEndpointTest {
                     AtomicLong writers = (AtomicLong) ReflectionTestUtils.getField(sharedLock, "writers");
                     assertThat(writers.get()).isEqualTo(2);
                     waitForTick(3);
-                    super.bufferCommand(command);
+                    super.writeToBuffer(command);
                 }
             };
         }

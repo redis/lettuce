@@ -41,6 +41,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionEvents;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
@@ -55,7 +56,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 @RunWith(MockitoJUnitRunner.class)
 public class CommandHandlerTest {
 
-    private Queue<RedisCommand<String, String, ?>> q;
+    private Queue<RedisCommand<String, String, ?>> stack;
 
     private CommandHandler sut;
 
@@ -115,8 +116,8 @@ public class CommandHandlerTest {
         when(clientResources.commandLatencyCollector()).thenReturn(
                 new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
 
-        sut = new CommandHandler(clientResources, endpoint);
-        q = (Queue) ReflectionTestUtils.getField(sut, "queue");
+        sut = new CommandHandler(ClientOptions.create(), clientResources, endpoint);
+        stack = (Queue) ReflectionTestUtils.getField(sut, "stack");
     }
 
     @Test
@@ -154,14 +155,14 @@ public class CommandHandlerTest {
     @Test
     public void testExceptionWithQueue() throws Exception {
         sut.setState(CommandHandler.LifecycleState.ACTIVE);
-        q.clear();
+        stack.clear();
 
         sut.channelActive(context);
 
-        q.add(command);
+        stack.add(command);
         sut.exceptionCaught(context, new Exception());
 
-        assertThat(q).isEmpty();
+        assertThat(stack).isEmpty();
         command.get();
 
         assertThat(ReflectionTestUtils.getField(command, "exception")).isNotNull();
@@ -246,7 +247,7 @@ public class CommandHandlerTest {
         sut.write(context, command, null);
 
         verifyZeroInteractions(context);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+        assertThat(stack).isEmpty();
     }
 
     @Test
@@ -265,7 +266,7 @@ public class CommandHandlerTest {
             assertThat(e).isSameAs(exception);
         }
 
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+        assertThat(stack).isEmpty();
         verify(commandMock).completeExceptionally(exception);
     }
 
@@ -285,7 +286,7 @@ public class CommandHandlerTest {
             assertThat(e).isSameAs(exception);
         }
 
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+        assertThat(stack).isEmpty();
         verify(commandMock).completeExceptionally(exception);
     }
 
@@ -295,8 +296,7 @@ public class CommandHandlerTest {
         sut.write(context, command, null);
 
         verify(context).write(command, null);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).hasSize(1).allMatch(
-                o -> o instanceof LatencyMeteredCommand);
+        assertThat(stack).hasSize(1).allMatch(o -> o instanceof LatencyMeteredCommand);
     }
 
     @Test
@@ -306,7 +306,7 @@ public class CommandHandlerTest {
         sut.write(context, Arrays.asList(command), null);
 
         verifyZeroInteractions(context);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).isEmpty();
+        assertThat((Collection) ReflectionTestUtils.getField(sut, "stack")).isEmpty();
     }
 
     @Test
@@ -316,7 +316,7 @@ public class CommandHandlerTest {
         sut.write(context, commands, null);
 
         verify(context).write(commands, null);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).hasSize(1);
+        assertThat(stack).hasSize(1);
     }
 
     @Test
@@ -334,8 +334,7 @@ public class CommandHandlerTest {
         verify(context).write(captor.capture(), any());
 
         assertThat(captor.getValue()).containsOnly(command2);
-        assertThat((Collection) ReflectionTestUtils.getField(sut, "queue")).hasSize(1)
-                .allMatch(o -> o instanceof LatencyMeteredCommand)
+        assertThat(stack).hasSize(1).allMatch(o -> o instanceof LatencyMeteredCommand)
                 .allMatch(o -> CommandWrapper.unwrap((RedisCommand) o) == command2);
     }
 

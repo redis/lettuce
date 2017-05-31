@@ -15,8 +15,6 @@
  */
 package io.lettuce.core.protocol;
 
-import java.util.Optional;
-
 import io.netty.channel.Channel;
 
 /**
@@ -49,20 +47,6 @@ public interface Endpoint {
     void notifyException(Throwable t);
 
     /**
-     * Register a component holding a queue.
-     *
-     * @param queueHolder the queue holder.
-     */
-    void registerQueue(HasQueuedCommands queueHolder);
-
-    /**
-     * Unregister a component holding a queue.
-     *
-     * @param queueHolder the queue holder.
-     */
-    void unregisterQueue(HasQueuedCommands queueHolder);
-
-    /**
      * Signal the endpoint to drain queued commands from the queue holder.
      *
      * @param queuedCommands the queue holder.
@@ -72,8 +56,8 @@ public interface Endpoint {
     /**
      * Associate a {@link ConnectionWatchdog} with the {@link Endpoint}.
      *
-     * @param connectionWatchdog the connection watchdog, may be empty.
+     * @param connectionWatchdog the connection watchdog.
      */
-    void registerConnectionWatchdog(Optional<ConnectionWatchdog> connectionWatchdog);
+    void registerConnectionWatchdog(ConnectionWatchdog connectionWatchdog);
 
 }

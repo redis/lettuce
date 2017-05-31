@@ -17,7 +17,7 @@ package io.lettuce.core.reliability;
 
 import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static io.lettuce.ConnectionTestUtil.getCommandBuffer;
-import static io.lettuce.ConnectionTestUtil.getQueue;
+import static io.lettuce.ConnectionTestUtil.getStack;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -105,7 +105,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         sync.set(key, "1");
 
-        assertThat(getQueue(connection)).isEmpty();
+        assertThat(getStack(connection)).isEmpty();
         assertThat(getCommandBuffer(connection)).isEmpty();
 
         connection.close();
@@ -159,12 +159,12 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isFalse();
         assertThat(getException(command)).isInstanceOf(EncoderException.class);
-        assertThat(ConnectionTestUtil.getQueue(connection)).isNotEmpty();
-        ConnectionTestUtil.getQueue(connection).clear();
+        assertThat(ConnectionTestUtil.getStack(connection)).isNotEmpty();
+        ConnectionTestUtil.getStack(connection).clear();
 
         assertThat(sync.get(key)).isEqualTo("2");
 
-        assertThat(ConnectionTestUtil.getQueue(connection)).isEmpty();
+        assertThat(ConnectionTestUtil.getStack(connection)).isEmpty();
         assertThat(ConnectionTestUtil.getCommandBuffer(connection)).isEmpty();
 
         connection.close();
@@ -213,7 +213,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get(key)).isEqualTo("1");
 
-        assertThat(getQueue(connection)).isEmpty();
+        assertThat(getStack(connection)).isEmpty();
         assertThat(getCommandBuffer(connection)).isEmpty();
 
         connection.close();
