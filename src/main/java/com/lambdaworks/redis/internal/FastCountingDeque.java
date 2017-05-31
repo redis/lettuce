@@ -294,11 +294,11 @@ public class FastCountingDeque<E> extends ForwardingDeque<E> implements Deque<E>
     }
 
     protected void increment() {
-        assert UPDATER.incrementAndGet(this) > 0;
+        UPDATER.incrementAndGet(this);
     }
 
     protected void decrement() {
-        assert UPDATER.decrementAndGet(this) >= 0;
+        UPDATER.decrementAndGet(this);
     }
 
     private static class UnmodifiableIterator<E> implements Iterator<E> {
