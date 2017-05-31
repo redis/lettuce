@@ -156,4 +156,37 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
 
         return result;
     }
+
+    @Override
+    public boolean equals(Object o) {
+
+        if (this == o)
+            return true;
+        if (!(o instanceof RedisCommand)) {
+            return false;
+        }
+
+        RedisCommand<?, ?, ?> left = command;
+        while (left instanceof DecoratedCommand) {
+            left = CommandWrapper.unwrap(left);
+        }
+
+        RedisCommand<?, ?, ?> right = (RedisCommand<?, ?, ?>) o;
+        while (right instanceof DecoratedCommand) {
+            right = CommandWrapper.unwrap(right);
+        }
+
+        return left == right;
+    }
+
+    @Override
+    public int hashCode() {
+
+        RedisCommand<?, ?, ?> toHash = command;
+        while (toHash instanceof DecoratedCommand) {
+            toHash = CommandWrapper.unwrap(toHash);
+        }
+
+        return toHash != null ? toHash.hashCode() : 0;
+    }
 }

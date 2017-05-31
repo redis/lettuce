@@ -35,19 +35,17 @@ public class JmhMain {
     public static void main(String... args) throws IOException, RunnerException {
 
         // run selectively
-        runCommandBenchmark();
+        // runCommandBenchmark();
         runCommandHandlerBenchmark();
-        runRedisStateMachineBenchmark();
-        runCommandEncoderBenchmark();
+        // runRedisStateMachineBenchmark();
+        // runCommandEncoderBenchmark();
 
         // or all
         // runBenchmarks();
     }
 
     private static void runBenchmarks() throws RunnerException {
-
         new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).build()).run();
-
     }
 
     private static void runCommandBenchmark() throws RunnerException {

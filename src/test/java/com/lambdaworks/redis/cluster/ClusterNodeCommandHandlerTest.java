@@ -24,13 +24,13 @@ import static org.mockito.Mockito.when;
 
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.RedisChannelWriter;
@@ -53,7 +53,7 @@ public class ClusterNodeCommandHandlerTest {
     private AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.APPEND,
             new StatusOutput<>(new Utf8StringCodec()), null));
 
-    private Queue<RedisCommand<String, String, ?>> queue = new LinkedBlockingQueue<>();
+    private Queue<RedisCommand<String, String, ?>> queue;
 
     @Mock
     private ClientOptions clientOptions;
@@ -69,8 +69,11 @@ public class ClusterNodeCommandHandlerTest {
     @Before
     public void before() throws Exception {
 
+        when(clientOptions.getRequestQueueSize()).thenReturn(Integer.MAX_VALUE);
         when(clientResources.commandLatencyCollector()).thenReturn(DefaultCommandLatencyCollector.disabled());
-        sut = new ClusterNodeCommandHandler(clientOptions, clientResources, queue, clusterChannelWriter);
+        sut = new ClusterNodeCommandHandler(clientOptions, clientResources, clusterChannelWriter);
+
+        queue = (Queue) ReflectionTestUtils.getField(sut, "disconnectedBuffer");
     }
 
     @Test

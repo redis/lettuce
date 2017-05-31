@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.lambdaworks.Delay;
-import com.lambdaworks.Wait;
-import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
-
 import rx.Observable;
 import rx.Subscriber;
 import rx.observers.TestSubscriber;
 import rx.schedulers.Schedulers;
+
+import com.lambdaworks.Delay;
+import com.lambdaworks.Wait;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 
 public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
@@ -88,37 +88,9 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void testCancelCommand() throws Exception {
-
-        List<Object> result = new ArrayList<>();
-        reactive.clientPause(1000).subscribe();
-        reactive.set(key, value).subscribe(new CompletionSubscriber(result));
-        Delay.delay(millis(100));
-
-        reactive.reset();
-        assertThat(result).hasSize(1).contains("completed");
-    }
-
-    @Test
     public void testEcho() throws Exception {
         String result = reactive.echo("echo").toBlocking().first();
         assertThat(result).isEqualTo("echo");
-    }
-
-    @Test
-    public void testMultiCancel() throws Exception {
-
-        List<Object> result = new ArrayList<>();
-        reactive.clientPause(1000).subscribe();
-
-        Observable<String> set = reactive.set(key, value);
-        set.subscribe(new CompletionSubscriber(result));
-        set.subscribe(new CompletionSubscriber(result));
-        set.subscribe(new CompletionSubscriber(result));
-
-        Delay.delay(millis(100));
-        reactive.reset();
-        assertThat(result).hasSize(3).contains("completed");
     }
 
     @Test

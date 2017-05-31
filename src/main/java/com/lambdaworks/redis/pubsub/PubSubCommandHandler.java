@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,10 @@
  */
 package com.lambdaworks.redis.pubsub;
 
-import java.util.Queue;
-
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.buffer.ByteBuf;
@@ -31,10 +28,10 @@ import io.netty.channel.ChannelHandlerContext;
 /**
  * A netty {@link ChannelHandler} responsible for writing redis pub/sub commands and reading the response stream from the
  * server.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
- * 
+ *
  * @author Will Glozer
  */
 public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
@@ -44,27 +41,26 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
 
     /**
      * Initialize a new instance.
-     * 
+     *
      * @param clientOptions client options for the connection
      * @param clientResources client resources for this connection
-     * @param queue Command queue.
      * @param codec Codec.
      */
-    public PubSubCommandHandler(ClientOptions clientOptions, ClientResources clientResources,
-            Queue<RedisCommand<K, V, ?>> queue, RedisCodec<K, V> codec) {
-        super(clientOptions, clientResources, queue);
+    public PubSubCommandHandler(ClientOptions clientOptions, ClientResources clientResources, RedisCodec<K, V> codec) {
+        super(clientOptions, clientResources);
         this.codec = codec;
         this.output = new PubSubOutput<>(codec);
     }
 
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
-        while (output.type() == null && !queue.isEmpty()) {
-            CommandOutput<K, V, ?> currentOutput = queue.peek().getOutput();
+    protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) {
+
+        while (output.type() == null && canDecode(buffer)) {
+            CommandOutput<K, V, ?> currentOutput = stack.peek().getOutput();
             if (!rsm.decode(buffer, currentOutput)) {
                 return;
             }
-            queue.poll().complete();
+            stack.poll().complete();
             buffer.discardReadBytes();
             if (currentOutput instanceof PubSubOutput) {
                 ctx.fireChannelRead(currentOutput);

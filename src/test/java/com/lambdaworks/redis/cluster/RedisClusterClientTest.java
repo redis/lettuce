@@ -30,11 +30,9 @@ import org.junit.*;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -67,8 +65,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     public static void setupClient() throws Exception {
         setupClusterClient();
         client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient
-                .create(Collections.singletonList(RedisURI.Builder.redis(host, port1).withClientName("my-client").build()));
+        clusterClient = RedisClusterClient.create(Collections.singletonList(RedisURI.Builder.redis(host, port1)
+                .withClientName("my-client").build()));
     }
 
     @AfterClass
@@ -180,8 +178,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         connection.sync().quit();
         assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
 
-        StatefulRedisConnection<String, String> nodeConnection = connection
-                .getConnection(connection.getPartitions().getPartition(0).getNodeId());
+        StatefulRedisConnection<String, String> nodeConnection = connection.getConnection(connection.getPartitions()
+                .getPartition(0).getNodeId());
         assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
         nodeConnection.sync().quit();
         assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
@@ -198,8 +196,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         connection.sync().quit();
         assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
 
-        StatefulRedisConnection<String, String> nodeConnection = connection
-                .getConnection(connection.getPartitions().getPartition(0).getNodeId());
+        StatefulRedisConnection<String, String> nodeConnection = connection.getConnection(connection.getPartitions()
+                .getPartition(0).getNodeId());
         assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
         nodeConnection.sync().quit();
         assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
@@ -386,8 +384,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Test
     public void clusterAuth() throws Exception {
 
-        RedisClusterClient clusterClient = new RedisClusterClient(
-                RedisURI.Builder.redis(TestSettings.host(), port7).withPassword("foobared").build());
+        RedisClusterClient clusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), port7)
+                .withPassword("foobared").build());
 
         try (RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster()) {
 
@@ -403,7 +401,6 @@ public class RedisClusterClientTest extends AbstractClusterTest {
             assertThat(new String(password)).isEqualTo("foobared");
         } finally {
             FastShutdown.shutdown(clusterClient);
-
         }
     }
 
@@ -473,8 +470,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         sync.set(KEY_A, value);
         sync.set(KEY_B, "d");
 
-        StatefulRedisConnection<String, String> statefulRedisConnection = sync.getStatefulConnection()
-                .getConnection(TestSettings.hostAddr(), port2);
+        StatefulRedisConnection<String, String> statefulRedisConnection = sync.getStatefulConnection().getConnection(
+                TestSettings.hostAddr(), port2);
 
         RedisClusterCommands<String, String> connection = statefulRedisConnection.sync();
 

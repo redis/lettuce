@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis.protocol;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
 
 import org.openjdk.jmh.annotations.*;
@@ -41,22 +40,22 @@ import io.netty.channel.embedded.EmbeddedChannel;
 public class CommandHandlerBenchmark {
 
     private final static ByteArrayCodec CODEC = new ByteArrayCodec();
-    private final static ClientOptions CLIENT_OPTIONS = ClientOptions.create();
+    private final static ClientOptions CLIENT_OPTIONS = ClientOptions.builder().build();
     private final static EmptyContext CHANNEL_HANDLER_CONTEXT = new EmptyContext();
     private final static byte[] KEY = "key".getBytes();
     private final static ChannelFuture EMPTY = new EmptyFuture();
 
     private CommandHandler commandHandler;
-    private Collection<?> transportBuffer;
+    private Collection<?> stack;
     private Command command;
 
     @Setup
     public void setup() {
 
-        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new ArrayDeque<>()) {
+        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE) {
             @Override
             protected void setState(LifecycleState lifecycleState) {
-                CommandHandlerBenchmark.this.transportBuffer = super.transportBuffer;
+                CommandHandlerBenchmark.this.stack = super.stack;
                 super.setState(lifecycleState);
             }
         };
@@ -71,7 +70,7 @@ public class CommandHandlerBenchmark {
     @TearDown(Level.Iteration)
     public void tearDown() {
         commandHandler.reset();
-        transportBuffer.clear();
+        stack.clear();
     }
 
     @Benchmark
@@ -82,6 +81,7 @@ public class CommandHandlerBenchmark {
     @Benchmark
     public void measureNettyWrite() throws Exception {
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, null);
+        stack.remove(command);
     }
 
     private final static class MyLocalChannel extends EmbeddedChannel {

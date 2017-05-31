@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,11 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
      *
      * @param clientOptions client options for this connection
      * @param clientResources client resources for this connection
-     * @param queue The command queue
      * @param clusterChannelWriter top-most channel writer.
      */
     public ClusterNodeCommandHandler(ClientOptions clientOptions, ClientResources clientResources,
-            Queue<RedisCommand<K, V, ?>> queue, RedisChannelWriter<K, V> clusterChannelWriter) {
-        super(clientOptions, clientResources, queue);
+            RedisChannelWriter<K, V> clusterChannelWriter) {
+        super(clientOptions, clientResources);
         this.clusterChannelWriter = clusterChannelWriter;
     }
 
@@ -87,14 +86,15 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
         logger.debug("{} close()", logPrefix());
 
         if (clusterChannelWriter != null) {
-            
+
+            Collection<RedisCommand<K, V, ?>> commands = new ArrayList<>();
+
             if (isAutoReconnect() && !CHANNEL_OPEN_STATES.contains(getState())) {
-               
-                Collection<RedisCommand<K, V, ?>> commands = shiftCommands(queue);
-                retriggerCommands(commands);
+                commands.addAll(shiftCommands(stack));
             }
 
-            Collection<RedisCommand<K, V, ?>> commands = shiftCommands(commandBuffer);
+            commands.addAll(shiftCommands(disconnectedBuffer));
+            commands.addAll(shiftCommands(commandBuffer));
             retriggerCommands(commands);
         }
 
@@ -102,13 +102,13 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
     }
 
     protected void retriggerCommands(Collection<RedisCommand<K, V, ?>> commands) {
-        
+
         for (RedisCommand<K, V, ?> queuedCommand : commands) {
-            
+
             if (queuedCommand == null || queuedCommand.isCancelled()) {
                 continue;
             }
-            
+
             try {
                 clusterChannelWriter.write(queuedCommand);
             } catch (RedisException e) {
@@ -120,7 +120,7 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
     /**
      * Retrieve commands within a lock to prevent concurrent modification
      */
-    private Collection<RedisCommand<K, V, ?>> shiftCommands(Collection<RedisCommand<K, V, ?>> source) {
+    private Collection<RedisCommand<K, V, ?>> shiftCommands(Queue<RedisCommand<K, V, ?>> source) {
 
         synchronized (stateLock) {
 
@@ -128,11 +128,7 @@ class ClusterNodeCommandHandler<K, V> extends CommandHandler<K, V> {
 
                 lockWritersExclusive();
 
-                try {
-                    return new ArrayList<>(source);
-                } finally {
-                    source.clear();
-                }
+                return drainCommands(source);
 
             } finally {
                 unlockWritersExclusive();

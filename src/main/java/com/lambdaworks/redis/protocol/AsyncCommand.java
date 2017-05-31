@@ -25,16 +25,17 @@ import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.CommandOutput;
+
 import io.netty.buffer.ByteBuf;
 
 /**
  * An asynchronous redis command and its result. All successfully executed commands will eventually return a
  * {@link CommandOutput} object.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Command output type.
- * 
+ *
  * @author Mark Paluch
  */
 public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T>, RedisFuture<T>,
@@ -44,9 +45,9 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     protected RedisCommand<K, V, T> command;
 
     /**
-     * 
+     *
      * @param command the command, must not be {@literal null}.
-     * 
+     *
      */
     public AsyncCommand(RedisCommand<K, V, T> command) {
         LettuceAssert.notNull(command, "RedisCommand must not be null");
@@ -73,7 +74,7 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
 
     /**
      * Get the object that holds this command's output.
-     * 
+     *
      * @return The command output object.
      */
     @Override
@@ -170,9 +171,41 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
         thenAccept(action);
     }
 
-	@Override
-	public RedisCommand<K, V, T> getDelegate() {
-		return command;
-	}
-	
+    @Override
+    public RedisCommand<K, V, T> getDelegate() {
+        return command;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+
+        if (this == o)
+            return true;
+        if (!(o instanceof RedisCommand)) {
+            return false;
+        }
+
+        RedisCommand<?, ?, ?> left = command;
+        while (left instanceof DecoratedCommand) {
+            left = CommandWrapper.unwrap(left);
+        }
+
+        RedisCommand<?, ?, ?> right = (RedisCommand<?, ?, ?>) o;
+        while (right instanceof DecoratedCommand) {
+            right = CommandWrapper.unwrap(right);
+        }
+
+        return left == right;
+    }
+
+    @Override
+    public int hashCode() {
+
+        RedisCommand<?, ?, ?> toHash = command;
+        while (toHash instanceof DecoratedCommand) {
+            toHash = CommandWrapper.unwrap(toHash);
+        }
+
+        return toHash != null ? toHash.hashCode() : 0;
+    }
 }

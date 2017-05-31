@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import com.lambdaworks.redis.ConnectionEvents.PingBeforeActivate;
 import com.lambdaworks.redis.event.connection.ConnectedEvent;
 import com.lambdaworks.redis.event.connection.ConnectionActivatedEvent;
 import com.lambdaworks.redis.event.connection.DisconnectedEvent;
@@ -134,7 +135,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
     static void pingBeforeActivate(AsyncCommand<?, ?, ?> cmd, CompletableFuture<Boolean> initializedFuture,
             ChannelHandlerContext ctx, ClientResources clientResources, long timeout, TimeUnit timeUnit) throws Exception {
 
-        ctx.channel().writeAndFlush(cmd);
+        ctx.fireUserEventTriggered(new PingBeforeActivate(cmd));
 
         Runnable timeoutGuard = () -> {
 

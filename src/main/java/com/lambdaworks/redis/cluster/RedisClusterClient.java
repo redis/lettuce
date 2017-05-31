@@ -43,11 +43,9 @@ import com.lambdaworks.redis.cluster.topology.TopologyComparators;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
@@ -495,9 +493,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         SocketAddress socketAddress = socketAddressSupplier.get();
 
         logger.debug(String.format("connectToNodeAsync(%s at %s)", nodeId, socketAddress));
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
-        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<>(clientOptions, getResources(), queue,
+        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<>(clientOptions, getResources(),
                 clusterWriter);
         StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(handler, codec, timeout, unit);
 
@@ -545,9 +542,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
         logger.debug("connectPubSubToNode(" + nodeId + ")");
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, codec);
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(handler, codec, timeout,
                 unit);
 
@@ -578,11 +574,10 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectCluster(" + initialUris + ")");
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, clientResources, queue);
+        CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, clientResources);
 
         ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<>(clientOptions, handler,
                 clusterTopologyRefreshScheduler);
@@ -641,11 +636,10 @@ public class RedisClusterClient extends AbstractRedisClient {
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectClusterPubSub(" + initialUris + ")");
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, codec);
 
         ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<>(clientOptions, handler,
                 clusterTopologyRefreshScheduler);

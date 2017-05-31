@@ -21,7 +21,6 @@ import static com.lambdaworks.redis.internal.LettuceClassUtils.isPresent;
 
 import java.net.SocketAddress;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -33,9 +32,7 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.protocol.CommandHandler;
-import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
@@ -483,8 +480,7 @@ public class RedisClient extends AbstractRedisClient {
 
         logger.debug("Trying to get a Redis connection for: " + redisURI);
 
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
-        CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, clientResources, queue);
+        CommandHandler<K, V> handler = new CommandHandler<>(clientOptions, clientResources);
 
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(handler, codec, timeout.timeout,
                 timeout.timeUnit);
@@ -616,9 +612,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
-
-        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, queue, codec);
+        PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<>(clientOptions, clientResources, codec);
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(handler, codec, timeout.timeout,
                 timeout.timeUnit);
 
@@ -745,13 +739,12 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
         connectionBuilder.clientResources(clientResources);
 
-        final CommandHandler<K, V> commandHandler = new CommandHandler<>(clientOptions, clientResources, queue);
+        final CommandHandler<K, V> commandHandler = new CommandHandler<>(clientOptions, clientResources);
 
         StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(commandHandler, codec,
                 timeout.timeout, timeout.timeUnit);
