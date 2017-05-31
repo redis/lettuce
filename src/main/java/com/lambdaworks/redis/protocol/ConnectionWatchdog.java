@@ -214,7 +214,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempt));
             logger.debug("Reconnect attempt {}, delay {}ms", attempt, timeout);
 
-            this.reconnectScheduleTimeout = timer.newTimeout(it -> {
+            Timeout reconnectScheduleTimeout = timer.newTimeout(it -> {
 
                 if (!isEventLoopGroupActive()) {
                     logger.debug("isEventLoopGroupActive() == false");
@@ -226,6 +226,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                     return null;
                 });
             }, timeout, TimeUnit.MILLISECONDS);
+            if (!reconnectScheduleTimeout.isExpired()) {
+                this.reconnectScheduleTimeout = reconnectScheduleTimeout;
+            }
         } else {
             logger.debug("{} Skipping scheduleReconnect() because I have an active channel", logPrefix());
         }
