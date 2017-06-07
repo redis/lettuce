@@ -56,7 +56,7 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
                 RedisFuture<?> command = (RedisFuture<?>) result;
                 if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
                     if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti()) {
-                        return null;
+                        throw new IllegalStateException("Unable to execute non-MULTI command during MULTI block.  Be sure your connection is not being shared between multiple threads during a MULTI block.");
                     }
                 }
 
