@@ -226,6 +226,11 @@ public abstract class ConnectionPoolSupport {
         }
 
         @Override
+        public void destroyObject(PooledObject<T> p) throws Exception {
+            p.getObject().close();
+        }
+
+        @Override
         public PooledObject<T> wrap(T obj) {
             return new DefaultPooledObject<>(obj);
         }
