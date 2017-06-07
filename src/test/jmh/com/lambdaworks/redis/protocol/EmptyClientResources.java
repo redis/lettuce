@@ -21,6 +21,7 @@ import com.lambdaworks.redis.event.DefaultEventPublisherOptions;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.EventPublisherOptions;
 import com.lambdaworks.redis.metrics.CommandLatencyCollector;
+import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
 import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.resource.Delay;
 import com.lambdaworks.redis.resource.DnsResolver;
@@ -38,6 +39,7 @@ import io.netty.util.concurrent.SucceededFuture;
 public class EmptyClientResources implements ClientResources {
 
     public static final DefaultEventPublisherOptions PUBLISHER_OPTIONS = DefaultEventPublisherOptions.disabled();
+    public static final CommandLatencyCollector LATENCY_COLLECTOR = DefaultCommandLatencyCollector.disabled();
     public static final EmptyClientResources INSTANCE = new EmptyClientResources();
 
     @Override
@@ -87,7 +89,7 @@ public class EmptyClientResources implements ClientResources {
 
     @Override
     public CommandLatencyCollector commandLatencyCollector() {
-        return null;
+        return LATENCY_COLLECTOR;
     }
 
     @Override

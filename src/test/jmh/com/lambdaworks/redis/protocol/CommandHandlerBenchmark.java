@@ -15,12 +15,11 @@
  */
 package com.lambdaworks.redis.protocol;
 
-import java.util.ArrayDeque;
-
 import org.openjdk.jmh.annotations.*;
 
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
+import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.output.ValueOutput;
 
 import io.netty.channel.ChannelFuture;
@@ -33,7 +32,7 @@ import io.netty.channel.embedded.EmbeddedChannel;
  * <li>user command writes</li>
  * <li>netty (in-eventloop) writes</li>
  * </ul>
- * 
+ *
  * @author Mark Paluch
  */
 @State(Scope.Benchmark)
@@ -51,7 +50,8 @@ public class CommandHandlerBenchmark {
     @Setup
     public void setup() {
 
-        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new ArrayDeque<>(512));
+        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE,
+                LettuceFactories.newConcurrentQueue());
         command = new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
 
         commandHandler.setState(CommandHandler.LifecycleState.CONNECTED);
@@ -67,11 +67,13 @@ public class CommandHandlerBenchmark {
     @Benchmark
     public void measureUserWrite() {
         commandHandler.write(command);
+        commandHandler.transportBuffer.remove(command);
     }
 
     @Benchmark
     public void measureNettyWrite() throws Exception {
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, null);
+        commandHandler.queue.remove(command);
     }
 
     private final static class MyLocalChannel extends EmbeddedChannel {
