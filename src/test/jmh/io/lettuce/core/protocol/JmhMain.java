@@ -37,6 +37,7 @@ public class JmhMain {
         // run selectively
         // runCommandBenchmark();
         runCommandHandlerBenchmark();
+        runRedisEndpointBenchmark();
         // runRedisStateMachineBenchmark();
         // runCommandEncoderBenchmark();
 
@@ -61,6 +62,14 @@ public class JmhMain {
 
         new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
                 .include(".*CommandHandlerBenchmark.*").build()).run();
+        // new
+        // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
+    }
+
+    private static void runRedisEndpointBenchmark() throws RunnerException {
+
+        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*RedisEndpointBenchmark.*")
+                .build()).run();
         // new
         // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
     }
