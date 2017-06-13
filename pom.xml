@@ -110,7 +110,7 @@
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
     <spring.version>5.0.0.RC1</spring.version>
-    <spring-batch.version>4.0.0.M1</spring-batch.version>
+    <spring-batch.version>4.0.0.M2</spring-batch.version>
     <junit-platform.version>1.0.0-M4</junit-platform.version>
     <junit.version>5.0.0-M4</junit.version>
 
@@ -145,7 +145,7 @@
     <dependency>
       <groupId>org.springframework.batch</groupId>
       <artifactId>spring-batch-infrastructure</artifactId>
-      <version>4.0.0.M1</version>
+      <version>${spring-batch.version}</version>
       <scope>provided</scope>
     </dependency>
 
