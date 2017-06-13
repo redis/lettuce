@@ -25,7 +25,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 /**
  * Tiny netty server to generate random base64 data on message reception.
- * 
+ *
  * @author Mark Paluch
  */
 public class RandomResponseServer {
@@ -36,8 +36,8 @@ public class RandomResponseServer {
 
     public void initialize(int port) throws InterruptedException {
 
-        bossGroup = new NioEventLoopGroup(1);
-        workerGroup = new NioEventLoopGroup();
+        bossGroup = Resources.bossGroup;
+        workerGroup = Resources.workerGroup;
 
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).option(ChannelOption.SO_BACKLOG, 100)
@@ -58,7 +58,23 @@ public class RandomResponseServer {
 
     public void shutdown() {
         channel.close();
-        bossGroup.shutdownGracefully(100, 100, TimeUnit.MILLISECONDS);
-        workerGroup.shutdownGracefully(100, 100, TimeUnit.MILLISECONDS);
+    }
+
+    private static class Resources {
+
+        private static final EventLoopGroup bossGroup;
+        private static final EventLoopGroup workerGroup;
+
+        static {
+            bossGroup = new NioEventLoopGroup(1);
+            workerGroup = new NioEventLoopGroup();
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                bossGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS);
+                workerGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS);
+
+            }, "RandomResponseServer-shutdown"));
+        }
+
     }
 }
