@@ -88,9 +88,9 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   @Override
   public void afterPropertiesSet() throws Exception {
     super.afterPropertiesSet();
-    notNull(sqlSessionFactory);
+    notNull(sqlSessionFactory, "A SqlSessionFactory is required.");
     sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
-    notNull(queryId);
+    notNull(queryId, "A queryId is required.");
   }
 
   @Override

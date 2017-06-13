@@ -83,8 +83,8 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
    */
   @Override
   public void afterPropertiesSet() throws Exception {
-    notNull(sqlSessionFactory);
-    notNull(queryId);
+    notNull(sqlSessionFactory, "A SqlSessionFactory is required.");
+    notNull(queryId, "A queryId is required.");
   }
 
   /**
