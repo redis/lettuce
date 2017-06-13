@@ -22,7 +22,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import reactor.test.StepVerifier;
-
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisException;
@@ -64,7 +63,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
 
         StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
-        commands.set(key, value).subscribe();
+        commands.set(key, value).toProcessor();
 
         StepVerifier.create(commands.discard()).expectNext("OK").verifyComplete();
         StepVerifier.create(commands.get(key)).verifyComplete();
@@ -80,7 +79,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
         StepVerifier.create(commands.watch(key)).expectNext("OK").verifyComplete();
         StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
-        commands.set(key, value).subscribe();
+        commands.set(key, value).toProcessor();
 
         otherConnection.sync().del(key);
 
@@ -104,10 +103,10 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
     @Test
     public void errorInMulti() throws Exception {
 
-        commands.multi().subscribe();
-        commands.set(key, value).subscribe();
-        commands.lpop(key).subscribe();
-        commands.get(key).subscribe();
+        commands.multi().toProcessor();
+        commands.set(key, value).toProcessor();
+        commands.lpop(key).toProcessor();
+        commands.get(key).toProcessor();
 
         StepVerifier.create(commands.exec()).consumeNextWith(actual -> {
 
@@ -120,7 +119,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
     @Test
     public void resultOfMultiIsContainedInCommandFlux() throws Exception {
 
-        commands.multi().subscribe();
+        commands.multi().toProcessor();
 
         StepVerifier.Step<String> set1 = StepVerifier.create(commands.set("key1", "value1")).expectNext("OK").thenAwait();
         StepVerifier.Step<String> set2 = StepVerifier.create(commands.set("key2", "value2")).expectNext("OK").thenAwait();
@@ -141,11 +140,11 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
     @Test
     public void resultOfMultiIsContainedInExecObservable() throws Exception {
 
-        commands.multi().subscribe();
-        commands.set("key1", "value1").subscribe();
-        commands.set("key2", "value2").subscribe();
-        commands.mget("key1", "key2").subscribe();
-        commands.llen("something").subscribe();
+        commands.multi().toProcessor();
+        commands.set("key1", "value1").toProcessor();
+        commands.set("key2", "value2").toProcessor();
+        commands.mget("key1", "key2").collectList().toProcessor();
+        commands.llen("something").toProcessor();
 
         StepVerifier.create(commands.exec()).consumeNextWith(actual -> {
 

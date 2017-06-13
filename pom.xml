@@ -88,7 +88,7 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
-            <version>3.1.0.M1</version>
+            <version>3.1.0.M2</version>
         </dependency>
 
         <!-- Netty -->
@@ -237,9 +237,9 @@
         </dependency>
 
         <dependency>
-            <groupId>io.projectreactor.addons</groupId>
+            <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
-            <version>3.1.0.M1</version>
+            <version>3.1.0.M2</version>
             <scope>test</scope>
         </dependency>
 
