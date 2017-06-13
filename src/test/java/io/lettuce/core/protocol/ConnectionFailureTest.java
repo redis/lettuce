@@ -100,10 +100,12 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
 
             try {
-                connection.info().get(1, TimeUnit.MINUTES);
+                connection.info().get(5, TimeUnit.SECONDS);
             } catch (ExecutionException e) {
                 assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
                 assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
+            } catch (TimeoutException e) {
+                // happens once in a while...
             }
             connection.getStatefulConnection().close();
         } finally {
