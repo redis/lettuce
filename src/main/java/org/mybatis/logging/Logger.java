@@ -26,7 +26,7 @@ import java.util.function.Supplier;
  */
 public class Logger {
 
-  private Log log;
+  private final Log log;
 
   Logger(Log log) {
     this.log = log;
