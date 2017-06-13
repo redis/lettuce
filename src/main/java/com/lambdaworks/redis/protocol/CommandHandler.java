@@ -1217,9 +1217,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             dequeue();
 
             if (!future.isSuccess()) {
-                if (!stack.isEmpty()) {
-                    System.out.println();
-                }
                 if (sentCommand != null) {
                     try {
                         write(sentCommand);
