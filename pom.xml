@@ -109,7 +109,7 @@
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
-    <spring.version>5.0.0.RC1</spring.version>
+    <spring.version>5.0.0.RC2</spring.version>
     <spring-batch.version>4.0.0.M2</spring-batch.version>
     <junit-platform.version>1.0.0-M4</junit-platform.version>
     <junit.version>5.0.0-M4</junit.version>
