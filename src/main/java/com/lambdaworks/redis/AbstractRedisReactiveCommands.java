@@ -277,6 +277,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> del(K key) {
+        return createObservable(() -> commandBuilder.del(key));
+    }
+
+    @Override
     public Observable<Long> del(K... keys) {
         return createObservable(() -> commandBuilder.del(keys));
     }

@@ -35,6 +35,14 @@ import rx.Observable;
 public interface RedisKeyReactiveCommands<K, V> {
 
     /**
+     * Delete one key.
+     *
+     * @param key the key
+     * @return Long integer-reply The number of keys that were removed.
+     */
+    Observable<Long> del(K key);
+
+    /**
      * Delete one or more keys.
      *
      * @param keys the keys

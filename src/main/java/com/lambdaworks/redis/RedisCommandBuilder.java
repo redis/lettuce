@@ -340,6 +340,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DECRBY, new IntegerOutput<K, V>(codec), args);
     }
 
+    public Command<K, V, Long> del(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key);
+        return createCommand(DEL, new IntegerOutput<K, V>(codec), args);
+    }
+
     public Command<K, V, Long> del(K... keys) {
         notEmpty(keys);
 

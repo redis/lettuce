@@ -285,6 +285,11 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
+    public RedisFuture<Long> del(K key) {
+        return dispatch(commandBuilder.del(key));
+    }
+
+    @Override
     public RedisFuture<Long> del(K... keys) {
         return dispatch(commandBuilder.del(keys));
     }
