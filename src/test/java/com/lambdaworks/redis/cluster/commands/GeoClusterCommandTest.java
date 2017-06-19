@@ -16,12 +16,14 @@
 package com.lambdaworks.redis.cluster.commands;
 
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.flushDatabaseOfAllNodes;
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
@@ -42,6 +44,10 @@ public class GeoClusterCommandTest extends GeoCommandTest {
     public static void setupClient() {
         redisClusterClient = new RedisClusterClient(
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+
+        try (StatefulRedisClusterConnection<String, String> connection = redisClusterClient.connect()) {
+            assumeTrue(RedisConditions.of(connection).hasCommand("GEOADD"));
+        }
     }
 
     @AfterClass

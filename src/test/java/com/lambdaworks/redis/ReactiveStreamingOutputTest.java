@@ -16,6 +16,7 @@
 package com.lambdaworks.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -26,6 +27,7 @@ import org.junit.rules.ExpectedException;
 import rx.observers.TestSubscriber;
 
 import com.lambdaworks.KeysAndValues;
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.GeoArgs.Unit;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
@@ -40,18 +42,18 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     private StatefulRedisConnection<String, String> stateful;
 
     @Before
-    public void openReactiveConnection() throws Exception {
+    public void openReactiveConnection() {
         stateful = client.connect();
         reactive = stateful.reactive();
     }
 
     @After
-    public void closeReactiveConnection() throws Exception {
+    public void closeReactiveConnection() {
         reactive.close();
     }
 
     @Test
-    public void keyListCommandShouldReturnAllElements() throws Exception {
+    public void keyListCommandShouldReturnAllElements() {
 
         redis.mset(KeysAndValues.MAP);
 
@@ -62,7 +64,7 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void valueListCommandShouldReturnAllElements() throws Exception {
+    public void valueListCommandShouldReturnAllElements() {
 
         redis.mset(KeysAndValues.MAP);
 
@@ -73,7 +75,7 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void stringListCommandShouldReturnAllElements() throws Exception {
+    public void stringListCommandShouldReturnAllElements() {
 
         reactive.configGet("*").subscribe(subscriber);
         subscriber.awaitTerminalEvent();
@@ -82,7 +84,7 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void booleanListCommandShouldReturnAllElements() throws Exception {
+    public void booleanListCommandShouldReturnAllElements() {
 
         TestSubscriber<Boolean> subscriber = TestSubscriber.create();
 
@@ -93,7 +95,7 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void scoredValueListCommandShouldReturnAllElements() throws Exception {
+    public void scoredValueListCommandShouldReturnAllElements() {
 
         TestSubscriber<ScoredValue<String>> subscriber = TestSubscriber.create();
 
@@ -106,7 +108,9 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void geoWithinListCommandShouldReturnAllElements() throws Exception {
+    public void geoWithinListCommandShouldReturnAllElements() {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("GEORADIUS"));
 
         TestSubscriber<GeoWithin<String>> subscriber = TestSubscriber.create();
 
@@ -122,7 +126,9 @@ new GeoWithin<>("value1", null, 3542523898362974L, null),
     }
 
     @Test
-    public void geoCoordinatesListCommandShouldReturnAllElements() throws Exception {
+    public void geoCoordinatesListCommandShouldReturnAllElements() {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("GEOPOS"));
 
         TestSubscriber<GeoCoordinates> subscriber = TestSubscriber.create();
 
@@ -134,5 +140,4 @@ new GeoWithin<>("value1", null, 3542523898362974L, null),
 
         assertThat(subscriber.getOnNextEvents()).hasSize(2).doesNotContainNull();
     }
-
 }

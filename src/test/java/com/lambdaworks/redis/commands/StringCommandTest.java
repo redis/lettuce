@@ -31,7 +31,6 @@ import org.junit.rules.ExpectedException;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.ListStreamingAdapter;
-import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisException;
 
 /**
@@ -160,13 +159,6 @@ public class StringCommandTest extends AbstractRedisClientTest {
     @Test(expected = RedisException.class)
     public void setNegativePX() throws Exception {
         redis.set(key, value, px(-1000));
-    }
-
-    @Test
-    public void setExWithPx() throws Exception {
-        exception.expect(RedisCommandExecutionException.class);
-        exception.expectMessage("ERR syntax error");
-        redis.set(key, value, ex(10).px(20000).nx());
     }
 
     @Test

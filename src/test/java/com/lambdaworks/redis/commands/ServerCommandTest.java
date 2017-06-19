@@ -18,6 +18,7 @@ package com.lambdaworks.redis.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.Date;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.RedisConnection;
@@ -46,7 +48,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ServerCommandTest extends AbstractRedisClientTest {
     @Test
-    public void bgrewriteaof() throws Exception {
+    public void bgrewriteaof() {
         String msg = "Background append only file rewriting";
         assertThat(redis.bgrewriteaof(), containsString(msg));
     }
@@ -61,7 +63,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void clientGetSetname() throws Exception {
+    public void clientGetSetname() {
         assertThat(redis.clientGetname()).isNull();
         assertThat(redis.clientSetname("test")).isEqualTo("OK");
         assertThat(redis.clientGetname()).isEqualTo("test");
@@ -70,12 +72,12 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void clientPause() throws Exception {
+    public void clientPause() {
         assertThat(redis.clientPause(10)).isEqualTo("OK");
     }
 
     @Test
-    public void clientKill() throws Exception {
+    public void clientKill() {
         Pattern p = Pattern.compile(".*addr=([^ ]+).*");
         String clients = redis.clientList();
         Matcher m = p.matcher(clients);
@@ -85,7 +87,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void clientKillExtended() throws Exception {
+    public void clientKillExtended() {
 
         RedisConnection<String, String> connection2 = client.connect().sync();
         connection2.clientSetname("killme");
@@ -107,17 +109,17 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void clientList() throws Exception {
+    public void clientList() {
         assertThat(redis.clientList().contains("addr=")).isTrue();
     }
 
     @Test
-    public void commandCount() throws Exception {
+    public void commandCount() {
         assertThat(redis.commandCount()).isGreaterThan(100);
     }
 
     @Test
-    public void command() throws Exception {
+    public void command() {
 
         List<Object> result = redis.command();
 
@@ -128,7 +130,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandInfo() throws Exception {
+    public void commandInfo() {
 
         List<Object> result = redis.commandInfo(CommandType.GETRANGE, CommandType.SET);
 
@@ -144,12 +146,12 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void configGet() throws Exception {
+    public void configGet() {
         assertThat(redis.configGet("maxmemory")).isEqualTo(list("maxmemory", "0"));
     }
 
     @Test
-    public void configResetstat() throws Exception {
+    public void configResetstat() {
         redis.get(key);
         redis.get(key);
         assertThat(redis.configResetstat()).isEqualTo("OK");
@@ -157,7 +159,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void configSet() throws Exception {
+    public void configSet() {
         String maxmemory = redis.configGet("maxmemory").get(1);
         assertThat(redis.configSet("maxmemory", "1024")).isEqualTo("OK");
         assertThat(redis.configGet("maxmemory").get(1)).isEqualTo("1024");
@@ -165,14 +167,14 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void configRewrite() throws Exception {
+    public void configRewrite() {
 
         String result = redis.configRewrite();
         assertThat(result).isEqualTo("OK");
     }
 
     @Test
-    public void dbsize() throws Exception {
+    public void dbsize() {
         assertThat(redis.dbsize()).isEqualTo(0);
         redis.set(key, value);
         assertThat(redis.dbsize()).isEqualTo(1);
@@ -180,7 +182,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
 
     @Test
     @Ignore("Causes instabilities")
-    public void debugCrashAndRecover() throws Exception {
+    public void debugCrashAndRecover() {
         try {
             assertThat(redis.debugCrashAndRecover(1L)).isNotNull();
         } catch (Exception e) {
@@ -189,26 +191,26 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void debugHtstats() throws Exception {
+    public void debugHtstats() {
         redis.set(key, value);
         String result = redis.debugHtstats(0);
         assertThat(result).contains("table size");
     }
 
     @Test
-    public void debugObject() throws Exception {
+    public void debugObject() {
         redis.set(key, value);
         redis.debugObject(key);
     }
 
     @Test
-    public void debugReload() throws Exception {
+    public void debugReload() {
         assertThat(redis.debugReload()).isEqualTo("OK");
     }
 
     @Test
     @Ignore("Causes instabilities")
-    public void debugRestart() throws Exception {
+    public void debugRestart() {
         try {
             assertThat(redis.debugRestart(1L)).isNotNull();
         } catch (Exception e) {
@@ -217,7 +219,7 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void debugSdslen() throws Exception {
+    public void debugSdslen() {
         redis.set(key, value);
         String result = redis.debugSdslen(key);
         assertThat(result).contains("key_sds_len");
@@ -226,24 +228,27 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     /**
      * this test causes a stop of the redis. This means, you cannot repeat the test without restarting your redis.
      *
-     * @throws Exception
+     * @
      */
     @Test
-    public void flushall() throws Exception {
+    public void flushall() {
         redis.set(key, value);
         assertThat(redis.flushall()).isEqualTo("OK");
         assertThat(redis.get(key)).isNull();
     }
 
     @Test
-    public void flushallAsync() throws Exception {
+    public void flushallAsync() {
+
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("3.4"));
+
         redis.set(key, value);
         assertThat(redis.flushallAsync()).isEqualTo("OK");
         assertThat(redis.get(key)).isNull();
     }
 
     @Test
-    public void flushdb() throws Exception {
+    public void flushdb() {
         redis.set(key, value);
         redis.select(1);
         redis.set(key, value + "X");
@@ -254,7 +259,10 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void flushdbAsync() throws Exception {
+    public void flushdbAsync() {
+
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("3.4"));
+
         redis.set(key, value);
         redis.select(1);
         redis.set(key, value + "X");
@@ -265,13 +273,13 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void info() throws Exception {
+    public void info() {
         assertThat(redis.info().contains("redis_version")).isTrue();
         assertThat(redis.info("server").contains("redis_version")).isTrue();
     }
 
     @Test
-    public void lastsave() throws Exception {
+    public void lastsave() {
         Date start = new Date(System.currentTimeMillis() / 1000);
         assertThat(start.compareTo(redis.lastsave()) <= 0).isTrue();
     }
@@ -286,19 +294,19 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void slaveof() throws Exception {
+    public void slaveof() {
 
         assertThat(redis.slaveof(TestSettings.host(), 0)).isEqualTo("OK");
         redis.slaveofNoOne();
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void slaveofEmptyHost() throws Exception {
+    public void slaveofEmptyHost() {
         redis.slaveof("", 0);
     }
 
     @Test
-    public void role() throws Exception {
+    public void role() {
 
         List<Object> objects = redis.role();
 
@@ -310,13 +318,13 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void slaveofNoOne() throws Exception {
+    public void slaveofNoOne() {
         assertThat(redis.slaveofNoOne()).isEqualTo("OK");
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void slowlog() throws Exception {
+    public void slowlog() {
         long start = System.currentTimeMillis() / 1000;
 
         assertThat(redis.configSet("slowlog-log-slower-than", "0")).isEqualTo("OK");
@@ -348,6 +356,8 @@ public class ServerCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void swapdb() {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("SWAPDB"));
 
         redis.select(1);
         redis.set(key, "value1");

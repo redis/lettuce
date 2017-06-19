@@ -16,12 +16,14 @@
 package com.lambdaworks.redis.cluster.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
@@ -91,6 +93,8 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
     @Test
     public void touch() throws Exception {
 
+        assumeTrue(RedisConditions.of(redis).hasCommand("TOUCH"));
+
         redis.set(key, "value");
         redis.set("a", "value");
         redis.set("b", "value");
@@ -101,6 +105,8 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void unlink() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("UNLINK"));
 
         redis.set(key, "value");
         redis.set("a", "value");

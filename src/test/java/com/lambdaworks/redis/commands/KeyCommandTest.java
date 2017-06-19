@@ -17,6 +17,7 @@ package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 
@@ -24,6 +25,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.*;
 
 /**
@@ -47,6 +49,9 @@ public class KeyCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void unlink() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("UNLINK"));
+
         redis.set(key, value);
         assertThat((long) redis.unlink(key)).isEqualTo(1);
         redis.set(key + "1", value);
@@ -230,12 +235,6 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void renamenxIdenticalKeys() throws Exception {
-        redis.set(key, value);
-        assertThat(redis.renamenx(key, key)).isFalse();
-    }
-
-    @Test
     public void restore() throws Exception {
         redis.set(key, value);
         byte[] bytes = redis.dump(key);
@@ -254,6 +253,9 @@ public class KeyCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void touch() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("TOUCH"));
+
         assertThat((long) redis.touch(key)).isEqualTo(0);
         redis.set(key, value);
         assertThat((long) redis.touch(key, "key2")).isEqualTo(1);

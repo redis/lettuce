@@ -17,6 +17,7 @@ package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.*;
 
 /**
@@ -139,6 +141,9 @@ public class HashCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void hstrlen() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("HSTRLEN"));
+
         assertThat((long) redis.hstrlen(key, "one")).isEqualTo(0);
         redis.hset(key, "one", value);
         assertThat((long) redis.hstrlen(key, "one")).isEqualTo(value.length());

@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +28,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.lambdaworks.KeysAndValues;
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
@@ -225,6 +227,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void delRegular() throws Exception {
 
+        assumeTrue(RedisConditions.of(syncCommands.getStatefulConnection()).hasCommand("UNLINK"));
+
         msetRegular();
         Long result = syncCommands.unlink(key);
 
@@ -250,6 +254,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void unlinkRegular() throws Exception {
 
+        assumeTrue(RedisConditions.of(syncCommands.getStatefulConnection()).hasCommand("UNLINK"));
+
         msetRegular();
         Long result = syncCommands.unlink(key);
 
@@ -259,6 +265,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     @Test
     public void unlinkCrossSlot() throws Exception {
+
+        assumeTrue(RedisConditions.of(syncCommands.getStatefulConnection()).hasCommand("UNLINK"));
 
         List<String> keys = prepareKeys();
 

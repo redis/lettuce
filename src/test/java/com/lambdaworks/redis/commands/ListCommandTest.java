@@ -16,12 +16,14 @@
 package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.ListStreamingAdapter;
 
@@ -30,6 +32,7 @@ import com.lambdaworks.redis.ListStreamingAdapter;
  * @author Mark Paluch
  */
 public class ListCommandTest extends AbstractRedisClientTest {
+
     @Test
     public void blpop() throws Exception {
         redis.rpush("two", "2", "3");
@@ -112,6 +115,9 @@ public class ListCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void lpushxVariadic() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommandArity("LPUSHX", -3));
+
         assertThat((long) redis.lpushx(key, "one", "two")).isEqualTo(0);
         redis.lpush(key, "two");
         assertThat((long) redis.lpushx(key, "one", "zero")).isEqualTo(3);
@@ -217,6 +223,9 @@ public class ListCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void rpushxVariadic() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommandArity("RPUSHX", -3));
+
         assertThat((long) redis.rpushx(key, "two", "three")).isEqualTo(0);
         redis.rpush(key, "one");
         assertThat((long) redis.rpushx(key, "two", "three")).isEqualTo(3);
