@@ -47,25 +47,25 @@ public class ServerReactiveCommandTest extends ServerCommandTest {
      * Luckily these commands do not destroy anything in contrast to sync/async.
      */
     @Test
-    public void shutdown() throws Exception {
+    public void shutdown() {
         reactive.shutdown(true);
         assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
     }
 
     @Test
-    public void debugOom() throws Exception {
+    public void debugOom() {
         reactive.debugOom();
         assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
     }
 
     @Test
-    public void debugSegfault() throws Exception {
+    public void debugSegfault() {
         reactive.debugSegfault();
         assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
     }
 
     @Test
-    public void debugRestart() throws Exception {
+    public void debugRestart() {
         reactive.debugRestart(1L);
         assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
     }

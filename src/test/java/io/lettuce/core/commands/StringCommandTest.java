@@ -25,11 +25,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.*;
-import io.lettuce.core.codec.ByteArrayCodec;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.KeyValueStreamingAdapter;
+import io.lettuce.core.RedisException;
 
 /**
  * @author Will Glozer
@@ -41,8 +44,8 @@ public class StringCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void append() throws Exception {
-        assertThat(redis.append(key, value)).isEqualTo( value.length() );
-        assertThat(redis.append(key, "X")).isEqualTo( value.length() + 1 );
+        assertThat(redis.append(key, value)).isEqualTo(value.length());
+        assertThat(redis.append(key, "X")).isEqualTo(value.length() + 1);
     }
 
     @Test
@@ -61,16 +64,16 @@ public class StringCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void getrange() throws Exception {
-        assertThat(redis.getrange(key, 0, -1)).isEqualTo( "" );
+        assertThat(redis.getrange(key, 0, -1)).isEqualTo("");
         redis.set(key, "foobar");
-        assertThat(redis.getrange(key, 2, 4)).isEqualTo( "oba" );
-        assertThat(redis.getrange(key, 3, -1)).isEqualTo( "bar" );
+        assertThat(redis.getrange(key, 2, 4)).isEqualTo("oba");
+        assertThat(redis.getrange(key, 3, -1)).isEqualTo("bar");
     }
 
     @Test
     public void getset() throws Exception {
         assertThat(redis.getset(key, value)).isNull();
-        assertThat(redis.getset(key, "two")).isEqualTo( value );
+        assertThat(redis.getset(key, "two")).isEqualTo(value);
         assertThat(redis.get(key)).isEqualTo("two");
     }
 
@@ -128,11 +131,11 @@ public class StringCommandTest extends AbstractRedisClientTest {
         assertThat(redis.set(key, value, px(20000))).isEqualTo("OK");
         assertThat(redis.set(key, value, ex(10))).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
-        assertThat(redis.ttl(key)).isGreaterThanOrEqualTo( 9 );
+        assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(9);
 
         assertThat(redis.set(key, value, px(10000))).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
-        assertThat(redis.ttl(key)).isGreaterThanOrEqualTo( 9 );
+        assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(9);
 
         assertThat(redis.set(key, value, nx())).isNull();
         assertThat(redis.set(key, value, xx())).isEqualTo("OK");
@@ -157,13 +160,6 @@ public class StringCommandTest extends AbstractRedisClientTest {
     @Test(expected = RedisException.class)
     public void setNegativePX() throws Exception {
         redis.set(key, value, px(-1000));
-    }
-
-    @Test
-    public void setExWithPx() throws Exception {
-        exception.expect(RedisCommandExecutionException.class);
-        exception.expectMessage("ERR syntax error");
-        redis.set(key, value, ex(10).px(20000).nx());
     }
 
     @Test

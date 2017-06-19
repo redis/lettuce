@@ -21,12 +21,14 @@ import static io.lettuce.core.BitFieldArgs.typeWidthBasedOffset;
 import static io.lettuce.core.BitFieldArgs.unsigned;
 import static io.lettuce.core.BitFieldArgs.OverflowType.WRAP;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.Test;
 
+import io.lettuce.RedisConditions;
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -104,6 +106,8 @@ public class BitCommandTest extends AbstractRedisClientTest {
     @Test
     public void bitfield() throws Exception {
 
+        assumeTrue(RedisConditions.of(redis).hasCommand("BITFIELD"));
+
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).set(5, 1).incrBy(2, 3).get().get(2);
 
         List<Long> values = redis.bitfield(key, bitFieldArgs);
@@ -114,6 +118,8 @@ public class BitCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void bitfieldGetWithOffset() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("BITFIELD"));
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).get(signed(2), typeWidthBasedOffset(1));
 
@@ -126,6 +132,8 @@ public class BitCommandTest extends AbstractRedisClientTest {
     @Test
     public void bitfieldSet() throws Exception {
 
+        assumeTrue(RedisConditions.of(redis).hasCommand("BITFIELD"));
+
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).set(5);
 
         List<Long> values = redis.bitfield(key, bitFieldArgs);
@@ -136,6 +144,8 @@ public class BitCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void bitfieldWithOffsetSet() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("BITFIELD"));
 
         redis.bitfield(key, BitFieldArgs.Builder.set(signed(8), typeWidthBasedOffset(2), 5));
         assertThat(bitstring.get(key)).isEqualTo("000000000000000010100000");
@@ -148,6 +158,8 @@ public class BitCommandTest extends AbstractRedisClientTest {
     @Test
     public void bitfieldIncrBy() throws Exception {
 
+        assumeTrue(RedisConditions.of(redis).hasCommand("BITFIELD"));
+
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).incrBy(1);
 
         List<Long> values = redis.bitfield(key, bitFieldArgs);
@@ -159,6 +171,8 @@ public class BitCommandTest extends AbstractRedisClientTest {
     @Test
     public void bitfieldWithOffsetIncrBy() throws Exception {
 
+        assumeTrue(RedisConditions.of(redis).hasCommand("BITFIELD"));
+
         redis.bitfield(key, BitFieldArgs.Builder.incrBy(signed(8), typeWidthBasedOffset(2), 1));
         assertThat(bitstring.get(key)).isEqualTo("000000000000000010000000");
 
@@ -169,6 +183,8 @@ public class BitCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void bitfieldOverflow() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("BITFIELD"));
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.overflow(WRAP).set(signed(8), 9, Integer.MAX_VALUE).get(signed(8));
 

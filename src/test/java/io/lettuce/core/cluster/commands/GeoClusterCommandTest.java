@@ -16,13 +16,15 @@
 package io.lettuce.core.cluster.commands;
 
 import static io.lettuce.core.cluster.ClusterTestUtil.flushDatabaseOfAllNodes;
+import static org.junit.Assume.assumeTrue;
 
-import io.lettuce.TestClientResources;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 
+import io.lettuce.RedisConditions;
+import io.lettuce.TestClientResources;
 import io.lettuce.core.FastShutdown;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSettings;
@@ -43,6 +45,10 @@ public class GeoClusterCommandTest extends GeoCommandTest {
     public static void setupClient() {
         redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+
+        try (StatefulRedisClusterConnection<String, String> connection = redisClusterClient.connect()) {
+            assumeTrue(RedisConditions.of(connection).hasCommand("GEOADD"));
+        }
     }
 
     @AfterClass

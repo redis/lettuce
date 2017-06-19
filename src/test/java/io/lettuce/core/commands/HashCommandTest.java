@@ -17,8 +17,8 @@ package io.lettuce.core.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
+import static org.junit.Assume.assumeTrue;
 
-import java.security.Key;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import io.lettuce.RedisConditions;
 import io.lettuce.core.*;
 
 /**
@@ -140,6 +141,9 @@ public class HashCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void hstrlen() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("HSTRLEN"));
+
         assertThat((long) redis.hstrlen(key, "one")).isEqualTo(0);
         redis.hset(key, "one", value);
         assertThat((long) redis.hstrlen(key, "one")).isEqualTo(value.length());

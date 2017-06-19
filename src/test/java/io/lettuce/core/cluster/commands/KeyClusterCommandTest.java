@@ -16,12 +16,14 @@
 package io.lettuce.core.cluster.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.lettuce.RedisConditions;
 import io.lettuce.TestClientResources;
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.FastShutdown;
@@ -92,6 +94,8 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
     @Test
     public void touch() throws Exception {
 
+        assumeTrue(RedisConditions.of(redis).hasCommand("TOUCH"));
+
         redis.set(key, "value");
         redis.set("a", "value");
         redis.set("b", "value");
@@ -102,6 +106,8 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void unlink() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("UNLINK"));
 
         redis.set(key, "value");
         redis.set("a", "value");

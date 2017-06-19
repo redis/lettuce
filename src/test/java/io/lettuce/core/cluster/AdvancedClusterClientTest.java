@@ -16,6 +16,7 @@
 package io.lettuce.core.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +28,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import io.lettuce.KeysAndValues;
+import io.lettuce.RedisConditions;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -101,8 +103,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
             RedisClusterAsyncCommands<String, String> nodeId = commands.getConnection(redisClusterNode.getNodeId());
-            RedisClusterAsyncCommands<String, String> hostAndPort = commands
-                    .getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
+            RedisClusterAsyncCommands<String, String> hostAndPort = commands.getConnection(redisClusterNode.getUri().getHost(),
+                    redisClusterNode.getUri().getPort());
 
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
@@ -111,8 +113,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
 
             StatefulRedisConnection<String, String> nodeId = statefulConnection.getConnection(redisClusterNode.getNodeId());
-            StatefulRedisConnection<String, String> hostAndPort = statefulConnection
-                    .getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
+            StatefulRedisConnection<String, String> hostAndPort = statefulConnection.getConnection(redisClusterNode.getUri()
+                    .getHost(), redisClusterNode.getUri().getPort());
 
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
@@ -211,6 +213,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void delRegular() throws Exception {
 
+        assumeTrue(RedisConditions.of(syncCommands.getStatefulConnection()).hasCommand("UNLINK"));
+
         msetRegular();
         Long result = syncCommands.unlink(key);
 
@@ -236,6 +240,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void unlinkRegular() throws Exception {
 
+        assumeTrue(RedisConditions.of(syncCommands.getStatefulConnection()).hasCommand("UNLINK"));
+
         msetRegular();
         Long result = syncCommands.unlink(key);
 
@@ -245,6 +251,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     @Test
     public void unlinkCrossSlot() throws Exception {
+
+        assumeTrue(RedisConditions.of(syncCommands.getStatefulConnection()).hasCommand("UNLINK"));
 
         List<String> keys = prepareKeys();
 
@@ -567,8 +575,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             }
         } while (!scanCursor.isFinished());
 
-        assertThat(adapter.getList())
-                .containsAll(KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+        assertThat(adapter.getList()).containsAll(
+                KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
 
     }
 

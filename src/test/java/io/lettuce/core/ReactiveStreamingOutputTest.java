@@ -16,6 +16,7 @@
 package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +28,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import reactor.test.StepVerifier;
-
 import io.lettuce.KeysAndValues;
+import io.lettuce.RedisConditions;
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -45,18 +46,18 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     private StatefulRedisConnection<String, String> stateful;
 
     @Before
-    public void openReactiveConnection() throws Exception {
+    public void openReactiveConnection() {
         stateful = client.connect();
         reactive = stateful.reactive();
     }
 
     @After
-    public void closeReactiveConnection() throws Exception {
+    public void closeReactiveConnection() {
         reactive.getStatefulConnection().close();
     }
 
     @Test
-    public void keyListCommandShouldReturnAllElements() throws Exception {
+    public void keyListCommandShouldReturnAllElements() {
 
         redis.mset(KeysAndValues.MAP);
 
@@ -65,7 +66,7 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void valueListCommandShouldReturnAllElements() throws Exception {
+    public void valueListCommandShouldReturnAllElements() {
 
         redis.mset(KeysAndValues.MAP);
 
@@ -74,17 +75,17 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void stringListCommandShouldReturnAllElements() throws Exception {
+    public void stringListCommandShouldReturnAllElements() {
         StepVerifier.create(reactive.configGet("*")).expectNextCount(120).thenCancel().verify();
     }
 
     @Test
-    public void booleanListCommandShouldReturnAllElements() throws Exception {
+    public void booleanListCommandShouldReturnAllElements() {
         StepVerifier.create(reactive.scriptExists("a", "b", "c")).expectNextCount(3).verifyComplete();
     }
 
     @Test
-    public void scoredValueListCommandShouldReturnAllElements() throws Exception {
+    public void scoredValueListCommandShouldReturnAllElements() {
 
         redis.zadd(key, 1d, "v1", 2d, "v2", 3d, "v3");
 
@@ -94,7 +95,9 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void geoWithinListCommandShouldReturnAllElements() throws Exception {
+    public void geoWithinListCommandShouldReturnAllElements() {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("GEORADIUS"));
 
         redis.geoadd(key, 50, 20, "value1");
         redis.geoadd(key, 50, 21, "value2");
@@ -112,7 +115,9 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void geoCoordinatesListCommandShouldReturnAllElements() throws Exception {
+    public void geoCoordinatesListCommandShouldReturnAllElements() {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("GEOPOS"));
 
         redis.geoadd(key, 50, 20, "value1");
         redis.geoadd(key, 50, 21, "value2");

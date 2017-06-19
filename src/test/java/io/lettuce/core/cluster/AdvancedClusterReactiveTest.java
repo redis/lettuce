@@ -16,6 +16,7 @@
 package io.lettuce.core.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,6 +30,7 @@ import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 import io.lettuce.KeysAndValues;
+import io.lettuce.RedisConditions;
 import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
@@ -143,6 +145,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
     @Test
     public void unlinkCrossSlot() {
+
+        assumeTrue(RedisConditions.of(syncCommands).hasCommand("UNLINK"));
 
         msetCrossSlot();
 
