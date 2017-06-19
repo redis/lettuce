@@ -327,14 +327,14 @@ public class ServerCommandTest extends AbstractRedisClientTest {
         assertThat(log).hasSize(2);
 
         List<Object> entry = (List<Object>) log.get(0);
-        assertThat(entry).hasSize(4);
+        assertThat(entry.size()).isGreaterThanOrEqualTo(4);
         assertThat(entry.get(0) instanceof Long).isTrue();
         assertThat((Long) entry.get(1) >= start).isTrue();
         assertThat(entry.get(2) instanceof Long).isTrue();
         assertThat(entry.get(3)).isEqualTo(list("SET", key, value));
 
         entry = (List<Object>) log.get(1);
-        assertThat(entry).hasSize(4);
+        assertThat(entry.size()).isGreaterThanOrEqualTo(4);
         assertThat(entry.get(0) instanceof Long).isTrue();
         assertThat((Long) entry.get(1) >= start).isTrue();
         assertThat(entry.get(2) instanceof Long).isTrue();
