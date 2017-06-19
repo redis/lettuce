@@ -15,7 +15,7 @@
  */
 package com.lambdaworks.redis.commands.rx;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -43,25 +43,25 @@ public class ServerRxCommandTest extends ServerCommandTest {
      * Luckily these commands do not destroy anything in contrast to sync/async.
      */
     @Test
-    public void shutdown() throws Exception {
+    public void shutdown() {
         reactive.shutdown(true);
         assertThat(reactive.isOpen()).isTrue();
     }
 
     @Test
-    public void debugOom() throws Exception {
+    public void debugOom() {
         reactive.debugOom();
         assertThat(reactive.isOpen()).isTrue();
     }
 
     @Test
-    public void debugSegfault() throws Exception {
+    public void debugSegfault() {
         reactive.debugSegfault();
         assertThat(reactive.isOpen()).isTrue();
     }
 
     @Test
-    public void debugRestart() throws Exception {
+    public void debugRestart() {
         reactive.debugRestart(1L);
         assertThat(reactive.isOpen()).isTrue();
     }

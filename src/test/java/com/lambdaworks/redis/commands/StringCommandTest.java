@@ -164,13 +164,6 @@ public class StringCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void setExWithPx() throws Exception {
-        exception.expect(RedisCommandExecutionException.class);
-        exception.expectMessage("ERR syntax error");
-        redis.set(key, value, ex(10).px(20000).nx());
-    }
-
-    @Test
     public void setbit() throws Exception {
         assertThat(redis.setbit(key, 0, 1)).isEqualTo(0);
         assertThat(redis.setbit(key, 0, 0)).isEqualTo(1);

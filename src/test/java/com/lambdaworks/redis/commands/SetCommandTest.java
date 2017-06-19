@@ -16,12 +16,14 @@
 package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.lambdaworks.RedisConditions;
 import org.junit.Test;
 
 import com.lambdaworks.redis.*;
@@ -138,6 +140,9 @@ public class SetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void spopMultiple() throws Exception {
+
+        assumeTrue(RedisConditions.of(redis).hasCommandArity("SPOP", -2));
+
         assertThat(redis.spop(key)).isNull();
         redis.sadd(key, "a", "b", "c");
         Set<String> rand = redis.spop(key, 2);
@@ -325,7 +330,7 @@ public class SetCommandTest extends AbstractRedisClientTest {
             check.addAll(cursor.getValues());
         }
 
-        assertThat(new TreeSet<String>(check)).isEqualTo(new TreeSet<String>(expect));
+        assertThat(new TreeSet<>(check)).isEqualTo(new TreeSet<>(expect));
     }
 
     @Test

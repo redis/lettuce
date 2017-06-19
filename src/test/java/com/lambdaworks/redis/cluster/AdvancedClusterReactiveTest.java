@@ -17,11 +17,13 @@ package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import com.lambdaworks.RedisConditions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -166,6 +168,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
     @Test
     public void unlinkCrossSlot() throws Exception {
+
+        assumeTrue(RedisConditions.of(syncCommands).hasCommand("UNLINK"));
 
         msetCrossSlot();
 
@@ -399,7 +403,7 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
         syncCommands.set(KEY_ON_NODE_1, value);
         syncCommands.set(KEY_ON_NODE_2, value);
     }
-    
+
     protected Map<String, String> prepareMset() {
         Map<String, String> mset = new HashMap<>();
         for (char c = 'a'; c < 'z'; c++) {

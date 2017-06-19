@@ -16,11 +16,13 @@
 package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import com.lambdaworks.RedisConditions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -185,7 +187,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         String key = mset.keySet().iterator().next();
         Map<String, String> submap = Collections.singletonMap(key, mset.get(key));
-        
+
         assertThat(commands.msetnx(submap).get()).isTrue();
         assertThat(commands.msetnx(mset).get()).isFalse();
 
@@ -225,6 +227,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void delRegular() throws Exception {
 
+        assumeTrue(RedisConditions.of(syncCommands.getStatefulConnection()).hasCommand("UNLINK"));
+
         msetRegular();
         Long result = syncCommands.unlink(key);
 
@@ -250,6 +254,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     @Test
     public void unlinkRegular() throws Exception {
 
+        assumeTrue(RedisConditions.of(syncCommands.getStatefulConnection()).hasCommand("UNLINK"));
+
         msetRegular();
         Long result = syncCommands.unlink(key);
 
@@ -259,6 +265,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
     @Test
     public void unlinkCrossSlot() throws Exception {
+
+        assumeTrue(RedisConditions.of(syncCommands.getStatefulConnection()).hasCommand("UNLINK"));
 
         List<String> keys = prepareKeys();
 
@@ -621,7 +629,7 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         syncCommands.set(KEY_ON_NODE_1, value);
         syncCommands.set(KEY_ON_NODE_2, value);
     }
-    
+
     protected Map<String, String> prepareMset() {
         Map<String, String> mset = new HashMap<>();
         for (char c = 'a'; c < 'z'; c++) {

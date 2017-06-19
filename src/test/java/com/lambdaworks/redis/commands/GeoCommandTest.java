@@ -17,20 +17,34 @@ package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.List;
 import java.util.Set;
 
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 
 public class GeoCommandTest extends AbstractRedisClientTest {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+
+    @BeforeClass
+    public static void setupClient() {
+        client = DefaultRedisClient.get();
+        client.setOptions(ClientOptions.create());
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+            assumeTrue(RedisConditions.of(connection).hasCommand("GEOADD"));
+        }
+    }
 
     @Test
     public void geoadd() throws Exception {
@@ -121,6 +135,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     @Test
     public void geodistMissingElements() throws Exception {
 
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("3.4"));
         prepareGeo();
 
         assertThat(redis.geodist("Unknown", "Unknown", "Bahn", GeoArgs.Unit.km)).isNull();
@@ -251,6 +266,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     @Test
     public void geohashUnknownKey() throws Exception {
 
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("3.4"));
+
         prepareGeo();
 
         List<String> geohash = redis.geohash("dunno", "member");
@@ -294,8 +311,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         prepareGeo();
 
         String resultKey = "38o54"; // yields in same slot as "key"
-        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
-                new GeoRadiusStoreArgs<>().withCount(1).desc().withStore(resultKey));
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, new GeoRadiusStoreArgs<>().withCount(1)
+                .desc().withStore(resultKey));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> results = redis.zrangeWithScores(resultKey, 0, -1);
@@ -323,8 +340,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         prepareGeo();
 
         String resultKey = "38o54"; // yields in same slot as "key"
-        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
-                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist("38o54"));
+        Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, new GeoRadiusStoreArgs<>().withCount(1)
+                .desc().withStoreDist("38o54"));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
@@ -361,8 +378,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         prepareGeo();
 
         String resultKey = "38o54"; // yields in same slot as "key"
-        Long result = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
-                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist("38o54"));
+        Long result = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoRadiusStoreArgs<>().withCount(1).desc()
+                .withStoreDist("38o54"));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
@@ -376,8 +393,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        List<GeoWithin<String>> empty = redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km,
-                new GeoArgs().withHash().withCoordinates().withDistance().desc());
+        List<GeoWithin<String>> empty = redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, new GeoArgs().withHash()
+                .withCoordinates().withDistance().desc());
         assertThat(empty).isNotEmpty();
 
         List<GeoWithin<String>> withDistanceAndCoordinates = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
@@ -390,8 +407,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         assertThat(weinheim.getDistance()).isNotNull();
         assertThat(weinheim.getCoordinates()).isNotNull();
 
-        List<GeoWithin<String>> withDistanceAndHash = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
-                new GeoArgs().withDistance().withHash().desc());
+        List<GeoWithin<String>> withDistanceAndHash = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoArgs()
+                .withDistance().withHash().desc());
         assertThat(withDistanceAndHash).hasSize(2);
 
         GeoWithin<String> weinheimDistanceHash = withDistanceAndHash.get(0);
@@ -400,8 +417,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         assertThat(weinheimDistanceHash.getDistance()).isNotNull();
         assertThat(weinheimDistanceHash.getCoordinates()).isNull();
 
-        List<GeoWithin<String>> withCoordinates = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
-                new GeoArgs().withCoordinates().desc());
+        List<GeoWithin<String>> withCoordinates = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoArgs()
+                .withCoordinates().desc());
         assertThat(withCoordinates).hasSize(2);
 
         GeoWithin<String> weinheimCoordinates = withCoordinates.get(0);
@@ -417,8 +434,8 @@ public class GeoCommandTest extends AbstractRedisClientTest {
         prepareGeo();
 
         redis.multi();
-        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km,
-                new GeoArgs().withHash().withCoordinates().withDistance().desc());
+        redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, new GeoArgs().withHash().withCoordinates().withDistance()
+                .desc());
         redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoArgs().withCoordinates().withDistance().desc());
         redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoArgs().withDistance().withHash().desc());
         redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km, new GeoArgs().withCoordinates().desc());

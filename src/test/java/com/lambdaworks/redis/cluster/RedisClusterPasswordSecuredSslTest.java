@@ -61,6 +61,9 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
         assumeTrue("Assume that stunnel runs on port 7443", Sockets.isOpen(host(), CLUSTER_PORT_SSL_1));
         assumeTrue("Assume that stunnel runs on port 7444", Sockets.isOpen(host(), CLUSTER_PORT_SSL_2));
         assumeTrue("Assume that stunnel runs on port 7445", Sockets.isOpen(host(), CLUSTER_PORT_SSL_3));
+        assumeTrue("Assume that Redis runs on port 7479", Sockets.isOpen(host(), 7479));
+        assumeTrue("Assume that Redis runs on port 7480", Sockets.isOpen(host(), 7480));
+        assumeTrue("Assume that Redis runs on port 7481", Sockets.isOpen(host(), 7481));
         assertThat(new File(KEYSTORE)).exists();
         System.setProperty("javax.net.ssl.trustStore", KEYSTORE);
     }
