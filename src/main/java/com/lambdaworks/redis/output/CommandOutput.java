@@ -62,7 +62,7 @@ public abstract class CommandOutput<K, V, T> {
      * @param bytes The command output, or null.
      */
     public void set(ByteBuffer bytes) {
-        throw new IllegalStateException();
+        throw new IllegalStateException(new String(bytes.array()));
     }
 
     /**
@@ -72,7 +72,7 @@ public abstract class CommandOutput<K, V, T> {
      * @param integer The command output.
      */
     public void set(long integer) {
-        throw new IllegalStateException();
+        throw new IllegalStateException(String.valueOf(integer));
     }
 
     /**
