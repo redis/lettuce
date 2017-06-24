@@ -26,6 +26,7 @@ import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.dynamic.batch.BatchSize;
+import io.lettuce.core.dynamic.intercept.DefaultMethodInvokingInterceptor;
 import io.lettuce.core.dynamic.intercept.InvocationProxyFactory;
 import io.lettuce.core.dynamic.intercept.MethodInterceptor;
 import io.lettuce.core.dynamic.intercept.MethodInvocation;
@@ -180,7 +181,9 @@ public class RedisCommandFactory {
         BatchAwareCommandLookupStrategy lookupStrategy = new BatchAwareCommandLookupStrategy(
                 new CompositeCommandLookupStrategy(), metadata);
 
+        factory.addInterceptor(new DefaultMethodInvokingInterceptor());
         factory.addInterceptor(new CommandFactoryExecutorMethodInterceptor(metadata, lookupStrategy));
+
         return factory.createProxy(commandInterface.getClassLoader());
     }
 

@@ -98,7 +98,7 @@ public class InvocationProxyFactory {
 
         @Override
         protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
-            return context.invoke(method, args);
+            return context.invoke(proxy, method, args);
         }
     }
 }

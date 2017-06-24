@@ -63,14 +63,15 @@ abstract class MethodInterceptorChain {
     /**
      * Invoke a {@link Method} with its {@code args}.
      *
+     * @param target must not be {@literal null}.
      * @param method must not be {@literal null}.
      * @param args must not be {@literal null}.
      * @return
      * @throws Throwable
      */
-    public Object invoke(Method method, Object[] args) throws Throwable {
+    public Object invoke(Object target, Method method, Object[] args) throws Throwable {
 
-        PooledMethodInvocation invocation = getInvocation(method, args, next);
+        PooledMethodInvocation invocation = getInvocation(target, method, args, next);
 
         try {
             // JIT hint
@@ -83,10 +84,10 @@ abstract class MethodInterceptorChain {
         }
     }
 
-    private PooledMethodInvocation getInvocation(Method method, Object[] args, MethodInterceptorChain next) {
+    private PooledMethodInvocation getInvocation(Object target, Method method, Object[] args, MethodInterceptorChain next) {
 
         PooledMethodInvocation pooledMethodInvocation = pool.get();
-        pooledMethodInvocation.initialize(method, args, next);
+        pooledMethodInvocation.initialize(target, method, args, next);
         return pooledMethodInvocation;
     }
 
@@ -152,8 +153,9 @@ abstract class MethodInterceptorChain {
     /**
      * Stateful {@link MethodInvocation} using {@link MethodInterceptorChain}. The state is only valid throughout a call.
      */
-    static class PooledMethodInvocation implements MethodInvocation {
+    static class PooledMethodInvocation implements MethodInvocation, InvocationTargetProvider {
 
+        private Object target;
         private Method method;
         private Object args[];
         private MethodInterceptorChain current;
@@ -164,11 +166,13 @@ abstract class MethodInterceptorChain {
         /**
          * Initialize state from the method call.
          *
+         * @param target
          * @param method
          * @param args
          * @param head
          */
-        public void initialize(Method method, Object[] args, MethodInterceptorChain head) {
+        public void initialize(Object target, Method method, Object[] args, MethodInterceptorChain head) {
+            this.target = target;
             this.method = method;
             this.args = args;
             this.current = head;
@@ -178,6 +182,7 @@ abstract class MethodInterceptorChain {
          * Clear invocation state.
          */
         public void clear() {
+            this.target = null;
             this.method = null;
             this.args = null;
             this.current = null;
@@ -187,6 +192,11 @@ abstract class MethodInterceptorChain {
         public Object proceed() throws Throwable {
             current = current.next;
             return current.proceed(this);
+        }
+
+        @Override
+        public Object getInvocationTarget() {
+            return target;
         }
 
         @Override

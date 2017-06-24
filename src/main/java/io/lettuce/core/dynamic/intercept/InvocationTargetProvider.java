@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,17 @@
  */
 package io.lettuce.core.dynamic.intercept;
 
-import java.lang.reflect.Method;
-
 /**
- * Default implementation of {@link MethodInvocation}
+ * Provides an invocation target object.
  *
+ * @see MethodInterceptor
  * @author Mark Paluch
+ * @since 5.0
  */
-abstract class DefaultMethodInvocation implements MethodInvocation {
+public interface InvocationTargetProvider {
 
-    private final Method method;
-    private final Object[] arguments;
-
-    DefaultMethodInvocation(Method method, Object[] arguments) {
-
-        this.method = method;
-        this.arguments = arguments;
-    }
-
-    @Override
-    public Method getMethod() {
-        return method;
-    }
-
-    @Override
-    public Object[] getArguments() {
-        return arguments;
-    }
+    /**
+     * @return the invocation target.
+     */
+    Object getInvocationTarget();
 }

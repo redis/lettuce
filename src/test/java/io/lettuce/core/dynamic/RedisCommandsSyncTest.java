@@ -35,7 +35,7 @@ import io.lettuce.core.dynamic.domain.Timeout;
 public class RedisCommandsSyncTest extends AbstractRedisClientTest {
 
     @Test
-    public void sync() throws Exception {
+    public void sync() {
 
         StatefulRedisConnection<byte[], byte[]> connection = client.connect(ByteArrayCodec.INSTANCE);
         RedisCommandFactory factory = new RedisCommandFactory(connection);
@@ -50,7 +50,22 @@ public class RedisCommandsSyncTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void mgetAsValues() throws Exception {
+    public void defaultMethod() {
+
+        StatefulRedisConnection<byte[], byte[]> connection = client.connect(ByteArrayCodec.INSTANCE);
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
+
+        MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
+
+        api.setSync(key, value, Timeout.create(10, TimeUnit.SECONDS));
+
+        assertThat(api.getAsBytes()).isEqualTo("value".getBytes());
+
+        connection.close();
+    }
+
+    @Test
+    public void mgetAsValues() {
 
         redis.set(key, value);
 
@@ -64,9 +79,13 @@ public class RedisCommandsSyncTest extends AbstractRedisClientTest {
         assertThat(values.get(1)).isEqualTo(Value.empty());
     }
 
-    static interface MultipleExecutionModels extends Commands {
+    interface MultipleExecutionModels extends Commands {
 
         String get(String key);
+
+        default byte[] getAsBytes() {
+            return getAsBytes("key");
+        }
 
         @Command("GET")
         byte[] getAsBytes(String key);
