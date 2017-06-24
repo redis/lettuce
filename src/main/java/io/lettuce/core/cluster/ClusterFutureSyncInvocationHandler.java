@@ -16,9 +16,6 @@
 package io.lettuce.core.cluster;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -36,6 +33,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.AbstractInvocationHandler;
+import io.lettuce.core.internal.DefaultMethods;
 
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
@@ -58,23 +56,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
     private final Map<Method, Method> apiMethodCache = new ConcurrentHashMap<>(RedisClusterCommands.class.getMethods().length,
             1);
     private final Map<Method, Method> connectionMethodCache = new ConcurrentHashMap<>(5, 1);
-
-    private static final Constructor<MethodHandles.Lookup> LOOKUP_CONSTRUCTOR;
-
-    static {
-        try {
-            LOOKUP_CONSTRUCTOR = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, int.class);
-        } catch (NoSuchMethodException e) {
-            throw new IllegalStateException(e);
-        }
-
-        try {
-            if (!LOOKUP_CONSTRUCTOR.isAccessible()) {
-                LOOKUP_CONSTRUCTOR.setAccessible(true);
-            }
-        } catch (Throwable jdk9) {
-        }
-    }
+    private final Map<Method, MethodHandle> methodHandleCache = new ConcurrentHashMap<>(5, 1);
 
     ClusterFutureSyncInvocationHandler(StatefulConnection<K, V> connection, Class<?> asyncCommandsInterface,
             Class<?> nodeSelectionInterface, Class<?> nodeSelectionCommandsInterface, Object asyncApi) {
@@ -86,7 +68,6 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
     }
 
     /**
-     *
      * @see AbstractInvocationHandler#handleInvocation(Object, Method, Object[])
      */
     @Override
@@ -95,7 +76,8 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
         try {
 
             if (method.isDefault()) {
-                return getDefaultMethodHandle(method).bindTo(proxy).invokeWithArguments(args);
+                return methodHandleCache.computeIfAbsent(method, this::lookupDefaultMethod).bindTo(proxy)
+                        .invokeWithArguments(args);
             }
 
             if (method.getName().equals("getConnection") && args.length > 0) {
@@ -190,20 +172,12 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
                 nodeSelectionCommandsInterface, nodeSelectionInterface }, h);
     }
 
-    private static MethodHandle getDefaultMethodHandle(Method method) {
-
-        Class<?> declaringClass = method.getDeclaringClass();
+    private MethodHandle lookupDefaultMethod(Method method) {
 
         try {
-            if (LOOKUP_CONSTRUCTOR.isAccessible()) {
-                MethodHandles.Lookup result = LOOKUP_CONSTRUCTOR.newInstance(declaringClass, MethodHandles.Lookup.PRIVATE);
-                return result.unreflectSpecial(method, declaringClass);
-            }
-
-            return MethodHandles.lookup().findSpecial(method.getDeclaringClass(), method.getName(),
-                    MethodType.methodType(method.getReturnType(), method.getParameterTypes()), method.getDeclaringClass());
+            return DefaultMethods.lookupMethodHandle(method);
         } catch (ReflectiveOperationException e) {
-            throw new IllegalArgumentException("Did not pass in an interface method: " + method, e);
+            throw new IllegalArgumentException(e);
         }
     }
 }
