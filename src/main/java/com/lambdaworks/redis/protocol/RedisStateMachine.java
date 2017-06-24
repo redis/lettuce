@@ -48,7 +48,7 @@ public class RedisStateMachine<K, V> {
     private static final ByteBuffer QUEUED = buffer("QUEUED");
 
     private static final boolean USE_NETTY40_BYTEBUF_COMPATIBILITY;
-    private static final Class LONG_PROCESSOR_CLASS;
+    private static final Class<?> LONG_PROCESSOR_CLASS;
 
     static {
 

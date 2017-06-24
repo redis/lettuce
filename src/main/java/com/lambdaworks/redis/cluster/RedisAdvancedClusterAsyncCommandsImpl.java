@@ -517,13 +517,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         NodeSelectionSupport<RedisAsyncCommands<K, V>, ?> selection;
 
-        StatefulRedisClusterConnectionImpl impl = (StatefulRedisClusterConnectionImpl) connection;
+        StatefulRedisClusterConnectionImpl<K, V> impl = (StatefulRedisClusterConnectionImpl<K, V>) connection;
         if (dynamic) {
-            selection = new DynamicNodeSelection<RedisAsyncCommands<K, V>, Object, K, V>(
-                    impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::async);
+            selection = new DynamicNodeSelection<>(impl.getClusterDistributionChannelWriter(), predicate, intent,
+                    StatefulRedisConnection::async);
         } else {
-            selection = new StaticNodeSelection<RedisAsyncCommands<K, V>, Object, K, V>(
-                    impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::async);
+            selection = new StaticNodeSelection<>(impl.getClusterDistributionChannelWriter(), predicate, intent,
+                    StatefulRedisConnection::async);
         }
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,

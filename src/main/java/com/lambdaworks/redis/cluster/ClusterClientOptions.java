@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,10 @@ import com.lambdaworks.redis.SslOptions;
 
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
- * 
+ *
  * @author Mark Paluch
  */
+@SuppressWarnings("serial")
 public class ClusterClientOptions extends ClientOptions {
 
     public static final boolean DEFAULT_REFRESH_CLUSTER_VIEW = false;
@@ -263,7 +264,7 @@ public class ClusterClientOptions extends ClientOptions {
      * Flag, whether regular cluster topology updates are updated. The client starts updating the cluster topology in the
      * intervals of {@link #getRefreshPeriod()} /{@link #getRefreshPeriodUnit()}. Defaults to {@literal false}. Returns the
      * value from {@link ClusterTopologyRefreshOptions} if provided.
-     * 
+     *
      * @return {@literal true} it the cluster topology view is updated periodically
      */
     public boolean isRefreshClusterView() {
@@ -273,7 +274,7 @@ public class ClusterClientOptions extends ClientOptions {
     /**
      * Period between the regular cluster topology updates. Defaults to {@literal 60}. Returns the value from
      * {@link ClusterTopologyRefreshOptions} if provided.
-     * 
+     *
      * @return the period between the regular cluster topology updates
      */
     public long getRefreshPeriod() {
@@ -283,7 +284,7 @@ public class ClusterClientOptions extends ClientOptions {
     /**
      * Unit for the {@link #getRefreshPeriod()}. Defaults to {@link TimeUnit#SECONDS}. Returns the value from
      * {@link ClusterTopologyRefreshOptions} if provided.
-     * 
+     *
      * @return unit for the {@link #getRefreshPeriod()}
      */
     public TimeUnit getRefreshPeriodUnit() {
@@ -294,7 +295,7 @@ public class ClusterClientOptions extends ClientOptions {
      * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@literal true}. Comes only
      * into effect if {@link #isRefreshClusterView()} is {@literal true}. Returns the value from
      * {@link ClusterTopologyRefreshOptions} if provided.
-     * 
+     *
      * @return {@literal true} if stale connections are cleaned up after cluster topology updates
      */
     public boolean isCloseStaleConnections() {
@@ -303,7 +304,7 @@ public class ClusterClientOptions extends ClientOptions {
 
     /**
      * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@literal true}.
-     * 
+     *
      * @return {@literal true} if validation is enabled.
      */
     public boolean isValidateClusterNodeMembership() {
@@ -313,7 +314,7 @@ public class ClusterClientOptions extends ClientOptions {
     /**
      * Number of maximal of cluster redirects ({@literal -MOVED} and {@literal -ASK}) to follow in case a key was moved from one
      * node to another node. Defaults to {@literal 5}. See {@link ClusterClientOptions#DEFAULT_MAX_REDIRECTS}.
-     * 
+     *
      * @return the maximal number of followed cluster redirects
      */
     public int getMaxRedirects() {
@@ -322,7 +323,7 @@ public class ClusterClientOptions extends ClientOptions {
 
     /**
      * The {@link ClusterTopologyRefreshOptions} for detailed control of topology updates.
-     * 
+     *
      * @return the {@link ClusterTopologyRefreshOptions}.
      */
     public ClusterTopologyRefreshOptions getTopologyRefreshOptions() {

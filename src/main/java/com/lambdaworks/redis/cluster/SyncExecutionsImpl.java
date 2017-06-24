@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ class SyncExecutionsImpl<T> implements Executions<T> {
 
     private Map<RedisClusterNode, T> executions;
 
-    public SyncExecutionsImpl(Map<RedisClusterNode, CompletionStage<T>> executions) throws ExecutionException,
+    public SyncExecutionsImpl(Map<RedisClusterNode, CompletionStage<? extends T>> executions) throws ExecutionException,
             InterruptedException {
 
         Map<RedisClusterNode, T> result = new HashMap<>(executions.size(), 1);
-        for (Map.Entry<RedisClusterNode, CompletionStage<T>> entry : executions.entrySet()) {
+        for (Map.Entry<RedisClusterNode, CompletionStage<? extends T>> entry : executions.entrySet()) {
             result.put(entry.getKey(), entry.getValue().toCompletableFuture().get());
         }
 

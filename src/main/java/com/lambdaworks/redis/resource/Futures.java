@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import io.netty.util.concurrent.*;
 
 /**
  * Utility class to support netty's future handling.
- * 
+ *
  * @author Mark Paluch
  * @since 3.4
  */
@@ -33,23 +33,20 @@ class Futures {
 
     /**
      * Create a promise that emits a {@code Boolean} value on completion of the {@code future}
-     * 
+     *
      * @param future the future.
      * @return Promise emitting a {@code Boolean} value. {@literal true} if the {@code future} completed successfully, otherwise
      *         the cause wil be transported.
      */
     static Promise<Boolean> toBooleanPromise(Future<?> future) {
-        final DefaultPromise<Boolean> result = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
 
-        future.addListener(new GenericFutureListener<Future<Object>>() {
-            @Override
-            public void operationComplete(Future<Object> future) throws Exception {
+        DefaultPromise<Boolean> result = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+        future.addListener((GenericFutureListener<Future<Object>>) f -> {
 
-                if (future.isSuccess()) {
-                    result.setSuccess(true);
-                } else {
-                    result.setFailure(future.cause());
-                }
+            if (f.isSuccess()) {
+                result.setSuccess(true);
+            } else {
+                result.setFailure(f.cause());
             }
         });
         return result;
@@ -64,9 +61,9 @@ class Futures {
      * <li>Add the number of futures using {@link #add(Promise[])} until the expectation is met. The added futures can be either
      * done or in progress.</li>
      * <li>The {@code aggregatePromise} is released/finished as soon as the last future/promise completes</li>
-     * 
+     *
      * </ol>
-     * 
+     *
      * @param <V> Result value type
      * @param <F> Future type
      */
@@ -90,7 +87,7 @@ class Futures {
 
         /**
          * Add the number of {@code count} to the count of expected promises.
-         * 
+         *
          * @param count number of futures/promises, that is added to the overall expectation count.
          * @throws IllegalStateException if the aggregator was armed
          */
@@ -102,7 +99,7 @@ class Futures {
 
         /**
          * Arm the aggregator to expect completion of the futures.
-         * 
+         *
          * @throws IllegalStateException if the aggregator was armed
          */
         public void arm() {
@@ -112,7 +109,7 @@ class Futures {
 
         /**
          * Add the given {@link Promise}s to the aggregator.
-         * 
+         *
          * @param promises the promises
          * @throws IllegalStateException if the aggregator was not armed
          */

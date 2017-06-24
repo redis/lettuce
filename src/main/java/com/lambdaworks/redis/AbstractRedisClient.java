@@ -15,6 +15,9 @@
  */
 package com.lambdaworks.redis;
 
+import static java.util.concurrent.CompletableFuture.allOf;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -231,7 +234,10 @@ public abstract class AbstractRedisClient {
      */
     @SuppressWarnings("unchecked")
     protected <K, V, T extends RedisChannelHandler<K, V>> T initializeChannel(ConnectionBuilder connectionBuilder) {
-        return getConnection(initializeChannelAsync(connectionBuilder));
+
+        ConnectionFuture<T> connectionFuture = initializeChannelAsync(connectionBuilder);
+
+        return getConnection(connectionFuture);
     }
 
     /**
@@ -299,7 +305,7 @@ public abstract class AbstractRedisClient {
                 return;
             }
 
-            CompletableFuture<Boolean> initFuture = (CompletableFuture<Boolean>) initializer.channelInitialized();
+            CompletableFuture<Boolean> initFuture = initializer.channelInitialized();
             initFuture.whenComplete((success, throwable) -> {
 
                 if (throwable == null) {
@@ -422,10 +428,10 @@ public abstract class AbstractRedisClient {
                 }
             }
 
-            return CompletableFuture.allOf(closeFutures.toArray(new CompletableFuture[closeFutures.size()]));
+            return allOf(closeFutures.toArray(new CompletableFuture[closeFutures.size()]));
         }
 
-        return CompletableFuture.completedFuture(null);
+        return completedFuture(null);
     }
 
     protected int getResourceCount() {

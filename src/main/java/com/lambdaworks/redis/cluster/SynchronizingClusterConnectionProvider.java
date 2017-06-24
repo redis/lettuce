@@ -48,6 +48,7 @@ class SynchronizingClusterConnectionProvider<K, V> {
 
     private final ClusterNodeConnectionFactory<K, V> connectionFactory;
     private final Map<ConnectionKey, Sync<K, V>> connections = new ConcurrentHashMap<>();
+
     private volatile boolean closed;
 
     /**
@@ -117,13 +118,13 @@ class SynchronizingClusterConnectionProvider<K, V> {
     /**
      * @return number of established connections.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public int getConnectionCount() {
 
-        Sync<K, V>[] syncs = connections.values().toArray(new Sync[0]);
+        Object[] syncs = connections.values().toArray(new Object[0]);
         int count = 0;
 
-        for (Sync<K, V> sync : syncs) {
+        for (Object sync : syncs) {
             if (sync instanceof Finished) {
                 count++;
             }
@@ -242,6 +243,7 @@ class SynchronizingClusterConnectionProvider<K, V> {
         private static final int ST_IN_PROGRESS = 0;
         private static final int ST_FINISHED = 1;
 
+        @SuppressWarnings({ "rawtypes", "unchecked" })
         private final static AtomicIntegerFieldUpdater<InProgress> REMOVE = AtomicIntegerFieldUpdater.newUpdater(
                 InProgress.class, "remove");
 

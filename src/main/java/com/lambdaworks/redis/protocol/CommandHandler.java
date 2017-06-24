@@ -54,6 +54,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
     private static final AtomicLong CHANNEL_COUNTER = new AtomicLong();
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static final AtomicIntegerFieldUpdater<CommandHandler> QUEUE_SIZE = AtomicIntegerFieldUpdater.newUpdater(
             CommandHandler.class, "queueSize");
 

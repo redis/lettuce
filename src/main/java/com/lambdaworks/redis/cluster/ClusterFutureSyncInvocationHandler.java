@@ -81,24 +81,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
             }
 
             if (method.getName().equals("getConnection") && args.length > 0) {
-                Method targetMethod = connectionMethodCache.computeIfAbsent(method, key -> {
-                    try {
-                        return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
-                    } catch (NoSuchMethodException e) {
-                        throw new IllegalStateException(e);
-                    }
-                });
-
-                Object result = targetMethod.invoke(connection, args);
-                if (result instanceof StatefulRedisClusterConnection) {
-                    StatefulRedisClusterConnection<K, V> connection = (StatefulRedisClusterConnection<K, V>) result;
-                    return connection.sync();
-                }
-
-                if (result instanceof StatefulRedisConnection) {
-                    StatefulRedisConnection<K, V> connection = (StatefulRedisConnection<K, V>) result;
-                    return connection.sync();
-                }
+                return getConnection(method, args);
             }
 
             if (method.getName().equals("readonly") && args.length == 1) {
@@ -141,29 +124,55 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
         }
     }
 
+    private Object getConnection(Method method, Object[] args) throws Exception {
+
+        Method targetMethod = connectionMethodCache.computeIfAbsent(method, this::lookupMethod);
+
+        Object result = targetMethod.invoke(connection, args);
+        if (result instanceof StatefulRedisClusterConnection) {
+            StatefulRedisClusterConnection<K, V> connection = (StatefulRedisClusterConnection<K, V>) result;
+            return connection.sync();
+        }
+
+        if (result instanceof StatefulRedisConnection) {
+            StatefulRedisConnection<K, V> connection = (StatefulRedisConnection<K, V>) result;
+            return connection.sync();
+        }
+
+        throw new IllegalArgumentException("Cannot call method " + method);
+    }
+
+    private Method lookupMethod(Method key) {
+        try {
+            return connection.getClass().getMethod(key.getName(), key.getParameterTypes());
+        } catch (NoSuchMethodException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
     protected Object nodes(Predicate<RedisClusterNode> predicate, ClusterConnectionProvider.Intent intent, boolean dynamic) {
 
         NodeSelectionSupport<RedisCommands<K, V>, ?> selection = null;
 
         if (connection instanceof StatefulRedisClusterConnectionImpl) {
 
-            StatefulRedisClusterConnectionImpl impl = (StatefulRedisClusterConnectionImpl) connection;
+            StatefulRedisClusterConnectionImpl<K, V> impl = (StatefulRedisClusterConnectionImpl<K, V>) connection;
 
             if (dynamic) {
-                selection = new DynamicNodeSelection<RedisCommands<K, V>, Object, K, V>(
-                        impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::sync);
+                selection = new DynamicNodeSelection<>(impl.getClusterDistributionChannelWriter(), predicate, intent,
+                        StatefulRedisConnection::sync);
             } else {
 
-                selection = new StaticNodeSelection<RedisCommands<K, V>, Object, K, V>(
-                        impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::sync);
+                selection = new StaticNodeSelection<>(impl.getClusterDistributionChannelWriter(), predicate, intent,
+                        StatefulRedisConnection::sync);
             }
         }
 
         if (connection instanceof StatefulRedisClusterPubSubConnectionImpl) {
 
-            StatefulRedisClusterPubSubConnectionImpl impl = (StatefulRedisClusterPubSubConnectionImpl) connection;
-            selection = new StaticNodeSelection<RedisCommands<K, V>, Object, K, V>(impl.getClusterDistributionChannelWriter(),
-                    predicate, intent, StatefulRedisConnection::sync);
+            StatefulRedisClusterPubSubConnectionImpl<K, V> impl = (StatefulRedisClusterPubSubConnectionImpl<K, V>) connection;
+            selection = new StaticNodeSelection<>(impl.getClusterDistributionChannelWriter(), predicate, intent,
+                    StatefulRedisConnection::sync);
         }
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,

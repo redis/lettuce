@@ -192,7 +192,7 @@ public abstract class ConnectionPoolSupport {
         return pool;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private static <T> T wrapConnection(T connection, ObjectPool<T> pool) {
 
         ReturnObjectOnCloseInvocationHandler<T> handler = new ReturnObjectOnCloseInvocationHandler<>(connection, pool);
@@ -290,29 +290,31 @@ public abstract class ConnectionPoolSupport {
 
             try {
 
-                if (method.getName().equals("sync") || method.getName().equals("async")
-                        || method.getName().equals("reactive")) {
-                    return connectionProxies.computeIfAbsent(method, m -> {
-
-                        try {
-                            Object result = method.invoke(connection, args);
-
-                            result = Proxy.newProxyInstance(getClass().getClassLoader(), result.getClass().getInterfaces(),
-                                    new DelegateCloseToConnectionInvocationHandler((AutoCloseable) proxiedConnection, result));
-
-                            return result;
-                        } catch (IllegalAccessException e) {
-                            throw new RedisException(e);
-                        } catch (InvocationTargetException e) {
-                            throw new RedisException(e.getTargetException());
-                        }
-                    });
+                if (method.getName().equals("sync") || method.getName().equals("async") || method.getName().equals("reactive")) {
+                    return connectionProxies.computeIfAbsent(method, m -> getInnerProxy(method, args));
                 }
 
                 return method.invoke(connection, args);
 
             } catch (InvocationTargetException e) {
                 throw e.getTargetException();
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        private Object getInnerProxy(Method method, Object[] args) {
+
+            try {
+                Object result = method.invoke(connection, args);
+
+                result = Proxy.newProxyInstance(getClass().getClassLoader(), result.getClass().getInterfaces(),
+                        new DelegateCloseToConnectionInvocationHandler<>((AutoCloseable) proxiedConnection, result));
+
+                return result;
+            } catch (IllegalAccessException e) {
+                throw new RedisException(e);
+            } catch (InvocationTargetException e) {
+                throw new RedisException(e.getTargetException());
             }
         }
 

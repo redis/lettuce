@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
- * 
+ *
  * @author Mark Paluch
  */
+@SuppressWarnings("serial")
 public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION = false;
@@ -87,7 +88,7 @@ public class ClientOptions implements Serializable {
 
     /**
      * Create a new instance of {@link ClientOptions} with default settings.
-     * 
+     *
      * @return a new instance of {@link ClientOptions} with default settings
      */
     public static ClientOptions create() {
@@ -118,7 +119,7 @@ public class ClientOptions implements Serializable {
         /**
          * Sets the {@literal PING} before activate connection flag. Defaults to {@literal false}. See
          * {@link #DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION}.
-         * 
+         *
          * @param pingBeforeActivateConnection true/false
          * @return {@code this}
          */
@@ -130,7 +131,7 @@ public class ClientOptions implements Serializable {
         /**
          * Enables or disables auto reconnection on connection loss. Defaults to {@literal true}. See
          * {@link #DEFAULT_AUTO_RECONNECT}.
-         * 
+         *
          * @param autoReconnect true/false
          * @return {@code this}
          */
@@ -142,7 +143,7 @@ public class ClientOptions implements Serializable {
         /**
          * Suspends reconnect when reconnects run into protocol failures (SSL verification, PING before connect fails). Defaults
          * to {@literal false}. See {@link #DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL}.
-         * 
+         *
          * @param suspendReconnectOnProtocolFailure true/false
          * @return {@code this}
          */
@@ -154,7 +155,7 @@ public class ClientOptions implements Serializable {
         /**
          * Allows cancelling queued commands in case a reconnect fails.Defaults to {@literal false}. See
          * {@link #DEFAULT_CANCEL_CMD_RECONNECT_FAIL}.
-         * 
+         *
          * @param cancelCommandsOnReconnectFailure true/false
          * @return {@code this}
          */
@@ -181,7 +182,7 @@ public class ClientOptions implements Serializable {
         /**
          * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to {@literal true}.
          * See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
-         * 
+         *
          * @param disconnectedBehavior must not be {@literal null}.
          * @return {@code this}
          */
@@ -221,7 +222,7 @@ public class ClientOptions implements Serializable {
 
         /**
          * Create a new instance of {@link ClientOptions}.
-         * 
+         *
          * @return new instance of {@link ClientOptions}
          */
         public ClientOptions build() {
@@ -246,7 +247,7 @@ public class ClientOptions implements Serializable {
      * queued commands.
      *
      * This flag has also the effect that disconnected connections will refuse commands and cancel these with an exception.
-     * 
+     *
      * @return {@literal true} if auto-reconnect is enabled.
      */
     public boolean isAutoReconnect() {
@@ -256,7 +257,7 @@ public class ClientOptions implements Serializable {
     /**
      * If this flag is {@literal true} any queued commands will be canceled when a reconnect fails within the activation
      * sequence. Default is {@literal false}.
-     * 
+     *
      * @return {@literal true} if commands should be cancelled on reconnect failures.
      */
     public boolean isCancelCommandsOnReconnectFailure() {
@@ -266,7 +267,7 @@ public class ClientOptions implements Serializable {
     /**
      * If this flag is {@literal true} the reconnect will be suspended on protocol errors. Protocol errors are errors while SSL
      * negotiation or when PING before connect fails.
-     * 
+     *
      * @return {@literal true} if reconnect will be suspended on protocol errors.
      */
     public boolean isSuspendReconnectOnProtocolFailure() {
@@ -277,7 +278,7 @@ public class ClientOptions implements Serializable {
      * Request queue size for a connection. This value applies per connection. The command invocation will throw a
      * {@link RedisException} if the queue size is exceeded and a new command is requested. Defaults to
      * {@link Integer#MAX_VALUE}.
-     * 
+     *
      * @return the request queue size.
      */
     public int getRequestQueueSize() {
@@ -287,7 +288,7 @@ public class ClientOptions implements Serializable {
     /**
      * Behavior for command invocation when connections are in a disconnected state. Defaults to
      * {@link DisconnectedBehavior#DEFAULT true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
-     * 
+     *
      * @return the behavior for command invocation when connections are in a disconnected state
      */
     public DisconnectedBehavior getDisconnectedBehavior() {
@@ -296,7 +297,7 @@ public class ClientOptions implements Serializable {
 
     /**
      * Returns the {@link SocketOptions}.
-     * 
+     *
      * @return the {@link SocketOptions}.
      */
     public SocketOptions getSocketOptions() {

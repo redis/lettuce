@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import rx.Observable;
+
 import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisCommandTimeoutException;
@@ -150,9 +152,15 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     @SuppressWarnings("unchecked")
     private Object getExecutions(Map<RedisClusterNode, Object> executions) throws ExecutionException, InterruptedException {
 
+        if (executionModel == ExecutionModel.REACTIVE) {
+            Map<RedisClusterNode, CompletableFuture<Observable<?>>> reactiveExecutions = (Map) executions;
+            return new ReactiveExecutionsImpl<>(reactiveExecutions);
+        }
+
+        Map<RedisClusterNode, CompletionStage<?>> asyncExecutions = (Map) executions;
+
         if (executionModel == ExecutionModel.SYNC) {
 
-            Map<RedisClusterNode, CompletionStage<?>> asyncExecutions = (Map) executions;
             if (!awaitAll(timeout, unit, asyncExecutions.values())) {
                 throw createTimeoutException(asyncExecutions);
             }
@@ -161,14 +169,10 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
                 throw createExecutionException(asyncExecutions);
             }
 
-            return new SyncExecutionsImpl(asyncExecutions);
+            return new SyncExecutionsImpl<>(asyncExecutions);
         }
 
-        if (executionModel == ExecutionModel.REACTIVE) {
-            return new ReactiveExecutionsImpl(executions);
-        }
-
-        return new AsyncExecutionsImpl(executions);
+        return new AsyncExecutionsImpl<>(asyncExecutions);
     }
 
     private static boolean awaitAll(long timeout, TimeUnit unit, Collection<CompletionStage<?>> futures) {
@@ -257,7 +261,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     private String getDescriptor(RedisClusterNode redisClusterNode) {
 
-        StringBuffer buffer = new StringBuffer(redisClusterNode.getNodeId());
+        StringBuilder buffer = new StringBuilder(redisClusterNode.getNodeId());
         buffer.append(" (");
 
         if (redisClusterNode.getUri() != null) {
@@ -291,6 +295,6 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     }
 
     enum ExecutionModel {
-        SYNC, ASYNC, REACTIVE;
+        SYNC, ASYNC, REACTIVE
     }
 }

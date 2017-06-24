@@ -34,16 +34,16 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
  */
 class ReactiveExecutionsImpl<T> implements ReactiveExecutions<T> {
 
-    private Map<RedisClusterNode, CompletableFuture<Observable<T>>> executions;
+    private Map<RedisClusterNode, CompletableFuture<Observable<? extends T>>> executions;
 
-    public ReactiveExecutionsImpl(Map<RedisClusterNode, CompletableFuture<Observable<T>>> executions) {
+    public ReactiveExecutionsImpl(Map<RedisClusterNode, CompletableFuture<Observable<? extends T>>> executions) {
         this.executions = executions;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public Observable<T> observable() {
-        return Observable.create(new FromCompletableFuture(executions.values())).flatMap(observable -> observable);
+        return Observable.create(new FromCompletableFuture<>(executions.values())).flatMap(observable -> observable);
     }
 
     @Override
@@ -51,7 +51,7 @@ class ReactiveExecutionsImpl<T> implements ReactiveExecutions<T> {
         return executions.keySet();
     }
 
-    static class FromCompletableFuture<T> implements Observable.OnSubscribe<Observable<T>> {
+    static class FromCompletableFuture<T> implements Observable.OnSubscribe<Observable<? extends T>> {
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
         private static final AtomicIntegerFieldUpdater<FromCompletableFuture> LATCH_UPDATER = AtomicIntegerFieldUpdater
@@ -61,12 +61,17 @@ class ReactiveExecutionsImpl<T> implements ReactiveExecutions<T> {
         private static final AtomicIntegerFieldUpdater<FromCompletableFuture> TERMINATED_UPDATER = AtomicIntegerFieldUpdater
                 .newUpdater(FromCompletableFuture.class, "terminated");
 
-        private final Collection<CompletableFuture<Observable<T>>> futures;
+        private final Collection<CompletableFuture<Observable<? extends T>>> futures;
 
+        // Updated with AtomicIntegerFieldUpdater
+        @SuppressWarnings("unused")
         private volatile int latch;
+
+        // Updated with AtomicIntegerFieldUpdater
+        @SuppressWarnings("unused")
         private volatile int terminated;
 
-        public FromCompletableFuture(Collection<CompletableFuture<Observable<T>>> futures) {
+        public FromCompletableFuture(Collection<CompletableFuture<Observable<? extends T>>> futures) {
 
             this.futures = futures;
             LATCH_UPDATER.set(this, futures.size());
@@ -74,11 +79,11 @@ class ReactiveExecutionsImpl<T> implements ReactiveExecutions<T> {
         }
 
         @Override
-        public void call(Subscriber<? super Observable<T>> subscriber) {
+        public void call(Subscriber<? super Observable<? extends T>> subscriber) {
 
             subscriber.onStart();
 
-            for (CompletableFuture<Observable<T>> future : futures) {
+            for (CompletableFuture<Observable<? extends T>> future : futures) {
 
                 future.whenComplete((observable, throwable) -> {
 

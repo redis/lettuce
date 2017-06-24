@@ -137,6 +137,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return mget(Arrays.asList(keys));
     }
 
+    @SuppressWarnings("unchecked")
     public Observable<V> mget(Iterable<K> keys) {
 
         List<K> keyList = LettuceLists.newList(keys);
@@ -172,8 +173,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
                 offset += entry.getValue().size();
             }
 
-            List<V> objects = (List<V>) new ArrayList<>(Arrays.asList(values));
-            return objects;
+            return (List<V>) new ArrayList<>(Arrays.asList(values));
         });
 
         return map.compose(new FlattenTransform<>());
@@ -483,7 +483,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * Perform a SCAN in the cluster.
      *
      */
-    static <T extends ScanCursor, K, V> Observable<T> clusterScan(StatefulRedisClusterConnectionImpl<K, V> connection,
+    private static <T extends ScanCursor, K, V> Observable<T> clusterScan(StatefulRedisClusterConnectionImpl<K, V> connection,
             ScanCursor cursor, BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Observable<T>> scanFunction,
             ClusterScanSupport.ScanCursorMapper<Observable<T>> mapper) {
 

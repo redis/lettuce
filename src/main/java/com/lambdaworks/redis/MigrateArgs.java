@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.lambdaworks.redis;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -25,8 +24,8 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandType;
 
 /**
- * Argument list builder for the new redis <a href="http://redis.io/commands/migrate">MIGRATE</a> command. Static import
- * the methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
+ * Argument list builder for the new redis <a href="http://redis.io/commands/migrate">MIGRATE</a> command. Static import the
+ * methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
  *
  * @author Mark Paluch
  */
@@ -94,15 +93,14 @@ public class MigrateArgs<K> {
 
     public MigrateArgs<K> keys(Iterable<K> keys) {
         LettuceAssert.notNull(keys, "Keys must not be null");
-        Iterator<K> iterator = keys.iterator();
-        while (iterator.hasNext()) {
-            this.keys.add(iterator.next());
+        for (K key : keys) {
+            this.keys.add(key);
         }
         return this;
     }
 
     @SuppressWarnings("unchecked")
-    public <K, V> void build(CommandArgs<K, V> args) {
+    public <V> void build(CommandArgs<K, V> args) {
 
         if (copy) {
             args.add(CommandKeyword.COPY);
@@ -114,8 +112,7 @@ public class MigrateArgs<K> {
 
         if (keys.size() > 1) {
             args.add(CommandType.KEYS);
-            args.addKeys((Iterable<K>) keys);
+            args.addKeys(keys);
         }
-
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ public class GeoRadiusStoreArgs<K> {
     private Sort sort = Sort.none;
 
     /**
-     * Store the resulting members with their location in the new Geo set {@code storeKey}.
-     * Cannot be used together with {@link #withStoreDist(Object)}.
+     * Store the resulting members with their location in the new Geo set {@code storeKey}. Cannot be used together with
+     * {@link #withStoreDist(Object)}.
      *
      * @param storeKey the destination key.
      * @return {@code this}
@@ -46,8 +46,8 @@ public class GeoRadiusStoreArgs<K> {
     }
 
     /**
-     * Store the resulting members with their distance in the sorted set {@code storeKey}.
-     * Cannot be used together with {@link #withStore(Object)}.
+     * Store the resulting members with their distance in the sorted set {@code storeKey}. Cannot be used together with
+     * {@link #withStore(Object)}.
      *
      * @param storeKey the destination key.
      * @return {@code this}
@@ -117,7 +117,7 @@ public class GeoRadiusStoreArgs<K> {
         return this;
     }
 
-    public <K, V> void build(CommandArgs<K, V> args) {
+    public <V> void build(CommandArgs<K, V> args) {
 
         if (sort != null && sort != Sort.none) {
             args.add(sort.name());
@@ -128,11 +128,11 @@ public class GeoRadiusStoreArgs<K> {
         }
 
         if (storeKey != null) {
-            args.add("STORE").addKey((K) storeKey);
+            args.add("STORE").addKey(storeKey);
         }
 
         if (storeDistKey != null) {
-            args.add("STOREDIST").addKey((K) storeDistKey);
+            args.add("STOREDIST").addKey(storeDistKey);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,17 @@ import io.netty.buffer.ByteBuf;
  */
 public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private final static AtomicReferenceFieldUpdater<CommandWrapper, Consumer[]> ONCOMPLETE = AtomicReferenceFieldUpdater
             .newUpdater(CommandWrapper.class, Consumer[].class, "onComplete");
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private final static Consumer<?>[] EMPTY = new Consumer[0];
 
     protected final RedisCommand<K, V, T> command;
 
     // accessed via AtomicReferenceFieldUpdater.
+    @SuppressWarnings("unused")
     private volatile Consumer<?>[] onComplete = EMPTY;
 
     public CommandWrapper(RedisCommand<K, V, T> command) {
@@ -48,7 +52,7 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void complete() {
 
         command.complete();
@@ -102,6 +106,7 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     }
 
     @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void onComplete(Consumer<? super T> action) {
 
         for (;;) {
@@ -119,7 +124,7 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [type=").append(getType());
         sb.append(", output=").append(getOutput());
@@ -142,11 +147,9 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
      * Unwrap a wrapped command.
      *
      * @param wrapped
-     * @param <K>
-     * @param <V>
-     * @param <T>
      * @return
      */
+    @SuppressWarnings("unchecked")
     public static <K, V, T> RedisCommand<K, V, T> unwrap(RedisCommand<K, V, T> wrapped) {
 
         RedisCommand<K, V, T> result = wrapped;

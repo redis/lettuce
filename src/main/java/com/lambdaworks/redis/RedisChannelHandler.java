@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Abstract base for every redis connection. Provides basic connection functionality and tracks open resources.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -51,7 +51,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     private volatile boolean closed;
     private volatile boolean active = true;
     private volatile ClientOptions clientOptions;
-    
+
     // If DEBUG level logging has been enabled at startup.
     private final boolean debugEnabled;
 
@@ -61,10 +61,10 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      * @param unit unit of the timeout
      */
     public RedisChannelHandler(RedisChannelWriter<K, V> writer, long timeout, TimeUnit unit) {
-        
+
         this.channelWriter = writer;
         debugEnabled = logger.isDebugEnabled();
-        
+
         writer.setRedisChannelHandler(this);
         setTimeout(timeout, unit);
     }
@@ -76,7 +76,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     /**
      * Set the command timeout for this connection.
-     * 
+     *
      * @param timeout Command timeout.
      * @param unit Unit of time for the timeout.
      */
@@ -90,8 +90,8 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
      */
     @Override
     public synchronized void close() {
-        
-        if(debugEnabled) {
+
+        if (debugEnabled) {
             logger.debug("close()");
         }
 
@@ -117,7 +117,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
 
     /**
      * Invoked on a channel read.
-     * 
+     *
      * @param msg channel message
      */
     public void channelRead(Object msg) {
@@ -125,17 +125,17 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     }
 
     protected <T, C extends RedisCommand<K, V, T>> C dispatch(C cmd) {
-        
-        if(debugEnabled) {
+
+        if (debugEnabled) {
             logger.debug("dispatching command {}", cmd);
         }
-        
+
         return channelWriter.write(cmd);
     }
 
     /**
      * Register Closeable resources. Internal access only.
-     * 
+     *
      * @param registry registry of closeables
      * @param closeables closeables to register
      */
@@ -151,7 +151,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
                 try {
                     closeable.close();
                 } catch (IOException e) {
-                    if(debugEnabled) {
+                    if (debugEnabled) {
                         logger.debug(e.toString(), e);
                     }
                 }
@@ -166,7 +166,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     }
 
     /**
-     * 
+     *
      * @return true if the connection is closed (final state in the connection lifecyle).
      */
     public boolean isClosed() {
@@ -189,7 +189,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     }
 
     /**
-     * 
+     *
      * @return the channel writer
      */
     public RedisChannelWriter<K, V> getChannelWriter() {
@@ -197,7 +197,7 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
     }
 
     /**
-     * 
+     *
      * @return true if the connection is active and not closed.
      */
     public boolean isOpen() {
@@ -225,8 +225,9 @@ public abstract class RedisChannelHandler<K, V> extends ChannelInboundHandlerAda
         return unit;
     }
 
+    @SuppressWarnings("unchecked")
     protected <T> T syncHandler(Object asyncApi, Class<?>... interfaces) {
-        FutureSyncInvocationHandler<K, V> h = new FutureSyncInvocationHandler<>((StatefulConnection) this, asyncApi, interfaces);
+        FutureSyncInvocationHandler h = new FutureSyncInvocationHandler((StatefulConnection<?, ?>) this, asyncApi, interfaces);
         return (T) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaces, h);
     }
 

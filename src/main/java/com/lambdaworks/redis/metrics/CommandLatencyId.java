@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
 /**
  * Identifier for a command latency. Consists of a local/remote tuple of {@link SocketAddress}es and a
  * {@link com.lambdaworks.redis.protocol.ProtocolKeyword commandType} part.
- * 
+ *
  * @author Mark Paluch
  */
+@SuppressWarnings("serial")
 public class CommandLatencyId implements Serializable, Comparable<CommandLatencyId> {
 
     private final SocketAddress localAddress;
@@ -45,7 +46,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
 
     /**
      * Create a new instance of {@link CommandLatencyId}.
-     * 
+     *
      * @param localAddress the local address
      * @param remoteAddress the remote address
      * @param commandType the command type
@@ -57,7 +58,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
 
     /**
      * Returns the local address.
-     * 
+     *
      * @return the local address
      */
     public SocketAddress localAddress() {
@@ -66,7 +67,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
 
     /**
      * Returns the remote address.
-     * 
+     *
      * @return the remote address
      */
     public SocketAddress remoteAddress() {
@@ -75,7 +76,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
 
     /**
      * Returns the command type.
-     * 
+     *
      * @return the command type
      */
     public ProtocolKeyword commandType() {
