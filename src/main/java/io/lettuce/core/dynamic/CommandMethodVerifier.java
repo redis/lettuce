@@ -23,6 +23,7 @@ import io.lettuce.core.dynamic.segment.CommandSegments;
  * @author Mark Paluch
  * @since 5.0
  */
+@FunctionalInterface
 interface CommandMethodVerifier {
 
     /**

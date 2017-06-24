@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,17 +38,14 @@ class Futures {
      *         the cause wil be transported.
      */
     static Promise<Boolean> toBooleanPromise(Future<?> future) {
-        final DefaultPromise<Boolean> result = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
 
-        future.addListener(new GenericFutureListener<Future<Object>>() {
-            @Override
-            public void operationComplete(Future<Object> future) throws Exception {
+        DefaultPromise<Boolean> result = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+        future.addListener((GenericFutureListener<Future<Object>>) f -> {
 
-                if (future.isSuccess()) {
-                    result.setSuccess(true);
-                } else {
-                    result.setFailure(future.cause());
-                }
+            if (f.isSuccess()) {
+                result.setSuccess(true);
+            } else {
+                result.setFailure(f.cause());
             }
         });
         return result;

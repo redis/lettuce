@@ -129,13 +129,12 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
         }
     }
 
-    public MasterSlaveConnectionProvider getMasterSlaveConnectionProvider() {
+    public MasterSlaveConnectionProvider<K, V> getMasterSlaveConnectionProvider() {
         return masterSlaveConnectionProvider;
     }
 
     @Override
     public void setConnectionFacade(ConnectionFacade connection) {
-
     }
 
     @Override

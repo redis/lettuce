@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import io.lettuce.core.output.*;
  * @since 5.0
  * @see CommandOutput
  */
+@SuppressWarnings("rawtypes")
 public class OutputRegistry {
 
     private final static Map<OutputType, CommandOutputFactory> BUILTIN = new LinkedHashMap<>();
@@ -115,7 +116,7 @@ public class OutputRegistry {
         return registry;
     }
 
-    private static <T extends CommandOutput> void register(Map<OutputType, CommandOutputFactory> registry,
+    private static <T extends CommandOutput<?, ?, ?>> void register(Map<OutputType, CommandOutputFactory> registry,
             Class<T> commandOutputClass, CommandOutputFactory commandOutputFactory) {
 
         List<OutputType> outputTypes = getOutputTypes(commandOutputClass);
@@ -125,7 +126,7 @@ public class OutputRegistry {
         }
     }
 
-    private static List<OutputType> getOutputTypes(Class<? extends CommandOutput> commandOutputClass) {
+    private static List<OutputType> getOutputTypes(Class<? extends CommandOutput<?, ?, ?>> commandOutputClass) {
 
         OutputType streamingType = getStreamingType(commandOutputClass);
         OutputType componentOutputType = getOutputComponentType(commandOutputClass);
@@ -148,6 +149,7 @@ public class OutputRegistry {
      * @param commandOutputClass
      * @return
      */
+    @SuppressWarnings("rawtypes")
     static OutputType getStreamingType(Class<? extends CommandOutput> commandOutputClass) {
 
         ClassTypeInformation<? extends CommandOutput> classTypeInformation = ClassTypeInformation.from(commandOutputClass);
@@ -167,8 +169,8 @@ public class OutputRegistry {
 
                 TypeInformation<?> typeInformation = ClassTypeInformation.from(codec.getClass());
 
-                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass,
-                        new CodecVariableTypeResolver(typeInformation));
+                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass, new CodecVariableTypeResolver(
+                        typeInformation));
 
                 while (resolvableType != ResolvableType.NONE) {
 
@@ -212,8 +214,8 @@ public class OutputRegistry {
 
                 TypeInformation<?> typeInformation = ClassTypeInformation.from(codec.getClass());
 
-                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass,
-                        new CodecVariableTypeResolver(typeInformation));
+                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass, new CodecVariableTypeResolver(
+                        typeInformation));
 
                 while (!resolvableType.getRawClass().equals(CommandOutput.class)) {
                     resolvableType = resolvableType.getSuperType();
@@ -224,6 +226,7 @@ public class OutputRegistry {
         };
     }
 
+    @SuppressWarnings("serial")
     static class CodecVariableTypeResolver implements ResolvableType.VariableResolver {
 
         private final TypeInformation<?> codecType;

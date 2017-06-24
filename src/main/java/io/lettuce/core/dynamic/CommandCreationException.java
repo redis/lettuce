@@ -23,6 +23,7 @@ import io.lettuce.core.RedisException;
  * @author Mark Paluch
  * @since 5.0
  */
+@SuppressWarnings("serial")
 public class CommandCreationException extends RedisException {
 
     private final CommandMethod commandMethod;

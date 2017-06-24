@@ -25,6 +25,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Mark Paluch
  * @since 5.0
  */
+@FunctionalInterface
 interface CommandFactory {
 
     /**

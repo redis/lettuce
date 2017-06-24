@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +37,13 @@ class ConversionService {
      *
      * @param converter the converter.
      */
+    @SuppressWarnings("rawtypes")
     public void addConverter(Function<?, ?> converter) {
 
         LettuceAssert.notNull(converter, "Converter must not be null");
 
         ClassTypeInformation<? extends Function> classTypeInformation = ClassTypeInformation.from(converter.getClass());
-
         TypeInformation<?> typeInformation = classTypeInformation.getSuperTypeInformation(Function.class);
-
         List<TypeInformation<?>> typeArguments = typeInformation.getTypeArguments();
 
         ConvertiblePair pair = new ConvertiblePair(typeArguments.get(0).getType(), typeArguments.get(1).getType());

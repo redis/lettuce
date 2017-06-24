@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Operators;
 import reactor.util.concurrent.QueueSupplier;
-
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -39,7 +38,6 @@ import io.lettuce.core.output.StreamingOutput;
 import io.lettuce.core.protocol.CommandWrapper;
 import io.lettuce.core.protocol.DemandAware;
 import io.lettuce.core.protocol.RedisCommand;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -50,8 +48,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * individual elements instead of emitting collections. This publisher allows multiple subscriptions if it's backed by a
  * {@link Supplier command supplier}.
  * <p>
- * When using streaming outputs ({@link io.lettuce.core.output.CommandOutput} that implement {@link StreamingOutput})
- * elements are emitted as they are decoded. Otherwise, results are processed at command completion.
+ * When using streaming outputs ({@link io.lettuce.core.output.CommandOutput} that implement {@link StreamingOutput}) elements
+ * are emitted as they are decoded. Otherwise, results are processed at command completion.
  *
  * @author Mark Paluch
  * @since 5.0
@@ -129,6 +127,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
 
+        @SuppressWarnings({ "rawtypes", "unchecked" })
         static final AtomicLongFieldUpdater<RedisSubscription> DEMAND = AtomicLongFieldUpdater.newUpdater(
                 RedisSubscription.class, "demand");
 
@@ -142,6 +141,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         final AtomicReference<State> state = new AtomicReference<>(State.UNSUBSCRIBED);
         final AtomicReference<CommandDispatch> commandDispatch = new AtomicReference<>(CommandDispatch.UNDISPATCHED);
 
+        @SuppressWarnings("unused")
+        // accessed via AtomicLongFieldUpdater
         volatile long demand;
         volatile boolean allDataRead = false;
 
@@ -291,7 +292,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         private boolean hasDemand() {
-            return this.demand > 0;
+            return DEMAND.get(this) > 0;
         }
 
         private boolean changeState(State oldState, State newState) {
@@ -605,7 +606,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         public boolean hasDemand() {
 
             // signal demand as completed commands just no-op on incoming data.
-            return completed || subscription.state() == State.COMPLETED || subscription.demand > subscription.data.size();
+            return completed || subscription.state() == State.COMPLETED
+                    || RedisSubscription.DEMAND.get(subscription) > subscription.data.size();
         }
 
         @Override

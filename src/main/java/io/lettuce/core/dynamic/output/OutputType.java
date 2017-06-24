@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,14 @@ import io.lettuce.core.output.CommandOutput;
  * This value object describes the primary output type and the produced {@link TypeInformation} by the {@link CommandOutput}
  * type.
  * <p>
- * {@link OutputType} makes a distinction whether a {@link CommandOutput} is a
- * {@link io.lettuce.core.output.StreamingOutput} by providing {@code streaming}. Streaming outputs produce usually a
- * component type hence they require an own {@link OutputType} descriptor.
+ * {@link OutputType} makes a distinction whether a {@link CommandOutput} is a {@link io.lettuce.core.output.StreamingOutput} by
+ * providing {@code streaming}. Streaming outputs produce usually a component type hence they require an own {@link OutputType}
+ * descriptor.
  *
  * @author Mark Paluch
  * @since 5.0
  */
+@SuppressWarnings("rawtypes")
 public class OutputType {
 
     private final Class<? extends CommandOutput> commandOutputClass;

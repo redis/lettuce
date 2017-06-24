@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,34 +89,7 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
                 .collect(Collectors.toList());
 
         commandMethod.getParameters().getBindableParameters().forEach(parameter -> {
-
-            for (Voted<RedisCodec<?, ?>> vote : votes) {
-
-                ClassTypeInformation<? extends RedisCodec> typeInformation = ClassTypeInformation.from(vote.subject.getClass());
-
-                TypeInformation<?> superTypeInformation = typeInformation.getSuperTypeInformation(RedisCodec.class);
-
-                List<TypeInformation<?>> typeArguments = superTypeInformation.getTypeArguments();
-
-                if (typeArguments.size() != 2) {
-                    continue;
-                }
-
-                TypeInformation<?> parameterType = parameter.getTypeInformation();
-                TypeInformation<?> parameterKeyType = ParameterWrappers.getKeyType(parameterType);
-                TypeInformation<?> parameterValueType = ParameterWrappers.getValueType(parameterType);
-
-                TypeInformation<?> keyType = typeArguments.get(0);
-                TypeInformation<?> valueType = typeArguments.get(1);
-
-                if (keyType.isAssignableFrom(parameterKeyType)) {
-                    vote.votes++;
-                }
-
-                if (valueType.isAssignableFrom(parameterValueType)) {
-                    vote.votes++;
-                }
-            }
+            vote(votes, parameter);
         });
 
         Collections.sort(votes);
@@ -131,6 +104,38 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         }
 
         return voted;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static void vote(List<Voted<RedisCodec<?, ?>>> votes, Parameter parameter) {
+
+        for (Voted<RedisCodec<?, ?>> vote : votes) {
+
+            ClassTypeInformation<? extends RedisCodec> typeInformation = ClassTypeInformation.from(vote.subject.getClass());
+
+            TypeInformation<?> superTypeInformation = typeInformation.getSuperTypeInformation(RedisCodec.class);
+
+            List<TypeInformation<?>> typeArguments = superTypeInformation.getTypeArguments();
+
+            if (typeArguments.size() != 2) {
+                continue;
+            }
+
+            TypeInformation<?> parameterType = parameter.getTypeInformation();
+            TypeInformation<?> parameterKeyType = ParameterWrappers.getKeyType(parameterType);
+            TypeInformation<?> parameterValueType = ParameterWrappers.getValueType(parameterType);
+
+            TypeInformation<?> keyType = typeArguments.get(0);
+            TypeInformation<?> valueType = typeArguments.get(1);
+
+            if (keyType.isAssignableFrom(parameterKeyType)) {
+                vote.votes++;
+            }
+
+            if (valueType.isAssignableFrom(parameterValueType)) {
+                vote.votes++;
+            }
+        }
     }
 
     private RedisCodec<?, ?> resolveCodec(Set<Class<?>> keyTypes, Set<Class<?>> valueTypes) {

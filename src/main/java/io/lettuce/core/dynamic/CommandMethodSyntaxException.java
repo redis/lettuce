@@ -21,6 +21,7 @@ package io.lettuce.core.dynamic;
  * @author Mark Paluch
  * @since 5.0
  */
+@SuppressWarnings("serial")
 public class CommandMethodSyntaxException extends CommandCreationException {
 
     /**

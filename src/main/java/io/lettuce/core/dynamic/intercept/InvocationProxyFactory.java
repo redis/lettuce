@@ -50,12 +50,12 @@ public class InvocationProxyFactory {
      * @param <T> inferred result type.
      * @return the invocation proxy instance.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public <T> T createProxy(ClassLoader classLoader) {
 
         LettuceAssert.notNull(classLoader, "ClassLoader must not be null");
 
-        Class<?>[] interfaces = this.interfaces.toArray(new Class[this.interfaces.size()]);
+        Class<?>[] interfaces = this.interfaces.toArray(new Class[0]);
 
         return (T) Proxy.newProxyInstance(classLoader, interfaces, new InterceptorChainInvocationHandler(interceptors));
     }

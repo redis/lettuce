@@ -20,6 +20,7 @@ package io.lettuce.core.dynamic;
  *
  * @since 5.0
  */
+@FunctionalInterface
 interface CommandFactoryResolver {
 
     /**

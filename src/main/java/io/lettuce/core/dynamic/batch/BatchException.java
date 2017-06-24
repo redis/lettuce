@@ -32,6 +32,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @see BatchSize
  * @see CommandBatching
  */
+@SuppressWarnings("serial")
 public class BatchException extends RedisCommandExecutionException {
 
     private final List<RedisCommand<?, ?, ?>> failedCommands;

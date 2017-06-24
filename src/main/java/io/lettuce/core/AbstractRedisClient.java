@@ -15,6 +15,9 @@
  */
 package io.lettuce.core;
 
+import static java.util.concurrent.CompletableFuture.allOf;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -257,7 +260,7 @@ public abstract class AbstractRedisClient {
                 return;
             }
 
-            CompletableFuture<Boolean> initFuture = (CompletableFuture<Boolean>) initializer.channelInitialized();
+            CompletableFuture<Boolean> initFuture = initializer.channelInitialized();
             initFuture.whenComplete((success, throwable) -> {
 
                 if (throwable == null) {
@@ -332,6 +335,7 @@ public abstract class AbstractRedisClient {
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
      * @since 4.4
      */
+    @SuppressWarnings("rawtypes")
     public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         if (shutdown.compareAndSet(false, true)) {
@@ -375,10 +379,10 @@ public abstract class AbstractRedisClient {
                 }
             }
 
-            return CompletableFuture.allOf(closeFutures.toArray(new CompletableFuture[closeFutures.size()]));
+            return allOf(closeFutures.toArray(new CompletableFuture[0]));
         }
 
-        return CompletableFuture.completedFuture(null);
+        return completedFuture(null);
     }
 
     protected int getResourceCount() {

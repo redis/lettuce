@@ -158,8 +158,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         try {
 
             if (asking) { // set asking bit
-                StatefulRedisConnection<K, V> statefulRedisConnection = (StatefulRedisConnection<K, V>) connection;
-                statefulRedisConnection.async().asking();
+                connection.async().asking();
             }
 
             writeCommand(command, ((RedisChannelHandler<K, V>) connection).getChannelWriter());

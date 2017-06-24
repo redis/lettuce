@@ -17,7 +17,7 @@ package io.lettuce.core.cluster;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.reactivestreams.Publisher;
 
@@ -34,9 +34,9 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
  */
 class ReactiveExecutionsImpl<T> implements ReactiveExecutions<T> {
 
-    private Map<RedisClusterNode, CompletableFuture<? extends Publisher<T>>> executions;
+    private Map<RedisClusterNode, CompletionStage<? extends Publisher<? extends T>>> executions;
 
-    public ReactiveExecutionsImpl(Map<RedisClusterNode, CompletableFuture<? extends Publisher<T>>> executions) {
+    public ReactiveExecutionsImpl(Map<RedisClusterNode, CompletionStage<? extends Publisher<? extends T>>> executions) {
         this.executions = executions;
     }
 

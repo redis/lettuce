@@ -2705,14 +2705,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEORADIUSBYMEMBER, new IntegerOutput<K, V>(codec), args);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Command<K, V, List<GeoCoordinates>> geopos(K key, V[] members) {
         notNullKey(key);
         LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValues(members);
 
-        return (Command) createCommand(GEOPOS, new GeoCoordinatesListOutput<K, V>(codec), args);
+        return createCommand(GEOPOS, new GeoCoordinatesListOutput<K, V>(codec), args);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -2739,67 +2738,67 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEODIST, new DoubleOutput<K, V>(codec), args);
     }
 
-    public void notNull(ScoredValueStreamingChannel<?> channel) {
+    public static void notNull(ScoredValueStreamingChannel<?> channel) {
         LettuceAssert.notNull(channel, "ScoredValueStreamingChannel " + MUST_NOT_BE_NULL);
     }
 
-    public void notNull(KeyStreamingChannel<?> channel) {
+    public static void notNull(KeyStreamingChannel<?> channel) {
         LettuceAssert.notNull(channel, "KeyValueStreamingChannel " + MUST_NOT_BE_NULL);
     }
 
-    public void notNull(ValueStreamingChannel<?> channel) {
+    public static void notNull(ValueStreamingChannel<?> channel) {
         LettuceAssert.notNull(channel, "ValueStreamingChannel " + MUST_NOT_BE_NULL);
     }
 
-    public void notNull(KeyValueStreamingChannel<?, ?> channel) {
+    public static void notNull(KeyValueStreamingChannel<?, ?> channel) {
         LettuceAssert.notNull(channel, "KeyValueStreamingChannel " + MUST_NOT_BE_NULL);
     }
 
-    private void notNullKey(K key) {
+    private static void notNullKey(Object key) {
         LettuceAssert.notNull(key, "Key " + MUST_NOT_BE_NULL);
     }
 
-    private void notNullRange(Range<?> range) {
+    private static void notNullRange(Range<?> range) {
         LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
     }
 
-    private void notNullLimit(Limit limit) {
+    private static void notNullLimit(Limit limit) {
         LettuceAssert.notNull(limit, "Limit " + MUST_NOT_BE_NULL);
     }
 
-    public void notNullMinMax(String min, String max) {
+    public static void notNullMinMax(String min, String max) {
         LettuceAssert.notNull(min, "Min " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(max, "Max " + MUST_NOT_BE_NULL);
     }
 
-    private void notEmpty(K[] keys) {
+    private static void notEmpty(Object[] keys) {
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(keys, "Keys " + MUST_NOT_BE_EMPTY);
     }
 
-    private void notEmptyValues(V[] values) {
+    private static void notEmptyValues(Object[] values) {
         LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
     }
 
-    private void assertNodeId(String nodeId) {
+    private static void assertNodeId(String nodeId) {
         LettuceAssert.notNull(nodeId, "NodeId " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
     }
 
-    private void notEmptySlots(int[] slots) {
+    private static void notEmptySlots(int[] slots) {
         LettuceAssert.notNull(slots, "Slots " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(slots, "Slots " + MUST_NOT_BE_EMPTY);
     }
 
-    private void addLimit(CommandArgs<K, V> args, Limit limit) {
+    private static void addLimit(CommandArgs<?, ?> args, Limit limit) {
 
         if (limit.isLimited()) {
             args.add(LIMIT).add(limit.getOffset()).add(limit.getCount());
         }
     }
 
-    private String min(Range<? extends Number> range) {
+    private static String min(Range<? extends Number> range) {
 
         Range.Boundary<? extends Number> lower = range.getLower();
 
@@ -2815,7 +2814,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return lower.getValue().toString();
     }
 
-    private String max(Range<? extends Number> range) {
+    private static String max(Range<? extends Number> range) {
 
         Range.Boundary<? extends Number> upper = range.getUpper();
 

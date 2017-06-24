@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package io.lettuce.core;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import io.lettuce.core.internal.LettuceAssert;
@@ -25,8 +24,8 @@ import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 
 /**
- * Argument list builder for the new redis <a href="http://redis.io/commands/migrate">MIGRATE</a> command. Static import
- * the methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
+ * Argument list builder for the new redis <a href="http://redis.io/commands/migrate">MIGRATE</a> command. Static import the
+ * methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
  *
  * @author Mark Paluch
  */
@@ -94,9 +93,8 @@ public class MigrateArgs<K> implements CompositeArgument {
 
     public MigrateArgs<K> keys(Iterable<K> keys) {
         LettuceAssert.notNull(keys, "Keys must not be null");
-        Iterator<K> iterator = keys.iterator();
-        while (iterator.hasNext()) {
-            this.keys.add(iterator.next());
+        for (K key : keys) {
+            this.keys.add(key);
         }
         return this;
     }
@@ -114,8 +112,7 @@ public class MigrateArgs<K> implements CompositeArgument {
 
         if (keys.size() > 1) {
             args.add(CommandType.KEYS);
-            args.addKeys((Iterable<K>) keys);
+            args.addKeys((List<K>) keys);
         }
-
     }
 }

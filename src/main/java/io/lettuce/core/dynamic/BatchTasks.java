@@ -42,7 +42,8 @@ class BatchTasks implements Iterable<RedisCommand<?, ?, ?>> {
         return futures.iterator();
     }
 
+    @SuppressWarnings("rawtypes")
     public RedisCommand<?, ?, ?>[] toArray() {
-        return futures.toArray(new RedisCommand[futures.size()]);
+        return futures.toArray(new RedisCommand[0]);
     }
 }

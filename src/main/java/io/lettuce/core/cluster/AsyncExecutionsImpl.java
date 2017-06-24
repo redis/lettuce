@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package io.lettuce.core.cluster;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import io.lettuce.core.cluster.api.async.AsyncExecutions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -28,8 +29,10 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
 
     private Map<RedisClusterNode, CompletableFuture<T>> executions;
 
-    public AsyncExecutionsImpl(Map<RedisClusterNode, CompletableFuture<T>> executions) {
-        this.executions = Collections.unmodifiableMap(new HashMap<>(executions));
+    @SuppressWarnings("unchecked")
+    public AsyncExecutionsImpl(Map<RedisClusterNode, CompletionStage<? extends T>> executions) {
+        Map<RedisClusterNode, CompletionStage<? extends T>> map = new HashMap<>(executions);
+        this.executions = Collections.unmodifiableMap((Map) map);
     }
 
     @Override
@@ -55,6 +58,6 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public CompletableFuture<T>[] futures() {
-        return executions.values().toArray(new CompletableFuture[executions.size()]);
+        return executions.values().toArray(new CompletableFuture[0]);
     }
 }

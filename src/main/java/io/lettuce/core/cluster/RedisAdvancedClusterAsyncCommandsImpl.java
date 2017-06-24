@@ -183,7 +183,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys) {
-       return mget(channel, Arrays.asList(keys));
+        return mget(channel, Arrays.asList(keys));
     }
 
     @Override
@@ -518,7 +518,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         NodeSelectionSupport<RedisAsyncCommands<K, V>, ?> selection;
 
-        StatefulRedisClusterConnectionImpl impl = (StatefulRedisClusterConnectionImpl) getConnection();
+        StatefulRedisClusterConnectionImpl<K, V> impl = (StatefulRedisClusterConnectionImpl<K, V>) getConnection();
         if (dynamic) {
             selection = new DynamicNodeSelection<RedisAsyncCommands<K, V>, Object, K, V>(
                     impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::async);

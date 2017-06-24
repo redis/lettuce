@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 class DefaultMethodParametersAccessor implements MethodParametersAccessor {
 
-    private final Parameters parameters;
+    private final Parameters<? extends Parameter> parameters;
     private final List<Object> values;
 
-    public DefaultMethodParametersAccessor(Parameters parameters, Object... values) {
+    public DefaultMethodParametersAccessor(Parameters<? extends Parameter> parameters, Object... values) {
 
         LettuceAssert.notNull(parameters, "Parameters must not be null");
         LettuceAssert.notNull(values, "Values must not be null");
@@ -74,7 +74,8 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
     @Override
     public int resolveParameterIndex(String name) {
 
-        List<Parameter> bindableParameters = parameters.getBindableParameters();
+        List<? extends Parameter> bindableParameters = parameters.getBindableParameters();
+
         for (int i = 0; i < bindableParameters.size(); i++) {
 
             if (name.equals(bindableParameters.get(i).getName())) {

@@ -472,13 +472,13 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         logger.debug("connectPubSubToNode(" + nodeId + ")");
 
-        PubSubEndpoint endpoint = new PubSubEndpoint(clientOptions);
+        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions);
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, endpoint, codec,
                 timeout, unit);
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
-                getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<K, V>(clientOptions, clientResources,
-                        codec, endpoint));
+                getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec,
+                        endpoint));
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
                 connection.close();

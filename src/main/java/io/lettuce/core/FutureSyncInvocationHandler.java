@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,10 @@ import io.lettuce.core.internal.AbstractInvocationHandler;
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
  * sync class which just delegates every request.
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Mark Paluch
  * @since 3.0
  */
-class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
+class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
     private final StatefulConnection<?, ?> connection;
     private final Object asyncApi;
@@ -52,21 +50,29 @@ class FutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
             Method targetMethod = this.translator.get(method);
             Object result = targetMethod.invoke(asyncApi, args);
 
-            if (result instanceof RedisFuture) {
+            if (result instanceof RedisFuture<?>) {
+
                 RedisFuture<?> command = (RedisFuture<?>) result;
-                if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
-                    if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti()) {
-                        return null;
-                    }
+
+                if (isNonTxControlMethod(method.getName()) && isTransactionActive(connection)) {
+                    return null;
                 }
 
                 LettuceFutures.awaitOrCancel(command, connection.getTimeout(), connection.getTimeoutUnit());
                 return command.get();
             }
+
             return result;
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
+    }
 
+    private static boolean isTransactionActive(StatefulConnection<?, ?> connection) {
+        return connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti();
+    }
+
+    private static boolean isNonTxControlMethod(String methodName) {
+        return !methodName.equals("exec") && !methodName.equals("multi");
     }
 }

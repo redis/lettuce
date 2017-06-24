@@ -126,6 +126,7 @@ class CodecAwareMethodParametersAccessor implements MethodParametersAccessor {
         final TypeInformation<?> keyType;
         final TypeInformation<?> valueType;
 
+        @SuppressWarnings("rawtypes")
         public TypeContext(RedisCodec<?, ?> redisCodec) {
 
             LettuceAssert.notNull(redisCodec, "RedisCodec must not be null");

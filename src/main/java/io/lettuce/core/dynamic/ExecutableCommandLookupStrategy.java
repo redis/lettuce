@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
  * @author Mark Paluch
  * @since 5.0
  */
+@FunctionalInterface
 interface ExecutableCommandLookupStrategy {
 
     /**
