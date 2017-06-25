@@ -335,18 +335,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
             validateWrite();
 
-            if ((channel == null || !isConnected()) && isRejectCommand()) {
-                throw new RedisException("Currently not connected. Commands are rejected.");
-            }
-
-            /*
-             * This lock causes safety for connection activation and somehow netty gets more stable and predictable performance
-             * than without a lock and all threads are hammering towards writeAndFlush.
-             */
-            Channel channel = this.channel;
             if (autoFlushCommands) {
 
-                if (channel != null && isConnected() && channel.isActive()) {
+                if (isConnected()) {
                     writeToChannel(command);
                 } else {
                     writeToDisconnectedBuffer(command);
