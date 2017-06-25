@@ -46,6 +46,7 @@ public class RedisStateMachine {
 
     private static final boolean USE_NETTY40_BYTEBUF_COMPATIBILITY;
     private static final Class<?> LONG_PROCESSOR_CLASS;
+    private static final Class<?> INDEX_OF_LINEBREAK_PROCESSOR_CLASS;
 
     static {
 
@@ -59,8 +60,15 @@ public class RedisStateMachine {
             } catch (ClassNotFoundException e) {
                 throw new RedisException("Cannot load Netty41LongProcessor class", e);
             }
+            try {
+                INDEX_OF_LINEBREAK_PROCESSOR_CLASS = Class
+                        .forName("io.lettuce.core.protocol.RedisStateMachine$Netty41IndexOfLineBreakProcessor");
+            } catch (ClassNotFoundException e) {
+                throw new RedisException("Cannot load Netty41IndexOfLineBreakProcessor class", e);
+            }
         } else {
             LONG_PROCESSOR_CLASS = null;
+            INDEX_OF_LINEBREAK_PROCESSOR_CLASS = null;
         }
     }
 
@@ -76,6 +84,7 @@ public class RedisStateMachine {
     private final State[] stack = new State[32];
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final LongProcessor longProcessor;
+    private final IndexOfLineBreakProcessor indexOfLineBreakProcessor;
     private final ByteBuf responseElementBuffer = PooledByteBufAllocator.DEFAULT.directBuffer(1024);
     private final AtomicBoolean closed = new AtomicBoolean();
 
@@ -87,6 +96,7 @@ public class RedisStateMachine {
     public RedisStateMachine() {
 
         LongProcessor longProcessor;
+        IndexOfLineBreakProcessor indexOfLineBreakProcessor;
 
         if (!USE_NETTY40_BYTEBUF_COMPATIBILITY) {
             try {
@@ -94,11 +104,19 @@ public class RedisStateMachine {
             } catch (ReflectiveOperationException e) {
                 throw new RedisException("Cannot create Netty41LongProcessor instance", e);
             }
+
+            try {
+                indexOfLineBreakProcessor = (IndexOfLineBreakProcessor) INDEX_OF_LINEBREAK_PROCESSOR_CLASS.newInstance();
+            } catch (ReflectiveOperationException e) {
+                throw new RedisException("Cannot create Netty41IndexOfLineBreakProcessor instance", e);
+            }
         } else {
             longProcessor = new LongProcessor();
+            indexOfLineBreakProcessor = new IndexOfLineBreakProcessor();
         }
 
         this.longProcessor = longProcessor;
+        this.indexOfLineBreakProcessor = indexOfLineBreakProcessor;
     }
 
     /**
@@ -247,8 +265,7 @@ public class RedisStateMachine {
 
     private int findLineEnd(ByteBuf buffer) {
 
-        int start = buffer.readerIndex();
-        int index = buffer.indexOf(start, buffer.writerIndex(), (byte) '\n');
+        int index = (int) indexOfLineBreakProcessor.getValue(buffer, buffer.readerIndex(), buffer.writerIndex());
         return (index > 0 && buffer.getByte(index - 1) == '\r') ? index : -1;
     }
 
@@ -515,6 +532,33 @@ public class RedisStateMachine {
             result = result * 10 - digit;
 
             return true;
+        }
+    }
+
+    /**
+     * Compatibility code that works also on Netty 4.0.
+     */
+    static class IndexOfLineBreakProcessor {
+
+        public long getValue(ByteBuf buffer, int start, int end) {
+            return buffer.indexOf(start, buffer.writerIndex(), (byte) '\n');
+        }
+    }
+
+    /**
+     * Processor for Netty 4.1. Note {@link ByteBufProcessor} is deprecated but ByteProcessor does not exist in Netty 4.0. So we
+     * need to stick to that as long as we support Netty 4.0.
+     */
+    static class Netty41IndexOfLineBreakProcessor extends IndexOfLineBreakProcessor implements ByteBufProcessor {
+
+        @Override
+        public long getValue(ByteBuf buffer, int start, int end) {
+            return buffer.forEachByte(start, end - start, this);
+        }
+
+        @Override
+        public boolean process(byte value) throws Exception {
+            return value != (byte) '\n';
         }
     }
 }
