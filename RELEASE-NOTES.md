@@ -157,6 +157,8 @@ Enhancements
 * Align log prefix for CommandHandler and ConnectionWatchdog #538
 * Add support for kqueue transport #539
 * Add support for client certificate authentication #540
+* Reduce cross-thread queue sharing #544
+* Use pre-instantiated ByteBufProcessor in RedisStateMachine to find EOL #557
 
 
 Fixes
@@ -188,6 +190,9 @@ Fixes
 * NumberFormatException on "inf" zscore #528 (Thanks to @DarkSeraphim)
 * Connection pool deadlock #531 (Thanks to @DarkSeraphim)
 * Improve Epoll availability detection #535
+* Close connections in pooling destroy hook #545
+* Adopt to changed SLOWLOG output #551
+* CommandHandler.write contains isConnected verification #556
 
 
 Other
@@ -211,6 +216,9 @@ Other
 * Upgrade to RxJava 1.2.10  #524
 * Upgrade to netty 4.1.10 #532
 * Upgrade to netty 4.0.11 #537
+* Upgrade to netty 4.1.12 #548
+* Allow Redis version pinning for build #552
+
 
 Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
 against the latest Redis source-build.
