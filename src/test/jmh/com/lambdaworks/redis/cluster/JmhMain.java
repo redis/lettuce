@@ -33,7 +33,8 @@ public class JmhMain {
 
     public static void main(String... args) throws RunnerException {
 
-        runClusterDistributionChannelWriterBenchmark();
+        // runClusterDistributionChannelWriterBenchmark();
+        runSlotHashBenchmark();
     }
 
     private static void runClusterDistributionChannelWriterBenchmark() throws RunnerException {
@@ -41,6 +42,14 @@ public class JmhMain {
         new Runner(prepareOptions().mode(Mode.AverageTime) //
                 .timeUnit(TimeUnit.NANOSECONDS) //
                 .include(".*ClusterDistributionChannelWriterBenchmark.*") //
+                .build()).run();
+    }
+
+    private static void runSlotHashBenchmark() throws RunnerException {
+
+        new Runner(prepareOptions().mode(Mode.AverageTime) //
+                .timeUnit(TimeUnit.NANOSECONDS) //
+                .include(".*SlotHashBenchmark.*") //
                 .build()).run();
     }
 

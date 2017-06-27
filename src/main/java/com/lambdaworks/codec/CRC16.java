@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.lambdaworks.codec;
+
+import java.nio.ByteBuffer;
 
 /**
  * @author Mark Paluch
@@ -59,17 +61,51 @@ public class CRC16 {
 
     /**
      * Create a CRC16 checksum from the bytes.
-     * 
+     *
      * @param bytes input bytes
-     * @return CRC16 as interger value
+     * @return CRC16 as integer value
      */
     public static int crc16(byte[] bytes) {
-        int crc = 0x0000;
+        return crc16(bytes, 0, bytes.length);
+    }
 
-        for (byte b : bytes) {
-            crc = ((crc << 8) ^ LOOKUP_TABLE[((crc >>> 8) ^ (b & 0xFF)) & 0xFF]);
+    /**
+     * Create a CRC16 checksum from the bytes.
+     *
+     * @param bytes input bytes
+     * @return CRC16 as integer value
+     */
+    public static int crc16(byte[] bytes, int off, int len) {
+
+        int crc = 0x0000;
+        int end = off + len;
+
+        for (int i = off; i < end; i++) {
+            crc = doCrc(bytes[i], crc);
         }
+
         return crc & 0xFFFF;
     }
 
+    /**
+     * Create a CRC16 checksum from the bytes.
+     *
+     * @param bytes input bytes
+     * @return CRC16 as integer value
+     * @since 4.4
+     */
+    public static int crc16(ByteBuffer bytes) {
+
+        int crc = 0x0000;
+
+        while (bytes.hasRemaining()) {
+            crc = doCrc(bytes.get(), crc);
+        }
+
+        return crc & 0xFFFF;
+    }
+
+    private static int doCrc(byte b, int crc) {
+        return ((crc << 8) ^ LOOKUP_TABLE[((crc >>> 8) ^ (b & 0xFF)) & 0xFF]);
+    }
 }
