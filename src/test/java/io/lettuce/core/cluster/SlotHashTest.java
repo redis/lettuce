@@ -15,7 +15,9 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
@@ -25,17 +27,34 @@ import org.junit.Test;
  */
 public class SlotHashTest {
 
-    @Test
-    public void testHash() throws Exception {
-        int result = SlotHash.getSlot("123456789".getBytes());
-        assertThat(result).isEqualTo(0x31C3);
+    static final byte[] BYTES = "123456789".getBytes();
+    static final byte[] TAGGED = "key{123456789}a".getBytes();
 
+    @Test
+    public void shouldGetSlotHeap() {
+
+        int result = SlotHash.getSlot(BYTES);
+        assertThat(result).isEqualTo(0x31C3);
     }
 
     @Test
-    public void testHashWithHash() throws Exception {
-        int result = SlotHash.getSlot("key{123456789}a".getBytes());
-        assertThat(result).isEqualTo(0x31C3);
+    public void shouldGetTaggedSlotHeap() {
 
+        int result = SlotHash.getSlot(TAGGED);
+        assertThat(result).isEqualTo(0x31C3);
+    }
+
+    @Test
+    public void shouldGetSlotDirect() {
+
+        int result = SlotHash.getSlot((ByteBuffer) ByteBuffer.allocateDirect(BYTES.length).put(BYTES).flip());
+        assertThat(result).isEqualTo(0x31C3);
+    }
+
+    @Test
+    public void testHashWithHash() {
+
+        int result = SlotHash.getSlot((ByteBuffer) ByteBuffer.allocateDirect(TAGGED.length).put(TAGGED).flip());
+        assertThat(result).isEqualTo(0x31C3);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class SlotHash {
      * @param key the key
      * @return slot
      */
-    public static final int getSlot(byte[] key) {
+    public static int getSlot(byte[] key) {
         return getSlot(ByteBuffer.wrap(key));
     }
 
@@ -74,34 +74,38 @@ public class SlotHash {
      * @param key the key
      * @return slot
      */
-    public static final int getSlot(ByteBuffer key) {
+    public static int getSlot(ByteBuffer key) {
 
-        byte[] input = new byte[key.remaining()];
-        key.duplicate().get(input);
+        int limit = key.limit();
+        int position = key.position();
 
-        byte[] finalKey = input;
-
-        int start = indexOf(input, SUBKEY_START);
+        int start = indexOf(key, SUBKEY_START);
         if (start != -1) {
-            int end = indexOf(input, start + 1, SUBKEY_END);
+            int end = indexOf(key, start + 1, SUBKEY_END);
             if (end != -1 && end != start + 1) {
-
-                finalKey = new byte[end - (start + 1)];
-                System.arraycopy(input, start + 1, finalKey, 0, finalKey.length);
+                key.position(start + 1).limit(end);
             }
         }
-        return CRC16.crc16(finalKey) % SLOT_COUNT;
+
+        try {
+            if (key.hasArray()) {
+                return CRC16.crc16(key.array(), key.position(), key.limit() - key.position()) % SLOT_COUNT;
+            }
+            return CRC16.crc16(key) % SLOT_COUNT;
+        } finally {
+            key.position(position).limit(limit);
+        }
     }
 
-    private static int indexOf(byte[] haystack, byte needle) {
-        return indexOf(haystack, 0, needle);
+    private static int indexOf(ByteBuffer haystack, byte needle) {
+        return indexOf(haystack, haystack.position(), needle);
     }
 
-    private static int indexOf(byte[] haystack, int start, byte needle) {
+    private static int indexOf(ByteBuffer haystack, int start, byte needle) {
 
-        for (int i = start; i < haystack.length; i++) {
+        for (int i = start; i < haystack.remaining(); i++) {
 
-            if (haystack[i] == needle) {
+            if (haystack.get(i) == needle) {
                 return i;
             }
         }
