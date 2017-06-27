@@ -76,8 +76,8 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
         try {
 
             if (method.isDefault()) {
-                return methodHandleCache.computeIfAbsent(method, this::lookupDefaultMethod).bindTo(proxy)
-                        .invokeWithArguments(args);
+                return methodHandleCache.computeIfAbsent(method, ClusterFutureSyncInvocationHandler::lookupDefaultMethod)
+                        .bindTo(proxy).invokeWithArguments(args);
             }
 
             if (method.getName().equals("getConnection") && args.length > 0) {
@@ -181,7 +181,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
                 nodeSelectionCommandsInterface, nodeSelectionInterface }, h);
     }
 
-    private MethodHandle lookupDefaultMethod(Method method) {
+    private static MethodHandle lookupDefaultMethod(Method method) {
 
         try {
             return DefaultMethods.lookupMethodHandle(method);

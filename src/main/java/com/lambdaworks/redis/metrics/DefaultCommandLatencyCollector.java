@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Function;
 
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
@@ -67,9 +68,26 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             createNewLatencyMap());
 
     private volatile boolean stopped;
+    private final Function<CommandLatencyId, Latencies> createLatencies;
 
     public DefaultCommandLatencyCollector(CommandLatencyCollectorOptions options) {
+
         this.options = options;
+        this.createLatencies = id -> {
+
+            if (PAUSE_DETECTOR_UPDATER.get(this) == null) {
+                if (PAUSE_DETECTOR_UPDATER.compareAndSet(this, null, GLOBAL_PAUSE_DETECTOR)) {
+                    PAUSE_DETECTOR_UPDATER.get(this).retain();
+                }
+            }
+            PauseDetector pauseDetector = ((DefaultPauseDetectorWrapper) PAUSE_DETECTOR_UPDATER.get(this)).getPauseDetector();
+
+            if (options.resetLatenciesAfterEvent()) {
+                return new Latencies(pauseDetector);
+            }
+
+            return new CummulativeLatencies(pauseDetector);
+        };
     }
 
     /**
@@ -88,21 +106,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             return;
         }
 
-        Latencies latencies = latencyMetricsRef.get().computeIfAbsent(createId(local, remote, commandType), id -> {
-
-            if (PAUSE_DETECTOR_UPDATER.get(this) == null) {
-                if (PAUSE_DETECTOR_UPDATER.compareAndSet(this, null, GLOBAL_PAUSE_DETECTOR)) {
-                    PAUSE_DETECTOR_UPDATER.get(this).retain();
-                }
-            }
-            PauseDetector pauseDetector = ((DefaultPauseDetectorWrapper) PAUSE_DETECTOR_UPDATER.get(this)).getPauseDetector();
-
-            if (options.resetLatenciesAfterEvent()) {
-                return new Latencies(pauseDetector);
-            }
-
-            return new CummulativeLatencies(pauseDetector);
-        });
+        Latencies latencies = latencyMetricsRef.get().computeIfAbsent(createId(local, remote, commandType), createLatencies);
 
         latencies.firstResponse.recordLatency(rangify(firstResponseLatency));
         latencies.completion.recordLatency(rangify(completionLatency));
