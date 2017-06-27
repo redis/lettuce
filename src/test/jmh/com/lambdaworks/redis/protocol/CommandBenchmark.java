@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,16 @@
  */
 package com.lambdaworks.redis.protocol;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.GatheringByteChannel;
-import java.nio.channels.ScatteringByteChannel;
-import java.nio.charset.Charset;
-
-import com.lambdaworks.redis.protocol.CommandArgs.ExperimentalByteArrayCodec;
-import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.infra.Blackhole;
 
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.ValueOutput;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufProcessor;
+import com.lambdaworks.redis.protocol.CommandArgs.ExperimentalByteArrayCodec;
 
 /**
  * Benchmark for {@link Command}. Test cases:
@@ -57,8 +47,13 @@ public class CommandBenchmark {
     private final static byte[] BYTE_KEY = "key".getBytes();
 
     @Benchmark
-    public void createCommandUsingByteArrayCodec() {
-        createCommand(BYTE_KEY, BYTE_ARRAY_CODEC);
+    public void createCommandUsingByteArrayCodec(Blackhole blackhole) {
+        blackhole.consume(createCommand(BYTE_KEY, BYTE_ARRAY_CODEC));
+    }
+
+    @Benchmark
+    public void createAsyncCommandUsingByteArrayCodec(Blackhole blackhole) {
+        blackhole.consume(new AsyncCommand<>(createCommand(BYTE_KEY, BYTE_ARRAY_CODEC)));
     }
 
     @Benchmark
@@ -85,6 +80,5 @@ public class CommandBenchmark {
         Command command = new Command(CommandType.GET, new ValueOutput<>(codec), new CommandArgs(codec).addKey(key));
         return command;
     }
-
 
 }
