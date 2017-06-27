@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package io.lettuce.core.protocol;
-
-import java.util.concurrent.CountDownLatch;
 
 /**
  * A wrapper for commands within a {@literal MULTI} transaction. Commands triggered within a transaction will be completed
@@ -32,8 +30,7 @@ import java.util.concurrent.CountDownLatch;
 public class TransactionalCommand<K, V, T> extends AsyncCommand<K, V, T> implements RedisCommand<K, V, T> {
 
     public TransactionalCommand(RedisCommand<K, V, T> command) {
-        super(command);
-        latch = new CountDownLatch(2);
+        super(command, 2);
     }
 
 }

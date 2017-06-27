@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package io.lettuce.core.protocol;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
 import io.lettuce.core.RedisCommandExecutionException;
@@ -40,17 +42,27 @@ import io.netty.buffer.ByteBuf;
 public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T>, RedisFuture<T>,
         CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
-    protected CountDownLatch latch = new CountDownLatch(1);
-    protected RedisCommand<K, V, T> command;
+    private static final AtomicIntegerFieldUpdater<AsyncCommand> COUNT_UPDATER = AtomicIntegerFieldUpdater.newUpdater(
+            AsyncCommand.class, "count");
+
+    private final RedisCommand<K, V, T> command;
+
+    private volatile int count = 1;
 
     /**
-     *
      * @param command the command, must not be {@literal null}.
-     *
      */
     public AsyncCommand(RedisCommand<K, V, T> command) {
+        this(command, 1);
+    }
+
+    /**
+     * @param command the command, must not be {@literal null}.
+     */
+    protected AsyncCommand(RedisCommand<K, V, T> command, int count) {
         LettuceAssert.notNull(command, "RedisCommand must not be null");
         this.command = command;
+        this.count = count;
     }
 
     /**
@@ -64,10 +76,15 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     @Override
     public boolean await(long timeout, TimeUnit unit) {
         try {
-            return latch.await(timeout, unit);
+            get(timeout, unit);
+            return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
+        } catch (ExecutionException e) {
+            return true;
+        } catch (TimeoutException e) {
+            return false;
         }
     }
 
@@ -86,18 +103,17 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
      */
     @Override
     public void complete() {
-        if (latch.getCount() == 1) {
+        if (COUNT_UPDATER.decrementAndGet(this) == 0) {
             completeResult();
             command.complete();
         }
-        latch.countDown();
     }
 
     protected void completeResult() {
         if (command.getOutput() == null) {
             complete(null);
         } else if (command.getOutput().hasError()) {
-            completeExceptionally(new RedisCommandExecutionException(command.getOutput().getError()));
+            doCompleteExceptionally(new RedisCommandExecutionException(command.getOutput().getError()));
         } else {
             complete(command.getOutput().get());
         }
@@ -106,12 +122,15 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     @Override
     public boolean completeExceptionally(Throwable ex) {
         boolean result = false;
-        if (latch.getCount() == 1) {
-            command.completeExceptionally(ex);
-            result = super.completeExceptionally(ex);
+        if (COUNT_UPDATER.decrementAndGet(this) == 0) {
+            result = doCompleteExceptionally(ex);
         }
-        latch.countDown();
         return result;
+    }
+
+    private boolean doCompleteExceptionally(Throwable ex) {
+        command.completeExceptionally(ex);
+        return super.completeExceptionally(ex);
     }
 
     @Override
@@ -120,7 +139,7 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
             command.cancel();
             return super.cancel(mayInterruptIfRunning);
         } finally {
-            latch.countDown();
+            COUNT_UPDATER.set(this, 0);
         }
     }
 
