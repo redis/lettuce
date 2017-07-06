@@ -22,10 +22,7 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.internal.HostAndPort;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandKeyword;
-import com.lambdaworks.redis.protocol.ProtocolKeyword;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.*;
 
 import io.netty.util.concurrent.EventExecutorGroup;
 
@@ -121,7 +118,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
 
         RedisChannelWriter<K, V> channelWriter = null;
 
-        if (args != null && args.getFirstEncodedKey() != null) {
+        if (args != null && args.getFirstEncodedKey() != null && !CommandType.CLIENT.equals(command.getType())) {
             int hash = getSlot(args.getFirstEncodedKey());
             ClusterConnectionProvider.Intent intent = getIntent(command.getType());
 

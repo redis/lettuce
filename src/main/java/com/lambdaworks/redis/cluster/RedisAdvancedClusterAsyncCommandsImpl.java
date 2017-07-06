@@ -49,7 +49,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
- * 
+ *
  * @author Mark Paluch
  * @since 3.3
  */
@@ -238,7 +238,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            
+
             for (RedisFuture<Boolean> listRedisFuture : executions.values()) {
                 Boolean b = MultiNodeExecution.execute(() -> listRedisFuture.get());
                 if (b == null ||  !b) {
@@ -253,6 +253,8 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<String> clientSetname(K name) {
         Map<String, RedisFuture<String>> executions = new HashMap<>();
+
+        executions.put("Default", super.clientSetname(name));
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
             RedisClusterAsyncCommands<K, V> byNodeId = getConnection(redisClusterNode.getNodeId());
@@ -390,7 +392,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     /**
      * Run a command on all available masters,
-     * 
+     *
      * @param function function producing the command
      * @param <T> result type
      * @return map of a key (counter) and commands.
@@ -402,7 +404,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     /**
      * Run a command on all available nodes that match {@code filter}.
-     * 
+     *
      * @param function function producing the command
      * @param filter filter function for the node selection
      * @param <T> result type
