@@ -23,6 +23,7 @@ import static com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.N
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -262,9 +263,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<String> clientSetname(K name) {
 
-        Map<String, CompletableFuture<String>> executions = new HashMap<>();
+        Map<String, CompletionStage<String>> executions = new HashMap<>();
 
         CompletableFuture<String> ok = CompletableFuture.completedFuture("OK");
+
+        executions.put("Default", super.clientSetname(name).toCompletableFuture());
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
 

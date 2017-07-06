@@ -235,6 +235,8 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         List<Observable<String>> observables = new ArrayList<>();
 
+        observables.add(super.clientSetname(name));
+
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
             Single<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
 

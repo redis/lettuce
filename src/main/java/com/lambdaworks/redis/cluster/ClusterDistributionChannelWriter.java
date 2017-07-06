@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.cluster;
 
 import static com.lambdaworks.redis.cluster.SlotHash.getSlot;
+import static com.lambdaworks.redis.protocol.CommandType.CLIENT;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
@@ -107,7 +108,8 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         ClusterCommand<K, V, ?> commandToSend = getCommandToSend(command);
         CommandArgs<K, V> args = command.getArgs();
 
-        if (args != null) {
+        // exclude CLIENT commands from cluster routing
+        if (args != null && !CLIENT.equals(commandToSend.getType())) {
 
             ByteBuffer encodedKey = args.getFirstEncodedKey();
             if (encodedKey != null) {
