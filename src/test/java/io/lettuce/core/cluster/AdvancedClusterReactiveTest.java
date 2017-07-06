@@ -173,6 +173,8 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
                     .getConnection(redisClusterNode.getNodeId());
             assertThat(nodeConnection.clientList()).contains(name);
         }
+
+        StepVerifier.create(commands.clientGetname()).expectNext(name).verifyComplete();
     }
 
     @Test
@@ -371,7 +373,6 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         assertThat(adapter.getList()).containsAll(
                 KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
-
     }
 
     private void writeKeysToTwoNodes() {

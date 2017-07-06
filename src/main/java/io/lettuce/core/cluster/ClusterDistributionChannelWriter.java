@@ -105,7 +105,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         ClusterCommand<K, V, T> commandToSend = getCommandToSend(command);
         CommandArgs<K, V> args = command.getArgs();
 
-        if (args != null) {
+        // exclude CLIENT commands from cluster routing
+        if (args != null && !CommandType.CLIENT.equals(commandToSend.getType())) {
 
             ByteBuffer encodedKey = args.getFirstEncodedKey();
             if (encodedKey != null) {

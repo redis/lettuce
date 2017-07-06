@@ -242,6 +242,8 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         List<Publisher<String>> publishers = new ArrayList<>();
 
+        publishers.add(super.clientSetname(name));
+
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
 
             Mono<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
