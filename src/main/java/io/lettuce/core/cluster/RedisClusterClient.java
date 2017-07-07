@@ -529,6 +529,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             try {
                 connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier, () -> new CommandHandler(
                         clientOptions, clientResources, endpoint));
+                connection.inspectRedisState();
                 connected = true;
                 break;
             } catch (RedisException e) {
@@ -545,6 +546,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
+
 
         return connection;
     }
@@ -592,6 +594,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             try {
                 connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier,
                         () -> new PubSubCommandHandler<K, V>(clientOptions, clientResources, codec, endpoint));
+                connection.inspectRedisState();
                 connected = true;
                 break;
             } catch (RedisException e) {

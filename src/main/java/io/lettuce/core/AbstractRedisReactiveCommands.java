@@ -15,7 +15,7 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandType.EXEC;
+import static io.lettuce.core.protocol.CommandType.*;
 
 import java.util.Date;
 import java.util.Map;
@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
@@ -1842,12 +1841,24 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Flux<V> georadius(K key, double longitude, double latitude, double distance, Unit unit) {
-        return createDissolvingFlux(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name()));
+        return createDissolvingFlux(() -> commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name()));
+    }
+
+    protected Flux<V> georadius_ro(K key, double longitude, double latitude, double distance, Unit unit) {
+        return createDissolvingFlux(() -> commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance,
+                unit.name()));
     }
 
     @Override
     public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, Unit unit, GeoArgs geoArgs) {
-        return createDissolvingFlux(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name(), geoArgs));
+        return createDissolvingFlux(() -> commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name(),
+                geoArgs));
+    }
+
+    protected Flux<GeoWithin<V>> georadius_ro(K key, double longitude, double latitude, double distance, Unit unit,
+            GeoArgs geoArgs) {
+        return createDissolvingFlux(() -> commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance,
+                unit.name(), geoArgs));
     }
 
     @Override
@@ -1858,12 +1869,24 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Flux<V> georadiusbymember(K key, V member, double distance, Unit unit) {
-        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name()));
+        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance,
+                unit.name()));
+    }
+
+    protected Flux<V> georadiusbymember_ro(K key, V member, double distance, Unit unit) {
+        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance,
+                unit.name()));
     }
 
     @Override
     public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, Unit unit, GeoArgs geoArgs) {
-        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
+        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance,
+                unit.name(), geoArgs));
+    }
+
+    protected Flux<GeoWithin<V>> georadiusbymember_ro(K key, V member, double distance, Unit unit, GeoArgs geoArgs) {
+        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance,
+                unit.name(), geoArgs));
     }
 
     @Override

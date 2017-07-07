@@ -33,6 +33,7 @@ import io.lettuce.core.cluster.pubsub.api.sync.NodeSelectionPubSubCommands;
 import io.lettuce.core.cluster.pubsub.api.sync.PubSubNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.sync.RedisClusterPubSubCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.models.command.CommandDetailParser;
 import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
 import io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -48,6 +49,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
 
     private final PubSubClusterEndpoint<K, V> endpoint;
     private volatile Partitions partitions;
+    private volatile RedisState redisState;
 
     /**
      * Initialize a new connection.
@@ -100,6 +102,14 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisClusterPubSubReactiveCommandsImpl<K, V>(this, codec);
+    }
+
+    void inspectRedisState() {
+        this.redisState = new RedisState(CommandDetailParser.parse(sync().command()));
+    }
+
+    RedisState getState() {
+        return redisState;
     }
 
     @Override

@@ -19,10 +19,14 @@ import static io.lettuce.core.cluster.NodeSelectionInvocationHandler.ExecutionMo
 
 import java.lang.reflect.Proxy;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.GeoArgs;
+import io.lettuce.core.GeoWithin;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -31,6 +35,7 @@ import io.lettuce.core.cluster.pubsub.api.async.NodeSelectionPubSubAsyncCommands
 import io.lettuce.core.cluster.pubsub.api.async.PubSubAsyncNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
@@ -52,8 +57,50 @@ class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommands
     }
 
     @Override
-    public StatefulRedisClusterPubSubConnection<K, V> getStatefulConnection() {
-        return (StatefulRedisClusterPubSubConnection<K, V>) super.getStatefulConnection();
+    public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit);
+    }
+
+    @Override
+    public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
+            GeoArgs.Unit unit, GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
+    }
+
+    @Override
+    public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit);
+    }
+
+    @Override
+    public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit, geoArgs);
+    }
+
+    @Override
+    public StatefulRedisClusterPubSubConnectionImpl<K, V> getStatefulConnection() {
+        return (StatefulRedisClusterPubSubConnectionImpl<K, V>) super.getStatefulConnection();
     }
 
     @SuppressWarnings("unchecked")

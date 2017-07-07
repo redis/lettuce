@@ -18,6 +18,8 @@ package io.lettuce.core.cluster;
 import static io.lettuce.core.cluster.ClusterScanSupport.reactiveClusterKeyScanCursorMapper;
 import static io.lettuce.core.cluster.ClusterScanSupport.reactiveClusterStreamScanCursorMapper;
 import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
+import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
+import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -291,6 +293,47 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         Map<String, Flux<String>> publishers = executeOnMasters((commands) -> commands.flushdb().flux());
         return Flux.merge(publishers.values()).last();
+    }
+
+    @Override
+    public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit);
+    }
+
+    @Override
+    public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
+    }
+
+    @Override
+    public Flux<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(GEORADIUSBYMEMBER_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit);
+    }
+
+    @Override
+    public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(GEORADIUSBYMEMBER_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit, geoArgs);
     }
 
     @Override

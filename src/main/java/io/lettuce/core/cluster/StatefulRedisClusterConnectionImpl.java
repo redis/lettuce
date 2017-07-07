@@ -41,6 +41,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.command.CommandDetailParser;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 
@@ -66,6 +67,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     protected final RedisAdvancedClusterCommands<K, V> sync;
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
     protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
+
+    private volatile RedisState state;
 
     /**
      * Initialize a new connection.
@@ -103,6 +106,14 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Override
     public RedisAdvancedClusterReactiveCommands<K, V> reactive() {
         return reactive;
+    }
+
+    void inspectRedisState() {
+        this.state = new RedisState(CommandDetailParser.parse(sync().command()));
+    }
+
+    RedisState getState() {
+        return state;
     }
 
     private RedisURI lookup(String nodeId) {
