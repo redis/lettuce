@@ -66,6 +66,61 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Observable<String> clientSetname(K name) {
+
+        List<Observable<String>> observables = new ArrayList<>();
+
+        observables.add(super.clientSetname(name));
+
+        for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
+            Single<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
+
+            observables.add(byNodeId.flatMapObservable(conn -> {
+
+                if (conn.isOpen()) {
+                    return conn.clientSetname(name);
+                }
+                return Observable.empty();
+            }));
+
+            Single<RedisClusterReactiveCommands<K, V>> byHost = getConnectionReactive(redisClusterNode.getUri().getHost(),
+                    redisClusterNode.getUri().getPort());
+
+            observables.add(byHost.flatMapObservable(conn -> {
+
+                if (conn.isOpen()) {
+                    return conn.clientSetname(name);
+                }
+                return Observable.empty();
+            }));
+        }
+
+        return Observable.merge(observables).last();
+    }
+
+    @Override
+    public Observable<Long> clusterCountKeysInSlot(int slot) {
+
+        Single<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
+
+        return connectionBySlot.flatMapObservable(cmd -> cmd.clusterCountKeysInSlot(slot));
+    }
+
+    @Override
+    public Observable<K> clusterGetKeysInSlot(int slot, int count) {
+
+        Single<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
+
+        return connectionBySlot.flatMapObservable(conn -> conn.clusterGetKeysInSlot(slot, count));
+    }
+
+    @Override
+    public Observable<Long> dbsize() {
+        Map<String, Observable<Long>> observables = executeOnMasters(RedisServerReactiveCommands::dbsize);
+        return Observable.merge(observables.values()).reduce((accu, next) -> accu + next);
+    }
+
+    @Override
     public Observable<Long> del(K... keys) {
         return del(Arrays.asList(keys));
     }
@@ -83,29 +138,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             observables.add(super.del(entry.getValue()));
-        }
-
-        return Observable.merge(observables).reduce((accu, next) -> accu + next);
-    }
-
-    @Override
-    public Observable<Long> unlink(K... keys) {
-        return unlink(Arrays.asList(keys));
-    }
-
-    @Override
-    public Observable<Long> unlink(Iterable<K> keys) {
-
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
-
-        if (partitioned.size() < 2) {
-            return super.unlink(keys);
-        }
-
-        List<Observable<Long>> observables = new ArrayList<>();
-
-        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            observables.add(super.unlink(entry.getValue()));
         }
 
         return Observable.merge(observables).reduce((accu, next) -> accu + next);
@@ -131,6 +163,71 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         }
 
         return Observable.merge(observables).reduce((accu, next) -> accu + next);
+    }
+
+    @Override
+    public Observable<String> flushall() {
+        Map<String, Observable<String>> observables = executeOnMasters(RedisServerReactiveCommands::flushall);
+        return Observable.merge(observables.values()).last();
+    }
+
+    @Override
+    public Observable<String> flushdb() {
+        Map<String, Observable<String>> observables = executeOnMasters(RedisServerReactiveCommands::flushdb);
+        return Observable.merge(observables.values()).last();
+    }
+
+    @Override
+    public Observable<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit);
+    }
+
+    @Override
+    public Observable<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
+    }
+
+    @Override
+    public Observable<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit);
+    }
+
+    @Override
+    public Observable<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit, geoArgs);
+    }
+
+    @Override
+    public Observable<K> keys(K pattern) {
+        Map<String, Observable<K>> observables = executeOnMasters(commands -> commands.keys(pattern));
+        return Observable.merge(observables.values());
+    }
+
+    @Override
+    public Observable<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+        Map<String, Observable<Long>> observables = executeOnMasters(commands -> commands.keys(channel, pattern));
+        return Observable.merge(observables.values()).reduce((accu, next) -> accu + next);
     }
 
     @Override
@@ -216,126 +313,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Observable<K> clusterGetKeysInSlot(int slot, int count) {
-
-        Single<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
-
-        return connectionBySlot.flatMapObservable(conn -> conn.clusterGetKeysInSlot(slot, count));
-    }
-
-    @Override
-    public Observable<Long> clusterCountKeysInSlot(int slot) {
-
-        Single<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
-
-        return connectionBySlot.flatMapObservable(cmd -> cmd.clusterCountKeysInSlot(slot));
-    }
-
-    @Override
-    public Observable<String> clientSetname(K name) {
-
-        List<Observable<String>> observables = new ArrayList<>();
-
-        observables.add(super.clientSetname(name));
-
-        for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
-            Single<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
-
-            observables.add(byNodeId.flatMapObservable(conn -> {
-
-                if (conn.isOpen()) {
-                    return conn.clientSetname(name);
-                }
-                return Observable.empty();
-            }));
-
-            Single<RedisClusterReactiveCommands<K, V>> byHost = getConnectionReactive(redisClusterNode.getUri().getHost(),
-                    redisClusterNode.getUri().getPort());
-
-            observables.add(byHost.flatMapObservable(conn -> {
-
-                if (conn.isOpen()) {
-                    return conn.clientSetname(name);
-                }
-                return Observable.empty();
-            }));
-        }
-
-        return Observable.merge(observables).last();
-    }
-
-    @Override
-    public Observable<Long> dbsize() {
-        Map<String, Observable<Long>> observables = executeOnMasters(RedisServerReactiveCommands::dbsize);
-        return Observable.merge(observables.values()).reduce((accu, next) -> accu + next);
-    }
-
-    @Override
-    public Observable<String> flushall() {
-        Map<String, Observable<String>> observables = executeOnMasters(RedisServerReactiveCommands::flushall);
-        return Observable.merge(observables.values()).last();
-    }
-
-    @Override
-    public Observable<String> flushdb() {
-        Map<String, Observable<String>> observables = executeOnMasters(RedisServerReactiveCommands::flushdb);
-        return Observable.merge(observables.values()).last();
-    }
-
-    @Override
-    public Observable<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit);
-    }
-
-    @Override
-    public Observable<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
-            GeoArgs geoArgs) {
-
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
-    }
-
-    @Override
-    public Observable<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit);
-    }
-
-    @Override
-    public Observable<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
-
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit, geoArgs);
-    }
-
-    @Override
-    public Observable<K> keys(K pattern) {
-        Map<String, Observable<K>> observables = executeOnMasters(commands -> commands.keys(pattern));
-        return Observable.merge(observables.values());
-    }
-
-    @Override
-    public Observable<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
-        Map<String, Observable<Long>> observables = executeOnMasters(commands -> commands.keys(channel, pattern));
-        return Observable.merge(observables.values()).reduce((accu, next) -> accu + next);
-    }
-
-    @Override
     public Observable<V> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();
@@ -385,6 +362,29 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             observables.add(super.touch(entry.getValue()));
+        }
+
+        return Observable.merge(observables).reduce((accu, next) -> accu + next);
+    }
+
+    @Override
+    public Observable<Long> unlink(K... keys) {
+        return unlink(Arrays.asList(keys));
+    }
+
+    @Override
+    public Observable<Long> unlink(Iterable<K> keys) {
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
+
+        if (partitioned.size() < 2) {
+            return super.unlink(keys);
+        }
+
+        List<Observable<Long>> observables = new ArrayList<>();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            observables.add(super.unlink(entry.getValue()));
         }
 
         return Observable.merge(observables).reduce((accu, next) -> accu + next);
