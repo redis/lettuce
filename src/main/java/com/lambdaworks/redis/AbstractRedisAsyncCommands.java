@@ -15,7 +15,7 @@
  */
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.util.Date;
 import java.util.List;
@@ -1887,13 +1887,22 @@ public abstract class AbstractRedisAsyncCommands<K, V>
 
     @Override
     public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-        return dispatch(commandBuilder.georadius(key, longitude, latitude, distance, unit.name()));
+        return dispatch(commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name()));
+    }
+
+    protected RedisFuture<Set<V>> georadius_ro(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance, unit.name()));
     }
 
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
             GeoArgs.Unit unit, GeoArgs geoArgs) {
-        return dispatch(commandBuilder.georadius(key, longitude, latitude, distance, unit.name(), geoArgs));
+        return dispatch(commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name(), geoArgs));
+    }
+
+    protected RedisFuture<List<GeoWithin<V>>> georadius_ro(K key, double longitude, double latitude, double distance,
+            GeoArgs.Unit unit, GeoArgs geoArgs) {
+        return dispatch(commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance, unit.name(), geoArgs));
     }
 
     @Override
@@ -1904,13 +1913,22 @@ public abstract class AbstractRedisAsyncCommands<K, V>
 
     @Override
     public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-        return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name()));
+        return dispatch(commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance, unit.name()));
+    }
+
+    protected RedisFuture<Set<V>> georadiusbymember_ro(K key, V member, double distance, GeoArgs.Unit unit) {
+        return dispatch(commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance, unit.name()));
     }
 
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
-        return dispatch(commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
+        return dispatch(commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance, unit.name(), geoArgs));
+    }
+
+    protected RedisFuture<List<GeoWithin<V>>> georadiusbymember_ro(K key, V member, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+        return dispatch(commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance, unit.name(), geoArgs));
     }
 
     @Override

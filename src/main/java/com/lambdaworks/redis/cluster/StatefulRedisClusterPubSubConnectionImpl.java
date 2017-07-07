@@ -36,6 +36,7 @@ import com.lambdaworks.redis.cluster.pubsub.api.sync.NodeSelectionPubSubCommands
 import com.lambdaworks.redis.cluster.pubsub.api.sync.PubSubNodeSelection;
 import com.lambdaworks.redis.cluster.pubsub.api.sync.RedisClusterPubSubCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.pubsub.*;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
@@ -46,8 +47,8 @@ import io.netty.channel.ChannelHandler;
  * @author Mark Paluch
  */
 @ChannelHandler.Sharable
-class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSubConnectionImpl<K, V>
-        implements StatefulRedisClusterPubSubConnection<K, V> {
+class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSubConnectionImpl<K, V> implements
+        StatefulRedisClusterPubSubConnection<K, V> {
 
     private final List<RedisClusterPubSubListener<K, V>> clusterListeners = new CopyOnWriteArrayList<>();
     private final NotifyingMessageListener multicast = new NotifyingMessageListener();
@@ -56,6 +57,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     private volatile Partitions partitions;
     private volatile boolean nodeMessagePropagation = false;
     private volatile String nodeId;
+    private RedisState state;
 
     /**
      * Initialize a new connection.
@@ -90,8 +92,8 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     @Override
     protected RedisPubSubCommands<K, V> newRedisSyncCommandsImpl() {
 
-        return (RedisPubSubCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
-                new Class<?>[] { RedisClusterPubSubCommands.class, RedisPubSubCommands.class }, syncInvocationHandler());
+        return (RedisPubSubCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), new Class<?>[] {
+                RedisClusterPubSubCommands.class, RedisPubSubCommands.class }, syncInvocationHandler());
     }
 
     private InvocationHandler syncInvocationHandler() {
@@ -107,6 +109,14 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisClusterPubSubReactiveCommandsImpl<>(this, codec);
+    }
+
+    void inspectRedisState() {
+        this.state = new RedisState(CommandDetailParser.parse(sync().command()));
+    }
+
+    RedisState getState() {
+        return state;
     }
 
     @Override

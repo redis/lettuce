@@ -494,8 +494,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         logger.debug(String.format("connectToNodeAsync(%s at %s)", nodeId, socketAddress));
 
-        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<>(clientOptions, getResources(),
-                clusterWriter);
+        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<>(clientOptions, getResources(), clusterWriter);
         StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(handler, codec, timeout, unit);
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(handler, connection,
@@ -599,6 +598,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         for (int i = 0; i < connectionAttempts; i++) {
             try {
                 connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
+                connection.inspectRedisState();
                 connected = true;
                 break;
             } catch (RedisException e) {
@@ -615,6 +615,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
+
 
         return connection;
     }
@@ -661,6 +662,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         for (int i = 0; i < connectionAttempts; i++) {
             try {
                 connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
+                connection.inspectRedisState();
                 connected = true;
                 break;
             } catch (RedisException e) {

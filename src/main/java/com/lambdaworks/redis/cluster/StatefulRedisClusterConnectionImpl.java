@@ -21,6 +21,7 @@ import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -38,6 +39,8 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.models.command.CommandDetail;
+import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
 
@@ -66,6 +69,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     protected final RedisAdvancedClusterCommands<K, V> sync;
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
     protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
+
+    private volatile RedisState state;
 
     /**
      * Initialize a new connection.
@@ -110,6 +115,17 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Deprecated
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> getReactiveCommands() {
         return reactive;
+    }
+
+    void inspectRedisState() {
+
+        List<CommandDetail> commands = CommandDetailParser.parse(sync().command());
+
+        this.state = new RedisState(commands);
+    }
+
+    RedisState getState() {
+        return state;
     }
 
     private RedisURI lookup(String nodeId) {
