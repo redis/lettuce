@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.*;
 import com.lambdaworks.redis.protocol.*;
@@ -44,6 +45,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static final byte[] MINUS_BYTES = { '-' };
     private static final byte[] PLUS_BYTES = { '+' };
+
+    private final RedisCodec<String, String> STRING_CODEC = new Utf8StringCodec();
 
     public RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
@@ -212,8 +215,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<Object>> command() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        return createCommand(COMMAND, new ArrayOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<K, V>((RedisCodec) STRING_CODEC);
+        return createCommand(COMMAND, new ArrayOutput<K, V>((RedisCodec) STRING_CODEC), args);
     }
 
     public Command<K, V, List<Object>> commandInfo(String... commands) {
@@ -221,14 +224,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notEmpty(commands, "Commands " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(commands, "Commands " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
+        CommandArgs<K, V> args = new CommandArgs<K, V>((RedisCodec) STRING_CODEC);
         args.add(INFO);
 
         for (String command : commands) {
             args.add(command);
         }
 
-        return createCommand(COMMAND, new ArrayOutput<K, V>(codec), args);
+        return createCommand(COMMAND, new ArrayOutput<K, V>((RedisCodec) STRING_CODEC), args);
     }
 
     public Command<K, V, Long> commandCount() {
