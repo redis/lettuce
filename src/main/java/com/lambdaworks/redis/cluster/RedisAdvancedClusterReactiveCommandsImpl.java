@@ -24,7 +24,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.lambdaworks.redis.internal.LettuceLists;
 import rx.Observable;
 
 import com.lambdaworks.redis.*;
@@ -38,8 +37,10 @@ import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
+import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
@@ -275,6 +276,47 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Observable<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit);
+    }
+
+    @Override
+    public Observable<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
+    }
+
+    @Override
+    public Observable<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit);
+    }
+
+    @Override
+    public Observable<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit, geoArgs);
+    }
+
+    @Override
     public Observable<K> keys(K pattern) {
         Map<String, Observable<K>> observables = executeOnMasters(commands -> commands.keys(pattern));
         return Observable.merge(observables.values());
@@ -342,7 +384,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Run a command on all available masters,
-     * 
+     *
      * @param function function producing the command
      * @param <T> result type
      * @return map of a key (counter) and commands.
@@ -354,7 +396,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Run a command on all available nodes that match {@code filter}.
-     * 
+     *
      * @param function function producing the command
      * @param filter filter function for the node selection
      * @param <T> result type
@@ -389,8 +431,8 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
-        return (StatefulRedisClusterConnection<K, V>) connection;
+    public StatefulRedisClusterConnectionImpl<K, V> getStatefulConnection() {
+        return (StatefulRedisClusterConnectionImpl<K, V>) connection;
     }
 
     @Override
@@ -458,7 +500,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Perform a SCAN in the cluster.
-     * 
+     *
      */
     static <T extends ScanCursor, K, V> Observable<T> clusterScan(StatefulRedisClusterConnection<K, V> connection,
             ScanCursor cursor, BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Observable<T>> scanFunction,

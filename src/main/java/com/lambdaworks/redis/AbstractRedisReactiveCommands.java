@@ -15,15 +15,13 @@
  */
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandType.EXEC;
+import static com.lambdaworks.redis.protocol.CommandType.*;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.*;
 import rx.Observable;
 import rx.Subscriber;
 
@@ -32,7 +30,9 @@ import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.rx.*;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.*;
+import com.lambdaworks.redis.protocol.*;
 
 /**
  * A reactive and thread-safe API for a Redis connection.
@@ -1862,13 +1862,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-        return createDissolvingObservable(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name()));
+        return createDissolvingObservable(() -> commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance,
+                unit.name()));
+    }
+
+    protected Observable<V> georadius_ro(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+        return createDissolvingObservable(() -> commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance,
+                unit.name()));
     }
 
     @Override
     public Observable<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
-        return createDissolvingObservable(() -> commandBuilder.georadius(key, longitude, latitude, distance, unit.name(),
+        return createDissolvingObservable(() -> commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance,
+                unit.name(), geoArgs));
+    }
+
+    protected Observable<GeoWithin<V>> georadius_ro(K key, double longitude, double latitude, double distance,
+            GeoArgs.Unit unit, GeoArgs geoArgs) {
+        return createDissolvingObservable(() -> commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance,
+                unit.name(),
                 geoArgs));
     }
 
@@ -1881,12 +1894,24 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name()));
+        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance,
+                unit.name()));
+    }
+
+    protected Observable<V> georadiusbymember_ro(K key, V member, double distance, GeoArgs.Unit unit) {
+        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance,
+                unit.name()));
     }
 
     @Override
     public Observable<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
-        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoArgs));
+        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance,
+                unit.name(), geoArgs));
+    }
+
+    protected Observable<GeoWithin<V>> georadiusbymember_ro(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+        return createDissolvingObservable(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance,
+                unit.name(), geoArgs));
     }
 
     @Override

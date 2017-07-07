@@ -28,10 +28,7 @@ import java.util.Set;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.*;
-import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
-import com.lambdaworks.redis.protocol.Command;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.RedisCommand;
+import com.lambdaworks.redis.protocol.*;
 
 /**
  * @param <K>
@@ -2566,16 +2563,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEOHASH, new StringListOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Set<V>> georadius(K key, double longitude, double latitude, double distance, String unit) {
+    public Command<K, V, Set<V>> georadius(CommandType commandType, K key, double longitude, double latitude, double distance,
+            String unit) {
         notNullKey(key);
         LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
-        return createCommand(GEORADIUS, new ValueSetOutput<K, V>(codec), args);
+        return createCommand(commandType, new ValueSetOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance, String unit,
+    public Command<K, V, List<GeoWithin<V>>> georadius(CommandType commandType, K key, double longitude, double latitude,
+            double distance, String unit,
             GeoArgs geoArgs) {
 
         notNullKey(key);
@@ -2585,7 +2584,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
         geoArgs.build(args);
 
-        return createCommand(GEORADIUS, new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(),
+        return createCommand(commandType, new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(),
                 geoArgs.isWithCoordinates()), args);
     }
 
@@ -2605,17 +2604,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEORADIUS, new IntegerOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Set<V>> georadiusbymember(K key, V member, double distance, String unit) {
+    public Command<K, V, Set<V>> georadiusbymember(CommandType commandType, K key, V member, double distance, String unit) {
 
         notNullKey(key);
         LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
-        return createCommand(GEORADIUSBYMEMBER, new ValueSetOutput<K, V>(codec), args);
+        return createCommand(commandType, new ValueSetOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, String unit, GeoArgs geoArgs) {
+    public Command<K, V, List<GeoWithin<V>>> georadiusbymember(CommandType commandType, K key, V member, double distance,
+            String unit, GeoArgs geoArgs) {
 
         notNullKey(key);
         LettuceAssert.notNull(geoArgs, "GeoArgs " + MUST_NOT_BE_NULL);
@@ -2625,8 +2625,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKey(key).addValue(member).add(distance).add(unit);
         geoArgs.build(args);
 
-        return createCommand(GEORADIUSBYMEMBER, new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(),
-                geoArgs.isWithHash(), geoArgs.isWithCoordinates()), args);
+        return createCommand(
+                commandType,
+                new GeoWithinListOutput<K, V>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(), geoArgs
+                        .isWithCoordinates()), args);
     }
 
     public Command<K, V, Long> georadiusbymember(K key, V member, double distance, String unit,

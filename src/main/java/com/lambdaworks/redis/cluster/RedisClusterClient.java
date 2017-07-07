@@ -484,8 +484,10 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectNode(" + nodeId + ")");
         Queue<RedisCommand<K, V, ?>> queue = LettuceFactories.newConcurrentQueue();
 
-        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, getResources(), queue,
-                clusterWriter);
+
+
+        ClusterNodeCommandHandler<K, V> handler = new ClusterNodeCommandHandler<K, V>(clientOptions, getResources(),
+               queue, clusterWriter);
         StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(handler, codec, timeout, unit);
 
         try {
@@ -543,6 +545,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         for (int i = 0; i < connectionAttempts; i++) {
             try {
                 connectStateful(handler, connection, getFirstUri(), socketAddressSupplier);
+                connection.inspectRedisState();
                 connected = true;
                 break;
             } catch (RedisException e) {
@@ -559,6 +562,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         connection.registerCloseables(closeableResources, connection, clusterWriter, pooledClusterConnectionProvider);
+
 
         return connection;
     }

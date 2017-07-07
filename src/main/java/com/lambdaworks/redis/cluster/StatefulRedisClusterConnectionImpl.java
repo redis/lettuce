@@ -15,11 +15,14 @@
  */
 package com.lambdaworks.redis.cluster;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandType.AUTH;
+import static com.lambdaworks.redis.protocol.CommandType.READONLY;
+import static com.lambdaworks.redis.protocol.CommandType.READWRITE;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.*;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +45,8 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.AbstractInvocationHandler;
 import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.models.command.CommandDetail;
+import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.protocol.CompleteableCommand;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
 import com.lambdaworks.redis.protocol.RedisCommand;
@@ -53,7 +58,7 @@ import io.netty.channel.ChannelHandler;
  *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
- * 
+ *
  * @author Mark Paluch
  * @since 4.0
  */
@@ -70,6 +75,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     protected final RedisAdvancedClusterCommands<K, V> sync;
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
     protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
+
+    private volatile RedisState state;
 
     /**
      * Initialize a new connection.
@@ -112,6 +119,17 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Deprecated
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> getReactiveCommands() {
         return reactive;
+    }
+
+    void inspectRedisState() {
+
+        List<CommandDetail> commands = CommandDetailParser.parse(sync().command());
+
+        this.state = new RedisState(commands);
+    }
+
+    RedisState getState() {
+        return state;
     }
 
     private RedisURI lookup(String nodeId) {
