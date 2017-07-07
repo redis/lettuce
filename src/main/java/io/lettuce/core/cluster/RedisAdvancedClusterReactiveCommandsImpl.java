@@ -68,6 +68,63 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Mono<String> clientSetname(K name) {
+
+        List<Publisher<String>> publishers = new ArrayList<>();
+
+        publishers.add(super.clientSetname(name));
+
+        for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
+
+            Mono<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
+
+            publishers.add(byNodeId.flatMap(conn -> {
+
+                if (conn.isOpen()) {
+                    return conn.clientSetname(name);
+                }
+                return Mono.empty();
+            }));
+
+            Mono<RedisClusterReactiveCommands<K, V>> byHost = getConnectionReactive(redisClusterNode.getUri().getHost(),
+                    redisClusterNode.getUri().getPort());
+
+            publishers.add(byHost.flatMap(conn -> {
+
+                if (conn.isOpen()) {
+                    return conn.clientSetname(name);
+                }
+                return Mono.empty();
+            }));
+        }
+
+        return Flux.merge(publishers).last();
+    }
+
+    @Override
+    public Mono<Long> clusterCountKeysInSlot(int slot) {
+
+        Mono<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
+
+        return connectionBySlot.flatMap(cmd -> cmd.clusterCountKeysInSlot(slot));
+    }
+
+    @Override
+    public Flux<K> clusterGetKeysInSlot(int slot, int count) {
+
+        Mono<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
+
+        return connectionBySlot.flatMapMany(conn -> conn.clusterGetKeysInSlot(slot, count));
+    }
+
+    @Override
+    public Mono<Long> dbsize() {
+
+        Map<String, Flux<Long>> publishers = executeOnMasters((commands) -> commands.dbsize().flux());
+        return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
+    }
+
+    @Override
     public Mono<Long> del(K... keys) {
         return del(Arrays.asList(keys));
     }
@@ -85,29 +142,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             publishers.add(super.del(entry.getValue()));
-        }
-
-        return Flux.merge(publishers).reduce((accu, next) -> accu + next);
-    }
-
-    @Override
-    public Mono<Long> unlink(K... keys) {
-        return unlink(Arrays.asList(keys));
-    }
-
-    @Override
-    public Mono<Long> unlink(Iterable<K> keys) {
-
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
-
-        if (partitioned.size() < 2) {
-            return super.unlink(keys);
-        }
-
-        List<Publisher<Long>> publishers = new ArrayList<>();
-
-        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            publishers.add(super.unlink(entry.getValue()));
         }
 
         return Flux.merge(publishers).reduce((accu, next) -> accu + next);
@@ -135,6 +169,76 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         }
 
         return Flux.merge(publishers).reduce((accu, next) -> accu + next);
+    }
+
+    @Override
+    public Mono<String> flushall() {
+
+        Map<String, Flux<String>> publishers = executeOnMasters((kvRedisClusterReactiveCommancommandss) -> kvRedisClusterReactiveCommancommandss
+                .flushall().flux());
+        return Flux.merge(publishers.values()).last();
+    }
+
+    @Override
+    public Mono<String> flushdb() {
+
+        Map<String, Flux<String>> publishers = executeOnMasters((commands) -> commands.flushdb().flux());
+        return Flux.merge(publishers.values()).last();
+    }
+
+    @Override
+    public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit);
+    }
+
+    @Override
+    public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(GEORADIUS_RO)) {
+            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
+        }
+
+        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
+    }
+
+    @Override
+    public Flux<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
+
+        if (getStatefulConnection().getState().hasCommand(GEORADIUSBYMEMBER_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit);
+    }
+
+    @Override
+    public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+
+        if (getStatefulConnection().getState().hasCommand(GEORADIUSBYMEMBER_RO)) {
+            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
+        }
+
+        return super.georadiusbymember(key, member, distance, unit, geoArgs);
+    }
+
+    @Override
+    public Flux<K> keys(K pattern) {
+
+        Map<String, Flux<K>> publishers = executeOnMasters(commands -> commands.keys(pattern));
+        return Flux.merge(publishers.values());
+    }
+
+    @Override
+    public Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+
+        Map<String, Flux<Long>> publishers = executeOnMasters(commands -> commands.keys(channel, pattern).flux());
+        return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
     }
 
     @Override
@@ -224,133 +328,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Flux<K> clusterGetKeysInSlot(int slot, int count) {
-
-        Mono<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
-
-        return connectionBySlot.flatMapMany(conn -> conn.clusterGetKeysInSlot(slot, count));
-    }
-
-    @Override
-    public Mono<Long> clusterCountKeysInSlot(int slot) {
-
-        Mono<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
-
-        return connectionBySlot.flatMap(cmd -> cmd.clusterCountKeysInSlot(slot));
-    }
-
-    @Override
-    public Mono<String> clientSetname(K name) {
-
-        List<Publisher<String>> publishers = new ArrayList<>();
-
-        publishers.add(super.clientSetname(name));
-
-        for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
-
-            Mono<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
-
-            publishers.add(byNodeId.flatMap(conn -> {
-
-                if (conn.isOpen()) {
-                    return conn.clientSetname(name);
-                }
-                return Mono.empty();
-            }));
-
-            Mono<RedisClusterReactiveCommands<K, V>> byHost = getConnectionReactive(redisClusterNode.getUri().getHost(),
-                    redisClusterNode.getUri().getPort());
-
-            publishers.add(byHost.flatMap(conn -> {
-
-                if (conn.isOpen()) {
-                    return conn.clientSetname(name);
-                }
-                return Mono.empty();
-            }));
-        }
-
-        return Flux.merge(publishers).last();
-    }
-
-    @Override
-    public Mono<Long> dbsize() {
-
-        Map<String, Flux<Long>> publishers = executeOnMasters((commands) -> commands.dbsize().flux());
-        return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
-    }
-
-    @Override
-    public Mono<String> flushall() {
-
-        Map<String, Flux<String>> publishers = executeOnMasters((kvRedisClusterReactiveCommancommandss) -> kvRedisClusterReactiveCommancommandss
-                .flushall().flux());
-        return Flux.merge(publishers.values()).last();
-    }
-
-    @Override
-    public Mono<String> flushdb() {
-
-        Map<String, Flux<String>> publishers = executeOnMasters((commands) -> commands.flushdb().flux());
-        return Flux.merge(publishers.values()).last();
-    }
-
-    @Override
-    public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-
-        if (getStatefulConnection().getState().hasCommand(GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit);
-    }
-
-    @Override
-    public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
-            GeoArgs geoArgs) {
-
-        if (getStatefulConnection().getState().hasCommand(GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
-    }
-
-    @Override
-    public Flux<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-
-        if (getStatefulConnection().getState().hasCommand(GEORADIUSBYMEMBER_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit);
-    }
-
-    @Override
-    public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
-
-        if (getStatefulConnection().getState().hasCommand(GEORADIUSBYMEMBER_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit, geoArgs);
-    }
-
-    @Override
-    public Flux<K> keys(K pattern) {
-
-        Map<String, Flux<K>> publishers = executeOnMasters(commands -> commands.keys(pattern));
-        return Flux.merge(publishers.values());
-    }
-
-    @Override
-    public Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
-
-        Map<String, Flux<Long>> publishers = executeOnMasters(commands -> commands.keys(channel, pattern).flux());
-        return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
-    }
-
-    @Override
     public Mono<V> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();
@@ -404,52 +381,27 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return Flux.merge(publishers).reduce((accu, next) -> accu + next);
     }
 
-    /**
-     * Run a command on all available masters,
-     *
-     * @param function function producing the command
-     * @param <T> result type
-     * @return map of a key (counter) and commands.
-     */
-    protected <T> Map<String, Flux<T>> executeOnMasters(Function<RedisClusterReactiveCommands<K, V>, Flux<T>> function) {
-        return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(MASTER));
+    @Override
+    public Mono<Long> unlink(K... keys) {
+        return unlink(Arrays.asList(keys));
     }
 
-    /**
-     * Run a command on all available nodes that match {@code filter}.
-     *
-     * @param function function producing the command
-     * @param filter filter function for the node selection
-     * @param <T> result type
-     * @return map of a key (counter) and commands.
-     */
-    protected <T> Map<String, Flux<T>> executeOnNodes(Function<RedisClusterReactiveCommands<K, V>, Flux<T>> function,
-            Function<RedisClusterNode, Boolean> filter) {
+    @Override
+    public Mono<Long> unlink(Iterable<K> keys) {
 
-        Map<String, Flux<T>> executions = new HashMap<>();
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
-        for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
-
-            if (!filter.apply(redisClusterNode)) {
-                continue;
-            }
-
-            RedisURI uri = redisClusterNode.getUri();
-            Mono<RedisClusterReactiveCommands<K, V>> connection = getConnectionReactive(uri.getHost(), uri.getPort());
-
-            executions.put(redisClusterNode.getNodeId(), connection.flatMapMany(function::apply));
-        }
-        return executions;
-    }
-
-    private Mono<RedisClusterReactiveCommands<K, V>> findConnectionBySlotReactive(int slot) {
-
-        RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
-        if (node != null) {
-            return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort());
+        if (partitioned.size() < 2) {
+            return super.unlink(keys);
         }
 
-        return Mono.error(new RedisException("No partition for slot " + slot));
+        List<Publisher<Long>> publishers = new ArrayList<>();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            publishers.add(super.unlink(entry.getValue()));
+        }
+
+        return Flux.merge(publishers).reduce((accu, next) -> accu + next);
     }
 
     @Override
@@ -536,6 +488,72 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return clusterScan(getStatefulConnection(), cursor, scanFunction, (ClusterScanSupport.ScanCursorMapper) resultMapper);
     }
 
+    private <T> Flux<T> pipeliningWithMap(Map<K, V> map, Function<Map<K, V>, Flux<T>> function,
+            Function<Flux<T>, Flux<T>> resultFunction) {
+
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
+
+        if (partitioned.size() < 2) {
+            return function.apply(map);
+        }
+
+        List<Flux<T>> publishers = partitioned.values().stream().map(ks -> {
+            Map<K, V> op = new HashMap<>();
+            ks.forEach(k -> op.put(k, map.get(k)));
+            return function.apply(op);
+        }).collect(Collectors.toList());
+
+        return resultFunction.apply(Flux.merge(publishers));
+    }
+
+    /**
+     * Run a command on all available masters,
+     *
+     * @param function function producing the command
+     * @param <T> result type
+     * @return map of a key (counter) and commands.
+     */
+    protected <T> Map<String, Flux<T>> executeOnMasters(Function<RedisClusterReactiveCommands<K, V>, Flux<T>> function) {
+        return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(MASTER));
+    }
+
+    /**
+     * Run a command on all available nodes that match {@code filter}.
+     *
+     * @param function function producing the command
+     * @param filter filter function for the node selection
+     * @param <T> result type
+     * @return map of a key (counter) and commands.
+     */
+    protected <T> Map<String, Flux<T>> executeOnNodes(Function<RedisClusterReactiveCommands<K, V>, Flux<T>> function,
+            Function<RedisClusterNode, Boolean> filter) {
+
+        Map<String, Flux<T>> executions = new HashMap<>();
+
+        for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
+
+            if (!filter.apply(redisClusterNode)) {
+                continue;
+            }
+
+            RedisURI uri = redisClusterNode.getUri();
+            Mono<RedisClusterReactiveCommands<K, V>> connection = getConnectionReactive(uri.getHost(), uri.getPort());
+
+            executions.put(redisClusterNode.getNodeId(), connection.flatMapMany(function::apply));
+        }
+        return executions;
+    }
+
+    private Mono<RedisClusterReactiveCommands<K, V>> findConnectionBySlotReactive(int slot) {
+
+        RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
+        if (node != null) {
+            return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort());
+        }
+
+        return Mono.error(new RedisException("No partition for slot " + slot));
+    }
+
     /**
      * Perform a SCAN in the cluster.
      *
@@ -554,24 +572,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         Mono<T> scanCursor = getMono(connectionProvider.<K, V> getConnectionAsync(Intent.WRITE, currentNodeId)).flatMap(
                 conn -> scanFunction.apply(conn.reactive(), continuationCursor));
         return mapper.map(nodeIds, currentNodeId, scanCursor);
-    }
-
-    private <T> Flux<T> pipeliningWithMap(Map<K, V> map, Function<Map<K, V>, Flux<T>> function,
-            Function<Flux<T>, Flux<T>> resultFunction) {
-
-        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
-
-        if (partitioned.size() < 2) {
-            return function.apply(map);
-        }
-
-        List<Flux<T>> publishers = partitioned.values().stream().map(ks -> {
-            Map<K, V> op = new HashMap<>();
-            ks.forEach(k -> op.put(k, map.get(k)));
-            return function.apply(op);
-        }).collect(Collectors.toList());
-
-        return resultFunction.apply(Flux.merge(publishers));
     }
 
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {
