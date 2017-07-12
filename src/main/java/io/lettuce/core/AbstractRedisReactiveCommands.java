@@ -199,8 +199,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Flux<String> configGet(String parameter) {
-        return createDissolvingFlux(() -> commandBuilder.configGet(parameter));
+    public Mono<Map<String, String>> configGet(String parameter) {
+        return createMono(() -> commandBuilder.configGet(parameter));
     }
 
     @Override

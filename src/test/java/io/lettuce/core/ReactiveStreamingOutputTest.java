@@ -75,11 +75,6 @@ public class ReactiveStreamingOutputTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void stringListCommandShouldReturnAllElements() {
-        StepVerifier.create(reactive.configGet("*")).expectNextCount(120).thenCancel().verify();
-    }
-
-    @Test
     public void booleanListCommandShouldReturnAllElements() {
         StepVerifier.create(reactive.scriptExists("a", "b", "c")).expectNextCount(3).verifyComplete();
     }

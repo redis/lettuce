@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package io.lettuce.core.api.reactive;
 
 import java.util.Date;
-
-import io.lettuce.core.KillArgs;
-import io.lettuce.core.protocol.CommandType;
+import java.util.Map;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.KillArgs;
+import io.lettuce.core.protocol.CommandType;
 
 /**
  * Reactive executed commands for Server Control.
@@ -129,9 +129,9 @@ public interface RedisServerReactiveCommands<K, V> {
      * Get the value of a configuration parameter.
      *
      * @param parameter name of the parameter
-     * @return String bulk-string-reply
+     * @return Map bulk-string-reply
      */
-    Flux<String> configGet(String parameter);
+    Mono<Map<String, String>> configGet(String parameter);
 
     /**
      * Reset the stats returned by INFO.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import io.lettuce.core.protocol.CommandType;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ServerCommandTest extends AbstractRedisClientTest {
+
     @Test
     public void bgrewriteaof() {
         String msg = "Background append only file rewriting";
@@ -142,12 +143,11 @@ public class ServerCommandTest extends AbstractRedisClientTest {
         result = redis.commandInfo("a missing command");
 
         assertThat(result.size()).isEqualTo(0);
-
     }
 
     @Test
     public void configGet() {
-        assertThat(redis.configGet("maxmemory")).isEqualTo(list("maxmemory", "0"));
+        assertThat(redis.configGet("maxmemory")).containsEntry("maxmemory", "0");
     }
 
     @Test
@@ -160,9 +160,9 @@ public class ServerCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void configSet() {
-        String maxmemory = redis.configGet("maxmemory").get(1);
+        String maxmemory = redis.configGet("maxmemory").get("maxmemory");
         assertThat(redis.configSet("maxmemory", "1024")).isEqualTo("OK");
-        assertThat(redis.configGet("maxmemory").get(1)).isEqualTo("1024");
+        assertThat(redis.configGet("maxmemory")).containsEntry("maxmemory", "1024");
         redis.configSet("maxmemory", maxmemory);
     }
 

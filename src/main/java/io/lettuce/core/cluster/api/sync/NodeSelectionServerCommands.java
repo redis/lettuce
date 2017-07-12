@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package io.lettuce.core.cluster.api.sync;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.protocol.CommandType;
@@ -127,9 +128,9 @@ public interface NodeSelectionServerCommands<K, V> {
      * Get the value of a configuration parameter.
      *
      * @param parameter name of the parameter
-     * @return List&lt;String&gt; bulk-string-reply
+     * @return Map&lt;String,String&gt; bulk-string-reply
      */
-    Executions<List<String>> configGet(String parameter);
+    Executions<Map<String, String>> configGet(String parameter);
 
     /**
      * Reset the stats returned by INFO.

@@ -260,12 +260,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CONFIG, new StatusOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, List<String>> configGet(String parameter) {
+    public Command<K, V, Map<String, String>> configGet(String parameter) {
         LettuceAssert.notNull(parameter, "Parameter " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(parameter, "Parameter " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec).add(GET).add(parameter);
-        return createCommand(CONFIG, new StringListOutput<K, V>(codec), args);
+        CommandArgs<K, V> args = new CommandArgs<>((RedisCodec) STRING_CODEC).add(GET).add(parameter);
+        return createCommand(CONFIG, new MapOutput<>((RedisCodec) STRING_CODEC), args);
     }
 
     public Command<K, V, String> configResetstat() {

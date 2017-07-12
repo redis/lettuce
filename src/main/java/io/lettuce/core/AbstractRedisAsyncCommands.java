@@ -205,7 +205,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<List<String>> configGet(String parameter) {
+    public RedisFuture<Map<String, String>> configGet(String parameter) {
         return dispatch(commandBuilder.configGet(parameter));
     }
 

@@ -126,9 +126,9 @@ public interface RedisServerCommands<K, V> {
      * Get the value of a configuration parameter.
      *
      * @param parameter name of the parameter
-     * @return List&lt;String&gt; bulk-string-reply
+     * @return Map&lt;String, String&gt; bulk-string-reply
      */
-    List<String> configGet(String parameter);
+    Map<String, String> configGet(String parameter);
 
     /**
      * Reset the stats returned by INFO.
