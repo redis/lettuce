@@ -48,15 +48,15 @@ echo "Java detected: ${VER}"
 
 if [ "$mybatis_repo" == "https://github.com/mybatis/spring.git" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ] && [[ "$commit_message" != *"[maven-release-plugin]"* ]]; then
   if [ $VER == "16" ]; then
-    mvn clean deploy -q --settings ./travis/settings.xml
+    ./mvnw clean deploy -q --settings ./travis/settings.xml
     echo -e "Successfully deployed SNAPSHOT artifacts to Sonatype under Travis job ${TRAVIS_JOB_NUMBER}"
   elif [ $VER == "18" ]; then
-    mvn clean test jacoco:report coveralls:report -q
+    ./mvnw clean test jacoco:report coveralls:report -q
     echo -e "Successfully ran coveralls under Travis job ${TRAVIS_JOB_NUMBER}"
     # various issues exist currently in building this so comment for now
-    # mvn site site:deploy -q
+    # ./mvnw site site:deploy -q
     # echo -e "Successfully deploy site under Travis job ${TRAVIS_JOB_NUMBER}"
-    mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.login=ccf0be39fd0ca5ea5aa712247c79da7233cd3caa
+    ./mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.login=ccf0be39fd0ca5ea5aa712247c79da7233cd3caa
     echo -e "Successfully ran Sonar integration under Travis job ${TRAVIS_JOB_NUMBER}"	
   fi
 else
