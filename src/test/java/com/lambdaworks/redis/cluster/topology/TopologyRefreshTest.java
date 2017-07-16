@@ -17,15 +17,16 @@ package com.lambdaworks.redis.cluster.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
-import io.netty.util.concurrent.ScheduledFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
@@ -41,7 +42,8 @@ import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
-import org.springframework.test.util.ReflectionTestUtils;
+
+import io.netty.util.concurrent.ScheduledFuture;
 
 /**
  * Test for topology refreshing.
@@ -91,7 +93,7 @@ public class TopologyRefreshTest extends AbstractTest {
                 .getField(clusterClient, "clusterTopologyRefreshFuture");
 
         assertThat(clusterTopologyRefreshActivated.get()).isTrue();
-        assertThat(clusterTopologyRefreshFuture.get()).isNotNull();
+        assertThat((Future) clusterTopologyRefreshFuture.get()).isNotNull();
 
         ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
 
@@ -100,9 +102,8 @@ public class TopologyRefreshTest extends AbstractTest {
         FastShutdown.shutdown(clusterClient);
 
         assertThat(clusterTopologyRefreshActivated.get()).isFalse();
-        assertThat(clusterTopologyRefreshFuture.get()).isNull();
+        assertThat((Future) clusterTopologyRefreshFuture.get()).isNull();
         assertThat(scheduledFuture.isCancelled()).isTrue();
-
     }
 
     @Test
