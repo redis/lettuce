@@ -111,6 +111,8 @@
             <version>${netty-version}</version>
         </dependency>
 
+        <!-- OS-native transports -->
+
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
@@ -119,7 +121,13 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- netty-transport-native-kqueue is included with the netty-41 profile -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-kqueue</artifactId>
+            <version>${netty-version}</version>
+            <classifier>osx-x86_64</classifier>
+            <optional>true</optional>
+        </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
@@ -351,35 +359,6 @@
     </dependencies>
 
     <profiles>
-
-        <profile>
-
-            <id>netty-40</id>
-
-            <properties>
-                <netty-version>4.0.49.Final</netty-version>
-            </properties>
-        </profile>
-
-        <profile>
-
-            <id>netty-41</id>
-
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-
-            <dependencies>
-                <dependency>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-transport-native-kqueue</artifactId>
-                    <version>${netty-version}</version>
-                    <classifier>osx-x86_64</classifier>
-                    <optional>true</optional>
-                </dependency>
-            </dependencies>
-
-        </profile>
 
         <profile>
 

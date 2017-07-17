@@ -7,8 +7,7 @@ jdk:
 
 env:
   matrix:
-    - PROFILE=netty-40 REDIS=unstable
-    - PROFILE=netty-41 REDIS=unstable
+    - REDIS=unstable
     - PROFILE=jmh
     - REDIS=4.0-rc3
     - REDIS=3.2.9
@@ -23,7 +22,7 @@ before_install:
 
 install: make prepare ssl-keys
 
-script: make test-coverage PROFILE=${PROFILE:-netty-41}
+script: make test-coverage PROFILE=${PROFILE:-documentation}
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

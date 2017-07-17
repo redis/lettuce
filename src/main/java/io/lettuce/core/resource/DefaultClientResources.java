@@ -20,6 +20,7 @@ import static io.lettuce.core.resource.Futures.toBooleanPromise;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import reactor.core.scheduler.Schedulers;
 import io.lettuce.core.event.DefaultEventBus;
 import io.lettuce.core.event.DefaultEventPublisherOptions;
 import io.lettuce.core.event.EventBus;
@@ -33,15 +34,12 @@ import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.resource.Delay.StatefulDelay;
-
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
-import io.netty.util.Version;
 import io.netty.util.concurrent.*;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.scheduler.Schedulers;
 
 /**
  * Default instance of the client resources.
@@ -57,8 +55,8 @@ import reactor.core.scheduler.Schedulers;
  * <li>a {@code eventExecutorGroup} which is a provided instance of {@link EventExecutorGroup}. Higher precedence than
  * {@code computationThreadPoolSize}.</li>
  * <li>an {@code eventBus} which is a provided instance of {@link EventBus}.</li>
- * <li>a {@code commandLatencyCollector} which is a provided instance of
- * {@link io.lettuce.core.metrics.CommandLatencyCollector}.</li>
+ * <li>a {@code commandLatencyCollector} which is a provided instance of {@link io.lettuce.core.metrics.CommandLatencyCollector}
+ * .</li>
  * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
  * <li>a {@code timer} that is a provided instance of {@link io.netty.util.HashedWheelTimer}.</li>
  * <li>a {@code nettyCustomizer} that is a provided instance of {@link NettyCustomizer}.</li>
@@ -94,8 +92,6 @@ public class DefaultClientResources implements ClientResources {
      */
     public static final NettyCustomizer DEFAULT_NETTY_CUSTOMIZER = DefaultNettyCustomizer.INSTANCE;
 
-    private static final boolean NETTY_DNS_RESOLVER_SUPPORTED;
-
     static {
 
         int threads = Math.max(
@@ -108,9 +104,6 @@ public class DefaultClientResources implements ClientResources {
         if (logger.isDebugEnabled()) {
             logger.debug("-Dio.netty.eventLoopThreads: {}", threads);
         }
-
-        Version version = Version.identify().get("netty-common");
-        NETTY_DNS_RESOLVER_SUPPORTED = version != null && version.artifactVersion().startsWith("4.1");
     }
 
     private final boolean sharedEventLoopGroupProvider;
@@ -209,7 +202,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         if (builder.dnsResolver == null) {
-            dnsResolver = NETTY_DNS_RESOLVER_SUPPORTED ? DnsResolvers.UNRESOLVED : DnsResolvers.JVM_DEFAULT;
+            dnsResolver = DnsResolvers.UNRESOLVED;
         } else {
             dnsResolver = builder.dnsResolver;
         }
@@ -250,7 +243,7 @@ public class DefaultClientResources implements ClientResources {
         private CommandLatencyCollectorOptions commandLatencyCollectorOptions = DefaultCommandLatencyCollectorOptions.create();
         private CommandLatencyCollector commandLatencyCollector;
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
-        private DnsResolver dnsResolver = NETTY_DNS_RESOLVER_SUPPORTED ? DnsResolvers.UNRESOLVED : DnsResolvers.JVM_DEFAULT;
+        private DnsResolver dnsResolver = DnsResolvers.UNRESOLVED;
         private Supplier<Delay> reconnectDelay = DEFAULT_RECONNECT_DELAY;
         private NettyCustomizer nettyCustomizer = DEFAULT_NETTY_CUSTOMIZER;
 
@@ -322,10 +315,10 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets a shared {@link Timer} that can be used across different instances of {@link io.lettuce.core.RedisClient}
-         * and {@link io.lettuce.core.cluster.RedisClusterClient} The provided {@link Timer} instance will not be shut
-         * down when shutting down the client resources. You have to take care of that. This is an advanced configuration that
-         * should only be used if you know what you are doing.
+         * Sets a shared {@link Timer} that can be used across different instances of {@link io.lettuce.core.RedisClient} and
+         * {@link io.lettuce.core.cluster.RedisClusterClient} The provided {@link Timer} instance will not be shut down when
+         * shutting down the client resources. You have to take care of that. This is an advanced configuration that should only
+         * be used if you know what you are doing.
          *
          * @param timer the shared {@link Timer}, must not be {@literal null}.
          * @return {@code this} {@link Builder}.
@@ -430,8 +423,8 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the stateful reconnect {@link Supplier} to delay reconnect attempts. Defaults to binary exponential delay capped at
-         * {@literal 30 SECONDS}.
+         * Sets the stateful reconnect {@link Supplier} to delay reconnect attempts. Defaults to binary exponential delay capped
+         * at {@literal 30 SECONDS}.
          *
          * @param reconnectDelay the reconnect delay, must not be {@literal null}.
          * @return this
