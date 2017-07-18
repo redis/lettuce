@@ -22,7 +22,7 @@ before_install:
 
 install: make prepare ssl-keys
 
-script: make test-coverage PROFILE=${PROFILE:-documentation}
+script: make test-coverage PROFILE=${PROFILE:-netty41}
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
