@@ -17,6 +17,7 @@ package io.lettuce.core.cluster.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,7 +43,6 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-
 import io.netty.util.concurrent.ScheduledFuture;
 
 /**
@@ -93,7 +93,7 @@ public class TopologyRefreshTest extends AbstractTest {
                 .getField(clusterClient, "clusterTopologyRefreshFuture");
 
         assertThat(clusterTopologyRefreshActivated.get()).isTrue();
-        assertThat(clusterTopologyRefreshFuture.get()).isNotNull();
+        assertThat((Future) clusterTopologyRefreshFuture.get()).isNotNull();
 
         ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
 
@@ -102,9 +102,8 @@ public class TopologyRefreshTest extends AbstractTest {
         FastShutdown.shutdown(clusterClient);
 
         assertThat(clusterTopologyRefreshActivated.get()).isFalse();
-        assertThat(clusterTopologyRefreshFuture.get()).isNull();
+        assertThat((Future) clusterTopologyRefreshFuture.get()).isNull();
         assertThat(scheduledFuture.isCancelled()).isTrue();
-
     }
 
     @Test
