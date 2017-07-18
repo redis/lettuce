@@ -62,6 +62,7 @@
         <skipTests>true</skipTests>
         <netty-version>4.1.13.Final</netty-version>
         <spring-version>5.0.0.RC1</spring-version>
+        <reactor-version>Bismuth-M3</reactor-version>
     </properties>
 
     <scm>
@@ -81,6 +82,20 @@
         </repository>
     </repositories>
 
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-bom</artifactId>
+                <version>${reactor-version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
 
         <!-- Start of Core Dependencies -->
@@ -88,7 +103,6 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
-            <version>3.1.0.M2</version>
         </dependency>
 
         <!-- Netty -->
@@ -247,7 +261,6 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
-            <version>3.1.0.M2</version>
             <scope>test</scope>
         </dependency>
 

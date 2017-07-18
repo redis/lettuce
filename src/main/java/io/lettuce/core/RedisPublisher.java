@@ -30,7 +30,7 @@ import org.reactivestreams.Subscription;
 
 import reactor.core.Exceptions;
 import reactor.core.publisher.Operators;
-import reactor.util.concurrent.QueueSupplier;
+import reactor.util.concurrent.Queues;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -134,7 +134,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         private final SubscriptionCommand<?, ?, T> subscriptionCommand;
         private final boolean traceEnabled = LOG.isTraceEnabled();
 
-        final Queue<T> data = QueueSupplier.<T> unbounded().get();
+        final Queue<T> data = Queues.<T> unbounded().get();
         final StatefulConnection<?, ?> connection;
         final RedisCommand<?, ?, T> command;
         final boolean dissolve;
