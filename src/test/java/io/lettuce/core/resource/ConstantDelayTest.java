@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package io.lettuce.core.resource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -36,8 +37,8 @@ public class ConstantDelayTest {
 
         Delay delay = Delay.constant(0, TimeUnit.MILLISECONDS);
 
-        assertThat(delay.createDelay(0)).isEqualTo(0);
-        assertThat(delay.createDelay(5)).isEqualTo(0);
+        assertThat(delay.createDelay(0)).isEqualTo(Duration.ZERO);
+        assertThat(delay.createDelay(5)).isEqualTo(Duration.ZERO);
     }
 
     @Test
@@ -45,7 +46,7 @@ public class ConstantDelayTest {
 
         Delay delay = Delay.constant(100, TimeUnit.MILLISECONDS);
 
-        assertThat(delay.createDelay(0)).isEqualTo(100);
-        assertThat(delay.createDelay(5)).isEqualTo(100);
+        assertThat(delay.createDelay(0)).isEqualTo(Duration.ofMillis(100));
+        assertThat(delay.createDelay(5)).isEqualTo(Duration.ofMillis(100));
     }
 }

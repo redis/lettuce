@@ -425,7 +425,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug(String.format("connectToNodeAsync(%s at %s)", nodeId, socketAddress));
 
         ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(clientOptions, getResources(), clusterWriter);
-        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(endpoint, codec, timeout, unit);
+        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(endpoint, codec, timeout);
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier, () -> new CommandHandler(clientOptions, clientResources, endpoint));
@@ -474,7 +474,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions);
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, endpoint, codec,
-                timeout, unit);
+                timeout);
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec,
@@ -516,7 +516,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
         StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl<>(clusterWriter, codec,
-                timeout, unit);
+                timeout);
 
         connection.setReadFrom(ReadFrom.MASTER);
         connection.setPartitions(partitions);
@@ -547,7 +547,6 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
 
-
         return connection;
     }
 
@@ -577,7 +576,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 clusterTopologyRefreshScheduler);
 
         StatefulRedisClusterPubSubConnectionImpl<K, V> connection = new StatefulRedisClusterPubSubConnectionImpl<>(endpoint,
-                clusterWriter, codec, timeout, unit);
+                clusterWriter, codec, timeout);
 
         ClusterPubSubConnectionProvider<K, V> pooledClusterConnectionProvider = new ClusterPubSubConnectionProvider<>(this,
                 clusterWriter, codec, connection.getUpstreamListener());
@@ -838,7 +837,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
             if (clusterTopologyRefreshActivated.compareAndSet(false, true)) {
                 ScheduledFuture<?> scheduledFuture = genericWorkerPool.scheduleAtFixedRate(clusterTopologyRefreshScheduler,
-                        options.getRefreshPeriod(), options.getRefreshPeriod(), options.getRefreshPeriodUnit());
+                        options.getRefreshPeriod().toNanos(), options.getRefreshPeriod().toNanos(), TimeUnit.NANOSECONDS);
                 clusterTopologyRefreshFuture.set(scheduledFuture);
             }
         }

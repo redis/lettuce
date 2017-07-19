@@ -15,7 +15,7 @@
  */
 package biz.paluch.redis.extensibility;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.lettuce.core.RedisChannelWriter;
@@ -42,11 +42,9 @@ public class MyPubSubConnection<K, V> extends StatefulRedisPubSubConnectionImpl<
      * @param writer the channel writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
-     * @param unit Unit of time for the timeout.
      */
-    public MyPubSubConnection(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout,
-            TimeUnit unit) {
-        super(endpoint, writer, codec, timeout, unit);
+    public MyPubSubConnection(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
+        super(endpoint, writer, codec, timeout);
     }
 
     @Override

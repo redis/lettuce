@@ -16,9 +16,9 @@
 package io.lettuce.core;
 
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import io.lettuce.core.codec.Utf8StringCodec;
@@ -51,8 +51,7 @@ public class ConnectionBuilder {
     private Timer timer;
     private Bootstrap bootstrap;
     private ClientOptions clientOptions;
-    private long timeout;
-    private TimeUnit timeUnit;
+    private Duration timeout;
     private ClientResources clientResources;
     private char[] password;
     private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
@@ -120,7 +119,7 @@ public class ConnectionBuilder {
     }
 
     public RedisChannelInitializer build() {
-        return new PlainChannelInitializer(pingCommandSupplier, this::buildHandlers, clientResources, timeout, timeUnit);
+        return new PlainChannelInitializer(pingCommandSupplier, this::buildHandlers, clientResources, timeout);
     }
 
     public ConnectionBuilder socketAddressSupplier(Supplier<SocketAddress> socketAddressSupplier) {
@@ -133,18 +132,13 @@ public class ConnectionBuilder {
         return socketAddressSupplier.get();
     }
 
-    public ConnectionBuilder timeout(long timeout, TimeUnit timeUnit) {
+    public ConnectionBuilder timeout(Duration timeout) {
         this.timeout = timeout;
-        this.timeUnit = timeUnit;
         return this;
     }
 
-    public long getTimeout() {
+    public Duration getTimeout() {
         return timeout;
-    }
-
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
     }
 
     public ConnectionBuilder reconnectionListener(ReconnectionListener reconnectionListener) {

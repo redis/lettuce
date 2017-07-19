@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.dynamic;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -83,15 +84,14 @@ class BatchExecutableCommand implements ExecutableCommand {
             return null;
         }
 
-        long timeout = connection.getTimeout();
-        TimeUnit unit = connection.getTimeoutUnit();
+        Duration timeout = connection.getTimeout();
 
         BatchException exception = null;
         List<RedisCommand<?, ?, ?>> failures = null;
         for (RedisCommand<?, ?, ?> batchTask : batchTasks) {
 
             try {
-                LettuceFutures.awaitAll(timeout, unit, (RedisFuture) batchTask);
+                LettuceFutures.awaitAll(timeout.toNanos(), TimeUnit.NANOSECONDS, (RedisFuture) batchTask);
             } catch (Exception e) {
                 if (exception == null) {
                     failures = new ArrayList<>();

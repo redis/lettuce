@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class ExponentialDelayTest {
 
         Delay delay = Delay.exponential();
 
-        assertThat(delay.createDelay(-1)).isEqualTo(0);
+        assertThat(delay.createDelay(-1).toMillis()).isEqualTo(0);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class ExponentialDelayTest {
 
         Delay delay = Delay.exponential();
 
-        assertThat(delay.createDelay(0)).isEqualTo(0);
+        assertThat(delay.createDelay(0).toMillis()).isEqualTo(0);
     }
 
     @Test
@@ -62,26 +62,24 @@ public class ExponentialDelayTest {
 
         Delay delay = Delay.exponential();
 
-        assertThat(delay.getTimeUnit()).isEqualTo(TimeUnit.MILLISECONDS);
-
-        assertThat(delay.createDelay(1)).isEqualTo(1);
-        assertThat(delay.createDelay(2)).isEqualTo(2);
-        assertThat(delay.createDelay(3)).isEqualTo(4);
-        assertThat(delay.createDelay(4)).isEqualTo(8);
-        assertThat(delay.createDelay(5)).isEqualTo(16);
-        assertThat(delay.createDelay(6)).isEqualTo(32);
-        assertThat(delay.createDelay(7)).isEqualTo(64);
-        assertThat(delay.createDelay(8)).isEqualTo(128);
-        assertThat(delay.createDelay(9)).isEqualTo(256);
-        assertThat(delay.createDelay(10)).isEqualTo(512);
-        assertThat(delay.createDelay(11)).isEqualTo(1024);
-        assertThat(delay.createDelay(12)).isEqualTo(2048);
-        assertThat(delay.createDelay(13)).isEqualTo(4096);
-        assertThat(delay.createDelay(14)).isEqualTo(8192);
-        assertThat(delay.createDelay(15)).isEqualTo(16384);
-        assertThat(delay.createDelay(16)).isEqualTo(30000);
-        assertThat(delay.createDelay(17)).isEqualTo(30000);
-        assertThat(delay.createDelay(Integer.MAX_VALUE)).isEqualTo(30000);
+        assertThat(delay.createDelay(1).toMillis()).isEqualTo(1);
+        assertThat(delay.createDelay(2).toMillis()).isEqualTo(2);
+        assertThat(delay.createDelay(3).toMillis()).isEqualTo(4);
+        assertThat(delay.createDelay(4).toMillis()).isEqualTo(8);
+        assertThat(delay.createDelay(5).toMillis()).isEqualTo(16);
+        assertThat(delay.createDelay(6).toMillis()).isEqualTo(32);
+        assertThat(delay.createDelay(7).toMillis()).isEqualTo(64);
+        assertThat(delay.createDelay(8).toMillis()).isEqualTo(128);
+        assertThat(delay.createDelay(9).toMillis()).isEqualTo(256);
+        assertThat(delay.createDelay(10).toMillis()).isEqualTo(512);
+        assertThat(delay.createDelay(11).toMillis()).isEqualTo(1024);
+        assertThat(delay.createDelay(12).toMillis()).isEqualTo(2048);
+        assertThat(delay.createDelay(13).toMillis()).isEqualTo(4096);
+        assertThat(delay.createDelay(14).toMillis()).isEqualTo(8192);
+        assertThat(delay.createDelay(15).toMillis()).isEqualTo(16384);
+        assertThat(delay.createDelay(16).toMillis()).isEqualTo(30000);
+        assertThat(delay.createDelay(17).toMillis()).isEqualTo(30000);
+        assertThat(delay.createDelay(Integer.MAX_VALUE).toMillis()).isEqualTo(30000);
     }
 
     @Test
@@ -89,11 +87,11 @@ public class ExponentialDelayTest {
 
         Delay delay = Delay.exponential(100, 10000, TimeUnit.MILLISECONDS, 10);
 
-        assertThat(delay.createDelay(1)).isEqualTo(100);
-        assertThat(delay.createDelay(2)).isEqualTo(100);
-        assertThat(delay.createDelay(3)).isEqualTo(100);
-        assertThat(delay.createDelay(4)).isEqualTo(1000);
-        assertThat(delay.createDelay(5)).isEqualTo(10000);
-        assertThat(delay.createDelay(Integer.MAX_VALUE)).isEqualTo(10000);
+        assertThat(delay.createDelay(1).toMillis()).isEqualTo(100);
+        assertThat(delay.createDelay(2).toMillis()).isEqualTo(100);
+        assertThat(delay.createDelay(3).toMillis()).isEqualTo(100);
+        assertThat(delay.createDelay(4).toMillis()).isEqualTo(1000);
+        assertThat(delay.createDelay(5).toMillis()).isEqualTo(10000);
+        assertThat(delay.createDelay(Integer.MAX_VALUE).toMillis()).isEqualTo(10000);
     }
 }

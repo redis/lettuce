@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import static io.lettuce.core.protocol.CommandType.*;
 
+import java.time.Duration;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -1938,6 +1939,10 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @SuppressWarnings("unchecked")
     public <T, R> Flux<R> createDissolvingFlux(Supplier<RedisCommand<K, V, T>> commandSupplier) {
         return (Flux<R>) Flux.from(new RedisPublisher<>(commandSupplier, connection, true));
+    }
+
+    public void setTimeout(Duration timeout) {
+        connection.setTimeout(timeout);
     }
 
     public void setTimeout(long timeout, TimeUnit unit) {

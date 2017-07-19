@@ -17,8 +17,8 @@ package io.lettuce.core.dynamic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
 
@@ -79,7 +79,7 @@ public class RedisCommandsClusterSyncTest extends AbstractTest {
 
         SynchronousCommands api = factory.getCommands(SynchronousCommands.class);
 
-        api.setSync(key, value, Timeout.create(10, TimeUnit.SECONDS));
+        api.setSync(key, value, Timeout.create(Duration.ofSeconds(10)));
         assertThat(api.get("key")).isEqualTo("value");
         assertThat(api.getAsBytes("key")).isEqualTo("value".getBytes());
     }

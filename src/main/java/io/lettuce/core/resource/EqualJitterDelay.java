@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.resource;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,20 +30,23 @@ import java.util.concurrent.TimeUnit;
  * </p>
  *
  * @author Jongyeol Choi
+ * @author Mark Paluch
  * @since 4.2
  */
 class EqualJitterDelay extends ExponentialDelay {
 
     private final long base;
+    private final TimeUnit targetTimeUnit;
 
-    EqualJitterDelay(long lower, long upper, long base, TimeUnit unit) {
-        super(lower, upper, unit, 2);
+    EqualJitterDelay(Duration lower, Duration upper, long base, TimeUnit targetTimeUnit) {
+        super(lower, upper, 2, targetTimeUnit);
         this.base = base;
+        this.targetTimeUnit = targetTimeUnit;
     }
 
     @Override
-    public long createDelay(long attempt) {
+    public Duration createDelay(long attempt) {
         long value = randomBetween(0, base * calculatePowerOfTwo(attempt));
-        return applyBounds(value);
+        return applyBounds(Duration.ofNanos(targetTimeUnit.toNanos(value)));
     }
 }

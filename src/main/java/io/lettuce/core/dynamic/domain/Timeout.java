@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.dynamic.domain;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.dynamic.annotation.Command;
@@ -29,16 +30,24 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 public class Timeout {
 
-    private final long timeout;
-    private final TimeUnit timeUnit;
+    private final Duration timeout;
 
-    private Timeout(long timeout, TimeUnit timeUnit) {
+    private Timeout(Duration timeout) {
 
-        LettuceAssert.isTrue(timeout >= 0, "Timeout must be greater or equal to zero");
-        LettuceAssert.notNull(timeUnit, "TimeUnit must not be null");
+        LettuceAssert.notNull(timeout, "Timeout must not be null");
+        LettuceAssert.isTrue(!timeout.isNegative(), "Timeout must be greater or equal to zero");
 
         this.timeout = timeout;
-        this.timeUnit = timeUnit;
+    }
+
+    /**
+     * Create a {@link Timeout}.
+     *
+     * @param timeout the timeout value, must be non-negative.
+     * @return the {@link Timeout}.
+     */
+    public static Timeout create(Duration timeout) {
+        return new Timeout(timeout);
     }
 
     /**
@@ -49,22 +58,16 @@ public class Timeout {
      * @return the {@link Timeout}.
      */
     public static Timeout create(long timeout, TimeUnit timeUnit) {
-        return new Timeout(timeout, timeUnit);
+
+        LettuceAssert.notNull(timeUnit, "TimeUnit must not be null");
+
+        return new Timeout(Duration.ofNanos(timeUnit.toNanos(timeout)));
     }
 
     /**
-     *
      * @return the timeout value.
      */
-    public long getTimeout() {
+    public Duration getTimeout() {
         return timeout;
-    }
-
-    /**
-     *
-     * @return the {@link TimeUnit}.
-     */
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
     }
 }

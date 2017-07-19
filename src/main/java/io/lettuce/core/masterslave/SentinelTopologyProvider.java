@@ -17,6 +17,7 @@ package io.lettuce.core.masterslave;
 
 import static io.lettuce.core.masterslave.MasterSlaveUtils.CODEC;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,6 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -50,8 +50,7 @@ public class SentinelTopologyProvider implements TopologyProvider {
     private final String masterId;
     private final RedisClient redisClient;
     private final RedisURI sentinelUri;
-    private final long timeout;
-    private final TimeUnit timeUnit;
+    private final Duration timeout;
 
     /**
      * Creates a new {@link SentinelTopologyProvider}.
@@ -69,8 +68,7 @@ public class SentinelTopologyProvider implements TopologyProvider {
         this.masterId = masterId;
         this.redisClient = redisClient;
         this.sentinelUri = sentinelUri;
-        this.timeout = sentinelUri.getTimeout();
-        this.timeUnit = sentinelUri.getUnit();
+        this.timeout = sentinelUri.getTimeoutDuration();
     }
 
     @Override
@@ -85,8 +83,8 @@ public class SentinelTopologyProvider implements TopologyProvider {
 
             List<RedisNodeDescription> result = new ArrayList<>();
             try {
-                Map<String, String> master = masterFuture.get(timeout, timeUnit);
-                List<Map<String, String>> slaves = slavesFuture.get(timeout, timeUnit);
+                Map<String, String> master = masterFuture.get(timeout.toNanos(), TimeUnit.NANOSECONDS);
+                List<Map<String, String>> slaves = slavesFuture.get(timeout.toNanos(), TimeUnit.NANOSECONDS);
 
                 result.add(toNode(master, RedisInstance.Role.MASTER));
                 result.addAll(slaves.stream().filter(SentinelTopologyProvider::isAvailable)

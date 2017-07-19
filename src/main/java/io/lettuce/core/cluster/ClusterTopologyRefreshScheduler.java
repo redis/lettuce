@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package io.lettuce.core.cluster;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -103,8 +102,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         }
 
         ClusterTopologyRefreshOptions refreshOptions = getClusterTopologyRefreshOptions();
-        Timeout timeout = new Timeout(refreshOptions.getAdaptiveRefreshTimeout(),
-                refreshOptions.getAdaptiveRefreshTimeoutUnit());
+        Timeout timeout = new Timeout(refreshOptions.getAdaptiveRefreshTimeout());
 
         if (timeoutRef.compareAndSet(existingTimeout, timeout)) {
             return true;
@@ -163,8 +161,8 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         private final long expiresMs;
 
-        public Timeout(long timeout, TimeUnit timeUnit) {
-            this.expiresMs = System.currentTimeMillis() + timeUnit.toMillis(timeout);
+        public Timeout(Duration duration) {
+            this.expiresMs = System.currentTimeMillis() + duration.toMillis();
         }
 
         public boolean isExpired() {

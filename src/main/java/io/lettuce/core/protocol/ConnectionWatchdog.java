@@ -199,7 +199,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             attempts++;
 
             final int attempt = attempts;
-            int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempt));
+            int timeout = (int) reconnectDelay.createDelay(attempt).toMillis();
             logger.debug("{} Reconnect attempt {}, delay {}ms", logPrefix(), attempt, timeout);
 
             this.reconnectScheduleTimeout = timer.newTimeout(it -> {

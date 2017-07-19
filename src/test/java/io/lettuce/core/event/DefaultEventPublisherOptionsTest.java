@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package io.lettuce.core.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -27,30 +28,27 @@ import org.junit.Test;
 public class DefaultEventPublisherOptionsTest {
 
     @Test
-    public void testDefault() throws Exception {
+    public void testDefault() {
 
         DefaultEventPublisherOptions sut = DefaultEventPublisherOptions.create();
 
-        assertThat(sut.eventEmitInterval()).isEqualTo(10);
-        assertThat(sut.eventEmitIntervalUnit()).isEqualTo(TimeUnit.MINUTES);
+        assertThat(sut.eventEmitInterval()).isEqualTo(Duration.ofMinutes(10));
     }
 
     @Test
-    public void testDisabled() throws Exception {
+    public void testDisabled() {
 
         DefaultEventPublisherOptions sut = DefaultEventPublisherOptions.disabled();
 
-        assertThat(sut.eventEmitInterval()).isEqualTo(0);
-        assertThat(sut.eventEmitIntervalUnit()).isEqualTo(TimeUnit.SECONDS);
+        assertThat(sut.eventEmitInterval()).isEqualTo(Duration.ZERO);
     }
 
     @Test
-    public void testBuilder() throws Exception {
+    public void testBuilder() {
 
         DefaultEventPublisherOptions sut = DefaultEventPublisherOptions.builder().eventEmitInterval(1, TimeUnit.SECONDS)
                 .build();
 
-        assertThat(sut.eventEmitInterval()).isEqualTo(1);
-        assertThat(sut.eventEmitIntervalUnit()).isEqualTo(TimeUnit.SECONDS);
+        assertThat(sut.eventEmitInterval()).isEqualTo(Duration.ofSeconds(1));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 package io.lettuce.core.pubsub;
 
 import java.lang.reflect.Array;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisFuture;
@@ -31,9 +29,6 @@ import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
-
-import io.netty.channel.ChannelHandler;
-import io.netty.util.internal.ConcurrentSet;
 
 /**
  * An thread-safe pub/sub connection to a Redis server. Multiple threads may share one {@link StatefulRedisPubSubConnectionImpl}
@@ -57,11 +52,11 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
      * @param writer the writer used to write commands
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
-     * @param unit Unit of time for the timeout.
      */
-    public StatefulRedisPubSubConnectionImpl(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout,
-            TimeUnit unit) {
-        super(writer, codec, timeout, unit);
+    public StatefulRedisPubSubConnectionImpl(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec,
+            Duration timeout) {
+
+        super(writer, codec, timeout);
 
         this.endpoint = endpoint;
     }
@@ -142,8 +137,6 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         T[] array = (T[]) Array.newInstance(cls, c.size());
         return c.toArray(array);
     }
-
-
 
     @Override
     public void activated() {

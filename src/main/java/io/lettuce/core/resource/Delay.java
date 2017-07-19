@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.resource;
 
+import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -36,8 +37,8 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 public abstract class Delay {
 
-    private static long DEFAULT_LOWER_BOUND = 0;
-    private static long DEFAULT_UPPER_BOUND = TimeUnit.SECONDS.toMillis(30);
+    private static Duration DEFAULT_LOWER_BOUND = Duration.ZERO;
+    private static Duration DEFAULT_UPPER_BOUND = Duration.ofSeconds(30);
     private static int DEFAULT_POWER_OF = 2;
     private static TimeUnit DEFAULT_TIMEUNIT = TimeUnit.MILLISECONDS;
 
@@ -58,29 +59,9 @@ public abstract class Delay {
     }
 
     /**
-     * The time unit of the delay.
-     */
-    private final TimeUnit timeUnit;
-
-    /**
      * Creates a new {@link Delay}.
-     *
-     * @param timeUnit the time unit.
      */
-    protected Delay(TimeUnit timeUnit) {
-
-        LettuceAssert.notNull(timeUnit, "TimeUnit must not be null");
-
-        this.timeUnit = timeUnit;
-    }
-
-    /**
-     * Returns the {@link TimeUnit} associated with this {@link Delay}.
-     *
-     * @return the {@link TimeUnit} associated with this {@link Delay}.
-     */
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
+    protected Delay() {
     }
 
     /**
@@ -92,7 +73,21 @@ public abstract class Delay {
      * @param attempt the attempt to calculate the delay from.
      * @return the calculated delay.
      */
-    public abstract long createDelay(long attempt);
+    public abstract Duration createDelay(long attempt);
+
+    /**
+     * Creates a new {@link ConstantDelay}.
+     *
+     * @param delay the delay, must be greater or equal to {@literal 0}.
+     * @return a created {@link ConstantDelay}.
+     */
+    public static Delay constant(Duration delay) {
+
+        LettuceAssert.notNull(delay, "Delay must not be null");
+        LettuceAssert.isTrue(delay.toNanos() >= 0, "Delay must be greater or equal to 0");
+
+        return new ConstantDelay(delay);
+    }
 
     /**
      * Creates a new {@link ConstantDelay}.
@@ -100,12 +95,14 @@ public abstract class Delay {
      * @param delay the delay, must be greater or equal to 0
      * @param timeUnit the unit of the delay.
      * @return a created {@link ConstantDelay}.
+     * @deprecated since 5.0, use {@link #constant(Duration)}
      */
+    @Deprecated
     public static Delay constant(int delay, TimeUnit timeUnit) {
 
-        LettuceAssert.isTrue(delay >= 0, "Delay must be greater or equal to 0");
+        LettuceAssert.notNull(timeUnit, "TimeUnit must not be null");
 
-        return new ConstantDelay(delay, timeUnit);
+        return constant(Duration.ofNanos(timeUnit.toNanos(delay)));
     }
 
     /**
@@ -115,7 +112,31 @@ public abstract class Delay {
      * @return a created {@link ExponentialDelay}.
      */
     public static Delay exponential() {
-        return exponential(DEFAULT_LOWER_BOUND, DEFAULT_UPPER_BOUND, DEFAULT_TIMEUNIT, DEFAULT_POWER_OF);
+        return exponential(DEFAULT_LOWER_BOUND, DEFAULT_UPPER_BOUND, DEFAULT_POWER_OF, DEFAULT_TIMEUNIT);
+    }
+
+    /**
+     * Creates a new {@link ExponentialDelay} on with custom boundaries and factor (eg. with upper 9000, lower 0, powerOf 10: 1,
+     * 10, 100, 1000, 9000, 9000, 9000, ...).
+     *
+     * @param lower the lower boundary, must be non-negative
+     * @param upper the upper boundary, must be greater than the lower boundary
+     * @param powersOf the base for exponential growth (eg. powers of 2, powers of 10, etc...), must be non-negative and greater
+     *        than 1
+     * @param targetTimeUnit the unit of the delay.
+     * @return a created {@link ExponentialDelay}.
+     * @since 5.0
+     */
+    public static Delay exponential(Duration lower, Duration upper, int powersOf, TimeUnit targetTimeUnit) {
+
+        LettuceAssert.notNull(lower, "Lower boundary must not be null");
+        LettuceAssert.isTrue(lower.toNanos() >= 0, "Lower boundary must be greater or equal to 0");
+        LettuceAssert.notNull(upper, "Upper boundary must not be null");
+        LettuceAssert.isTrue(upper.toNanos() > lower.toNanos(), "Upper boundary must be greater than the lower boundary");
+        LettuceAssert.isTrue(powersOf > 1, "PowersOf must be greater than 1");
+        LettuceAssert.notNull(targetTimeUnit, "Target TimeUnit must not be null");
+
+        return new ExponentialDelay(lower, upper, powersOf, targetTimeUnit);
     }
 
     /**
@@ -134,8 +155,9 @@ public abstract class Delay {
         LettuceAssert.isTrue(lower >= 0, "Lower boundary must be greater or equal to 0");
         LettuceAssert.isTrue(upper > lower, "Upper boundary must be greater than the lower boundary");
         LettuceAssert.isTrue(powersOf > 1, "PowersOf must be greater than 1");
+        LettuceAssert.notNull(unit, "TimeUnit must not be null");
 
-        return new ExponentialDelay(lower, upper, unit, powersOf);
+        return exponential(Duration.ofNanos(unit.toNanos(lower)), Duration.ofNanos(unit.toNanos(upper)), powersOf, unit);
     }
 
     /**
@@ -153,6 +175,28 @@ public abstract class Delay {
      * @param lower the lower boundary, must be non-negative
      * @param upper the upper boundary, must be greater than the lower boundary
      * @param base the base, must be greater or equal to 1
+     * @param targetTimeUnit the unit of the delay.
+     * @return a created {@link EqualJitterDelay}.
+     * @since 5.0
+     */
+    public static Delay equalJitter(Duration lower, Duration upper, long base, TimeUnit targetTimeUnit) {
+
+        LettuceAssert.notNull(lower, "Lower boundary must not be null");
+        LettuceAssert.isTrue(lower.toNanos() >= 0, "Lower boundary must be greater or equal to 0");
+        LettuceAssert.notNull(upper, "Upper boundary must not be null");
+        LettuceAssert.isTrue(upper.toNanos() > lower.toNanos(), "Upper boundary must be greater than the lower boundary");
+        LettuceAssert.isTrue(base >= 1, "Base must be greater or equal to 1");
+        LettuceAssert.notNull(targetTimeUnit, "Target TimeUnit must not be null");
+
+        return new EqualJitterDelay(lower, upper, base, targetTimeUnit);
+    }
+
+    /**
+     * Creates a new {@link EqualJitterDelay}.
+     *
+     * @param lower the lower boundary, must be non-negative
+     * @param upper the upper boundary, must be greater than the lower boundary
+     * @param base the base, must be greater or equal to 1
      * @param unit the unit of the delay.
      * @return a created {@link EqualJitterDelay}.
      */
@@ -161,8 +205,9 @@ public abstract class Delay {
         LettuceAssert.isTrue(lower >= 0, "Lower boundary must be greater or equal to 0");
         LettuceAssert.isTrue(upper > lower, "Upper boundary must be greater than the lower boundary");
         LettuceAssert.isTrue(base >= 1, "Base must be greater or equal to 1");
+        LettuceAssert.notNull(unit, "TimeUnit must not be null");
 
-        return new EqualJitterDelay(lower, upper, base, unit);
+        return equalJitter(Duration.ofNanos(unit.toNanos(lower)), Duration.ofNanos(unit.toNanos(upper)), base, unit);
     }
 
     /**
@@ -180,6 +225,28 @@ public abstract class Delay {
      * @param lower the lower boundary, must be non-negative
      * @param upper the upper boundary, must be greater than the lower boundary
      * @param base the base, must be greater or equal to 1
+     * @param targetTimeUnit the unit of the delay.
+     * @return a created {@link FullJitterDelay}.
+     * @since 5.0
+     */
+    public static Delay fullJitter(Duration lower, Duration upper, long base, TimeUnit targetTimeUnit) {
+
+        LettuceAssert.notNull(lower, "Lower boundary must not be null");
+        LettuceAssert.isTrue(lower.toNanos() >= 0, "Lower boundary must be greater or equal to 0");
+        LettuceAssert.notNull(upper, "Upper boundary must not be null");
+        LettuceAssert.isTrue(upper.toNanos() > lower.toNanos(), "Upper boundary must be greater than the lower boundary");
+        LettuceAssert.isTrue(base >= 1, "Base must be greater or equal to 1");
+        LettuceAssert.notNull(targetTimeUnit, "Target TimeUnit must not be null");
+
+        return new FullJitterDelay(lower, upper, base, targetTimeUnit);
+    }
+
+    /**
+     * Creates a new {@link FullJitterDelay}.
+     *
+     * @param lower the lower boundary, must be non-negative
+     * @param upper the upper boundary, must be greater than the lower boundary
+     * @param base the base, must be greater or equal to 1
      * @param unit the unit of the delay.
      * @return a created {@link FullJitterDelay}.
      */
@@ -188,8 +255,9 @@ public abstract class Delay {
         LettuceAssert.isTrue(lower >= 0, "Lower boundary must be greater or equal to 0");
         LettuceAssert.isTrue(upper > lower, "Upper boundary must be greater than the lower boundary");
         LettuceAssert.isTrue(base >= 1, "Base must be greater or equal to 1");
+        LettuceAssert.notNull(unit, "TimeUnit must not be null");
 
-        return new FullJitterDelay(lower, upper, base, unit);
+        return fullJitter(Duration.ofNanos(unit.toNanos(lower)), Duration.ofNanos(unit.toNanos(upper)), base, unit);
     }
 
     /**
@@ -207,6 +275,29 @@ public abstract class Delay {
      * @param lower the lower boundary, must be non-negative
      * @param upper the upper boundary, must be greater than the lower boundary
      * @param base the base, must be greater or equal to 0
+     * @param targetTimeUnit the unit of the delay.
+     * @return a new {@link Supplier} of {@link DecorrelatedJitterDelay}.
+     * @since 5.0
+     */
+    public static Supplier<Delay> decorrelatedJitter(Duration lower, Duration upper, long base, TimeUnit targetTimeUnit) {
+
+        LettuceAssert.notNull(lower, "Lower boundary must not be null");
+        LettuceAssert.isTrue(lower.toNanos() >= 0, "Lower boundary must be greater or equal to 0");
+        LettuceAssert.notNull(upper, "Upper boundary must not be null");
+        LettuceAssert.isTrue(upper.toNanos() > lower.toNanos(), "Upper boundary must be greater than the lower boundary");
+        LettuceAssert.isTrue(base >= 0, "Base must be greater or equal to 1");
+        LettuceAssert.notNull(targetTimeUnit, "Target TimeUnit must not be null");
+
+        // Create new Delay because it has state.
+        return () -> new DecorrelatedJitterDelay(lower, upper, base, targetTimeUnit);
+    }
+
+    /**
+     * Creates a {@link Supplier} that constructs new {@link DecorrelatedJitterDelay} instances.
+     *
+     * @param lower the lower boundary, must be non-negative
+     * @param upper the upper boundary, must be greater than the lower boundary
+     * @param base the base, must be greater or equal to 0
      * @param unit the unit of the delay.
      * @return a new {@link Supplier} of {@link DecorrelatedJitterDelay}.
      */
@@ -215,9 +306,10 @@ public abstract class Delay {
         LettuceAssert.isTrue(lower >= 0, "Lower boundary must be greater or equal to 0");
         LettuceAssert.isTrue(upper > lower, "Upper boundary must be greater than the lower boundary");
         LettuceAssert.isTrue(base >= 0, "Base must be greater or equal to 0");
+        LettuceAssert.notNull(unit, "TimeUnit must not be null");
 
         // Create new Delay because it has state.
-        return () -> new DecorrelatedJitterDelay(lower, upper, base, unit);
+        return decorrelatedJitter(Duration.ofNanos(unit.toNanos(lower)), Duration.ofNanos(unit.toNanos(upper)), base, unit);
     }
 
     /**
@@ -235,13 +327,13 @@ public abstract class Delay {
         return ThreadLocalRandom.current().nextLong(min, max);
     }
 
-    protected static long applyBounds(long calculatedValue, long lower, long upper) {
+    protected static Duration applyBounds(Duration calculatedValue, Duration lower, Duration upper) {
 
-        if (calculatedValue < lower) {
+        if (calculatedValue.compareTo(lower) < 0) {
             return lower;
         }
 
-        if (calculatedValue > upper) {
+        if (calculatedValue.compareTo(upper) > 0) {
             return upper;
         }
 

@@ -29,9 +29,6 @@ import io.lettuce.TestClientResources;
 import io.lettuce.Wait;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
-import io.lettuce.core.protocol.Command;
-import io.lettuce.core.protocol.CommandWrapper;
-import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * @author Will Glozer

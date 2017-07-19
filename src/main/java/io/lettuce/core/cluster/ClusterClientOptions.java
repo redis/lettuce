@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
@@ -31,7 +31,7 @@ public class ClusterClientOptions extends ClientOptions {
 
     public static final boolean DEFAULT_REFRESH_CLUSTER_VIEW = false;
     public static final long DEFAULT_REFRESH_PERIOD = 60;
-    public static final TimeUnit DEFAULT_REFRESH_PERIOD_UNIT = TimeUnit.SECONDS;
+    public static final Duration DEFAULT_REFRESH_PERIOD_DURATION = Duration.ofSeconds(DEFAULT_REFRESH_PERIOD);
     public static final boolean DEFAULT_CLOSE_STALE_CONNECTIONS = true;
     public static final boolean DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP = true;
     public static final int DEFAULT_MAX_REDIRECTS = 5;
@@ -51,9 +51,9 @@ public class ClusterClientOptions extends ClientOptions {
 
         if (refreshOptions == null) {
             refreshOptions = ClusterTopologyRefreshOptions.builder() //
-                    .enablePeriodicRefresh(builder.refreshClusterView)//
-                    .refreshPeriod(builder.refreshPeriod, builder.refreshPeriodUnit)//
-                    .closeStaleConnections(builder.closeStaleConnections)//
+                    .enablePeriodicRefresh(DEFAULT_REFRESH_CLUSTER_VIEW) //
+                    .refreshPeriod(DEFAULT_REFRESH_PERIOD_DURATION) //
+                    .closeStaleConnections(builder.closeStaleConnections) //
                     .build();
         }
 
@@ -102,9 +102,6 @@ public class ClusterClientOptions extends ClientOptions {
      */
     public static class Builder extends ClientOptions.Builder {
 
-        private boolean refreshClusterView = DEFAULT_REFRESH_CLUSTER_VIEW;
-        private long refreshPeriod = DEFAULT_REFRESH_PERIOD;
-        private TimeUnit refreshPeriodUnit = DEFAULT_REFRESH_PERIOD_UNIT;
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
         private boolean validateClusterNodeMembership = DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP;
         private int maxRedirects = DEFAULT_MAX_REDIRECTS;
@@ -208,8 +205,8 @@ public class ClusterClientOptions extends ClientOptions {
 
     /**
      * Flag, whether regular cluster topology updates are updated. The client starts updating the cluster topology in the
-     * intervals of {@link #getRefreshPeriod()} /{@link #getRefreshPeriodUnit()}. Defaults to {@literal false}. Returns the
-     * value from {@link ClusterTopologyRefreshOptions} if provided.
+     * intervals of {@link #getRefreshPeriod()}. Defaults to {@literal false}. Returns the value from
+     * {@link ClusterTopologyRefreshOptions} if provided.
      *
      * @return {@literal true} it the cluster topology view is updated periodically
      */
@@ -223,18 +220,8 @@ public class ClusterClientOptions extends ClientOptions {
      *
      * @return the period between the regular cluster topology updates
      */
-    public long getRefreshPeriod() {
+    public Duration getRefreshPeriod() {
         return topologyRefreshOptions.getRefreshPeriod();
-    }
-
-    /**
-     * Unit for the {@link #getRefreshPeriod()}. Defaults to {@link TimeUnit#SECONDS}. Returns the value from
-     * {@link ClusterTopologyRefreshOptions} if provided.
-     *
-     * @return unit for the {@link #getRefreshPeriod()}
-     */
-    public TimeUnit getRefreshPeriodUnit() {
-        return topologyRefreshOptions.getRefreshPeriodUnit();
     }
 
     /**

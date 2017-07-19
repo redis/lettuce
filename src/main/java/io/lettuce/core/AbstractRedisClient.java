@@ -20,6 +20,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -77,8 +78,7 @@ public abstract class AbstractRedisClient {
 
     protected volatile ClientOptions clientOptions = ClientOptions.builder().build();
 
-    protected long timeout = 60;
-    protected TimeUnit unit;
+    protected Duration timeout = RedisURI.DEFAULT_TIMEOUT_DURATION;
 
     private final boolean sharedResources;
     private final AtomicBoolean shutdown = new AtomicBoolean();
@@ -99,7 +99,6 @@ public abstract class AbstractRedisClient {
             this.clientResources = clientResources;
         }
 
-        unit = TimeUnit.SECONDS;
         genericWorkerPool = this.clientResources.eventExecutorGroup();
         channels = new DefaultChannelGroup(genericWorkerPool.next());
         timer = (HashedWheelTimer) this.clientResources.timer();
@@ -109,12 +108,28 @@ public abstract class AbstractRedisClient {
      * Set the default timeout for connections created by this client. The timeout applies to connection attempts and
      * non-blocking commands.
      *
+     * @param timeout default connection timeout, must not be {@literal null}.
+     * @since 5.0
+     */
+    public void setDefaultTimeout(Duration timeout) {
+
+        LettuceAssert.notNull(timeout, "Timeout duration must not be null");
+        LettuceAssert.isTrue(!timeout.isNegative(), "Timeout duration must be greater or equal to zero");
+
+        this.timeout = timeout;
+    }
+
+    /**
+     * Set the default timeout for connections created by this client. The timeout applies to connection attempts and
+     * non-blocking commands.
+     *
      * @param timeout Default connection timeout.
      * @param unit Unit of time for the timeout.
+     * @deprecated since 5.0, use {@link #setDefaultTimeout(long, TimeUnit)}.
      */
+    @Deprecated
     public void setDefaultTimeout(long timeout, TimeUnit unit) {
-        this.timeout = timeout;
-        this.unit = unit;
+        setDefaultTimeout(Duration.ofNanos(unit.toNanos(timeout)));
     }
 
     /**
@@ -135,14 +150,14 @@ public abstract class AbstractRedisClient {
         SocketOptions socketOptions = getOptions().getSocketOptions();
 
         redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
-                (int) socketOptions.getConnectTimeoutUnit().toMillis(socketOptions.getConnectTimeout()));
+                Math.toIntExact(socketOptions.getConnectTimeout().toMillis()));
 
         if (LettuceStrings.isEmpty(redisURI.getSocket())) {
             redisBootstrap.option(ChannelOption.SO_KEEPALIVE, socketOptions.isKeepAlive());
             redisBootstrap.option(ChannelOption.TCP_NODELAY, socketOptions.isTcpNoDelay());
         }
 
-        connectionBuilder.timeout(redisURI.getTimeout(), redisURI.getUnit());
+        connectionBuilder.timeout(redisURI.getTimeoutDuration());
         connectionBuilder.password(redisURI.getPassword());
 
         connectionBuilder.bootstrap(redisBootstrap);
@@ -279,7 +294,7 @@ public abstract class AbstractRedisClient {
                     failure = throwable;
                 } else if (throwable instanceof TimeoutException) {
                     failure = new RedisConnectionException("Could not initialize channel within "
-                            + connectionBuilder.getTimeout() + " " + connectionBuilder.getTimeUnit(), throwable);
+                            + connectionBuilder.getTimeout(), throwable);
                 } else {
                     failure = throwable;
                 }
@@ -301,6 +316,19 @@ public abstract class AbstractRedisClient {
      */
     public void shutdown() {
         shutdown(2, 15, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
+     *
+     * @param quietPeriod the quiet period as described in the documentation
+     * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
+     *        during the quiet period
+     * @since 5.0
+     */
+    public void shutdown(Duration quietPeriod, Duration timeout) {
+        LettuceFutures.translateException(() -> shutdownAsync(quietPeriod.toNanos(), timeout.toNanos(), TimeUnit.NANOSECONDS)
+                .get(), () -> null);
     }
 
     /**

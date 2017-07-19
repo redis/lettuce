@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -58,7 +59,7 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
                     return null;
                 }
 
-                LettuceFutures.awaitOrCancel(command, connection.getTimeout(), connection.getTimeoutUnit());
+                LettuceFutures.awaitOrCancel(command, connection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
                 return command.get();
             }
 

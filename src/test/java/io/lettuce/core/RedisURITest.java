@@ -22,8 +22,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.internal.LettuceSets;
 import org.junit.Test;
+
+import io.lettuce.core.internal.LettuceSets;
 
 /**
  * @author Mark Paluch
@@ -159,6 +160,7 @@ public class RedisURITest {
 
     @Test
     public void timeoutParsingTest() {
+
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=5000", 5000, TimeUnit.MILLISECONDS);
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=5000ms", 5000, TimeUnit.MILLISECONDS);
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=5s", 5, TimeUnit.SECONDS);
@@ -174,7 +176,7 @@ public class RedisURITest {
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=junk", defaultUri.getTimeout(), defaultUri.getUnit());
 
         RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/5?timeout=5000ms");
-        assertThat(redisURI.toURI().toString()).isEqualTo("redis://auth@localhost:1234?database=5&timeout=5000ms");
+        assertThat(redisURI.toURI().toString()).isEqualTo("redis://auth@localhost:1234?database=5&timeout=5s");
     }
 
     @Test
@@ -194,10 +196,9 @@ public class RedisURITest {
     }
 
     private RedisURI checkUriTimeout(String uri, long expectedTimeout, TimeUnit expectedUnit) {
-        RedisURI redisURI1 = RedisURI.create(uri);
-        assertThat(redisURI1.getTimeout()).isEqualTo(expectedTimeout);
-        assertThat(redisURI1.getUnit()).isEqualTo(expectedUnit);
-        return redisURI1;
+        RedisURI redisURI = RedisURI.create(uri);
+        assertThat(expectedUnit.convert(redisURI.getTimeout(), redisURI.getUnit())).isEqualTo(expectedTimeout);
+        return redisURI;
     }
 
     @Test

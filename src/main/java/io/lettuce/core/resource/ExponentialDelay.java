@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.resource;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,20 +38,21 @@ import java.util.concurrent.TimeUnit;
  */
 class ExponentialDelay extends Delay {
 
-    private final long lower;
-    private final long upper;
+    private final Duration lower;
+    private final Duration upper;
     private final int powersOf;
+    private final TimeUnit targetTimeUnit;
 
-    ExponentialDelay(long lower, long upper, TimeUnit unit, int powersOf) {
+    ExponentialDelay(Duration lower, Duration upper, int powersOf, TimeUnit targetTimeUnit) {
 
-        super(unit);
         this.lower = lower;
         this.upper = upper;
         this.powersOf = powersOf;
+        this.targetTimeUnit = targetTimeUnit;
     }
 
     @Override
-    public long createDelay(long attempt) {
+    public Duration createDelay(long attempt) {
 
         long delay;
         if (attempt <= 0) { // safeguard against underflow
@@ -61,7 +63,7 @@ class ExponentialDelay extends Delay {
             delay = calculateAlternatePower(attempt);
         }
 
-        return applyBounds(delay);
+        return applyBounds(Duration.ofNanos(targetTimeUnit.toNanos(delay)));
     }
 
     /**
@@ -70,7 +72,7 @@ class ExponentialDelay extends Delay {
      * @param delay the delay
      * @return the delay normalized to its lower and upper bounds.
      */
-    protected long applyBounds(long delay) {
+    protected Duration applyBounds(Duration delay) {
         return applyBounds(delay, lower, upper);
     }
 

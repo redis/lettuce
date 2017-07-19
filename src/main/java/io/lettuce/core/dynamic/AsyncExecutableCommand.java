@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.dynamic;
 
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -64,8 +65,7 @@ class AsyncExecutableCommand implements ExecutableCommand {
 
         connection.dispatch(asyncCommand);
 
-        long timeout = connection.getTimeout();
-        TimeUnit unit = connection.getTimeoutUnit();
+        Duration timeout = connection.getTimeout();
 
         if (commandMethod.getParameters() instanceof ExecutionSpecificParameters) {
             ExecutionSpecificParameters executionSpecificParameters = (ExecutionSpecificParameters) commandMethod
@@ -75,12 +75,11 @@ class AsyncExecutableCommand implements ExecutableCommand {
                 Timeout timeoutArg = (Timeout) arguments[executionSpecificParameters.getTimeoutIndex()];
                 if (timeoutArg != null) {
                     timeout = timeoutArg.getTimeout();
-                    unit = timeoutArg.getTimeUnit();
                 }
             }
         }
 
-        LettuceFutures.awaitAll(timeout, unit, asyncCommand);
+        LettuceFutures.awaitAll(timeout.toNanos(), TimeUnit.NANOSECONDS, asyncCommand);
 
         return asyncCommand.get();
     }

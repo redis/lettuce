@@ -15,8 +15,8 @@
  */
 package io.lettuce.core.sentinel;
 
+import java.time.Duration;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
@@ -42,9 +42,9 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
 
     private String clientName;
 
-    public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout,
-            TimeUnit unit) {
-        super(writer, timeout, unit);
+    public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
+
+        super(writer, timeout);
 
         this.codec = codec;
         this.async = new RedisSentinelAsyncCommandsImpl<>(this, codec);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package io.lettuce.core.event.metrics;
 
+import java.util.concurrent.TimeUnit;
+
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.metrics.CommandLatencyCollector;
-
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ScheduledFuture;
 
@@ -34,31 +35,27 @@ public class DefaultCommandLatencyEventPublisher implements MetricEventPublisher
     private final EventBus eventBus;
     private final CommandLatencyCollector commandLatencyCollector;
 
-    private final Runnable EMITTER = new Runnable() {
-        @Override
-        public void run() {
-            emitMetricsEvent();
-        }
-    };
+    private final Runnable EMITTER = this::emitMetricsEvent;
 
     private volatile ScheduledFuture<?> scheduledFuture;
 
     public DefaultCommandLatencyEventPublisher(EventExecutorGroup eventExecutorGroup, EventPublisherOptions options,
             EventBus eventBus, CommandLatencyCollector commandLatencyCollector) {
+
         this.eventExecutorGroup = eventExecutorGroup;
         this.options = options;
         this.eventBus = eventBus;
         this.commandLatencyCollector = commandLatencyCollector;
 
-        if (options.eventEmitInterval() > 0) {
-            scheduledFuture = this.eventExecutorGroup.scheduleAtFixedRate(EMITTER, options.eventEmitInterval(),
-                    options.eventEmitInterval(), options.eventEmitIntervalUnit());
+        if (!options.eventEmitInterval().isZero()) {
+            scheduledFuture = this.eventExecutorGroup.scheduleAtFixedRate(EMITTER, options.eventEmitInterval().toMillis(),
+                    options.eventEmitInterval().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 
     @Override
     public boolean isEnabled() {
-        return options.eventEmitInterval() > 0 && scheduledFuture != null;
+        return !options.eventEmitInterval().isZero() && scheduledFuture != null;
     }
 
     @Override

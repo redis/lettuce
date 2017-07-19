@@ -20,19 +20,18 @@ import static io.lettuce.core.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.TestClientResources;
 import io.lettuce.core.*;
-import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -130,8 +129,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
 
-        assertTimeout(connection, 1, TimeUnit.MINUTES);
-        assertTimeout(connection.getConnection(host, port1), 1, TimeUnit.MINUTES);
+        assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
+        assertThat(connection.getConnection(host, port1).getTimeout()).isEqualTo(Duration.ofMinutes(1));
 
         connection.close();
     }
@@ -143,8 +142,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect(CODEC);
 
-        assertTimeout(connection, 1, TimeUnit.MINUTES);
-        assertTimeout(connection.getConnection(host, port1), 1, TimeUnit.MINUTES);
+        assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
+        assertThat(connection.getConnection(host, port1).getTimeout()).isEqualTo(Duration.ofMinutes(1));
 
         connection.close();
     }
@@ -156,7 +155,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub();
 
-        assertTimeout(connection, 1, TimeUnit.MINUTES);
+        assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
         connection.close();
     }
 
@@ -167,7 +166,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub(CODEC);
 
-        assertTimeout(connection, 1, TimeUnit.MINUTES);
+        assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
         connection.close();
     }
 
@@ -611,11 +610,5 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         assertThat(connection.pfcount("key8885")).isEqualTo(3);
 
         connection.getStatefulConnection().close();
-    }
-
-    private void assertTimeout(StatefulConnection<?, ?> connection, long expectedTimeout, TimeUnit expectedTimeUnit) {
-
-        AssertionsForClassTypes.assertThat(ReflectionTestUtils.getField(connection, "timeout")).isEqualTo(expectedTimeout);
-        AssertionsForClassTypes.assertThat(ReflectionTestUtils.getField(connection, "unit")).isEqualTo(expectedTimeUnit);
     }
 }

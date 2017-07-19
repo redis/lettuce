@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.net.SocketException;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -43,8 +44,7 @@ public class SocketOptionsTest extends AbstractRedisClientTest {
 
         assertThat(sut.isKeepAlive()).isEqualTo(true);
         assertThat(sut.isTcpNoDelay()).isEqualTo(true);
-        assertThat(sut.getConnectTimeout()).isEqualTo(1);
-        assertThat(sut.getConnectTimeoutUnit()).isEqualTo(TimeUnit.MINUTES);
+        assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofMinutes(1));
     }
 
     @Test
@@ -55,8 +55,7 @@ public class SocketOptionsTest extends AbstractRedisClientTest {
     protected void checkAssertions(SocketOptions sut) {
         assertThat(sut.isKeepAlive()).isEqualTo(false);
         assertThat(sut.isTcpNoDelay()).isEqualTo(false);
-        assertThat(sut.getConnectTimeout()).isEqualTo(10);
-        assertThat(sut.getConnectTimeoutUnit()).isEqualTo(TimeUnit.SECONDS);
+        assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofSeconds(10));
     }
 
     @Test(timeout = 1000)

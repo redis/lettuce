@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import io.lettuce.core.LettuceFutures;
@@ -114,7 +115,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
                         return null;
                     }
                 }
-                return LettuceFutures.awaitOrCancel(command, connection.getTimeout(), connection.getTimeoutUnit());
+                return LettuceFutures.awaitOrCancel(command, connection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
             }
 
             return result;
@@ -176,7 +177,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
         }
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
-                asyncCommandsInterface, connection.getTimeout(), connection.getTimeoutUnit());
+                asyncCommandsInterface, connection.getTimeout());
         return Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(), new Class<?>[] {
                 nodeSelectionCommandsInterface, nodeSelectionInterface }, h);
     }

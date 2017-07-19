@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.role.RedisNodeDescription;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -101,7 +100,7 @@ class MasterSlaveTopologyRefresh {
 
         List<RedisNodeDescription> result = new ArrayList<>();
 
-        long timeout = seed.getUnit().toNanos(seed.getTimeout());
+        long timeout = seed.getTimeoutDuration().toNanos();
         Map<RedisNodeDescription, Long> latencies = new HashMap<>();
 
         requestedPing.await(timeout, TimeUnit.NANOSECONDS);

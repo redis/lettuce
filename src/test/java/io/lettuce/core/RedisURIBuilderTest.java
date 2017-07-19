@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package io.lettuce.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -29,10 +30,11 @@ public class RedisURIBuilderTest {
 
     @Test
     public void sentinel() throws Exception {
-        RedisURI result = RedisURI.Builder.sentinel("localhost").withTimeout(2, TimeUnit.HOURS).build();
+        RedisURI result = RedisURI.Builder.sentinel("localhost").withTimeout(Duration.ofHours(2)).build();
         assertThat(result.getSentinels()).hasSize(1);
-        assertThat(result.getTimeout()).isEqualTo(2);
-        assertThat(result.getUnit()).isEqualTo(TimeUnit.HOURS);
+        assertThat(result.getTimeout()).isEqualTo(TimeUnit.HOURS.toSeconds(2));
+        assertThat(result.getUnit()).isEqualTo(TimeUnit.SECONDS);
+        assertThat(result.getTimeoutDuration()).isEqualTo(Duration.ofHours(2));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -42,10 +44,11 @@ public class RedisURIBuilderTest {
 
     @Test
     public void sentinelWithPort() throws Exception {
-        RedisURI result = RedisURI.Builder.sentinel("localhost", 1).withTimeout(2, TimeUnit.HOURS).build();
+        RedisURI result = RedisURI.Builder.sentinel("localhost", 1).withTimeout(Duration.ofHours(2)).build();
         assertThat(result.getSentinels()).hasSize(1);
-        assertThat(result.getTimeout()).isEqualTo(2);
-        assertThat(result.getUnit()).isEqualTo(TimeUnit.HOURS);
+        assertThat(result.getTimeout()).isEqualTo(TimeUnit.HOURS.toSeconds(2));
+        assertThat(result.getUnit()).isEqualTo(TimeUnit.SECONDS);
+        assertThat(result.getTimeoutDuration()).isEqualTo(Duration.ofHours(2));
     }
 
     @Test(expected = IllegalStateException.class)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.event;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 /**
  * Configuration interface for command latency collection.
@@ -29,12 +29,5 @@ public interface EventPublisherOptions {
      *
      * @return the interval for emit metrics
      */
-    long eventEmitInterval();
-
-    /**
-     * Returns the {@link TimeUnit} for the event emit interval.
-     *
-     * @return the {@link TimeUnit} for the event emit interval
-     */
-    TimeUnit eventEmitIntervalUnit();
+    Duration eventEmitInterval();
 }

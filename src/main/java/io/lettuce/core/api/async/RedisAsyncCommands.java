@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package io.lettuce.core.api.async;
-
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -34,14 +32,6 @@ public interface RedisAsyncCommands<K, V> extends RedisHashAsyncCommands<K, V>, 
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>,
         RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V> {
-
-    /**
-     * Set the default timeout for operations.
-     *
-     * @param timeout the timeout value
-     * @param unit the unit of the timeout value
-     */
-    void setTimeout(long timeout, TimeUnit unit);
 
     /**
      * Authenticate to the server.

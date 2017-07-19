@@ -21,10 +21,10 @@ import static io.lettuce.core.protocol.CommandType.READWRITE;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import io.lettuce.core.*;
@@ -76,10 +76,10 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      * @param writer the channel writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
-     * @param unit Unit of time for the timeout.
      */
-    public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        super(writer, timeout, unit);
+    public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
+
+        super(writer, timeout);
         this.codec = codec;
 
         this.async = new RedisAdvancedClusterAsyncCommandsImpl<>(this, codec);

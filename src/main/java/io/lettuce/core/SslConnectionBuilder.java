@@ -26,9 +26,9 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import javax.net.ssl.*;
@@ -39,7 +39,6 @@ import io.lettuce.core.event.connection.DisconnectedEvent;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
@@ -80,7 +79,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     public RedisChannelInitializer build() {
 
         return new SslChannelInitializer(getPingCommandSupplier(), this::buildHandlers, redisURI, clientResources(),
-                getTimeout(), getTimeUnit(), clientOptions().getSslOptions());
+                getTimeout(), clientOptions().getSslOptions());
     }
 
     /**
@@ -92,22 +91,20 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         private final Supplier<List<ChannelHandler>> handlers;
         private final RedisURI redisURI;
         private final ClientResources clientResources;
-        private final long timeout;
-        private final TimeUnit timeUnit;
+        private final Duration timeout;
         private final SslOptions sslOptions;
 
         private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
 
         public SslChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier,
-                Supplier<List<ChannelHandler>> handlers, RedisURI redisURI, ClientResources clientResources, long timeout,
-                TimeUnit timeUnit, SslOptions sslOptions) {
+                Supplier<List<ChannelHandler>> handlers, RedisURI redisURI, ClientResources clientResources, Duration timeout,
+                SslOptions sslOptions) {
 
             this.pingCommandSupplier = pingCommandSupplier;
             this.handlers = handlers;
             this.redisURI = redisURI;
             this.clientResources = clientResources;
             this.timeout = timeout;
-            this.timeUnit = timeUnit;
             this.sslOptions = sslOptions;
         }
 
@@ -194,7 +191,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                             if (event.isSuccess()) {
                                 if (pingCommandSupplier != PlainChannelInitializer.NO_PING) {
                                     pingCommand = pingCommandSupplier.get();
-                                    pingBeforeActivate(pingCommand, initializedFuture, ctx, clientResources, timeout, timeUnit);
+                                    pingBeforeActivate(pingCommand, initializedFuture, ctx, clientResources, timeout);
                                 } else {
                                     ctx.fireChannelActive();
                                 }

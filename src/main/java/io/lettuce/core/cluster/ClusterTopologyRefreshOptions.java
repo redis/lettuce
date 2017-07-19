@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -31,33 +32,32 @@ public class ClusterTopologyRefreshOptions {
     public static final boolean DEFAULT_PERIODIC_REFRESH_ENABLED = false;
     public static final long DEFAULT_REFRESH_PERIOD = 60;
     public static final TimeUnit DEFAULT_REFRESH_PERIOD_UNIT = TimeUnit.SECONDS;
+    public static final Duration DEFAULT_REFRESH_PERIOD_DURATION = Duration.ofSeconds(DEFAULT_REFRESH_PERIOD);
     public static final boolean DEFAULT_DYNAMIC_REFRESH_SOURCES = true;
     public static final Set<RefreshTrigger> DEFAULT_ADAPTIVE_REFRESH_TRIGGERS = Collections.emptySet();
     public static final long DEFAULT_ADAPTIVE_REFRESH_TIMEOUT = 30;
     public static final TimeUnit DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_UNIT = TimeUnit.SECONDS;
+    public static final Duration DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_DURATION = Duration
+            .ofSeconds(DEFAULT_ADAPTIVE_REFRESH_TIMEOUT);
     public static final int DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS = 5;
     public static final boolean DEFAULT_CLOSE_STALE_CONNECTIONS = true;
 
     private final boolean periodicRefreshEnabled;
-    private final long refreshPeriod;
-    private final TimeUnit refreshPeriodUnit;
+    private final Duration refreshPeriod;
     private final boolean closeStaleConnections;
     private final boolean dynamicRefreshSources;
     private final Set<RefreshTrigger> adaptiveRefreshTriggers;
-    private final long adaptiveRefreshTimeout;
-    private final TimeUnit adaptiveRefreshTimeoutUnit;
+    private final Duration adaptiveRefreshTimeout;
     private final int refreshTriggersReconnectAttempts;
 
     protected ClusterTopologyRefreshOptions(Builder builder) {
 
         this.periodicRefreshEnabled = builder.periodicRefreshEnabled;
         this.refreshPeriod = builder.refreshPeriod;
-        this.refreshPeriodUnit = builder.refreshPeriodUnit;
         this.closeStaleConnections = builder.closeStaleConnections;
         this.dynamicRefreshSources = builder.dynamicRefreshSources;
         this.adaptiveRefreshTriggers = Collections.unmodifiableSet(new HashSet<>(builder.adaptiveRefreshTriggers));
         this.adaptiveRefreshTimeout = builder.adaptiveRefreshTimeout;
-        this.adaptiveRefreshTimeoutUnit = builder.adaptiveRefreshTimeoutUnit;
         this.refreshTriggersReconnectAttempts = builder.refreshTriggersReconnectAttempts;
     }
 
@@ -65,12 +65,10 @@ public class ClusterTopologyRefreshOptions {
 
         this.periodicRefreshEnabled = original.periodicRefreshEnabled;
         this.refreshPeriod = original.refreshPeriod;
-        this.refreshPeriodUnit = original.refreshPeriodUnit;
         this.closeStaleConnections = original.closeStaleConnections;
         this.dynamicRefreshSources = original.dynamicRefreshSources;
         this.adaptiveRefreshTriggers = Collections.unmodifiableSet(new HashSet<>(original.adaptiveRefreshTriggers));
         this.adaptiveRefreshTimeout = original.adaptiveRefreshTimeout;
-        this.adaptiveRefreshTimeoutUnit = original.adaptiveRefreshTimeoutUnit;
         this.refreshTriggersReconnectAttempts = original.refreshTriggersReconnectAttempts;
     }
 
@@ -117,13 +115,11 @@ public class ClusterTopologyRefreshOptions {
     public static class Builder {
 
         private boolean periodicRefreshEnabled = DEFAULT_PERIODIC_REFRESH_ENABLED;
-        private long refreshPeriod = DEFAULT_REFRESH_PERIOD;
-        private TimeUnit refreshPeriodUnit = DEFAULT_REFRESH_PERIOD_UNIT;
+        private Duration refreshPeriod = DEFAULT_REFRESH_PERIOD_DURATION;
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
         private boolean dynamicRefreshSources = DEFAULT_DYNAMIC_REFRESH_SOURCES;
         private Set<RefreshTrigger> adaptiveRefreshTriggers = new HashSet<>(DEFAULT_ADAPTIVE_REFRESH_TRIGGERS);
-        private long adaptiveRefreshTimeout = DEFAULT_ADAPTIVE_REFRESH_TIMEOUT;
-        private TimeUnit adaptiveRefreshTimeoutUnit = DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_UNIT;
+        private Duration adaptiveRefreshTimeout = DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_DURATION;
         private int refreshTriggersReconnectAttempts = DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS;
 
         private Builder() {
@@ -157,9 +153,24 @@ public class ClusterTopologyRefreshOptions {
          * {@link #refreshPeriod(long, TimeUnit)} and {@link #enablePeriodicRefresh()}.
          *
          * @param refreshPeriod period for triggering topology updates, must be greater {@literal 0}
+         * @return {@code this}
+         * @since 5.0
+         */
+        public Builder enablePeriodicRefresh(Duration refreshPeriod) {
+            return refreshPeriod(refreshPeriod).enablePeriodicRefresh();
+        }
+
+        /**
+         * Enables periodic refresh and sets the refresh period. Defaults to {@literal 60 SECONDS}. See
+         * {@link #DEFAULT_REFRESH_PERIOD} and {@link #DEFAULT_REFRESH_PERIOD_UNIT}. This method is a shortcut for
+         * {@link #refreshPeriod(long, TimeUnit)} and {@link #enablePeriodicRefresh()}.
+         *
+         * @param refreshPeriod period for triggering topology updates, must be greater {@literal 0}
          * @param refreshPeriodUnit unit for {@code refreshPeriod}, must not be {@literal null}
          * @return {@code this}
+         * @deprecated since 5.0, use {@link #enablePeriodicRefresh(Duration)}.
          */
+        @Deprecated
         public Builder enablePeriodicRefresh(long refreshPeriod, TimeUnit refreshPeriodUnit) {
             return refreshPeriod(refreshPeriod, refreshPeriodUnit).enablePeriodicRefresh();
         }
@@ -169,17 +180,34 @@ public class ClusterTopologyRefreshOptions {
          * {@link #DEFAULT_REFRESH_PERIOD_UNIT}.
          *
          * @param refreshPeriod period for triggering topology updates, must be greater {@literal 0}
+         * @return {@code this}
+         * @since 5.0
+         */
+        public Builder refreshPeriod(Duration refreshPeriod) {
+
+            LettuceAssert.notNull(refreshPeriod, "RefreshPeriod duration must not be null");
+            LettuceAssert.isTrue(refreshPeriod.toNanos() > 0, "RefreshPeriod must be greater 0");
+
+            this.refreshPeriod = refreshPeriod;
+            return this;
+        }
+
+        /**
+         * Set the refresh period. Defaults to {@literal 60 SECONDS}. See {@link #DEFAULT_REFRESH_PERIOD} and
+         * {@link #DEFAULT_REFRESH_PERIOD_UNIT}.
+         *
+         * @param refreshPeriod period for triggering topology updates, must be greater {@literal 0}
          * @param refreshPeriodUnit unit for {@code refreshPeriod}, must not be {@literal null}
          * @return {@code this}
+         * @deprecated since 5.0, use {@link #refreshPeriod(Duration)}.
          */
+        @Deprecated
         public Builder refreshPeriod(long refreshPeriod, TimeUnit refreshPeriodUnit) {
 
             LettuceAssert.isTrue(refreshPeriod > 0, "RefreshPeriod must be greater 0");
             LettuceAssert.notNull(refreshPeriodUnit, "TimeUnit must not be null");
 
-            this.refreshPeriod = refreshPeriod;
-            this.refreshPeriodUnit = refreshPeriodUnit;
-            return this;
+            return refreshPeriod(Duration.ofNanos(refreshPeriodUnit.toNanos(refreshPeriod)));
         }
 
         /**
@@ -222,8 +250,10 @@ public class ClusterTopologyRefreshOptions {
          * @return {@code this}
          */
         public Builder enableAdaptiveRefreshTrigger(RefreshTrigger... refreshTrigger) {
+
             LettuceAssert.notNull(refreshTrigger, "RefreshTriggers must not be null");
             LettuceAssert.noNullElements(refreshTrigger, "RefreshTriggers must not contain null elements");
+
             adaptiveRefreshTriggers.addAll(Arrays.asList(refreshTrigger));
             return this;
         }
@@ -247,14 +277,36 @@ public class ClusterTopologyRefreshOptions {
          * triggers to one topology refresh per timeout. Defaults to {@literal 30 SECONDS}. See {@link #DEFAULT_REFRESH_PERIOD}
          * and {@link #DEFAULT_REFRESH_PERIOD_UNIT}.
          *
+         * @param timeout timeout for rate-limit adaptive topology updates, must be greater than {@literal 0}.
+         * @return {@code this}
+         * @since 5.0
+         */
+        public Builder adaptiveRefreshTriggersTimeout(Duration timeout) {
+
+            LettuceAssert.notNull(refreshPeriod, "Adaptive refresh triggers timeout must not be null");
+            LettuceAssert.isTrue(refreshPeriod.toNanos() > 0, "Adaptive refresh triggers timeout must be greater 0");
+
+            this.adaptiveRefreshTimeout = timeout;
+            return this;
+        }
+
+        /**
+         * Set the timeout for adaptive topology updates. This timeout is to rate-limit topology updates initiated by refresh
+         * triggers to one topology refresh per timeout. Defaults to {@literal 30 SECONDS}. See {@link #DEFAULT_REFRESH_PERIOD}
+         * and {@link #DEFAULT_REFRESH_PERIOD_UNIT}.
+         *
          * @param timeout timeout for rate-limit adaptive topology updates
          * @param unit unit for {@code timeout}
          * @return {@code this}
+         * @deprecated since 5.0, use {@link #adaptiveRefreshTriggersTimeout(Duration)}.
          */
+        @Deprecated
         public Builder adaptiveRefreshTriggersTimeout(long timeout, TimeUnit unit) {
-            this.adaptiveRefreshTimeout = timeout;
-            this.adaptiveRefreshTimeoutUnit = unit;
-            return this;
+
+            LettuceAssert.isTrue(timeout > 0, "Triggers timeout must be greater 0");
+            LettuceAssert.notNull(unit, "TimeUnit must not be null");
+
+            return adaptiveRefreshTriggersTimeout(Duration.ofNanos(unit.toNanos(timeout)));
         }
 
         /**
@@ -283,7 +335,7 @@ public class ClusterTopologyRefreshOptions {
 
     /**
      * Flag, whether regular cluster topology updates are updated. The client starts updating the cluster topology in the
-     * intervals of {@link #getRefreshPeriod()} /{@link #getRefreshPeriodUnit()}. Defaults to {@literal false}.
+     * intervals of {@link #getRefreshPeriod()}. Defaults to {@literal false}.
      *
      * @return {@literal true} it the cluster topology view is updated periodically
      */
@@ -296,17 +348,8 @@ public class ClusterTopologyRefreshOptions {
      *
      * @return the period between the regular cluster topology updates
      */
-    public long getRefreshPeriod() {
+    public Duration getRefreshPeriod() {
         return refreshPeriod;
-    }
-
-    /**
-     * Unit for the {@link #getRefreshPeriod()}. Defaults to {@link TimeUnit#SECONDS}.
-     *
-     * @return unit for the {@link #getRefreshPeriod()}
-     */
-    public TimeUnit getRefreshPeriodUnit() {
-        return refreshPeriodUnit;
     }
 
     /**
@@ -348,17 +391,8 @@ public class ClusterTopologyRefreshOptions {
      *
      * @return the period between the regular cluster topology updates
      */
-    public long getAdaptiveRefreshTimeout() {
+    public Duration getAdaptiveRefreshTimeout() {
         return adaptiveRefreshTimeout;
-    }
-
-    /**
-     * Unit for the {@link #getAdaptiveRefreshTimeout()}. Defaults to {@link TimeUnit#SECONDS}.
-     *
-     * @return unit for the {@link #getRefreshPeriod()}
-     */
-    public TimeUnit getAdaptiveRefreshTimeoutUnit() {
-        return adaptiveRefreshTimeoutUnit;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.internal.LettuceAssert;
@@ -29,26 +30,24 @@ public class SocketOptions {
 
     public static final long DEFAULT_CONNECT_TIMEOUT = 10;
     public static final TimeUnit DEFAULT_CONNECT_TIMEOUT_UNIT = TimeUnit.SECONDS;
+    public static final Duration DEFAULT_CONNECT_TIMEOUT_DURATION = Duration.ofSeconds(DEFAULT_CONNECT_TIMEOUT);
 
     public static final boolean DEFAULT_SO_KEEPALIVE = false;
     public static final boolean DEFAULT_SO_NO_DELAY = false;
 
-    private final long connectTimeout;
-    private final TimeUnit connectTimeoutUnit;
+    private final Duration connectTimeout;
     private final boolean keepAlive;
     private final boolean tcpNoDelay;
 
     protected SocketOptions(Builder builder) {
 
         this.connectTimeout = builder.connectTimeout;
-        this.connectTimeoutUnit = builder.connectTimeoutUnit;
         this.keepAlive = builder.keepAlive;
         this.tcpNoDelay = builder.tcpNoDelay;
     }
 
     protected SocketOptions(SocketOptions original) {
         this.connectTimeout = original.getConnectTimeout();
-        this.connectTimeoutUnit = original.getConnectTimeoutUnit();
         this.keepAlive = original.isKeepAlive();
         this.tcpNoDelay = original.isTcpNoDelay();
     }
@@ -86,8 +85,7 @@ public class SocketOptions {
      */
     public static class Builder {
 
-        private long connectTimeout = DEFAULT_CONNECT_TIMEOUT;
-        private TimeUnit connectTimeoutUnit = DEFAULT_CONNECT_TIMEOUT_UNIT;
+        private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT_DURATION;
         private boolean keepAlive = DEFAULT_SO_KEEPALIVE;
         private boolean tcpNoDelay = DEFAULT_SO_NO_DELAY;
 
@@ -99,17 +97,34 @@ public class SocketOptions {
          * {@link #DEFAULT_CONNECT_TIMEOUT_UNIT}.
          *
          * @param connectTimeout connection timeout, must be greater {@literal 0}.
+         * @return {@code this}
+         * @since 5.0
+         */
+        public Builder connectTimeout(Duration connectTimeout) {
+
+            LettuceAssert.notNull(connectTimeout, "Connection timeout must not be null");
+            LettuceAssert.isTrue(connectTimeout.toNanos() > 0, "Connect timeout must be greater 0");
+
+            this.connectTimeout = connectTimeout;
+            return this;
+        }
+
+        /**
+         * Set connection timeout. Defaults to {@literal 10 SECONDS}. See {@link #DEFAULT_CONNECT_TIMEOUT} and
+         * {@link #DEFAULT_CONNECT_TIMEOUT_UNIT}.
+         *
+         * @param connectTimeout connection timeout, must be greater {@literal 0}.
          * @param connectTimeoutUnit unit for {@code connectTimeout}, must not be {@literal null}.
          * @return {@code this}
+         * @deprecated since 5.0, use {@link #connectTimeout(Duration)}
          */
+        @Deprecated
         public Builder connectTimeout(long connectTimeout, TimeUnit connectTimeoutUnit) {
 
             LettuceAssert.isTrue(connectTimeout > 0, "Connect timeout must be greater 0");
             LettuceAssert.notNull(connectTimeoutUnit, "TimeUnit must not be null");
 
-            this.connectTimeout = connectTimeout;
-            this.connectTimeoutUnit = connectTimeoutUnit;
-            return this;
+            return connectTimeout(Duration.ofNanos(connectTimeoutUnit.toNanos(connectTimeout)));
         }
 
         /**
@@ -154,17 +169,8 @@ public class SocketOptions {
      *
      * @return the connection timeout.
      */
-    public long getConnectTimeout() {
+    public Duration getConnectTimeout() {
         return connectTimeout;
-    }
-
-    /**
-     * Returns the the connection timeout unit.
-     *
-     * @return the connection timeout unit.
-     */
-    public TimeUnit getConnectTimeoutUnit() {
-        return connectTimeoutUnit;
     }
 
     /**

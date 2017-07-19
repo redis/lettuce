@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package biz.paluch.redis.extensibility;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import javax.enterprise.inject.Alternative;
 
@@ -44,7 +44,7 @@ public class MyExtendedRedisClient extends RedisClient {
 
     @Override
     protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(PubSubEndpoint<K, V> endpoint,
-            RedisChannelWriter channelWriter, RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
-        return new MyPubSubConnection<>(endpoint, channelWriter, codec, timeout, unit);
+            RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout) {
+        return new MyPubSubConnection<>(endpoint, channelWriter, codec, timeout);
     }
 }

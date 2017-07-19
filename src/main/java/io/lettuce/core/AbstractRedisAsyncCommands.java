@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import static io.lettuce.core.protocol.CommandType.*;
 
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +73,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
         LettuceAssert.notNull(password, "Password must not be null");
         AsyncCommand<K, V, String> cmd = authAsync(password.toCharArray());
-        return LettuceFutures.awaitOrCancel(cmd, connection.getTimeout(), connection.getTimeoutUnit());
+        return LettuceFutures.awaitOrCancel(cmd, connection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
     }
 
     public AsyncCommand<K, V, String> authAsync(char[] password) {
@@ -822,8 +823,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
     public String select(int db) {
         AsyncCommand<K, V, String> cmd = selectAsync(db);
-        String status = LettuceFutures.awaitOrCancel(cmd, connection.getTimeout(), connection.getTimeoutUnit());
-        return status;
+        return LettuceFutures.awaitOrCancel(cmd, connection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
     }
 
     protected AsyncCommand<K, V, String> selectAsync(int db) {
@@ -1939,6 +1939,10 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
             return (AsyncCommand<K, V, T>) dispatched;
         }
         return asyncCommand;
+    }
+
+    public void setTimeout(Duration timeout) {
+        connection.setTimeout(timeout);
     }
 
     public void setTimeout(long timeout, TimeUnit unit) {

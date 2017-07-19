@@ -15,14 +15,14 @@
  */
 package io.lettuce.core.cluster.api.reactive;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.api.reactive.*;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.api.reactive.*;
 
 /**
  * A complete reactive and thread-safe cluster Redis API with 400+ Methods.
@@ -41,8 +41,18 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
      * Set the default timeout for operations.
      *
      * @param timeout the timeout value
-     * @param unit the unit of the timeout value
+     * @since 5.0
      */
+    void setTimeout(Duration timeout);
+
+    /**
+     * Set the default timeout for operations.
+     *
+     * @param timeout the timeout value
+     * @param unit the unit of the timeout value
+     * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
+     */
+    @Deprecated
     void setTimeout(long timeout, TimeUnit unit);
 
     /**

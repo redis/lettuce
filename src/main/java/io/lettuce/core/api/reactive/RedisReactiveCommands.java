@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,9 @@
  */
 package io.lettuce.core.api.reactive;
 
-import java.util.concurrent.TimeUnit;
-
+import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
-
-import reactor.core.publisher.Mono;
 
 /**
  * A complete reactive and thread-safe Redis API with 400+ Methods.
@@ -35,14 +32,6 @@ public interface RedisReactiveCommands<K, V> extends RedisHashReactiveCommands<K
         RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>,
         RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V> {
-
-    /**
-     * Set the default timeout for operations.
-     *
-     * @param timeout the timeout value
-     * @param unit the unit of the timeout value
-     */
-    void setTimeout(long timeout, TimeUnit unit);
 
     /**
      * Authenticate to the server.

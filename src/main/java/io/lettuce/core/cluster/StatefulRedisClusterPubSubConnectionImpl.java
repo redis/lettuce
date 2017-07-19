@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package io.lettuce.core.cluster;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.RedisChannelWriter;
@@ -57,12 +57,12 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
      * @param writer the channel writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
-     * @param unit Unit of time for the timeout.
      */
     public StatefulRedisClusterPubSubConnectionImpl(PubSubClusterEndpoint<K, V> endpoint, RedisChannelWriter writer,
-            RedisCodec<K, V> codec, long timeout, TimeUnit unit) {
+            RedisCodec<K, V> codec, Duration timeout) {
 
-        super(endpoint, writer, codec, timeout, unit);
+        super(endpoint, writer, codec, timeout);
+
         this.endpoint = endpoint;
     }
 

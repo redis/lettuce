@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.resource;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.resource.Delay.StatefulDelay;
@@ -31,33 +32,35 @@ import io.lettuce.core.resource.Delay.StatefulDelay;
  * </p>
  *
  * @author Jongyeol Choi
+ * @author Mark Paluch
  * @since 4.2
  * @see StatefulDelay
  */
 class DecorrelatedJitterDelay extends Delay implements StatefulDelay {
 
-    private final long lower;
-    private final long upper;
+    private final Duration lower;
+    private final Duration upper;
     private final long base;
+    private final TimeUnit targetTimeUnit;
 
     /*
      * Delays may be used by different threads, this one is volatile to prevent visibility issues
      */
     private volatile long prevDelay;
 
-    DecorrelatedJitterDelay(long lower, long upper, long base, TimeUnit unit) {
-        super(unit);
+    DecorrelatedJitterDelay(Duration lower, Duration upper, long base, TimeUnit targetTimeUnit) {
         this.lower = lower;
         this.upper = upper;
         this.base = base;
+        this.targetTimeUnit = targetTimeUnit;
         reset();
     }
 
     @Override
-    public long createDelay(long attempt) {
+    public Duration createDelay(long attempt) {
         long value = randomBetween(base, Math.max(base, prevDelay * 3));
-        long delay = applyBounds(value, lower, upper);
-        prevDelay = delay;
+        Duration delay = applyBounds(Duration.ofNanos(targetTimeUnit.toNanos(value)), lower, upper);
+        prevDelay = delay.toNanos();
         return delay;
     }
 

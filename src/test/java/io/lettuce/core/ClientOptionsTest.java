@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.net.ServerSocket;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
@@ -32,7 +33,6 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
-
 import io.netty.channel.Channel;
 
 /**
@@ -230,7 +230,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
                 try (ServerSocket serverSocket = new ServerSocket(0)) {
 
                     RedisURI redisURI = RedisURI.builder().redis(TestSettings.host(), serverSocket.getLocalPort())
-                            .withPassword(passwd).withTimeout(500, TimeUnit.MILLISECONDS).build();
+                            .withPassword(passwd).withTimeout(Duration.ofMillis(500)).build();
 
                     try {
                         client.connect(redisURI);

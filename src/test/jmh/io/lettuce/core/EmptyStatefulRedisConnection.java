@@ -15,6 +15,7 @@
  */
 package io.lettuce.core;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +35,7 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
             EmptyRedisChannelWriter.INSTANCE);
 
     public EmptyStatefulRedisConnection(RedisChannelWriter writer) {
-        super(writer, 0, TimeUnit.MINUTES);
+        super(writer, Duration.ZERO);
     }
 
     @Override
@@ -59,16 +60,6 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
 
     @Override
     public void setTimeout(long timeout, TimeUnit unit) {
-    }
-
-    @Override
-    public TimeUnit getTimeoutUnit() {
-        return null;
-    }
-
-    @Override
-    public long getTimeout() {
-        return 0;
     }
 
     @Override

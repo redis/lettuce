@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -139,7 +139,7 @@ public class ClusterPartitionParserTest {
         node.setPongReceivedTimestamp(3);
         node.setSlaveOf("me");
         node.setSlots(LettuceLists.unmodifiableList(1, 2, 3));
-        node.setUri(new RedisURI("localhost", 1, 1, TimeUnit.DAYS));
+        node.setUri(new RedisURI("localhost", 1, Duration.ofDays(1)));
         return node;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ public class ClusterClientOptionsTest {
         ClusterClientOptions copy = ClusterClientOptions.copyOf(options);
 
         assertThat(copy.getRefreshPeriod()).isEqualTo(options.getRefreshPeriod());
-        assertThat(copy.getRefreshPeriodUnit()).isEqualTo(options.getRefreshPeriodUnit());
         assertThat(copy.isCloseStaleConnections()).isEqualTo(options.isCloseStaleConnections());
         assertThat(copy.isRefreshClusterView()).isEqualTo(options.isRefreshClusterView());
         assertThat(copy.isValidateClusterNodeMembership()).isEqualTo(options.isValidateClusterNodeMembership());

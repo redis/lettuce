@@ -17,6 +17,7 @@ package io.lettuce.core.cluster;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -48,8 +49,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     private final AbstractNodeSelection<?, ?, ?, ?> selection;
     private final ExecutionModel executionModel;
-    private final long timeout;
-    private final TimeUnit unit;
+    private final Duration timeout;
 
     static {
         try {
@@ -62,27 +62,24 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface,
             ExecutionModel executionModel) {
-        this(selection, commandsInterface, 0, null, executionModel);
+        this(selection, commandsInterface, Duration.ZERO, executionModel);
     }
 
-    NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface, long timeout,
-            TimeUnit unit) {
-        this(selection, commandsInterface, timeout, unit, ExecutionModel.SYNC);
+    NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface, Duration timeout) {
+        this(selection, commandsInterface, timeout, ExecutionModel.SYNC);
     }
 
     private NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface,
-            long timeout, TimeUnit unit, ExecutionModel executionModel) {
+            Duration timeout, ExecutionModel executionModel) {
 
         if (executionModel == ExecutionModel.SYNC) {
-            LettuceAssert.isTrue(timeout > 0, "Timeout must be greater 0 when using sync mode");
-            LettuceAssert.notNull(unit, "Unit must not be null when using sync mode");
+            LettuceAssert.isTrue(timeout.toNanos() > 0, "Timeout must be greater 0 when using sync mode");
         }
 
         LettuceAssert.notNull(executionModel, "ExecutionModel must not be null");
 
         this.selection = selection;
         this.commandsInterface = commandsInterface;
-        this.unit = unit;
         this.timeout = timeout;
         this.executionModel = executionModel;
     }
@@ -161,7 +158,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
         if (executionModel == ExecutionModel.SYNC) {
 
-            if (!awaitAll(timeout, unit, asyncExecutions.values())) {
+            if (!awaitAll(timeout.toNanos(), TimeUnit.NANOSECONDS, asyncExecutions.values())) {
                 throw createTimeoutException(asyncExecutions);
             }
 

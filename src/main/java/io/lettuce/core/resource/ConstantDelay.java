@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.resource;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 /**
  * {@link Delay} with a constant delay for each attempt.
@@ -24,16 +24,14 @@ import java.util.concurrent.TimeUnit;
  */
 class ConstantDelay extends Delay {
 
-    private final long delay;
+    private final Duration delay;
 
-    ConstantDelay(long delay, TimeUnit timeUnit) {
-
-        super(timeUnit);
+    ConstantDelay(Duration delay) {
         this.delay = delay;
     }
 
     @Override
-    public long createDelay(long attempt) {
+    public Duration createDelay(long attempt) {
         return delay;
     }
 }

@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -159,6 +160,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      */
     public static final long DEFAULT_TIMEOUT = 60;
     public static final TimeUnit DEFAULT_TIMEOUT_UNIT = TimeUnit.SECONDS;
+    public static final Duration DEFAULT_TIMEOUT_DURATION = Duration.ofSeconds(DEFAULT_TIMEOUT);
 
     private String host;
     private String socket;
@@ -170,8 +172,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private boolean ssl = false;
     private boolean verifyPeer = true;
     private boolean startTls = false;
-    private long timeout = 60;
-    private TimeUnit unit = TimeUnit.SECONDS;
+    private Duration timeout = DEFAULT_TIMEOUT_DURATION;
+    private TimeUnit unit = DEFAULT_TIMEOUT_UNIT;
     private final List<RedisURI> sentinels = new ArrayList<>();
 
     /**
@@ -186,13 +188,35 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @param host the host
      * @param port the port
      * @param timeout timeout value
-     * @param unit unit of the timeout value
+     * @param timeout unit of the timeout value
      */
+    public RedisURI(String host, int port, Duration timeout) {
+
+        LettuceAssert.notEmpty(host, "Host must not be empty");
+        LettuceAssert.notNull(timeout, "Timeout duration must not be null");
+        LettuceAssert.isTrue(!timeout.isNegative(), "Timeout duration must be greater or equal to zero");
+
+        setHost(host);
+        setPort(port);
+        setTimeout(timeout);
+    }
+
+    /**
+     * Constructor with host/port and timeout.
+     *
+     * @param host the host
+     * @param port the port
+     * @param timeout timeout value
+     * @param unit unit of the timeout value
+     * @deprecated since 5.0, use {@link #RedisURI(String, int, Duration)}
+     */
+    @Deprecated
     public RedisURI(String host, int port, long timeout, TimeUnit unit) {
-        this.host = host;
-        this.port = port;
-        this.timeout = timeout;
-        this.unit = unit;
+
+        setHost(host);
+        setPort(port);
+        setUnit(unit);
+        setTimeout(timeout);
     }
 
     /**
@@ -348,8 +372,20 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Returns the command timeout for synchronous command execution.
      *
      * @return the Timeout
+     * @deprecated since 5.0, use {@link #getTimeoutDuration()}.
      */
+    @Deprecated
     public long getTimeout() {
+        return unit.convert(timeout.toNanos(), TimeUnit.NANOSECONDS);
+    }
+
+    /**
+     * Returns the command timeout for synchronous command execution.
+     *
+     * @return the Timeout
+     * @since 5.0
+     */
+    public Duration getTimeoutDuration() {
         return timeout;
     }
 
@@ -357,16 +393,41 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Sets the command timeout for synchronous command execution.
      *
      * @param timeout the command timeout for synchronous command execution.
+     * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
      */
+    @Deprecated
     public void setTimeout(long timeout) {
+
+        LettuceAssert.isTrue(timeout >= 0, "Timeout must be greater or equal 0");
+
+        this.timeout = Duration.ofNanos(unit.toNanos(timeout));
+    }
+
+    /**
+     * Sets the command timeout for synchronous command execution.
+     *
+     * @param timeout the command timeout for synchronous command execution.
+     * @since 5.0
+     */
+    public void setTimeout(Duration timeout) {
+
+        LettuceAssert.notNull(timeout, "Timeout must not be null");
+        LettuceAssert.isTrue(!timeout.isNegative(), "Timeout must be greater or equal 0");
+
         this.timeout = timeout;
+
+        if (timeout.getNano() != 0) {
+            setUnit(TimeUnit.NANOSECONDS);
+        }
     }
 
     /**
      * Returns the {@link TimeUnit} for the command timeout.
      *
      * @return the {@link TimeUnit} for the command timeout.
+     * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
      */
+    @Deprecated
     public TimeUnit getUnit() {
         return unit;
     }
@@ -375,7 +436,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Sets the {@link TimeUnit} for the command timeout.
      *
      * @param unit the {@link TimeUnit} for the command timeout, must not be {@literal null}
+     * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
      */
+    @Deprecated
     public void setUnit(TimeUnit unit) {
 
         LettuceAssert.notNull(unit, "TimeUnit must not be null");
@@ -602,6 +665,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     private String getQueryString() {
+
         List<String> queryPairs = new ArrayList<>();
 
         if (database != 0) {
@@ -616,8 +680,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
             queryPairs.add(PARAMETER_NAME_SENTINEL_MASTER_ID + "=" + urlEncode(sentinelMasterId));
         }
 
-        if (timeout != 0 && unit != null && (timeout != DEFAULT_TIMEOUT && !unit.equals(DEFAULT_TIMEOUT_UNIT))) {
-            queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout + toQueryParamUnit(unit));
+        if (timeout.getSeconds() != DEFAULT_TIMEOUT) {
+
+            if (timeout.getNano() == 0) {
+                queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout.getSeconds() + toQueryParamUnit(TimeUnit.SECONDS));
+            } else {
+                queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout.toMillis() + toQueryParamUnit(TimeUnit.MILLISECONDS));
+            }
         }
 
         return queryPairs.stream().collect(Collectors.joining("&"));
@@ -780,7 +849,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         } else {
             String timeoutValueString = timeoutString.substring(0, numbersEnd);
             long timeoutValue = Long.parseLong(timeoutValueString);
-            builder.withTimeout(timeoutValue, TimeUnit.MILLISECONDS);
+            builder.withTimeout(Duration.ofMillis(timeoutValue));
 
             String suffix = timeoutString.substring(numbersEnd);
             TimeUnit timeoutUnit = TIME_UNIT_MAP.get(suffix);
@@ -943,8 +1012,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private boolean ssl = false;
         private boolean verifyPeer = true;
         private boolean startTls = false;
-        private long timeout = 60;
-        private TimeUnit unit = TimeUnit.SECONDS;
+        private Duration timeout = DEFAULT_TIMEOUT_DURATION;
         private final List<HostAndPort> sentinels = new ArrayList<>();
 
         private Builder() {
@@ -1207,18 +1275,33 @@ public class RedisURI implements Serializable, ConnectionPoint {
         /**
          * Configures a timeout.
          *
+         * @param timeout must not be {@literal null} or negative.
+         * @return the builder
+         */
+        public Builder withTimeout(Duration timeout) {
+
+            LettuceAssert.notNull(timeout, "Timeout must not be null");
+            LettuceAssert.notNull(!timeout.isNegative(), "Timeout must be greater or equal 0");
+
+            this.timeout = timeout;
+            return this;
+        }
+
+        /**
+         * Configures a timeout.
+         *
          * @param timeout must be greater or equal 0.
          * @param unit the timeout time unit.
          * @return the builder
+         * @deprecated since 5.0, use {@link #withTimeout(Duration)}.
          */
+        @Deprecated
         public Builder withTimeout(long timeout, TimeUnit unit) {
 
             LettuceAssert.notNull(unit, "TimeUnit must not be null");
             LettuceAssert.isTrue(timeout >= 0, "Timeout must be greater or equal 0");
 
-            this.timeout = timeout;
-            this.unit = unit;
-            return this;
+            return withTimeout(Duration.ofNanos(unit.toNanos(timeout)));
         }
 
         /**
@@ -1248,25 +1331,25 @@ public class RedisURI implements Serializable, ConnectionPoint {
             RedisURI redisURI = new RedisURI();
             redisURI.setHost(host);
             redisURI.setPort(port);
+
             if (password != null) {
                 redisURI.setPassword(password);
             }
+
             redisURI.setDatabase(database);
             redisURI.setClientName(clientName);
 
             redisURI.setSentinelMasterId(sentinelMasterId);
 
             for (HostAndPort sentinel : sentinels) {
-                redisURI.getSentinels().add(new RedisURI(sentinel.getHostText(), sentinel.getPort(), timeout, unit));
+                redisURI.getSentinels().add(new RedisURI(sentinel.getHostText(), sentinel.getPort(), timeout));
             }
 
             redisURI.setSocket(socket);
             redisURI.setSsl(ssl);
             redisURI.setStartTls(startTls);
             redisURI.setVerifyPeer(verifyPeer);
-
             redisURI.setTimeout(timeout);
-            redisURI.setUnit(unit);
 
             return redisURI;
         }

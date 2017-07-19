@@ -18,6 +18,7 @@ package io.lettuce.core;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -41,8 +42,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
-    private long timeout;
-    private TimeUnit unit;
+    private Duration timeout;
     private CloseEvents closeEvents = new CloseEvents();
 
     private final RedisChannelWriter channelWriter;
@@ -55,14 +55,27 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     /**
      * @param writer the channel writer
      * @param timeout timeout value
-     * @param unit unit of the timeout
      */
-    public RedisChannelHandler(RedisChannelWriter writer, long timeout, TimeUnit unit) {
+    public RedisChannelHandler(RedisChannelWriter writer, Duration timeout) {
 
         this.channelWriter = writer;
 
         writer.setConnectionFacade(this);
-        setTimeout(timeout, unit);
+        setTimeout(timeout);
+    }
+
+    /**
+     * Set the command timeout for this connection.
+     *
+     * @param timeout Command timeout.
+     * @since 5.0
+     */
+    public void setTimeout(Duration timeout) {
+
+        LettuceAssert.notNull(timeout, "Timeout duration must not be null");
+        LettuceAssert.isTrue(!timeout.isNegative(), "Timeout duration must be greater or equal to zero");
+
+        this.timeout = timeout;
     }
 
     /**
@@ -70,11 +83,11 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
      *
      * @param timeout Command timeout.
      * @param unit Unit of time for the timeout.
+     * @deprecated since 5.0, use {@link #setTimeout(Duration)}
      */
+    @Deprecated
     public void setTimeout(long timeout, TimeUnit unit) {
-
-        this.timeout = timeout;
-        this.unit = unit;
+        setTimeout(Duration.ofNanos(unit.toNanos(timeout)));
     }
 
     /**
@@ -203,12 +216,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
         this.clientOptions = clientOptions;
     }
 
-    public long getTimeout() {
+    public Duration getTimeout() {
         return timeout;
-    }
-
-    public TimeUnit getTimeoutUnit() {
-        return unit;
     }
 
     @SuppressWarnings("unchecked")

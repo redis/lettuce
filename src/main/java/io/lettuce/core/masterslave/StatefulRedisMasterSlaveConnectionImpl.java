@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.masterslave;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.StatefulRedisConnectionImpl;
@@ -33,11 +33,10 @@ class StatefulRedisMasterSlaveConnectionImpl<K, V> extends StatefulRedisConnecti
      * @param writer the channel writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
-     * @param unit Unit of time for the timeout.
      */
-    public StatefulRedisMasterSlaveConnectionImpl(MasterSlaveChannelWriter<K, V> writer, RedisCodec<K, V> codec, long timeout,
-            TimeUnit unit) {
-        super(writer, codec, timeout, unit);
+    public StatefulRedisMasterSlaveConnectionImpl(MasterSlaveChannelWriter<K, V> writer, RedisCodec<K, V> codec,
+            Duration timeout) {
+        super(writer, codec, timeout);
     }
 
     @Override

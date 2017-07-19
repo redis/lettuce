@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.api;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
@@ -35,19 +36,24 @@ public interface StatefulConnection<K, V> extends AutoCloseable {
      * Set the default command timeout for this connection.
      *
      * @param timeout Command timeout.
-     * @param unit Unit of time for the timeout.
+     * @since 5.0
      */
-    void setTimeout(long timeout, TimeUnit unit);
+    void setTimeout(Duration timeout);
 
     /**
-     * @return the timeout unit.
+     * Set the default command timeout for this connection.
+     *
+     * @param timeout Command timeout.
+     * @param unit Unit of time for the timeout.
+     * @deprecated since 5.0, use {@link #setTimeout(Duration)}
      */
-    TimeUnit getTimeoutUnit();
+    @Deprecated
+    void setTimeout(long timeout, TimeUnit unit);
 
     /**
      * @return the timeout.
      */
-    long getTimeout();
+    Duration getTimeout();
 
     /**
      * Dispatch a command. Write a command on the channel. The command may be changed/wrapped during write and the written
