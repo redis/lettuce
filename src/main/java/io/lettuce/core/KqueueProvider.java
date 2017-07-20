@@ -63,11 +63,11 @@ public class KqueueProvider {
         KQUEUE_AVAILABLE = availability;
 
         if (KQUEUE_AVAILABLE) {
-            logger.warn("Starting with kqueue library");
+            logger.info("Starting with kqueue library");
             KQUEUE_RESOURCES = AvailableKqueueResources.INSTANCE;
 
         } else {
-            logger.warn("Starting without optional kqueue library");
+            logger.info("Starting without optional kqueue library");
             KQUEUE_RESOURCES = UnavailableKqueueResources.INSTANCE;
         }
     }
