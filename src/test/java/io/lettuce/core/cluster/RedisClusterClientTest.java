@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.RedisClientConnectionTest.CODEC;
 import static io.lettuce.core.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -41,6 +40,7 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
+import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
@@ -140,7 +140,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
 
-        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect(CODEC);
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect(Utf8StringCodec.UTF8);
 
         assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
         assertThat(connection.getConnection(host, port1).getTimeout()).isEqualTo(Duration.ofMinutes(1));
@@ -164,7 +164,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
 
-        StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub(CODEC);
+        StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub(Utf8StringCodec.UTF8);
 
         assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
         connection.close();

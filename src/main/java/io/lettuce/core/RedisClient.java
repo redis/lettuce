@@ -230,15 +230,33 @@ public class RedisClient extends AbstractRedisClient {
         return connectStandalone(codec, redisURI, redisURI.getTimeout());
     }
 
+    /**
+     * Open asynchronously a new connection to a Redis server using the supplied {@link RedisURI} and the supplied
+     * {@link RedisCodec codec} to encode/decode keys.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return {@link ConnectionFuture} to indicate success or failure to connect.
+     * @since 5.0
+     */
+    public <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
+
+        assertNotNull(redisURI);
+        return connectStandaloneAsync(codec, redisURI, redisURI.getTimeout());
+    }
+
     private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI, Duration timeout) {
 
         ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStandaloneAsync(codec, redisURI, timeout);
         return getConnection(future);
     }
 
-    @SuppressWarnings("unused")
     // Required by ReflectiveNodeConnectionFactory.
-    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
+    @SuppressWarnings("unused")
+    private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI) {
 
         assertNotNull(redisURI);
         return connectStandaloneAsync(codec, redisURI, redisURI.getTimeout());
@@ -269,9 +287,8 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     @SuppressWarnings("unchecked")
-    private <K, V, T extends RedisChannelHandler<K, V>, S> ConnectionFuture<S> connectStatefulAsync(
-            StatefulRedisConnectionImpl<K, V> connection, DefaultEndpoint endpoint, RedisURI redisURI,
-            Supplier<CommandHandler> commandHandlerSupplier) {
+    private <K, V, S> ConnectionFuture<S> connectStatefulAsync(StatefulRedisConnectionImpl<K, V> connection,
+            DefaultEndpoint endpoint, RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
         if (redisURI.isSsl()) {
@@ -341,7 +358,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new stateful pub/sub connection
      */
     public StatefulRedisPubSubConnection<String, String> connectPubSub() {
-        return connectPubSub(newStringStringCodec(), redisURI, timeout);
+        return getConnection(connectPubSubAsync(newStringStringCodec(), redisURI, timeout));
     }
 
     /**
@@ -354,7 +371,7 @@ public class RedisClient extends AbstractRedisClient {
     public StatefulRedisPubSubConnection<String, String> connectPubSub(RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectPubSub(newStringStringCodec(), redisURI, redisURI.getTimeout());
+        return getConnection(connectPubSubAsync(newStringStringCodec(), redisURI, redisURI.getTimeout()));
     }
 
     /**
@@ -368,7 +385,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
         checkForRedisURI();
-        return connectPubSub(codec, redisURI, timeout);
+        return getConnection(connectPubSubAsync(codec, redisURI, timeout));
     }
 
     /**
@@ -384,10 +401,29 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectPubSub(codec, redisURI, redisURI.getTimeout());
+        return getConnection(connectPubSubAsync(codec, redisURI, redisURI.getTimeout()));
     }
 
-    private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI, Duration timeout) {
+    /**
+     * Open asynchronously a new pub/sub connection to the Redis server using the supplied {@link RedisURI} and use the supplied
+     * {@link RedisCodec codec} to encode/decode keys and values.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return {@link ConnectionFuture} to indicate success or failure to connect.
+     * @since 5.0
+     */
+    public <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI) {
+
+        assertNotNull(redisURI);
+        return connectPubSubAsync(codec, redisURI, redisURI.getTimeout());
+    }
+
+    private <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI, Duration timeout) {
 
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
@@ -397,17 +433,15 @@ public class RedisClient extends AbstractRedisClient {
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, endpoint, codec,
                 timeout);
 
-        ConnectionFuture<StatefulRedisConnectionImpl<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
+        ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
                 () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
 
-        getConnection(future.whenComplete((conn, throwable) -> {
+        return future.whenComplete((conn, throwable) -> {
 
             if (throwable != null) {
                 conn.close();
             }
-        }));
-
-        return connection;
+        });
     }
 
     /**
