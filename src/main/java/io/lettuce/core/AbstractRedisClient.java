@@ -157,7 +157,7 @@ public abstract class AbstractRedisClient {
             redisBootstrap.option(ChannelOption.TCP_NODELAY, socketOptions.isTcpNoDelay());
         }
 
-        connectionBuilder.timeout(redisURI.getTimeoutDuration());
+        connectionBuilder.timeout(redisURI.getTimeout());
         connectionBuilder.password(redisURI.getPassword());
 
         connectionBuilder.bootstrap(redisBootstrap);

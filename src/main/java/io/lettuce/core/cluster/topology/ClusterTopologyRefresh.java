@@ -30,7 +30,6 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.SocketAddressResolver;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -269,6 +268,6 @@ public class ClusterTopologyRefresh {
     private long getCommandTimeoutNs(Iterable<RedisURI> redisURIs) {
 
         RedisURI redisURI = redisURIs.iterator().next();
-        return redisURI.getUnit().toNanos(redisURI.getTimeout());
+        return redisURI.getTimeout().toNanos();
     }
 }

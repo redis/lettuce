@@ -17,7 +17,6 @@ package io.lettuce.core.dynamic;
 
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.api.StatefulConnection;
@@ -79,7 +78,7 @@ class AsyncExecutableCommand implements ExecutableCommand {
             }
         }
 
-        LettuceFutures.awaitAll(timeout.toNanos(), TimeUnit.NANOSECONDS, asyncCommand);
+        LettuceFutures.awaitAll(timeout, asyncCommand);
 
         return asyncCommand.get();
     }

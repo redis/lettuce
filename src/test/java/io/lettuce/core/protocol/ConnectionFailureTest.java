@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package io.lettuce.core.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.concurrent.*;
 
 import org.junit.Test;
@@ -79,8 +80,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
         RandomResponseServer ts = getRandomResponseServer();
 
         RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build();
-        redisUri.setTimeout(5);
-        redisUri.setUnit(TimeUnit.SECONDS);
+        redisUri.setTimeout(Duration.ofSeconds(5));
 
         try {
             RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
@@ -129,8 +129,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
         RandomResponseServer ts = getRandomResponseServer();
 
         RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
-        redisUri.setTimeout(5);
-        redisUri.setUnit(TimeUnit.SECONDS);
+        redisUri.setTimeout(Duration.ofSeconds(5));
 
         try {
             final BlockingQueue<ConnectionEvents.Reconnect> events = new LinkedBlockingDeque<>();

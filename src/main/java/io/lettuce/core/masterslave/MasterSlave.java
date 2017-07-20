@@ -163,7 +163,7 @@ public class MasterSlave {
 
         MasterSlaveChannelWriter<K, V> channelWriter = new MasterSlaveChannelWriter<>(connectionProvider);
         StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(channelWriter,
-                codec, redisURI.getTimeoutDuration());
+                codec, redisURI.getTimeout());
 
         Runnable runnable = () -> {
             try {
@@ -222,7 +222,7 @@ public class MasterSlave {
             MasterSlaveChannelWriter<K, V> channelWriter = new MasterSlaveChannelWriter<>(connectionProvider);
 
             StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(
-                    channelWriter, codec, redisURI.getTimeoutDuration());
+                    channelWriter, codec, redisURI.getTimeout());
 
             return connection;
 
@@ -258,7 +258,7 @@ public class MasterSlave {
             MasterSlaveChannelWriter<K, V> channelWriter = new MasterSlaveChannelWriter<>(connectionProvider);
 
             StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(
-                    channelWriter, codec, seedNode.getTimeoutDuration());
+                    channelWriter, codec, seedNode.getTimeout());
 
             return connection;
 

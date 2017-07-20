@@ -173,7 +173,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private boolean verifyPeer = true;
     private boolean startTls = false;
     private Duration timeout = DEFAULT_TIMEOUT_DURATION;
-    private TimeUnit unit = DEFAULT_TIMEOUT_UNIT;
     private final List<RedisURI> sentinels = new ArrayList<>();
 
     /**
@@ -215,8 +214,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         setHost(host);
         setPort(port);
-        setUnit(unit);
-        setTimeout(timeout);
+        setTimeout(Duration.ofNanos(unit.toNanos(timeout)));
     }
 
     /**
@@ -372,35 +370,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Returns the command timeout for synchronous command execution.
      *
      * @return the Timeout
-     * @deprecated since 5.0, use {@link #getTimeoutDuration()}.
-     */
-    @Deprecated
-    public long getTimeout() {
-        return unit.convert(timeout.toNanos(), TimeUnit.NANOSECONDS);
-    }
-
-    /**
-     * Returns the command timeout for synchronous command execution.
-     *
-     * @return the Timeout
      * @since 5.0
      */
-    public Duration getTimeoutDuration() {
+    public Duration getTimeout() {
         return timeout;
-    }
-
-    /**
-     * Sets the command timeout for synchronous command execution.
-     *
-     * @param timeout the command timeout for synchronous command execution.
-     * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
-     */
-    @Deprecated
-    public void setTimeout(long timeout) {
-
-        LettuceAssert.isTrue(timeout >= 0, "Timeout must be greater or equal 0");
-
-        this.timeout = Duration.ofNanos(unit.toNanos(timeout));
     }
 
     /**
@@ -415,34 +388,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
         LettuceAssert.isTrue(!timeout.isNegative(), "Timeout must be greater or equal 0");
 
         this.timeout = timeout;
-
-        if (timeout.getNano() != 0) {
-            setUnit(TimeUnit.NANOSECONDS);
-        }
-    }
-
-    /**
-     * Returns the {@link TimeUnit} for the command timeout.
-     *
-     * @return the {@link TimeUnit} for the command timeout.
-     * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
-     */
-    @Deprecated
-    public TimeUnit getUnit() {
-        return unit;
-    }
-
-    /**
-     * Sets the {@link TimeUnit} for the command timeout.
-     *
-     * @param unit the {@link TimeUnit} for the command timeout, must not be {@literal null}
-     * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
-     */
-    @Deprecated
-    public void setUnit(TimeUnit unit) {
-
-        LettuceAssert.notNull(unit, "TimeUnit must not be null");
-        this.unit = unit;
     }
 
     /**

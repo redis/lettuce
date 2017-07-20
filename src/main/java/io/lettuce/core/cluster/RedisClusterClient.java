@@ -175,7 +175,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         this.initialUris = Collections.unmodifiableList(LettuceLists.newList(redisURIs));
 
-        setDefaultTimeout(getFirstUri().getTimeout(), getFirstUri().getUnit());
+        setDefaultTimeout(getFirstUri().getTimeout());
         setOptions(ClusterClientOptions.builder().build());
     }
 

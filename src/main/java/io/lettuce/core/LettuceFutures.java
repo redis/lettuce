@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core;
 
+import java.time.Duration;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
@@ -28,6 +29,19 @@ import java.util.function.Supplier;
 public class LettuceFutures {
 
     private LettuceFutures() {
+    }
+
+    /**
+     * Wait until futures are complete or the supplied timeout is reached. Commands are not canceled (in contrast to
+     * {@link #awaitOrCancel(RedisFuture, long, TimeUnit)}) when the timeout expires.
+     *
+     * @param timeout Maximum time to wait for futures to complete.
+     * @param futures Futures to wait for.
+     * @return {@literal true} if all futures complete in time, otherwise {@literal false}
+     * @since 5.0
+     */
+    public static boolean awaitAll(Duration timeout, Future<?>... futures) {
+        return awaitAll(timeout.toNanos(), TimeUnit.NANOSECONDS, futures);
     }
 
     /**

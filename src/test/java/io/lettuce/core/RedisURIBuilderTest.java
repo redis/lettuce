@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -32,9 +31,7 @@ public class RedisURIBuilderTest {
     public void sentinel() throws Exception {
         RedisURI result = RedisURI.Builder.sentinel("localhost").withTimeout(Duration.ofHours(2)).build();
         assertThat(result.getSentinels()).hasSize(1);
-        assertThat(result.getTimeout()).isEqualTo(TimeUnit.HOURS.toSeconds(2));
-        assertThat(result.getUnit()).isEqualTo(TimeUnit.SECONDS);
-        assertThat(result.getTimeoutDuration()).isEqualTo(Duration.ofHours(2));
+        assertThat(result.getTimeout()).isEqualTo(Duration.ofHours(2));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -46,9 +43,7 @@ public class RedisURIBuilderTest {
     public void sentinelWithPort() throws Exception {
         RedisURI result = RedisURI.Builder.sentinel("localhost", 1).withTimeout(Duration.ofHours(2)).build();
         assertThat(result.getSentinels()).hasSize(1);
-        assertThat(result.getTimeout()).isEqualTo(TimeUnit.HOURS.toSeconds(2));
-        assertThat(result.getUnit()).isEqualTo(TimeUnit.SECONDS);
-        assertThat(result.getTimeoutDuration()).isEqualTo(Duration.ofHours(2));
+        assertThat(result.getTimeout()).isEqualTo(Duration.ofHours(2));
     }
 
     @Test(expected = IllegalStateException.class)

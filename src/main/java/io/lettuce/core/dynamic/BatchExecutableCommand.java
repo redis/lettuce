@@ -19,7 +19,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisFuture;
@@ -91,7 +90,7 @@ class BatchExecutableCommand implements ExecutableCommand {
         for (RedisCommand<?, ?, ?> batchTask : batchTasks) {
 
             try {
-                LettuceFutures.awaitAll(timeout.toNanos(), TimeUnit.NANOSECONDS, (RedisFuture) batchTask);
+                LettuceFutures.awaitAll(timeout, (RedisFuture) batchTask);
             } catch (Exception e) {
                 if (exception == null) {
                     failures = new ArrayList<>();

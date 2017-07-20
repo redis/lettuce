@@ -68,7 +68,7 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
     public void connectOwnUri() throws Exception {
         RedisURI redisURI = redis(host, port).build();
         StatefulRedisConnection<String, String> connection = client.connect(redisURI);
-        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeoutDuration());
+        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeout());
         connection.close();
     }
 
@@ -86,7 +86,7 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
     public void connectCodecOwnUri() throws Exception {
         RedisURI redisURI = redis(host, port).build();
         StatefulRedisConnection<String, String> connection = client.connect(CODEC, redisURI);
-        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeoutDuration());
+        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeout());
         connection.close();
     }
 
@@ -149,7 +149,7 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
     public void connectPubSubOwnUri() throws Exception {
         RedisURI redisURI = redis(host, port).build();
         StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub(redisURI);
-        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeoutDuration());
+        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeout());
         connection.close();
     }
 
@@ -167,7 +167,7 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
     public void connectPubSubCodecOwnUri() throws Exception {
         RedisURI redisURI = redis(host, port).build();
         StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub(CODEC, redisURI);
-        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeoutDuration());
+        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeout());
         connection.close();
     }
 
@@ -221,7 +221,7 @@ public class RedisClientConnectionTest extends AbstractRedisClientTest {
 
         RedisURI redisURI = redis(host, port).build();
         StatefulRedisSentinelConnection<String, String> connection = client.connectSentinel(CODEC, redisURI);
-        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeoutDuration());
+        assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeout());
         connection.close();
     }
 

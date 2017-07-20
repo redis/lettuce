@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class SentinelTopologyProvider implements TopologyProvider {
         this.masterId = masterId;
         this.redisClient = redisClient;
         this.sentinelUri = sentinelUri;
-        this.timeout = sentinelUri.getTimeoutDuration();
+        this.timeout = sentinelUri.getTimeout();
     }
 
     @Override

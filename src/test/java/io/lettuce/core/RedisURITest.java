@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -173,7 +174,8 @@ public class RedisURITest {
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=-1", 0, TimeUnit.MILLISECONDS);
 
         RedisURI defaultUri = new RedisURI();
-        checkUriTimeout("redis://auth@localhost:1234/5?timeout=junk", defaultUri.getTimeout(), defaultUri.getUnit());
+        checkUriTimeout("redis://auth@localhost:1234/5?timeout=junk", defaultUri.getTimeout().getSeconds(),
+                RedisURI.DEFAULT_TIMEOUT_UNIT);
 
         RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/5?timeout=5000ms");
         assertThat(redisURI.toURI().toString()).isEqualTo("redis://auth@localhost:1234?database=5&timeout=5s");
@@ -190,14 +192,13 @@ public class RedisURITest {
     @Test
     public void timeoutParsingWithJunkParamTest() {
         RedisURI redisURI1 = RedisURI.create("redis-sentinel://auth@localhost:1234/5?timeout=5s;junkparam=#master-instance");
-        assertThat(redisURI1.getTimeout()).isEqualTo(5);
-        assertThat(redisURI1.getUnit()).isEqualTo(TimeUnit.SECONDS);
+        assertThat(redisURI1.getTimeout()).isEqualTo(Duration.ofSeconds(5));
         assertThat(redisURI1.getSentinelMasterId()).isEqualTo("master-instance");
     }
 
     private RedisURI checkUriTimeout(String uri, long expectedTimeout, TimeUnit expectedUnit) {
         RedisURI redisURI = RedisURI.create(uri);
-        assertThat(expectedUnit.convert(redisURI.getTimeout(), redisURI.getUnit())).isEqualTo(expectedTimeout);
+        assertThat(expectedUnit.convert(redisURI.getTimeout().toNanos(), TimeUnit.NANOSECONDS)).isEqualTo(expectedTimeout);
         return redisURI;
     }
 

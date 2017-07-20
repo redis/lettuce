@@ -71,11 +71,10 @@ class MasterSlaveTopologyRefresh {
         Connections connections = null;
 
         try {
-
-            connections = asyncConnections.get(seed.getTimeout(), seed.getUnit());
+            connections = asyncConnections.get(seed.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
             Requests requestedPing = connections.requestPing();
-            return getNodeSpecificViews(requestedPing, nodes, seed);
 
+            return getNodeSpecificViews(requestedPing, nodes, seed);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
@@ -100,7 +99,7 @@ class MasterSlaveTopologyRefresh {
 
         List<RedisNodeDescription> result = new ArrayList<>();
 
-        long timeout = seed.getTimeoutDuration().toNanos();
+        long timeout = seed.getTimeout().toNanos();
         Map<RedisNodeDescription, Long> latencies = new HashMap<>();
 
         requestedPing.await(timeout, TimeUnit.NANOSECONDS);

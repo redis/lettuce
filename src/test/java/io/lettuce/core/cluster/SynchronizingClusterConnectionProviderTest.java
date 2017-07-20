@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -52,8 +53,7 @@ public class SynchronizingClusterConnectionProviderTest {
     public static void beforeClass() throws Exception {
 
         RedisURI redisURI = RedisURI.create(TestSettings.host(), 1);
-        redisURI.setTimeout(5);
-        redisURI.setUnit(TimeUnit.SECONDS);
+        redisURI.setTimeout(Duration.ofSeconds(5));
 
         redisClient = RedisClusterClient.create(TestClientResources.create(), redisURI);
         redisClient.setOptions(ClusterClientOptions.create());
@@ -70,8 +70,7 @@ public class SynchronizingClusterConnectionProviderTest {
             public ConnectionFuture<StatefulRedisConnection<String, String>> apply(ConnectionKey connectionKey) {
 
                 RedisURI redisURI = RedisURI.create(TestSettings.host(), serverSocket.getLocalPort());
-                redisURI.setTimeout(5);
-                redisURI.setUnit(TimeUnit.SECONDS);
+                redisURI.setTimeout(Duration.ofSeconds(5));
 
                 ConnectionFuture<StatefulRedisConnection<String, String>> future = redisClient.connectToNodeAsync(
                         StringCodec.UTF8, "", null,

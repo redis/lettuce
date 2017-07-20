@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.models.role.RoleParser;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -73,8 +72,7 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
             }
 
             RedisURI next = redisURIs.iterator().next();
-            boolean success = LettuceFutures.awaitAll(next.getTimeout(), next.getUnit(),
-                    roles.values().toArray(new Future[roles.size()]));
+            boolean success = LettuceFutures.awaitAll(next.getTimeout(), roles.values().toArray(new Future[roles.size()]));
 
             if (success) {
 

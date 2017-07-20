@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,10 @@ import io.lettuce.core.internal.HostAndPort;
  * @author Mark Paluch
  * @since 4.4
  */
-public class RedisClusterURIUtil {
+public abstract class RedisClusterURIUtil {
+
+    private RedisClusterURIUtil() {
+    }
 
     /**
      * Parse a Redis Cluster URI with potentially multiple hosts into a {@link List} of {@link RedisURI}.
@@ -49,8 +52,8 @@ public class RedisClusterURIUtil {
         for (String part : parts) {
             HostAndPort hostAndPort = HostAndPort.parse(part);
 
-            RedisURI nodeUri = RedisURI.create(hostAndPort.getHostText(),
-                    hostAndPort.hasPort() ? hostAndPort.getPort() : redisURI.getPort());
+            RedisURI nodeUri = RedisURI.create(hostAndPort.getHostText(), hostAndPort.hasPort() ? hostAndPort.getPort()
+                    : redisURI.getPort());
 
             applyUriConnectionSettings(redisURI, nodeUri);
 
@@ -73,7 +76,6 @@ public class RedisClusterURIUtil {
         }
 
         to.setTimeout(from.getTimeout());
-        to.setUnit(from.getUnit());
         to.setSsl(from.isSsl());
         to.setStartTls(from.isStartTls());
         to.setVerifyPeer(from.isVerifyPeer());

@@ -88,7 +88,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(redisURI);
 
         this.redisURI = redisURI;
-        setDefaultTimeout(redisURI.getTimeoutDuration());
+        setDefaultTimeout(redisURI.getTimeout());
     }
 
     /**
@@ -211,7 +211,7 @@ public class RedisClient extends AbstractRedisClient {
     public StatefulRedisConnection<String, String> connect(RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectStandalone(newStringStringCodec(), redisURI, redisURI.getTimeoutDuration());
+        return connectStandalone(newStringStringCodec(), redisURI, redisURI.getTimeout());
     }
 
     /**
@@ -227,7 +227,7 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> StatefulRedisConnection<K, V> connect(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectStandalone(codec, redisURI, redisURI.getTimeoutDuration());
+        return connectStandalone(codec, redisURI, redisURI.getTimeout());
     }
 
     private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI, Duration timeout) {
@@ -241,7 +241,7 @@ public class RedisClient extends AbstractRedisClient {
     <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectStandaloneAsync(codec, redisURI, redisURI.getTimeoutDuration());
+        return connectStandaloneAsync(codec, redisURI, redisURI.getTimeout());
     }
 
     private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
@@ -354,7 +354,7 @@ public class RedisClient extends AbstractRedisClient {
     public StatefulRedisPubSubConnection<String, String> connectPubSub(RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectPubSub(newStringStringCodec(), redisURI, redisURI.getTimeoutDuration());
+        return connectPubSub(newStringStringCodec(), redisURI, redisURI.getTimeout());
     }
 
     /**
@@ -384,7 +384,7 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectPubSub(codec, redisURI, redisURI.getTimeoutDuration());
+        return connectPubSub(codec, redisURI, redisURI.getTimeout());
     }
 
     private <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec, RedisURI redisURI, Duration timeout) {
@@ -443,7 +443,7 @@ public class RedisClient extends AbstractRedisClient {
     public StatefulRedisSentinelConnection<String, String> connectSentinel(RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectSentinel(newStringStringCodec(), redisURI, redisURI.getTimeoutDuration());
+        return connectSentinel(newStringStringCodec(), redisURI, redisURI.getTimeout());
     }
 
     /**
@@ -459,7 +459,7 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectSentinel(codec, redisURI, redisURI.getTimeoutDuration());
+        return connectSentinel(codec, redisURI, redisURI.getTimeout());
     }
 
     private <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec, RedisURI redisURI,
