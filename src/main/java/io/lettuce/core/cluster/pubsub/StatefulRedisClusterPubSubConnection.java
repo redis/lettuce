@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.cluster.pubsub;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import io.lettuce.core.RedisException;
@@ -97,7 +98,7 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * connection is bound to the node id. Once the cluster topology view is updated, the connection will try to reconnect the
      * to the node with the specified {@code nodeId}, that behavior can also lead to a closed connection once the node with the
      * specified {@code nodeId} is no longer part of the cluster.
-     *
+     * <p>
      * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
      * validated against the current topology view in {@link io.lettuce.core.cluster.models.partitions.Partitions}.
      *
@@ -108,10 +109,26 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
     StatefulRedisPubSubConnection<K, V> getConnection(String nodeId);
 
     /**
+     * Retrieve asynchronously a connection to the specified cluster node using the nodeId. Host and port are looked up in the
+     * node list. This connection is bound to the node id. Once the cluster topology view is updated, the connection will try to
+     * reconnect the to the node with the specified {@code nodeId}, that behavior can also lead to a closed connection once the
+     * node with the specified {@code nodeId} is no longer part of the cluster.
+     * <p>
+     * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
+     * validated against the current topology view in {@link io.lettuce.core.cluster.models.partitions.Partitions}.
+     *
+     * @param nodeId the node Id
+     * @return {@link CompletableFuture} to indicate success or failure to connect to the requested cluster node.
+     * @throws RedisException if the requested node identified by {@code nodeId} is not part of the cluster
+     * @since 5.0
+     */
+    CompletableFuture<StatefulRedisPubSubConnection<K, V>> getConnectionAsync(String nodeId);
+
+    /**
      * Retrieve a connection to the specified cluster node using host and port. This connection is bound to a host and port.
      * Updates to the cluster topology view can close the connection once the host, identified by {@code host} and {@code port},
      * are no longer part of the cluster.
-     *
+     * <p>
      * Do not close the connections. Otherwise, unpredictable behavior will occur. Host and port connections are verified by
      * default for cluster membership, see {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
      *
@@ -121,6 +138,22 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
      */
     StatefulRedisPubSubConnection<K, V> getConnection(String host, int port);
+
+    /**
+     * Retrieve a connection to the specified cluster node using host and port. This connection is bound to a host and port.
+     * Updates to the cluster topology view can close the connection once the host, identified by {@code host} and {@code port},
+     * are no longer part of the cluster.
+     * <p>
+     * Do not close the connections. Otherwise, unpredictable behavior will occur. Host and port connections are verified by
+     * default for cluster membership, see {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
+     *
+     * @param host the host
+     * @param port the port
+     * @return {@link CompletableFuture} to indicate success or failure to connect to the requested cluster node.
+     * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
+     * @since 5.0
+     */
+    CompletableFuture<StatefulRedisPubSubConnection<K, V>> getConnectionAsync(String host, int port);
 
     /**
      * @return Known partitions for this connection.

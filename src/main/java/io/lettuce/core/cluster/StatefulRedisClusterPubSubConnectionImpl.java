@@ -18,6 +18,7 @@ package io.lettuce.core.cluster;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.RedisChannelWriter;
@@ -132,10 +133,35 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<StatefulRedisPubSubConnection<K, V>> getConnectionAsync(String nodeId) {
+
+        RedisURI redisURI = lookup(nodeId);
+
+        if (redisURI == null) {
+            throw new RedisException("NodeId " + nodeId + " does not belong to the cluster");
+        }
+
+        AsyncClusterConnectionProvider provider = (AsyncClusterConnectionProvider) getClusterDistributionChannelWriter()
+                .getClusterConnectionProvider();
+        return (CompletableFuture) provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, nodeId);
+
+    }
+
+    @Override
     public StatefulRedisPubSubConnection<K, V> getConnection(String host, int port) {
 
         return (StatefulRedisPubSubConnection<K, V>) getClusterDistributionChannelWriter().getClusterConnectionProvider()
                 .getConnection(ClusterConnectionProvider.Intent.WRITE, host, port);
+    }
+
+    @Override
+    public CompletableFuture<StatefulRedisPubSubConnection<K, V>> getConnectionAsync(String host, int port) {
+
+        AsyncClusterConnectionProvider provider = (AsyncClusterConnectionProvider) getClusterDistributionChannelWriter()
+                .getClusterConnectionProvider();
+
+        return (CompletableFuture) provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port);
     }
 
     public void setPartitions(Partitions partitions) {

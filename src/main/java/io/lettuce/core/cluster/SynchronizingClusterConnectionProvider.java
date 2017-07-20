@@ -15,10 +15,10 @@
  */
 package io.lettuce.core.cluster;
 
+import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.BiConsumer;
@@ -82,7 +82,7 @@ class SynchronizingClusterConnectionProvider<K, V> {
      * @throws RedisException if a {@link RedisException} occured
      * @throws CompletionException
      */
-    public CompletionStage<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionKey key) {
+    public ConnectionFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionKey key) {
         return getConnectionSync(key).getConnectionAsync();
     }
 
@@ -188,7 +188,7 @@ class SynchronizingClusterConnectionProvider<K, V> {
          */
         StatefulRedisConnection<K, V> getConnection();
 
-        CompletionStage<StatefulRedisConnection<K, V>> getConnectionAsync();
+        ConnectionFuture<StatefulRedisConnection<K, V>> getConnectionAsync();
 
         /**
          * Apply a {@link Consumer} callback to the {@link StatefulConnection}.
@@ -209,12 +209,12 @@ class SynchronizingClusterConnectionProvider<K, V> {
 
         private final ConnectionKey key;
         private final StatefulRedisConnection<K, V> connection;
-        private final CompletableFuture<StatefulRedisConnection<K, V>> future;
+        private final ConnectionFuture<StatefulRedisConnection<K, V>> future;
 
-        public Finished(ConnectionKey key, StatefulRedisConnection<K, V> connection) {
+        public Finished(ConnectionKey key, SocketAddress remoteAddress, StatefulRedisConnection<K, V> connection) {
             this.key = key;
             this.connection = connection;
-            this.future = CompletableFuture.completedFuture(connection);
+            this.future = ConnectionFuture.from(remoteAddress, CompletableFuture.completedFuture(connection));
         }
 
         @Override
@@ -223,7 +223,7 @@ class SynchronizingClusterConnectionProvider<K, V> {
         }
 
         @Override
-        public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync() {
+        public ConnectionFuture<StatefulRedisConnection<K, V>> getConnectionAsync() {
             return future;
         }
 
@@ -264,14 +264,14 @@ class SynchronizingClusterConnectionProvider<K, V> {
         }
 
         @Override
-        public CompletionStage<StatefulRedisConnection<K, V>> getConnectionAsync() {
+        public ConnectionFuture<StatefulRedisConnection<K, V>> getConnectionAsync() {
 
             return future.whenComplete((connection, throwable) -> {
 
                 if (REMOVE.compareAndSet(this, 0, ST_FINISHED)) {
 
                     if (throwable == null) {
-                        connections.replace(key, this, new Finished<>(key, connection));
+                        connections.replace(key, this, new Finished<>(key, future.getRemoteAddress(), connection));
                     } else {
                         connections.remove(key);
                     }

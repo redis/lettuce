@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import io.lettuce.core.*;
@@ -140,10 +141,34 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     @Override
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String nodeId) {
+
+        RedisURI redisURI = lookup(nodeId);
+
+        if (redisURI == null) {
+            throw new RedisException("NodeId " + nodeId + " does not belong to the cluster");
+        }
+
+        AsyncClusterConnectionProvider provider = (AsyncClusterConnectionProvider) getClusterDistributionChannelWriter()
+                .getClusterConnectionProvider();
+
+        return provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, nodeId);
+    }
+
+    @Override
     public StatefulRedisConnection<K, V> getConnection(String host, int port) {
 
         return getClusterDistributionChannelWriter().getClusterConnectionProvider().getConnection(
                 ClusterConnectionProvider.Intent.WRITE, host, port);
+    }
+
+    @Override
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String host, int port) {
+
+        AsyncClusterConnectionProvider provider = (AsyncClusterConnectionProvider) getClusterDistributionChannelWriter()
+                .getClusterConnectionProvider();
+
+        return provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port);
     }
 
     public ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {

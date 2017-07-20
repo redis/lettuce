@@ -30,7 +30,20 @@ import io.lettuce.core.api.StatefulConnection;
  *
  * @since 4.4
  */
-public interface ConnectionFuture<T> extends CompletionStage<T> {
+public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
+
+    /**
+     * Create a {@link ConnectionFuture} given {@link SocketAddress} and {@link CompletableFuture} holding the connection
+     * progress.
+     *
+     * @param remoteAddress initial connection endpoint, must not be {@literal null}.
+     * @param delegate must not be {@literal null}.
+     * @return the {@link ConnectionFuture} for {@link SocketAddress} and {@link CompletableFuture}.
+     * @since 5.0
+     */
+    static <T> ConnectionFuture<T> from(SocketAddress remoteAddress, CompletableFuture<T> delegate) {
+        return new DefaultConnectionFuture<>(remoteAddress, delegate);
+    }
 
     /**
      * Waits if necessary for the computation to complete, and then retrieves its result.

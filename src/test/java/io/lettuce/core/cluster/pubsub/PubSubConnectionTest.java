@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.AbstractClusterTest;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -38,8 +39,8 @@ public class PubSubConnectionTest extends AbstractClusterTest {
     private PubSubTestListener listener = new PubSubTestListener();
 
     private StatefulRedisClusterConnection<String, String> connection;
-    private StatefulRedisPubSubConnection<String, String> pubSubConnection;
-    private StatefulRedisPubSubConnection<String, String> pubSubConnection2;
+    private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection;
+    private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection2;
 
     @Before
     public void openPubSubConnection() throws Exception {
@@ -125,7 +126,28 @@ public class PubSubConnectionTest extends AbstractClusterTest {
         RedisCommands<String, String> otherNodeConnection = connection.getConnection(otherNode.getNodeId()).sync();
         otherNodeConnection.publish(key, value);
         assertThat(listener.getChannels().take()).isEqualTo(key);
+    }
 
+    @Test
+    public void testGetConnectionAsyncByNodeId() {
+
+        RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
+
+        StatefulRedisPubSubConnection<String, String> node = pubSubConnection.getConnectionAsync(partition.getNodeId()).join();
+
+        assertThat(node.sync().ping()).isEqualTo("PONG");
+    }
+
+    @Test
+    public void testGetConnectionAsyncByHostAndPort() {
+
+        RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
+
+        RedisURI uri = partition.getUri();
+        StatefulRedisPubSubConnection<String, String> node = pubSubConnection.getConnectionAsync(uri.getHost(), uri.getPort())
+                .join();
+
+        assertThat(node.sync().ping()).isEqualTo("PONG");
     }
 
     private RedisClusterNode getOtherThan(String nodeId) {

@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -104,7 +103,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         if (intent == Intent.READ && readFrom != null) {
             return getReadConnection(slot);
         }
-        return getWriteConnection(slot);
+        return getWriteConnection(slot).toCompletableFuture();
     }
 
     private CompletableFuture<StatefulRedisConnection<K, V>> getWriteConnection(int slot) {
@@ -124,7 +123,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             // host because the nodeId can be handled by a different host.
             RedisURI uri = partition.getUri();
             ConnectionKey key = new ConnectionKey(Intent.WRITE, uri.getHost(), uri.getPort());
-            return getConnectionAsync(key).thenApply(connection -> {
+
+            ConnectionFuture<StatefulRedisConnection<K, V>> future = getConnectionAsync(key);
+
+            return future.thenApply(connection -> {
 
                 synchronized (stateLock) {
                     if (writers[slot] == null) {
@@ -133,7 +135,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 }
 
                 return connection;
-            });
+            }).toCompletableFuture();
         }
 
         return writer;
@@ -256,29 +258,12 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         return result;
     }
 
-    private static <K, V> CompletableFuture<StatefulRedisConnection<K, V>> getConnection(
-
-    CompletableFuture<StatefulRedisConnection<K, V>[]> root) {
-
-        return root.thenApply((StatefulRedisConnection<K, V>[] connections) -> {
-
-            for (StatefulRedisConnection<K, V> connection : connections) {
-
-                if (connection.isOpen()) {
-                    return connection;
-                }
-            }
-            return connections[0];
-        });
-    }
-
     private CompletableFuture<StatefulRedisConnection<K, V>>[] getReadFromConnections(List<RedisNodeDescription> selection) {
 
-        CompletableFuture<StatefulRedisConnection<K, V>>[] readerCandidates;
         // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
         // host because the nodeId can be handled by a different host.
 
-        readerCandidates = new CompletableFuture[selection.size()];
+        CompletableFuture<StatefulRedisConnection<K, V>>[] readerCandidates = new CompletableFuture[selection.size()];
 
         for (int i = 0; i < selection.size(); i++) {
 
@@ -288,7 +273,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             ConnectionKey key = new ConnectionKey(redisClusterNode.getRole() == RedisInstance.Role.MASTER ? Intent.WRITE
                     : Intent.READ, uri.getHost(), uri.getPort());
 
-            readerCandidates[i] = getConnectionAsync(key);
+            readerCandidates[i] = getConnectionAsync(key).toCompletableFuture();
         }
 
         return readerCandidates;
@@ -322,25 +307,19 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             logger.debug("getConnection(" + intent + ", " + nodeId + ")");
         }
 
-        return getConnectionAsync(new ConnectionKey(intent, nodeId));
+        return getConnectionAsync(new ConnectionKey(intent, nodeId)).toCompletableFuture();
     }
 
-    protected CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionKey key) {
+    protected ConnectionFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionKey key) {
 
-        CompletionStage<StatefulRedisConnection<K, V>> future = connectionProvider.getConnectionAsync(key);
-
+        ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectionProvider.getConnectionAsync(key);
         CompletableFuture<StatefulRedisConnection<K, V>> result = new CompletableFuture<>();
 
-        future.handle((connection, throwable) -> {
+        connectionFuture.handle((connection, throwable) -> {
 
             if (throwable != null) {
 
-                if (future instanceof ConnectionFuture) {
-                    ConnectionFuture<?> connectionFuture = (ConnectionFuture<?>) future;
-                    result.completeExceptionally(RedisConnectionException.create(connectionFuture.getRemoteAddress(), throwable));
-                } else {
-                    result.completeExceptionally(throwable);
-                }
+                result.completeExceptionally(RedisConnectionException.create(connectionFuture.getRemoteAddress(), throwable));
             } else {
                 result.complete(connection);
             }
@@ -348,7 +327,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             return null;
         });
 
-        return result;
+        return ConnectionFuture.from(connectionFuture.getRemoteAddress(), result);
     }
 
     @Override
