@@ -619,6 +619,7 @@ public class CommandArgs<K, V> {
      */
     public static final class ExperimentalByteArrayCodec extends ByteArrayCodec {
 
+        private static final byte[] ENCODED_NULL = "0\r\n\r\n".getBytes();
         public static final ExperimentalByteArrayCodec INSTANCE = new ExperimentalByteArrayCodec();
 
         private ExperimentalByteArrayCodec() {
@@ -630,7 +631,7 @@ public class CommandArgs<K, V> {
             target.writeByte('$');
 
             if (key == null) {
-                target.writeBytes("0\r\n\r\n".getBytes());
+                target.writeBytes(ENCODED_NULL);
                 return;
             }
 
