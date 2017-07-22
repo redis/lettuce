@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -47,8 +46,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
      * @param connection the connection, must not be {@literal null}
      * @param dissolve dissolve collections into particular elements
      */
-    public ReactiveCommandDispatcher(RedisCommand<K, V, T> staticCommand, StatefulConnection<K, V> connection,
-            boolean dissolve) {
+    public ReactiveCommandDispatcher(RedisCommand<K, V, T> staticCommand, StatefulConnection<K, V> connection, boolean dissolve) {
         this(() -> staticCommand, connection, dissolve);
     }
 
@@ -83,8 +81,8 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
             StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
 
             if (connection instanceof StatefulRedisConnection<?, ?> && ((StatefulRedisConnection) connection).isMulti()) {
-                streamingOutput.setSubscriber(new DelegatingWrapper<>(
-                        Arrays.asList(new ObservableSubscriberWrapper<>(subscriber), streamingOutput.getSubscriber())));
+                streamingOutput.setSubscriber(new DelegatingWrapper<>(new ObservableSubscriberWrapper<>(subscriber),
+                        streamingOutput.getSubscriber()));
             } else {
                 streamingOutput.setSubscriber(new ObservableSubscriberWrapper<>(subscriber));
             }
@@ -142,7 +140,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
                 try {
                     subscriber.onCompleted();
                 } catch (Exception e) {
-                   completeExceptionally(e);
+                    completeExceptionally(e);
                 }
             } finally {
                 completed = true;
@@ -174,7 +172,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
         }
     }
 
-    static class ObservableSubscriberWrapper<T> implements StreamingOutput.Subscriber<T> {
+    static class ObservableSubscriberWrapper<T> extends StreamingOutput.Subscriber<T> {
 
         private Subscriber<? super T> subscriber;
 
@@ -185,7 +183,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
         @Override
         public void onNext(T t) {
 
-            if(subscriber.isUnsubscribed()) {
+            if (subscriber.isUnsubscribed()) {
                 return;
             }
 
@@ -193,20 +191,26 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
         }
     }
 
-    static class DelegatingWrapper<T> implements StreamingOutput.Subscriber<T> {
+    static class DelegatingWrapper<T> extends StreamingOutput.Subscriber<T> {
 
-        private Collection<StreamingOutput.Subscriber<T>> subscribers;
+        private final StreamingOutput.Subscriber<T> first;
+        private final StreamingOutput.Subscriber<T> second;
 
-        public DelegatingWrapper(Collection<StreamingOutput.Subscriber<T>> subscribers) {
-            this.subscribers = subscribers;
+        public DelegatingWrapper(StreamingOutput.Subscriber<T> first, StreamingOutput.Subscriber<T> second) {
+            this.first = first;
+            this.second = second;
         }
 
         @Override
         public void onNext(T t) {
+            throw new UnsupportedOperationException();
+        }
 
-            for (StreamingOutput.Subscriber<T> subscriber : subscribers) {
-                subscriber.onNext(t);
-            }
+        @Override
+        public void onNext(Collection<T> outputTarget, T t) {
+
+            first.onNext(outputTarget, t);
+            second.onNext(outputTarget, t);
         }
     }
 }

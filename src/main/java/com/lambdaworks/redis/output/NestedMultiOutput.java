@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -25,17 +25,19 @@ import com.lambdaworks.redis.internal.LettuceFactories;
 
 /**
  * {@link List} of command outputs, possibly deeply nested.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
  */
 public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
+
     private final Deque<List<Object>> stack;
     private int depth;
+    private boolean initialized;
 
     public NestedMultiOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
+        super(codec, Collections.emptyList());
         stack = LettuceFactories.newSpScQueue();
         depth = 0;
     }
@@ -60,7 +62,13 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void multi(int count) {
-        List<Object> a = new ArrayList<>(count);
+
+        if (!initialized) {
+            output = OutputFactory.newList(count);
+            initialized = true;
+        }
+
+        List<Object> a = OutputFactory.newList(count);
         output.add(a);
         stack.push(output);
         output = a;

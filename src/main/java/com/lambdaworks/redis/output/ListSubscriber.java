@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,35 @@
  */
 package com.lambdaworks.redis.output;
 
-import java.util.List;
+import java.util.Collection;
 
-import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.output.StreamingOutput.Subscriber;
 
 /**
  * Simple subscriber
+ *
  * @author Mark Paluch
  * @since 4.2
  */
-class ListSubscriber<T> implements Subscriber<T> {
+class ListSubscriber<T> extends Subscriber<T> {
 
-    private List<T> target;
+    private final static ListSubscriber<Object> INSTANCE = new ListSubscriber<>();
 
-    private ListSubscriber(List<T> target) {
+    private ListSubscriber() {
+    }
 
-        LettuceAssert.notNull(target, "Target must not be null");
-		this.target = target;
+    @SuppressWarnings("unchecked")
+    public static <T> ListSubscriber<T> instance() {
+        return (ListSubscriber<T>) INSTANCE;
     }
 
     @Override
     public void onNext(T t) {
-        target.add(t);
+        throw new UnsupportedOperationException();
     }
 
-    static <T> ListSubscriber<T> of(List<T> target) {
-		return new ListSubscriber<>(target);
-	}
+    @Override
+    public void onNext(Collection<T> outputTarget, T t) {
+        outputTarget.add(t);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
@@ -31,6 +30,7 @@ import com.lambdaworks.redis.protocol.RedisCommand;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
@@ -38,7 +38,7 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     private Integer expectedResults = null;
 
     public MultiOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
+        super(codec, null);
         queue = LettuceFactories.newSpScQueue();
     }
 
@@ -70,6 +70,10 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void multi(int count) {
+
+        if (output == null) {
+            output = OutputFactory.newList(count);
+        }
 
         if (expectedResults == null) {
             expectedResults = count;

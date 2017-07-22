@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -26,18 +26,19 @@ import com.lambdaworks.redis.codec.RedisCodec;
 /**
  * {@link java.util.List} of objects and lists to support dynamic nested structures (List with mixed content of values and
  * sublists).
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
- * 
  * @author Mark Paluch
  */
 public class ArrayOutput<K, V> extends CommandOutput<K, V, List<Object>> {
+
+    private boolean initialized;
     private Deque<Integer> counts = new ArrayDeque<>();
     private Deque<List<Object>> stack = new ArrayDeque<>();
 
     public ArrayOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
+        super(codec, Collections.emptyList());
     }
 
     @Override
@@ -72,10 +73,16 @@ public class ArrayOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void multi(int count) {
+
+        if (!initialized) {
+            output = OutputFactory.newList(count);
+            initialized = true;
+        }
+
         if (stack.isEmpty()) {
             stack.push(output);
         } else {
-            stack.push(new ArrayList<>(count));
+            stack.push(OutputFactory.newList(count));
 
         }
         counts.push(count);

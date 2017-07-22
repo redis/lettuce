@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.lambdaworks.redis.output;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 
@@ -32,18 +32,21 @@ public class ScoredValueListOutputTest {
     private ScoredValueListOutput<String, String> sut = new ScoredValueListOutput<>(new Utf8StringCodec());
 
     @Test
-    public void defaultSubscriberIsSet() throws Exception {
+    public void defaultSubscriberIsSet() {
+
+        sut.multi(1);
         assertThat(sut.getSubscriber()).isNotNull().isInstanceOf(ListSubscriber.class);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void setIntegerShouldFail() throws Exception {
+    public void setIntegerShouldFail() {
         sut.set(123L);
     }
 
     @Test
-    public void commandOutputCorrectlyDecoded() throws Exception {
+    public void commandOutputCorrectlyDecoded() {
 
+        sut.multi(1);
         sut.set(ByteBuffer.wrap("key".getBytes()));
         sut.set(ByteBuffer.wrap("4.567".getBytes()));
         sut.multi(-1);

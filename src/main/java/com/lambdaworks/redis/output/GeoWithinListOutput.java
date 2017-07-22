@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.lambdaworks.redis.output;
 import static java.lang.Double.parseDouble;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.lambdaworks.redis.GeoCoordinates;
@@ -31,8 +30,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>>
-        implements StreamingOutput<GeoWithin<V>> {
+public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>> implements StreamingOutput<GeoWithin<V>> {
 
     private V member;
     private Double distance;
@@ -47,15 +45,16 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     private Subscriber<GeoWithin<V>> subscriber;
 
     public GeoWithinListOutput(RedisCodec<K, V> codec, boolean withDistance, boolean withHash, boolean withCoordinates) {
-        super(codec, new ArrayList<>());
+        super(codec, OutputFactory.newList(16));
         this.withDistance = withDistance;
         this.withHash = withHash;
         this.withCoordinates = withCoordinates;
-        setSubscriber(ListSubscriber.of(output));
+        setSubscriber(ListSubscriber.instance());
     }
 
     @Override
     public void set(long integer) {
+
         if (member == null) {
             member = (V) (Long) integer;
             return;
@@ -94,8 +93,9 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
 
     @Override
     public void complete(int depth) {
+
         if (depth == 1) {
-            subscriber.onNext(new GeoWithin<>(member, distance, geohash, coordinates));
+            subscriber.onNext(output, new GeoWithin<>(member, distance, geohash, coordinates));
 
             member = null;
             distance = null;

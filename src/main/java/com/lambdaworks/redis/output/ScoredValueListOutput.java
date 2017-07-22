@@ -16,7 +16,7 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.lambdaworks.redis.LettuceStrings;
@@ -34,24 +34,35 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<ScoredValue<V>>> implements
         StreamingOutput<ScoredValue<V>> {
 
-    private V value;
+    private boolean initialized;
     private Subscriber<ScoredValue<V>> subscriber;
+    private V value;
 
     public ScoredValueListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
-        setSubscriber(ListSubscriber.of(output));
+        super(codec, Collections.emptyList());
+        setSubscriber(ListSubscriber.instance());
     }
 
     @Override
     public void set(ByteBuffer bytes) {
+
         if (value == null) {
             value = codec.decodeValue(bytes);
             return;
         }
 
         double score = LettuceStrings.toDouble(decodeAscii(bytes));
-        subscriber.onNext(new ScoredValue<>(score, value));
+        subscriber.onNext(output, new ScoredValue<>(score, value));
         value = null;
+    }
+
+    @Override
+    public void multi(int count) {
+
+        if (!initialized) {
+            output = OutputFactory.newList(count);
+            initialized = true;
+        }
     }
 
     @Override

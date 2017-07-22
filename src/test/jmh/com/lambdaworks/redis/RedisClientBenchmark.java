@@ -15,6 +15,8 @@
  */
 package com.lambdaworks.redis;
 
+import java.util.concurrent.TimeUnit;
+
 import org.openjdk.jmh.annotations.*;
 
 import rx.Observable;
@@ -30,6 +32,7 @@ public class RedisClientBenchmark {
 
     private final static int BATCH_SIZE = 20;
     private final static byte[] KEY = "benchmark".getBytes();
+    private final static byte[] FOO = "foo".getBytes();
 
     private RedisClient redisClient;
     private StatefulRedisConnection<byte[], byte[]> connection;
@@ -49,7 +52,7 @@ public class RedisClientBenchmark {
     public void tearDown() {
 
         connection.close();
-        redisClient.shutdown();
+        redisClient.shutdown(0, 0, TimeUnit.SECONDS);
     }
 
     @Benchmark
@@ -94,6 +97,14 @@ public class RedisClientBenchmark {
     }
 
     @Benchmark
+    public void syncList() {
+        connection.async().del(FOO);
+        connection.sync().lpush(FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO, FOO,
+                FOO);
+        connection.sync().lrange(FOO, 0, -1);
+    }
+
+    @Benchmark
     public void reactiveSet() {
         connection.reactive().set(KEY, KEY).toBlocking().single();
     }
@@ -125,5 +136,16 @@ public class RedisClientBenchmark {
             connection.setAutoFlushCommands(true);
 
         }).toBlocking().last();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+
+        RedisClientBenchmark b = new RedisClientBenchmark();
+        b.setup();
+
+        Thread.sleep(10000);
+        while (true) {
+            b.syncList();
+        }
     }
 }

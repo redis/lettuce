@@ -28,16 +28,19 @@ import com.lambdaworks.redis.codec.RedisCodec;
  * @param <V> Value type.
  *
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
+
     private K key;
 
     public MapOutput(RedisCodec<K, V> codec) {
-        super(codec, new LinkedHashMap<>());
+        super(codec, null);
     }
 
     @Override
     public void set(ByteBuffer bytes) {
+
         if (key == null) {
             key = codec.decodeKey(bytes);
             return;
@@ -51,6 +54,7 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
     @Override
     @SuppressWarnings("unchecked")
     public void set(long integer) {
+
         if (key == null) {
             key = (K) Long.valueOf(integer);
             return;
@@ -59,5 +63,13 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
         V value = (V) Long.valueOf(integer);
         output.put(key, value);
         key = null;
+    }
+
+    @Override
+    public void multi(int count) {
+
+        if (output == null) {
+            output = new LinkedHashMap<>(count / 2, 1);
+        }
     }
 }

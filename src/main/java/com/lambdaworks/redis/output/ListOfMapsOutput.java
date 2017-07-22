@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,17 @@ import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
  * {@link java.util.List} of maps output.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
- * 
+ *
  * @author Will Glozer
  */
 public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>> {
+
     private MapOutput<K, V> nested;
     private int mapCount = -1;
-    private List<Integer> counts = new ArrayList<>();
+    private final List<Integer> counts = new ArrayList<>();
 
     public ListOfMapsOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<>());
@@ -62,6 +63,9 @@ public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>>
 
     @Override
     public void multi(int count) {
+
+        nested.multi(count);
+
         if (mapCount == -1) {
             mapCount = count;
         } else {

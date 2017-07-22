@@ -29,9 +29,9 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
  */
 public class GeoCoordinatesListOutputTest {
 
-	private GeoCoordinatesListOutput<?, ?> sut = new GeoCoordinatesListOutput<>(new Utf8StringCodec());
+    private GeoCoordinatesListOutput<?, ?> sut = new GeoCoordinatesListOutput<>(new Utf8StringCodec());
 
-	 @Test
+    @Test
     public void defaultSubscriberIsSet() throws Exception {
         assertThat(sut.getSubscriber()).isNotNull().isInstanceOf(ListSubscriber.class);
     }
@@ -41,13 +41,14 @@ public class GeoCoordinatesListOutputTest {
         sut.set(123L);
     }
 
-	@Test
+    @Test
     public void commandOutputCorrectlyDecoded() throws Exception {
 
-		sut.set(ByteBuffer.wrap("1.234".getBytes()));
-		sut.set(ByteBuffer.wrap("4.567".getBytes()));
-		sut.multi(-1);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("1.234".getBytes()));
+        sut.set(ByteBuffer.wrap("4.567".getBytes()));
+        sut.multi(-1);
 
-		assertThat(sut.get()).contains(new GeoCoordinates(1.234, 4.567));
-	}
+        assertThat(sut.get()).contains(new GeoCoordinates(1.234, 4.567));
+    }
 }

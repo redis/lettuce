@@ -15,7 +15,7 @@
  */
 package com.lambdaworks.redis.output;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 
@@ -38,7 +38,8 @@ public class BooleanListOutputTest {
     @Test
     public void commandOutputCorrectlyDecoded() throws Exception {
 
-		sut.set(1L);
+        sut.multi(3);
+        sut.set(1L);
         sut.set(0L);
         sut.set(2L);
 
