@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ import java.nio.ByteBuffer;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public class KeyValueOutput<K, V> extends CommandOutput<K, V, KeyValue<K, V>> {
+
     private K key;
 
     public KeyValueOutput(RedisCodec<K, V> codec) {
@@ -37,6 +38,7 @@ public class KeyValueOutput<K, V> extends CommandOutput<K, V, KeyValue<K, V>> {
 
     @Override
     public void set(ByteBuffer bytes) {
+
         if (bytes != null) {
             if (key == null) {
                 key = codec.decodeKey(bytes);

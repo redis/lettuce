@@ -75,9 +75,7 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]>, ToByteBufEnco
 
     @Override
     public ByteBuffer encodeValue(byte[] value) {
-
-
-            return encodeKey(value);
+        return encodeKey(value);
     }
 
     private static byte[] getBytes(ByteBuffer buffer) {

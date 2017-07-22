@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package io.lettuce.core.output;
 
+import static java.lang.Double.parseDouble;
+
 import java.nio.ByteBuffer;
 
 import io.lettuce.core.codec.RedisCodec;
-
-import static java.lang.Double.parseDouble;
 
 /**
  * Double output, may be null.
@@ -29,6 +29,7 @@ import static java.lang.Double.parseDouble;
  * @author Will Glozer
  */
 public class DoubleOutput<K, V> extends CommandOutput<K, V, Double> {
+
     public DoubleOutput(RedisCodec<K, V> codec) {
         super(codec, null);
     }
