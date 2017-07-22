@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,21 @@
  */
 package com.lambdaworks.redis.output;
 
+import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
+
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 
-import static com.lambdaworks.redis.protocol.LettuceCharsets.buffer;
-
 /**
  * Status message output.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
  */
 public class StatusOutput<K, V> extends CommandOutput<K, V, String> {
+
     private static final ByteBuffer OK = buffer("OK");
 
     public StatusOutput(RedisCodec<K, V> codec) {

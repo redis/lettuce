@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@ import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
  * Date output with no milliseconds.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public class DateOutput<K, V> extends CommandOutput<K, V, Date> {
+
     public DateOutput(RedisCodec<K, V> codec) {
         super(codec, null);
     }

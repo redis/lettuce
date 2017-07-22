@@ -31,8 +31,9 @@ import com.lambdaworks.redis.codec.RedisCodec;
  */
 public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanCursor> {
 
-    private V value;
     private final ScoredValueStreamingChannel<V> channel;
+
+    private V value;
 
     public ScoredValueScanStreamingOutput(RedisCodec<K, V> codec, ScoredValueStreamingChannel<V> channel) {
         super(codec, new StreamScanCursor());

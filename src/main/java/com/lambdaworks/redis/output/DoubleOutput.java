@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,21 @@
  */
 package com.lambdaworks.redis.output;
 
+import static java.lang.Double.parseDouble;
+
 import java.nio.ByteBuffer;
 
 import com.lambdaworks.redis.codec.RedisCodec;
 
-import static java.lang.Double.parseDouble;
-
 /**
  * Double output, may be null.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
  */
 public class DoubleOutput<K, V> extends CommandOutput<K, V, Double> {
+
     public DoubleOutput(RedisCodec<K, V> codec) {
         super(codec, null);
     }

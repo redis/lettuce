@@ -49,5 +49,4 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
         output.getValues().add(new ScoredValue<>(score, value));
         value = null;
     }
-
 }
