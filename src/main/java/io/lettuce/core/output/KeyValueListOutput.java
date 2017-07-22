@@ -16,7 +16,7 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -32,27 +32,37 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<K, V>>>
-        implements StreamingOutput<KeyValue<K, V>> {
+public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<K, V>>> implements
+        StreamingOutput<KeyValue<K, V>> {
 
+    private boolean initialized;
     private Subscriber<KeyValue<K, V>> subscriber;
     private Iterable<K> keys;
     private Iterator<K> keyIterator;
 
     public KeyValueListOutput(RedisCodec<K, V> codec, Iterable<K> keys) {
-        super(codec, new ArrayList<>());
-        setSubscriber(ListSubscriber.of(output));
+        super(codec, Collections.emptyList());
+        setSubscriber(ListSubscriber.instance());
         this.keys = keys;
     }
 
     @Override
     public void set(ByteBuffer bytes) {
 
-        if(keyIterator == null) {
+        if (keyIterator == null) {
             keyIterator = keys.iterator();
         }
 
-        subscriber.onNext(KeyValue.fromNullable(keyIterator.next(), bytes == null ? null : codec.decodeValue(bytes)));
+        subscriber.onNext(output, KeyValue.fromNullable(keyIterator.next(), bytes == null ? null : codec.decodeValue(bytes)));
+    }
+
+    @Override
+    public void multi(int count) {
+
+        if (!initialized) {
+            output = OutputFactory.newList(count);
+            initialized = true;
+        }
     }
 
     @Override

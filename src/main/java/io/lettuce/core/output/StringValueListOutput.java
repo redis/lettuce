@@ -16,7 +16,7 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.lettuce.core.Value;
@@ -31,19 +31,29 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Mark Paluch
  * @since 5.0
  */
-public class StringValueListOutput<K, V> extends CommandOutput<K, V, List<Value<String>>>
-        implements StreamingOutput<Value<String>> {
+public class StringValueListOutput<K, V> extends CommandOutput<K, V, List<Value<String>>> implements
+        StreamingOutput<Value<String>> {
 
+    private boolean initialized;
     private Subscriber<Value<String>> subscriber;
 
     public StringValueListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
-        setSubscriber(ListSubscriber.of(output));
+        super(codec, Collections.emptyList());
+        setSubscriber(ListSubscriber.instance());
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        subscriber.onNext(bytes == null ? Value.empty() : Value.fromNullable(decodeAscii(bytes)));
+        subscriber.onNext(output, bytes == null ? Value.empty() : Value.fromNullable(decodeAscii(bytes)));
+    }
+
+    @Override
+    public void multi(int count) {
+
+        if (!initialized) {
+            output = OutputFactory.newList(count);
+            initialized = true;
+        }
     }
 
     @Override

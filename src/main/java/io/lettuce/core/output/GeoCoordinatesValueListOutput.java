@@ -18,7 +18,7 @@ package io.lettuce.core.output;
 import static java.lang.Double.parseDouble;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.lettuce.core.GeoCoordinates;
@@ -31,15 +31,16 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, List<Value<GeoCoordinates>>>
-        implements StreamingOutput<Value<GeoCoordinates>> {
+public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, List<Value<GeoCoordinates>>> implements
+        StreamingOutput<Value<GeoCoordinates>> {
 
     private Double x;
+    private boolean initialized;
     private Subscriber<Value<GeoCoordinates>> subscriber;
 
     public GeoCoordinatesValueListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
-        setSubscriber(ListSubscriber.of(output));
+        super(codec, Collections.emptyList());
+        setSubscriber(ListSubscriber.instance());
     }
 
     @Override
@@ -52,14 +53,20 @@ public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, Lis
             return;
         }
 
-        subscriber.onNext(Value.fromNullable(new GeoCoordinates(x, value)));
+        subscriber.onNext(output, Value.fromNullable(new GeoCoordinates(x, value)));
         x = null;
     }
 
     @Override
     public void multi(int count) {
+
+        if (!initialized) {
+            output = OutputFactory.newList(count / 2);
+            initialized = true;
+        }
+
         if (count == -1) {
-            subscriber.onNext(Value.empty());
+            subscriber.onNext(output, Value.empty());
         }
     }
 

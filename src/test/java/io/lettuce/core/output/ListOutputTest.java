@@ -67,22 +67,25 @@ public class ListOutputTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void settingEmptySubscriberShouldFail() throws Exception {
+    public void settingEmptySubscriberShouldFail() {
         streamingOutput.setSubscriber(null);
     }
 
     @Test
-    public void defaultSubscriberIsSet() throws Exception {
+    public void defaultSubscriberIsSet() {
+        commandOutput.multi(1);
         assertThat(streamingOutput.getSubscriber()).isNotNull().isInstanceOf(ListSubscriber.class);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void setIntegerShouldFail() throws Exception {
+    public void setIntegerShouldFail() {
         commandOutput.set(123L);
     }
 
     @Test
-    public void setValueShouldConvert() throws Exception {
+    public void setValueShouldConvert() {
+
+        commandOutput.multi(1);
         commandOutput.set(ByteBuffer.wrap(valueBytes));
 
         assertThat(commandOutput.get()).contains(value);

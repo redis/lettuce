@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 import io.lettuce.core.codec.RedisCodec;
@@ -30,12 +30,24 @@ import io.lettuce.core.codec.RedisCodec;
  * @author Will Glozer
  */
 public class ValueSetOutput<K, V> extends CommandOutput<K, V, Set<V>> {
+
+    private boolean initialized;
+
     public ValueSetOutput(RedisCodec<K, V> codec) {
-        super(codec, new HashSet<>());
+        super(codec, Collections.emptySet());
     }
 
     @Override
     public void set(ByteBuffer bytes) {
         output.add(bytes == null ? null : codec.decodeValue(bytes));
+    }
+
+    @Override
+    public void multi(int count) {
+
+        if (!initialized) {
+            output = OutputFactory.newSet(count);
+            initialized = true;
+        }
     }
 }

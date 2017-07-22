@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package io.lettuce.core.output;
 
+import java.util.Collection;
+
 /**
  * Implementors of this class support a streaming {@link CommandOutput} while the command is still processed. The receiving
- * {@link Subscriber} receives {@link Subscriber#onNext(Object)} calls while the command is active.
+ * {@link Subscriber} receives {@link Subscriber#onNext(Collection, Object)} calls while the command is active.
  *
  * @author Mark Paluch
  * @since 4.2
@@ -43,14 +45,23 @@ public interface StreamingOutput<T> {
      *
      * @param <T>
      */
-    interface Subscriber<T> {
+    abstract class Subscriber<T> {
 
         /**
          * Data notification sent by the {@link StreamingOutput}.
          *
          * @param t element
          */
-        void onNext(T t);
-    }
+        public abstract void onNext(T t);
 
+        /**
+         * Data notification sent by the {@link StreamingOutput}.
+         *
+         * @param outputTarget target
+         * @param t element
+         */
+        public void onNext(Collection<T> outputTarget, T t) {
+            onNext(t);
+        }
+    }
 }

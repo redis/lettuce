@@ -16,7 +16,6 @@
 package io.lettuce.core;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Queue;
@@ -123,7 +122,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      *
      * @param <T> data element type
      */
-    static class RedisSubscription<T> implements Subscription, StreamingOutput.Subscriber<T> {
+    static class RedisSubscription<T> extends StreamingOutput.Subscriber<T> implements Subscription {
 
         static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
 
@@ -162,8 +161,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
 
                 if (connection instanceof StatefulRedisConnection<?, ?> && ((StatefulRedisConnection) connection).isMulti()) {
-                    streamingOutput.setSubscriber(new CompositeSubscriber<>(
-                            Arrays.asList(this, streamingOutput.getSubscriber())));
+                    streamingOutput.setSubscriber(new CompositeSubscriber<>(this, streamingOutput.getSubscriber()));
                 } else {
                     streamingOutput.setSubscriber(this);
                 }
@@ -699,17 +697,26 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      *
      * @param <T> element type
      */
-    private static class CompositeSubscriber<T> implements StreamingOutput.Subscriber<T> {
+    private static class CompositeSubscriber<T> extends StreamingOutput.Subscriber<T> {
 
-        private final Collection<StreamingOutput.Subscriber<T>> subscribers;
+        private final StreamingOutput.Subscriber<T> first;
+        private final StreamingOutput.Subscriber<T> second;
 
-        CompositeSubscriber(Collection<StreamingOutput.Subscriber<T>> subscribers) {
-            this.subscribers = subscribers;
+        public CompositeSubscriber(StreamingOutput.Subscriber<T> first, StreamingOutput.Subscriber<T> second) {
+            this.first = first;
+            this.second = second;
         }
 
         @Override
         public void onNext(T t) {
-            subscribers.forEach(subscriber -> subscriber.onNext(t));
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void onNext(Collection<T> outputTarget, T t) {
+
+            first.onNext(outputTarget, t);
+            second.onNext(outputTarget, t);
         }
     }
 }

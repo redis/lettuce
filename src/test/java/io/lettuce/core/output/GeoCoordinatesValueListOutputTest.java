@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ import io.lettuce.core.codec.Utf8StringCodec;
  */
 public class GeoCoordinatesValueListOutputTest {
 
-	private GeoCoordinatesValueListOutput<?, ?> sut = new GeoCoordinatesValueListOutput<>(new Utf8StringCodec());
+    private GeoCoordinatesValueListOutput<?, ?> sut = new GeoCoordinatesValueListOutput<>(new Utf8StringCodec());
 
-	 @Test
+    @Test
     public void defaultSubscriberIsSet() throws Exception {
         assertThat(sut.getSubscriber()).isNotNull().isInstanceOf(ListSubscriber.class);
     }
@@ -42,13 +42,14 @@ public class GeoCoordinatesValueListOutputTest {
         sut.set(123L);
     }
 
-	@Test
-    public void commandOutputCorrectlyDecoded() throws Exception {
+    @Test
+    public void commandOutputCorrectlyDecoded() {
 
-		sut.set(ByteBuffer.wrap("1.234".getBytes()));
-		sut.set(ByteBuffer.wrap("4.567".getBytes()));
-		sut.multi(-1);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("1.234".getBytes()));
+        sut.set(ByteBuffer.wrap("4.567".getBytes()));
+        sut.multi(-1);
 
-		assertThat(sut.get()).contains(Value.just(new GeoCoordinates(1.234, 4.567)));
-	}
+        assertThat(sut.get()).contains(Value.just(new GeoCoordinates(1.234, 4.567)));
+    }
 }

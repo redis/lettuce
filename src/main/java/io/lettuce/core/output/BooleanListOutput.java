@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.output;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.lettuce.core.codec.RedisCodec;
@@ -27,19 +27,30 @@ import io.lettuce.core.internal.LettuceAssert;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public class BooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> implements StreamingOutput<Boolean> {
 
+    private boolean initialized;
     private Subscriber<Boolean> subscriber;
 
     public BooleanListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
-        setSubscriber(ListSubscriber.of(output));
+        super(codec, Collections.emptyList());
+        setSubscriber(ListSubscriber.instance());
     }
 
     @Override
     public void set(long integer) {
-        subscriber.onNext((integer == 1) ? Boolean.TRUE : Boolean.FALSE);
+        subscriber.onNext(output, (integer == 1) ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    @Override
+    public void multi(int count) {
+
+        if (!initialized) {
+            output = OutputFactory.newList(count);
+            initialized = true;
+        }
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,10 @@ package io.lettuce.core.output;
 import static java.lang.Double.parseDouble;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.lettuce.core.GeoCoordinates;
-import io.lettuce.core.Value;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 
@@ -31,13 +30,17 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<GeoCoordinates>>  {
+public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<GeoCoordinates>> implements
+        StreamingOutput<GeoCoordinates> {
 
     private Double x;
+    private boolean initialized;
+    private Subscriber<GeoCoordinates> subscriber;
 
-	public GeoCoordinatesListOutput(RedisCodec<K, V> codec) {
-        super(codec, new ArrayList<>());
-	}
+    public GeoCoordinatesListOutput(RedisCodec<K, V> codec) {
+        super(codec, Collections.emptyList());
+        setSubscriber(ListSubscriber.instance());
+    }
 
     @Override
     public void set(ByteBuffer bytes) {
@@ -49,14 +52,31 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
             return;
         }
 
-        output.add(new GeoCoordinates(x, value));
+        subscriber.onNext(output, new GeoCoordinates(x, value));
         x = null;
     }
 
     @Override
     public void multi(int count) {
-        if (count == -1) {
-            output.add(null);
+
+        if (!initialized) {
+            output = OutputFactory.newList(count / 2);
+            initialized = true;
         }
+
+        if (count == -1) {
+            subscriber.onNext(output, null);
+        }
+    }
+
+    @Override
+    public void setSubscriber(Subscriber<GeoCoordinates> subscriber) {
+        LettuceAssert.notNull(subscriber, "Subscriber must not be null");
+        this.subscriber = subscriber;
+    }
+
+    @Override
+    public Subscriber<GeoCoordinates> getSubscriber() {
+        return subscriber;
     }
 }

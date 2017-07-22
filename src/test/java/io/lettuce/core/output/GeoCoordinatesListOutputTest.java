@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,9 @@ public class GeoCoordinatesListOutputTest {
     }
 
     @Test
-    public void commandOutputCorrectlyDecoded() throws Exception {
+    public void commandOutputCorrectlyDecoded() {
 
+        sut.multi(2);
         sut.set(ByteBuffer.wrap("1.234".getBytes()));
         sut.set(ByteBuffer.wrap("4.567".getBytes()));
         sut.multi(-1);
