@@ -327,8 +327,7 @@ public abstract class AbstractRedisClient {
      * @since 5.0
      */
     public void shutdown(Duration quietPeriod, Duration timeout) {
-        LettuceFutures.translateException(() -> shutdownAsync(quietPeriod.toNanos(), timeout.toNanos(), TimeUnit.NANOSECONDS)
-                .get(), () -> null);
+        shutdown(quietPeriod.toNanos(), timeout.toNanos(), TimeUnit.NANOSECONDS);
     }
 
     /**
@@ -340,7 +339,25 @@ public abstract class AbstractRedisClient {
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
-        LettuceFutures.translateException(() -> shutdownAsync(quietPeriod, timeout, timeUnit).get(), () -> null);
+
+        try {
+            shutdownAsync(quietPeriod, timeout, timeUnit).get();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (ExecutionException e) {
+
+            if (e.getCause() instanceof RedisCommandExecutionException) {
+                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
+            }
+
+            throw new RedisException(e.getCause());
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+            throw new RedisCommandInterruptedException(e);
+        } catch (Exception e) {
+            throw new RedisCommandExecutionException(e);
+        }
     }
 
     /**

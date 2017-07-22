@@ -16,8 +16,10 @@
 package io.lettuce.core;
 
 import java.time.Duration;
-import java.util.concurrent.*;
-import java.util.function.Supplier;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Utility to {@link #awaitAll(long, TimeUnit, Future[])} futures until they are done and to synchronize future execution using
@@ -55,8 +57,7 @@ public class LettuceFutures {
      */
     public static boolean awaitAll(long timeout, TimeUnit unit, Future<?>... futures) {
 
-        return translateException(() -> {
-
+        try {
             long nanos = unit.toNanos(timeout);
             long time = System.nanoTime();
 
@@ -74,7 +75,24 @@ public class LettuceFutures {
             }
 
             return true;
-        }, () -> false);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (TimeoutException e) {
+            return false;
+        } catch (ExecutionException e) {
+
+            if (e.getCause() instanceof RedisCommandExecutionException) {
+                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
+            }
+
+            throw new RedisException(e.getCause());
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+            throw new RedisCommandInterruptedException(e);
+        } catch (Exception e) {
+            throw new RedisCommandExecutionException(e);
+        }
     }
 
     /**
@@ -90,31 +108,14 @@ public class LettuceFutures {
      */
     public static <T> T awaitOrCancel(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
 
-        return translateException(() -> {
+        try {
             if (!cmd.await(timeout, unit)) {
                 cmd.cancel(true);
                 throw new RedisCommandTimeoutException();
             }
             return cmd.get();
-        }, () -> null);
-    }
-
-    /**
-     * Execute a {@link Callable} applying exception translation.
-     *
-     * @param callable the {@link Callable} to call.
-     * @param otherwiseTimeout {@link Supplier} for a fallback value when a {@link TimeoutException} is caught.
-     * @return result value of the {@link Callable} or {@link Supplier#get()} if a {@link TimeoutException} occurs.
-     * @since 4.4
-     */
-    protected static <T> T translateException(Callable<T> callable, Supplier<T> otherwiseTimeout) {
-
-        try {
-            return callable.call();
         } catch (RuntimeException e) {
             throw e;
-        } catch (TimeoutException e) {
-            return otherwiseTimeout.get();
         } catch (ExecutionException e) {
 
             if (e.getCause() instanceof RedisCommandExecutionException) {
