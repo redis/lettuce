@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 
 /**
  * A {@link RedisCodec} that uses plain byte arrays.
- * 
+ *
  * @author Mark Paluch
  * @since 3.3
  */
@@ -41,7 +41,7 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
     @Override
     public ByteBuffer encodeKey(byte[] key) {
 
-        if(key == null){
+        if (key == null) {
             return ByteBuffer.wrap(EMPTY);
         }
 
@@ -51,7 +51,7 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
     @Override
     public ByteBuffer encodeValue(byte[] value) {
 
-        if(value == null){
+        if (value == null) {
             return ByteBuffer.wrap(EMPTY);
         }
 
@@ -59,7 +59,14 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]> {
     }
 
     private static byte[] getBytes(ByteBuffer buffer) {
-        byte[] b = new byte[buffer.remaining()];
+
+        int remaining = buffer.remaining();
+
+        if (remaining == 0) {
+            return EMPTY;
+        }
+
+        byte[] b = new byte[remaining];
         buffer.get(b);
         return b;
     }
