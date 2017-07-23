@@ -248,7 +248,8 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> add(CommandKeyword keyword) {
 
         LettuceAssert.notNull(keyword, "CommandKeyword must not be null");
-        return add(keyword.bytes);
+        singularArguments.add(ProtocolKeywordArgument.of(keyword));
+        return this;
     }
 
     /**
@@ -260,7 +261,8 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> add(CommandType type) {
 
         LettuceAssert.notNull(type, "CommandType must not be null");
-        return add(type.bytes);
+        singularArguments.add(ProtocolKeywordArgument.of(type));
+        return this;
     }
 
     /**
@@ -272,7 +274,8 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> add(ProtocolKeyword keyword) {
 
         LettuceAssert.notNull(keyword, "CommandKeyword must not be null");
-        return add(keyword.getBytes());
+        singularArguments.add(ProtocolKeywordArgument.of(keyword));
+        return this;
     }
 
     @Override
@@ -377,6 +380,50 @@ public class CommandArgs<K, V> {
         }
     }
 
+    static class ProtocolKeywordArgument {
+
+        static BytesArgument of(ProtocolKeyword protocolKeyword) {
+
+            if (protocolKeyword instanceof CommandType) {
+                return CommandTypeCache.cache[((Enum) protocolKeyword).ordinal()];
+            }
+
+            if (protocolKeyword instanceof CommandKeyword) {
+                return CommandKeywordCache.cache[((Enum) protocolKeyword).ordinal()];
+            }
+
+            return BytesArgument.of(protocolKeyword.getBytes());
+        }
+    }
+
+    static class CommandTypeCache {
+
+        static final CommandArgs.BytesArgument cache[];
+
+        static {
+
+            CommandType[] values = CommandType.values();
+            cache = new BytesArgument[values.length];
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new BytesArgument(values[i].getBytes());
+            }
+        }
+    }
+
+    static class CommandKeywordCache {
+
+        static final CommandArgs.BytesArgument cache[];
+
+        static {
+
+            CommandKeyword[] values = CommandKeyword.values();
+            cache = new BytesArgument[values.length];
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new BytesArgument(values[i].getBytes());
+            }
+        }
+    }
+
     static class ByteBufferArgument {
 
         static void writeByteBuffer(ByteBuf target, ByteBuffer value) {
@@ -416,6 +463,10 @@ public class CommandArgs<K, V> {
                 return IntegerCache.cache[(int) val];
             }
 
+            if (val < 0 && -val < IntegerCache.cache.length) {
+                return IntegerCache.negativeCache[(int) -val];
+            }
+
             return new IntegerArgument(val);
         }
 
@@ -442,12 +493,15 @@ public class CommandArgs<K, V> {
     static class IntegerCache {
 
         static final IntegerArgument cache[];
+        static final IntegerArgument negativeCache[];
 
         static {
             int high = Integer.getInteger("biz.paluch.redis.CommandArgs.IntegerCache", 128);
             cache = new IntegerArgument[high];
+            negativeCache = new IntegerArgument[high];
             for (int i = 0; i < high; i++) {
                 cache[i] = new IntegerArgument(i);
+                negativeCache[i] = new IntegerArgument(-i);
             }
         }
     }
