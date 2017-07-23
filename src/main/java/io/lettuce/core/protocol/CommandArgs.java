@@ -244,7 +244,8 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> add(CommandKeyword keyword) {
 
         LettuceAssert.notNull(keyword, "CommandKeyword must not be null");
-        return add((ProtocolKeyword) keyword);
+        singularArguments.add(ProtocolKeywordArgument.of(keyword));
+        return this;
     }
 
     /**
@@ -256,7 +257,8 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> add(CommandType type) {
 
         LettuceAssert.notNull(type, "CommandType must not be null");
-        return add(type.bytes);
+        singularArguments.add(ProtocolKeywordArgument.of(type));
+        return this;
     }
 
     /**
@@ -268,7 +270,6 @@ public class CommandArgs<K, V> {
     public CommandArgs<K, V> add(ProtocolKeyword keyword) {
 
         LettuceAssert.notNull(keyword, "CommandKeyword must not be null");
-
         singularArguments.add(ProtocolKeywordArgument.of(keyword));
         return this;
     }
@@ -357,29 +358,6 @@ public class CommandArgs<K, V> {
         abstract void encode(ByteBuf buffer);
     }
 
-    static class ProtocolKeywordArgument extends SingularArgument {
-
-        final ProtocolKeyword protocolKeyword;
-
-        private ProtocolKeywordArgument(ProtocolKeyword protocolKeyword) {
-            this.protocolKeyword = protocolKeyword;
-        }
-
-        static ProtocolKeywordArgument of(ProtocolKeyword val) {
-            return new ProtocolKeywordArgument(val);
-        }
-
-        @Override
-        void encode(ByteBuf buffer) {
-            BytesArgument.writeBytes(buffer, protocolKeyword.getBytes());
-        }
-
-        @Override
-        public String toString() {
-            return protocolKeyword.name();
-        }
-    }
-
     static class BytesArgument extends SingularArgument {
 
         final byte[] val;
@@ -411,6 +389,62 @@ public class CommandArgs<K, V> {
         @Override
         public String toString() {
             return Base64.getEncoder().encodeToString(val);
+        }
+    }
+
+    static class ProtocolKeywordArgument extends BytesArgument {
+
+        private final ProtocolKeyword protocolKeyword;
+
+        private ProtocolKeywordArgument(ProtocolKeyword protocolKeyword) {
+            super(protocolKeyword.getBytes());
+            this.protocolKeyword = protocolKeyword;
+        }
+
+        static BytesArgument of(ProtocolKeyword protocolKeyword) {
+
+            if (protocolKeyword instanceof CommandType) {
+                return CommandTypeCache.cache[((Enum) protocolKeyword).ordinal()];
+            }
+
+            if (protocolKeyword instanceof CommandKeyword) {
+                return CommandKeywordCache.cache[((Enum) protocolKeyword).ordinal()];
+            }
+
+            return ProtocolKeywordArgument.of(protocolKeyword.getBytes());
+        }
+
+        @Override
+        public String toString() {
+            return protocolKeyword.name();
+        }
+    }
+
+    static class CommandTypeCache {
+
+        static final ProtocolKeywordArgument cache[];
+
+        static {
+
+            CommandType[] values = CommandType.values();
+            cache = new ProtocolKeywordArgument[values.length];
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new ProtocolKeywordArgument(values[i]);
+            }
+        }
+    }
+
+    static class CommandKeywordCache {
+
+        static final ProtocolKeywordArgument cache[];
+
+        static {
+
+            CommandKeyword[] values = CommandKeyword.values();
+            cache = new ProtocolKeywordArgument[values.length];
+            for (int i = 0; i < cache.length; i++) {
+                cache[i] = new ProtocolKeywordArgument(values[i]);
+            }
         }
     }
 
@@ -453,6 +487,10 @@ public class CommandArgs<K, V> {
                 return IntegerCache.cache[(int) val];
             }
 
+            if (val < 0 && -val < IntegerCache.cache.length) {
+                return IntegerCache.negativeCache[(int) -val];
+            }
+
             return new IntegerArgument(val);
         }
 
@@ -484,12 +522,15 @@ public class CommandArgs<K, V> {
     static class IntegerCache {
 
         static final IntegerArgument cache[];
+        static final IntegerArgument negativeCache[];
 
         static {
             int high = Integer.getInteger("io.lettuce.core.CommandArgs.IntegerCache", 128);
             cache = new IntegerArgument[high];
+            negativeCache = new IntegerArgument[high];
             for (int i = 0; i < high; i++) {
                 cache[i] = new IntegerArgument(i);
+                negativeCache[i] = new IntegerArgument(-i);
             }
         }
     }

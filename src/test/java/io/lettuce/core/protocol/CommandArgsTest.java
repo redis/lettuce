@@ -51,6 +51,14 @@ public class CommandArgsTest {
     }
 
     @Test
+    public void getFirstIntegerShouldReturnFirstNegativeInteger() throws Exception {
+
+        CommandArgs<String, String> args = new CommandArgs<>(codec).add(-1L).add(-127).add(-128).add(-129);
+
+        assertThat(CommandArgsAccessor.getFirstInteger(args)).isEqualTo(-1L);
+    }
+
+    @Test
     public void getFirstStringShouldReturnNull() throws Exception {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec);
