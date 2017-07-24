@@ -17,8 +17,8 @@ package com.lambdaworks.redis.pubsub;
 
 import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.protocol.CommandHandler;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.buffer.ByteBuf;
@@ -31,8 +31,8 @@ import io.netty.channel.ChannelHandlerContext;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
 
@@ -47,7 +47,9 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
      * @param codec Codec.
      */
     public PubSubCommandHandler(ClientOptions clientOptions, ClientResources clientResources, RedisCodec<K, V> codec) {
+
         super(clientOptions, clientResources);
+
         this.codec = codec;
         this.output = new PubSubOutput<>(codec);
     }
@@ -55,23 +57,29 @@ public class PubSubCommandHandler<K, V> extends CommandHandler<K, V> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) {
 
-        while (output.type() == null && canDecode(buffer)) {
-            CommandOutput<K, V, ?> currentOutput = stack.peek().getOutput();
-            if (!rsm.decode(buffer, currentOutput)) {
+        super.decode(ctx, buffer);
+
+        while (buffer.isReadable()) {
+
+            if (!rsm.decode(buffer, output)) {
                 return;
             }
-            stack.poll().complete();
-            buffer.discardReadBytes();
-            if (currentOutput instanceof PubSubOutput) {
-                ctx.fireChannelRead(currentOutput);
-            }
-        }
 
-        while (rsm.decode(buffer, output)) {
             ctx.fireChannelRead(output);
             output = new PubSubOutput<>(codec);
             buffer.discardReadBytes();
         }
     }
 
+    @Override
+    protected boolean canDecode(ByteBuf buffer) {
+        return super.canDecode(buffer) && output.type() == null;
+    }
+
+    @Override
+    protected void afterComplete(ChannelHandlerContext ctx, RedisCommand<K, V, ?> command) {
+        if (command.getOutput() instanceof PubSubOutput) {
+            ctx.fireChannelRead(command.getOutput());
+        }
+    }
 }

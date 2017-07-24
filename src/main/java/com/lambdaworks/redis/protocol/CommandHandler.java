@@ -274,7 +274,18 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             if (buffer.refCnt() != 0) {
                 buffer.discardReadBytes();
             }
+
+            afterComplete(ctx, command);
         }
+    }
+
+    /**
+     * Hook method called after command completion.
+     *
+     * @param ctx
+     * @param command
+     */
+    protected void afterComplete(ChannelHandlerContext ctx, RedisCommand<K, V, ?> command) {
     }
 
     protected boolean canDecode(ByteBuf buffer) {
