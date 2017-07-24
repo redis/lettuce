@@ -17,8 +17,8 @@ package io.lettuce.core.pubsub;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandHandler;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -30,8 +30,8 @@ import io.netty.channel.ChannelHandlerContext;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public class PubSubCommandHandler<K, V> extends CommandHandler {
 
@@ -49,7 +49,6 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
      */
     public PubSubCommandHandler(ClientOptions clientOptions, ClientResources clientResources, RedisCodec<K, V> codec,
             PubSubEndpoint<K, V> endpoint) {
-
         super(clientOptions, clientResources, endpoint);
 
         this.endpoint = endpoint;
@@ -61,28 +60,31 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
 
-        while (output.type() == null && canDecode(buffer)) {
-            CommandOutput<?, ?, ?> currentOutput = getStack().peek().getOutput();
+        super.decode(ctx, buffer);
 
-            if (!super.decode(buffer, currentOutput)) {
+        while (buffer.isReadable()) {
+
+            if (!super.decode(buffer, output)) {
                 return;
             }
-
-            getStack().poll().complete();
-
-            buffer.discardReadBytes();
-
-            if (currentOutput instanceof PubSubOutput) {
-                endpoint.notifyMessage((PubSubOutput) currentOutput);
-            }
-        }
-
-        while (super.decode(buffer, output)) {
 
             endpoint.notifyMessage(output);
             output = new PubSubOutput<>(codec);
 
             buffer.discardReadBytes();
+        }
+    }
+
+    @Override
+    protected boolean canDecode(ByteBuf buffer) {
+        return super.canDecode(buffer) && output.type() == null;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void afterComplete(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
+        if (command.getOutput() instanceof PubSubOutput) {
+            endpoint.notifyMessage((PubSubOutput) command.getOutput());
         }
     }
 }

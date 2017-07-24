@@ -518,6 +518,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             if (buffer.refCnt() != 0) {
                 buffer.discardReadBytes();
             }
+
+            afterComplete(ctx, command);
         }
     }
 
@@ -576,6 +578,15 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     protected boolean decode(ByteBuf buffer, RedisCommand<?, ?, ?> command, CommandOutput<?, ?, ?> output) {
         return rsm.decode(buffer, command, output);
+    }
+
+    /**
+     * Hook method called after command completion.
+     *
+     * @param ctx
+     * @param command
+     */
+    protected void afterComplete(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
     }
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
