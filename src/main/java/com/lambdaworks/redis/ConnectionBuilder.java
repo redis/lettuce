@@ -15,6 +15,7 @@
  */
 package com.lambdaworks.redis;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,8 @@ import com.lambdaworks.redis.resource.ClientResources;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.handler.proxy.Socks4ProxyHandler;
+import io.netty.handler.proxy.Socks5ProxyHandler;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 
@@ -75,6 +78,8 @@ public class ConnectionBuilder {
 
         connection.setOptions(clientOptions);
 
+        addProxyHandlerByOption(handlers, clientOptions.getSocketOptions().getSocksProxyOptions());
+
         handlers.add(new ChannelGroupListener(channelGroup));
         handlers.add(new CommandEncoder());
         handlers.add(commandHandler);
@@ -86,6 +91,30 @@ public class ConnectionBuilder {
         }
 
         return handlers;
+    }
+
+    private void addProxyHandlerByOption(List<ChannelHandler> handlers, SocksProxyOptions socksProxyOptions) {
+        if (socksProxyOptions == null) {
+            return;
+        }
+
+        int socksVersion = socksProxyOptions.getSocksVersion();
+        SocketAddress socketAddress = new InetSocketAddress(socksProxyOptions.getHost(), socksProxyOptions.getPort());
+
+        if (socksVersion == SocksProxyOptions.SOCKS_VERSION_4) {
+            if (socksProxyOptions.getUsername() != null) {
+                handlers.add(new Socks4ProxyHandler(socketAddress, socksProxyOptions.getUsername()));
+            } else {
+                handlers.add(new Socks4ProxyHandler(socketAddress));
+            }
+
+        } else if (socksVersion == SocksProxyOptions.SOCKS_VERSION_5) {
+            if (socksProxyOptions.getUsername() != null) {
+                handlers.add(new Socks5ProxyHandler(socketAddress, socksProxyOptions.getUsername(), socksProxyOptions.getPassword()));
+            } else {
+                handlers.add(new Socks5ProxyHandler(socketAddress));
+            }
+        }
     }
 
     public void enablePingBeforeConnect() {
