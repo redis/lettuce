@@ -32,18 +32,20 @@ public class SocketOptions {
 
     public static final boolean DEFAULT_SO_KEEPALIVE = false;
     public static final boolean DEFAULT_SO_NO_DELAY = false;
+    public static final SocksProxyOptions DEFAULT_SOCKS_PROXY = null;
 
     private final long connectTimeout;
     private final TimeUnit connectTimeoutUnit;
     private final boolean keepAlive;
     private final boolean tcpNoDelay;
+    private final SocksProxyOptions socksProxyOptions;
 
     protected SocketOptions(Builder builder) {
-
         this.connectTimeout = builder.connectTimeout;
         this.connectTimeoutUnit = builder.connectTimeoutUnit;
         this.keepAlive = builder.keepAlive;
         this.tcpNoDelay = builder.tcpNoDelay;
+        this.socksProxyOptions = builder.socksProxyOptions;
     }
 
     protected SocketOptions(SocketOptions original) {
@@ -51,6 +53,7 @@ public class SocketOptions {
         this.connectTimeoutUnit = original.getConnectTimeoutUnit();
         this.keepAlive = original.isKeepAlive();
         this.tcpNoDelay = original.isTcpNoDelay();
+        this.socksProxyOptions = original.getSocksProxyOptions();
     }
 
     /**
@@ -90,6 +93,7 @@ public class SocketOptions {
         private TimeUnit connectTimeoutUnit = DEFAULT_CONNECT_TIMEOUT_UNIT;
         private boolean keepAlive = DEFAULT_SO_KEEPALIVE;
         private boolean tcpNoDelay = DEFAULT_SO_NO_DELAY;
+        private SocksProxyOptions socksProxyOptions = DEFAULT_SOCKS_PROXY;
 
         private Builder() {
         }
@@ -140,6 +144,18 @@ public class SocketOptions {
         }
 
         /**
+         * Sets socks proxy.
+         *
+         * @param socksProxyOptions options for socks proxy.
+         * @return {@code this}
+         */
+        public Builder socksProxy(SocksProxyOptions socksProxyOptions) {
+
+            this.socksProxyOptions = socksProxyOptions;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link SocketOptions}
          *
          * @return new instance of {@link SocketOptions}
@@ -185,5 +201,14 @@ public class SocketOptions {
      */
     public boolean isTcpNoDelay() {
         return tcpNoDelay;
+    }
+
+    /**
+     * Returns socks proxy options.
+     *
+     * @return socks proxy options.
+     */
+    public SocksProxyOptions getSocksProxyOptions() {
+        return socksProxyOptions;
     }
 }
