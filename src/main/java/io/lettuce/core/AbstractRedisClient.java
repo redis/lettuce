@@ -486,6 +486,15 @@ public abstract class AbstractRedisClient {
 
         CompletableFuture<Void> promise = new CompletableFuture<>();
 
+        if (future.isDone() || future.isCancelled()) {
+            if (future.isSuccess()) {
+                promise.complete(null);
+            } else {
+                promise.completeExceptionally(future.cause());
+            }
+            return promise;
+        }
+
         future.addListener(f -> {
             if (f.isSuccess()) {
                 promise.complete(null);

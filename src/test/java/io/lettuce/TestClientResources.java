@@ -34,6 +34,14 @@ public class TestClientResources {
     private ClientResources clientResources = create();
 
     /**
+     * @return the default {@link ClientResources} instance used across multiple tests. The returned instance must not be shut
+     *         down.
+     */
+    public static ClientResources get() {
+        return instance.clientResources;
+    }
+
+    /**
      * Creates a new {@link ClientResources} instance and registers a shutdown hook to de-allocate the instance upon JVM
      * shutdown.
      *
@@ -58,11 +66,4 @@ public class TestClientResources {
         return resources;
     }
 
-    /**
-     * @return the default {@link ClientResources} instance used across multiple tests. The returned instance must not be shut
-     *         down.
-     */
-    public static ClientResources get() {
-        return instance.clientResources;
-    }
 }

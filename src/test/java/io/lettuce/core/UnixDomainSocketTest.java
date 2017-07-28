@@ -33,7 +33,6 @@ import org.junit.Test;
 import io.lettuce.TestClientResources;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.sentinel.SentinelRule;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.netty.util.internal.SystemPropertyUtil;
@@ -46,7 +45,6 @@ public class UnixDomainSocketTest {
     private static final String MASTER_ID = "mymaster";
 
     private static RedisClient sentinelClient;
-    private static ClientResources clientResources;
 
     @Rule
     public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
@@ -57,15 +55,12 @@ public class UnixDomainSocketTest {
 
     @BeforeClass
     public static void setupClient() {
-
-        clientResources = TestClientResources.create();
         sentinelClient = getRedisSentinelClient();
     }
 
     @AfterClass
     public static void shutdownClient() {
         FastShutdown.shutdown(sentinelClient);
-        FastShutdown.shutdown(clientResources);
     }
 
     @Test
@@ -78,7 +73,6 @@ public class UnixDomainSocketTest {
         RedisClient redisClient = RedisClient.create(TestClientResources.get(), redisURI);
 
         StatefulRedisConnection<String, String> connection = redisClient.connect();
-
         someRedisAction(connection.sync());
         connection.close();
 
@@ -193,7 +187,8 @@ public class UnixDomainSocketTest {
 
     private void assumeTestSupported() {
         String osName = SystemPropertyUtil.get("os.name").toLowerCase(Locale.UK).trim();
-        assumeTrue("Only supported on Linux, your os is " + osName, osName.startsWith("linux"));
+        assumeTrue("Only supported on Linux/OSX, your os is " + osName + " with epoll/kqueue support.",
+                Transports.NativeTransports.isSocketSupported());
     }
 
     private static RedisURI getSocketRedisUri() throws IOException {
