@@ -41,6 +41,16 @@ class Futures {
     static Promise<Boolean> toBooleanPromise(Future<?> future) {
 
         DefaultPromise<Boolean> result = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+
+        if (future.isDone() || future.isCancelled()) {
+            if (future.isSuccess()) {
+                result.setSuccess(true);
+            } else {
+                result.setFailure(future.cause());
+            }
+            return result;
+        }
+
         future.addListener((GenericFutureListener<Future<Object>>) f -> {
 
             if (f.isSuccess()) {
