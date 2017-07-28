@@ -20,17 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import com.lambdaworks.redis.internal.LettuceLists;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import rx.Observable;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
@@ -38,6 +33,7 @@ import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
+import com.lambdaworks.redis.internal.LettuceLists;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @SuppressWarnings("unchecked")
@@ -51,8 +47,9 @@ public class ClusterReactiveCommandTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         setupClusterClient();
-        client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(LettuceLists.unmodifiableList(RedisURI.Builder.redis(host, port1).build()));
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                LettuceLists.unmodifiableList(RedisURI.Builder.redis(host, port1).build()));
 
     }
 

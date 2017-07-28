@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.lambdaworks.redis.*;
@@ -46,7 +47,7 @@ public class SslTest extends AbstractTest {
 
     private static final String KEYSTORE = "work/keystore.jks";
     private static final String TRUSTSTORE = "work/truststore.jks";
-    private static final RedisClient redisClient = RedisClient.create();
+    private static RedisClient redisClient;
 
     private static final RedisURI URI_NO_VERIFY = RedisURI.Builder.redis(host(), sslPort()) //
             .withSsl(true) //
@@ -62,6 +63,11 @@ public class SslTest extends AbstractTest {
             .withSsl(true) //
             .withVerifyPeer(true) //
             .build();
+
+    @BeforeClass
+    public void beforeClass() {
+        redisClient = RedisClient.create(TestClientResources.get());
+    }
 
     @Before
     public void before() {

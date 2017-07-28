@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,22 @@ import com.lambdaworks.redis.resource.DefaultClientResources;
  * Client-Resources suitable for testing. Uses {@link com.lambdaworks.redis.TestEventLoopGroupProvider} to preserve the event
  * loop groups between tests. Every time a new {@link TestClientResources} instance is created, shutdown hook is added
  * {@link Runtime#addShutdownHook(Thread)}.
- * 
+ *
  * @author Mark Paluch
  */
 public class TestClientResources {
+
+    private static final ClientResources RESOURCES = create();
+
+    /**
+     * Creates a new {@link ClientResources} instance and registers a shutdown hook to de-allocate the instance upon JVM
+     * shutdown.
+     *
+     * @return a new {@link ClientResources} instance.
+     */
+    public static ClientResources get() {
+        return RESOURCES;
+    }
 
     /**
      * Creates a new {@link ClientResources} instance and registers a shutdown hook to de-allocate the instance upon JVM

@@ -24,6 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.lambdaworks.RedisConditions;
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
@@ -44,7 +45,8 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
     @BeforeClass
     public static void setupClient() {
         redisClusterClient = RedisClusterClient
-                .create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass

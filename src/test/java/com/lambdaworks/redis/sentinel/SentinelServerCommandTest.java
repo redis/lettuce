@@ -26,6 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
@@ -42,7 +43,8 @@ public class SentinelServerCommandTest extends AbstractSentinelTest {
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        sentinelClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder
+                .sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     @Before

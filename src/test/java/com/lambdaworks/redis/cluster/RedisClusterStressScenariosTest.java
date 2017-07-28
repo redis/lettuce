@@ -32,6 +32,7 @@ import org.junit.runners.MethodSorters;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
 import com.lambdaworks.redis.*;
@@ -65,8 +66,8 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
-        client = RedisClient.create(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
-        clusterClient = RedisClusterClient.create(
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
                 Collections.singletonList(RedisURI.Builder.redis(host, AbstractClusterTest.port5)
                 .build()));
     }

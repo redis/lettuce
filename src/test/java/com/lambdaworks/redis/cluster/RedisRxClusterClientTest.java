@@ -21,16 +21,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import rx.Observable;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisException;
@@ -53,8 +49,9 @@ public class RedisRxClusterClientTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         setupClusterClient();
-        client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                Collections.singletonList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass

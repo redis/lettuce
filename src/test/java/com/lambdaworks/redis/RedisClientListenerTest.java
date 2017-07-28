@@ -21,9 +21,7 @@ import static com.lambdaworks.Connections.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.SocketAddress;
-import java.util.concurrent.TimeUnit;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -35,7 +33,7 @@ import com.lambdaworks.redis.resource.ClientResources;
 
 /**
  * Integration tests for {@link RedisConnectionStateListener} via {@link RedisClient}.
- * 
+ *
  * @author Mark Paluch
  */
 public class RedisClientListenerTest extends AbstractTest {
@@ -44,7 +42,7 @@ public class RedisClientListenerTest extends AbstractTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        DEFAULT_RESOURCES = TestClientResources.create();
+        DEFAULT_RESOURCES = TestClientResources.get();
     }
 
     @Test

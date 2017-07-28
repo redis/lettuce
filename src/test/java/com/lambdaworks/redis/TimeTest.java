@@ -15,17 +15,18 @@
  */
 package com.lambdaworks.redis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.lambdaworks.TestClientResources;
 
 public class TimeTest {
-    RedisClient client = RedisClient.create();
+    RedisClient client = RedisClient.create(TestClientResources.get());
 
     @Before
     public void setUp() throws Exception {

@@ -23,14 +23,13 @@ import static org.mockito.Mockito.when;
 
 import java.util.concurrent.ExecutionException;
 
-import org.assertj.core.api.Assertions;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.protocol.BaseRedisCommandBuilder;
 import com.lambdaworks.redis.protocol.CommandHandler;
 
 /**
@@ -55,7 +54,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
                 }
 
                 RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
-                RedisClient redisClient = new RedisClient(redisURI);
+                RedisClient redisClient = RedisClient.create(TestClientResources.get(), redisURI);
                 RedisConnection<String, String> authConnection = redisClient.connect().sync();
                 authConnection.ping();
                 authConnection.close();

@@ -33,6 +33,7 @@ import rx.Subscription;
 import rx.observers.TestSubscriber;
 
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.event.EventBus;
 import com.lambdaworks.redis.event.metrics.CommandLatencyEvent;
@@ -49,7 +50,7 @@ public class ClientMetricsTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() {
-        client = RedisClient.create(RedisURI.Builder.redis(host, port).build());
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
     }
 
     @Before

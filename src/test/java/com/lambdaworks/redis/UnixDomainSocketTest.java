@@ -32,7 +32,6 @@ import org.junit.Test;
 
 import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
-import com.lambdaworks.redis.resource.ClientResources;
 import com.lambdaworks.redis.sentinel.SentinelRule;
 
 import io.netty.util.internal.SystemPropertyUtil;
@@ -45,7 +44,6 @@ public class UnixDomainSocketTest {
     private static final String MASTER_ID = "mymaster";
 
     private static RedisClient sentinelClient;
-    private static ClientResources clientResources;
 
     @Rule
     public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
@@ -56,15 +54,12 @@ public class UnixDomainSocketTest {
 
     @BeforeClass
     public static void setupClient() {
-
-        clientResources = TestClientResources.create();
         sentinelClient = getRedisSentinelClient();
     }
 
     @AfterClass
     public static void shutdownClient() {
         FastShutdown.shutdown(sentinelClient);
-        FastShutdown.shutdown(clientResources);
     }
 
     @Test
@@ -74,7 +69,7 @@ public class UnixDomainSocketTest {
 
         RedisURI redisURI = getSocketRedisUri();
 
-        RedisClient redisClient = RedisClient.create(clientResources, redisURI);
+        RedisClient redisClient = RedisClient.create(TestClientResources.get(), redisURI);
 
         StatefulRedisConnection<String, String> connection = redisClient.connect();
 
@@ -91,7 +86,7 @@ public class UnixDomainSocketTest {
 
         RedisURI redisURI = getSocketRedisUri();
 
-        RedisClient redisClient = RedisClient.create(clientResources);
+        RedisClient redisClient = RedisClient.create(TestClientResources.get());
 
         StatefulRedisConnection<String, String> connection = redisClient.connect(redisURI);
 
@@ -110,7 +105,7 @@ public class UnixDomainSocketTest {
         uri.getSentinels().add(getSentinelSocketRedisUri());
         uri.setSentinelMasterId("mymaster");
 
-        RedisClient redisClient = RedisClient.create(clientResources, uri);
+        RedisClient redisClient = RedisClient.create(TestClientResources.get(), uri);
 
         StatefulRedisConnection<String, String> connection = redisClient.connect();
 
@@ -135,7 +130,7 @@ public class UnixDomainSocketTest {
         uri.getSentinels().add(getSentinelSocketRedisUri());
         uri.setSentinelMasterId("mymaster");
 
-        RedisClient redisClient = RedisClient.create(clientResources);
+        RedisClient redisClient = RedisClient.create(TestClientResources.get());
 
         StatefulRedisConnection<String, String> connection = redisClient.connect(uri);
 
@@ -162,7 +157,7 @@ public class UnixDomainSocketTest {
         uri.getSentinels().add(RedisURI.create(RedisURI.URI_SCHEME_REDIS + "://" + TestSettings.host() + ":26379"));
         uri.setSentinelMasterId(MASTER_ID);
 
-        RedisClient redisClient = new RedisClient(clientResources, uri);
+        RedisClient redisClient = new RedisClient(TestClientResources.get(), uri);
 
         RedisSentinelAsyncConnection<String, String> sentinelConnection = redisClient
                 .connectSentinelAsync(getSentinelSocketRedisUri());
@@ -187,7 +182,7 @@ public class UnixDomainSocketTest {
     }
 
     private static RedisClient getRedisSentinelClient() {
-        return new RedisClient(clientResources, RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        return new RedisClient(TestClientResources.get(), RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     private static void assumeTestSupported() {

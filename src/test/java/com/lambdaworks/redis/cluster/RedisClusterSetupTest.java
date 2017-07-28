@@ -37,6 +37,7 @@ import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.Connections;
 import com.lambdaworks.Futures;
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
 import com.lambdaworks.redis.*;
@@ -73,7 +74,8 @@ public class RedisClusterSetupTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() {
-        clusterClient = RedisClusterClient.create(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
     }
 
     @AfterClass

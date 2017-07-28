@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runners.MethodSorters;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
@@ -121,7 +122,7 @@ public class ClientTest extends AbstractRedisClientTest {
     @Test
     public void emptyClient() throws Exception {
 
-        RedisClient client = new RedisClient();
+        RedisClient client = RedisClient.create(TestClientResources.get());
         try {
             client.connect();
         } catch (IllegalStateException e) {

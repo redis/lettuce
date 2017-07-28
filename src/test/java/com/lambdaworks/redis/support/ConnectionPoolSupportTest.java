@@ -60,7 +60,7 @@ public class ConnectionPoolSupportTest extends AbstractTest {
 
     @BeforeClass
     public static void setupClient() {
-        client = RedisClient.create(TestClientResources.create(), RedisURI.Builder.redis(host, port).build());
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
         client.setOptions(ClientOptions.create());
         channels = (ChannelGroup) ReflectionTestUtils.getField(client, "channels");
     }
@@ -68,7 +68,6 @@ public class ConnectionPoolSupportTest extends AbstractTest {
     @AfterClass
     public static void afterClass() {
         FastShutdown.shutdown(client);
-        FastShutdown.shutdown(client.getResources());
     }
 
     @Test
@@ -223,7 +222,7 @@ public class ConnectionPoolSupportTest extends AbstractTest {
     @Test
     public void wrappedClusterConnectionShouldUseWrappers() throws Exception {
 
-        RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.create(),
+        RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.create(TestSettings.host(), 7379));
 
         GenericObjectPool<StatefulRedisClusterConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(

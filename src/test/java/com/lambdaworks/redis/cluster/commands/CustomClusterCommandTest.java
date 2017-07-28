@@ -22,6 +22,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import rx.Observable;
+
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.AbstractClusterTest;
 import com.lambdaworks.redis.cluster.ClusterTestUtil;
@@ -32,8 +35,6 @@ import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.commands.CustomCommandTest;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
-
-import rx.Observable;
 
 /**
  * @author Mark Paluch
@@ -47,7 +48,7 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 

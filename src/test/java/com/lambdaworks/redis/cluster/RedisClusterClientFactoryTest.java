@@ -40,7 +40,7 @@ public class RedisClusterClientFactoryTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        DEFAULT_RESOURCES = TestClientResources.create();
+        DEFAULT_RESOURCES = TestClientResources.get();
     }
 
     @Test

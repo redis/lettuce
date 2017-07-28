@@ -29,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
@@ -44,7 +45,8 @@ public class SentinelCommandTest extends AbstractSentinelTest {
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build());
+        sentinelClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder
+                .sentinel(TestSettings.host(), MASTER_ID).build());
     }
 
     @Before
@@ -93,7 +95,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnectWith() throws Exception {
 
-        RedisClient client = new RedisClient(
+        RedisClient client = RedisClient.create(TestClientResources.get(),
                 RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID).withSentinel(TestSettings.host()).build());
 
         RedisSentinelAsyncCommands<String, String> sentinelConnection = client.connectSentinelAsync();
@@ -115,7 +117,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnectWrongMaster() throws Exception {
 
-        RedisClient client = new RedisClient(
+        RedisClient client = RedisClient.create(TestClientResources.get(),
                 RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent").withSentinel(TestSettings.host()).build());
         try {
             client.connect();
@@ -129,7 +131,8 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     @Test
     public void sentinelConnect() throws Exception {
 
-        RedisClient client = new RedisClient(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
+        RedisClient client = RedisClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
 
         RedisSentinelAsyncCommands<String, String> connection = client.connectSentinelAsync();
         assertThat(connection.ping().get()).isEqualTo("PONG");

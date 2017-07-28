@@ -17,6 +17,8 @@ package com.lambdaworks.redis;
 
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.TestClientResources;
+
 /**
  * @author Mark Paluch
  */
@@ -27,7 +29,8 @@ public class DefaultRedisClient {
     private RedisClient redisClient;
 
     public DefaultRedisClient() {
-        redisClient = RedisClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
+        redisClient = RedisClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -38,7 +41,7 @@ public class DefaultRedisClient {
 
     /**
      * Do not close the client.
-     * 
+     *
      * @return the default redis client for the tests.
      */
     public static RedisClient get() {

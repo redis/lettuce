@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.ListStreamingAdapter;
 import com.lambdaworks.redis.RedisURI;
@@ -45,7 +46,8 @@ public class StringClusterCommandTest extends StringCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
     @AfterClass

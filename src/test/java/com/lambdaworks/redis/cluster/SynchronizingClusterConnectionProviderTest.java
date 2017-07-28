@@ -55,7 +55,7 @@ public class SynchronizingClusterConnectionProviderTest {
         redisURI.setTimeout(5);
         redisURI.setUnit(TimeUnit.SECONDS);
 
-        redisClient = RedisClusterClient.create(TestClientResources.create(), redisURI);
+        redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
         redisClient.setOptions(ClusterClientOptions.create());
     }
 

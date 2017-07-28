@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 
 import org.junit.*;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
@@ -42,7 +43,8 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
 
     @BeforeClass
     public static void setupClient() {
-        sentinelClient = new RedisClient(RedisURI.Builder.sentinel(TestSettings.host(), 26380, MASTER_ID).build());
+        sentinelClient = RedisClient.create(TestClientResources.get(),
+                RedisURI.Builder.sentinel(TestSettings.host(), 26380, MASTER_ID).build());
     }
 
     @Before
@@ -63,7 +65,8 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
     @Test
     public void failover() throws Exception {
 
-        RedisClient redisClient = new RedisClient(RedisURI.Builder.redis(TestSettings.host(), port(3)).build());
+        RedisClient redisClient = RedisClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), port(3)).build());
 
         String tcpPort1 = connectUsingSentinelAndGetPort();
 

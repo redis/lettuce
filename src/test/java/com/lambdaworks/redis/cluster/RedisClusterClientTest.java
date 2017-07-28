@@ -30,6 +30,7 @@ import org.junit.*;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -64,8 +65,9 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @BeforeClass
     public static void setupClient() throws Exception {
         setupClusterClient();
-        client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(Collections.singletonList(RedisURI.Builder.redis(host, port1)
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                Collections.singletonList(RedisURI.Builder.redis(host, port1)
                 .withClientName("my-client").build()));
     }
 
@@ -384,7 +386,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Test
     public void clusterAuth() throws Exception {
 
-        RedisClusterClient clusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), port7)
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), port7)
                 .withPassword("foobared").build());
 
         try (RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster()) {
@@ -407,7 +410,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Test
     public void clusterAuthPingBeforeConnect() throws Exception {
 
-        RedisClusterClient clusterClient = RedisClusterClient.create(RedisURI.Builder.redis(TestSettings.host(), port7)
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), port7)
                 .withPassword("foobared").build());
         clusterClient.setOptions(ClusterClientOptions.builder().pingBeforeActivateConnection(true).build());
 
@@ -429,7 +433,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Test(expected = RedisException.class)
     public void clusterNeedsAuthButNotSupplied() throws Exception {
 
-        RedisClusterClient clusterClient = new RedisClusterClient(RedisURI.Builder.redis(TestSettings.host(), port7).build());
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), port7).build());
 
         try (RedisClusterCommands<String, String> connection = clusterClient.connectCluster()) {
 
@@ -443,7 +448,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     @Test
     public void noClusterNodeAvailable() throws Exception {
 
-        RedisClusterClient clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, 40400).build());
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(host, 40400).build());
         try {
             clusterClient.connectCluster();
             fail("Missing RedisException");
@@ -520,7 +526,8 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         sync.readWrite();
 
         assertThat(ReflectionTestUtils.getField(sync.getStatefulConnection(), "readOnly")).isEqualTo(Boolean.FALSE);
-        RedisClusterClient clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, 40400).build());
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(host, 40400).build());
         try {
             clusterClient.connectCluster();
             fail("Missing RedisException");

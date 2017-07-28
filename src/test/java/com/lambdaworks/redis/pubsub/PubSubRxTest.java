@@ -29,7 +29,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import rx.Observable;
+import rx.Subscription;
+import rx.observables.BlockingObservable;
+
 import com.lambdaworks.Delay;
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.FastShutdown;
@@ -42,10 +47,6 @@ import com.lambdaworks.redis.pubsub.api.rx.ChannelMessage;
 import com.lambdaworks.redis.pubsub.api.rx.PatternMessage;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
-
-import rx.Observable;
-import rx.Subscription;
-import rx.observables.BlockingObservable;
 
 /**
  * @author Mark Paluch
@@ -301,7 +302,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     @Test
     public void pubsubCloseOnClientShutdown() throws Exception {
 
-        RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis(host, port).build());
+        RedisClient redisClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
         RedisPubSubCommands<String, String> connection = redisClient.connectPubSub().sync();
         FastShutdown.shutdown(redisClient);
 

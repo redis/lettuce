@@ -57,7 +57,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
 
     @BeforeClass
     public static void beforeClass() {
-        clientResources = TestClientResources.create();
+        clientResources = TestClientResources.get();
     }
 
     @Before

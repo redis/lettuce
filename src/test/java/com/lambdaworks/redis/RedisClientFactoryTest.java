@@ -15,13 +15,11 @@
  */
 package com.lambdaworks.redis;
 
-import com.lambdaworks.TestClientResources;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.resource.ClientResources;
-import com.lambdaworks.redis.resource.DefaultClientResources;
 
 /**
  * @author Mark Paluch
@@ -34,7 +32,7 @@ public class RedisClientFactoryTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        DEFAULT_RESOURCES = TestClientResources.create();
+        DEFAULT_RESOURCES = TestClientResources.get();
     }
 
     @Test

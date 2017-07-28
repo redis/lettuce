@@ -15,19 +15,20 @@
  */
 package com.lambdaworks.redis.issue42;
 
-import static com.google.code.tempusfugit.temporal.Duration.*;
-import static com.google.code.tempusfugit.temporal.Timeout.*;
+import static com.google.code.tempusfugit.temporal.Duration.seconds;
+import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.category.SlowTests;
-import com.lambdaworks.redis.FastShutdown;
 import org.junit.*;
 
 import com.google.code.tempusfugit.temporal.Condition;
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.ThreadSleep;
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.TestClientResources;
+import com.lambdaworks.category.SlowTests;
+import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.cluster.ClusterRule;
@@ -51,7 +52,8 @@ public class BreakClusterClientTest extends BreakClientBase {
 
     @BeforeClass
     public static void setupClient() {
-        clusterClient = new RedisClusterClient(RedisURI.Builder.redis(host, port1).withTimeout(TIMEOUT, TimeUnit.SECONDS)
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(host, port1).withTimeout(TIMEOUT, TimeUnit.SECONDS)
                 .build());
     }
 

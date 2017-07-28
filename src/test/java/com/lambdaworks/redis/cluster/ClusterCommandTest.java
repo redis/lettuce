@@ -21,17 +21,16 @@ import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import com.google.code.tempusfugit.temporal.WaitFor;
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
-import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange;
 import com.lambdaworks.redis.cluster.models.slots.ClusterSlotsParser;
@@ -50,8 +49,9 @@ public class ClusterCommandTest extends AbstractClusterTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
-        client = RedisClient.create(RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(LettuceLists.newList(RedisURI.Builder.redis(host, port1).build()));
+        client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                LettuceLists.newList(RedisURI.Builder.redis(host, port1).build()));
     }
 
     @AfterClass

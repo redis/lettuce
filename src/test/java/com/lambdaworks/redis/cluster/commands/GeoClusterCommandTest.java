@@ -24,6 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 
 import com.lambdaworks.RedisConditions;
+import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.FastShutdown;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.TestSettings;
@@ -42,7 +43,7 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @BeforeClass
     public static void setupClient() {
-        redisClusterClient = new RedisClusterClient(
+        redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
 
         try (StatefulRedisClusterConnection<String, String> connection = redisClusterClient.connect()) {
