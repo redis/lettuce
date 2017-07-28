@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.*;
 
 /**
  * Abstract base class for invocation handlers.
- * 
+ *
  * @since 4.2
  */
 public abstract class AbstractInvocationHandler implements InvocationHandler {
@@ -42,7 +42,7 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
      * </ul>
      * <li>other method calls are dispatched to {@link #handleInvocation}.
      * </ul>
-     * 
+     *
      * @param proxy the proxy instance that the method was invoked on
      *
      * @param method the {@code Method} instance corresponding to the interface method invoked on the proxy instance. The
@@ -83,7 +83,7 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
     /**
      * {@link #invoke} delegates to this method upon any method invocation on the proxy instance, except {@link Object#equals},
      * {@link Object#hashCode} and {@link Object#toString}. The result will be returned as the proxied method's return value.
-     * 
+     *
      * <p>
      * Unlike {@link #invoke}, {@code args} will never be null. When the method has no parameter, an empty array is passed in.
      *
@@ -123,7 +123,7 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
     /**
      * By default delegates to {@link Object#hashCode}. The dynamic proxies' {@code hashCode()} will delegate to this method.
      * Subclasses can override this method to provide custom equality.
-     * 
+     *
      * @return a hash code value for this object.
      */
     @Override
@@ -134,7 +134,7 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
     /**
      * By default delegates to {@link Object#toString}. The dynamic proxies' {@code toString()} will delegate to this method.
      * Subclasses can override this method to provide custom string representation for the proxies.
-     * 
+     *
      * @return a string representation of the object.
      */
     @Override
@@ -144,21 +144,35 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
 
     private static boolean isProxyOfSameInterfaces(Object arg, Class<?> proxyClass) {
         return proxyClass.isInstance(arg)
-                // Equal proxy instances should mostly be instance of proxyClass
-                // Under some edge cases (such as the proxy of JDK types serialized and then deserialized)
-                // the proxy type may not be the same.
-                // We first check isProxyClass() so that the common case of comparing with non-proxy objects
-                // is efficient.
-                || (Proxy.isProxyClass(arg.getClass())
-                        && Arrays.equals(arg.getClass().getInterfaces(), proxyClass.getInterfaces()));
+        // Equal proxy instances should mostly be instance of proxyClass
+        // Under some edge cases (such as the proxy of JDK types serialized and then deserialized)
+        // the proxy type may not be the same.
+        // We first check isProxyClass() so that the common case of comparing with non-proxy objects
+        // is efficient.
+                || (Proxy.isProxyClass(arg.getClass()) && Arrays.equals(arg.getClass().getInterfaces(),
+                        proxyClass.getInterfaces()));
     }
 
     protected static class MethodTranslator {
 
+        private final static WeakHashMap<Class<?>, MethodTranslator> TRANSLATOR_MAP = new WeakHashMap<>(32);
         private final Map<Method, Method> map;
 
-        public MethodTranslator(Class<?> delegate, Class<?>... methodSources) {
+        private MethodTranslator(Class<?> delegate, Class<?>... methodSources) {
 
+            map = createMethodMap(delegate, methodSources);
+        }
+
+        public static MethodTranslator of(Class<?> delegate, Class<?>... methodSources) {
+
+            synchronized (TRANSLATOR_MAP) {
+                return TRANSLATOR_MAP.computeIfAbsent(delegate, key -> new MethodTranslator(key, methodSources));
+            }
+        }
+
+        private Map<Method, Method> createMethodMap(Class<?> delegate, Class<?>[] methodSources) {
+
+            Map<Method, Method> map;
             List<Method> methods = new ArrayList<>();
             for (Class<?> sourceClass : methodSources) {
                 methods.addAll(getMethods(sourceClass));
@@ -173,6 +187,7 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
                 } catch (NoSuchMethodException ignore) {
                 }
             }
+            return map;
         }
 
         private Collection<? extends Method> getMethods(Class<?> sourceClass) {
