@@ -65,16 +65,16 @@ public class SslTest extends AbstractTest {
             .build();
 
     @BeforeClass
-    public void beforeClass() {
+    public static void beforeClass() {
+
+        assumeTrue("Assume that stunnel runs on port 6443", Sockets.isOpen(host(), sslPort()));
+        assertThat(new File(TRUSTSTORE)).exists();
+
         redisClient = RedisClient.create(TestClientResources.get());
     }
 
     @Before
     public void before() {
-
-        assumeTrue("Assume that stunnel runs on port 6443", Sockets.isOpen(host(), sslPort()));
-        assertThat(new File(TRUSTSTORE)).exists();
-
         redisClient.setOptions(ClientOptions.create());
     }
 
