@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,22 +57,22 @@ public class BitFieldArgs {
         }
 
         /**
-         * Create a new {@link Get} subcommand.
+         * Create a new {@code GET} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset
-         * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
+         * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
          */
         public static BitFieldArgs get(BitFieldType bitFieldType, int offset) {
             return new BitFieldArgs().get(bitFieldType, offset);
         }
 
         /**
-         * Create a new {@link Get} subcommand.
+         * Create a new {@code GET} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset, must not be {@literal null}.
-         * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
+         * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
          * @since 4.3
          */
         public static BitFieldArgs get(BitFieldType bitFieldType, Offset offset) {
@@ -80,24 +80,24 @@ public class BitFieldArgs {
         }
 
         /**
-         * Create a new {@link Set} subcommand.
+         * Create a new {@code SET} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset
          * @param value the value
-         * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+         * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
          */
         public static BitFieldArgs set(BitFieldType bitFieldType, int offset, long value) {
             return new BitFieldArgs().set(bitFieldType, offset, value);
         }
 
         /**
-         * Create a new {@link Set} subcommand.
+         * Create a new {@code SET} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset, must not be {@literal null}.
          * @param value the value
-         * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+         * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
          * @since 4.3
          */
         public static BitFieldArgs set(BitFieldType bitFieldType, Offset offset, long value) {
@@ -105,24 +105,26 @@ public class BitFieldArgs {
         }
 
         /**
-         * Create a new {@link IncrBy} subcommand.
+         * Create a new {@@code INCRBY} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset
          * @param value the value
-         * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+         * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}
+         *         .
          */
         public static BitFieldArgs incrBy(BitFieldType bitFieldType, int offset, long value) {
             return new BitFieldArgs().incrBy(bitFieldType, offset, value);
         }
 
         /**
-         * Create a new {@link IncrBy} subcommand.
+         * Create a new {@@code INCRBY} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset, must not be {@literal null}.
          * @param value the value
-         * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+         * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}
+         *         .
          * @since 4.3
          */
         public static BitFieldArgs incrBy(BitFieldType bitFieldType, Offset offset, long value) {
@@ -130,10 +132,10 @@ public class BitFieldArgs {
         }
 
         /**
-         * Adds a new {@link Overflow} subcommand.
+         * Adds a new {@code OVERFLOW} subcommand.
          *
          * @param overflowType type of overflow, must not be {@literal null}.
-         * @return a new {@link Overflow} subcommand for the given {@code overflowType}.
+         * @return a new {@code OVERFLOW} subcommand for the given {@code overflowType}.
          */
         public static BitFieldArgs overflow(OverflowType overflowType) {
             return new BitFieldArgs().overflow(overflowType);
@@ -199,9 +201,9 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link Get} subcommand using offset {@code 0} and the field type of the previous command.
+     * Adds a new {@code GET} subcommand using offset {@code 0} and the field type of the previous command.
      *
-     * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
+     * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      * @throws IllegalStateException if no previous field type was found
      */
     public BitFieldArgs get() {
@@ -209,32 +211,32 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link Get} subcommand using offset {@code 0}.
+     * Adds a new {@code GET} subcommand using offset {@code 0}.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
-     * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
+     * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      */
     public BitFieldArgs get(BitFieldType bitFieldType) {
         return get(bitFieldType, 0);
     }
 
     /**
-     * Adds a new {@link Get} subcommand.
+     * Adds a new {@code GET} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param offset bitfield offset
-     * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
+     * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      */
     public BitFieldArgs get(BitFieldType bitFieldType, int offset) {
         return addSubCommand(new Get(bitFieldType, false, offset));
     }
 
     /**
-     * Adds a new {@link Get} subcommand.
+     * Adds a new {@code GET} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param offset bitfield offset
-     * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
+     * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      * @since 4.3
      */
     public BitFieldArgs get(BitFieldType bitFieldType, Offset offset) {
@@ -245,10 +247,10 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link Get} subcommand using the field type of the previous command.
+     * Adds a new {@code GET} subcommand using the field type of the previous command.
      *
      * @param offset bitfield offset
-     * @return a new {@link Get} subcommand for the given {@code bitFieldType} and {@code offset}.
+     * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      * @throws IllegalStateException if no previous field type was found
      */
     public BitFieldArgs get(int offset) {
@@ -256,10 +258,10 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link Set} subcommand using offset {@code 0} and the field type of the previous command.
+     * Adds a new {@code SET} subcommand using offset {@code 0} and the field type of the previous command.
      *
      * @param value the value
-     * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
     public BitFieldArgs set(long value) {
@@ -267,22 +269,22 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link Set} subcommand using offset {@code 0}.
+     * Adds a new {@code SET} subcommand using offset {@code 0}.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param value the value
-     * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs set(BitFieldType bitFieldType, long value) {
         return set(bitFieldType, 0, value);
     }
 
     /**
-     * Adds a new {@link Set} subcommand using the field type of the previous command.
+     * Adds a new {@code SET} subcommand using the field type of the previous command.
      *
      * @param offset bitfield offset
      * @param value the value
-     * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
     public BitFieldArgs set(int offset, long value) {
@@ -290,24 +292,24 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link Set} subcommand.
+     * Adds a new {@code SET} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param offset bitfield offset
      * @param value the value
-     * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs set(BitFieldType bitFieldType, int offset, long value) {
         return addSubCommand(new Set(bitFieldType, false, offset, value));
     }
 
     /**
-     * Adds a new {@link Set} subcommand.
+     * Adds a new {@code SET} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param offset bitfield offset, must not be {@literal null}.
      * @param value the value
-     * @return a new {@link Set} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @since 4.3
      */
     public BitFieldArgs set(BitFieldType bitFieldType, Offset offset, long value) {
@@ -318,10 +320,10 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link IncrBy} subcommand using offset {@code 0} and the field type of the previous command.
+     * Adds a new {@@code INCRBY} subcommand using offset {@code 0} and the field type of the previous command.
      *
      * @param value the value
-     * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
     public BitFieldArgs incrBy(long value) {
@@ -329,22 +331,22 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link IncrBy} subcommand using offset {@code 0}.
+     * Adds a new {@@code INCRBY} subcommand using offset {@code 0}.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param value the value
-     * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs incrBy(BitFieldType bitFieldType, long value) {
         return incrBy(bitFieldType, 0, value);
     }
 
     /**
-     * Adds a new {@link IncrBy} subcommand using the field type of the previous command.
+     * Adds a new {@@code INCRBY} subcommand using the field type of the previous command.
      *
      * @param offset bitfield offset
      * @param value the value
-     * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
     public BitFieldArgs incrBy(int offset, long value) {
@@ -352,24 +354,24 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link IncrBy} subcommand.
+     * Adds a new {@@code INCRBY} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param offset bitfield offset
      * @param value the value
-     * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs incrBy(BitFieldType bitFieldType, int offset, long value) {
         return addSubCommand(new IncrBy(bitFieldType, false, offset, value));
     }
 
     /**
-     * Adds a new {@link IncrBy} subcommand.
+     * Adds a new {@@code INCRBY} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param offset bitfield offset, must not be {@literal null}.
      * @param value the value
-     * @return a new {@link IncrBy} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @since 4.3
      */
     public BitFieldArgs incrBy(BitFieldType bitFieldType, Offset offset, long value) {
@@ -380,10 +382,10 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@link Overflow} subcommand.
+     * Adds a new {@code OVERFLOW} subcommand.
      *
      * @param overflowType type of overflow, must not be {@literal null}.
-     * @return a new {@link Overflow} subcommand for the given {@code overflowType}.
+     * @return a new {@code OVERFLOW} subcommand for the given {@code overflowType}.
      */
     public BitFieldArgs overflow(OverflowType overflowType) {
         return addSubCommand(new Overflow(overflowType));
@@ -620,7 +622,7 @@ public class BitFieldArgs {
     /**
      * Represents a bit field offset. See also <a href="http://redis.io/commands/bitfield#bits-and-positional-offsets">Bits and
      * positional offsets</a>
-     * 
+     *
      * @since 4.3
      */
     public static class Offset {
