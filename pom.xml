@@ -687,6 +687,7 @@
                                     <exclude>io.netty:netty-tcnative</exclude>
                                     <exclude>io.netty:netty-transport-native-epoll</exclude>
                                     <exclude>io.netty:netty-transport-native-kqueue</exclude>
+                                    <exclude>io.netty:netty-transport-native-unix-common</exclude>
                                 </excludes>
                             </artifactSet>
                             <filters>
