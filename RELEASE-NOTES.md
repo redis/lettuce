@@ -1,14 +1,13 @@
 lettuce 4.4.0 RELEASE NOTES
 ===========================
 
-This release ships with [76 tickets](https://github.com/mp911de/lettuce/milestone/24?closed=1) fixed.
+This release ships with [96 tickets](https://github.com/mp911de/lettuce/milestone/24?closed=1) fixed.
 
 It contains a range of performance improvements to lower GC pressure, 
-introduces kqueue native transport on BSD-like systems and asynchronous,
-connection initialization for Redis Cluster and Cluster Pub/Sub subscriptions 
-for a selection of nodes.
+introducing kqueue native transport on BSD-like systems and asynchronous,
+connection initialization for Redis Cluster and Cluster Pub/Sub subscriptions.
 
-This release asserts compatibility in class-path mode with Java 9 requiring 
+This release is compatible with Java 9 (class-path mode) requiring 
 netty 4.1.11.Final.
 
 
@@ -109,7 +108,6 @@ while(scan.hasNext()) {
 // Java 8 Stream
 scan.stream().filter(…).map(…).forEach(…)
 ```
-
   
 
 Find the full change log at the end of this document.
@@ -124,6 +122,10 @@ If you need any support, meet Lettuce at:
 * GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
 * Documentation: https://lettuce.io/docs/
 
+Commands
+-----
+* Adopt to read-only variant GEORADIUS(BYMEMBER)_RO #564 
+* Support CLIENT and INFO commands for Redis Sentinel #415
 
 Enhancements
 -----
@@ -133,7 +135,6 @@ Enhancements
 * Extend RedisClusterClient and RedisClusterFactoryBean to take multiple hosts #401
 * Default to epoll transport if available #402
 * Simplify NodeSelection implementation #408
-* Support CLIENT and INFO commands for Redis Sentinel #415
 * Allow setting client name with RedisURI #416
 * Extend RedisConnectionStateListener.onRedisConnected by adding SocketAddress #419
 * Connect asynchronously in cluster topology refresh #424 (Thanks to @szabowexler)
@@ -159,6 +160,11 @@ Enhancements
 * Add support for client certificate authentication #540
 * Reduce cross-thread queue sharing #544
 * Use pre-instantiated ByteBufProcessor in RedisStateMachine to find EOL #557
+* Replace CountDownLatch in AsyncCommand with AtomicFieldUpdater #559
+* Allocate lazily of array outputs targets #573
+* Enhance SingularArgument caching #575
+* Reuse CommandHandler decoding via PubSubCommandHandler #576
+* Introduce MethodTranslator caching #580
 
 
 Fixes
@@ -193,6 +199,10 @@ Fixes
 * Close connections in pooling destroy hook #545
 * Adopt to changed SLOWLOG output #551
 * CommandHandler.write contains isConnected verification #556
+* Reduce (eliminate byte[]) duplication during slot hash calculation #558
+* clientSetname does not set client name on default connection #563
+* Avoid getBytes() calls on constant value in ExperimentalByteArrayCodec #574(Thanks to @CodingFabian)
+* Prevent dead listener callback failure in shutdown sequence #581 
 
 
 Other
@@ -218,6 +228,9 @@ Other
 * Upgrade to netty 4.0.11 #537
 * Upgrade to netty 4.1.12 #548
 * Allow Redis version pinning for build #552
+* Upgrade to netty 4.1.13/4.0.49 #565
+* Use BOM to manage netty and Spring dependencies #568
+* Upgrade dependencies #569
 
 
 Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
