@@ -26,7 +26,9 @@ import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import io.lettuce.core.*;
@@ -44,7 +46,7 @@ public class SslTest extends AbstractTest {
 
     private static final String KEYSTORE = "work/keystore.jks";
     private static final String TRUSTSTORE = "work/truststore.jks";
-    private static final RedisClient redisClient = DefaultRedisClient.get();
+    private static RedisClient redisClient;
 
     private static final RedisURI URI_NO_VERIFY = RedisURI.Builder.redis(host(), sslPort()) //
             .withSsl(true) //
@@ -61,13 +63,23 @@ public class SslTest extends AbstractTest {
             .withVerifyPeer(true) //
             .build();
 
-    @Before
-    public void before() {
+    @BeforeClass
+    public static void beforeClass() {
 
         assumeTrue("Assume that stunnel runs on port 6443", Sockets.isOpen(host(), sslPort()));
         assertThat(new File(TRUSTSTORE)).exists();
 
+        redisClient = RedisClient.create(TestClientResources.get());
+    }
+
+    @Before
+    public void before() {
         redisClient.setOptions(ClientOptions.create());
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        FastShutdown.shutdown(redisClient);
     }
 
     @Test
