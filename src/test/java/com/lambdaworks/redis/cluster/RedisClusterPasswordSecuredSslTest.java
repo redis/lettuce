@@ -67,7 +67,10 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
 
     @AfterClass
     public static void afterClass() {
-        FastShutdown.shutdown(redisClient);
+
+        if (redisClient != null) {
+            FastShutdown.shutdown(redisClient);
+        }
     }
 
     @Test
