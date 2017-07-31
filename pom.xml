@@ -61,7 +61,7 @@
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
         <netty-version>4.1.13.Final</netty-version>
-        <spring-version>5.0.0.RC2</spring-version>
+        <spring-version>4.3.10.RELEASE</spring-version>
     </properties>
 
     <scm>
