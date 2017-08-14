@@ -75,7 +75,7 @@ SqlSessionFactory 和至少一个数据映射器类。
       </p>
 
       <p>
-        Assume you have a data mapper class defined like the following:
+假设你定义了一个如下的数据 mapper 接口:
       </p>
         <source><![CDATA[public interface UserMapper {
   @Select("SELECT * FROM users WHERE id = #{userId}")
