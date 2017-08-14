@@ -111,8 +111,8 @@
 
     <spring.version>5.0.0.RC2</spring.version>
     <spring-batch.version>4.0.0.M2</spring-batch.version>
-    <junit-platform.version>1.0.0-M4</junit-platform.version>
-    <junit.version>5.0.0-M4</junit.version>
+    <junit-platform.version>1.0.0-RC2</junit-platform.version>
+    <junit.version>5.0.0-RC2</junit.version>
 
     <!-- Override: Animal Sniffer Signature -->
     <signature.group>org.codehaus.mojo.signature</signature.group>
