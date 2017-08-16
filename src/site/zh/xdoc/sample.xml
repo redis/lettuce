@@ -29,14 +29,14 @@
 
 			<p>
 				<span class="label important">NOTE</span>
-				点击 <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> 获取更多关于 Spring 在完整的应用服务器上面的使用例子..
+				点击 <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> 获取更多关于 Spring 在完整的应用服务上面的使用例子..
 			</p>
 
 			<p>
-				您可以从此处查看 MyBatis-Spring 的示例代码<a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">repo</a>:
+				您可以从此处查看 MyBatis-Spring 的示例代码 <a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">repo</a>:
 			</p>
 			<p>
-				任何一个示例都可以JUnit 4运行.
+				任何一个示例都在 JUnit 4 中运行.
 			</p>
 			<p>
 				示例代码显示了事务服务从数据访问层获取域对象的典型设计.
@@ -61,7 +61,7 @@ public class FooService {
 }
 ]]></source>
 			<p>
-				它是一个事务bean，所以当调用它的任何方法时，事务被启动并且在方法结束时提交，且不会抛出未经检查的异常.请注意，事务行为配置为 <code>@Transactional</code> 属性. 这不是必需的 Spring 提供的任何其他方式都可用于划分你的事务.
+				它是一个事务 bean，所以当调用它的任何方法时，事务被启动并且在方法结束时提交，且不会抛出未经检查的异常.请注意，事务行为配置为 <code>@Transactional</code> 属性. 这不是必需的 Spring 提供的任何其他方式都可用于划分你的事务.
 			</p>
 			<p>
 				此服务调用使用 MyBatis 构建的数据访问层. 这层只是一个界面 <code>UserMapper.java</code> 这将与 MyBatis 建立的动态代理一起使用运行时并通过 Spring 注入服务.
@@ -74,7 +74,7 @@ public interface UserMapper {
 }
 ]]></source>			
 			<p> 
-			    注意，为了简单起见，我们使用了接口 <code>UserMapper.java</code> 对于DAO场景其中一个DAO是用接口和一个实现构建的，尽管在这种情况下它将会更多足够使用一个接口调用 <code>UserDao.java</code> 来取代.
+			    注意，为了简单起见，我们使用了接口 <code>UserMapper.java</code> 对于 DAO 场景其中一个 DAO 层是用接口和一个实现构建的，尽管在这种情况下它将会更多足够使用一个接口调用 <code>UserDao.java</code> 来取代.
 			</p>
 			<p>
 				我们将看到不同的方法来找到映射器接口，将其注册到 Spring 并将其注入到服务 bean 中:
@@ -101,7 +101,7 @@ public interface UserMapper {
 							<code>SampleScannerTest.java</code>
 						</td>
 						<td>
-							显示如何使用 <code>MapperScannerConfigurer</code> 来实现项目总所有 mappers 的自动发现.
+							显示如何使用 <code>MapperScannerConfigurer</code> 来实现项目中所有 mappers 的自动发现.
 						</td>
 					</tr>
 					<tr>
@@ -109,7 +109,7 @@ public interface UserMapper {
 							<code>SampleSqlSessionTest.java</code>
 						</td>
 						<td>
-							显示如何使用 Spring  <code>SqlSession</code> 手动编写 DAO 并提供你自己的实现 <code>UserDaoImpl.java</code>.
+							显示如何使用 Spring  <code>SqlSession</code> 手动编写 DAO 层并提供你自己的实现 <code>UserDaoImpl.java</code>.
 						</td>
 					</tr>
 					<tr>
