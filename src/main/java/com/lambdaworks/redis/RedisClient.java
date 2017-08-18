@@ -780,7 +780,7 @@ public class RedisClient extends AbstractRedisClient {
                 connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
 
                 if (logger.isDebugEnabled()) {
-                    SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
+                    SocketAddress socketAddress = SocketAddressResolver.resolve(uri, clientResources.dnsResolver());
                     logger.debug("Connecting to Redis Sentinel, address: " + socketAddress);
                 }
                 try {
