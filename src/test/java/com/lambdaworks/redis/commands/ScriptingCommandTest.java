@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.lambdaworks.redis.commands;
 import static com.lambdaworks.redis.ScriptOutputType.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.After;
@@ -64,6 +65,16 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
         assertThat((List<?>) redis.eval("return {1, 'one', {2}}", MULTI)).isEqualTo(list(1L, "one", list(2L)));
         exception.expectMessage("Oops!");
         redis.eval("return {err='Oops!'}", STATUS);
+    }
+
+    @Test
+    public void evalWithSingleKey() throws Exception {
+        assertThat((List<?>) redis.eval("return KEYS[1]", MULTI, "one")).isEqualTo(list("one"));
+    }
+
+    @Test
+    public void evalReturningNullInMulti() throws Exception {
+        assertThat((List<?>) redis.eval("return nil", MULTI, "one")).isEqualTo(Collections.singletonList(null));
     }
 
     @Test
