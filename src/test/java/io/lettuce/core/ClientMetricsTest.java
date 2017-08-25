@@ -18,9 +18,9 @@ package io.lettuce.core;
 import static io.lettuce.core.AbstractRedisClientTest.client;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
@@ -32,7 +32,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
-
 import io.lettuce.TestClientResources;
 import io.lettuce.Wait;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -67,7 +66,7 @@ public class ClientMetricsTest extends AbstractTest {
     @Test
     public void testMetricsEvent() throws Exception {
 
-        List<CommandLatencyEvent> events = new ArrayList<>();
+        Collection<CommandLatencyEvent> events = new LinkedBlockingQueue<>();
         EventBus eventBus = client.getResources().eventBus();
         MetricEventPublisher publisher = (MetricEventPublisher) ReflectionTestUtils.getField(client.getResources(),
                 "metricEventPublisher");
