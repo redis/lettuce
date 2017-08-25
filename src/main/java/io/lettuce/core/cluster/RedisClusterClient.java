@@ -1003,12 +1003,12 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Returns {@link true} if {@link ClusterTopologyRefreshOptions#useDynamicRefreshSources() dynamic refresh sources} are
+     * Returns {@literal true} if {@link ClusterTopologyRefreshOptions#useDynamicRefreshSources() dynamic refresh sources} are
      * enabled.
      * <p>
      * Subclasses of {@link RedisClusterClient} may override that method.
      *
-     * @return {@link true} if dynamic refresh sources are used.
+     * @return {@literal true} if dynamic refresh sources are used.
      * @see ClusterTopologyRefreshOptions#useDynamicRefreshSources()
      */
     protected boolean useDynamicRefreshSources() {
