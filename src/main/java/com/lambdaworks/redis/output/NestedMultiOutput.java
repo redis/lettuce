@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.output;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
@@ -44,11 +45,21 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     @Override
     public void set(long integer) {
+
+        if (!initialized) {
+            output = new ArrayList<>();
+        }
+
         output.add(integer);
     }
 
     @Override
     public void set(ByteBuffer bytes) {
+
+        if (!initialized) {
+            output = new ArrayList<>();
+        }
+
         output.add(bytes == null ? null : codec.decodeValue(bytes));
     }
 
@@ -64,7 +75,7 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
     public void multi(int count) {
 
         if (!initialized) {
-            output = OutputFactory.newList(count);
+            output = OutputFactory.newList(Math.max(1, count));
             initialized = true;
         }
 
