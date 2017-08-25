@@ -19,9 +19,7 @@ import static io.lettuce.core.AbstractRedisClientTest.client;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -30,16 +28,12 @@ import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
 import io.lettuce.TestClientResources;
 import io.lettuce.Wait;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.metrics.CommandLatencyEvent;
 import io.lettuce.core.event.metrics.MetricEventPublisher;
-import io.lettuce.core.metrics.CommandLatencyId;
-import io.lettuce.core.metrics.CommandMetrics;
 
 /**
  * @author Mark Paluch
@@ -83,34 +77,6 @@ public class ClientMetricsTest extends AbstractTest {
         assertThat(events).isNotEmpty();
 
         disposable.dispose();
-    }
-
-    @Test
-    public void testMetrics() throws Exception {
-
-        EventBus eventBus = client.getResources().eventBus();
-        MetricEventPublisher publisher = (MetricEventPublisher) ReflectionTestUtils.getField(client.getResources(),
-                "metricEventPublisher");
-
-        Flux<CommandLatencyEvent> flux = eventBus.get().filter(redisEvent -> redisEvent instanceof CommandLatencyEvent)
-                .cast(CommandLatencyEvent.class);
-
-        StepVerifier.create(flux).then(() -> {
-            generateTestData();
-            publisher.emitMetricsEvent();
-        }).consumeNextWith(actual -> {
-            // just consume
-            }).consumeNextWith(actual -> {
-
-            Set<CommandLatencyId> ids = actual.getLatencies().keySet();
-            CommandMetrics commandMetrics = actual.getLatencies().get(ids.iterator().next());
-            assertThat(commandMetrics.getCompletion().getMin()).isBetween(0L, TimeUnit.MILLISECONDS.toMicros(100));
-            assertThat(commandMetrics.getCompletion().getMax()).isBetween(0L, TimeUnit.MILLISECONDS.toMicros(200));
-
-            assertThat(commandMetrics.getFirstResponse().getMin()).isBetween(0L, TimeUnit.MILLISECONDS.toMicros(100));
-            assertThat(commandMetrics.getFirstResponse().getMax()).isBetween(0L, TimeUnit.MILLISECONDS.toMicros(200));
-        }).thenCancel().verify();
-
     }
 
     private void generateTestData() {
