@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package io.lettuce.core.cluster.api.reactive;
 
 import java.util.Map;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
@@ -25,9 +27,6 @@ import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.output.KeyStreamingChannel;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * Advanced reactive and thread-safe Redis Cluster API.
@@ -199,6 +198,14 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @see RedisScriptingReactiveCommands#scriptKill()
      */
     Mono<String> scriptKill();
+
+    /**
+     * Load the specified Lua script into the script cache on all cluster nodes.
+     *
+     * @param script script content
+     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     */
+    Mono<String> scriptLoad(V script);
 
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.

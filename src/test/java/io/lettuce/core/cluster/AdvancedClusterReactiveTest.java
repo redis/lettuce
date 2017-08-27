@@ -260,6 +260,22 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
     }
 
     @Test
+    public void scriptLoad() throws Exception {
+
+        scriptFlush();
+
+        String script = "return true";
+
+        String sha = LettuceStrings.digest(script.getBytes());
+
+        StepVerifier.create(commands.scriptExists(sha)).expectNext(false).verifyComplete();
+
+        StepVerifier.create(commands.scriptLoad(script)).expectNext(sha).verifyComplete();
+
+        StepVerifier.create(commands.scriptExists(sha)).expectNext(true).verifyComplete();
+    }
+
+    @Test
     @Ignore("Run me manually, I will shutdown all your cluster nodes so you need to restart the Redis Cluster after this test")
     public void shutdown() {
         commands.shutdown(true).subscribe();

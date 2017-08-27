@@ -373,6 +373,22 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
+    public void scriptLoad() throws Exception {
+
+        assertThat(syncCommands.scriptFlush()).isEqualTo("OK");
+
+        String script = "return true";
+
+        String sha = LettuceStrings.digest(script.getBytes());
+        assertThat(syncCommands.scriptExists(sha)).contains(false);
+
+        String returnedSha = syncCommands.scriptLoad(script);
+
+        assertThat(returnedSha).isEqualTo(sha);
+        assertThat(syncCommands.scriptExists(sha)).contains(true);
+    }
+
+    @Test
     @Ignore("Run me manually, I will shutdown all your cluster nodes so you need to restart the Redis Cluster after this test")
     public void shutdown() throws Exception {
         syncCommands.shutdown(true);

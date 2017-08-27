@@ -35,6 +35,9 @@ class MultiNodeExecution {
     static <T> T execute(Callable<T> function) {
         try {
             return function.call();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RedisCommandInterruptedException(e);
         } catch (Exception e) {
             throw new RedisException(e);
         }
@@ -83,27 +86,52 @@ class MultiNodeExecution {
     }
 
     /**
+     * Returns the result of the last {@link RedisFuture} and guarantee that all futures are finished.
+     *
+     * @param executions mapping of a key to the future
+     * @param <T> result type
+     * @return future returning the first result.
+     */
+    static <T> RedisFuture<T> lastOfAsync(Map<?, ? extends CompletionStage<T>> executions) {
+
+        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
+            // make sure, that all futures are executed before returning the result.
+                T result = null;
+                for (CompletionStage<T> future : executions.values()) {
+                    result = execute(() -> future.toCompletableFuture().get());
+                }
+                return result;
+            });
+    }
+
+    /**
      * Returns always {@literal OK} and guarantee that all futures are finished.
      *
      * @param executions mapping of a key to the future
      * @return future returning the first result.
      */
-    protected static RedisFuture<String> alwaysOkOfAsync(Map<?, ? extends CompletionStage<String>> executions) {
+    static RedisFuture<String> alwaysOkOfAsync(Map<?, ? extends CompletionStage<String>> executions) {
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            // make sure, that all futures are executed before returning the result.
-                for (CompletionStage<String> future : executions.values()) {
-                    try {
-                        future.toCompletableFuture().get();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RedisCommandInterruptedException(e);
-                    } catch (ExecutionException e) {
-                        // swallow exceptions
+
+            synchronize(executions);
+
+            return "OK";
+        });
+    }
+
+    private static void synchronize(Map<?, ? extends CompletionStage<String>> executions) {
+
+        // make sure, that all futures are executed before returning the result.
+        for (CompletionStage<String> future : executions.values()) {
+            try {
+                future.toCompletableFuture().get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RedisCommandInterruptedException(e);
+            } catch (ExecutionException e) {
+                // swallow exceptions
             }
         }
-        return "OK";
-
-    }   );
     }
 }

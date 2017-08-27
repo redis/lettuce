@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -266,6 +266,14 @@ public interface RedisAdvancedClusterAsyncCommands<K, V>
      * @see RedisScriptingAsyncCommands#scriptKill()
      */
     RedisFuture<String> scriptKill();
+
+    /**
+     * Load the specified Lua script into the script cache on all cluster nodes.
+     *
+     * @param script script content
+     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     */
+    RedisFuture<String> scriptLoad(V script);
 
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
