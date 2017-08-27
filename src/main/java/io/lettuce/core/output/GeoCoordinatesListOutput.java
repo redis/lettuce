@@ -60,7 +60,7 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
     public void multi(int count) {
 
         if (!initialized) {
-            output = OutputFactory.newList(count / 2);
+            output = OutputFactory.newList(count);
             initialized = true;
         }
 
