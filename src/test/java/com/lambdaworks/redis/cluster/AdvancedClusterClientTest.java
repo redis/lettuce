@@ -117,8 +117,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
             RedisClusterAsyncConnection<String, String> nodeId = commands.getConnection(redisClusterNode.getNodeId());
-            RedisClusterAsyncConnection<String, String> hostAndPort = commands
-                    .getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
+            RedisClusterAsyncConnection<String, String> hostAndPort = commands.getConnection(redisClusterNode.getUri()
+                    .getHost(), redisClusterNode.getUri().getPort());
 
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
@@ -127,8 +127,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
 
             StatefulRedisConnection<String, String> nodeId = statefulConnection.getConnection(redisClusterNode.getNodeId());
-            StatefulRedisConnection<String, String> hostAndPort = statefulConnection
-                    .getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
+            StatefulRedisConnection<String, String> hostAndPort = statefulConnection.getConnection(redisClusterNode.getUri()
+                    .getHost(), redisClusterNode.getUri().getPort());
 
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
@@ -387,6 +387,22 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
     }
 
     @Test
+    public void scriptLoad() throws Exception {
+
+        assertThat(syncCommands.scriptFlush()).isEqualTo("OK");
+
+        String script = "return true";
+
+        String sha = LettuceStrings.digest(script.getBytes());
+        assertThat(syncCommands.scriptExists(sha)).contains(false);
+
+        String returnedSha = syncCommands.scriptLoad(script);
+
+        assertThat(returnedSha).isEqualTo(sha);
+        assertThat(syncCommands.scriptExists(sha)).contains(true);
+    }
+
+    @Test
     @Ignore("Run me manually, I will shutdown all your cluster nodes so you need to restart the Redis Cluster after this test")
     public void shutdown() throws Exception {
         syncCommands.shutdown(true);
@@ -604,8 +620,8 @@ public class AdvancedClusterClientTest extends AbstractClusterTest {
             }
         } while (!scanCursor.isFinished());
 
-        assertThat(adapter.getList())
-                .containsAll(KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+        assertThat(adapter.getList()).containsAll(
+                KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
 
     }
 

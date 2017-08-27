@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.lambdaworks.redis.cluster.api.rx;
 
 import java.util.Map;
 
+import rx.Observable;
+
 import com.lambdaworks.redis.KeyScanCursor;
 import com.lambdaworks.redis.ScanArgs;
 import com.lambdaworks.redis.ScanCursor;
@@ -25,8 +27,6 @@ import com.lambdaworks.redis.api.rx.*;
 import com.lambdaworks.redis.cluster.ClusterClientOptions;
 import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.output.KeyStreamingChannel;
-
-import rx.Observable;
 
 /**
  * Advanced reactive and thread-safe Redis Cluster API.
@@ -197,6 +197,14 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @see RedisScriptingReactiveCommands#scriptKill()
      */
     Observable<String> scriptKill();
+
+    /**
+     * Load the specified Lua script into the script cache on all cluster nodes.
+     *
+     * @param script script content
+     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     */
+    Observable<String> scriptLoad(V script);
 
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.

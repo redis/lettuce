@@ -269,6 +269,14 @@ public interface RedisAdvancedClusterAsyncCommands<K, V>
     RedisFuture<String> scriptKill();
 
     /**
+     * Load the specified Lua script into the script cache on all cluster nodes.
+     *
+     * @param script script content
+     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     */
+    RedisFuture<String> scriptLoad(V script);
+
+    /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
      *
      * @param save {@literal true} force save operation

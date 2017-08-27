@@ -55,6 +55,8 @@ import com.lambdaworks.redis.protocol.CommandType;
 public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
         RedisAdvancedClusterReactiveCommands<K, V> {
 
+    private static Function<RedisClusterNode, Boolean> ALL_NODE_FILTER = node -> true;
+
     /**
      * Initialize a new connection.
      *
@@ -326,21 +328,26 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Observable<String> scriptFlush() {
         Map<String, Observable<String>> observables = executeOnNodes(RedisScriptingReactiveCommands::scriptFlush,
-                redisClusterNode -> true);
+                ALL_NODE_FILTER);
         return Observable.merge(observables.values()).last();
     }
 
     @Override
     public Observable<String> scriptKill() {
         Map<String, Observable<String>> observables = executeOnNodes(RedisScriptingReactiveCommands::scriptFlush,
-                redisClusterNode -> true);
+                ALL_NODE_FILTER);
         return Observable.merge(observables.values()).onErrorReturn(throwable -> "OK").last();
     }
 
     @Override
+    public Observable<String> scriptLoad(V script) {
+        Map<String, Observable<String>> observables = executeOnNodes(cmd -> cmd.scriptLoad(script), ALL_NODE_FILTER);
+        return Observable.merge(observables.values()).last();
+    }
+
+    @Override
     public Observable<Success> shutdown(boolean save) {
-        Map<String, Observable<Success>> observables = executeOnNodes(commands -> commands.shutdown(save),
-                redisClusterNode -> true);
+        Map<String, Observable<Success>> observables = executeOnNodes(commands -> commands.shutdown(save), ALL_NODE_FILTER);
         return Observable.merge(observables.values()).onErrorReturn(throwable -> null).last();
     }
 
