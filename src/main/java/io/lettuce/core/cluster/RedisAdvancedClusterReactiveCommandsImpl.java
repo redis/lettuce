@@ -36,6 +36,8 @@ import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
+import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
+import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
@@ -108,7 +110,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Mono<Long> clusterCountKeysInSlot(int slot) {
 
         Mono<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
-
         return connectionBySlot.flatMap(cmd -> cmd.clusterCountKeysInSlot(slot));
     }
 
@@ -116,14 +117,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Flux<K> clusterGetKeysInSlot(int slot, int count) {
 
         Mono<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
-
         return connectionBySlot.flatMapMany(conn -> conn.clusterGetKeysInSlot(slot, count));
     }
 
     @Override
     public Mono<Long> dbsize() {
 
-        Map<String, Flux<Long>> publishers = executeOnMasters((commands) -> commands.dbsize().flux());
+        Map<String, Publisher<Long>> publishers = executeOnMasters(RedisServerReactiveCommands::dbsize);
         return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
     }
 
@@ -177,15 +177,14 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Mono<String> flushall() {
 
-        Map<String, Flux<String>> publishers = executeOnMasters((kvRedisClusterReactiveCommancommandss) -> kvRedisClusterReactiveCommancommandss
-                .flushall().flux());
+        Map<String, Publisher<String>> publishers = executeOnMasters(RedisServerReactiveCommands::flushall);
         return Flux.merge(publishers.values()).last();
     }
 
     @Override
     public Mono<String> flushdb() {
 
-        Map<String, Flux<String>> publishers = executeOnMasters((commands) -> commands.flushdb().flux());
+        Map<String, Publisher<String>> publishers = executeOnMasters(RedisServerReactiveCommands::flushdb);
         return Flux.merge(publishers.values()).last();
     }
 
@@ -233,14 +232,14 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Flux<K> keys(K pattern) {
 
-        Map<String, Flux<K>> publishers = executeOnMasters(commands -> commands.keys(pattern));
+        Map<String, Publisher<K>> publishers = executeOnMasters(commands -> commands.keys(pattern));
         return Flux.merge(publishers.values());
     }
 
     @Override
     public Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
 
-        Map<String, Flux<Long>> publishers = executeOnMasters(commands -> commands.keys(channel, pattern).flux());
+        Map<String, Publisher<Long>> publishers = executeOnMasters(commands -> commands.keys(channel, pattern));
         return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
     }
 
@@ -342,25 +341,25 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<String> scriptFlush() {
-        Map<String, Flux<String>> publishers = executeOnNodes((commands) -> commands.scriptFlush().flux(), ALL_NODES);
+        Map<String, Publisher<String>> publishers = executeOnNodes(RedisScriptingReactiveCommands::scriptFlush, ALL_NODES);
         return Flux.merge(publishers.values()).last();
     }
 
     @Override
     public Mono<String> scriptKill() {
-        Map<String, Flux<String>> publishers = executeOnNodes((commands) -> commands.scriptFlush().flux(), ALL_NODES);
+        Map<String, Publisher<String>> publishers = executeOnNodes(RedisScriptingReactiveCommands::scriptFlush, ALL_NODES);
         return Flux.merge(publishers.values()).onErrorReturn("OK").last();
     }
 
     @Override
     public Mono<String> scriptLoad(V script) {
-        Map<String, Flux<String>> publishers = executeOnNodes((commands) -> commands.scriptLoad(script), ALL_NODES);
+        Map<String, Publisher<String>> publishers = executeOnNodes((commands) -> commands.scriptLoad(script), ALL_NODES);
         return Flux.merge(publishers.values()).last();
     }
 
     @Override
     public Mono<Void> shutdown(boolean save) {
-        Map<String, Flux<Void>> publishers = executeOnNodes(commands -> commands.shutdown(save).flux(), ALL_NODES);
+        Map<String, Publisher<Void>> publishers = executeOnNodes(commands -> commands.shutdown(save), ALL_NODES);
         return Flux.merge(publishers.values()).then();
     }
 
@@ -381,7 +380,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         List<Publisher<Long>> publishers = new ArrayList<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            publishers.add(super.touch(entry.getValue()).flux());
+            publishers.add(super.touch(entry.getValue()));
         }
 
         return Flux.merge(publishers).reduce((accu, next) -> accu + next);
@@ -519,7 +518,8 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param <T> result type
      * @return map of a key (counter) and commands.
      */
-    protected <T> Map<String, Flux<T>> executeOnMasters(Function<RedisClusterReactiveCommands<K, V>, Flux<T>> function) {
+    protected <T> Map<String, Publisher<T>> executeOnMasters(
+            Function<RedisClusterReactiveCommands<K, V>, ? extends Publisher<T>> function) {
         return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(MASTER));
     }
 
@@ -531,10 +531,10 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param <T> result type
      * @return map of a key (counter) and commands.
      */
-    protected <T, P extends Flux<T>> Map<String, Flux<T>> executeOnNodes(
+    protected <T> Map<String, Publisher<T>> executeOnNodes(
             Function<RedisClusterReactiveCommands<K, V>, ? extends Publisher<T>> function, Predicate<RedisClusterNode> filter) {
 
-        Map<String, Flux<T>> executions = new HashMap<>();
+        Map<String, Publisher<T>> executions = new HashMap<>();
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
 
