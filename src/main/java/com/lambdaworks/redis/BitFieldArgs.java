@@ -105,26 +105,24 @@ public class BitFieldArgs {
         }
 
         /**
-         * Create a new {@@code INCRBY} subcommand.
+         * Create a new {@code INCRBY} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset
          * @param value the value
-         * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}
-         *         .
+         * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value} .
          */
         public static BitFieldArgs incrBy(BitFieldType bitFieldType, int offset, long value) {
             return new BitFieldArgs().incrBy(bitFieldType, offset, value);
         }
 
         /**
-         * Create a new {@@code INCRBY} subcommand.
+         * Create a new {@code INCRBY} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@literal null}.
          * @param offset bitfield offset, must not be {@literal null}.
          * @param value the value
-         * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}
-         *         .
+         * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value} .
          * @since 4.3
          */
         public static BitFieldArgs incrBy(BitFieldType bitFieldType, Offset offset, long value) {
@@ -320,10 +318,10 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@@code INCRBY} subcommand using offset {@code 0} and the field type of the previous command.
+     * Adds a new {@code INCRBY} subcommand using offset {@code 0} and the field type of the previous command.
      *
      * @param value the value
-     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
     public BitFieldArgs incrBy(long value) {
@@ -331,22 +329,22 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@@code INCRBY} subcommand using offset {@code 0}.
+     * Adds a new {@code INCRBY} subcommand using offset {@code 0}.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param value the value
-     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs incrBy(BitFieldType bitFieldType, long value) {
         return incrBy(bitFieldType, 0, value);
     }
 
     /**
-     * Adds a new {@@code INCRBY} subcommand using the field type of the previous command.
+     * Adds a new {@code INCRBY} subcommand using the field type of the previous command.
      *
      * @param offset bitfield offset
      * @param value the value
-     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
     public BitFieldArgs incrBy(int offset, long value) {
@@ -354,24 +352,24 @@ public class BitFieldArgs {
     }
 
     /**
-     * Adds a new {@@code INCRBY} subcommand.
+     * Adds a new {@code INCRBY} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param offset bitfield offset
      * @param value the value
-     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs incrBy(BitFieldType bitFieldType, int offset, long value) {
         return addSubCommand(new IncrBy(bitFieldType, false, offset, value));
     }
 
     /**
-     * Adds a new {@@code INCRBY} subcommand.
+     * Adds a new {@code INCRBY} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@literal null}.
      * @param offset bitfield offset, must not be {@literal null}.
      * @param value the value
-     * @return a new {@@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
+     * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @since 4.3
      */
     public BitFieldArgs incrBy(BitFieldType bitFieldType, Offset offset, long value) {
