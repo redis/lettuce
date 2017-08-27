@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,12 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         prepareGeo();
 
-        List<GeoCoordinates> geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
+        List<GeoCoordinates> geopos = redis.geopos(key, "Weinheim");
+
+        assertThat(geopos).hasSize(1);
+        assertThat(geopos.get(0).getX().doubleValue()).isEqualTo(8.6638, offset(0.001));
+
+        geopos = redis.geopos(key, "Weinheim", "foobar", "Bahn");
 
         assertThat(geopos).hasSize(3);
         assertThat(geopos.get(0).getX().doubleValue()).isEqualTo(8.6638, offset(0.001));
