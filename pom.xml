@@ -9,7 +9,7 @@
 
     <groupId>biz.paluch.redis</groupId>
     <artifactId>lettuce</artifactId>
-    <version>4.4.1-SNAPSHOT</version>
+    <version>4.4.1.Final</version>
     <packaging>jar</packaging>
 
     <name>lettuce</name>
@@ -67,7 +67,8 @@
         <connection>scm:git:https://github.com/lettuce-io/lettuce-core.git</connection>
         <developerConnection>scm:git:https://github.com/lettuce-io/lettuce-core.git</developerConnection>
         <url>http://github.com/lettuce-io/lettuce-core</url>
-    </scm>
+      <tag>4.4.1.Final</tag>
+  </scm>
 
     <!-- Required for Spring RC artifacts -->
 
