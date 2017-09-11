@@ -29,9 +29,7 @@
 
   <context:property-placeholder location="classpath:/org/mybatis/spring/submitted/webapp_placeholder/conf.properties"/>
 
-  <jdbc:embedded-database id="dataSource">
-    <jdbc:script location="classpath:/org/mybatis/spring/submitted/webapp_placeholder/schema.sql"/>
-  </jdbc:embedded-database>
+  <jdbc:embedded-database id="dataSource" />
 
   <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
     <property name="dataSource" ref="dataSource" />
