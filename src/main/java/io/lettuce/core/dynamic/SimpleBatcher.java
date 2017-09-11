@@ -18,6 +18,8 @@ package io.lettuce.core.dynamic;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.lettuce.core.api.StatefulConnection;
@@ -25,10 +27,8 @@ import io.lettuce.core.dynamic.batch.CommandBatching;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.RedisCommand;
 
-import io.netty.util.internal.shaded.org.jctools.queues.atomic.MpscLinkedAtomicQueue;
-
 /**
- * Simple threadsafe and lock-free {@link Batcher} that flushes queued command when either:
+ * Simple threadsafe {@link Batcher} that flushes queued command when either:
  * <ul>
  * <li>Reaches the configured {@link #batchSize}</li>
  * <li>Encounters a {@link CommandBatching#flush() force flush}</li>
@@ -40,7 +40,7 @@ class SimpleBatcher implements Batcher {
 
     private final StatefulConnection<Object, Object> connection;
     private final int batchSize;
-    private final MpscLinkedAtomicQueue<RedisCommand<Object, Object, Object>> queue = new MpscLinkedAtomicQueue<>();
+    private final BlockingQueue<RedisCommand<Object, Object, Object>> queue = new LinkedBlockingQueue<>();
     private final AtomicBoolean flushing = new AtomicBoolean();
 
     public SimpleBatcher(StatefulConnection<Object, Object> connection, int batchSize) {
