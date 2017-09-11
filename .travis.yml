@@ -9,8 +9,8 @@ env:
   matrix:
     - REDIS=unstable
     - PROFILE=jmh
-    - REDIS=4.0-rc3
-    - REDIS=3.2.9
+    - REDIS=4.0.1
+    - REDIS=3.2.10
 
 sudo: false
 
