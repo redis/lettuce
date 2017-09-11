@@ -5,7 +5,7 @@ BREW_BIN := $(shell which brew)
 YUM_BIN := $(shell which yum)
 APT_BIN := $(shell which apt-get)
 PROFILE ?= netty-41
-REDIS ?= 4.0-rc3
+REDIS ?= 4.0.1
 
 define REDIS_CLUSTER_CONFIG1
 c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7380 master - 1434887920102 1434887920002 0 connected 12000-16383
@@ -365,7 +365,7 @@ endif
 endif
 
 work/redis-git/src/redis-cli work/redis-git/src/redis-server:
-	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git work/redis-git && cd work/redis-git && git co $(REDIS) || true
+	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git work/redis-git && cd work/redis-git && git checkout $(REDIS) || true
 	$(eval REDIS_BRANCH = -v $(shell git -C work/redis-git branch --no-color | sed 's/\* //g'))
 	cd work/redis-git && git reset --hard || true
 	[ "$(REDIS)" != "$(REDIS_BRANCH)" ] && cd work/redis-git && git checkout $(REDIS) || true
