@@ -27,9 +27,11 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Operators;
 import reactor.util.concurrent.Queues;
+import reactor.util.context.Context;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -232,7 +234,12 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             if (!data.offer(t)) {
 
-                Throwable e = Operators.onOperatorError(this, Exceptions.failWithOverflow(), t);
+                Context context = Context.empty();
+                if (subscriber instanceof CoreSubscriber) {
+                    context = ((CoreSubscriber) subscriber).currentContext();
+                }
+
+                Throwable e = Operators.onOperatorError(this, Exceptions.failWithOverflow(), t, context);
                 onError(e);
                 return;
             }
@@ -436,7 +443,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
-                if (Operators.checkRequest(n, subscription.subscriber)) {
+                if (Operators.validate(n)) {
 
                     Operators.getAndAddCap(RedisSubscription.DEMAND, subscription, n);
 
@@ -485,7 +492,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
-                if (Operators.checkRequest(n, subscription.subscriber)) {
+                if (Operators.validate(n)) {
                     Operators.getAndAddCap(RedisSubscription.DEMAND, subscription, n);
                 }
             }
@@ -496,7 +503,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
-                if (Operators.checkRequest(n, subscription.subscriber)) {
+                if (Operators.validate(n)) {
                     Operators.getAndAddCap(RedisSubscription.DEMAND, subscription, n);
                 }
             }
