@@ -29,8 +29,6 @@ import org.reactivestreams.Subscription;
 
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
-import reactor.core.publisher.Operators;
-import reactor.util.concurrent.Queues;
 import reactor.util.context.Context;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -135,7 +133,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         private final SubscriptionCommand<?, ?, T> subscriptionCommand;
         private final boolean traceEnabled = LOG.isTraceEnabled();
 
-        final Queue<T> data = Queues.<T> unbounded().get();
+        final Queue<T> data = Operators.newQueue();
         final StatefulConnection<?, ?> connection;
         final RedisCommand<?, ?, T> command;
         final boolean dissolve;
@@ -342,7 +340,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                     this.subscriber.onNext(data);
 
-                    if (Operators.addAndGet(DEMAND, this, -1) == 0) {
+                    if (Operators.addCap(DEMAND, this, -1) == 0) {
                         return false;
                     }
                 } else {
@@ -445,7 +443,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 if (Operators.validate(n)) {
 
-                    Operators.getAndAddCap(RedisSubscription.DEMAND, subscription, n);
+                    Operators.addCap(RedisSubscription.DEMAND, subscription, n);
 
                     if (subscription.changeState(this, DEMAND)) {
 
@@ -493,7 +491,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             void request(RedisSubscription<?> subscription, long n) {
 
                 if (Operators.validate(n)) {
-                    Operators.getAndAddCap(RedisSubscription.DEMAND, subscription, n);
+                    Operators.addCap(RedisSubscription.DEMAND, subscription, n);
                 }
             }
 
@@ -504,7 +502,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             void request(RedisSubscription<?> subscription, long n) {
 
                 if (Operators.validate(n)) {
-                    Operators.getAndAddCap(RedisSubscription.DEMAND, subscription, n);
+                    Operators.addCap(RedisSubscription.DEMAND, subscription, n);
                 }
             }
         },
