@@ -60,7 +60,7 @@
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
         <netty-version>4.1.15.Final</netty-version>
-        <spring-version>5.0.0.RC2</spring-version>
+        <spring-version>4.3.11.RELEASE</spring-version>
         <reactor-version>Bismuth-RELEASE</reactor-version>
     </properties>
 
@@ -70,16 +70,6 @@
         <url>http://github.com/lettuce-io/lettuce-core</url>
         <tag>HEAD</tag>
     </scm>
-
-    <!-- Required for Spring RC artifacts -->
-
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/libs-milestone</url>
-        </repository>
-    </repositories>
 
     <dependencyManagement>
         <dependencies>
