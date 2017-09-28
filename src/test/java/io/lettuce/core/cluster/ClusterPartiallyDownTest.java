@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package io.lettuce.core.cluster;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-import java.net.ConnectException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -96,7 +96,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
             connection.sync().get(key_10439);
             fail("Missing RedisException");
         } catch (RedisException e) {
-            assertThat(e).hasRootCauseInstanceOf(ConnectException.class);
+            assertThat(e).hasRootCauseInstanceOf(IOException.class);
         }
 
         connection.close();
@@ -133,7 +133,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
             redisClusterClient.connect();
             fail("Missing RedisConnectionException");
         } catch (RedisConnectionException e) {
-            assertThat(e).hasRootCauseInstanceOf(ConnectException.class);
+            assertThat(e).hasRootCauseInstanceOf(IOException.class);
         }
     }
 }
