@@ -342,10 +342,10 @@ public abstract class AbstractRedisClient {
 
     /**
      * Shutdown this client and close all open connections. The client should be discarded after calling shutdown. The shutdown
-     * has 2 secs quiet time and a timeout of 15 secs.
+     * has no quiet time and a timeout of 2 seconds.
      */
     public void shutdown() {
-        shutdown(2, 15, TimeUnit.SECONDS);
+        shutdown(0, 2, TimeUnit.SECONDS);
     }
 
     /**
