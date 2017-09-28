@@ -5,7 +5,7 @@ After a 13 months development phase and 208 solved tickets,
 it is my pleasure to announce general availability of Lettuce 5.0.
 
 This is a major release coming with several breaking changes and new interesting
-features. 
+features Java 9 compatibility. 
 
 Lettuce 5 introduces the dynamic Redis Commands API. This programming
 model enables you to declare command methods and invoke commands to your needs and
@@ -31,7 +31,9 @@ Major breaking changes:
 Lettuce requires only Netty and Project Reactor which brings us to the next change. 
 The reactive API is based on Reactive Streams by using 
 Project Reactor types `Mono` and `Flux` instead of RxJava 1 and `Observable`.
-Existing users can convert `Mono` and `Flux` by using `rxjava-reactive-streams`.
+If you require RxJava's `Single` and `Observable` in your code, 
+then use publisher adapters in `rxjava-reactive-streams` to adapt `Mono` and `Flux`.
+
 
 This release introduces a new reference guide that is shipped along the regular artifacts. 
 The reference guide is bound to a particular version and does not change over time, 
@@ -87,7 +89,7 @@ provided with `@Command`. Introduction of new commands does not require you
 to wait for a new Lettuce release but they can invoke commands through own declaration. 
 That interface could be also supporting different key and value types, depending on the use-case.
 
-Commands are executed applying synchronization, asynchronous and in a reactive fashion, 
+Commands are executed synchronously, asynchronous or with a reactive execution model, 
 depending on the method declaration.
 
 ```java
@@ -117,12 +119,14 @@ MyRedisCommands commands = factory.getCommands(MyRedisCommands.class);
 String value = commands.get("key");
 ```
 
-You get a whole lot new possibilities with Redis Command Interfaces. This release
-provides initial support. Future versions are likely to support RxJava 1/2 reactive
-types so RxJava 1 users have a migration path that allows using native types without
+You get a whole lot new possibilities with Redis Command Interfaces. 
+One of them is transparent reactive type adoption. Lettuce's reactive API is based on Reactive Streams, 
+however with command interfaces you can declare a RxJava 1 or RxJava 2 return 
+type and Lettuce will handle the adoption for you. 
+RxJava 1 users have a migration path that allows using native types without
 further conversion.
 
-See also: https://lettuce.io/core/snapshot/reference/#redis-command-interfaces
+See also: https://lettuce.io/core/5.0.0.RELEASE/reference/#redis-command-interfaces
 
 Command Interface Batching
 --------------------------
@@ -162,7 +166,7 @@ commands.get("key", CommandBatching.flush()); // invocation-level queueing contr
                                               // flushes all queued commands
 ```
 
-Read more: https://lettuce.io/core/snapshot/reference/#command-interfaces.batch
+Read more: https://lettuce.io/core/5.0.0.RELEASE//reference/#command-interfaces.batch
 
 
 Migration to Reactive Streams (Project Reactor)
@@ -213,7 +217,7 @@ You will find differences in comparison to the previous API and to the sync/asyn
 in cases where commands can return `null` values. Lettuce 5.0 comes with
 new `Value` types that are monads encapsulating a value (or their absence).
 
-See also: https://lettuce.io/core/snapshot/reference/#reactive-api
+See also: https://lettuce.io/core/5.0.0.RELEASE/reference/#reactive-api
 
 
 Value, KeyValue, and other value types
@@ -287,7 +291,7 @@ DefaultClientResources.builder()
 ```
 
 See also: https://www.awsarchitectureblog.com/2015/03/backoff.html and
-https://lettuce.io/core/snapshot/reference/#clientresources.advanced-settings
+https://lettuce.io/core/5.0.0.RELEASE/reference/#clientresources.advanced-settings
 
 
 New API for Z...RANGE commands
@@ -372,7 +376,6 @@ GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPool
 try(StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
     // Work
 }
-
 
 pool.close();
 ```
