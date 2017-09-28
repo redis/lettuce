@@ -1,5 +1,6 @@
 :ssl-link: <<ssl>>
 :uds-link: <<unix-domain-sockets>>
+:native-transport-link: <<native-transports>>
 :basic-synchronous-link: <<basic-usage,Synchronous>>
 :asynchronous-api-link: <<asynchronous-api>>
 :reactive-api-link: <<reactive-api>>
@@ -12,7 +13,7 @@ include::{ext-doc}/Getting-started-%285.0%29.asciidoc[leveloffset=+1]
 
 [[connecting-redis]]
 == Connecting Redis
-include::{ext-doc}/Redis-URI-and-connection-details.asciidoc[leveloffset=+1]
+include::{ext-doc}/Redis-URI-and-connection-details.asciidoc[]
 
 [[basic-usage]]
 === Basic Usage

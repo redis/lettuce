@@ -50,6 +50,10 @@ a:active {
     text-decoration:none;
     color:#6db33f;
 }
+a[href^="http"] {
+    color: #16906a;
+}
+
 a[name] {
     color:#353833;
 }
@@ -104,6 +108,9 @@ table tr td dt code {
 sup {
     font-size:8px;
 }
+/*
+Document title and Copyright styles
+*/
 .clear {
     clear:both;
     height:0px;

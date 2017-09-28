@@ -1,0 +1,15 @@
+[[new-features]]
+= New & Noteworthy
+
+[[new-features.5-0-0]]
+== What's new in Lettuce 5.0
+* New artifact coordinates: `io.lettuce:lettuce-core` and packages moved from `com.lambdaworks.redis` to `io.lettuce.core`.
+* <<reactive-api,Reactive API>> now Reactive Streams-based using https://projectreactor.io/[Project Reactor].
+* <<redis-command-interfaces,Redis Command Interfaces>> supporting dynamic command invocation and Redis Modules.
+* Enhanced, immutable Key-Value objects.
+* Asynchronous Cluster connect.
+* Native transport support for Kqueue on macOS systems.
+* Removal of support for Guava.
+* Removal of deprecated `RedisConnection` and `RedisAsyncConnection` interfaces.
+* Java 9 compatibility.
+* HTML and PDF reference documentation along with a new project website: https://lettuce.io.

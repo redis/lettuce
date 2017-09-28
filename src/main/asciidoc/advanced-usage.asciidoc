@@ -13,12 +13,16 @@
 include::{ext-doc}/Configuring-Client-resources.asciidoc[leveloffset=+2]
 
 [[client-options]]
-=== Client options
-include::{ext-doc}/Client-options.asciidoc[leveloffset=+2]
+=== Client Options
+include::{ext-doc}/Client-Options.asciidoc[leveloffset=+2]
 
 [[ssl]]
 === SSL Connections
 include::{ext-doc}/SSL-Connections.asciidoc[leveloffset=+2]
+
+[[native-transports]]
+=== Native Transports
+include::{ext-doc}/Native-Transports.asciidoc[leveloffset=+2]
 
 [[unix-domain-sockets]]
 === Unix Domain Sockets

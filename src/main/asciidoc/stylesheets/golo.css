@@ -438,14 +438,17 @@ h1 small, h2 small, h3 small, #toctitle small, .sidebarblock > .content > .title
 
 h1 {
     font-size: 2.125em;
+    line-height: 2em;
 }
 
 h2 {
     font-size: 1.6875em;
+    line-height: 1.5em;
 }
 
 h3, #toctitle, .sidebarblock > .content > .title {
     font-size: 1.375em;
+    line-height: 1.3em;
 }
 
 h4 {
