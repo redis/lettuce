@@ -82,13 +82,39 @@ public class DefaultMethods {
          */
         ENCAPSULATED {
 
+            Method privateLookupIn = findBridgeMethod();
+
             @Override
             MethodHandle lookup(Method method) throws ReflectiveOperationException {
 
                 MethodType methodType = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
 
-                return MethodHandles.lookup().findSpecial(method.getDeclaringClass(), method.getName(), methodType,
-                        method.getDeclaringClass());
+                return getLookup(method.getDeclaringClass()).findSpecial(method.getDeclaringClass(), method.getName(),
+                        methodType, method.getDeclaringClass());
+            }
+
+            private Method findBridgeMethod() {
+
+                try {
+                    return MethodHandles.class.getDeclaredMethod("privateLookupIn", Class.class, Lookup.class);
+                } catch (ReflectiveOperationException e) {
+                    return null;
+                }
+            }
+
+            private Lookup getLookup(Class<?> declaringClass) {
+
+                Lookup lookup = MethodHandles.lookup();
+
+                if (privateLookupIn != null) {
+                    try {
+                        return (Lookup) privateLookupIn.invoke(null, declaringClass, lookup);
+                    } catch (ReflectiveOperationException e) {
+                        return lookup;
+                    }
+                }
+
+                return lookup;
             }
 
             @Override
