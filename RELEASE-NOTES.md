@@ -600,6 +600,7 @@ Enhancements
 * Enhance argument caching #575
 * Introduce MethodTranslator caching #580
 * Execute RedisAdvancedClusterCommands.scriptLoad(…) on all nodes #590
+* Reduce default shutdown timeout #613
 
 Fixes
 -----

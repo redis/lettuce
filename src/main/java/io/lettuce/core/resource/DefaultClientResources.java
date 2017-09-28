@@ -478,7 +478,7 @@ public class DefaultClientResources implements ClientResources {
      */
     @Override
     public Future<Boolean> shutdown() {
-        return shutdown(2, 15, TimeUnit.SECONDS);
+        return shutdown(0, 2, TimeUnit.SECONDS);
     }
 
     /**
