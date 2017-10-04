@@ -58,6 +58,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     private final ClientOptions clientOptions;
     private final Queue<RedisCommand<?, ?, ?>> disconnectedBuffer;
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
+    private final boolean boundedQueues;
 
     private final long endpointId = ENDPOINT_COUNTER.incrementAndGet();
     private final AtomicBoolean closed = new AtomicBoolean();
@@ -73,6 +74,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     private Throwable connectionError;
 
     // access via QUEUE_SIZE
+    @SuppressWarnings("unused")
     private volatile int queueSize = 0;
 
     /**
@@ -86,8 +88,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
         this.clientOptions = clientOptions;
         this.reliability = clientOptions.isAutoReconnect() ? Reliability.AT_LEAST_ONCE : Reliability.AT_MOST_ONCE;
-        this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
+        this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
+        this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
     }
 
     @Override
@@ -193,7 +196,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     }
 
     private boolean usesBoundedQueues() {
-        return clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
+        return boundedQueues;
     }
 
     private void writeToBuffer(Iterable<? extends RedisCommand<?, ?, ?>> commands) {
@@ -544,18 +547,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             logger.debug("{} notifyQueuedCommands adding {} command(s) to buffer", logPrefix(), commands.size());
 
             commands.addAll(drainCommands(disconnectedBuffer));
-
-            disconnectedBuffer.removeAll(commands);
-
-            for (RedisCommand<?, ?, ?> command : commands) {
-                try {
-                    if (!disconnectedBuffer.contains(command)) {
-                        disconnectedBuffer.add(command);
-                    }
-                } catch (Exception e) {
-                    command.completeExceptionally(e);
-                }
-            }
+            disconnectedBuffer.addAll(commands);
 
             if (isConnected()) {
                 flushCommands(disconnectedBuffer);
@@ -594,10 +586,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
         RedisCommand<?, ?, ?> cmd;
         while ((cmd = source.poll()) != null) {
-
-            if (cmd instanceof LatencyMeteredCommand<?, ?, ?>) {
-                cmd = ((LatencyMeteredCommand<?, ?, ?>) cmd).getDelegate();
-            }
             target.add(cmd);
         }
 
@@ -619,6 +607,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     }
 
     private boolean isConnected() {
+
+        Channel channel = this.channel;
         return channel != null && channel.isActive();
     }
 
@@ -691,7 +681,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             if (future.cause() != null) {
                 complete(future.cause());
-
             }
         }
     }
@@ -715,24 +704,15 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             Throwable cause = future.cause();
 
+            boolean success = future.isSuccess();
             dequeue();
 
-            if (!future.isSuccess()) {
-
-                if (sentCommand != null) {
-                    try {
-                        write(sentCommand);
-                    } catch (Exception e) {
-                        complete(e);
-                    }
-                }
-
-                if (sentCommands != null) {
-                    try {
-                        write((Collection) sentCommands);
-                    } catch (Exception e) {
-                        complete(e);
-                    }
+            if (!success) {
+                Channel channel = DefaultEndpoint.this.channel;
+                if (channel != null) {
+                    channel.eventLoop().submit(this::requeueCommands);
+                } else {
+                    requeueCommands();
                 }
             }
 
@@ -746,6 +726,25 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
                 }
 
                 logger.log(logLevel, message, cause.toString(), cause);
+            }
+        }
+
+        private void requeueCommands() {
+
+            if (sentCommand != null) {
+                try {
+                    write(sentCommand);
+                } catch (Exception e) {
+                    complete(e);
+                }
+            }
+
+            if (sentCommands != null) {
+                try {
+                    write((Collection) sentCommands);
+                } catch (Exception e) {
+                    complete(e);
+                }
             }
         }
     }
