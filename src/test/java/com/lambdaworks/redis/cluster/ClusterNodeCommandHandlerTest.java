@@ -67,7 +67,7 @@ public class ClusterNodeCommandHandlerTest {
     private ClusterNodeCommandHandler sut;
 
     @Before
-    public void before() throws Exception {
+    public void before() {
 
         when(clientOptions.getRequestQueueSize()).thenReturn(Integer.MAX_VALUE);
         when(clientResources.commandLatencyCollector()).thenReturn(DefaultCommandLatencyCollector.disabled());
@@ -77,14 +77,14 @@ public class ClusterNodeCommandHandlerTest {
     }
 
     @Test
-    public void closeWithoutCommands() throws Exception {
+    public void closeWithoutCommands() {
 
         sut.close();
         verifyZeroInteractions(clusterChannelWriter);
     }
 
     @Test
-    public void closeWithQueuedCommands() throws Exception {
+    public void closeWithQueuedCommands() {
 
         when(clientOptions.isAutoReconnect()).thenReturn(true);
         queue.add(command);
@@ -95,7 +95,7 @@ public class ClusterNodeCommandHandlerTest {
     }
 
     @Test
-    public void closeWithCancelledQueuedCommands() throws Exception {
+    public void closeWithCancelledQueuedCommands() {
 
         when(clientOptions.isAutoReconnect()).thenReturn(true);
         queue.add(command);
@@ -127,11 +127,14 @@ public class ClusterNodeCommandHandlerTest {
     }
 
     @Test
-    public void closeWithBufferedCommands() throws Exception {
+    public void closeWithBufferedCommands() {
 
         when(clientOptions.isAutoReconnect()).thenReturn(true);
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+
+        sut = new ClusterNodeCommandHandler(clientOptions, clientResources, clusterChannelWriter);
+
         sut.write(command);
 
         sut.close();
@@ -140,11 +143,12 @@ public class ClusterNodeCommandHandlerTest {
     }
 
     @Test
-    public void closeWithCancelledBufferedCommands() throws Exception {
+    public void closeWithCancelledBufferedCommands() {
 
         when(clientOptions.isAutoReconnect()).thenReturn(true);
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+        sut = new ClusterNodeCommandHandler(clientOptions, clientResources, clusterChannelWriter);
         sut.write(command);
         command.cancel();
 
@@ -159,6 +163,7 @@ public class ClusterNodeCommandHandlerTest {
         when(clientOptions.isAutoReconnect()).thenReturn(true);
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+        sut = new ClusterNodeCommandHandler(clientOptions, clientResources, clusterChannelWriter);
         sut.write(command);
         when(clusterChannelWriter.write(any())).thenThrow(new RedisException(""));
 
