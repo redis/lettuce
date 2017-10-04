@@ -48,6 +48,8 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
 
     private final RedisCommand<K, V, T> command;
 
+    // access via COUNT_UPDATER
+    @SuppressWarnings({ "unused" })
     private volatile int count = 1;
 
     /**

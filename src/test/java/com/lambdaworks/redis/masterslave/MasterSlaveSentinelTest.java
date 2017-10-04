@@ -20,7 +20,7 @@ import static com.lambdaworks.redis.masterslave.MasterSlaveTest.slaveCall;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
-import java.net.ConnectException;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -112,7 +112,7 @@ public class MasterSlaveSentinelTest extends AbstractSentinelTest {
             MasterSlave.connect(sentinelClient, new Utf8StringCodec(), uri);
             fail("Missing RedisConnectionException");
         } catch (RedisConnectionException e) {
-            assertThat(e.getCause()).hasCauseInstanceOf(ConnectException.class);
+            assertThat(e.getCause()).hasCauseInstanceOf(IOException.class);
         }
     }
 
