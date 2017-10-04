@@ -45,6 +45,7 @@ import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.ConnectionEvents;
 import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
 import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
@@ -299,7 +300,8 @@ public class CommandHandlerTest {
 
         sut.write(command);
 
-        assertThat(disconnectedBuffer).containsOnly(command);
+        assertThat(disconnectedBuffer).hasSize(1);
+        assertThat(CommandWrapper.unwrap(disconnectedBuffer.element())).isEqualTo(command);
     }
 
     @Test(expected = RedisException.class)
@@ -528,6 +530,22 @@ public class CommandHandlerTest {
         sut.channelRead(context, byteBufMock);
 
         verify(byteBufMock, never()).release();
+    }
+
+    @Test(timeout = 5000)
+    public void shouldRebuildHugeQueue() throws Exception {
+
+        for (int i = 0; i < 500000; i++) {
+
+            Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+
+            disconnectedBuffer.add(new AsyncCommand<>(command));
+        }
+
+        sut.channelInactive(context);
+        sut.channelActive(context);
+
+        assertThat(disconnectedBuffer).isEmpty();
     }
 
     @Test
