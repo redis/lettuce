@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class CommandHandlerBenchmark {
     private final static ClientOptions CLIENT_OPTIONS = ClientOptions.create();
     private final static EmptyContext CHANNEL_HANDLER_CONTEXT = new EmptyContext();
     private final static byte[] KEY = "key".getBytes();
+    private final EmptyPromise PROMISE = new EmptyPromise();
 
     private CommandHandler commandHandler;
     private Command command;
@@ -55,7 +56,7 @@ public class CommandHandlerBenchmark {
     @Benchmark
     public void measureNettyWrite() throws Exception {
 
-        commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, null);
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, PROMISE);
 
         // Prevent OOME
         commandHandler.getStack().clear();

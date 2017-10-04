@@ -69,6 +69,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final boolean traceEnabled = logger.isTraceEnabled();
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final boolean latencyMetricsEnabled;
+    private final boolean boundedQueues;
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
     Channel channel;
@@ -93,6 +94,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.clientResources = clientResources;
         this.endpoint = endpoint;
         this.latencyMetricsEnabled = clientResources.commandLatencyCollector().isEnabled();
+        this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
     }
 
     public Queue<RedisCommand<?, ?, ?>> getStack() {
@@ -397,13 +399,22 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 command.complete();
             } else {
 
-                if (latencyMetricsEnabled) {
-                    stack.add(getLatencyCommand(command));
-                } else {
-                    stack.add(command);
+                if (stack.contains(command)) {
+                    throw new RedisException("Attempting to write duplicate command that is already enqueued: " + command);
                 }
             }
 
+            RedisCommand<?, ?, ?> redisCommand = potentiallyWrapLatencyCommand(command);
+
+            if (promise.isVoid()) {
+                stack.add(redisCommand);
+            } else {
+                promise.addListener(future -> {
+                    if (future.isSuccess()) {
+                        stack.add(redisCommand);
+                    }
+                });
+            }
         } catch (Exception e) {
             command.completeExceptionally(e);
             promise.setFailure(e);
@@ -422,14 +433,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     private boolean usesBoundedQueues() {
-        return clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
+        return boundedQueues;
     }
 
     private static boolean isWriteable(RedisCommand<?, ?, ?> command) {
         return !command.isCancelled() && !command.isDone();
     }
 
-    private RedisCommand<?, ?, ?> getLatencyCommand(RedisCommand<?, ?, ?> command) {
+    private RedisCommand<?, ?, ?> potentiallyWrapLatencyCommand(RedisCommand<?, ?, ?> command) {
+
+        if (!latencyMetricsEnabled) {
+            return command;
+        }
 
         if (command instanceof WithLatency) {
 

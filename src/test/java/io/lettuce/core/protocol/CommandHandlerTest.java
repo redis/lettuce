@@ -84,6 +84,9 @@ public class CommandHandlerTest {
     @Mock
     private Endpoint endpoint;
 
+    @Mock
+    private ChannelPromise promise;
+
     @BeforeClass
     public static void beforeClass() {
         LoggerContext ctx = (LoggerContext) LogManager.getContext();
@@ -293,9 +296,11 @@ public class CommandHandlerTest {
     @Test
     public void shouldWriteActiveCommands() throws Exception {
 
-        sut.write(context, command, null);
+        when(promise.isVoid()).thenReturn(true);
 
-        verify(context).write(command, null);
+        sut.write(context, command, promise);
+
+        verify(context).write(command, promise);
         assertThat(stack).hasSize(1).allMatch(o -> o instanceof LatencyMeteredCommand);
     }
 
@@ -303,7 +308,7 @@ public class CommandHandlerTest {
     public void shouldNotWriteCancelledCommandBatch() throws Exception {
 
         command.cancel();
-        sut.write(context, Arrays.asList(command), null);
+        sut.write(context, Arrays.asList(command), promise);
 
         verifyZeroInteractions(context);
         assertThat((Collection) ReflectionTestUtils.getField(sut, "stack")).isEmpty();
@@ -313,9 +318,10 @@ public class CommandHandlerTest {
     public void shouldWriteActiveCommandsInBatch() throws Exception {
 
         List<Command<String, String, String>> commands = Arrays.asList(command);
-        sut.write(context, commands, null);
+        when(promise.isVoid()).thenReturn(true);
+        sut.write(context, commands, promise);
 
-        verify(context).write(commands, null);
+        verify(context).write(commands, promise);
         assertThat(stack).hasSize(1);
     }
 
@@ -325,10 +331,10 @@ public class CommandHandlerTest {
 
         Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
                 null);
-
         command.cancel();
+        when(promise.isVoid()).thenReturn(true);
 
-        sut.write(context, Arrays.asList(command, command2), null);
+        sut.write(context, Arrays.asList(command, command2), promise);
 
         ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
         verify(context).write(captor.capture(), any());

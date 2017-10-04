@@ -75,14 +75,14 @@ public class ClusterNodeEndpointTest {
     }
 
     @Test
-    public void closeWithoutCommands() throws Exception {
+    public void closeWithoutCommands() {
 
         sut.close();
         verifyZeroInteractions(clusterChannelWriter);
     }
 
     @Test
-    public void closeWithQueuedCommands() throws Exception {
+    public void closeWithQueuedCommands() {
 
         disconnectedBuffer.add(command);
 
@@ -92,7 +92,7 @@ public class ClusterNodeEndpointTest {
     }
 
     @Test
-    public void closeWithCancelledQueuedCommands() throws Exception {
+    public void closeWithCancelledQueuedCommands() {
 
         disconnectedBuffer.add(command);
         command.cancel();
@@ -122,9 +122,10 @@ public class ClusterNodeEndpointTest {
     }
 
     @Test
-    public void closeWithBufferedCommands() throws Exception {
+    public void closeWithBufferedCommands() {
 
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+
         sut.write(command);
 
         sut.close();
@@ -133,7 +134,7 @@ public class ClusterNodeEndpointTest {
     }
 
     @Test
-    public void closeWithCancelledBufferedCommands() throws Exception {
+    public void closeWithCancelledBufferedCommands() {
 
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
         sut.write(command);
