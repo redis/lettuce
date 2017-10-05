@@ -403,10 +403,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     protected <C extends RedisCommand<K, V, T>, T> void writeToDisconnectedBuffer(C command) {
 
-        if (disconnectedBuffer.contains(command)) {
-            return;
-        }
-
         if (connectionError != null) {
             if (debugEnabled) {
                 logger.debug("{} disconnectedBufferCommand() Completing command {} due to connection error", logPrefix(),
@@ -474,10 +470,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     private void bufferCommand(RedisCommand<K, V, ?> command) {
-
-        if (commandBuffer.contains(command)) {
-            return;
-        }
 
         if (debugEnabled) {
             logger.debug("{} bufferCommand() buffering command {}", logPrefix(), command);
