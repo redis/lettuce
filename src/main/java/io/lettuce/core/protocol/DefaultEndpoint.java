@@ -214,10 +214,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
     private void writeToDisconnectedBuffer(RedisCommand<?, ?, ?> command) {
 
-        if (disconnectedBuffer.contains(command)) {
-            return;
-        }
-
         if (connectionError != null) {
             if (debugEnabled) {
                 logger.debug("{} writeToDisconnectedBuffer() Completing command {} due to connection error", logPrefix(),
@@ -236,10 +232,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     }
 
     protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
-
-        if (commandBuffer.contains(command)) {
-            return;
-        }
 
         if (debugEnabled) {
             logger.debug("{} writeToBuffer() buffering command {}", logPrefix(), command);
