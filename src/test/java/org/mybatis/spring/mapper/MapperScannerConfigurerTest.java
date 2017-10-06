@@ -71,14 +71,16 @@ public final class MapperScannerConfigurerTest {
 
   @AfterEach
   void assertNoMapperClass() {
-    // concrete classes should always be ignored by MapperScannerPostProcessor
-    assertBeanNotLoaded("mapperClass");
+    try {
+      // concrete classes should always be ignored by MapperScannerPostProcessor
+      assertBeanNotLoaded("mapperClass");
 
-    // no method interfaces should be ignored too
-    assertBeanNotLoaded("package-info");
-    //        assertBeanNotLoaded("annotatedMapperZeroMethods"); // as of 1.1.0 mappers with no methods are loaded
-    
-    applicationContext.close();
+      // no method interfaces should be ignored too
+      assertBeanNotLoaded("package-info");
+      //        assertBeanNotLoaded("annotatedMapperZeroMethods"); // as of 1.1.0 mappers with no methods are loaded
+    } finally {
+      applicationContext.close();
+    }
   }
 
   @Test
