@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package io.lettuce.core.pubsub;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.DefaultEndpoint;
-
+import io.lettuce.core.protocol.RedisCommand;
 import io.netty.util.internal.ConcurrentSet;
 
 /**
@@ -29,9 +32,21 @@ import io.netty.util.internal.ConcurrentSet;
  */
 public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
+    private static final Set<String> ALLOWED_COMMANDS_SUBSCRIBED;
     private final List<RedisPubSubListener<K, V>> listeners = new CopyOnWriteArrayList<>();
     private final Set<K> channels;
     private final Set<K> patterns;
+
+    static {
+
+        ALLOWED_COMMANDS_SUBSCRIBED = new HashSet<>(5, 1);
+
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.SUBSCRIBE.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PSUBSCRIBE.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.UNSUBSCRIBE.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PUNSUBSCRIBE.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.QUIT.name());
+    }
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -73,6 +88,21 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
     public Set<K> getPatterns() {
         return patterns;
+    }
+
+    @Override
+    public <K1, V1, T> RedisCommand<K1, V1, T> write(RedisCommand<K1, V1, T> command) {
+
+        if (!channels.isEmpty() || !patterns.isEmpty()) {
+
+            if (!ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name())) {
+
+                throw new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
+                        command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED));
+            }
+        }
+
+        return super.write(command);
     }
 
     public void notifyMessage(PubSubOutput<K, V, V> output) {
