@@ -29,20 +29,20 @@
 
 			<p>
 				<span class="label important">NOTE</span>
-				See <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> to know about how to use Spring with a full web application server.				.
+				查看 <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> 获取更多关于 Spring 在完整的应用服务上面的使用例子..
 			</p>
 
 			<p>
-				You can check out sample code from the MyBatis-Spring <a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">repo</a>:
+				您可以从此处查看 MyBatis-Spring 的示例代码 <a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">repo</a>:
 			</p>
 			<p>
-				Any of the samples can be run with JUnit 4.
+				任何一个示例都在 JUnit 4 中运行.
 			</p>
 			<p>
-				The sample code shows a typical design where a transactional service gets domain objects from a data access layer.
+				示例代码显示了事务服务从数据访问层获取域对象的典型设计.
 			</p>
 			<p>
-				<code>FooService.java</code> acts as the service:
+				<code>FooService.java</code> 作为服务:
 			</p>
 			<source><![CDATA[
 @Transactional
@@ -61,18 +61,10 @@ public class FooService {
 }
 ]]></source>
 			<p>
-				It is a transactional bean, so a transaction is started when any of its methods is called
-				and committed when the method ends without throwing an unchecked exception.
-				Notice that transactional behaviour is configured with the
-				<code>@Transactional</code>
-				attribute. This is not required; any other way provided by Spring can be used to demarcate
-				your transactions.
+				它是一个事务 bean，所以当调用它的任何方法时，事务被启动并且在方法结束时提交，且不会抛出未经检查的异常.请注意，事务行为配置为 <code>@Transactional</code> 属性. 这不是必需的 Spring 提供的任何其他方式都可用于划分你的事务.
 			</p>
 			<p>
-				This service calls a data access layer built with MyBatis. This layer
-				consists on a just an interface <code>UserMapper.java</code>
-				that will be used with a dynamic proxy built by MyBatis at
-				runtime and injected into the service by Spring.
+				此服务调用使用 MyBatis 构建的数据访问层. 这层只是一个界面 <code>UserMapper.java</code> 这将与 MyBatis 建立的动态代理一起使用运行时并通过 Spring 注入服务.
 			</p>
 			<source><![CDATA[
 public interface UserMapper {
@@ -82,19 +74,17 @@ public interface UserMapper {
 }
 ]]></source>			
 			<p> 
-			    Note that, for the sake of simplicity we used the interface <code>UserMapper.java</code> for the DAO scenario
-			    where a DAO is built with an interface and a implementation though in this case it would have been more
-			    adequate to use an interface called <code>UserDao.java</code> instead.
+			    注意，为了简单起见，我们使用了接口 <code>UserMapper.java</code> 对于 DAO 场景其中一个 DAO 层是用接口和一个实现构建的，尽管在这种情况下它将会更多足够使用一个接口调用 <code>UserDao.java</code> 来取代.
 			</p>
 			<p>
-				We will see different ways to find the mapper interface, register it to Spring and inject it into the service bean:
+				我们将看到不同的方法来找到映射器接口，将其注册到 Spring 并将其注入到服务 bean 中:
 			</p>
 			<table>
-				<caption>Scenarios</caption>
+				<caption>使用场景</caption>
 				<thead>
 					<tr>
-						<th>Sample test</th>
-						<th>Description</th>
+						<th>测试用样例</th>
+						<th>描述</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -103,8 +93,7 @@ public interface UserMapper {
 							<code>SampleMapperTest.java</code>
 						</td>
 						<td>
-							Shows you the base configuration based on a <code>MapperFactoryBean</code>
-							that will dynamically build an implementation for <code>UserMapper</code>
+							显示基于 <code>MapperFactoryBean</code> 的基本配置，这将动态构建一个实现 <code>UserMapper</code>
 						</td>
 					</tr>
 					<tr>
@@ -112,7 +101,7 @@ public interface UserMapper {
 							<code>SampleScannerTest.java</code>
 						</td>
 						<td>
-							Shows how to use the <code>MapperScannerConfigurer</code> so all the mappers in a project are autodiscovered.
+							显示如何使用 <code>MapperScannerConfigurer</code> 来实现项目中所有 mappers 的自动发现.
 						</td>
 					</tr>
 					<tr>
@@ -120,8 +109,7 @@ public interface UserMapper {
 							<code>SampleSqlSessionTest.java</code>
 						</td>
 						<td>
-							Shows how to hand code a DAO using a Spring managed <code>SqlSession</code>
-							and providing your own implementation <code>UserDaoImpl.java</code>.
+							显示如何使用 Spring  <code>SqlSession</code> 手动编写 DAO 层并提供你自己的实现 <code>UserDaoImpl.java</code>.
 						</td>
 					</tr>
 					<tr>
@@ -129,7 +117,7 @@ public interface UserMapper {
 							<code>SampleConfigurationTest.java</code>
 						</td>
 						<td>
-							Shows how to use Spring's <code>@Configuration</code> to create MyBatis beans manually.
+							显示如何使用 Spring 的 <code>@Configuration</code> 来手动创建 MyBatis beans .
 						</td>
 					</tr>
 					<tr>
@@ -137,8 +125,7 @@ public interface UserMapper {
 							<code>SampleEnableTest</code>
 						</td>
 						<td>
-							Shows how to use Spring's <code>@Configuration</code> with the <code>@MapperScann</code> annotation so
-							mappers are autodiscovered.
+							现实如何使用 Spring 的 <code>@Configuration</code> 和 <code>@MapperScann</code> 注解来自动发现 mappers.
 						</td>
 					</tr>
 					<tr>
@@ -146,13 +133,13 @@ public interface UserMapper {
 							<code>SampleNamespaceTest</code>
 						</td>
 						<td>
-							Shows how to use the custom MyBatis XML namespace. 
+							显示如何使用自定义 MyBatis XML 命名空间. 
 						</td>
 					</tr>
 				</tbody>
 			</table>
 			<p>
-				Please take a look at the different <code>applicationContext.xml</code> files to see MyBatis-Spring in action.
+				查看 <code>applicationContext.xml</code> 文件的区别以进行 MyBatis-Spring 实战.
 			</p>
 
 		</section>
