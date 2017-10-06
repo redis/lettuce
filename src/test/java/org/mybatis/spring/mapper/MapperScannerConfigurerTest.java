@@ -44,7 +44,7 @@ public final class MapperScannerConfigurerTest {
   private GenericApplicationContext applicationContext;
 
   @BeforeEach
-  public void setupContext() {
+  void setupContext() {
     applicationContext = new GenericApplicationContext();
 
     // add the mapper scanner as a bean definition rather than explicitly setting a
@@ -70,7 +70,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @AfterEach
-  public void assertNoMapperClass() {
+  void assertNoMapperClass() {
     // concrete classes should always be ignored by MapperScannerPostProcessor
     assertBeanNotLoaded("mapperClass");
 
@@ -82,7 +82,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testInterfaceScan() {
+  void testInterfaceScan() {
     startContext();
 
     // all interfaces with methods should be loaded
@@ -93,7 +93,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testNameGenerator() {
+  void testNameGenerator() {
     GenericBeanDefinition definition = new GenericBeanDefinition();
     definition.setBeanClass(BeanNameGenerator.class);
     applicationContext.registerBeanDefinition("beanNameGenerator", definition);
@@ -111,7 +111,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testMarkerInterfaceScan() {
+  void testMarkerInterfaceScan() {
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
         "markerInterface", MapperInterface.class);
 
@@ -126,7 +126,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testAnnotationScan() {
+  void testAnnotationScan() {
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
         "annotationClass", Component.class);
 
@@ -141,7 +141,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testMarkerInterfaceAndAnnotationScan() {
+  void testMarkerInterfaceAndAnnotationScan() {
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
         "markerInterface", MapperInterface.class);
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
@@ -158,7 +158,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testScanWithExplicitSqlSessionFactory() throws Exception {
+  void testScanWithExplicitSqlSessionFactory() throws Exception {
     setupSqlSessionFactory("sqlSessionFactory2");
 
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
@@ -168,7 +168,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testScanWithExplicitSqlSessionTemplate() throws Exception {
+  void testScanWithExplicitSqlSessionTemplate() throws Exception {
     GenericBeanDefinition definition = new GenericBeanDefinition();
     definition.setBeanClass(SqlSessionTemplate.class);
     ConstructorArgumentValues constructorArgs = new ConstructorArgumentValues();
@@ -183,7 +183,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testScanWithExplicitSqlSessionFactoryViaPlaceholder() throws Exception {
+  void testScanWithExplicitSqlSessionFactoryViaPlaceholder() throws Exception {
     setupSqlSessionFactory("sqlSessionFactory2");
 
     // use a property placeholder for the session factory name
@@ -203,7 +203,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testScanWithNameConflict() {
+  void testScanWithNameConflict() {
     GenericBeanDefinition definition = new GenericBeanDefinition();
     definition.setBeanClass(Object.class);
     applicationContext.registerBeanDefinition("mapperInterface", definition);
@@ -216,7 +216,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  public void testScanWithPropertyPlaceholders() {
+  void testScanWithPropertyPlaceholders() {
     GenericBeanDefinition definition = (GenericBeanDefinition) applicationContext
         .getBeanDefinition("mapperScanner");
 

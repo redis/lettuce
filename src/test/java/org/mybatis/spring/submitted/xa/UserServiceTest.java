@@ -35,14 +35,14 @@ public class UserServiceTest {
   private UserService userService;
   
   @Test
-  public void testCommit() {
+  void testCommit() {
     User user = new User(1, "Pocoyo");
     userService.saveWithNoFailure(user);
     assertThat(userService.checkUserExists(user.getId())).isTrue();
   }
   
   @Test
-  public void testRollback() {
+  void testRollback() {
     User user = new User(2, "Pocoyo");
     try {
       userService.saveWithFailure(user);
@@ -53,7 +53,7 @@ public class UserServiceTest {
   }
 
   @Test
-  public void testCommitWithExistingTx() throws Exception {
+  void testCommitWithExistingTx() throws Exception {
     userTransaction.begin();
     User user = new User(3, "Pocoyo");
     userService.saveWithNoFailure(user);
@@ -66,7 +66,7 @@ public class UserServiceTest {
   // because Spring calls beforeCommmit from its TX interceptor
   // then, the JTA TX may be rolledback.
   @Test
-  public void testRollbackWithExistingTx() throws Exception {
+  void testRollbackWithExistingTx() throws Exception {
     userTransaction.begin();
     User user = new User(5, "Pocoyo");
     userService.saveWithNoFailure(user);

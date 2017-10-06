@@ -103,7 +103,7 @@ public class SampleConfigurationTest {
   private FooService fooService;
 
   @Test
-  public void test() {
+  void test() {
     User user = fooService.doSomeBusinessStuff("u1");
     assertThat(user.getName()).isEqualTo("Pocoyo");
   }

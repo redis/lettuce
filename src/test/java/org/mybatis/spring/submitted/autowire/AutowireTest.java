@@ -24,7 +24,7 @@ public class AutowireTest {
   private ClassPathXmlApplicationContext context;
 
   @Test
-  public void shouldReturnMapper() {
+  void shouldReturnMapper() {
     context = new ClassPathXmlApplicationContext("classpath:org/mybatis/spring/submitted/autowire/spring.xml");
 
     FooMapper fooMapper = (FooMapper) context.getBean("fooMapper");

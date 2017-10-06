@@ -37,7 +37,7 @@ public abstract class AbstractSampleTest {
   }
 
   @Test
-  public final void testFooService() {
+  final void testFooService() {
     User user = this.fooService.doSomeBusinessStuff("u1");
     assertThat(user).isNotNull();
     assertThat(user.getName()).isEqualTo("Pocoyo");

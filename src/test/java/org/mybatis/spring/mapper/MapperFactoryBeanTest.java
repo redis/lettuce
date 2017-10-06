@@ -42,13 +42,13 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
   private static SqlSessionTemplate sqlSessionTemplate;
 
   @BeforeAll
-  public static void setupSqlTemplate() {
+  static void setupSqlTemplate() {
     sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
   }
 
   // test normal MapperFactoryBean usage
   @Test
-  public void testBasicUsage() throws Exception {
+  void testBasicUsage() throws Exception {
     find();
 
     assertCommit(); // SqlSesssionTemplate autocommits
@@ -57,7 +57,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testAddToConfigTrue() throws Exception {
+  void testAddToConfigTrue() throws Exception {
     // the default SqlSessionFactory in AbstractMyBatisSpringTest is created with an explicitly set
     // MapperLocations list, so create a new factory here that tests auto-loading the config
     SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
@@ -76,7 +76,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
   // will fail because TestDao's mapper config is never loaded
   @Test
-  public void testAddToConfigFalse() throws Throwable {
+  void testAddToConfigFalse() throws Throwable {
     try {
       // the default SqlSessionFactory in AbstractMyBatisSpringTest is created with an explicitly
       // set MapperLocations list, so create a new factory here that tests auto-loading the
@@ -101,7 +101,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithTx() throws Exception {
+  void testWithTx() throws Exception {
     TransactionStatus status = txManager.getTransaction(new DefaultTransactionDefinition());
 
     find();
@@ -116,7 +116,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
   // MapperFactoryBeans should be usable outside of Spring TX, as long as a there is no active
   // transaction
   @Test
-  public void testWithNonSpringTransactionFactory() throws Exception {
+  void testWithNonSpringTransactionFactory() throws Exception {
     Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
     Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
     sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
@@ -136,7 +136,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
   // active transaction using the DataSource, but without a SpringTransactionFactory
   // this should error
   @Test
-  public void testNonSpringTxMgrWithTx() throws Exception {
+  void testNonSpringTxMgrWithTx() throws Exception {
     Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
     Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
     sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
@@ -162,7 +162,7 @@ public final class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
 
   // similar to testNonSpringTxFactoryNonSpringDSWithTx() in MyBatisSpringTest
   @Test
-  public void testNonSpringWithTx() throws Exception {
+  void testNonSpringWithTx() throws Exception {
     Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
 
     MockDataSource mockDataSource = new MockDataSource();
