@@ -924,9 +924,24 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         drainCommands(stack, queuedCommands);
         drainCommands(disconnectedBuffer, queuedCommands);
 
-        disconnectedBuffer.addAll(queuedCommands);
+        try {
+            disconnectedBuffer.addAll(queuedCommands);
+        } catch (RuntimeException e) {
 
-        logger.debug("{} rebuildQueue {} command(s) added to buffer", logPrefix(), disconnectedBuffer.size());
+            if (debugEnabled) {
+                logger.debug("{} rebuildQueue Queue overcommit. Cannot add all commands to buffer (disconnected).",
+                        logPrefix(), queuedCommands.size());
+            }
+            queuedCommands.removeAll(disconnectedBuffer);
+
+            for (RedisCommand<?, ?, ?> command : queuedCommands) {
+                command.completeExceptionally(e);
+            }
+        }
+
+        if (debugEnabled) {
+            logger.debug("{} rebuildQueue {} command(s) added to buffer", logPrefix(), disconnectedBuffer.size());
+        }
     }
 
     private void activateCommandHandlerAndExecuteBufferedCommands(ChannelHandlerContext ctx) {

@@ -17,13 +17,19 @@ package com.lambdaworks.redis;
 
 import static com.lambdaworks.Connections.getChannel;
 import static com.lambdaworks.Connections.getConnectionWatchdog;
+import static com.lambdaworks.Connections.getStack;
 import static com.lambdaworks.Connections.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
+import com.lambdaworks.redis.codec.StringCodec;
 import org.junit.Test;
 
 import com.lambdaworks.Wait;
@@ -42,17 +48,17 @@ import io.netty.channel.Channel;
 public class ClientOptionsTest extends AbstractRedisClientTest {
 
     @Test
-    public void testNew() throws Exception {
+    public void testNew() {
         checkAssertions(ClientOptions.create());
     }
 
     @Test
-    public void testBuilder() throws Exception {
+    public void testBuilder() {
         checkAssertions(ClientOptions.builder().build());
     }
 
     @Test
-    public void testCopy() throws Exception {
+    public void testCopy() {
         checkAssertions(ClientOptions.copyOf(ClientOptions.builder().build()));
     }
 
@@ -65,7 +71,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void variousClientOptions() throws Exception {
+    public void variousClientOptions() {
 
         RedisAsyncCommands<String, String> plain = client.connect().async();
 
@@ -82,7 +88,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void requestQueueSize() throws Exception {
+    public void requestQueueSize() {
 
         client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
 
@@ -108,7 +114,73 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void disconnectedWithoutReconnect() throws Exception {
+    public void requestQueueSizeAppliedForReconnect() {
+
+        client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+
+        RedisAsyncCommands<String, String> connection = client.connect().async();
+        ConnectionWatchdog watchdog = getConnectionWatchdog(connection.getStatefulConnection());
+
+        watchdog.setListenOnChannelInactive(false);
+
+        connection.quit();
+
+        Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
+
+        List<RedisFuture<String>> pings = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            pings.add(connection.ping());
+        }
+
+        watchdog.setListenOnChannelInactive(true);
+        watchdog.scheduleReconnect();
+
+        for (RedisFuture<String> ping : pings) {
+            assertThat(ping.toCompletableFuture().join()).isEqualTo("PONG");
+        }
+
+        connection.getStatefulConnection().close();
+    }
+
+    @Test
+    public void requestQueueSizeOvercommittedReconnect() throws Exception {
+
+        client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+        ConnectionWatchdog watchdog = getConnectionWatchdog(connection);
+
+        watchdog.setListenOnChannelInactive(false);
+
+        Queue<Object> buffer = getStack(connection);
+        List<RedisFuture<String>> pings = new ArrayList<>();
+        for (int i = 0; i < 11; i++) {
+
+            AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.PING,
+                    new StatusOutput<>(StringCodec.UTF8)));
+            pings.add(command);
+            buffer.add(command);
+        }
+
+        getChannel(connection).disconnect();
+
+        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+
+        watchdog.setListenOnChannelInactive(true);
+        watchdog.scheduleReconnect();
+
+        for (int i = 0; i < 10; i++) {
+            assertThat(pings.get(i).get()).isEqualTo("PONG");
+        }
+
+        assertThatThrownBy(() -> pings.get(10).toCompletableFuture().join()).hasCauseInstanceOf(IllegalStateException.class)
+                .hasMessage("java.lang.IllegalStateException: Queue full");
+
+        connection.close();
+    }
+
+    @Test
+    public void disconnectedWithoutReconnect() {
 
         client.setOptions(ClientOptions.builder().autoReconnect(false).build());
 
@@ -126,7 +198,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void disconnectedRejectCommands() throws Exception {
+    public void disconnectedRejectCommands() {
 
         client.setOptions(ClientOptions.builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
                 .build());
@@ -146,7 +218,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void disconnectedAcceptCommands() throws Exception {
+    public void disconnectedAcceptCommands() {
 
         client.setOptions(ClientOptions.builder().autoReconnect(false)
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS).build());
@@ -160,7 +232,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test(timeout = 10000)
-    public void pingBeforeConnect() throws Exception {
+    public void pingBeforeConnect() {
 
         redis.set(key, value);
         client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
@@ -195,11 +267,11 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pingBeforeConnectWithAuthentication() throws Exception {
+    public void pingBeforeConnectWithAuthentication() {
 
         new WithPasswordRequired() {
             @Override
-            protected void run(RedisClient client) throws Exception {
+            protected void run(RedisClient client) {
 
                 client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
                 RedisURI redisURI = RedisURI.Builder.redis(host, port).withPassword(passwd).build();
@@ -218,7 +290,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test(timeout = 2000)
-    public void pingBeforeConnectWithAuthenticationTimeout() throws Exception {
+    public void pingBeforeConnectWithAuthenticationTimeout() {
 
         new WithPasswordRequired() {
             @Override
@@ -244,11 +316,11 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pingBeforeConnectWithSslAndAuthentication() throws Exception {
+    public void pingBeforeConnectWithSslAndAuthentication() {
 
         new WithPasswordRequired() {
             @Override
-            protected void run(RedisClient client) throws Exception {
+            protected void run(RedisClient client) {
 
                 client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
                 RedisURI redisURI = RedisURI.Builder.redis(host, 6443).withPassword(passwd).withVerifyPeer(false).withSsl(true)
@@ -268,11 +340,11 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pingBeforeConnectWithAuthenticationFails() throws Exception {
+    public void pingBeforeConnectWithAuthenticationFails() {
 
         new WithPasswordRequired() {
             @Override
-            protected void run(RedisClient client) throws Exception {
+            protected void run(RedisClient client) {
 
                 client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
                 RedisURI redisURI = RedisURI.builder().redis(host, port).build();
@@ -288,11 +360,11 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pingBeforeConnectWithSslAndAuthenticationFails() throws Exception {
+    public void pingBeforeConnectWithSslAndAuthenticationFails() {
 
         new WithPasswordRequired() {
             @Override
-            protected void run(RedisClient client) throws Exception {
+            protected void run(RedisClient client) {
 
                 client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
                 RedisURI redisURI = RedisURI.builder().redis(host, 6443).withVerifyPeer(false).withSsl(true).build();
@@ -351,7 +423,7 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
     }
 
     @Test(timeout = 10000)
-    public void authenticatedPingBeforeConnectWithQueuedCommandsAndReconnect() throws Exception {
+    public void authenticatedPingBeforeConnectWithQueuedCommandsAndReconnect() {
 
         new WithPasswordRequired() {
 
