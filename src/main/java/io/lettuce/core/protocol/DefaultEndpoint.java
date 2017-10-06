@@ -537,6 +537,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             Collection<RedisCommand<?, ?, ?>> commands = queuedCommands.drainQueue();
 
+            if (debugEnabled) {
+                logger.debug("{} notifyQueuedCommands adding {} command(s) to buffer", logPrefix(), commands.size());
+            }
+
+            commands.addAll(drainCommands(disconnectedBuffer));
+
             for (RedisCommand<?, ?, ?> command : commands) {
 
                 if (command instanceof DemandAware.Sink) {
@@ -544,10 +550,20 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
                 }
             }
 
-            logger.debug("{} notifyQueuedCommands adding {} command(s) to buffer", logPrefix(), commands.size());
+            try {
+                disconnectedBuffer.addAll(commands);
+            } catch (RuntimeException e) {
 
-            commands.addAll(drainCommands(disconnectedBuffer));
-            disconnectedBuffer.addAll(commands);
+                if (debugEnabled) {
+                    logger.debug("{} notifyQueuedCommands Queue overcommit. Cannot add all commands to buffer (disconnected).",
+                            logPrefix(), commands.size());
+                }
+                commands.removeAll(disconnectedBuffer);
+
+                for (RedisCommand<?, ?, ?> command : commands) {
+                    command.completeExceptionally(e);
+                }
+            }
 
             if (isConnected()) {
                 flushCommands(disconnectedBuffer);
