@@ -262,10 +262,10 @@ public class SslTest extends AbstractTest {
         assertThat(future.get()).doesNotContain("c1", "c2");
         assertThat(future.isDone()).isEqualTo(true);
 
-        RedisFuture<List<String>> defectFuture = connection.pubsubChannels();
+        RedisFuture<Void> defectFuture = connection.subscribe("foo");
 
         try {
-            assertThat(defectFuture.get()).doesNotContain("c1", "c2");
+            defectFuture.get();
             fail("Missing ExecutionException with nested SSLHandshakeException");
         } catch (InterruptedException e) {
             fail("Missing ExecutionException with nested SSLHandshakeException");

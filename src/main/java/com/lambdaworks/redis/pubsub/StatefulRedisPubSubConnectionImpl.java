@@ -16,21 +16,19 @@
 package com.lambdaworks.redis.pubsub;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.protocol.CommandType;
 import com.lambdaworks.redis.protocol.ConnectionWatchdog;
+import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
+
 import io.netty.channel.ChannelHandler;
 import io.netty.util.internal.ConcurrentSet;
 
@@ -48,9 +46,22 @@ import io.netty.util.internal.ConcurrentSet;
 public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnectionImpl<K, V> implements
         StatefulRedisPubSubConnection<K, V> {
 
+    private static final Set<String> ALLOWED_COMMANDS_SUBSCRIBED;
+
     protected final List<RedisPubSubListener<K, V>> listeners;
     protected final Set<K> channels;
     protected final Set<K> patterns;
+
+    static {
+
+        ALLOWED_COMMANDS_SUBSCRIBED = new HashSet<>(5, 1);
+
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.SUBSCRIBE.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PSUBSCRIBE.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.UNSUBSCRIBE.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PUNSUBSCRIBE.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.QUIT.name());
+    }
 
     /**
      * Initialize a new connection.
@@ -137,6 +148,21 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     public void activated() {
         super.activated();
         resubscribe();
+    }
+
+    @Override
+    public <T, C extends RedisCommand<K, V, T>> C dispatch(C command) {
+
+        if (!channels.isEmpty() || !patterns.isEmpty()) {
+
+            if (!ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name())) {
+
+                throw new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
+                        command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED));
+            }
+        }
+
+        return super.dispatch(command);
     }
 
     /**

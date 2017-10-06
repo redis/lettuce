@@ -125,7 +125,6 @@ public class PubSubConnectionTest extends AbstractClusterTest {
         RedisCommands<String, String> otherNodeConnection = connection.getConnection(otherNode.getNodeId()).sync();
         otherNodeConnection.publish(key, value);
         assertThat(listener.getChannels().take()).isEqualTo(key);
-
     }
 
     private RedisClusterNode getOtherThan(String nodeId) {

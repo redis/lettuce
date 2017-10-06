@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Fail.fail;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
@@ -380,6 +381,19 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
         redis.publish(channel, message);
         assertThat(channels.poll(10, TimeUnit.MILLISECONDS)).isNull();
         assertThat(messages.poll(10, TimeUnit.MILLISECONDS)).isNull();
+    }
+
+    @Test
+    public void pingNotAllowedInSubscriptionState() throws Exception {
+
+        pubsub.subscribe(channel).get();
+
+        assertThatThrownBy(() -> pubsub.ping().get()).isInstanceOf(RedisException.class).hasMessageContaining("not allowed");
+        pubsub.unsubscribe(channel);
+
+        Wait.untilTrue(() -> channels.size() == 2).waitOrTimeout();
+
+        assertThat(pubsub.ping().get()).isEqualTo("PONG");
     }
 
     // RedisPubSubListener implementation
