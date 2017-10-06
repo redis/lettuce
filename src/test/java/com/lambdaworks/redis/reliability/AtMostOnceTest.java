@@ -15,19 +15,16 @@
  */
 package com.lambdaworks.redis.reliability;
 
+import static com.lambdaworks.Connections.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
-import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
@@ -140,8 +137,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         assertThat(working.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(connection.get(key)).isEqualTo("2");
 
-        AsyncCommand<String, String, Object> command = new AsyncCommand<String, String, Object>(
-new Command<>(CommandType.INCR,
+        AsyncCommand<String, String, Object> command = new AsyncCommand<String, String, Object>(new Command<>(CommandType.INCR,
                 new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
 
             @Override
@@ -278,36 +274,5 @@ new Command<>(CommandType.INCR,
             return e.getCause();
         }
         return null;
-    }
-
-    private <K, V> RedisChannelHandler<K, V> getRedisChannelHandler(RedisConnection<K, V> sync) {
-
-        InvocationHandler invocationHandler = Proxy.getInvocationHandler(sync);
-        return (RedisChannelHandler<K, V>) ReflectionTestUtils.getField(invocationHandler, "connection");
-    }
-
-    private <T> T getHandler(Class<T> handlerType, RedisChannelHandler<?, ?> channelHandler) {
-        Channel channel = getChannel(channelHandler);
-        return (T) channel.pipeline().get((Class) handlerType);
-    }
-
-    private Channel getChannel(RedisChannelHandler<?, ?> channelHandler) {
-        return (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
-    }
-
-    private Queue<?> getDisconnectedBuffer(RedisChannelHandler<?, ?> channelHandler) {
-        return (Queue<?>) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "disconnectedBuffer");
-    }
-
-    private Queue<?> getCommandBuffer(RedisChannelHandler<?, ?> channelHandler) {
-        return (Queue<?>) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "commandBuffer");
-    }
-
-    private Queue<Object> getStack(RedisChannelHandler<?, ?> channelHandler) {
-        return (Queue<Object>) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "stack");
-    }
-
-    private String getConnectionState(RedisChannelHandler<?, ?> channelHandler) {
-        return ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "lifecycleState").toString();
     }
 }

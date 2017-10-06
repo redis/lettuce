@@ -193,7 +193,6 @@ public class CommandHandlerTest {
                 return null;
             }
         }).when(channelHandler).activated();
-        when(channel.isActive()).thenReturn(true);
 
         sut.channelRegistered(context);
         sut.channelActive(context);
@@ -292,7 +291,6 @@ public class CommandHandlerTest {
     @Test
     public void testWriteChannelDisconnected() throws Exception {
 
-        when(channel.isActive()).thenReturn(true);
         sut.channelRegistered(context);
         sut.channelActive(context);
 
@@ -310,7 +308,6 @@ public class CommandHandlerTest {
         sut = new CommandHandler<>(ClientOptions.builder().autoReconnect(false).build(), clientResources);
         sut.setRedisChannelHandler(channelHandler);
 
-        when(channel.isActive()).thenReturn(true);
         sut.channelRegistered(context);
         sut.channelActive(context);
 
