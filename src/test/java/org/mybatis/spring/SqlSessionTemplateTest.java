@@ -40,12 +40,12 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   private static SqlSession sqlSessionTemplate;
 
   @BeforeAll
-  public static void setupSqlTemplate() {
+  static void setupSqlTemplate() {
     sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
   }
 
   @AfterEach
-  public void tearDown() {
+  void tearDown() {
     try {
       connection.close();
     } catch (SQLException ignored) {
@@ -53,7 +53,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testGetConnection() throws java.sql.SQLException {
+  void testGetConnection() throws java.sql.SQLException {
     java.sql.Connection conn = sqlSessionTemplate.getConnection();
 
     // outside of an explicit tx, getConnection() will start a tx, get an open connection then
@@ -62,7 +62,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testGetConnectionInTx() throws java.sql.SQLException {
+  void testGetConnectionInTx() throws java.sql.SQLException {
     TransactionStatus status = null;
 
     try {
@@ -79,22 +79,22 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testCommit() throws SQLException {
+  void testCommit() throws SQLException {
     assertThrows(UnsupportedOperationException.class, sqlSessionTemplate::commit);
   }
 
   @Test
-  public void testClose() throws SQLException {
+  void testClose() throws SQLException {
     assertThrows(UnsupportedOperationException.class, sqlSessionTemplate::close);
   }
 
   @Test
-  public void testRollback() throws SQLException {
+  void testRollback() throws SQLException {
     assertThrows(UnsupportedOperationException.class, sqlSessionTemplate::rollback);
   }
 
   @Test
-  public void testExecutorType() {
+  void testExecutorType() {
     SqlSessionTemplate template = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
     assertThat(template.getExecutorType()).isEqualTo(ExecutorType.BATCH);
 
@@ -119,7 +119,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testExceptionTranslationShouldThrowMyBatisSystemException() throws SQLException {
+  void testExceptionTranslationShouldThrowMyBatisSystemException() throws SQLException {
     try {
       sqlSessionTemplate.selectOne("undefined");
       fail("exception not thrown when expected");
@@ -133,7 +133,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testExceptionTranslationShouldThrowDataAccessException() {
+  void testExceptionTranslationShouldThrowDataAccessException() {
 
     // this query must be the same as the query in TestMapper.xml
     connection.getPreparedStatementResultSetHandler().prepareThrowsSQLException("SELECT 'fail'");
@@ -151,7 +151,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testTemplateWithNoTxInsert() {
+  void testTemplateWithNoTxInsert() {
 
     sqlSessionTemplate.getMapper(TestMapper.class).insertTest("test1");
     assertCommitJdbc();
@@ -160,7 +160,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testTemplateWithNoTxSelect() {
+  void testTemplateWithNoTxSelect() {
 
     sqlSessionTemplate.getMapper(TestMapper.class).findTest();
     assertCommit();
@@ -168,7 +168,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithTxRequired() {
+  void testWithTxRequired() {
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
     txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
 

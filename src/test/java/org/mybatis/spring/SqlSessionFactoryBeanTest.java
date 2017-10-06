@@ -63,7 +63,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testDefaults() throws Exception {
+  void testDefaults() throws Exception {
     setupFactoryBean();
 
     assertDefaultConfig(factoryBean.getObject());
@@ -72,27 +72,27 @@ public final class SqlSessionFactoryBeanTest {
   // DataSource is the only required property that does not have a default value, so test for both
   // not setting it at all and setting it to null
   @Test
-  public void testNullDataSource() throws Exception {
+  void testNullDataSource() throws Exception {
     factoryBean = new SqlSessionFactoryBean();
     assertThrows(IllegalArgumentException.class, factoryBean::getObject);
   }
 
   @Test
-  public void testSetNullDataSource() throws Exception {
+  void testSetNullDataSource() throws Exception {
     factoryBean = new SqlSessionFactoryBean();
     factoryBean.setDataSource(null);
     assertThrows(IllegalArgumentException.class, factoryBean::getObject);
   }
 
   @Test
-  public void testNullSqlSessionFactoryBuilder() throws Exception {
+  void testNullSqlSessionFactoryBuilder() throws Exception {
     setupFactoryBean();
     factoryBean.setSqlSessionFactoryBuilder(null);
     assertThrows(IllegalArgumentException.class, factoryBean::getObject);
   }
 
   @Test
-  public void testNullTransactionFactoryClass() throws Exception {
+  void testNullTransactionFactoryClass() throws Exception {
     setupFactoryBean();
     factoryBean.setTransactionFactory(null);
 
@@ -100,7 +100,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testOtherTransactionFactoryClass() throws Exception {
+  void testOtherTransactionFactoryClass() throws Exception {
     setupFactoryBean();
     factoryBean.setTransactionFactory(new JdbcTransactionFactory());
 
@@ -108,7 +108,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testEmptyStringEnvironment() throws Exception {
+  void testEmptyStringEnvironment() throws Exception {
     setupFactoryBean();
 
     factoryBean.setEnvironment("");
@@ -117,14 +117,14 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testDefaultConfiguration() throws Exception {
+  void testDefaultConfiguration() throws Exception {
     setupFactoryBean();
 
     assertDefaultConfig(factoryBean.getObject());
   }
 
   @Test
-  public void testDefaultConfigurationWithConfigurationProperties() throws Exception {
+  void testDefaultConfigurationWithConfigurationProperties() throws Exception {
     setupFactoryBean();
 
     Properties configurationProperties = new Properties();
@@ -138,7 +138,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSetConfiguration() throws Exception {
+  void testSetConfiguration() throws Exception {
     setupFactoryBean();
 
     Configuration customConfiguration = new Configuration();
@@ -161,7 +161,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSpecifyVariablesOnly() throws Exception {
+  void testSpecifyVariablesOnly() throws Exception {
     setupFactoryBean();
 
     Configuration customConfiguration = new Configuration();
@@ -179,7 +179,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSpecifyVariablesAndConfigurationProperties() throws Exception {
+  void testSpecifyVariablesAndConfigurationProperties() throws Exception {
     setupFactoryBean();
 
     Configuration customConfiguration = new Configuration();
@@ -203,7 +203,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSpecifyConfigurationPropertiesOnly() throws Exception {
+  void testSpecifyConfigurationPropertiesOnly() throws Exception {
     setupFactoryBean();
 
     Configuration customConfiguration = new Configuration();
@@ -221,7 +221,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testNotSpecifyVariableAndConfigurationProperties() throws Exception {
+  void testNotSpecifyVariableAndConfigurationProperties() throws Exception {
     setupFactoryBean();
 
     Configuration customConfiguration = new Configuration();
@@ -236,7 +236,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testNullConfigLocation() throws Exception {
+  void testNullConfigLocation() throws Exception {
     setupFactoryBean();
     // default should also be null, but test explicitly setting to null
     factoryBean.setConfigLocation(null);
@@ -245,7 +245,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSetConfigLocation() throws Exception {
+  void testSetConfigLocation() throws Exception {
     setupFactoryBean();
 
     factoryBean.setConfigLocation(new org.springframework.core.io.ClassPathResource(
@@ -272,7 +272,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSpecifyConfigurationAndConfigLocation() throws Exception {
+  void testSpecifyConfigurationAndConfigLocation() throws Exception {
     setupFactoryBean();
 
     factoryBean.setConfiguration(new Configuration());
@@ -284,7 +284,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testFragmentsAreReadWithMapperLocations() throws Exception {
+  void testFragmentsAreReadWithMapperLocations() throws Exception {
     setupFactoryBean();
 
     factoryBean.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/TestMapper.xml") });
@@ -296,7 +296,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testNullMapperLocations() throws Exception {
+  void testNullMapperLocations() throws Exception {
     setupFactoryBean();
     // default should also be null, but test explicitly setting to null
     factoryBean.setMapperLocations(null);
@@ -305,7 +305,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testEmptyMapperLocations() throws Exception {
+  void testEmptyMapperLocations() throws Exception {
     setupFactoryBean();
     factoryBean.setMapperLocations(new org.springframework.core.io.Resource[0]);
 
@@ -313,7 +313,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testMapperLocationsWithNullEntry() throws Exception {
+  void testMapperLocationsWithNullEntry() throws Exception {
     setupFactoryBean();
     factoryBean.setMapperLocations(new org.springframework.core.io.Resource[] { null });
 
@@ -321,7 +321,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testAddATypeHandler() throws Exception {
+  void testAddATypeHandler() throws Exception {
     setupFactoryBean();
     factoryBean.setTypeHandlers(new TypeHandler[] { new DummyTypeHandler() });
 
@@ -330,7 +330,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testAddATypeAlias() throws Exception {
+  void testAddATypeAlias() throws Exception {
     setupFactoryBean();
 
     factoryBean.setTypeAliases(new Class[] { DummyTypeAlias.class });
@@ -339,7 +339,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSearchATypeAliasPackage() throws Exception {
+  void testSearchATypeAliasPackage() throws Exception {
     setupFactoryBean();
     factoryBean.setTypeAliasesPackage("org/mybatis/spring/type");
 
@@ -351,7 +351,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSearchATypeAliasPackageWithSuperType() throws Exception {
+  void testSearchATypeAliasPackageWithSuperType() throws Exception {
     setupFactoryBean();
     factoryBean.setTypeAliasesSuperType(SuperType.class);
     factoryBean.setTypeAliasesPackage("org/mybatis/spring/type");
@@ -365,7 +365,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSearchATypeHandlerPackage() throws Exception {
+  void testSearchATypeHandlerPackage() throws Exception {
     setupFactoryBean();
     factoryBean.setTypeHandlersPackage("org/mybatis/spring/type");
 
@@ -375,7 +375,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSetObjectFactory() throws Exception {
+  void testSetObjectFactory() throws Exception {
     setupFactoryBean();
     factoryBean.setObjectFactory(new TestObjectFactory());
 
@@ -384,7 +384,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testSetObjectWrapperFactory() throws Exception {
+  void testSetObjectWrapperFactory() throws Exception {
     setupFactoryBean();
     factoryBean.setObjectWrapperFactory(new TestObjectWrapperFactory());
 
@@ -393,7 +393,7 @@ public final class SqlSessionFactoryBeanTest {
   }
 
   @Test
-  public void testAddCache() {
+  void testAddCache() {
     setupFactoryBean();
     PerpetualCache cache = new PerpetualCache("test-cache");
     this.factoryBean.setCache(cache);

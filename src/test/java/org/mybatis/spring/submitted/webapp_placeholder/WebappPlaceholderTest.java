@@ -33,7 +33,7 @@ public class WebappPlaceholderTest {
   private Mapper mapper;
 
   @Test
-  public void testName() throws Exception {
+  void testName() throws Exception {
     assertThat(mapper).isNotNull();
   }
 }

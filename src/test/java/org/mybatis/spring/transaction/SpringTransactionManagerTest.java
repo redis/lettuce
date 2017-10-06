@@ -25,7 +25,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
 
   @Test
-  public void shouldNoOpWithTx() throws Exception {
+  void shouldNoOpWithTx() throws Exception {
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
     txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
     TransactionStatus status = txManager.getTransaction(txDef);
@@ -58,7 +58,7 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
   //    }
 
   @Test
-  public void shouldManageWithNoTx() throws Exception {
+  void shouldManageWithNoTx() throws Exception {
     SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory();
     SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource, null, false);
     transaction.getConnection();
@@ -69,7 +69,7 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
   }
 
   @Test
-  public void shouldNotCommitWithNoTxAndAutocommitIsOn() throws Exception {
+  void shouldNotCommitWithNoTxAndAutocommitIsOn() throws Exception {
     SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory();
     SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource, null, false);
     connection.setAutoCommit(true);
@@ -81,7 +81,7 @@ public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTes
   }
 
   @Test
-  public void shouldIgnoreAutocommit() throws Exception {
+  void shouldIgnoreAutocommit() throws Exception {
     SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory();
     SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource, null, true);
     transaction.getConnection();

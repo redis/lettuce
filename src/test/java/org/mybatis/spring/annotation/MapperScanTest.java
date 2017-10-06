@@ -50,7 +50,7 @@ public final class MapperScanTest {
   private AnnotationConfigApplicationContext applicationContext;
 
   @BeforeEach
-  public void setupContext() {
+  void setupContext() {
     applicationContext = new AnnotationConfigApplicationContext();
 
     setupSqlSessionFactory("sqlSessionFactory");
@@ -69,7 +69,7 @@ public final class MapperScanTest {
   }
 
   @AfterEach
-  public void assertNoMapperClass() {
+  void assertNoMapperClass() {
     // concrete classes should always be ignored by MapperScannerPostProcessor
     assertBeanNotLoaded("mapperClass");
 
@@ -82,7 +82,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testInterfaceScan() {
+  void testInterfaceScan() {
     applicationContext.register(AppConfigWithPackageScan.class);
 
     startContext();
@@ -95,7 +95,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testInterfaceScanWithPackageClasses() {
+  void testInterfaceScanWithPackageClasses() {
     applicationContext.register(AppConfigWithPackageClasses.class);
 
     startContext();
@@ -108,7 +108,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testNameGenerator() {
+  void testNameGenerator() {
     applicationContext.register(AppConfigWithNameGenerator.class);
 
     startContext();
@@ -121,7 +121,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testMarkerInterfaceScan() {
+  void testMarkerInterfaceScan() {
     applicationContext.register(AppConfigWithMarkerInterface.class);
 
     startContext();
@@ -135,7 +135,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testAnnotationScan() {
+  void testAnnotationScan() {
     applicationContext.register(AppConfigWithAnnotation.class);
 
     startContext();
@@ -149,7 +149,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testMarkerInterfaceAndAnnotationScan() {
+  void testMarkerInterfaceAndAnnotationScan() {
     applicationContext.register(AppConfigWithMarkerInterfaceAndAnnotation.class);
 
     startContext();
@@ -163,7 +163,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testCustomMapperFactoryBean() {
+  void testCustomMapperFactoryBean() {
     applicationContext.register(AppConfigWithCustomMapperFactoryBean.class);
 
     startContext();
@@ -179,7 +179,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testScanWithNameConflict() {
+  void testScanWithNameConflict() {
     GenericBeanDefinition definition = new GenericBeanDefinition();
     definition.setBeanClass(Object.class);
     applicationContext.registerBeanDefinition("mapperInterface", definition);
@@ -210,7 +210,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testScanWithExplicitSqlSessionFactory() {
+  void testScanWithExplicitSqlSessionFactory() {
     applicationContext.register(AppConfigWithSqlSessionFactory.class);
 
     startContext();
@@ -223,7 +223,7 @@ public final class MapperScanTest {
   }
 
   @Test
-  public void testScanWithExplicitSqlSessionTemplate() throws Exception {
+  void testScanWithExplicitSqlSessionTemplate() throws Exception {
     GenericBeanDefinition definition = new GenericBeanDefinition();
     definition.setBeanClass(SqlSessionTemplate.class);
     ConstructorArgumentValues constructorArgs = new ConstructorArgumentValues();

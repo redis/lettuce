@@ -37,17 +37,17 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
   private GenericApplicationContext applicationContext;
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     sqlSessionDaoSupport = new MockSqlSessionDao();
   }
 
   @AfterEach
-  public void closeConnection() throws SQLException {
+  void closeConnection() throws SQLException {
     connection.close();
   }
 
   @Test
-  public void testWithSqlSessionTemplate() {
+  void testWithSqlSessionTemplate() {
     SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
     sqlSessionDaoSupport.setSqlSessionTemplate(sessionTemplate);
     sqlSessionDaoSupport.afterPropertiesSet();
@@ -56,7 +56,7 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithSqlSessionFactory() {
+  void testWithSqlSessionFactory() {
     sqlSessionDaoSupport.setSqlSessionFactory(sqlSessionFactory);
     sqlSessionDaoSupport.afterPropertiesSet();
 
@@ -66,7 +66,7 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithBothFactoryAndTemplate() {
+  void testWithBothFactoryAndTemplate() {
     SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory);
     sqlSessionDaoSupport.setSqlSessionTemplate(sessionTemplate);
     sqlSessionDaoSupport.setSqlSessionFactory(sqlSessionFactory);
@@ -76,18 +76,18 @@ public final class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithNoFactoryOrSession() {
+  void testWithNoFactoryOrSession() {
     assertThrows(IllegalArgumentException.class, sqlSessionDaoSupport::afterPropertiesSet);
   }
 
   @Test
-  public void testAutowireWithNoFactoryOrSession() {
+  void testAutowireWithNoFactoryOrSession() {
     setupContext();
     assertThrows(BeanCreationException.class, this::startContext);
   }
 
   @Test
-  public void testAutowireWithTwoFactories() {
+  void testAutowireWithTwoFactories() {
     setupContext();
 
     setupSqlSessionFactory("factory1");
