@@ -78,7 +78,7 @@ public final class MapperScanTest {
     // assertBeanNotLoaded("annotatedMapperZeroMethods"); // as of 1.1.0 mappers
     // with no methods are loaded
 
-    applicationContext.destroy();
+    applicationContext.close();
   }
 
   @Test
