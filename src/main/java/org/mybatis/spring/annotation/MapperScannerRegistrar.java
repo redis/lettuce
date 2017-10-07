@@ -43,7 +43,7 @@ import org.springframework.util.StringUtils;
  * @author Michael Lanyon
  * @author Eduardo Macarron
  * @author Putthiphong Boonphong
- * 
+ *
  * @see MapperFactoryBean
  * @see ClassPathMapperScanner
  * @since 1.2.0
@@ -65,8 +65,15 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
    */
   @Override
   public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+    AnnotationAttributes mapperScanAttrs = AnnotationAttributes
+        .fromMap(importingClassMetadata.getAnnotationAttributes(MapperScan.class.getName()));
+    if (mapperScanAttrs != null) {
+      registerBeanDefinitions(mapperScanAttrs, registry);
+    }
+  }
 
-    AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(MapperScan.class.getName()));
+  void registerBeanDefinitions(AnnotationAttributes annoAttrs, BeanDefinitionRegistry registry) {
+
     ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry);
 
     // this check is needed in Spring 3.1
@@ -115,6 +122,26 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
 
     scanner.registerFilters();
     scanner.doScan(StringUtils.toStringArray(basePackages));
+  }
+
+  /**
+   * A {@link MapperScannerRegistrar} for {@link MapperScans}.
+   * @since 2.0.0
+   */
+  static class RepeatingRegistrar extends MapperScannerRegistrar {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
+        BeanDefinitionRegistry registry) {
+      AnnotationAttributes mapperScansAttrs = AnnotationAttributes
+          .fromMap(importingClassMetadata.getAnnotationAttributes(MapperScans.class.getName()));
+      if (mapperScansAttrs != null) {
+        Arrays.stream(mapperScansAttrs.getAnnotationArray("value"))
+            .forEach(mapperScanAttrs -> registerBeanDefinitions(mapperScanAttrs, registry));
+      }
+    }
   }
 
 }

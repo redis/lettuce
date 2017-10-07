@@ -245,6 +245,26 @@ public final class MapperScanTest {
     
   }
 
+  @Test
+  void testScanWithMapperScanIsRepeat() {
+    applicationContext.register(AppConfigWithMapperScanIsRepeat.class);
+
+    startContext();
+
+    applicationContext.getBean("ds1Mapper");
+    applicationContext.getBean("ds2Mapper");
+  }
+
+  @Test
+  void testScanWithMapperScans() {
+    applicationContext.register(AppConfigWithMapperScans.class);
+
+    startContext();
+
+    applicationContext.getBean("ds1Mapper");
+    applicationContext.getBean("ds2Mapper");
+  }
+
   @Configuration
   @MapperScan("org.mybatis.spring.mapper")
   public static class AppConfigWithPackageScan {
@@ -288,6 +308,20 @@ public final class MapperScanTest {
   @Configuration
   @MapperScan(basePackages = "org.mybatis.spring.mapper", factoryBean = DummyMapperFactoryBean.class)
   public static class AppConfigWithCustomMapperFactoryBean {
+  }
+
+  @Configuration
+  @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1")
+  @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds2")
+  public static class AppConfigWithMapperScanIsRepeat {
+  }
+
+  @Configuration
+  @MapperScans({
+      @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1")
+      ,@MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds2")
+  })
+  public static class AppConfigWithMapperScans {
   }
 
   public static class BeanNameGenerator implements org.springframework.beans.factory.support.BeanNameGenerator {
