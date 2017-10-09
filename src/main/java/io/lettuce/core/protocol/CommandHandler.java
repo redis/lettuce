@@ -34,6 +34,9 @@ import io.lettuce.core.resource.ClientResources;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
+import io.netty.util.Recycler;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -409,11 +412,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             if (promise.isVoid()) {
                 stack.add(redisCommand);
             } else {
-                promise.addListener(future -> {
-                    if (future.isSuccess()) {
-                        stack.add(redisCommand);
-                    }
-                });
+                promise.addListener(AppendToStack.newInstance(stack, command));
             }
         } catch (Exception e) {
             command.completeExceptionally(e);
@@ -688,6 +687,53 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             if (isConnected() && !isClosed() && !channel.config().isAutoRead()) {
                 channel.config().setAutoRead(true);
             }
+        }
+    }
+
+    static class AppendToStack implements GenericFutureListener<Future<Void>> {
+
+        private final Recycler.Handle<AppendToStack> handle;
+        private Collection<RedisCommand<?, ?, ?>> stack;
+        private RedisCommand<?, ?, ?> command;
+
+        private static final Recycler<AppendToStack> RECYCLER = new Recycler<AppendToStack>() {
+            @Override
+            protected AppendToStack newObject(Handle<AppendToStack> handle) {
+                return new AppendToStack(handle);
+            }
+        };
+
+        private AppendToStack(Recycler.Handle<AppendToStack> handle) {
+            this.handle = handle;
+        }
+
+        static AppendToStack newInstance(Collection<RedisCommand<?, ?, ?>> stack, RedisCommand<?, ?, ?> command) {
+            return RECYCLER.get().init(stack, command);
+        }
+
+        private AppendToStack init(Collection<RedisCommand<?, ?, ?>> stack, RedisCommand<?, ?, ?> command) {
+
+            this.stack = stack;
+            this.command = command;
+            return this;
+        }
+
+        public void recycle() {
+            handle.recycle(this);
+        }
+
+        @Override
+        public void operationComplete(Future<Void> future) throws Exception {
+
+            if (future.isSuccess()) {
+
+                stack.add(command);
+
+                stack = null;
+                command = null;
+            }
+
+            recycle();
         }
     }
 }
