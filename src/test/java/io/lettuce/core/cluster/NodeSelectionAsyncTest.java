@@ -33,7 +33,6 @@ import io.lettuce.core.cluster.api.async.AsyncExecutions;
 import io.lettuce.core.cluster.api.async.AsyncNodeSelection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
-import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceSets;
@@ -44,7 +43,6 @@ import io.lettuce.core.internal.LettuceSets;
 public class NodeSelectionAsyncTest extends AbstractClusterTest {
 
     private RedisAdvancedClusterAsyncCommands<String, String> commands;
-    private RedisAdvancedClusterCommands<String, String> syncCommands;
     private StatefulRedisClusterConnection<String, String> clusterConnection;
 
     @Before
@@ -52,7 +50,6 @@ public class NodeSelectionAsyncTest extends AbstractClusterTest {
         clusterClient.reloadPartitions();
         clusterConnection = clusterClient.connect();
         commands = clusterConnection.async();
-        syncCommands = clusterConnection.sync();
     }
 
     @After
@@ -114,18 +111,19 @@ public class NodeSelectionAsyncTest extends AbstractClusterTest {
     public void testDynamicNodeSelection() throws Exception {
 
         Partitions partitions = commands.getStatefulConnection().getPartitions();
-        partitions.forEach(redisClusterNode -> redisClusterNode.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER)));
+        partitions.forEach(redisClusterNode -> redisClusterNode.setFlags(Collections
+                .singleton(RedisClusterNode.NodeFlag.MASTER)));
 
         AsyncNodeSelection<String, String> selection = commands.nodes(
                 redisClusterNode -> redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF), true);
 
         assertThat(selection.asMap()).hasSize(0);
-        partitions.getPartition(0)
-                .setFlags(LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
+        partitions.getPartition(0).setFlags(
+                LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
         assertThat(selection.asMap()).hasSize(1);
 
-        partitions.getPartition(1)
-                .setFlags(LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
+        partitions.getPartition(1).setFlags(
+                LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
         assertThat(selection.asMap()).hasSize(2);
 
     }

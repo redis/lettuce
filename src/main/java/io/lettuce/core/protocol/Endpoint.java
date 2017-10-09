@@ -26,6 +26,13 @@ import io.netty.channel.Channel;
 public interface Endpoint {
 
     /**
+     * Reset this endpoint to its initial state, clear all buffers and potentially close the bound channel.
+     *
+     * @since 5.1
+     */
+    void initialState();
+
+    /**
      * Notify about channel activation.
      *
      * @param channel the channel

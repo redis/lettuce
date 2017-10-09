@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
@@ -33,6 +34,8 @@ import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.TimeoutProvider;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * Invocation handler to trigger commands on multiple connections and return a holder for the values.
@@ -50,7 +53,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     private final AbstractNodeSelection<?, ?, ?, ?> selection;
     private final ExecutionModel executionModel;
-    private final Duration timeout;
+    private final TimeoutProvider timeoutProvider;
 
     static {
         try {
@@ -63,25 +66,26 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface,
             ExecutionModel executionModel) {
-        this(selection, commandsInterface, Duration.ZERO, executionModel);
+        this(selection, commandsInterface, null, executionModel);
     }
 
-    NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface, Duration timeout) {
-        this(selection, commandsInterface, timeout, ExecutionModel.SYNC);
+    NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface,
+            TimeoutProvider timeoutProvider) {
+        this(selection, commandsInterface, timeoutProvider, ExecutionModel.SYNC);
     }
 
     private NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface,
-            Duration timeout, ExecutionModel executionModel) {
+            TimeoutProvider timeoutProvider, ExecutionModel executionModel) {
 
         if (executionModel == ExecutionModel.SYNC) {
-            LettuceAssert.isTrue(timeout.toNanos() > 0, "Timeout must be greater 0 when using sync mode");
+            LettuceAssert.notNull(timeoutProvider, "TimeoutProvider must not be null");
         }
 
         LettuceAssert.notNull(executionModel, "ExecutionModel must not be null");
 
         this.selection = selection;
         this.commandsInterface = commandsInterface;
-        this.timeout = timeout;
+        this.timeoutProvider = timeoutProvider;
         this.executionModel = executionModel;
     }
 
@@ -108,6 +112,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             connections.putAll(selection.statefulMap());
             Map<RedisClusterNode, Object> executions = new LinkedHashMap<>(selection.size(), 1);
 
+            AtomicLong timeout = new AtomicLong();
+
             for (Map.Entry<RedisClusterNode, CompletableFuture<? extends StatefulRedisConnection<?, ?>>> entry : connections
                     .entrySet()) {
 
@@ -119,6 +125,10 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
                         Object resultValue = targetMethod.invoke(
                                 executionModel == ExecutionModel.REACTIVE ? it.reactive() : it.async(), args);
+
+                        if (timeoutProvider != null && resultValue instanceof RedisCommand && timeout.get() == 0) {
+                            timeout.set(timeoutProvider.getTimeoutNs((RedisCommand) resultValue));
+                        }
 
                         if (resultValue instanceof CompletionStage<?>) {
                             return (CompletionStage<Object>) resultValue;
@@ -141,14 +151,15 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
                 executions.put(entry.getKey(), result);
             }
 
-            return getExecutions(executions);
+            return getExecutions(executions, timeout.get());
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
     }
 
     @SuppressWarnings("unchecked")
-    private Object getExecutions(Map<RedisClusterNode, Object> executions) throws ExecutionException, InterruptedException {
+    private Object getExecutions(Map<RedisClusterNode, Object> executions, long timeoutNs) throws ExecutionException,
+            InterruptedException {
 
         if (executionModel == ExecutionModel.REACTIVE) {
             Map<RedisClusterNode, CompletionStage<? extends Publisher<?>>> reactiveExecutions = (Map) executions;
@@ -159,8 +170,10 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
         if (executionModel == ExecutionModel.SYNC) {
 
-            if (!awaitAll(timeout.toNanos(), TimeUnit.NANOSECONDS, asyncExecutions.values())) {
-                throw createTimeoutException(asyncExecutions, timeout);
+            long timeoutToUse = timeoutNs > 0 ? timeoutNs : timeoutProvider.getTimeoutNs(null);
+
+            if (!awaitAll(timeoutToUse, TimeUnit.NANOSECONDS, asyncExecutions.values())) {
+                throw createTimeoutException(asyncExecutions, Duration.ofNanos(timeoutToUse));
             }
 
             if (atLeastOneFailed(asyncExecutions)) {
@@ -234,8 +247,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         });
 
         RedisCommandExecutionException e = ExceptionFactory
-                .createExecutionException(
-                "Multi-node command execution failed on node(s): " + getNodeDescription(failed));
+                .createExecutionException("Multi-node command execution failed on node(s): " + getNodeDescription(failed));
 
         executions.forEach((redisClusterNode, completionStage) -> {
             CompletableFuture<?> completableFuture = completionStage.toCompletableFuture();

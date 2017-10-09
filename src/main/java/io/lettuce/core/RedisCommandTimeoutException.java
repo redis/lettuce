@@ -38,4 +38,13 @@ public class RedisCommandTimeoutException extends RedisException {
     public RedisCommandTimeoutException(String msg) {
         super(msg);
     }
+
+    /**
+     * Create a {@code RedisException} with the specified nested exception.
+     *
+     * @param cause the nested exception.
+     */
+    public RedisCommandTimeoutException(Throwable cause) {
+        super(cause);
+    }
 }

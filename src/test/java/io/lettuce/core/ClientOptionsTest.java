@@ -27,16 +27,18 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 import io.lettuce.Wait;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.netty.channel.Channel;
@@ -381,6 +383,58 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
         };
     }
 
+    @Test
+    public void appliesCommandTimeoutToAsyncCommands() {
+
+        client.setOptions(ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build());
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+            connection.setTimeout(Duration.ofMillis(100));
+
+            connection.async().clientPause(300);
+
+            RedisFuture<String> future = connection.async().ping();
+
+            assertThatThrownBy(future::get).isInstanceOf(ExecutionException.class)
+                    .hasCauseInstanceOf(RedisCommandTimeoutException.class).hasMessageContaining("100 milli");
+        }
+    }
+
+    @Test
+    public void appliesCommandTimeoutToReactiveCommands() {
+
+        client.setOptions(ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build());
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+            connection.setTimeout(Duration.ofMillis(100));
+
+            connection.async().clientPause(300);
+
+            Mono<String> mono = connection.reactive().ping();
+
+            StepVerifier.create(mono).expectError(RedisCommandTimeoutException.class).verify();
+        }
+    }
+
+    @Test
+    public void timeoutExpiresBatchedCommands() {
+
+        client.setOptions(ClientOptions.builder()
+                .timeoutOptions(TimeoutOptions.builder().fixedTimeout(Duration.ofMillis(1)).build()).build());
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+
+            connection.setAutoFlushCommands(false);
+            RedisFuture<String> future = connection.async().ping();
+            Wait.untilTrue(future::isDone).waitOrTimeout();
+
+            assertThatThrownBy(future::get).isInstanceOf(ExecutionException.class)
+                    .hasCauseInstanceOf(RedisCommandTimeoutException.class).hasMessageContaining("1 milli");
+
+            connection.flushCommands();
+        }
+    }
+
     @Test(timeout = 10000)
     public void pingBeforeConnectWithQueuedCommandsAndReconnect() throws Exception {
 
@@ -388,14 +442,13 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
         client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
-        Utf8StringCodec codec = new Utf8StringCodec();
-
         StatefulRedisConnection<String, String> redisConnection = client.connect(RedisURI.create("redis://localhost:6479/5"));
         redisConnection.async().set("key1", "value1");
         redisConnection.async().set("key2", "value2");
 
         RedisFuture<String> sleep = (RedisFuture<String>) controlConnection.dispatch(new AsyncCommand<>(new Command<>(
-                CommandType.DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add("SLEEP").add(2))));
+                CommandType.DEBUG, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).add("SLEEP")
+                        .add(2))));
 
         sleep.await(100, TimeUnit.MILLISECONDS);
 
@@ -435,14 +488,13 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
 
                 client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
-                Utf8StringCodec codec = new Utf8StringCodec();
-
                 StatefulRedisConnection<String, String> redisConnection = client.connect(redisURI);
                 redisConnection.async().set("key1", "value1");
                 redisConnection.async().set("key2", "value2");
 
                 RedisFuture<String> sleep = (RedisFuture<String>) controlConnection.dispatch(new AsyncCommand<>(new Command<>(
-                        CommandType.DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add("SLEEP").add(2))));
+                        CommandType.DEBUG, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).add(
+                                "SLEEP").add(2))));
 
                 sleep.await(100, TimeUnit.MILLISECONDS);
 

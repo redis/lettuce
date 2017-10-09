@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.RedisCommand;
 import io.netty.util.internal.logging.InternalLogger;
@@ -76,6 +77,10 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
         LettuceAssert.isTrue(!timeout.isNegative(), "Timeout duration must be greater or equal to zero");
 
         this.timeout = timeout;
+
+        if (channelWriter instanceof CommandExpiryWriter) {
+            ((CommandExpiryWriter) channelWriter).setTimeout(timeout);
+        }
     }
 
     /**

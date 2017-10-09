@@ -15,7 +15,9 @@
  */
 package io.lettuce.core.protocol;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import io.lettuce.core.output.CommandOutput;
@@ -29,17 +31,17 @@ import io.netty.buffer.ByteBuf;
 public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private final static AtomicReferenceFieldUpdater<CommandWrapper, Consumer[]> ONCOMPLETE = AtomicReferenceFieldUpdater
-            .newUpdater(CommandWrapper.class, Consumer[].class, "onComplete");
+    private final static AtomicReferenceFieldUpdater<CommandWrapper, Object[]> ONCOMPLETE = AtomicReferenceFieldUpdater
+            .newUpdater(CommandWrapper.class, Object[].class, "onComplete");
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private final static Consumer<?>[] EMPTY = new Consumer[0];
+    private final static Object[] EMPTY = new Object[0];
 
     protected final RedisCommand<K, V, T> command;
 
     // accessed via AtomicReferenceFieldUpdater.
     @SuppressWarnings("unused")
-    private volatile Consumer<?>[] onComplete = EMPTY;
+    private volatile Object[] onComplete = EMPTY;
 
     public CommandWrapper(RedisCommand<K, V, T> command) {
         this.command = command;
@@ -56,14 +58,28 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
 
         command.complete();
 
-        Consumer[] consumers = ONCOMPLETE.get(this);
-        if (consumers != EMPTY && ONCOMPLETE.compareAndSet(this, consumers, EMPTY)) {
+        Object[] consumers = ONCOMPLETE.get(this);
+        if (!expireCallbacks(consumers)) {
+            return;
+        }
 
-            for (Consumer<? super T> consumer : consumers) {
+        for (Object callback : consumers) {
+
+            if (callback instanceof Consumer) {
+                Consumer consumer = (Consumer) callback;
                 if (getOutput() != null) {
                     consumer.accept(getOutput().get());
                 } else {
                     consumer.accept(null);
+                }
+            }
+
+            if (callback instanceof BiConsumer) {
+                BiConsumer consumer = (BiConsumer) callback;
+                if (getOutput() != null) {
+                    consumer.accept(getOutput().get(), null);
+                } else {
+                    consumer.accept(null, null);
                 }
             }
         }
@@ -71,17 +87,51 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
 
     @Override
     public void cancel() {
+
         command.cancel();
+        notifyBiConsumer(new CancellationException());
+    }
+
+    @Override
+    public boolean completeExceptionally(Throwable throwable) {
+
+        boolean result = command.completeExceptionally(throwable);
+        notifyBiConsumer(throwable);
+
+        return result;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void notifyBiConsumer(Throwable exception) {
+
+        Object[] consumers = ONCOMPLETE.get(this);
+
+        if (!expireCallbacks(consumers)) {
+            return;
+        }
+
+        for (Object callback : consumers) {
+
+            if (!(callback instanceof BiConsumer)) {
+                continue;
+            }
+
+            BiConsumer consumer = (BiConsumer) callback;
+            if (getOutput() != null) {
+                consumer.accept(getOutput().get(), exception);
+            } else {
+                consumer.accept(null, exception);
+            }
+        }
+    }
+
+    private boolean expireCallbacks(Object[] consumers) {
+        return consumers != EMPTY && ONCOMPLETE.compareAndSet(this, consumers, EMPTY);
     }
 
     @Override
     public CommandArgs<K, V> getArgs() {
         return command.getArgs();
-    }
-
-    @Override
-    public boolean completeExceptionally(Throwable throwable) {
-        return command.completeExceptionally(throwable);
     }
 
     @Override
@@ -105,13 +155,22 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void onComplete(Consumer<? super T> action) {
+        addOnComplete(action);
+    }
+
+    @Override
+    public void onComplete(BiConsumer<? super T, Throwable> action) {
+        addOnComplete(action);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void addOnComplete(Object action) {
 
         for (;;) {
 
-            Consumer[] existing = ONCOMPLETE.get(this);
-            Consumer[] updated = new Consumer[existing.length + 1];
+            Object[] existing = ONCOMPLETE.get(this);
+            Object[] updated = new Object[existing.length + 1];
             System.arraycopy(existing, 0, updated, 0, existing.length);
             updated[existing.length] = action;
 

@@ -45,7 +45,7 @@ public class ConnectionBuilder {
     private Supplier<SocketAddress> socketAddressSupplier;
     private ConnectionEvents connectionEvents;
     private RedisChannelHandler<?, ?> connection;
-    private DefaultEndpoint endpoint;
+    private Endpoint endpoint;
     private Supplier<CommandHandler> commandHandlerSupplier;
     private ChannelGroup channelGroup;
     private Timer timer;
@@ -183,7 +183,7 @@ public class ConnectionBuilder {
         return this;
     }
 
-    public ConnectionBuilder endpoint(DefaultEndpoint endpoint) {
+    public ConnectionBuilder endpoint(Endpoint endpoint) {
         this.endpoint = endpoint;
         return this;
     }
@@ -218,7 +218,7 @@ public class ConnectionBuilder {
         return password;
     }
 
-    public DefaultEndpoint endpoint() {
+    public Endpoint endpoint() {
         return endpoint;
     }
 

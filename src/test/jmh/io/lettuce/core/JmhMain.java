@@ -32,46 +32,15 @@ import org.openjdk.jmh.runner.options.TimeValue;
  */
 public class JmhMain {
 
-    public static void main(String... args) throws IOException, RunnerException {
+    public static void main(String... args) throws Exception {
 
-        runCommandHandlerBenchmark();
+        runRedisClientBenchmark();
     }
 
-    private static void runBenchmarks() throws RunnerException {
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).build()).run();
-    }
-
-    private static void runCommandBenchmark() throws RunnerException {
-
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*CommandBenchmark.*")
-                .build()).run();
-
-        new Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandBenchmark.*").build())
-                .run();
-    }
-
-    private static void runCommandHandlerBenchmark() throws RunnerException {
+    private static void runRedisClientBenchmark() throws RunnerException {
 
         new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*RedisClientBenchmark.*")
                 .build()).run();
-        // new
-        // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
-    }
-
-    private static void runCommandEncoderBenchmark() throws RunnerException {
-
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
-                .include(".*CommandEncoderBenchmark.*").build()).run();
-        // new
-        // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
-    }
-
-    private static void runRedisStateMachineBenchmark() throws RunnerException {
-
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
-                .include(".*RedisStateMachineBenchmark.*").build()).run();
-        // new
-        // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
     }
 
     private static ChainedOptionsBuilder prepareOptions() {

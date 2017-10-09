@@ -35,6 +35,7 @@ public class ClientOptions implements Serializable {
     public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
     public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
     public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
+    public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
 
     private final boolean pingBeforeActivateConnection;
     private final boolean autoReconnect;
@@ -44,6 +45,7 @@ public class ClientOptions implements Serializable {
     private final DisconnectedBehavior disconnectedBehavior;
     private final SocketOptions socketOptions;
     private final SslOptions sslOptions;
+    private final TimeoutOptions timeoutOptions;
 
     protected ClientOptions(Builder builder) {
         pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
@@ -54,6 +56,7 @@ public class ClientOptions implements Serializable {
         disconnectedBehavior = builder.disconnectedBehavior;
         socketOptions = builder.socketOptions;
         sslOptions = builder.sslOptions;
+        timeoutOptions = builder.timeoutOptions;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -65,6 +68,7 @@ public class ClientOptions implements Serializable {
         this.disconnectedBehavior = original.getDisconnectedBehavior();
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
+        this.timeoutOptions = original.getTimeoutOptions();
     }
 
     /**
@@ -108,6 +112,7 @@ public class ClientOptions implements Serializable {
         private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
         private SslOptions sslOptions = DEFAULT_SSL_OPTIONS;
+        private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
 
         protected Builder() {
         }
@@ -217,6 +222,20 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Sets the {@link TimeoutOptions} to expire and cancel commands. See {@link #DEFAULT_TIMEOUT_OPTIONS}.
+         *
+         * @param timeoutOptions must not be {@literal null}.
+         * @return {@code this}
+         * @since 5.1
+         */
+        public Builder timeoutOptions(TimeoutOptions timeoutOptions) {
+
+            LettuceAssert.notNull(timeoutOptions, "TimeoutOptions must not be null");
+            this.timeoutOptions = timeoutOptions;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link ClientOptions}.
          *
          * @return new instance of {@link ClientOptions}
@@ -307,6 +326,16 @@ public class ClientOptions implements Serializable {
      */
     public SslOptions getSslOptions() {
         return sslOptions;
+    }
+
+    /**
+     * Returns the {@link TimeoutOptions}.
+     *
+     * @return the {@link TimeoutOptions}.
+     * @since 5.1
+     */
+    public TimeoutOptions getTimeoutOptions() {
+        return timeoutOptions;
     }
 
     /**

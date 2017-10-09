@@ -20,6 +20,7 @@ import java.time.Duration;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.SslOptions;
+import io.lettuce.core.TimeoutOptions;
 
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
@@ -190,6 +191,12 @@ public class ClusterClientOptions extends ClientOptions {
         @Override
         public Builder sslOptions(SslOptions sslOptions) {
             super.sslOptions(sslOptions);
+            return this;
+        }
+
+        @Override
+        public Builder timeoutOptions(TimeoutOptions timeoutOptions) {
+            super.timeoutOptions(timeoutOptions);
             return this;
         }
 

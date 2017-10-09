@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.AbstractInvocationHandler;
+import io.lettuce.core.internal.TimeoutProvider;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
@@ -33,11 +35,14 @@ import io.lettuce.core.internal.AbstractInvocationHandler;
 class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
     private final StatefulConnection<?, ?> connection;
+    private final TimeoutProvider timeoutProvider;
     private final Object asyncApi;
     private final MethodTranslator translator;
 
     FutureSyncInvocationHandler(StatefulConnection<?, ?> connection, Object asyncApi, Class<?>[] interfaces) {
         this.connection = connection;
+        this.timeoutProvider = new TimeoutProvider(() -> connection.getOptions().getTimeoutOptions(), () -> connection
+                .getTimeout().toNanos());
         this.asyncApi = asyncApi;
         this.translator = MethodTranslator.of(asyncApi.getClass(), interfaces);
     }
@@ -59,7 +64,9 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
                     return null;
                 }
 
-                LettuceFutures.awaitOrCancel(command, connection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
+                long timeout = getTimeoutNs(command);
+
+                LettuceFutures.awaitOrCancel(command, timeout, TimeUnit.NANOSECONDS);
                 return command.get();
             }
 
@@ -67,6 +74,15 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
+    }
+
+    private long getTimeoutNs(RedisFuture<?> command) {
+
+        if (command instanceof RedisCommand) {
+            return timeoutProvider.getTimeoutNs((RedisCommand) command);
+        }
+
+        return connection.getTimeout().toNanos();
     }
 
     private static boolean isTransactionActive(StatefulConnection<?, ?> connection) {

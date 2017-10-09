@@ -45,6 +45,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.output.KeyValueStreamingChannel;
+import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
@@ -425,7 +426,14 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug(String.format("connectToNodeAsync(%s at %s)", nodeId, socketAddress));
 
         ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(clientOptions, getResources(), clusterWriter);
-        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(endpoint, codec, timeout);
+
+        RedisChannelWriter writer = endpoint;
+
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        }
+
+        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(writer, codec, timeout);
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier, () -> new CommandHandler(clientOptions, clientResources, endpoint));
@@ -473,7 +481,14 @@ public class RedisClusterClient extends AbstractRedisClient {
         logger.debug("connectPubSubToNode(" + nodeId + ")");
 
         PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions);
-        StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, endpoint, codec,
+
+        RedisChannelWriter writer = endpoint;
+
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        }
+
+        StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 timeout);
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
@@ -507,8 +522,13 @@ public class RedisClusterClient extends AbstractRedisClient {
         Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
         DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
+        RedisChannelWriter writer = endpoint;
 
-        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, endpoint,
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        }
+
+        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, writer,
                 clusterTopologyRefreshScheduler);
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
                 clusterWriter, codec);
@@ -574,9 +594,14 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, endpoint,
                 clusterTopologyRefreshScheduler);
+        RedisChannelWriter writer = clusterWriter;
+
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = new CommandExpiryWriter(clusterWriter, clientOptions, clientResources);
+        }
 
         StatefulRedisClusterPubSubConnectionImpl<K, V> connection = new StatefulRedisClusterPubSubConnectionImpl<>(endpoint,
-                clusterWriter, codec, timeout);
+                writer, codec, timeout);
 
         ClusterPubSubConnectionProvider<K, V> pooledClusterConnectionProvider = new ClusterPubSubConnectionProvider<>(this,
                 clusterWriter, codec, connection.getUpstreamListener());
@@ -591,8 +616,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         for (int i = 0; i < connectionAttempts; i++) {
             try {
-                connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier,
-                        () -> new PubSubCommandHandler<K, V>(clientOptions, clientResources, codec, endpoint));
+                connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<>(
+                        clientOptions, clientResources, codec, endpoint));
                 connection.inspectRedisState();
                 connected = true;
                 break;

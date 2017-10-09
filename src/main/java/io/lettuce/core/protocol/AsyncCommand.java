@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import io.lettuce.core.ExceptionFactory;
@@ -189,6 +190,11 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     @Override
     public void onComplete(Consumer<? super T> action) {
         thenAccept(action);
+    }
+
+    @Override
+    public void onComplete(BiConsumer<? super T, Throwable> action) {
+        whenComplete(action);
     }
 
     @Override

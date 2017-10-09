@@ -15,13 +15,13 @@
  */
 package io.lettuce.core;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.*;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 
@@ -57,6 +57,8 @@ public class RedisClientBenchmark {
     public void setup() {
 
         redisClient = RedisClient.create(RedisURI.create(TestSettings.host(), TestSettings.port()));
+        redisClient.setOptions(ClientOptions.builder()
+                .timeoutOptions(TimeoutOptions.builder().fixedTimeout(Duration.ofSeconds(10)).build()).build());
         connection = redisClient.connect(ByteArrayCodec.INSTANCE);
         commands = new RedisFuture[BATCH_SIZE];
         monos = new Mono[BATCH_SIZE];

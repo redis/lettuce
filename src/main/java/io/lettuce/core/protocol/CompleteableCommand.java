@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -27,11 +28,17 @@ import java.util.function.Consumer;
 public interface CompleteableCommand<T> {
 
     /**
-     * Register a command callback for command completion that notifies the callback with the command result or the failure
-     * resulting from command completion.
+     * Register a command callback for successive command completion that notifies the callback with the command result.
      *
      * @param action must not be {@literal null}.
      */
     void onComplete(Consumer<? super T> action);
 
+    /**
+     * Register a command callback for command completion that notifies the callback with the command result or the failure
+     * resulting from command completion.
+     *
+     * @param action must not be {@literal null}.
+     */
+    void onComplete(BiConsumer<? super T, Throwable> action);
 }

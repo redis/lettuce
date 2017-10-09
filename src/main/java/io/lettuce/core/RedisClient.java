@@ -30,8 +30,10 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.Endpoint;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -271,8 +273,13 @@ public class RedisClient extends AbstractRedisClient {
         logger.debug("Trying to get a Redis connection for: " + redisURI);
 
         DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
+        RedisChannelWriter writer = endpoint;
 
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(endpoint, codec, timeout);
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        }
+
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, codec, timeout);
         ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
                 () -> new CommandHandler(clientOptions, clientResources, endpoint));
 
@@ -287,8 +294,8 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     @SuppressWarnings("unchecked")
-    private <K, V, S> ConnectionFuture<S> connectStatefulAsync(StatefulRedisConnectionImpl<K, V> connection,
-            DefaultEndpoint endpoint, RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier) {
+    private <K, V, S> ConnectionFuture<S> connectStatefulAsync(StatefulRedisConnectionImpl<K, V> connection, Endpoint endpoint,
+            RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
         if (redisURI.isSsl()) {
@@ -428,10 +435,14 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<K, V>(clientOptions);
+        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions);
+        RedisChannelWriter writer = endpoint;
 
-        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, endpoint, codec,
-                timeout);
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        }
+
+        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout);
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
                 () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
@@ -506,8 +517,13 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.clientResources(clientResources);
 
         DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
+        RedisChannelWriter writer = endpoint;
 
-        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(endpoint, codec, timeout);
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        }
+
+        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(writer, codec, timeout);
 
         logger.debug("Trying to get a Redis Sentinel connection for one of: " + redisURI.getSentinels());
 

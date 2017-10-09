@@ -20,6 +20,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.LongSupplier;
+
+import io.lettuce.core.TimeoutOptions.TimeoutSource;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * Utility to {@link #awaitAll(long, TimeUnit, Future[])} futures until they are done and to synchronize future execution using
@@ -122,6 +127,10 @@ public class LettuceFutures {
                 throw ExceptionFactory.createExecutionException(e.getCause().getMessage(), e.getCause());
             }
 
+            if (e.getCause() instanceof RedisCommandTimeoutException) {
+                throw new RedisCommandTimeoutException(e.getCause());
+            }
+
             throw new RedisException(e.getCause());
         } catch (InterruptedException e) {
 
@@ -131,4 +140,5 @@ public class LettuceFutures {
             throw ExceptionFactory.createExecutionException(null, e);
         }
     }
+
 }

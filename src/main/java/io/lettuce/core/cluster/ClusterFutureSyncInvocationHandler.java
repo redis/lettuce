@@ -35,6 +35,8 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.DefaultMethods;
+import io.lettuce.core.internal.TimeoutProvider;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
@@ -49,6 +51,7 @@ import io.lettuce.core.internal.DefaultMethods;
 class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final StatefulConnection<K, V> connection;
+    private final TimeoutProvider timeoutProvider;
     private final Class<?> asyncCommandsInterface;
     private final Class<?> nodeSelectionInterface;
     private final Class<?> nodeSelectionCommandsInterface;
@@ -62,6 +65,8 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
     ClusterFutureSyncInvocationHandler(StatefulConnection<K, V> connection, Class<?> asyncCommandsInterface,
             Class<?> nodeSelectionInterface, Class<?> nodeSelectionCommandsInterface, Object asyncApi) {
         this.connection = connection;
+        this.timeoutProvider = new TimeoutProvider(() -> connection.getOptions().getTimeoutOptions(), () -> connection
+                .getTimeout().toNanos());
         this.asyncCommandsInterface = asyncCommandsInterface;
         this.nodeSelectionInterface = nodeSelectionInterface;
         this.nodeSelectionCommandsInterface = nodeSelectionCommandsInterface;
@@ -115,7 +120,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
                         return null;
                     }
                 }
-                return LettuceFutures.awaitOrCancel(command, connection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
+                return LettuceFutures.awaitOrCancel(command, getTimeoutNs(command), TimeUnit.NANOSECONDS);
             }
 
             return result;
@@ -123,6 +128,15 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
+    }
+
+    private long getTimeoutNs(RedisFuture<?> command) {
+
+        if (command instanceof RedisCommand) {
+            return timeoutProvider.getTimeoutNs((RedisCommand) command);
+        }
+
+        return connection.getTimeout().toNanos();
     }
 
     private Object getConnection(Method method, Object[] args) throws Exception {
@@ -177,7 +191,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
         }
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
-                asyncCommandsInterface, connection.getTimeout());
+                asyncCommandsInterface, timeoutProvider);
         return Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(), new Class<?>[] {
                 nodeSelectionCommandsInterface, nodeSelectionInterface }, h);
     }
