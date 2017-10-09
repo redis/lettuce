@@ -487,17 +487,6 @@ public class CommandHandlerTest {
     }
 
     @Test
-    public void shouldWriteActiveCommandsForVoidPromise() throws Exception {
-
-        when(promise.isVoid()).thenReturn(true);
-
-        sut.write(context, command, promise);
-
-        verify(context).write(command, promise);
-        assertThat(stack).hasSize(1).allMatch(o -> o instanceof LatencyMeteredCommand);
-    }
-
-    @Test
     public void shouldWriteActiveCommands() throws Exception {
 
         when(promise.isSuccess()).thenReturn(true);
