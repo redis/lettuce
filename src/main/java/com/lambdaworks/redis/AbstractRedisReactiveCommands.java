@@ -131,6 +131,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> bitpos(K key, boolean state, long start) {
+        return createObservable(() -> commandBuilder.bitpos(key, state, start));
+    }
+
+    @Override
     public Observable<Long> bitpos(K key, boolean state, long start, long end) {
         return createObservable(() -> commandBuilder.bitpos(key, state, start, end));
     }

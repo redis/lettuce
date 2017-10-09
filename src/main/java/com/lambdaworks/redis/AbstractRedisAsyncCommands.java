@@ -141,6 +141,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
+    public RedisFuture<Long> bitpos(K key, boolean state, long start) {
+        return dispatch(commandBuilder.bitpos(key, state, start));
+    }
+
+    @Override
     public RedisFuture<Long> bitpos(K key, boolean state, long start, long end) {
         return dispatch(commandBuilder.bitpos(key, state, start, end));
     }
