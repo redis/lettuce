@@ -205,15 +205,8 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
             return false;
         }
 
-        RedisCommand<?, ?, ?> left = command;
-        while (left instanceof DecoratedCommand) {
-            left = CommandWrapper.unwrap(left);
-        }
-
-        RedisCommand<?, ?, ?> right = (RedisCommand<?, ?, ?>) o;
-        while (right instanceof DecoratedCommand) {
-            right = CommandWrapper.unwrap(right);
-        }
+        RedisCommand<?, ?, ?> left = CommandWrapper.unwrap(command);
+        RedisCommand<?, ?, ?> right = CommandWrapper.unwrap((RedisCommand<?, ?, ?>) o);
 
         return left == right;
     }
@@ -221,10 +214,7 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     @Override
     public int hashCode() {
 
-        RedisCommand<?, ?, ?> toHash = command;
-        while (toHash instanceof DecoratedCommand) {
-            toHash = CommandWrapper.unwrap(toHash);
-        }
+        RedisCommand<?, ?, ?> toHash = CommandWrapper.unwrap(command);
 
         return toHash != null ? toHash.hashCode() : 0;
     }
