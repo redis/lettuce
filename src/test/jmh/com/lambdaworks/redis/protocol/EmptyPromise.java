@@ -27,7 +27,7 @@ import io.netty.util.concurrent.GenericFutureListener;
 /**
  * @author Mark Paluch
  */
-class EmptyPromise implements ChannelPromise{
+class EmptyPromise implements ChannelPromise {
 
     @Override
     public Channel channel() {
@@ -71,7 +71,7 @@ class EmptyPromise implements ChannelPromise{
 
     @Override
     public boolean isSuccess() {
-        return false;
+        return true;
     }
 
     @Override
@@ -86,11 +86,21 @@ class EmptyPromise implements ChannelPromise{
 
     @Override
     public ChannelPromise addListener(GenericFutureListener<? extends Future<? super Void>> listener) {
+
+        try {
+            ((GenericFutureListener) listener).operationComplete(this);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return null;
     }
 
     @Override
     public ChannelPromise addListeners(GenericFutureListener<? extends Future<? super Void>>... listeners) {
+
+        for (GenericFutureListener<? extends Future<? super Void>> listener : listeners) {
+            addListener(listener);
+        }
         return null;
     }
 

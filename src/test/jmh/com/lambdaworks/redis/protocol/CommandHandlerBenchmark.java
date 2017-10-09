@@ -43,7 +43,7 @@ public class CommandHandlerBenchmark {
     private final static ClientOptions CLIENT_OPTIONS = ClientOptions.builder().build();
     private final static EmptyContext CHANNEL_HANDLER_CONTEXT = new EmptyContext();
     private final static byte[] KEY = "key".getBytes();
-    private final static ChannelFuture EMPTY = new EmptyFuture();
+    private final static EmptyPromise EMPTY = new EmptyPromise();
 
     private CommandHandler commandHandler;
     private Collection<?> stack;
@@ -80,7 +80,7 @@ public class CommandHandlerBenchmark {
 
     @Benchmark
     public void measureNettyWrite() throws Exception {
-        commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, null);
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, EMPTY);
         stack.remove(command);
     }
 
