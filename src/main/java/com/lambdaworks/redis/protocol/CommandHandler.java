@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.ConnectionEvents.PingBeforeActivate;
 import com.lambdaworks.redis.internal.LettuceAssert;
+import com.lambdaworks.redis.internal.LettuceClassUtils;
 import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.resource.ClientResources;
@@ -54,6 +55,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
     private static final AtomicLong CHANNEL_COUNTER = new AtomicLong();
+    private static final Class<?> VOID_PROMISE_CLASS;
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static final AtomicIntegerFieldUpdater<CommandHandler> QUEUE_SIZE = AtomicIntegerFieldUpdater.newUpdater(
@@ -102,6 +104,19 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private Throwable connectionError;
     private String logPrefix;
     private boolean autoFlushCommands = true;
+
+    static {
+
+        Class<?> voidPromiseClass;
+
+        try {
+            voidPromiseClass = LettuceClassUtils.forName("io.netty.channel.VoidChannelPromise");
+        } catch (ClassNotFoundException e) {
+            voidPromiseClass = null;
+        }
+
+        VOID_PROMISE_CLASS = voidPromiseClass;
+    }
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -718,7 +733,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                     throw new RedisException("Attempting to write duplicate command that is already enqueued: " + command);
                 }
 
-                if (promise.isVoid()) {
+                if (promise.getClass() == VOID_PROMISE_CLASS) {
                     stack.add(commandToUse);
                 } else {
                     promise.addListener(future -> {
