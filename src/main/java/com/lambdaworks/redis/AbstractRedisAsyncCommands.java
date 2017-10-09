@@ -110,16 +110,6 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     }
 
     @Override
-    public RedisFuture<Long> bitpos(K key, boolean state) {
-        return dispatch(commandBuilder.bitpos(key, state));
-    }
-
-    @Override
-    public RedisFuture<Long> bitpos(K key, boolean state, long start, long end) {
-        return dispatch(commandBuilder.bitpos(key, state, start, end));
-    }
-
-    @Override
     public RedisFuture<Long> bitopAnd(K destination, K... keys) {
         return dispatch(commandBuilder.bitopAnd(destination, keys));
     }
@@ -137,6 +127,21 @@ public abstract class AbstractRedisAsyncCommands<K, V>
     @Override
     public RedisFuture<Long> bitopXor(K destination, K... keys) {
         return dispatch(commandBuilder.bitopXor(destination, keys));
+    }
+
+    @Override
+    public RedisFuture<Long> bitpos(K key, boolean state) {
+        return dispatch(commandBuilder.bitpos(key, state));
+    }
+
+    @Override
+    public RedisFuture<Long> bitpos(K key, boolean state, long start) {
+        return dispatch(commandBuilder.bitpos(key, state, start));
+    }
+
+    @Override
+    public RedisFuture<Long> bitpos(K key, boolean state, long start, long end) {
+        return dispatch(commandBuilder.bitpos(key, state, start, end));
     }
 
     @Override

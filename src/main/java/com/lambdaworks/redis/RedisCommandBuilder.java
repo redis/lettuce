@@ -108,22 +108,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BITFIELD, (CommandOutput) new ArrayOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, Long> bitpos(K key, boolean state) {
-        notNullKey(key);
-
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(state ? 1 : 0);
-        return createCommand(BITPOS, new IntegerOutput<K, V>(codec), args);
-    }
-
-    public Command<K, V, Long> bitpos(K key, boolean state, long start, long end) {
-        notNullKey(key);
-
-        CommandArgs<K, V> args = new CommandArgs<K, V>(codec);
-        args.addKey(key).add(state ? 1 : 0).add(start).add(end);
-        return createCommand(BITPOS, new IntegerOutput<K, V>(codec), args);
-    }
-
     public Command<K, V, Long> bitopAnd(K destination, K... keys) {
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
         notEmpty(keys);
@@ -160,7 +144,31 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BITOP, new IntegerOutput<K, V>(codec), args);
     }
 
-    public Command<K, V, KeyValue<K, V>> blpop(long timeout, K... keys) {
+    Command<K, V, Long> bitpos(K key, boolean state) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(state ? 1 : 0);
+        return createCommand(BITPOS, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> bitpos(K key, boolean state, long start) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(state ? 1 : 0).add(start);
+        return createCommand(BITPOS, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> bitpos(K key, boolean state, long start, long end) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(state ? 1 : 0).add(start).add(end);
+        return createCommand(BITPOS, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, KeyValue<K, V>> blpop(long timeout, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<K, V>(codec).addKeys(keys).add(timeout);
