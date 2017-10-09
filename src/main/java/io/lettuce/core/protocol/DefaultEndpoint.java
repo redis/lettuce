@@ -444,6 +444,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             if (!commands.isEmpty()) {
 
+                QUEUE_SIZE.addAndGet(this, commands.size());
+                
                 if (reliability == Reliability.AT_MOST_ONCE) {
                     // cancel on exceptions and remove from queue, because there is no housekeeping
                     writeAndFlush(commands).addListener(new AtMostOnceWriteListener(commands));
@@ -732,7 +734,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
                 }
             }
 
-            if (!future.isSuccess() && !(cause instanceof ClosedChannelException)) {
+            if (!success && !(cause instanceof ClosedChannelException)) {
 
                 String message = "Unexpected exception during request: {}";
                 InternalLogLevel logLevel = InternalLogLevel.WARN;
