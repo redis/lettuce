@@ -56,6 +56,8 @@ import edu.umd.cs.mtc.MultithreadedTestCase;
 import edu.umd.cs.mtc.TestFramework;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -86,6 +88,9 @@ public class CommandHandlerTest {
 
     @Mock
     private RedisChannelHandler channelHandler;
+
+    @Mock
+    private ChannelPromise promise;
 
     @BeforeClass
     public static void beforeClass() {
@@ -129,13 +134,21 @@ public class CommandHandlerTest {
                 stack.addAll((Collection) invocation.getArguments()[0]);
             }
 
-            return new DefaultChannelPromise(channel);
+            return promise;
         });
 
         sut = new CommandHandler<>(ClientOptions.create(), clientResources);
         sut.setRedisChannelHandler(channelHandler);
         disconnectedBuffer = (Queue) ReflectionTestUtils.getField(sut, "disconnectedBuffer");
         stack = (Queue) ReflectionTestUtils.getField(sut, "stack");
+
+        when(promise.addListener(any())).then(invocation -> {
+
+            GenericFutureListener<Future<Void>> listener = invocation.getArgument(0);
+            listener.operationComplete(promise);
+
+            return null;
+        });
     }
 
     @Test
@@ -145,7 +158,6 @@ public class CommandHandlerTest {
         sut.channelActive(context);
 
         verify(pipeline).fireUserEventTriggered(any(ConnectionEvents.Activated.class));
-
     }
 
     @Test
@@ -172,6 +184,8 @@ public class CommandHandlerTest {
 
     @Test
     public void testChannelActiveWithBufferedAndQueuedCommands() throws Exception {
+
+        when(promise.isSuccess()).thenReturn(true);
 
         Command<String, String, String> bufferedCommand = new Command<>(CommandType.GET, new StatusOutput<>(
                 new Utf8StringCodec()), null);
@@ -260,6 +274,8 @@ public class CommandHandlerTest {
 
         disconnectedBuffer.add(bufferedCommand1);
         disconnectedBuffer.add(bufferedCommand2);
+
+        when(promise.isSuccess()).thenReturn(true);
 
         sut.channelRegistered(context);
         sut.channelActive(context);
@@ -471,11 +487,24 @@ public class CommandHandlerTest {
     }
 
     @Test
+    public void shouldWriteActiveCommandsForVoidPromise() throws Exception {
+
+        when(promise.isVoid()).thenReturn(true);
+
+        sut.write(context, command, promise);
+
+        verify(context).write(command, promise);
+        assertThat(stack).hasSize(1).allMatch(o -> o instanceof LatencyMeteredCommand);
+    }
+
+    @Test
     public void shouldWriteActiveCommands() throws Exception {
 
-        sut.write(context, command, null);
+        when(promise.isSuccess()).thenReturn(true);
 
-        verify(context).write(command, null);
+        sut.write(context, command, promise);
+
+        verify(context).write(command, promise);
         assertThat(stack).hasSize(1).allMatch(o -> o instanceof LatencyMeteredCommand);
     }
 
@@ -483,7 +512,7 @@ public class CommandHandlerTest {
     public void shouldNotWriteCancelledCommandBatch() throws Exception {
 
         command.cancel();
-        sut.write(context, Arrays.asList(command), null);
+        sut.write(context, Arrays.asList(command), promise);
 
         verifyZeroInteractions(context);
         assertThat(disconnectedBuffer).isEmpty();
@@ -492,10 +521,12 @@ public class CommandHandlerTest {
     @Test
     public void shouldWriteActiveCommandsInBatch() throws Exception {
 
-        List<Command<String, String, String>> commands = Arrays.asList(command);
-        sut.write(context, commands, null);
+        when(promise.isSuccess()).thenReturn(true);
 
-        verify(context).write(commands, null);
+        List<Command<String, String, String>> commands = Arrays.asList(command);
+        sut.write(context, commands, promise);
+
+        verify(context).write(commands, promise);
         assertThat(stack).hasSize(1);
     }
 
@@ -503,12 +534,13 @@ public class CommandHandlerTest {
     @SuppressWarnings("unchecked")
     public void shouldWriteActiveCommandsInMixedBatch() throws Exception {
 
+        when(promise.isSuccess()).thenReturn(true);
+
         Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
                 null);
-
         command.cancel();
 
-        sut.write(context, Arrays.asList(command, command2), null);
+        sut.write(context, Arrays.asList(command, command2), promise);
 
         ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
         verify(context).write(captor.capture(), any());
@@ -532,10 +564,11 @@ public class CommandHandlerTest {
     @Test(timeout = 5000)
     public void shouldRebuildHugeQueue() throws Exception {
 
+        when(promise.isSuccess()).thenReturn(true);
+
         for (int i = 0; i < 500000; i++) {
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
-
             disconnectedBuffer.add(new AsyncCommand<>(command));
         }
 

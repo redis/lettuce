@@ -712,12 +712,20 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                             + ". Commands are not accepted until the stack size drops.");
                 }
 
-                command = potentiallyWrapLatencyCommand(command);
+                RedisCommand<K, V, ?> commandToUse = potentiallyWrapLatencyCommand(command);
 
                 if (stack.contains(command)) {
                     throw new RedisException("Attempting to write duplicate command that is already enqueued: " + command);
+                }
+
+                if (promise.isVoid()) {
+                    stack.add(commandToUse);
                 } else {
-                    stack.add(command);
+                    promise.addListener(future -> {
+                        if (future.isSuccess()) {
+                            stack.add(commandToUse);
+                        }
+                    });
                 }
             }
         } catch (RuntimeException e) {
@@ -1169,23 +1177,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             this.sentCommands = sentCommands;
         }
 
-        void dequeue(boolean success) {
+        void dequeue() {
 
             if (sentCommand != null) {
-
                 QUEUE_SIZE.decrementAndGet(CommandHandler.this);
-                if (!success) {
-                    CommandHandler.this.stack.remove(sentCommand);
-                    CommandHandler.this.disconnectedBuffer.remove(sentCommand);
-                }
             }
 
             if (sentCommands != null) {
                 QUEUE_SIZE.addAndGet(CommandHandler.this, -sentCommands.size());
-                if (!success) {
-                    CommandHandler.this.stack.removeAll(sentCommands);
-                    CommandHandler.this.disconnectedBuffer.removeAll(sentCommands);
-                }
             }
         }
 
@@ -1217,7 +1216,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         @Override
         public void operationComplete(ChannelFuture future) throws Exception {
 
-            dequeue(true);
+            dequeue();
 
             if (future.cause() != null) {
                 complete(future.cause());
@@ -1245,7 +1244,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             Throwable cause = future.cause();
 
             boolean success = future.isSuccess();
-            dequeue(success);
+            dequeue();
 
             if (!success) {
                 Channel channel = CommandHandler.this.channel;
@@ -1256,7 +1255,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 }
             }
 
-            if (!future.isSuccess() && !(cause instanceof ClosedChannelException)) {
+            if (!success && !(cause instanceof ClosedChannelException)) {
 
                 String message = "Unexpected exception during request: {}";
                 InternalLogLevel logLevel = InternalLogLevel.WARN;

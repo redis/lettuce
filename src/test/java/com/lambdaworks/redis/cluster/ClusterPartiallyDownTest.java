@@ -18,6 +18,7 @@ package com.lambdaworks.redis.cluster;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
+import java.io.IOException;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -96,7 +97,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
             connection.sync().get(key_10439);
             fail("Missing RedisException");
         } catch (RedisException e) {
-            assertThat(e).hasRootCauseInstanceOf(ConnectException.class);
+            assertThat(e).hasRootCauseInstanceOf(IOException.class);
         }
 
         connection.close();
@@ -133,7 +134,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
             redisClusterClient.connect();
             fail("Missing RedisConnectionException");
         } catch (RedisConnectionException e) {
-            assertThat(e).hasRootCauseInstanceOf(ConnectException.class);
+            assertThat(e).hasRootCauseInstanceOf(IOException.class);
         }
     }
 }
