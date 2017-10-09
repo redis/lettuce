@@ -69,7 +69,7 @@ public class CreateSyncNodeSelectionClusterApi {
     public CreateSyncNodeSelectionClusterApi(String templateName) {
 
         String targetName = templateName.replace("Redis", "NodeSelection");
-        File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
+        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
         String targetPackage = "io.lettuce.core.cluster.api.sync";
 
         // todo: remove AutoCloseable from BaseNodeSelectionAsyncCommands

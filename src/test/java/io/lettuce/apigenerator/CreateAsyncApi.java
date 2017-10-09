@@ -66,7 +66,7 @@ public class CreateAsyncApi {
 
         String targetName = templateName.replace("Commands", "AsyncCommands");
 
-        File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
+        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
         String targetPackage;
 
         if (templateName.contains("RedisSentinel")) {

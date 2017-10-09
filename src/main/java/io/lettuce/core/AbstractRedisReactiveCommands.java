@@ -130,6 +130,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> bitpos(K key, boolean state, long start) {
+        return createMono(() -> commandBuilder.bitpos(key, state, start));
+    }
+
+    @Override
     public Mono<Long> bitpos(K key, boolean state, long start, long end) {
         return createMono(() -> commandBuilder.bitpos(key, state, start, end));
     }
