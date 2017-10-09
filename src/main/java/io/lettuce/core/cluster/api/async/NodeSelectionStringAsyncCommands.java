@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@ package io.lettuce.core.cluster.api.async;
 
 import java.util.List;
 import java.util.Map;
-
+import io.lettuce.core.output.KeyValueStreamingChannel;
+import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.SetArgs;
-import io.lettuce.core.output.KeyValueStreamingChannel;
+import io.lettuce.core.Value;
+import io.lettuce.core.RedisFuture;
+import reactor.core.publisher.Mono;
 
 /**
  * Asynchronous executed commands on a node selection for Strings.
@@ -90,12 +93,29 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      *
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
      *         specify no range or the <em>start</em> argument <strong>only</strong>.
-     *
-     *         However this behavior changes if you are looking for clear bits and specify a range with both
-     *         <strong>start</strong> and <strong>end</strong>. If no clear bit is found in the specified range, the function
-     *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
      */
     AsyncExecutions<Long> bitpos(K key, boolean state);
+
+    /**
+     * Find first bit set or clear in a string.
+     *
+     * @param key the key
+     * @param state the bit type: long
+     * @param start the start type: long
+     * @return Long integer-reply The command returns the position of the first bit set to 1 or 0 according to the request.
+     *
+     *         If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
+     *         returned.
+     *
+     *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
+     *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
+     *         command {@code BITPOS key 0} will return 24, since up to bit 23 all the bits are 1.
+     *
+     *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
+     *         specify no range or the <em>start</em> argument <strong>only</strong>.
+     * @since 5.0.1
+     */
+    AsyncExecutions<Long> bitpos(K key, boolean state, long start);
 
     /**
      * Find first bit set or clear in a string.

@@ -69,7 +69,7 @@ public class CreateAsyncNodeSelectionClusterApi {
     public CreateAsyncNodeSelectionClusterApi(String templateName) {
 
         String targetName = templateName.replace("Commands", "AsyncCommands").replace("Redis", "NodeSelection");
-        File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
+        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
         String targetPackage = "io.lettuce.core.cluster.api.async";
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),

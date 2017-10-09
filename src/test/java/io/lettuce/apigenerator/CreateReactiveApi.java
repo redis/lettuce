@@ -76,7 +76,7 @@ public class CreateReactiveApi {
     public CreateReactiveApi(String templateName) {
 
         String targetName = templateName.replace("Commands", "ReactiveCommands");
-        File templateFile = new File(Constants.TEMPLATES, "com/lambdaworks/redis/api/" + templateName + ".java");
+        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
         String targetPackage;
 
         if (templateName.contains("RedisSentinel")) {

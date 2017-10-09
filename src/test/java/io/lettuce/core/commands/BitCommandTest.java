@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,11 +212,13 @@ public class BitCommandTest extends AbstractRedisClientTest {
         redis.setbit(key, 3, 0);
         redis.setbit(key, 4, 0);
         redis.setbit(key, 5, 1);
+        redis.setbit(key, 16, 1);
 
         assertThat((long) bitstring.getbit(key, 1)).isEqualTo(1);
         assertThat((long) bitstring.getbit(key, 4)).isEqualTo(0);
         assertThat((long) bitstring.getbit(key, 5)).isEqualTo(1);
-        assertThat(bitstring.get(key)).isEqualTo("00100011");
+        assertThat(bitstring.get(key)).isEqualTo("001000110000000000000001");
+        assertThat((long) redis.bitpos(key, true, 1)).isEqualTo(16);
         assertThat((long) redis.bitpos(key, false, 0, 0)).isEqualTo(2);
     }
 

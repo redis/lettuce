@@ -167,6 +167,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BITPOS, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, Long> bitpos(K key, boolean state, long start) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(state ? 1 : 0).add(start);
+        return createCommand(BITPOS, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Long> bitpos(K key, boolean state, long start, long end) {
         notNullKey(key);
 
