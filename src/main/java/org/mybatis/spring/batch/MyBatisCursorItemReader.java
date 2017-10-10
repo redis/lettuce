@@ -71,8 +71,12 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 
   @Override
   protected void doClose() throws Exception {
-    cursor.close();
-    sqlSession.close();
+    if (cursor != null) {
+      cursor.close();
+    }
+    if (sqlSession != null) {
+      sqlSession.close();
+    }
     cursorIterator = null;
   }
 
