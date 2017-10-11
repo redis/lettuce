@@ -15,6 +15,8 @@
  */
 package com.lambdaworks.redis;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Factory for Redis exceptions.
  * 
@@ -24,6 +26,29 @@ package com.lambdaworks.redis;
 public abstract class ExceptionFactory {
 
     private ExceptionFactory() {
+    }
+
+    /**
+     * Create a {@link RedisCommandTimeoutException} with a detail message given the timeout.
+     * 
+     * @param timeout the timeout value.
+     * @param unit the {@link TimeUnit}.
+     * @return the {@link RedisCommandTimeoutException}.
+     */
+    public static RedisCommandTimeoutException createTimeoutException(long timeout, TimeUnit unit) {
+        return new RedisCommandTimeoutException(String.format("Command timed out after %d %s", timeout, unit));
+    }
+
+    /**
+     * Create a {@link RedisCommandTimeoutException} with a detail message given the message and timeout.
+     * 
+     * @param message the detail message.
+     * @param timeout the timeout value.
+     * @param unit the {@link TimeUnit}.
+     * @return the {@link RedisCommandTimeoutException}.
+     */
+    public static RedisCommandTimeoutException createTimeoutException(String message, long timeout, TimeUnit unit) {
+        return new RedisCommandTimeoutException(String.format("%s. Command timed out after %d %s", message, timeout, unit));
     }
 
     /**
@@ -38,11 +63,11 @@ public abstract class ExceptionFactory {
     }
 
     /**
-     * Create a {@link RedisCommandExecutionException} with a detail message. Specific Redis error messages may create subtypes
-     * of {@link RedisCommandExecutionException}.
+     * Create a {@link RedisCommandExecutionException} with a detail message and optionally a {@link Throwable cause}. Specific
+     * Redis error messages may create subtypes of {@link RedisCommandExecutionException}.
      * 
      * @param message the detail message.
-     * @param cause the nested exception.
+     * @param cause the nested exception, may be {@literal null}.
      * @return the {@link RedisCommandExecutionException}.
      */
     public static RedisCommandExecutionException createExecutionException(String message, Throwable cause) {

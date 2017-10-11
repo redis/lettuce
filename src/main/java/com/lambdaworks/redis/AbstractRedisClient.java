@@ -374,7 +374,7 @@ public abstract class AbstractRedisClient {
             Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         } catch (Exception e) {
-            throw new RedisCommandExecutionException(e);
+            throw ExceptionFactory.createExecutionException(null, e);
         }
     }
 
