@@ -160,7 +160,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         if (executionModel == ExecutionModel.SYNC) {
 
             if (!awaitAll(timeout.toNanos(), TimeUnit.NANOSECONDS, asyncExecutions.values())) {
-                throw createTimeoutException(asyncExecutions);
+                throw createTimeoutException(asyncExecutions, timeout);
             }
 
             if (atLeastOneFailed(asyncExecutions)) {
@@ -210,7 +210,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
                 .anyMatch(completionStage -> completionStage.toCompletableFuture().isCompletedExceptionally());
     }
 
-    private RedisCommandTimeoutException createTimeoutException(Map<RedisClusterNode, CompletionStage<?>> executions) {
+    private RedisCommandTimeoutException createTimeoutException(Map<RedisClusterNode, CompletionStage<?>> executions,
+            Duration timeout) {
 
         List<RedisClusterNode> notFinished = new ArrayList<>();
         executions.forEach((redisClusterNode, completionStage) -> {
@@ -220,7 +221,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         });
 
         String description = getNodeDescription(notFinished);
-        return new RedisCommandTimeoutException("Command timed out for node(s): " + description);
+        return ExceptionFactory.createTimeoutException("Command timed out for node(s): " + description, timeout);
     }
 
     private RedisCommandExecutionException createExecutionException(Map<RedisClusterNode, CompletionStage<?>> executions) {

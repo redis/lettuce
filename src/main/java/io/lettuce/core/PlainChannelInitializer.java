@@ -132,9 +132,9 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
             if (cmd.isDone() || initializedFuture.isDone()) {
                 return;
             }
-
-            initializedFuture.completeExceptionally(new RedisCommandTimeoutException(String.format(
-                    "Cannot initialize channel (PING before activate) within %s", timeout)));
+            
+            initializedFuture.completeExceptionally(ExceptionFactory.createTimeoutException(
+                    "Cannot initialize channel (PING before activate)", timeout));
         };
 
         Timeout timeoutHandle = clientResources.timer().newTimeout(t -> {

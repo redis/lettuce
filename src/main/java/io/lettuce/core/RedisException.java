@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,36 @@ package io.lettuce.core;
  * Exception thrown when Redis returns an error message, or when the client fails for any reason.
  *
  * @author Will Glozer
+ * @author Mark Paluch
  */
 @SuppressWarnings("serial")
 public class RedisException extends RuntimeException {
 
+    /**
+     * Create a {@code RedisException} with the specified detail message.
+     * 
+     * @param msg the detail message.
+     */
     public RedisException(String msg) {
         super(msg);
     }
 
+    /**
+     * Create a {@code RedisException} with the specified detail message and nested exception.
+     * 
+     * @param msg the detail message.
+     * @param cause the nested exception.
+     */
     public RedisException(String msg, Throwable e) {
         super(msg, e);
     }
 
+    /**
+     * Create a {@code RedisException} with the specified nested exception.
+     * 
+     * @param msg the detail message.
+     * @param cause the nested exception.
+     */
     public RedisException(Throwable cause) {
         super(cause);
     }

@@ -15,6 +15,12 @@
  */
 package io.lettuce.core;
 
+import java.time.Duration;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+
 /**
  * Factory for Redis exceptions.
  * 
@@ -23,7 +29,72 @@ package io.lettuce.core;
  */
 public abstract class ExceptionFactory {
 
+    private static final DateTimeFormatter MINUTES = new DateTimeFormatterBuilder().appendText(ChronoField.MINUTE_OF_DAY)
+            .appendLiteral(" minute(s)").toFormatter();
+
+    private static final DateTimeFormatter SECONDS = new DateTimeFormatterBuilder().appendText(ChronoField.SECOND_OF_DAY)
+            .appendLiteral(" second(s)").toFormatter();
+
+    private static final DateTimeFormatter MILLISECONDS = new DateTimeFormatterBuilder().appendText(ChronoField.MILLI_OF_DAY)
+            .appendLiteral(" millisecond(s)").toFormatter();
+
     private ExceptionFactory() {
+    }
+
+    /**
+     * Create a {@link RedisCommandTimeoutException} with a detail message given the timeout.
+     * 
+     * @param timeout the timeout value.
+     * @return the {@link RedisCommandTimeoutException}.
+     */
+    public static RedisCommandTimeoutException createTimeoutException(Duration timeout) {
+        return new RedisCommandTimeoutException(String.format("Command timed out after %s", formatTimeout(timeout)));
+    }
+
+    /**
+     * Create a {@link RedisCommandTimeoutException} with a detail message given the message and timeout.
+     * 
+     * @param message the detail message.
+     * @param timeout the timeout value.
+     * @return the {@link RedisCommandTimeoutException}.
+     */
+    public static RedisCommandTimeoutException createTimeoutException(String message, Duration timeout) {
+        return new RedisCommandTimeoutException(
+                String.format("%s. Command timed out after %s", message, formatTimeout(timeout)));
+    }
+
+    static String formatTimeout(Duration duration) {
+
+        if (duration.isZero()) {
+            return "no timeout";
+        }
+
+        LocalTime time = LocalTime.MIDNIGHT.plus(duration);
+        if (isExactMinutes(duration)) {
+            return MINUTES.format(time);
+        }
+
+        if (isExactSeconds(duration)) {
+            return SECONDS.format(time);
+        }
+
+        if (isExactMillis(duration)) {
+            return MILLISECONDS.format(time);
+        }
+
+        return String.format("%d ns", duration.toNanos());
+    }
+
+    private static boolean isExactMinutes(Duration duration) {
+        return duration.toMillis() % (1000 * 60) == 0 && duration.getNano() == 0;
+    }
+
+    private static boolean isExactSeconds(Duration duration) {
+        return duration.toMillis() % (1000) == 0 && duration.getNano() == 0;
+    }
+
+    private static boolean isExactMillis(Duration duration) {
+        return duration.toNanos() % (1000 * 1000) == 0;
     }
 
     /**
@@ -38,11 +109,11 @@ public abstract class ExceptionFactory {
     }
 
     /**
-     * Create a {@link RedisCommandExecutionException} with a detail message. Specific Redis error messages may create subtypes
-     * of {@link RedisCommandExecutionException}.
+     * Create a {@link RedisCommandExecutionException} with a detail message and optionally a {@link Throwable cause}. Specific
+     * Redis error messages may create subtypes of {@link RedisCommandExecutionException}.
      * 
      * @param message the detail message.
-     * @param cause the nested exception.
+     * @param cause the nested exception, may be {@literal null}.
      * @return the {@link RedisCommandExecutionException}.
      */
     public static RedisCommandExecutionException createExecutionException(String message, Throwable cause) {

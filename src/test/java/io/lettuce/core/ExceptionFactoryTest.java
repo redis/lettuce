@@ -17,9 +17,8 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lettuce.core.ExceptionFactory;
-import io.lettuce.core.RedisBusyException;
-import io.lettuce.core.RedisNoScriptException;
+import java.time.Duration;
+
 import org.junit.Test;
 
 /**
@@ -57,5 +56,31 @@ public class ExceptionFactoryTest {
                 .hasRootCauseInstanceOf(IllegalStateException.class);
         assertThat(ExceptionFactory.createExecutionException(null, new IllegalStateException())).isInstanceOf(
                 RedisCommandExecutionException.class).hasRootCauseInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    public void shouldFormatExactUnits() {
+
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofMinutes(2))).isEqualTo("2 minute(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofMinutes(1))).isEqualTo("1 minute(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofMinutes(0))).isEqualTo("no timeout");
+
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofSeconds(2))).isEqualTo("2 second(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofSeconds(1))).isEqualTo("1 second(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofSeconds(0))).isEqualTo("no timeout");
+
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofMillis(2))).isEqualTo("2 millisecond(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofMillis(1))).isEqualTo("1 millisecond(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofMillis(0))).isEqualTo("no timeout");
+    }
+
+    @Test
+    public void shouldFormatToMinmalApplicableTimeunit() {
+
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofMinutes(2).plus(Duration.ofSeconds(10)))).isEqualTo(
+                "130 second(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofSeconds(2).plus(Duration.ofMillis(5)))).isEqualTo(
+                "2005 millisecond(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofNanos(2))).isEqualTo("2 ns");
     }
 }

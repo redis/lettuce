@@ -91,7 +91,7 @@ public class LettuceFutures {
             Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         } catch (Exception e) {
-            throw new RedisCommandExecutionException(e);
+            throw ExceptionFactory.createExecutionException(null, e);
         }
     }
 
@@ -111,7 +111,7 @@ public class LettuceFutures {
         try {
             if (!cmd.await(timeout, unit)) {
                 cmd.cancel(true);
-                throw new RedisCommandTimeoutException();
+                throw ExceptionFactory.createTimeoutException(Duration.ofNanos(unit.toNanos(timeout)));
             }
             return cmd.get();
         } catch (RuntimeException e) {
@@ -128,7 +128,7 @@ public class LettuceFutures {
             Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         } catch (Exception e) {
-            throw new RedisCommandExecutionException(e);
+            throw ExceptionFactory.createExecutionException(null, e);
         }
     }
 }
