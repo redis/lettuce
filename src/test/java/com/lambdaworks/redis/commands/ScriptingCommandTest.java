@@ -32,6 +32,7 @@ import com.lambdaworks.Wait;
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.RedisAsyncConnection;
 import com.lambdaworks.redis.RedisException;
+import com.lambdaworks.redis.RedisNoScriptException;
 
 /**
  * @author Will Glozer
@@ -95,6 +96,7 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
         String digest = redis.digest(script);
         assertThat((Number) redis.eval(script, INTEGER)).isEqualTo(2L);
         assertThat((Number) redis.evalsha(digest, INTEGER)).isEqualTo(2L);
+        exception.expect(RedisNoScriptException.class);
         exception.expectMessage("NOSCRIPT No matching script. Please use EVAL.");
         redis.evalsha(redis.digest("return 1 + 1 == 4"), INTEGER);
     }
@@ -103,6 +105,7 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
     public void evalshaWithMulti() throws Exception {
         redis.scriptFlush();
         String digest = redis.digest("return {1234, 5678}");
+        exception.expect(RedisNoScriptException.class);
         exception.expectMessage("NOSCRIPT No matching script. Please use EVAL.");
         redis.evalsha(digest, MULTI);
     }

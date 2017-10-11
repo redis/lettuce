@@ -68,7 +68,7 @@ public class LettuceFutures {
         } catch (ExecutionException e) {
 
             if (e.getCause() instanceof RedisCommandExecutionException) {
-                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
+                throw ExceptionFactory.createExecutionException(e.getCause().getMessage(), e.getCause());
             }
 
             throw new RedisException(e.getCause());
@@ -124,7 +124,7 @@ public class LettuceFutures {
         } catch (ExecutionException e) {
 
             if (e.getCause() instanceof RedisCommandExecutionException) {
-                throw new RedisCommandExecutionException(e.getCause().getMessage(), e.getCause());
+                throw ExceptionFactory.createExecutionException(e.getCause().getMessage(), e.getCause());
             }
 
             throw new RedisException(e.getCause());

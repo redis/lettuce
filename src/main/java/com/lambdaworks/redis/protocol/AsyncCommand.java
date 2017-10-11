@@ -22,7 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Consumer;
 
-import com.lambdaworks.redis.RedisCommandExecutionException;
+import com.lambdaworks.redis.ExceptionFactory;
 import com.lambdaworks.redis.RedisCommandInterruptedException;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -116,7 +116,7 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
         if (command.getOutput() == null) {
             complete(null);
         } else if (command.getOutput().hasError()) {
-            doCompleteExceptionally(new RedisCommandExecutionException(command.getOutput().getError()));
+            doCompleteExceptionally(ExceptionFactory.createExecutionException(command.getOutput().getError()));
         } else {
             complete(command.getOutput().get());
         }

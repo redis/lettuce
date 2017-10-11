@@ -131,7 +131,7 @@ public class ReactiveCommandDispatcher<K, V, T> implements Observable.OnSubscrib
                     }
 
                     if (getOutput().hasError()) {
-                        subscriber.onError(new RedisCommandExecutionException(getOutput().getError()));
+                        subscriber.onError(ExceptionFactory.createExecutionException(getOutput().getError()));
                         completed = true;
                         return;
                     }
