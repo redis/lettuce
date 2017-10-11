@@ -91,7 +91,7 @@ class CommandSegmentCommandFactory implements CommandFactory {
         CommandArgs<Object, Object> args = new CommandArgs<>(redisCodec);
 
         CommandOutput<Object, Object, ?> output = outputFactory.create(redisCodec);
-        Command<Object, Object, ?> command = new io.lettuce.core.protocol.Command<>(this.segments.getCommandType(),
+        Command<Object, Object, ?> command = new Command<>(this.segments.getCommandType(),
                 output, args);
 
         parameterBinder.bind(args, redisCodec, segments, parametersAccessor);
