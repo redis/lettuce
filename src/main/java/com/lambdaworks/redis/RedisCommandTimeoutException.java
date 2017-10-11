@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,18 @@ package com.lambdaworks.redis;
 @SuppressWarnings("serial")
 public class RedisCommandTimeoutException extends RedisException {
 
+    /**
+     * Create a {@code RedisCommandTimeoutException} with a default message.
+     */
     public RedisCommandTimeoutException() {
         super("Command timed out");
     }
 
+    /**
+     * Create a {@code RedisCommandTimeoutException} with the specified detail message.
+     *
+     * @param msg the detail message.
+     */
     public RedisCommandTimeoutException(String msg) {
         super(msg);
     }
