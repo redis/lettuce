@@ -25,20 +25,31 @@ import java.net.SocketAddress;
 @SuppressWarnings("serial")
 public class RedisConnectionException extends RedisException {
 
+    /**
+     * Create a {@code RedisConnectionException} with the specified detail message.
+     *
+     * @param msg the detail message.
+     */
     public RedisConnectionException(String msg) {
         super(msg);
     }
 
-    public RedisConnectionException(String msg, Throwable e) {
-        super(msg, e);
+    /**
+     * Create a {@code RedisConnectionException} with the specified detail message and nested exception.
+     * 
+     * @param msg the detail message.
+     * @param cause the nested exception.
+     */
+    public RedisConnectionException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 
     /**
      * Create a new {@link RedisConnectionException} given {@link SocketAddress} and the {@link Throwable cause}.
      *
-     * @param remoteAddress
-     * @param cause
-     * @return
+     * @param remoteAddress remote socket address.
+     * @param cause the nested exception.
+     * @return the {@link RedisConnectionException}.
      * @since 4.4
      */
     public static RedisConnectionException create(SocketAddress remoteAddress, Throwable cause) {
