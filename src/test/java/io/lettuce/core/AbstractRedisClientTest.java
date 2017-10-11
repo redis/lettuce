@@ -58,15 +58,13 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
             try {
                 redis.flushall();
                 redis.flushdb();
-            } catch (RedisException e) {
-                if (e.getMessage() != null && e.getMessage().contains("BUSY")) {
-                    scriptRunning = true;
-                    try {
-                        redis.scriptKill();
-                    } catch (RedisException e1) {
-                        // I know, it sounds crazy, but there is a possibility where one of the commands above raises BUSY.
-                        // Meanwhile the script ends and a call to SCRIPT KILL says NOTBUSY.
-                    }
+            } catch (RedisBusyException e) {
+                scriptRunning = true;
+                try {
+                    redis.scriptKill();
+                } catch (RedisException e1) {
+                    // I know, it sounds crazy, but there is a possibility where one of the commands above raises BUSY.
+                    // Meanwhile the script ends and a call to SCRIPT KILL says NOTBUSY.
                 }
             }
         } while (scriptRunning);

@@ -628,7 +628,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     Object result = getOutput().get();
 
                     if (getOutput().hasError()) {
-                        onError(new RedisCommandExecutionException(getOutput().getError()));
+                        onError(ExceptionFactory.createExecutionException(getOutput().getError()));
                         completed = true;
                         return;
                     }

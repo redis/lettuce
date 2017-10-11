@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
-import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.ExceptionFactory;
 import io.lettuce.core.TransactionResult;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceFactories;
@@ -104,7 +104,7 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
         if (depth == 1) {
             RedisCommand<K, V, ?> cmd = queue.remove();
             CommandOutput<K, V, ?> o = cmd.getOutput();
-            responses.add(!o.hasError() ? o.get() : new RedisCommandExecutionException(o.getError()));
+            responses.add(!o.hasError() ? o.get() : ExceptionFactory.createExecutionException(o.getError()));
             cmd.complete();
         } else if (depth == 0 && !queue.isEmpty()) {
             for (RedisCommand<K, V, ?> cmd : queue) {

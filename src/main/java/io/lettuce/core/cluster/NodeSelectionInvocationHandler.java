@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
 
+import io.lettuce.core.ExceptionFactory;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisCommandInterruptedException;
 import io.lettuce.core.RedisCommandTimeoutException;
@@ -231,7 +232,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             }
         });
 
-        RedisCommandExecutionException e = new RedisCommandExecutionException(
+        RedisCommandExecutionException e = ExceptionFactory
+                .createExecutionException(
                 "Multi-node command execution failed on node(s): " + getNodeDescription(failed));
 
         executions.forEach((redisClusterNode, completionStage) -> {
