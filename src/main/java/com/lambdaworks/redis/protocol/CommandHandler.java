@@ -104,6 +104,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private Throwable connectionError;
     private String logPrefix;
     private boolean autoFlushCommands = true;
+    private PristineFallbackCommand fallbackCommand;
+    private boolean pristine;
 
     static {
 
@@ -264,12 +266,27 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) {
 
+        if (pristine && stack.isEmpty() && buffer.isReadable()) {
+
+            if (debugEnabled) {
+                logger.debug("{} Received response without a command context (empty stack)", logPrefix());
+            }
+
+            if (consumeResponse(buffer)) {
+                pristine = false;
+            }
+
+            return;
+        }
+
         while (canDecode(buffer)) {
 
             RedisCommand<K, V, ?> command = stack.peek();
             if (debugEnabled) {
                 logger.debug("{} Stack contains: {} commands", logPrefix(), stack.size());
             }
+
+            pristine = false;
 
             try {
                 if (!decode(buffer, command)) {
@@ -281,12 +298,17 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 throw e;
             }
 
-            stack.poll();
+            if (isProtectedMode(command)) {
+                onProtectedMode(command.getOutput().getError());
+            } else {
 
-            try {
-                command.complete();
-            } catch (Exception e) {
-                logger.warn("{} Unexpected exception during command completion: {}", logPrefix, e.toString(), e);
+                stack.poll();
+
+                try {
+                    command.complete();
+                } catch (Exception e) {
+                    logger.warn("{} Unexpected exception during command completion: {}", logPrefix, e.toString(), e);
+                }
             }
 
             if (buffer.refCnt() != 0) {
@@ -295,6 +317,68 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
             afterComplete(ctx, command);
         }
+    }
+
+    /**
+     * Consume a response without having a command on the stack.
+     *
+     * @param buffer
+     * @return {@literal true} if the buffer decode was successful. {@literal false} if the buffer was not decoded.
+     */
+    private boolean consumeResponse(ByteBuf buffer) {
+
+        PristineFallbackCommand command = this.fallbackCommand;
+
+        if (command == null || !command.isDone()) {
+
+            if (debugEnabled) {
+                logger.debug("{} Consuming response using FallbackCommand", logPrefix());
+            }
+
+            if (command == null) {
+                command = new PristineFallbackCommand();
+                this.fallbackCommand = command;
+            }
+
+            if (!decode(buffer, (RedisCommand) command)) {
+                return false;
+            }
+
+            if (isProtectedMode(command)) {
+                onProtectedMode(command.getOutput().getError());
+            }
+        }
+
+        return true;
+    }
+
+    private boolean isProtectedMode(RedisCommand<?, ?, ?> command) {
+        return command != null && command.getOutput() != null && command.getOutput().hasError()
+                && RedisConnectionException.isProtectedMode(command.getOutput().getError());
+    }
+
+    private void onProtectedMode(String message) {
+
+        ConnectionWatchdog connectionWatchdog = this.connectionWatchdog;
+        Channel channel = this.channel;
+
+        if (connectionWatchdog != null) {
+            connectionWatchdog.setListenOnChannelInactive(false);
+            connectionWatchdog.setReconnectSuspended(false);
+        }
+
+        if (channel != null) {
+            channel.disconnect();
+        }
+
+        List<RedisCommand<K, V, ?>> bufferedCommands = getBufferedCommands();
+        this.connectionError = new RedisConnectionException(message);
+
+        bufferedCommands.forEach(cmd -> cmd.completeExceptionally(this.connectionError));
+        stack.forEach(cmd -> cmd.completeExceptionally(this.connectionError));
+        stack.clear();
+
+        cancelCommands(message);
     }
 
     /**
@@ -826,6 +910,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
+        fallbackCommand = null;
         logPrefix = null;
         connectionWatchdog = null;
 
@@ -834,6 +919,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         connectionWatchdog = getConnectionWatchdog(ctx.pipeline());
+        pristine = true;
+        fallbackCommand = null;
 
         synchronized (stateLock) {
             try {
@@ -934,6 +1021,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         rsm.reset();
 
+        PristineFallbackCommand command = this.fallbackCommand;
+        if (isProtectedMode(command)) {
+            onProtectedMode(command.getOutput().getError());
+        }
+
         if (debugEnabled) {
             logger.debug("{} channelInactive() done", logPrefix());
         }
@@ -994,6 +1086,18 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     private void cancelCommands(String message) {
 
+        List<RedisCommand<K, V, ?>> toCancel = getBufferedCommands();
+
+        if (channel != null) {
+            channel.pipeline().fireUserEventTriggered(new Reset(message));
+        } else {
+            resetInternals();
+        }
+
+        cancelCommands(message, toCancel);
+    }
+
+    private List<RedisCommand<K, V, ?>> getBufferedCommands() {
         List<RedisCommand<K, V, ?>> toCancel;
         synchronized (stateLock) {
             try {
@@ -1003,14 +1107,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 unlockWritersExclusive();
             }
         }
-
-        if (channel != null) {
-            channel.pipeline().fireUserEventTriggered(new Reset(message));
-        } else {
-            resetInternals();
-        }
-
-        cancelCommands(message, toCancel);
+        return toCancel;
     }
 
     private void cancelCommands(String message, List<RedisCommand<K, V, ?>> toCancel) {

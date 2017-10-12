@@ -55,4 +55,13 @@ public class RedisConnectionException extends RedisException {
     public static RedisConnectionException create(SocketAddress remoteAddress, Throwable cause) {
         return new RedisConnectionException(String.format("Unable to connect to %s", remoteAddress), cause);
     }
+
+    /**
+     * @param error
+     * @return {@literal true} if the {@code error} message indicates Redis protected mode.
+     * @since 4.5
+     */
+    public static boolean isProtectedMode(String error) {
+        return error != null && error.startsWith("DENIED");
+    }
 }
