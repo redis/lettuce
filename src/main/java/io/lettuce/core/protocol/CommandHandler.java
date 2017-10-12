@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
@@ -79,6 +80,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private ByteBuf buffer;
     private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
     private String logPrefix;
+    private PristineFallbackCommand fallbackCommand;
+    private boolean pristine;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -241,6 +244,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
         logPrefix = null;
+        pristine = true;
+        fallbackCommand = null;
 
         if (debugEnabled) {
             logger.debug("{} channelActive()", logPrefix());
@@ -296,6 +301,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         endpoint.notifyDrainQueuedCommands(this);
 
         setState(LifecycleState.DEACTIVATED);
+
+        PristineFallbackCommand command = this.fallbackCommand;
+        if (isProtectedMode(command)) {
+            onProtectedMode(command.getOutput().getError());
+        }
 
         rsm.reset();
 
@@ -504,12 +514,27 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
 
+        if (pristine && stack.isEmpty() && buffer.isReadable()) {
+
+            if (debugEnabled) {
+                logger.debug("{} Received response without a command context (empty stack)", logPrefix());
+            }
+
+            if (consumeResponse(buffer)) {
+                pristine = false;
+            }
+
+            return;
+        }
+
         while (canDecode(buffer)) {
 
             RedisCommand<?, ?, ?> command = stack.peek();
             if (debugEnabled) {
                 logger.debug("{} Stack contains: {} commands", logPrefix(), stack.size());
             }
+
+            pristine = false;
 
             try {
                 if (!decode(ctx, buffer, command)) {
@@ -521,12 +546,17 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 throw e;
             }
 
-            stack.poll();
+            if (isProtectedMode(command)) {
+                onProtectedMode(command.getOutput().getError());
+            } else {
 
-            try {
-                command.complete();
-            } catch (Exception e) {
-                logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                stack.poll();
+
+                try {
+                    command.complete();
+                } catch (Exception e) {
+                    logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                }
             }
 
             if (buffer.refCnt() != 0) {
@@ -592,6 +622,58 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     protected boolean decode(ByteBuf buffer, RedisCommand<?, ?, ?> command, CommandOutput<?, ?, ?> output) {
         return rsm.decode(buffer, command, output);
+    }
+
+    /**
+     * Consume a response without having a command on the stack.
+     *
+     * @param buffer
+     * @return {@literal true} if the buffer decode was successful. {@literal false} if the buffer was not decoded.
+     */
+    private boolean consumeResponse(ByteBuf buffer) {
+
+        PristineFallbackCommand command = this.fallbackCommand;
+
+        if (command == null || !command.isDone()) {
+
+            if (debugEnabled) {
+                logger.debug("{} Consuming response using FallbackCommand", logPrefix());
+            }
+
+            if (command == null) {
+                command = new PristineFallbackCommand();
+                this.fallbackCommand = command;
+            }
+
+            if (!decode(buffer, command.getOutput())) {
+                return false;
+            }
+
+            if (isProtectedMode(command)) {
+                onProtectedMode(command.getOutput().getError());
+            }
+        }
+
+        return true;
+    }
+
+    private boolean isProtectedMode(RedisCommand<?, ?, ?> command) {
+        return command != null && command.getOutput() != null && command.getOutput().hasError()
+                && RedisConnectionException.isProtectedMode(command.getOutput().getError());
+    }
+
+    private void onProtectedMode(String message) {
+
+        RedisConnectionException exception = new RedisConnectionException(message);
+
+        endpoint.notifyException(exception);
+
+        if (channel != null) {
+            channel.disconnect();
+        }
+
+        stack.forEach(cmd -> cmd.completeExceptionally(exception));
+        stack.clear();
     }
 
     /**

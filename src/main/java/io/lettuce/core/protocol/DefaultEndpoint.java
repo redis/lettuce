@@ -25,10 +25,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import io.lettuce.core.ClientOptions;
-import io.lettuce.core.ConnectionEvents;
-import io.lettuce.core.RedisChannelWriter;
-import io.lettuce.core.RedisException;
+import io.lettuce.core.*;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
 import io.netty.channel.Channel;
@@ -397,6 +394,18 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     @Override
     public void notifyException(Throwable t) {
 
+        if (t instanceof RedisConnectionException && RedisConnectionException.isProtectedMode(t.getMessage())) {
+
+            connectionError = t;
+
+            if (connectionWatchdog != null) {
+                connectionWatchdog.setListenOnChannelInactive(false);
+                connectionWatchdog.setReconnectSuspended(false);
+            }
+
+            doExclusive(this::drainCommands).forEach(cmd -> cmd.completeExceptionally(t));
+        }
+
         if (!isConnected()) {
             connectionError = t;
         }
@@ -437,7 +446,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             if (!commands.isEmpty()) {
 
                 QUEUE_SIZE.addAndGet(this, commands.size());
-                
+
                 if (reliability == Reliability.AT_MOST_ONCE) {
                     // cancel on exceptions and remove from queue, because there is no housekeeping
                     writeAndFlush(commands).addListener(new AtMostOnceWriteListener(commands));
