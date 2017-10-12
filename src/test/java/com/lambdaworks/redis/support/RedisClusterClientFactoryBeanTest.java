@@ -53,6 +53,8 @@ public class RedisClusterClientFactoryBeanTest {
         sut.afterPropertiesSet();
         assertThat(getRedisURI().getHost()).isEqualTo("host");
         assertThat(getRedisURI().getPassword()).isEqualTo("password".toCharArray());
+
+        sut.destroy();
     }
 
     @Test
@@ -64,6 +66,8 @@ public class RedisClusterClientFactoryBeanTest {
         sut.afterPropertiesSet();
         assertThat(getRedisURI().getHost()).isEqualTo("host");
         assertThat(getRedisURI().getPassword()).isEqualTo("thepassword".toCharArray());
+
+        sut.destroy();
     }
 
     @Test
@@ -84,6 +88,8 @@ public class RedisClusterClientFactoryBeanTest {
 
         assertThat(host2.getHost()).isEqualTo("host2");
         assertThat(host2.getPassword()).isEqualTo("password".toCharArray());
+
+        sut.destroy();
     }
 
     @Test
@@ -106,6 +112,8 @@ public class RedisClusterClientFactoryBeanTest {
 
         assertThat(host2.getHost()).isEqualTo("host2");
         assertThat(host2.getPassword()).isEqualTo("thepassword".toCharArray());
+
+        sut.destroy();
     }
 
     @Test
@@ -118,6 +126,8 @@ public class RedisClusterClientFactoryBeanTest {
         assertThat(getRedisURI().getPassword()).isEqualTo("password".toCharArray());
         assertThat(getRedisURI().isVerifyPeer()).isFalse();
         assertThat(getRedisURI().isSsl()).isTrue();
+
+        sut.destroy();
     }
 
     private RedisURI getRedisURI() {
