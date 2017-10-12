@@ -75,6 +75,11 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
                     clientResources.eventBus().publish(new DisconnectedEvent(local(ctx), remote(ctx)));
+
+                    if (!initializedFuture.isDone()) {
+                        initializedFuture.completeExceptionally(new RedisConnectionException("Connection closed prematurely"));
+                    }
+
                     initializedFuture = new CompletableFuture<>();
                     pingCommand = null;
                     super.channelInactive(ctx);
