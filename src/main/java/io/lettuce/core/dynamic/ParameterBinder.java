@@ -136,12 +136,15 @@ class ParameterBinder {
         }
 
         if (argument instanceof Iterable) {
+
             for (Object argumentElement : (Iterable<Object>) argument) {
                 bindArgument(args, argumentElement);
             }
-        } else {
-            bindArgument(args, argument);
+
+            return;
         }
+
+        bindArgument(args, argument);
     }
 
     /*
@@ -151,14 +154,22 @@ class ParameterBinder {
     @SuppressWarnings("unchecked")
     private static <K, V> void bindArgument(CommandArgs<K, V> args, Object argument) {
 
+        if (argument instanceof byte[]) {
+            args.add((byte[]) argument);
+            return;
+        }
+
         if (argument instanceof String) {
             args.add((String) argument);
+            return;
         }
 
         if (argument instanceof Double) {
             args.add(((Double) argument));
+            return;
         } else if (argument instanceof Number) {
             args.add(((Number) argument).longValue());
+            return;
         }
 
         if (argument instanceof ProtocolKeyword) {
@@ -229,7 +240,10 @@ class ParameterBinder {
 
         if (argument instanceof CompositeArgument) {
             ((CompositeArgument) argument).build(args);
+            return;
         }
+
+        throw new IllegalArgumentException("Cannot bind unsupported command argument " + args);
     }
 
     private static <K, V> void bindValueRange(CommandArgs<K, V> args, RedisCodec<K, V> codec, Range<? extends V> range) {
