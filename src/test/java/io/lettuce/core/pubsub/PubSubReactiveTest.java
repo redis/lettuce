@@ -32,7 +32,6 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
 import io.lettuce.Delay;
 import io.lettuce.TestClientResources;
 import io.lettuce.Wait;
@@ -250,7 +249,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
 
         Map<String, Long> result = block(pubsub2.pubsubNumsub(channel));
         assertThat(result).hasSize(1);
-        assertThat(result.get(channel)).isGreaterThan(0);
+        assertThat(result).containsKeys(channel);
     }
 
     @Test
