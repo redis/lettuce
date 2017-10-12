@@ -17,6 +17,7 @@ package io.lettuce.core.dynamic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -79,7 +80,22 @@ public class RedisCommandsSyncTest extends AbstractRedisClientTest {
         assertThat(values.get(1)).isEqualTo(Value.empty());
     }
 
+    @Test
+    public void mgetByteArray() {
+
+        redis.set(key, value);
+
+        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+
+        MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
+
+        List<byte[]> values = api.mget(Collections.singleton(key.getBytes()));
+        assertThat(values).hasSize(1).contains(value.getBytes());
+    }
+
     interface MultipleExecutionModels extends Commands {
+
+        List<byte[]> mget(Iterable<byte[]> keys);
 
         String get(String key);
 
