@@ -68,7 +68,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     private ConnectionWatchdog connectionWatchdog;
     private ConnectionFacade connectionFacade;
 
-    private Throwable connectionError;
+    private volatile Throwable connectionError;
 
     // access via QUEUE_SIZE
     @SuppressWarnings("unused")

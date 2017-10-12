@@ -263,6 +263,7 @@ public abstract class AbstractRedisClient {
         redisBootstrap.handler(initializer);
 
         clientResources.nettyCustomizer().afterBootstrapInitialized(redisBootstrap);
+        CompletableFuture<Boolean> initFuture = initializer.channelInitialized();
         ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
 
         connectFuture.addListener(future -> {
@@ -275,7 +276,6 @@ public abstract class AbstractRedisClient {
                 return;
             }
 
-            CompletableFuture<Boolean> initFuture = initializer.channelInitialized();
             initFuture.whenComplete((success, throwable) -> {
 
                 if (throwable == null) {

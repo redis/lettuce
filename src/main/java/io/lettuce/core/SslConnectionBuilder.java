@@ -171,6 +171,12 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
                     @Override
                     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+
+                        if (!initializedFuture.isDone()) {
+                            initializedFuture.completeExceptionally(new RedisConnectionException(
+                                    "Connection closed prematurely"));
+                        }
+
                         initializedFuture = new CompletableFuture<>();
                         pingCommand = null;
                         super.channelInactive(ctx);
