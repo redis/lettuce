@@ -85,6 +85,18 @@ public class RedisCommandsClusterSyncTest extends AbstractTest {
     }
 
     @Test
+    public void shouldRouteBinaryKey() {
+
+        connection.sync().set(key, value);
+
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
+
+        SynchronousCommands api = factory.getCommands(SynchronousCommands.class);
+
+        assertThat(api.get(key.getBytes())).isEqualTo(value.getBytes());
+    }
+
+    @Test
     public void mgetAsValues() {
 
         connection.sync().set(key, value);
@@ -98,7 +110,9 @@ public class RedisCommandsClusterSyncTest extends AbstractTest {
         assertThat(values.get(0)).isEqualTo(Value.just(value));
     }
 
-    static interface SynchronousCommands extends Commands {
+    interface SynchronousCommands extends Commands {
+
+        byte[] get(byte[] key);
 
         String get(String key);
 
