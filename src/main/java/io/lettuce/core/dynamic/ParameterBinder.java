@@ -99,7 +99,11 @@ class ParameterBinder {
         }
 
         if (argument instanceof byte[]) {
-            args.add((byte[]) argument);
+            if (index != -1 && accessor.isKey(index)) {
+                args.addKey((K) argument);
+            } else {
+                args.add((byte[]) argument);
+            }
             return;
         }
 
