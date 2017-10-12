@@ -18,7 +18,6 @@ package io.lettuce.core.support;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 
 import org.apache.webbeans.cditest.CdiTestContainer;
@@ -27,8 +26,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.lettuce.TestClientResources;
 import io.lettuce.core.AbstractRedisClientTest;
-import io.lettuce.core.FastShutdown;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.resource.ClientResources;
@@ -50,6 +49,13 @@ public class CdiTest {
         container.startApplicationScope();
     }
 
+    @AfterClass
+    public static void afterClass() throws Exception {
+
+        container.stopApplicationScope();
+        container.shutdownContainer();
+    }
+
     @Produces
     public RedisURI redisURI() {
         return RedisURI.Builder.redis(AbstractRedisClientTest.host, AbstractRedisClientTest.port).build();
@@ -57,17 +63,13 @@ public class CdiTest {
 
     @Produces
     public ClientResources clientResources() {
-        return DefaultClientResources.create();
+        return TestClientResources.get();
     }
 
     @Produces
     @PersonDB
     public ClientResources personClientResources() {
         return DefaultClientResources.create();
-    }
-
-    public void shutdownClientResources(@Disposes ClientResources clientResources) throws Exception {
-        FastShutdown.shutdown(clientResources);
     }
 
     @PersonDB
@@ -97,13 +99,4 @@ public class CdiTest {
 
         injectedClient.pingRedis();
     }
-
-    @AfterClass
-    public static void afterClass() throws Exception {
-
-        container.stopApplicationScope();
-        container.shutdownContainer();
-
-    }
-
 }
