@@ -32,7 +32,6 @@ import org.junit.Test;
 import rx.Observable;
 import rx.Subscription;
 import rx.observables.BlockingObservable;
-
 import com.lambdaworks.Delay;
 import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
@@ -253,7 +252,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         Map<String, Long> result = first(pubsub2.pubsubNumsub(channel));
         assertThat(result).hasSize(1);
-        assertThat(result.get(channel)).isGreaterThan(0);
+        assertThat(result).containsKeys(channel);
     }
 
     @Test
