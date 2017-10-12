@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 
 import javax.enterprise.inject.Produces;
 
+import com.lambdaworks.TestClientResources;
 import org.apache.webbeans.cditest.CdiTestContainer;
 import org.apache.webbeans.cditest.CdiTestContainerLoader;
 import org.junit.AfterClass;

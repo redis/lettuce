@@ -101,7 +101,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     private Thread exclusiveLockOwner;
     private RedisChannelHandler<K, V> redisChannelHandler;
-    private Throwable connectionError;
+    private volatile Throwable connectionError;
     private String logPrefix;
     private boolean autoFlushCommands = true;
     private PristineFallbackCommand fallbackCommand;
