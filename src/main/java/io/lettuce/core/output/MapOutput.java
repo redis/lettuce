@@ -42,7 +42,7 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
     public void set(ByteBuffer bytes) {
 
         if (key == null) {
-            key = codec.decodeKey(bytes);
+            key = (bytes == null) ? null : codec.decodeKey(bytes);
             return;
         }
 
