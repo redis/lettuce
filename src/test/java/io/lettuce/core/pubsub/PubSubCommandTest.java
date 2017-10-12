@@ -233,7 +233,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
 
         Map<String, Long> result = redis.pubsubNumsub(channel);
         assertThat(result.size()).isGreaterThan(0);
-        assertThat(result.get(channel)).isGreaterThan(0); // Redis sometimes keeps old references
+        assertThat(result).containsKeys(channel);
     }
 
     @Test

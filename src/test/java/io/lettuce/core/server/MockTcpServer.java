@@ -25,6 +25,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
  * Tiny netty server to generate a response.
@@ -77,8 +78,8 @@ public class MockTcpServer {
         private static final EventLoopGroup workerGroup;
 
         static {
-            bossGroup = new NioEventLoopGroup(1);
-            workerGroup = new NioEventLoopGroup();
+            bossGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(NioEventLoopGroup.class, true));
+            workerGroup = new NioEventLoopGroup(5, new DefaultThreadFactory(NioEventLoopGroup.class, true));
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 bossGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS);
