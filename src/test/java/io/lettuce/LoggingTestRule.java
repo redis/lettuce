@@ -45,10 +45,12 @@ public class LoggingTestRule implements MethodRule {
             @Override
             public void evaluate() throws Throwable {
                 Logger logger = LogManager.getLogger(method.getMethod().getDeclaringClass());
-                logger.info("---------------------------------------");
-                logger.info("-- Invoke method " + method.getMethod().getDeclaringClass().getSimpleName() + "."
-                        + method.getName());
-                logger.info("---------------------------------------");
+                if (logger.isInfoEnabled()) {
+                    logger.info("---------------------------------------");
+                    logger.info("-- Invoke method " + method.getMethod().getDeclaringClass().getSimpleName() + "."
+                            + method.getName());
+                    logger.info("---------------------------------------");
+                }
 
                 try {
                     base.evaluate();
@@ -59,10 +61,12 @@ public class LoggingTestRule implements MethodRule {
 
                     throw t;
                 } finally {
-                    logger.info("---------------------------------------");
-                    logger.info("-- Finished method " + method.getMethod().getDeclaringClass().getSimpleName() + "."
-                            + method.getName());
-                    logger.info("---------------------------------------");
+                    if (logger.isInfoEnabled()) {
+                        logger.info("---------------------------------------");
+                        logger.info("-- Finished method " + method.getMethod().getDeclaringClass().getSimpleName() + "."
+                                + method.getName());
+                        logger.info("---------------------------------------");
+                    }
                 }
             }
         };
