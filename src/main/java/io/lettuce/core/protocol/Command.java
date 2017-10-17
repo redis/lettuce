@@ -17,7 +17,6 @@ package io.lettuce.core.protocol;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.CommandOutput;
-
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -170,6 +169,6 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
 
     @Override
     public boolean isDone() {
-        return status == ST_COMPLETED;
+        return status != ST_INITIAL;
     }
 }
