@@ -765,7 +765,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     private static boolean isWriteable(RedisCommand<?, ?, ?> command) {
-        return !command.isCancelled() && !command.isDone();
+        return !command.isDone();
     }
 
     @SuppressWarnings("unchecked")
