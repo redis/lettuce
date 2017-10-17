@@ -165,6 +165,8 @@ public class MasterSlave {
         StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(channelWriter,
                 codec, redisURI.getTimeout());
 
+        connection.setOptions(redisClient.getOptions());
+
         Runnable runnable = () -> {
             try {
 
@@ -224,6 +226,8 @@ public class MasterSlave {
             StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(
                     channelWriter, codec, redisURI.getTimeout());
 
+            connection.setOptions(redisClient.getOptions());
+
             return connection;
 
         } catch (RuntimeException e) {
@@ -259,6 +263,8 @@ public class MasterSlave {
 
             StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(
                     channelWriter, codec, seedNode.getTimeout());
+
+            connection.setOptions(redisClient.getOptions());
 
             return connection;
 

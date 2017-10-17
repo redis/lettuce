@@ -42,8 +42,8 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection
-     * @param clientResources client resources for this connection
+     * @param clientOptions client options for this connection.
+     * @param clientResources client resources for this connection.
      * @param clusterChannelWriter top-most channel writer.
      */
     public ClusterNodeEndpoint(ClientOptions clientOptions, ClientResources clientResources,
