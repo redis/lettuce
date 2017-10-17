@@ -36,7 +36,7 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
     private final Object asyncApi;
     private final MethodTranslator translator;
 
-    public FutureSyncInvocationHandler(StatefulConnection<?, ?> connection, Object asyncApi, Class<?>[] interfaces) {
+    FutureSyncInvocationHandler(StatefulConnection<?, ?> connection, Object asyncApi, Class<?>[] interfaces) {
         this.connection = connection;
         this.asyncApi = asyncApi;
         this.translator = MethodTranslator.of(asyncApi.getClass(), interfaces);

@@ -125,7 +125,7 @@ public abstract class AbstractRedisClient {
      *
      * @param timeout Default connection timeout.
      * @param unit Unit of time for the timeout.
-     * @deprecated since 5.0, use {@link #setDefaultTimeout(long, TimeUnit)}.
+     * @deprecated since 5.0, use {@link #setDefaultTimeout(Duration)}.
      */
     @Deprecated
     public void setDefaultTimeout(long timeout, TimeUnit unit) {
