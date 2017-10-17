@@ -446,7 +446,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     private static boolean isWriteable(RedisCommand<?, ?, ?> command) {
-        return !command.isCancelled() && !command.isDone();
+        return !command.isDone();
     }
 
     private RedisCommand<?, ?, ?> potentiallyWrapLatencyCommand(RedisCommand<?, ?, ?> command) {
