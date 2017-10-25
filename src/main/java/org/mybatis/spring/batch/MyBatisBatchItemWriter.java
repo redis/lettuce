@@ -29,6 +29,7 @@ import org.mybatis.logging.LoggerFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 
@@ -61,6 +62,8 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   private String statementId;
 
   private boolean assertUpdates = true;
+
+  private Converter<T, ?> itemToParameterConverter = new PassThroughConverter<>();
 
   /**
    * Public setter for the flag that determines whether an assertion is made
@@ -103,6 +106,18 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   }
 
   /**
+   * Public setter for a converter that converting item to parameter object.
+   * <p>
+   * By default implementation, an item does not convert.
+   *
+   * @param itemToParameterConverter a converter that converting item to parameter object
+   * @since 2.0.0
+   */
+  public void setItemToParameterConverter(Converter<T, ?> itemToParameterConverter) {
+    this.itemToParameterConverter = itemToParameterConverter;
+  }
+
+  /**
    * Check mandatory properties - there must be an SqlSession and a statementId.
    */
   @Override
@@ -110,6 +125,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
     notNull(sqlSessionTemplate, "A SqlSessionFactory or a SqlSessionTemplate is required.");
     isTrue(ExecutorType.BATCH == sqlSessionTemplate.getExecutorType(), "SqlSessionTemplate's executor type must be BATCH");
     notNull(statementId, "A statementId is required.");
+    notNull(itemToParameterConverter, "A itemToParameterConverter is required.");
   }
 
   /**
@@ -122,7 +138,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
       LOGGER.debug(() -> "Executing batch with " + items.size() + " items.");
 
       for (T item : items) {
-        sqlSessionTemplate.update(statementId, item);
+        sqlSessionTemplate.update(statementId, itemToParameterConverter.convert(item));
       }
 
       List<BatchResult> results = sqlSessionTemplate.flushStatements();
@@ -144,6 +160,15 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
         }
       }
     }
+  }
+
+  private static class PassThroughConverter<T> implements Converter<T, T> {
+
+    @Override
+    public T convert(T source) {
+      return source;
+    }
+
   }
 
 }

@@ -31,9 +31,11 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.batch.MyBatisBatchItemWriter;
 
 import javax.sql.DataSource;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
 
 /**
  * Tests for {@link MyBatisBatchItemWriterBuilder}.
@@ -135,6 +137,38 @@ class MyBatisBatchItemWriterBuilderTest {
     Mockito.verify(this.sqlSession).update("updateFoo", foos.get(1));
     Mockito.verify(this.sqlSession).update("updateFoo", foos.get(2));
 
+  }
+
+  @Test
+  void testConfigurationSetItemToParameterConverter() {
+
+    // @formatter:off
+    MyBatisBatchItemWriter<Foo> itemWriter = new MyBatisBatchItemWriterBuilder<Foo>()
+            .sqlSessionFactory(this.sqlSessionFactory)
+            .statementId("updateFoo")
+            .itemToParameterConverter(item -> {
+                Map<String, Object> parameter = new HashMap<>();
+                parameter.put("item", item);
+                parameter.put("now", LocalDateTime.now(Clock.fixed(Instant.ofEpochMilli(0), ZoneId.systemDefault())));
+                return parameter;
+            })
+            .build();
+    // @formatter:on
+    itemWriter.afterPropertiesSet();
+
+    List<Foo> foos = getFoos();
+
+    itemWriter.write(foos);
+
+    Map<String, Object> parameter = new HashMap<>();
+    parameter.put("now",
+        LocalDateTime.now(Clock.fixed(Instant.ofEpochMilli(0), ZoneId.systemDefault())));
+    parameter.put("item", foos.get(0));
+    Mockito.verify(this.sqlSession).update("updateFoo", parameter);
+    parameter.put("item", foos.get(1));
+    Mockito.verify(this.sqlSession).update("updateFoo", parameter);
+    parameter.put("item", foos.get(2));
+    Mockito.verify(this.sqlSession).update("updateFoo", parameter);
   }
 
   private List<Foo> getFoos() {
