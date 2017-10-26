@@ -305,11 +305,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             return data.poll();
         }
 
-        private boolean hasDemand() {
+        boolean hasDemand() {
             return DEMAND.get(this) > 0;
         }
 
-        private boolean changeState(State oldState, State newState) {
+        boolean changeState(State oldState, State newState) {
             return this.state.compareAndSet(oldState, newState);
         }
 
@@ -341,7 +341,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
          *
          * @return {@literal true} if there is more demand, {@literal false} otherwise.
          */
-        private boolean readAndPublish() {
+        boolean readAndPublish() {
 
             while (hasDemand()) {
 
