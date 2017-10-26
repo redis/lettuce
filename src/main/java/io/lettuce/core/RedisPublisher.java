@@ -490,14 +490,14 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 if (subscription.changeState(this, READING)) {
 
-                    subscription.readAndPublish();
+                    boolean hasDemand = subscription.readAndPublish();
 
                     if (subscription.data.isEmpty() && subscription.allDataRead) {
                         subscription.onAllDataRead();
                         return true;
                     }
 
-                    if (subscription.readAndPublish()) {
+                    if (hasDemand) {
                         subscription.changeState(READING, DEMAND);
                         subscription.checkOnDataAvailable();
                     } else {
@@ -514,10 +514,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         READING {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
-
-                if (!Operators.request(RedisSubscription.DEMAND, subscription, n)) {
-                    onError(subscription, Exceptions.nullOrNegativeRequestException(n));
-                }
+                DEMAND.request(subscription, n);
             }
         },
 
