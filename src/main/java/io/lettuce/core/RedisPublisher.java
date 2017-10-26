@@ -180,11 +180,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 throw new NullPointerException("Subscriber must not be null");
             }
 
+            State state = state();
+
             if (traceEnabled) {
-                LOG.trace("{} subscribe: {}@{}", state(), subscriber.getClass().getName(), subscriber.hashCode());
+                LOG.trace("{} subscribe: {}@{}", state, subscriber.getClass().getName(), subscriber.hashCode());
             }
 
-            state().subscribe(this, subscriber);
+            state.subscribe(this, subscriber);
         }
 
         /**
@@ -195,11 +197,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         @Override
         public final void request(long n) {
 
+            State state = state();
+
             if (traceEnabled) {
-                LOG.trace("{} request: {}", state(), n);
+                LOG.trace("{} request: {}", state, n);
             }
 
-            state().request(this, n);
+            state.request(this, n);
         }
 
         /**
@@ -208,11 +212,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         @Override
         public final void cancel() {
 
+            State state = state();
+
             if (traceEnabled) {
-                LOG.trace("{} cancel", state());
+                LOG.trace("{} cancel", state);
             }
 
-            state().cancel(this);
+            state.cancel(this);
         }
 
         /**
@@ -250,11 +256,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
          */
         final void onDataAvailable() {
 
+            State state = state();
+
             if (traceEnabled) {
-                LOG.trace("{} onDataAvailable()", state());
+                LOG.trace("{} onDataAvailable()", state);
             }
 
-            state().onDataAvailable(this);
+            state.onDataAvailable(this);
         }
 
         /**
@@ -263,11 +271,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
          */
         final void onAllDataRead() {
 
+            State state = state();
+
             if (traceEnabled) {
-                LOG.trace("{} onAllDataRead()", state());
+                LOG.trace("{} onAllDataRead()", state);
             }
 
-            state().onAllDataRead(this);
+            state.onAllDataRead(this);
         }
 
         /**
@@ -277,11 +287,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
          */
         final void onError(Throwable t) {
 
+            State state = state();
+
             if (LOG.isErrorEnabled()) {
-                LOG.trace("{} onError(): {}", state(), t.toString(), t);
+                LOG.trace("{} onError(): {}", state, t.toString(), t);
             }
 
-            state().onError(this, t);
+            state.onError(this, t);
         }
 
         /**
