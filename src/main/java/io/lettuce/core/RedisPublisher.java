@@ -440,9 +440,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
-                if (Operators.validate(n)) {
-
-                    Operators.addCap(RedisSubscription.DEMAND, subscription, n);
+                if (Operators.request(RedisSubscription.DEMAND, subscription, n)) {
 
                     if (subscription.changeState(this, DEMAND)) {
 
@@ -453,6 +451,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                         }
                         subscription.checkOnDataAvailable();
                     }
+                } else {
+                    onError(subscription, Exceptions.nullOrNegativeRequestException(n));
                 }
             }
         },
@@ -476,12 +476,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
-                if (Operators.validate(n)) {
-                    Operators.addCap(RedisSubscription.DEMAND, subscription, n);
+                if (Operators.request(RedisSubscription.DEMAND, subscription, n)) {
 
                     if (subscription.changeState(NO_DEMAND, DEMAND)) {
                         read(subscription);
                     }
+                } else {
+                    onError(subscription, Exceptions.nullOrNegativeRequestException(n));
                 }
             }
 
@@ -514,8 +515,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
-                if (Operators.validate(n)) {
-                    Operators.addCap(RedisSubscription.DEMAND, subscription, n);
+                if (!Operators.request(RedisSubscription.DEMAND, subscription, n)) {
+                    onError(subscription, Exceptions.nullOrNegativeRequestException(n));
                 }
             }
         },
