@@ -15,7 +15,6 @@
  */
 package io.lettuce.core;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Queue;
@@ -330,7 +329,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
          *
          * @return {@literal true} if there is more demand, {@literal false} otherwise.
          */
-        private boolean readAndPublish() throws IOException {
+        private boolean readAndPublish() {
 
             while (hasDemand()) {
 
@@ -466,25 +465,12 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void onDataAvailable(RedisSubscription<?> subscription) {
 
-                if (subscription.changeState(this, READING)) {
+                do {
 
-                    try {
-                        boolean demandAvailable = subscription.readAndPublish();
-                        if (demandAvailable) {
-                            subscription.changeState(READING, DEMAND);
-                            subscription.checkOnDataAvailable();
-                        } else {
-
-                            if (subscription.data.isEmpty() && subscription.allDataRead) {
-                                subscription.onAllDataRead();
-                            } else {
-                                subscription.changeState(READING, NO_DEMAND);
-                            }
-                        }
-                    } catch (IOException ex) {
-                        onError(subscription, ex);
+                    if (!read(subscription)) {
+                        return;
                     }
-                }
+                } while (subscription.hasDemand() && subscription.changeState(NO_DEMAND, this));
             }
 
             @Override
@@ -492,9 +478,36 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 if (Operators.validate(n)) {
                     Operators.addCap(RedisSubscription.DEMAND, subscription, n);
+
+                    if (subscription.changeState(NO_DEMAND, DEMAND)) {
+                        read(subscription);
+                    }
                 }
             }
 
+            private boolean read(RedisSubscription<?> subscription) {
+
+                if (subscription.changeState(this, READING)) {
+
+                    subscription.readAndPublish();
+
+                    if (subscription.data.isEmpty() && subscription.allDataRead) {
+                        subscription.onAllDataRead();
+                        return true;
+                    }
+
+                    if (subscription.readAndPublish()) {
+                        subscription.changeState(READING, DEMAND);
+                        subscription.checkOnDataAvailable();
+                    } else {
+                        subscription.changeState(READING, NO_DEMAND);
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
         },
 
         READING {
