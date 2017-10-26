@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -31,8 +32,10 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 import io.lettuce.KeysAndValues;
 import io.lettuce.RedisConditions;
+import io.lettuce.Wait;
 import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -228,6 +231,25 @@ public class AdvancedClusterReactiveTest extends AbstractClusterTest {
 
         StepVerifier.create(commands.keys("*")).recordWith(ConcurrentSet::new).expectNextCount(2)
                 .consumeRecordedWith(actual -> assertThat(actual).contains(KEY_ON_NODE_1, KEY_ON_NODE_2)).verifyComplete();
+    }
+
+    @Test
+    public void keysDoesNotRunIntoRaceConditions() {
+
+        List<RedisFuture> futures = new ArrayList<>();
+        RedisClusterAsyncCommands<String, String> async = commands.getStatefulConnection().async();
+
+        for (int i = 0; i < 10000; i++) {
+            futures.add(async.set("key-" + i, "value-" + i));
+        }
+
+        futures.forEach(f -> f.toCompletableFuture().join());
+
+        for (int i = 0; i < 20; i++) {
+
+            CompletableFuture<Long> future = commands.keys("*").count().toFuture();
+            Wait.untilTrue(future::isDone).waitOrTimeout();
+        }
     }
 
     @Test
