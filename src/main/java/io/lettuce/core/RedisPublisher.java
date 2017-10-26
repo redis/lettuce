@@ -18,6 +18,7 @@ package io.lettuce.core;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -125,9 +126,15 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
 
+        static final int ST_PROGRESS = 0;
+        static final int ST_COMPLETED = 1;
+
         @SuppressWarnings({ "rawtypes", "unchecked" })
         static final AtomicLongFieldUpdater<RedisSubscription> DEMAND = AtomicLongFieldUpdater.newUpdater(
                 RedisSubscription.class, "demand");
+
+        static final AtomicIntegerFieldUpdater<RedisSubscription> COMPLETION = AtomicIntegerFieldUpdater.newUpdater(
+                RedisSubscription.class, "completion");
 
         private final SubscriptionCommand<?, ?, T> subscriptionCommand;
         private final boolean traceEnabled = LOG.isTraceEnabled();
@@ -142,6 +149,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         @SuppressWarnings("unused")
         // accessed via AtomicLongFieldUpdater
         volatile long demand;
+        @SuppressWarnings("unused")
+        volatile int completion = ST_PROGRESS;
         volatile boolean allDataRead = false;
 
         Subscriber<? super T> subscriber;
@@ -328,7 +337,18 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         boolean changeState(State oldState, State newState) {
-            return this.state.compareAndSet(oldState, newState);
+            return state.compareAndSet(oldState, newState);
+        }
+
+        public boolean complete() {
+
+            if (COMPLETION.compareAndSet(this, ST_PROGRESS, ST_COMPLETED)) {
+
+                state.set(State.COMPLETED);
+                return true;
+            }
+
+            return false;
         }
 
         void checkCommandDispatch() {
@@ -614,7 +634,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             subscription.allDataRead = true;
 
-            if (subscription.data.isEmpty() && subscription.changeState(this, COMPLETED)) {
+            if (subscription.data.isEmpty() && subscription.complete()) {
+
                 readData(subscription);
                 if (subscription.subscriber != null) {
                     subscription.subscriber.onComplete();
@@ -698,7 +719,6 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                             subscription.onNext((T) result);
                         }
                     }
-
                 }
 
                 subscription.onAllDataRead();
