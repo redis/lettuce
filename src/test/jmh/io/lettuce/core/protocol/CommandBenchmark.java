@@ -40,13 +40,13 @@ import io.lettuce.core.output.ValueOutput;
 @State(Scope.Benchmark)
 public class CommandBenchmark {
 
-    private final static ByteArrayCodec BYTE_ARRAY_CODEC = new ByteArrayCodec();
-    private final static Utf8StringCodec OLD_STRING_CODEC = new Utf8StringCodec();
-    private final static StringCodec NEW_STRING_CODEC = new StringCodec(StandardCharsets.UTF_8);
-    private final static EmptyByteBuf DUMMY_BYTE_BUF = new EmptyByteBuf();
+    private static final ByteArrayCodec BYTE_ARRAY_CODEC = new ByteArrayCodec();
+    private static final Utf8StringCodec OLD_STRING_CODEC = new Utf8StringCodec();
+    private static final StringCodec NEW_STRING_CODEC = new StringCodec(StandardCharsets.UTF_8);
+    private static final EmptyByteBuf DUMMY_BYTE_BUF = new EmptyByteBuf();
 
-    private final static String KEY = "key";
-    private final static byte[] BYTE_KEY = "key".getBytes();
+    private static final String KEY = "key";
+    private static final byte[] BYTE_KEY = "key".getBytes();
 
     @Benchmark
     public void createCommandUsingByteArrayCodec(Blackhole blackhole) {

@@ -44,24 +44,24 @@ import io.lettuce.core.protocol.CommandType;
 @State(Scope.Benchmark)
 public class ClusterDistributionChannelWriterBenchmark {
 
-    private final static ClientOptions CLIENT_OPTIONS = ClientOptions.create();
-    private final static RedisChannelWriter EMPTY_WRITER = EmptyRedisChannelWriter.INSTANCE;
-    private final static EmptyStatefulRedisConnection CONNECTION = EmptyStatefulRedisConnection.INSTANCE;
+    private static final ClientOptions CLIENT_OPTIONS = ClientOptions.create();
+    private static final RedisChannelWriter EMPTY_WRITER = EmptyRedisChannelWriter.INSTANCE;
+    private static final EmptyStatefulRedisConnection CONNECTION = EmptyStatefulRedisConnection.INSTANCE;
     private static final ValueOutput<byte[], byte[]> VALUE_OUTPUT = new ValueOutput<>(ByteArrayCodec.INSTANCE);
 
-    private final static Command<byte[], byte[], byte[]> KEYED_COMMAND1 = new Command<>(CommandType.GET, VALUE_OUTPUT,
+    private static final Command<byte[], byte[], byte[]> KEYED_COMMAND1 = new Command<>(CommandType.GET, VALUE_OUTPUT,
             new CommandArgs<>(ByteArrayCodec.INSTANCE).addKey("benchmark1".getBytes()));
 
-    private final static Command<byte[], byte[], byte[]> KEYED_COMMAND2 = new Command<>(CommandType.GET, VALUE_OUTPUT,
+    private static final Command<byte[], byte[], byte[]> KEYED_COMMAND2 = new Command<>(CommandType.GET, VALUE_OUTPUT,
             new CommandArgs<>(ByteArrayCodec.INSTANCE).addKey("benchmark2".getBytes()));
 
-    private final static Command<byte[], byte[], byte[]> KEYED_COMMAND3 = new Command<>(CommandType.GET, VALUE_OUTPUT,
+    private static final Command<byte[], byte[], byte[]> KEYED_COMMAND3 = new Command<>(CommandType.GET, VALUE_OUTPUT,
             new CommandArgs<>(ByteArrayCodec.INSTANCE).addKey("benchmark3".getBytes()));
 
-    private final static Command<byte[], byte[], byte[]> PLAIN_COMMAND = new Command<>(CommandType.GET, VALUE_OUTPUT,
+    private static final Command<byte[], byte[], byte[]> PLAIN_COMMAND = new Command<>(CommandType.GET, VALUE_OUTPUT,
             new CommandArgs<>(ByteArrayCodec.INSTANCE));
 
-    private final static List<Command<byte[], byte[], byte[]>> COMMANDS = Arrays.asList(KEYED_COMMAND1, KEYED_COMMAND2,
+    private static final List<Command<byte[], byte[], byte[]>> COMMANDS = Arrays.asList(KEYED_COMMAND1, KEYED_COMMAND2,
             KEYED_COMMAND3);
 
     private ClusterDistributionChannelWriter writer;

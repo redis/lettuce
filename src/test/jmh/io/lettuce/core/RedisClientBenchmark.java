@@ -44,9 +44,9 @@ import io.lettuce.core.codec.ByteArrayCodec;
 @State(Scope.Benchmark)
 public class RedisClientBenchmark {
 
-    private final static int BATCH_SIZE = 20;
-    private final static byte[] KEY = "benchmark".getBytes();
-    private final static byte[] FOO = "foo".getBytes();
+    private static final int BATCH_SIZE = 20;
+    private static final byte[] KEY = "benchmark".getBytes();
+    private static final byte[] FOO = "foo".getBytes();
 
     private RedisClient redisClient;
     private StatefulRedisConnection<byte[], byte[]> connection;

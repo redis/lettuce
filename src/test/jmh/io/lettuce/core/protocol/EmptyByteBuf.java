@@ -35,7 +35,7 @@ import io.netty.util.ByteProcessor;
  */
 class EmptyByteBuf extends ByteBuf {
 
-    private final static EmptyByteBuf INSTANCE = new EmptyByteBuf();
+    private static final EmptyByteBuf INSTANCE = new EmptyByteBuf();
 
     @Override
     public int capacity() {

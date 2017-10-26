@@ -28,13 +28,13 @@ import org.openjdk.jmh.infra.Blackhole;
 @State(Scope.Benchmark)
 public class SlotHashBenchmark {
 
-    private final static byte[] data = "this is my buffer".getBytes();
-    private final static byte[] tagged = "this is{my buffer}".getBytes();
-    private final static ByteBuffer heap = (ByteBuffer) ByteBuffer.allocate(data.length).put(data).flip();
-    private final static ByteBuffer direct = (ByteBuffer) ByteBuffer.allocateDirect(data.length).put(data).flip();
+    private static final byte[] data = "this is my buffer".getBytes();
+    private static final byte[] tagged = "this is{my buffer}".getBytes();
+    private static final ByteBuffer heap = (ByteBuffer) ByteBuffer.allocate(data.length).put(data).flip();
+    private static final ByteBuffer direct = (ByteBuffer) ByteBuffer.allocateDirect(data.length).put(data).flip();
 
-    private final static ByteBuffer heapTagged = (ByteBuffer) ByteBuffer.allocate(tagged.length).put(tagged).flip();
-    private final static ByteBuffer directTagged = (ByteBuffer) ByteBuffer.allocateDirect(tagged.length).put(tagged).flip();
+    private static final ByteBuffer heapTagged = (ByteBuffer) ByteBuffer.allocate(tagged.length).put(tagged).flip();
+    private static final ByteBuffer directTagged = (ByteBuffer) ByteBuffer.allocateDirect(tagged.length).put(tagged).flip();
 
     @Benchmark
     public void measureSlotHashHeap(Blackhole blackhole) {

@@ -22,7 +22,6 @@ import org.openjdk.jmh.annotations.*;
 
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.output.ArrayOutput;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 
@@ -34,9 +33,9 @@ import io.netty.buffer.PooledByteBufAllocator;
 @State(Scope.Benchmark)
 public class RedisStateMachineBenchmark {
 
-    private final static ByteArrayCodec BYTE_ARRAY_CODEC = new ByteArrayCodec();
+    private static final ByteArrayCodec BYTE_ARRAY_CODEC = new ByteArrayCodec();
 
-    private final static Command<byte[], byte[], List<Object>> byteArrayCommand = new Command<>(CommandType.GET,
+    private static final Command<byte[], byte[], List<Object>> byteArrayCommand = new Command<>(CommandType.GET,
             new ArrayOutput(BYTE_ARRAY_CODEC) {
 
                 @Override

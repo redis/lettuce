@@ -26,7 +26,8 @@ import io.lettuce.core.protocol.RedisCommand;
  */
 public class EmptyRedisChannelWriter implements RedisChannelWriter {
 
-    public final static EmptyRedisChannelWriter INSTANCE = new EmptyRedisChannelWriter();
+    public static final EmptyRedisChannelWriter INSTANCE = new EmptyRedisChannelWriter();
+    private static final CompletableFuture CLOSE_FUTURE = CompletableFuture.completedFuture(null);
 
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
@@ -45,7 +46,7 @@ public class EmptyRedisChannelWriter implements RedisChannelWriter {
 
     @Override
     public CompletableFuture<Void> closeAsync() {
-        return null;
+        return CLOSE_FUTURE;
     }
 
     @Override

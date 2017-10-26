@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,9 @@
  */
 package io.lettuce.core.support;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import static io.lettuce.core.support.ConnectionWrapping.HasTargetConnection;
+
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -32,10 +30,9 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.commons.pool2.impl.SoftReferenceObjectPool;
 
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.support.ConnectionWrapping.Origin;
 
 /**
  * Connection pool support for {@link GenericObjectPool} and {@link SoftReferenceObjectPool}. Connection pool creation requires
@@ -45,8 +42,8 @@ import io.lettuce.core.internal.LettuceAssert;
  * <li>Regular connections need to be returned to the pool with {@link GenericObjectPool#returnObject(Object)}</li>
  * </ul>
  * <p>
- * Lettuce connections are designed to be thread-safe so one connection can be shared amongst multiple threads and lettuce
- * connections {@link ClientOptions#isAutoReconnect() auto-reconnect} by default. Connection pooling with lettuce might be
+ * Lettuce connections are designed to be thread-safe so one connection can be shared amongst multiple threads and Lettuce
+ * connections {@link ClientOptions#isAutoReconnect() auto-reconnect} by default. Connection pooling with Lettuce can be
  * required when you're invoking Redis operations in multiple threads and you use
  * <ul>
  * <li>blocking commands such as {@code BLPOP}.</li>
@@ -55,7 +52,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * </ul>
  *
  * Transactions and command batching affect connection state. Blocking commands won't propagate queued commands to Redis until
- * the blocking command is resolved.
+ * the blocking command is completed.
  *
  * <h3>Example</h3>
  *
@@ -115,13 +112,14 @@ public abstract class ConnectionPoolSupport {
         LettuceAssert.notNull(connectionSupplier, "Connection supplier must not be null");
         LettuceAssert.notNull(config, "GenericObjectPoolConfig must not be null");
 
-        AtomicReference<ObjectPool<T>> poolRef = new AtomicReference<>();
+        AtomicReference<Origin<T>> poolRef = new AtomicReference<>();
 
         GenericObjectPool<T> pool = new GenericObjectPool<T>(new RedisPooledObjectFactory<T>(connectionSupplier), config) {
 
             @Override
             public T borrowObject() throws Exception {
-                return wrapConnections ? wrapConnection(super.borrowObject(), this) : super.borrowObject();
+                return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get()) : super
+                        .borrowObject();
             }
 
             @Override
@@ -135,7 +133,7 @@ public abstract class ConnectionPoolSupport {
             }
         };
 
-        poolRef.set(pool);
+        poolRef.set(new ObjectPoolWrapper<>(pool));
 
         return pool;
     }
@@ -169,12 +167,13 @@ public abstract class ConnectionPoolSupport {
 
         LettuceAssert.notNull(connectionSupplier, "Connection supplier must not be null");
 
-        AtomicReference<ObjectPool<T>> poolRef = new AtomicReference<>();
+        AtomicReference<Origin<T>> poolRef = new AtomicReference<>();
 
         SoftReferenceObjectPool<T> pool = new SoftReferenceObjectPool<T>(new RedisPooledObjectFactory<>(connectionSupplier)) {
             @Override
             public T borrowObject() throws Exception {
-                return wrapConnections ? wrapConnection(super.borrowObject(), this) : super.borrowObject();
+                return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get()) : super
+                        .borrowObject();
             }
 
             @Override
@@ -187,26 +186,11 @@ public abstract class ConnectionPoolSupport {
                 super.returnObject(obj);
             }
         };
-        poolRef.set(pool);
+        poolRef.set(new ObjectPoolWrapper<>(pool));
 
         return pool;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static <T> T wrapConnection(T connection, ObjectPool<T> pool) {
-
-        ReturnObjectOnCloseInvocationHandler<T> handler = new ReturnObjectOnCloseInvocationHandler<T>(connection, pool);
-
-        Class<?>[] implementedInterfaces = connection.getClass().getInterfaces();
-        Class[] interfaces = new Class[implementedInterfaces.length + 1];
-        interfaces[0] = HasTargetConnection.class;
-        System.arraycopy(implementedInterfaces, 0, interfaces, 1, implementedInterfaces.length);
-
-        T proxiedConnection = (T) Proxy.newProxyInstance(connection.getClass().getClassLoader(), interfaces, handler);
-        handler.setProxiedConnection(proxiedConnection);
-
-        return proxiedConnection;
-    }
 
     /**
      * @author Mark Paluch
@@ -241,136 +225,25 @@ public abstract class ConnectionPoolSupport {
         }
     }
 
-    /**
-     * Invocation handler that takes care of connection.close(). Connections are returned to the pool on a close()-call.
-     *
-     * @author Mark Paluch
-     * @param <T> Connection type.
-     * @since 4.3
-     */
-    private static class ReturnObjectOnCloseInvocationHandler<T> extends AbstractInvocationHandler {
+    private static class ObjectPoolWrapper<T> implements Origin<T> {
 
-        private T connection;
-        private T proxiedConnection;
-        private Map<Method, Object> connectionProxies = new ConcurrentHashMap<>(5, 1);
+        private static final CompletableFuture<Void> COMPLETED = CompletableFuture.completedFuture(null);
 
         private final ObjectPool<T> pool;
 
-        ReturnObjectOnCloseInvocationHandler(T connection, ObjectPool<T> pool) {
-            this.connection = connection;
+        ObjectPoolWrapper(ObjectPool<T> pool) {
             this.pool = pool;
         }
 
-        void setProxiedConnection(T proxiedConnection) {
-            this.proxiedConnection = proxiedConnection;
+        @Override
+        public void returnObject(T o) throws Exception {
+            pool.returnObject(o);
         }
 
         @Override
-        protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
-
-            if (method.getName().equals("getStatefulConnection")) {
-                return proxiedConnection;
-            }
-
-            if (method.getName().equals("getTargetConnection")) {
-                return connection;
-            }
-
-            if (connection == null) {
-                throw new RedisException("Connection is deallocated and cannot be used anymore.");
-            }
-
-            if (method.getName().equals("close")) {
-                pool.returnObject(proxiedConnection);
-                connection = null;
-                proxiedConnection = null;
-                connectionProxies.clear();
-                return null;
-            }
-
-            try {
-
-                if (method.getName().equals("sync") || method.getName().equals("async") || method.getName().equals("reactive")) {
-                    return connectionProxies.computeIfAbsent(
-                            method,
- m -> getInnerProxy(method, args));
-                }
-
-                return method.invoke(connection, args);
-
-            } catch (InvocationTargetException e) {
-                throw e.getTargetException();
-            }
+        public CompletableFuture<Void> returnObjectAsync(T o) throws Exception {
+            pool.returnObject(o);
+            return COMPLETED;
         }
-
-        @SuppressWarnings("unchecked")
-        private Object getInnerProxy(Method method, Object[] args) {
-
-            try {
-                Object result = method.invoke(connection, args);
-
-                result = Proxy.newProxyInstance(getClass().getClassLoader(), result.getClass().getInterfaces(),
-                        new DelegateCloseToConnectionInvocationHandler<>((AutoCloseable) proxiedConnection, result));
-
-                return result;
-            } catch (IllegalAccessException e) {
-                throw new RedisException(e);
-            } catch (InvocationTargetException e) {
-                throw new RedisException(e.getTargetException());
-
-            }
-        }
-
-        public T getConnection() {
-            return connection;
-        }
-    }
-
-    /**
-     * Invocation handler that takes care of connection.close(). Connections are returned to the pool on a close()-call.
-     *
-     * @author Mark Paluch
-     * @param <T> Connection type.
-     * @since 4.3
-     */
-    private static class DelegateCloseToConnectionInvocationHandler<T extends AutoCloseable> extends AbstractInvocationHandler {
-
-        private final T proxiedConnection;
-        private final Object api;
-
-        DelegateCloseToConnectionInvocationHandler(T proxiedConnection, Object api) {
-
-            this.proxiedConnection = proxiedConnection;
-            this.api = api;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
-
-            if (method.getName().equals("getStatefulConnection")) {
-                return proxiedConnection;
-            }
-
-            try {
-
-                if (method.getName().equals("close")) {
-                    proxiedConnection.close();
-                    return null;
-                }
-
-                return method.invoke(api, args);
-
-            } catch (InvocationTargetException e) {
-                throw e.getTargetException();
-            }
-        }
-    }
-
-    /**
-     * Interface to retrieve an underlying target connection from a proxy.
-     */
-    interface HasTargetConnection {
-        StatefulConnection<?, ?> getTargetConnection();
     }
 }

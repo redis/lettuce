@@ -21,7 +21,6 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.EmptyStatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.output.ValueOutput;
-
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -39,10 +38,10 @@ import io.netty.channel.embedded.EmbeddedChannel;
 @State(Scope.Benchmark)
 public class RedisEndpointBenchmark {
 
-    private final static ByteArrayCodec CODEC = new ByteArrayCodec();
-    private final static ClientOptions CLIENT_OPTIONS = ClientOptions.create();
-    private final static byte[] KEY = "key".getBytes();
-    private final static ChannelFuture EMPTY = new EmptyFuture();
+    private static final ByteArrayCodec CODEC = new ByteArrayCodec();
+    private static final ClientOptions CLIENT_OPTIONS = ClientOptions.create();
+    private static final byte[] KEY = "key".getBytes();
+    private static final ChannelFuture EMPTY = new EmptyFuture();
 
     private DefaultEndpoint defaultEndpoint;
     private Command command;
@@ -67,7 +66,7 @@ public class RedisEndpointBenchmark {
         defaultEndpoint.write(command);
     }
 
-    private final static class MyLocalChannel extends EmbeddedChannel {
+    private static final class MyLocalChannel extends EmbeddedChannel {
         @Override
         public boolean isActive() {
             return true;

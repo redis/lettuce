@@ -35,10 +35,10 @@ import io.lettuce.core.output.ValueOutput;
 @State(Scope.Benchmark)
 public class CommandHandlerBenchmark {
 
-    private final static ByteArrayCodec CODEC = new ByteArrayCodec();
-    private final static ClientOptions CLIENT_OPTIONS = ClientOptions.create();
-    private final static EmptyContext CHANNEL_HANDLER_CONTEXT = new EmptyContext();
-    private final static byte[] KEY = "key".getBytes();
+    private static final ByteArrayCodec CODEC = new ByteArrayCodec();
+    private static final ClientOptions CLIENT_OPTIONS = ClientOptions.create();
+    private static final EmptyContext CHANNEL_HANDLER_CONTEXT = new EmptyContext();
+    private static final byte[] KEY = "key".getBytes();
     private final EmptyPromise PROMISE = new EmptyPromise();
 
     private CommandHandler commandHandler;

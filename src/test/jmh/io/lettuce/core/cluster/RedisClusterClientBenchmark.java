@@ -19,7 +19,6 @@ import org.openjdk.jmh.annotations.*;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSettings;
@@ -43,8 +42,8 @@ import io.lettuce.core.codec.ByteArrayCodec;
 @State(Scope.Benchmark)
 public class RedisClusterClientBenchmark {
 
-    private final static int BATCH_SIZE = 20;
-    private final static byte[] KEY = "benchmark".getBytes();
+    private static final int BATCH_SIZE = 20;
+    private static final byte[] KEY = "benchmark".getBytes();
 
     private RedisClusterClient redisClusterClient;
     private StatefulRedisClusterConnection<byte[], byte[]> connection;

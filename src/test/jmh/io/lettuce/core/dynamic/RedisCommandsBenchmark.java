@@ -35,7 +35,7 @@ import io.lettuce.core.dynamic.batch.BatchSize;
 @State(Scope.Benchmark)
 public class RedisCommandsBenchmark {
 
-    private final static int BATCH_SIZE = 20;
+    private static final int BATCH_SIZE = 20;
 
     private RedisClient redisClient;
     private StatefulRedisConnection<byte[], byte[]> connection;

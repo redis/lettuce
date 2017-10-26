@@ -31,7 +31,7 @@ import io.lettuce.core.protocol.RedisCommand;
  */
 public class EmptyStatefulRedisConnection extends RedisChannelHandler implements StatefulRedisConnection, ConnectionFacade {
 
-    public final static EmptyStatefulRedisConnection INSTANCE = new EmptyStatefulRedisConnection(
+    public static final EmptyStatefulRedisConnection INSTANCE = new EmptyStatefulRedisConnection(
             EmptyRedisChannelWriter.INSTANCE);
 
     public EmptyStatefulRedisConnection(RedisChannelWriter writer) {
