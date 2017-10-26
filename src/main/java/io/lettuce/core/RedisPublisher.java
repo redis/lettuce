@@ -231,8 +231,26 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             LettuceAssert.notNull(t, "Data must not be null");
 
-            if (state() == State.COMPLETED) {
+            State state = state();
+
+            if (state == State.COMPLETED) {
                 return;
+            }
+
+            // Fast-path publishing, preserve ordering
+            if (state == State.DEMAND && data.isEmpty()) {
+
+                long initial = DEMAND.get(this);
+
+                if (initial > 0 && DEMAND.compareAndSet(this, initial, initial - 1)) {
+
+                    try {
+                        this.subscriber.onNext(t);
+                    } catch (Exception e) {
+                        onError(e);
+                    }
+                    return;
+                }
             }
 
             if (!data.offer(t)) {
@@ -345,21 +363,30 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             while (hasDemand()) {
 
+                long initial = DEMAND.get(this);
+
+                if (!hasDemand(initial)) {
+                    return false;
+                }
+
                 T data = read();
 
-                if (data != null) {
+                if (data == null) {
+                    return hasDemand(initial);
+                }
 
+                boolean success = DEMAND.compareAndSet(this, initial, initial - 1);
+
+                if (success) {
                     this.subscriber.onNext(data);
-
-                    if (Operators.addCap(DEMAND, this, -1) == 0) {
-                        return false;
-                    }
-                } else {
-                    return true;
                 }
             }
 
             return false;
+        }
+
+        private static boolean hasDemand(long n) {
+            return n > 0;
         }
 
         RedisPublisher.State state() {
