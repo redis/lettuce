@@ -21,6 +21,7 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
@@ -133,6 +134,12 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         static final AtomicLongFieldUpdater<RedisSubscription> DEMAND = AtomicLongFieldUpdater.newUpdater(
                 RedisSubscription.class, "demand");
 
+        static final AtomicReferenceFieldUpdater<RedisSubscription, State> STATE = AtomicReferenceFieldUpdater.newUpdater(
+                RedisSubscription.class, State.class, "state");
+
+        static final AtomicReferenceFieldUpdater<RedisSubscription, CommandDispatch> COMMAND_DISPATCH = AtomicReferenceFieldUpdater
+                .newUpdater(RedisSubscription.class, CommandDispatch.class, "commandDispatch");
+
         static final AtomicIntegerFieldUpdater<RedisSubscription> COMPLETION = AtomicIntegerFieldUpdater.newUpdater(
                 RedisSubscription.class, "completion");
 
@@ -143,14 +150,17 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         final StatefulConnection<?, ?> connection;
         final RedisCommand<?, ?, T> command;
         final boolean dissolve;
-        final AtomicReference<State> state = new AtomicReference<>(State.UNSUBSCRIBED);
-        final AtomicReference<CommandDispatch> commandDispatch = new AtomicReference<>(CommandDispatch.UNDISPATCHED);
 
-        @SuppressWarnings("unused")
         // accessed via AtomicLongFieldUpdater
+        @SuppressWarnings("unused")
         volatile long demand;
         @SuppressWarnings("unused")
+        volatile State state = State.UNSUBSCRIBED;
+        @SuppressWarnings("unused")
         volatile int completion = ST_PROGRESS;
+        @SuppressWarnings("unused")
+        volatile CommandDispatch commandDispatch = CommandDispatch.UNDISPATCHED;
+
         volatile boolean allDataRead = false;
 
         Subscriber<? super T> subscriber;
@@ -201,7 +211,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         /**
          * Signal for data demand.
          *
-         * @param n number of requested elements
+         * @param n number of requested elements.
          */
         @Override
         public final void request(long n) {
@@ -261,7 +271,6 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         /**
          * Called via a listener interface to indicate that reading is possible.
-         *
          */
         final void onDataAvailable() {
 
@@ -276,7 +285,6 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         /**
          * Called via a listener interface to indicate that all data has been read.
-         *
          */
         final void onAllDataRead() {
 
@@ -319,14 +327,14 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         boolean changeState(State oldState, State newState) {
-            return state.compareAndSet(oldState, newState);
+            return STATE.compareAndSet(this, oldState, newState);
         }
 
         public boolean complete() {
 
             if (COMPLETION.compareAndSet(this, ST_PROGRESS, ST_COMPLETED)) {
 
-                state.set(State.COMPLETED);
+                STATE.set(this, State.COMPLETED);
                 return true;
             }
 
@@ -334,7 +342,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         void checkCommandDispatch() {
-            commandDispatch.get().dispatch(this);
+            COMMAND_DISPATCH.get(this).dispatch(this);
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -383,7 +391,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         RedisPublisher.State state() {
-            return this.state.get();
+            return STATE.get(this);
         }
     }
 
@@ -411,7 +419,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void dispatch(RedisSubscription<?> redisSubscription) {
 
-                if (redisSubscription.commandDispatch.compareAndSet(this, DISPATCHED)) {
+                if (RedisSubscription.COMMAND_DISPATCH.compareAndSet(redisSubscription, this, DISPATCHED)) {
                     redisSubscription.dispatchCommand();
                 }
             }
@@ -455,6 +463,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 LettuceAssert.notNull(subscriber, "Subscriber must not be null");
 
                 if (subscription.changeState(this, NO_DEMAND)) {
+
                     subscription.subscriber = (Subscriber) subscriber;
                     subscriber.onSubscribe(subscription);
                 } else {
@@ -593,7 +602,9 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         void readData(RedisSubscription<?> subscription) {
+
             DemandAware.Source source = subscription.subscriptionCommand.source;
+
             if (source != null) {
                 source.requestMore();
             }
@@ -610,6 +621,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             if (subscription.data.isEmpty() && subscription.complete()) {
 
                 readData(subscription);
+
                 if (subscription.subscriber != null) {
                     subscription.subscriber.onComplete();
                 }
@@ -619,7 +631,9 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         void onError(RedisSubscription<?> subscription, Throwable t) {
 
             if (subscription.changeState(this, COMPLETED)) {
+
                 readData(subscription);
+
                 if (subscription.subscriber != null) {
                     subscription.subscriber.onError(t);
                 }
