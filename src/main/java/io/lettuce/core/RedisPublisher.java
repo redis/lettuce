@@ -323,7 +323,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         boolean hasDemand() {
-            return DEMAND.get(this) > 0;
+            return getDemand() > 0;
+        }
+
+        private long getDemand() {
+            return DEMAND.get(this);
         }
 
         boolean changeState(State oldState, State newState) {
@@ -353,13 +357,18 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         void checkOnDataAvailable() {
 
             if (data.isEmpty()) {
-                if (hasDemand()) {
-                    state().readData(this);
-                }
+                potentiallyReadMore();
             }
 
             if (!data.isEmpty()) {
                 onDataAvailable();
+            }
+        }
+
+        void potentiallyReadMore() {
+
+            if ((getDemand() + 1) > data.size()) {
+                state().readData(this);
             }
         }
 
@@ -492,6 +501,12 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                         }
                         subscription.checkOnDataAvailable();
                     }
+
+                    subscription.potentiallyReadMore();
+
+                    if (subscription.allDataRead) {
+                        onAllDataRead(subscription);
+                    }
                 } else {
                     onError(subscription, Exceptions.nullOrNegativeRequestException(n));
                 }
@@ -522,6 +537,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     if (subscription.changeState(NO_DEMAND, DEMAND)) {
                         read(subscription);
                     }
+
+                    subscription.potentiallyReadMore();
                 } else {
                     onError(subscription, Exceptions.nullOrNegativeRequestException(n));
                 }
@@ -533,7 +550,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                     boolean hasDemand = subscription.readAndPublish();
 
-                    if (subscription.data.isEmpty() && subscription.allDataRead) {
+                    if (subscription.allDataRead && subscription.data.isEmpty()) {
                         subscription.onAllDataRead();
                         return true;
                     }
@@ -665,10 +682,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         @Override
         public boolean hasDemand() {
-
-            // signal demand as completed commands just no-op on incoming data.
-            return completed || subscription.state() == State.COMPLETED
-                    || RedisSubscription.DEMAND.get(subscription) > subscription.data.size();
+            return completed || subscription.state() == State.COMPLETED || subscription.data.isEmpty();
         }
 
         @Override
