@@ -41,7 +41,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Long.MAX_VALUE, which is generic to {@link Subscription#request(long)} handling.
  * <p/>
  * This class duplicates some methods from {@link reactor.core.publisher.Operators} to be independent from Reactor API changes.
- * 
+ *
  * @author Mark Paluch
  * @since 5.0
  */
@@ -114,6 +114,27 @@ class Operators {
      * @param updater current field updater
      * @param instance current instance to update
      * @param toAdd delta to add
+     * @return {@literal true} if the operation succeeded.
+     * @since 5.0.1
+     */
+    public static <T> boolean request(AtomicLongFieldUpdater<T> updater, T instance, long toAdd) {
+
+        if (validate(toAdd)) {
+            addCap(updater, instance, toAdd);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Concurrent addition bound to Long.MAX_VALUE. Any concurrent write will "happen before" this operation.
+     *
+     * @param <T> the parent instance type
+     * @param updater current field updater
+     * @param instance current instance to update
+     * @param toAdd delta to add
      * @return value before addition or Long.MAX_VALUE
      */
     static <T> long addCap(AtomicLongFieldUpdater<T> updater, T instance, long toAdd) {
@@ -133,7 +154,7 @@ class Operators {
 
     /**
      * Evaluate if a request is strictly positive otherwise {@link #reportBadRequest(long)}
-     * 
+     *
      * @param n the request value
      * @return true if valid
      */
@@ -212,7 +233,7 @@ class Operators {
 
     /**
      * Create a new {@link Queue}.
-     * 
+     *
      * @return the new queue.
      */
     @SuppressWarnings("unchecked")
