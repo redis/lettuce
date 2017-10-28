@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>29</version>
+    <version>30-SNAPSHOT</version>
     <relativePath/>
   </parent>
 
@@ -298,6 +298,14 @@
   </dependencies>
 
   <repositories>
+    <repository>
+      <id>sonatype-oss-snapshots</id>
+      <name>Sonatype OSS Snapshots Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
     <repository>
       <id>spring-milestones</id>
       <name>Spring Milestones</name>
