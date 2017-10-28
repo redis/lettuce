@@ -118,6 +118,10 @@
     <signature.group>org.codehaus.mojo.signature</signature.group>
     <signature.artifact>java18</signature.artifact>
     <signature.version>1.0</signature.version>
+
+    <!-- Override: The JUnit 5 not supported maven-surefire-plugin 2.20.x yet. -->
+    <!-- See https://github.com/junit-team/junit5/issues/809 -->
+    <surefire.version>2.19.1</surefire.version>
   </properties>
 
   <dependencies>
