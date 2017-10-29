@@ -34,12 +34,21 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  * {@link ScanIterator} uses synchronous command interfaces to scan over keys ({@code SCAN}), sets ({@code SSCAN}), sorted sets
  * ({@code ZSCAN}), and hashes ({@code HSCAN}). A {@link ScanIterator} is stateful and not thread-safe. Instances can be used
  * only once to iterate over results.
+ * <p>
+ * Use {@link ScanArgs#limit(long)} to set the batch size.
+ * <p>
+ * Data structure scanning is progressive and stateful and demand-aware. It supports full iterations (until all received cursors
+ * are exhausted) and premature termination. Subsequent scan commands to fetch the cursor data get only issued if the caller
+ * signals demand by consuming the {@link ScanIterator}.
  *
  * @param <T> Element type
  * @author Mark Paluch
  * @since 4.4
  */
 public abstract class ScanIterator<T> implements Iterator<T> {
+
+    private ScanIterator() {
+    }
 
     /**
      * Sequentially iterate over keys in the keyspace. This method uses {@code SCAN} to perform an iterative scan.
@@ -89,8 +98,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
                     return scanArgs.map(commands::scan).orElseGet(commands::scan);
                 }
 
-                return scanArgs.map((scanArgs) -> commands.scan(scanCursor, scanArgs))
-                        .orElseGet(() -> commands.scan(scanCursor));
+                return scanArgs.map((scanArgs) -> commands.scan(scanCursor, scanArgs)).orElseGet(
+                        () -> commands.scan(scanCursor));
             }
         };
     }
@@ -100,6 +109,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * iterative scan.
      *
      * @param commands the commands interface, must not be {@literal null}.
+     * @param key the hash to scan.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link ScanIterator}.
@@ -113,6 +123,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * iterative scan.
      *
      * @param commands the commands interface, must not be {@literal null}.
+     * @param key the hash to scan.
      * @param scanArgs the scan arguments, must not be {@literal null}.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -147,8 +158,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
                     return scanArgs.map(scanArgs -> commands.hscan(key, scanArgs)).orElseGet(() -> commands.hscan(key));
                 }
 
-                return scanArgs.map((scanArgs) -> commands.hscan(key, scanCursor, scanArgs))
-                        .orElseGet(() -> commands.hscan(key, scanCursor));
+                return scanArgs.map((scanArgs) -> commands.hscan(key, scanCursor, scanArgs)).orElseGet(
+                        () -> commands.hscan(key, scanCursor));
             }
         };
     }
@@ -158,6 +169,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * iterative scan.
      *
      * @param commands the commands interface, must not be {@literal null}.
+     * @param key the set to scan.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link ScanIterator}.
@@ -171,6 +183,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * iterative scan.
      *
      * @param commands the commands interface, must not be {@literal null}.
+     * @param key the set to scan.
      * @param scanArgs the scan arguments, must not be {@literal null}.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -204,8 +217,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
                     return scanArgs.map(scanArgs -> commands.sscan(key, scanArgs)).orElseGet(() -> commands.sscan(key));
                 }
 
-                return scanArgs.map((scanArgs) -> commands.sscan(key, scanCursor, scanArgs))
-                        .orElseGet(() -> commands.sscan(key, scanCursor));
+                return scanArgs.map((scanArgs) -> commands.sscan(key, scanCursor, scanArgs)).orElseGet(
+                        () -> commands.sscan(key, scanCursor));
             }
         };
     }
@@ -215,6 +228,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * perform an iterative scan.
      *
      * @param commands the commands interface, must not be {@literal null}.
+     * @param key the sorted set to scan.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link ScanIterator}.
@@ -228,6 +242,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * perform an iterative scan.
      *
      * @param commands the commands interface, must not be {@literal null}.
+     * @param key the sorted set to scan.
      * @param scanArgs the scan arguments, must not be {@literal null}.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -262,8 +277,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
                     return scanArgs.map(scanArgs -> commands.zscan(key, scanArgs)).orElseGet(() -> commands.zscan(key));
                 }
 
-                return scanArgs.map((scanArgs) -> commands.zscan(key, scanCursor, scanArgs))
-                        .orElseGet(() -> commands.zscan(key, scanCursor));
+                return scanArgs.map((scanArgs) -> commands.zscan(key, scanCursor, scanArgs)).orElseGet(
+                        () -> commands.zscan(key, scanCursor));
             }
         };
     }
