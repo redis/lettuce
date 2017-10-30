@@ -35,7 +35,8 @@ import io.lettuce.core.api.reactive.*;
 public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
         RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
         RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
-        RedisHLLReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V> {
+        RedisHLLReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
+        BaseRedisReactiveCommands<K, V> {
 
     /**
      * Set the default timeout for operations.
