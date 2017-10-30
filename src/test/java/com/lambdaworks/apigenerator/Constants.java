@@ -22,10 +22,10 @@ import java.io.File;
  */
 class Constants {
 
-    public final static String[] TEMPLATE_NAMES = { "RedisHashCommands", "RedisHLLCommands", "RedisKeyCommands",
-            "RedisListCommands", "RedisScriptingCommands", "RedisServerCommands", "RedisSetCommands", "RedisSortedSetCommands",
-            "RedisStringCommands", "RedisTransactionalCommands", "RedisSentinelCommands", "BaseRedisCommands",
-            "RedisGeoCommands" };
+    public final static String[] TEMPLATE_NAMES = { "RedisGeoCommands", "RedisHashCommands", "RedisHLLCommands",
+            "RedisKeyCommands", "RedisListCommands", "RedisScriptingCommands", "RedisSentinelCommands", "RedisServerCommands",
+            "RedisSetCommands", "RedisSortedSetCommands", "RedisStringCommands", "RedisStreamCommands",
+            "RedisTransactionalCommands", "BaseRedisCommands" };
 
     public final static File TEMPLATES = new File("src/main/templates");
     public final static File SOURCES = new File("src/main/java");

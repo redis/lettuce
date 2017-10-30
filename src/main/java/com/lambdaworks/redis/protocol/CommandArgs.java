@@ -57,7 +57,6 @@ public class CommandArgs<K, V> {
     final List<SingularArgument> singularArguments = new ArrayList<>(10);
 
     /**
-     *
      * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
      */
     public CommandArgs(RedisCodec<K, V> codec) {

@@ -44,12 +44,23 @@ public class Limit {
     /**
      * Creates a {@link Limit} given {@code offset} and {@code count}.
      *
-     * @param offset
-     * @param count
+     * @param offset the offset.
+     * @param count the limit count.
      * @return the {@link Limit}
      */
     public static Limit create(long offset, long count) {
         return new Limit(offset, count);
+    }
+
+    /**
+     * Creates a {@link Limit} given {@code count}.
+     *
+     * @param count the limit count.
+     * @return the {@link Limit}.
+     * @since 4.5
+     */
+    public static Limit from(long count) {
+        return new Limit(0L, count);
     }
 
     /**

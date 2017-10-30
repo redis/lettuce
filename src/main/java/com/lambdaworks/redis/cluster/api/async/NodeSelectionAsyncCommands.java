@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.cluster.api.async;
 
 import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
+import com.lambdaworks.redis.cluster.api.sync.NodeSelectionStreamCommands;
 
 /**
  * Asynchronous and thread-safe Redis API to execute commands on a {@link NodeSelectionSupport}.
@@ -26,6 +27,6 @@ public interface NodeSelectionAsyncCommands<K, V> extends BaseNodeSelectionAsync
         NodeSelectionHashAsyncCommands<K, V>, NodeSelectionHLLAsyncCommands<K, V>, NodeSelectionKeyAsyncCommands<K, V>,
         NodeSelectionListAsyncCommands<K, V>, NodeSelectionScriptingAsyncCommands<K, V>,
         NodeSelectionServerAsyncCommands<K, V>, NodeSelectionSetAsyncCommands<K, V>, NodeSelectionSortedSetAsyncCommands<K, V>,
-        NodeSelectionStringAsyncCommands<K, V>, NodeSelectionGeoAsyncCommands<K, V> {
+        NodeSelectionStringAsyncCommands<K, V>, NodeSelectionGeoAsyncCommands<K, V>, NodeSelectionStreamCommands<K, V> {
 
 }
