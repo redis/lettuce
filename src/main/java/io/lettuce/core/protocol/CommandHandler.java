@@ -180,16 +180,17 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 
-        if (evt instanceof Reset) {
+        if (evt == EnableAutoRead.INSTANCE) {
+            channel.config().setAutoRead(true);
+        } else if (evt instanceof Reset) {
             reset();
-        }
-
-        if (evt instanceof PingBeforeActivate) {
+        } else if (evt instanceof PingBeforeActivate) {
 
             PingBeforeActivate pba = (PingBeforeActivate) evt;
 
             stack.addFirst(pba.getCommand());
             ctx.writeAndFlush(pba.getCommand());
+            return;
         }
 
         super.userEventTriggered(ctx, evt);
@@ -602,9 +603,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 DemandAware.Sink sink = (DemandAware.Sink) command;
                 sink.setSource(backpressureSource);
 
-                if (!sink.hasDemand()) {
-                    ctx.channel().config().setAutoRead(false);
-                }
+                ctx.channel().config().setAutoRead(sink.hasDemand());
             }
 
             return false;
@@ -767,9 +766,15 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         @Override
         public void requestMore() {
 
-            if (isConnected() && !isClosed() && !channel.config().isAutoRead()) {
-                channel.config().setAutoRead(true);
+            if (isConnected() && !isClosed()) {
+                if (!channel.config().isAutoRead()) {
+                    channel.pipeline().fireUserEventTriggered(EnableAutoRead.INSTANCE);
+                }
             }
         }
+    }
+
+    enum EnableAutoRead {
+        INSTANCE
     }
 }
