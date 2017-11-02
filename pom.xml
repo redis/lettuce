@@ -110,7 +110,7 @@
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
     <spring.version>5.0.1.RELEASE</spring.version>
-    <spring-batch.version>4.0.0.M5</spring-batch.version>
+    <spring-batch.version>4.0.0.RC1</spring-batch.version>
     <junit-platform.version>1.0.1</junit-platform.version>
     <junit.version>5.0.1</junit.version>
 
