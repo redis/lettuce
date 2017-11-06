@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>29</version>
+    <version>30-SNAPSHOT</version>
     <relativePath/>
   </parent>
 
@@ -118,6 +118,10 @@
     <signature.group>org.codehaus.mojo.signature</signature.group>
     <signature.artifact>java18</signature.artifact>
     <signature.version>1.0</signature.version>
+
+    <!-- Override: The JUnit 5 not supported maven-surefire-plugin 2.20.x yet. -->
+    <!-- See https://github.com/junit-team/junit5/issues/809 -->
+    <surefire.version>2.19.1</surefire.version>
   </properties>
 
   <dependencies>
@@ -298,6 +302,14 @@
   </dependencies>
 
   <repositories>
+    <repository>
+      <id>sonatype-oss-snapshots</id>
+      <name>Sonatype OSS Snapshots Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
     <repository>
       <id>spring-milestones</id>
       <name>Spring Milestones</name>
