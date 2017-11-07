@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.lambdaworks.redis.sentinel;
 import static com.lambdaworks.redis.protocol.CommandKeyword.*;
 import static com.lambdaworks.redis.protocol.CommandType.*;
 
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 
@@ -40,9 +41,9 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         super(codec);
     }
 
-    public Command<K, V, List<V>> getMasterAddrByKey(K key) {
+    public Command<K, V, SocketAddress> getMasterAddrByKey(K key) {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add("get-master-addr-by-name").addKey(key);
-        return createCommand(SENTINEL, new ValueListOutput<>(codec), args);
+        return createCommand(SENTINEL, new SocketAddressOutput<>(codec), args);
     }
 
     public Command<K, V, List<Map<K, V>>> masters() {
