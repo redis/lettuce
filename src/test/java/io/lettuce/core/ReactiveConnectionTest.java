@@ -15,10 +15,10 @@
  */
 package io.lettuce.core;
 
-import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static io.lettuce.core.ClientOptions.DisconnectedBehavior.REJECT_COMMANDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -50,20 +50,20 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     private StatefulRedisConnection<String, String> stateful;
 
     @Before
-    public void openReactiveConnection() throws Exception {
+    public void openReactiveConnection() {
         stateful = client.connect();
         reactive = stateful.reactive();
     }
 
     @After
-    public void closeReactiveConnection() throws Exception {
+    public void closeReactiveConnection() {
         reactive.getStatefulConnection().close();
     }
 
     @Test
-    public void doNotFireCommandUntilObservation() throws Exception {
+    public void doNotFireCommandUntilObservation() {
         Mono<String> set = reactive.set(key, value);
-        Delay.delay(millis(200));
+        Delay.delay(Duration.ofMillis(200));
         assertThat(redis.get(key)).isNull();
         set.subscribe();
         Wait.untilEquals(value, () -> redis.get(key)).waitOrTimeout();
@@ -72,69 +72,69 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void fireCommandAfterObserve() throws Exception {
+    public void fireCommandAfterObserve() {
         StepVerifier.create(reactive.set(key, value)).expectNext("OK").verifyComplete();
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
-    public void isOpen() throws Exception {
+    public void isOpen() {
         assertThat(reactive.isOpen()).isTrue();
     }
 
     @Test
-    public void getStatefulConnection() throws Exception {
+    public void getStatefulConnection() {
         assertThat(reactive.getStatefulConnection()).isSameAs(stateful);
     }
 
     @Test
-    public void testCancelCommand() throws Exception {
+    public void testCancelCommand() {
 
         List<Object> result = new ArrayList<>();
         reactive.clientPause(2000).subscribe();
-        Delay.delay(millis(100));
+        Delay.delay(Duration.ofMillis(100));
 
         reactive.set(key, value).subscribe(new CompletionSubscriber(result));
-        Delay.delay(millis(100));
+        Delay.delay(Duration.ofMillis(100));
 
         reactive.reset();
         assertThat(result).isEmpty();
     }
 
     @Test
-    public void testEcho() throws Exception {
+    public void testEcho() {
         StepVerifier.create(reactive.echo("echo")).expectNext("echo").verifyComplete();
     }
 
     @Test
-    public void testMonoMultiCancel() throws Exception {
+    public void testMonoMultiCancel() {
 
         List<Object> result = new ArrayList<>();
         reactive.clientPause(1000).subscribe();
-        Delay.delay(millis(100));
+        Delay.delay(Duration.ofMillis(100));
 
         Mono<String> set = reactive.set(key, value);
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
-        Delay.delay(millis(100));
+        Delay.delay(Duration.ofMillis(100));
 
         reactive.reset();
         assertThat(result).isEmpty();
     }
 
     @Test
-    public void testFluxCancel() throws Exception {
+    public void testFluxCancel() {
 
         List<Object> result = new ArrayList<>();
         reactive.clientPause(1000).subscribe();
-        Delay.delay(millis(100));
+        Delay.delay(Duration.ofMillis(100));
 
         Flux<KeyValue<String, String>> set = reactive.mget(key, value);
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
         set.subscribe(new CompletionSubscriber(result));
-        Delay.delay(millis(100));
+        Delay.delay(Duration.ofMillis(100));
 
         reactive.reset();
         assertThat(result).isEmpty();
@@ -175,12 +175,12 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void auth() throws Exception {
+    public void auth() {
         StepVerifier.create(reactive.auth("error")).expectError().verify();
     }
 
     @Test
-    public void subscriberCompletingWithExceptionShouldBeHandledSafely() throws Exception {
+    public void subscriberCompletingWithExceptionShouldBeHandledSafely() {
 
         StepVerifier.create(Flux.concat(reactive.set("keyA", "valueA"), reactive.set("keyB", "valueB"))).expectNextCount(2)
                 .verifyComplete();
@@ -192,7 +192,7 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void subscribeWithDisconnectedClient() throws Exception {
+    public void subscribeWithDisconnectedClient() {
 
         client.setOptions(ClientOptions.builder().disconnectedBehavior(REJECT_COMMANDS).autoReconnect(false).build());
 

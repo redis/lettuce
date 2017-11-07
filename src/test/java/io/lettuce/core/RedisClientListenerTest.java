@@ -15,8 +15,6 @@
  */
 package io.lettuce.core;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.SocketAddress;
@@ -24,8 +22,8 @@ import java.net.SocketAddress;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.code.tempusfugit.temporal.Timeout;
 import io.lettuce.TestClientResources;
+import io.lettuce.Wait;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 
@@ -58,7 +56,7 @@ public class RedisClientListenerTest extends AbstractTest {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
-        waitOrTimeout(() -> listener.onConnected != null, Timeout.timeout(seconds(2)));
+        Wait.untilTrue(() -> listener.onConnected != null).waitOrTimeout();
         assertThat(listener.onConnectedSocketAddress).isNotNull();
 
         assertThat(listener.onConnected).isEqualTo(connection);
@@ -67,7 +65,7 @@ public class RedisClientListenerTest extends AbstractTest {
         connection.sync().set(key, value);
         connection.close();
 
-        waitOrTimeout(() -> listener.onDisconnected != null, Timeout.timeout(seconds(2)));
+        Wait.untilTrue(() -> listener.onDisconnected != null).waitOrTimeout();
 
         assertThat(listener.onConnected).isEqualTo(connection);
         assertThat(listener.onDisconnected).isEqualTo(connection);
@@ -89,7 +87,7 @@ public class RedisClientListenerTest extends AbstractTest {
         // that's the sut call
         client.connect().close();
 
-        waitOrTimeout(() -> retainedListener.onConnected != null, Timeout.timeout(seconds(2)));
+        Wait.untilTrue(() -> retainedListener.onConnected != null).waitOrTimeout();
 
         assertThat(retainedListener.onConnected).isNotNull();
 

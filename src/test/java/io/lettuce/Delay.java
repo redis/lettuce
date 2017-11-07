@@ -15,7 +15,7 @@
  */
 package io.lettuce;
 
-import com.google.code.tempusfugit.temporal.Duration;
+import java.time.Duration;
 
 /**
  * @author Mark Paluch
@@ -25,8 +25,9 @@ public class Delay {
     public static void delay(Duration duration) {
 
         try {
-            Thread.sleep(duration.inMillis());
+            Thread.sleep(duration.toMillis());
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
         }
     }

@@ -15,8 +15,6 @@
  */
 package io.lettuce.core.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static io.lettuce.core.cluster.AbstractClusterTest.createSlots;
 import static io.lettuce.core.cluster.ClusterTestUtil.getNodeId;
 import static io.lettuce.core.cluster.ClusterTestUtil.getOwnPartition;
@@ -33,8 +31,6 @@ import java.util.stream.Collectors;
 
 import org.junit.*;
 
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.WaitFor;
 import io.lettuce.ConnectionTestUtil;
 import io.lettuce.Futures;
 import io.lettuce.TestClientResources;
@@ -190,8 +186,7 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void clusterTopologyRefresh() throws Exception {
 
-        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED)
-                .build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
         clusterClient.reloadPartitions();
 
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
@@ -307,9 +302,7 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void atLeastOnceForgetNodeFailover() throws Exception {
 
-
-        clusterClient.setOptions(
-                ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
         clusterClient.setOptions(ClusterClientOptions.create());
         ClusterSetup.setup2Masters(clusterRule);
@@ -358,8 +351,7 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void expireStaleNodeIdConnections() throws Exception {
 
-        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED)
-                .build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         ClusterSetup.setup2Masters(clusterRule);
@@ -533,16 +525,13 @@ public class RedisClusterSetupTest extends AbstractTest {
         assertThat(set.get()).isEqualTo("OK");
     }
 
-    private void waitUntilOnlyOnePartition() throws InterruptedException, TimeoutException {
-        Wait.untilEquals(1, () -> clusterClient.getPartitions().size()).waitOrTimeout();
-    }
+    private void suspendConnection(RedisClusterAsyncCommands<String, String> asyncCommands) {
 
-    private void suspendConnection(RedisClusterAsyncCommands<String, String> asyncCommands) throws InterruptedException,
-            TimeoutException {
         ConnectionTestUtil.getConnectionWatchdog(((RedisAsyncCommands<?, ?>) asyncCommands).getStatefulConnection())
                 .setReconnectSuspended(true);
         asyncCommands.quit();
-        WaitFor.waitOrTimeout(() -> !asyncCommands.isOpen(), timeout(seconds(6)));
+
+        Wait.untilTrue(() -> !asyncCommands.isOpen()).waitOrTimeout();
     }
 
     protected void shiftAllSlotsToNode1() throws InterruptedException, TimeoutException {
@@ -552,10 +541,11 @@ public class RedisClusterSetupTest extends AbstractTest {
 
         waitForSlots(redis2, 0);
 
-        final RedisClusterNode redis2Partition = getOwnPartition(redis2);
-        WaitFor.waitOrTimeout(new Condition() {
+        RedisClusterNode redis2Partition = getOwnPartition(redis2);
+
+        Wait.untilTrue(new Wait.Supplier<Boolean>() {
             @Override
-            public boolean isSatisfied() {
+            public Boolean get() {
                 Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
                 RedisClusterNode partition = partitions.getPartitionByNodeId(redis2Partition.getNodeId());
 
@@ -573,7 +563,7 @@ public class RedisClusterSetupTest extends AbstractTest {
                     // ignore
                 }
             }
-        }, timeout(seconds(10)));
+        }).waitOrTimeout();
 
         redis1.clusterAddSlots(createSlots(12000, 16384));
         waitForSlots(redis1, 16384);

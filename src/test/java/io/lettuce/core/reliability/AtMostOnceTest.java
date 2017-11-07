@@ -15,12 +15,12 @@
  */
 package io.lettuce.core.reliability;
 
-import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static io.lettuce.ConnectionTestUtil.getCommandBuffer;
 import static io.lettuce.ConnectionTestUtil.getStack;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -267,7 +267,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
 
         StatefulRedisConnection<String, String> connection2 = client.connect();
         connection2.async().quit();
-        Delay.delay(millis(100));
+        Delay.delay(Duration.ofMillis(100));
 
         try {
 

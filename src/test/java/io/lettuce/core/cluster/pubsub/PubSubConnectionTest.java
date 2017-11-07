@@ -43,7 +43,7 @@ public class PubSubConnectionTest extends AbstractClusterTest {
     private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection2;
 
     @Before
-    public void openPubSubConnection() throws Exception {
+    public void openPubSubConnection() {
         connection = clusterClient.connect();
         pubSubConnection = clusterClient.connectPubSub();
         pubSubConnection2 = clusterClient.connectPubSub();
@@ -51,14 +51,14 @@ public class PubSubConnectionTest extends AbstractClusterTest {
     }
 
     @After
-    public void closePubSubConnection() throws Exception {
+    public void closePubSubConnection() {
         connection.close();
         pubSubConnection.close();
         pubSubConnection2.close();
     }
 
     @Test
-    public void testRegularClientPubSubChannels() throws Exception {
+    public void testRegularClientPubSubChannels() {
 
         String nodeId = pubSubConnection.sync().clusterMyId();
         RedisClusterNode otherNode = getOtherThan(nodeId);
@@ -100,7 +100,7 @@ public class PubSubConnectionTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testConnectToLeastClientsNode() throws Exception {
+    public void testConnectToLeastClientsNode() {
 
         clusterClient.reloadPartitions();
         String nodeId = pubSubConnection.sync().clusterMyId();
