@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class ListClusterCommandTest extends ListCommandTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
+    public void openConnection() {
         redis = connect();
         ClusterTestUtil.flushDatabaseOfAllNodes(clusterConnection);
     }
@@ -65,7 +65,7 @@ public class ListClusterCommandTest extends ListCommandTest {
 
     // re-implementation because keys have to be on the same slot
     @Test
-    public void brpoplpush() throws Exception {
+    public void brpoplpush() {
 
         redis.rpush("UKPDHs8Zlp", "1", "2");
         redis.rpush("br7EPz9bbj", "3", "4");
@@ -75,24 +75,24 @@ public class ListClusterCommandTest extends ListCommandTest {
     }
 
     @Test
-    public void brpoplpushTimeout() throws Exception {
+    public void brpoplpushTimeout() {
         assertThat(redis.brpoplpush(1, "UKPDHs8Zlp", "br7EPz9bbj")).isNull();
     }
 
     @Test
-    public void blpop() throws Exception {
+    public void blpop() {
         redis.rpush("br7EPz9bbj", "2", "3");
         assertThat(redis.blpop(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo(kv("br7EPz9bbj", "2"));
     }
 
     @Test
-    public void brpop() throws Exception {
+    public void brpop() {
         redis.rpush("br7EPz9bbj", "2", "3");
         assertThat(redis.brpop(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo(kv("br7EPz9bbj", "3"));
     }
 
     @Test
-    public void rpoplpush() throws Exception {
+    public void rpoplpush() {
         assertThat(redis.rpoplpush("UKPDHs8Zlp", "br7EPz9bbj")).isNull();
         redis.rpush("UKPDHs8Zlp", "1", "2");
         redis.rpush("br7EPz9bbj", "3", "4");

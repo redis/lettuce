@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.lambdaworks.redis.commands;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -46,7 +45,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void exec() throws Exception {
+    public void exec() {
         assertThat(redis.multi()).isEqualTo("OK");
         redis.set(key, value);
         assertThat(redis.exec()).isEqualTo(list("OK"));
@@ -54,7 +53,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void watch() throws Exception {
+    public void watch() {
         assertThat(redis.watch(key)).isEqualTo("OK");
 
         RedisConnection<String, String> redis2 = client.connect().sync();
@@ -68,12 +67,12 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void unwatch() throws Exception {
+    public void unwatch() {
         assertThat(redis.unwatch()).isEqualTo("OK");
     }
 
     @Test
-    public void commandsReturnNullInMulti() throws Exception {
+    public void commandsReturnNullInMulti() {
         assertThat(redis.multi()).isEqualTo("OK");
         assertThat(redis.set(key, value)).isNull();
         assertThat(redis.get(key)).isNull();
@@ -82,7 +81,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void execmulti() throws Exception {
+    public void execmulti() {
         redis.multi();
         redis.set("one", "1");
         redis.set("two", "2");
@@ -104,7 +103,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void execWithoutMulti() throws Exception {
+    public void execWithoutMulti() {
         exception.expect(RedisCommandExecutionException.class);
         exception.expectMessage("ERR EXEC without MULTI");
         redis.exec();

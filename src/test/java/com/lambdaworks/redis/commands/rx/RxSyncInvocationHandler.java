@@ -21,6 +21,8 @@ import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Set;
 
+import rx.Observable;
+
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
@@ -29,8 +31,6 @@ import com.lambdaworks.redis.internal.AbstractInvocationHandler;
 import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
-
-import rx.Observable;
 
 /**
  * Invocation handler for testing purposes that exposes a synchronous API by calling commands using the reactive API.

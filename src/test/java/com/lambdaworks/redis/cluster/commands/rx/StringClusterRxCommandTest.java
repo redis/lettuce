@@ -58,7 +58,7 @@ public class StringClusterRxCommandTest extends StringCommandTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
+    public void openConnection() {
         redis = connect();
         ClusterTestUtil.flushDatabaseOfAllNodes(clusterConnection);
     }
@@ -70,7 +70,7 @@ public class StringClusterRxCommandTest extends StringCommandTest {
     }
 
     @Test
-    public void msetnx() throws Exception {
+    public void msetnx() {
         redis.set("one", "1");
         Map<String, String> map = new LinkedHashMap<>();
         map.put("one", "1");
@@ -83,7 +83,7 @@ public class StringClusterRxCommandTest extends StringCommandTest {
     }
 
     @Test
-    public void mget() throws Exception {
+    public void mget() {
 
         redis.set(key, value);
         redis.set("key1", value);

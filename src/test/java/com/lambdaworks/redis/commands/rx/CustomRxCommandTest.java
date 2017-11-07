@@ -17,6 +17,9 @@ package com.lambdaworks.redis.commands.rx;
 
 import org.junit.Test;
 
+import rx.Observable;
+import rx.observers.TestSubscriber;
+
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.commands.CustomCommandTest;
@@ -24,9 +27,6 @@ import com.lambdaworks.redis.output.ValueListOutput;
 import com.lambdaworks.redis.output.ValueOutput;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandType;
-
-import rx.Observable;
-import rx.observers.TestSubscriber;
 
 /**
  * @author Mark Paluch

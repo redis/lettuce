@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class GeoClusterCommandTest extends GeoCommandTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
+    public void openConnection() {
         redis = connect();
         flushDatabaseOfAllNodes(clusterConnection);
     }
@@ -71,41 +71,41 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geoaddWithTransaction() throws Exception {
+    public void geoaddWithTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geoaddMultiWithTransaction() throws Exception {
+    public void geoaddMultiWithTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void georadiusWithTransaction() throws Exception {
+    public void georadiusWithTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geodistWithTransaction() throws Exception {
+    public void geodistWithTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void georadiusWithArgsAndTransaction() throws Exception {
+    public void georadiusWithArgsAndTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void georadiusbymemberWithArgsAndTransaction() throws Exception {
+    public void georadiusbymemberWithArgsAndTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geoposWithTransaction() throws Exception {
+    public void geoposWithTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geohashWithTransaction() throws Exception {
+    public void geohashWithTransaction() {
     }
 }

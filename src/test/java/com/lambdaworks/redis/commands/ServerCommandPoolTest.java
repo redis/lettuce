@@ -15,11 +15,8 @@
  */
 package com.lambdaworks.redis.commands;
 
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import org.junit.Test;
-
-import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisConnectionPool;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 /**
  * @author Mark Paluch

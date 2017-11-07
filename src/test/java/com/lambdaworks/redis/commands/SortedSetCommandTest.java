@@ -40,7 +40,7 @@ import com.lambdaworks.redis.Range.Boundary;
 public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
-    public void zadd() throws Exception {
+    public void zadd() {
         assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
         assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(0);
 
@@ -50,7 +50,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zaddScoredValue() throws Exception {
+    public void zaddScoredValue() {
         assertThat(redis.zadd(key, new ScoredValue<>(1.0, "a"))).isEqualTo(1);
         assertThat(redis.zadd(key, new ScoredValue<>(1.0, "a"))).isEqualTo(0);
 
@@ -60,7 +60,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zaddnx() throws Exception {
+    public void zaddnx() {
         assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
         assertThat(redis.zadd(key, ZAddArgs.Builder.nx(), new ScoredValue<>(2.0, "a"))).isEqualTo(0);
 
@@ -72,17 +72,17 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void zaddWrongArguments() throws Exception {
+    public void zaddWrongArguments() {
         assertThat(redis.zadd(key, 2.0, "b", 3.0)).isEqualTo(2);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void zaddnxWrongArguments() throws Exception {
+    public void zaddnxWrongArguments() {
         assertThat(redis.zadd(key, ZAddArgs.Builder.nx(), new Object[] { 2.0, "b", 3.0 })).isEqualTo(1);
     }
 
     @Test
-    public void zaddxx() throws Exception {
+    public void zaddxx() {
         assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
         assertThat(redis.zadd(key, ZAddArgs.Builder.xx(), 2.0, "a")).isEqualTo(0);
 
@@ -92,7 +92,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zaddch() throws Exception {
+    public void zaddch() {
         assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
         assertThat(redis.zadd(key, ZAddArgs.Builder.ch().xx(), 2.0, "a")).isEqualTo(1);
         assertThat(redis.zadd(key, ZAddArgs.Builder.ch(), 2.0, "b")).isEqualTo(1);
@@ -101,7 +101,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zaddincr() throws Exception {
+    public void zaddincr() {
         assertThat(redis.zadd(key, 1.0, "a").longValue()).isEqualTo(1);
         assertThat(redis.zaddincr(key, 2.0, "a").longValue()).isEqualTo(3);
 
@@ -111,27 +111,27 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zaddincrnx() throws Exception {
+    public void zaddincrnx() {
         assertThat(redis.zaddincr(key, ZAddArgs.Builder.nx(), 2.0, "a").longValue()).isEqualTo(2);
         assertThat(redis.zaddincr(key, ZAddArgs.Builder.nx(), 2.0, "a")).isNull();
     }
 
     @Test
-    public void zaddincrxx() throws Exception {
+    public void zaddincrxx() {
         assertThat(redis.zaddincr(key, ZAddArgs.Builder.xx(), 2.0, "a")).isNull();
         assertThat(redis.zaddincr(key, ZAddArgs.Builder.nx(), 2.0, "a").longValue()).isEqualTo(2);
         assertThat(redis.zaddincr(key, ZAddArgs.Builder.xx(), 2.0, "a").longValue()).isEqualTo(4);
     }
 
     @Test
-    public void zcard() throws Exception {
+    public void zcard() {
         assertThat(redis.zcard(key)).isEqualTo(0);
         redis.zadd(key, 1.0, "a");
         assertThat(redis.zcard(key)).isEqualTo(1);
     }
 
     @Test
-    public void zcount() throws Exception {
+    public void zcount() {
         assertThat(redis.zcount(key, 0, 0)).isEqualTo(0);
 
         redis.zadd(key, 1.0, "a", 2.0, "b", 2.1, "c");
@@ -152,7 +152,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zincrby() throws Exception {
+    public void zincrby() {
         assertThat(redis.zincrby(key, 0.0, "a")).isEqualTo(0, offset(0.1));
         assertThat(redis.zincrby(key, 1.1, "a")).isEqualTo(1.1, offset(0.1));
         assertThat(redis.zscore(key, "a")).isEqualTo(1.1, offset(0.1));
@@ -161,7 +161,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zinterstore() throws Exception {
+    public void zinterstore() {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");
         redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
         assertThat(redis.zinterstore(key, "zset1", "zset2")).isEqualTo(2);
@@ -170,13 +170,13 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrange() throws Exception {
+    public void zrange() {
         setup();
         assertThat(redis.zrange(key, 0, -1)).isEqualTo(list("a", "b", "c"));
     }
 
     @Test
-    public void zrangeStreaming() throws Exception {
+    public void zrangeStreaming() {
         setup();
 
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
@@ -192,14 +192,14 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zrangeWithScores() throws Exception {
+    public void zrangeWithScores() {
         setup();
         assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")));
     }
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zrangeWithScoresStreaming() throws Exception {
+    public void zrangeWithScoresStreaming() {
         setup();
         ScoredValueStreamingAdapter<String> streamingAdapter = new ScoredValueStreamingAdapter<>();
         Long count = redis.zrangeWithScores(streamingAdapter, key, 0, -1);
@@ -208,7 +208,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrangebyscore() throws Exception {
+    public void zrangebyscore() {
 
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
 
@@ -228,7 +228,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrangebyscoreStreaming() throws Exception {
+    public void zrangebyscoreStreaming() {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
 
@@ -250,7 +250,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zrangebyscoreWithScores() throws Exception {
+    public void zrangebyscoreWithScores() {
 
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
 
@@ -277,7 +277,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zrangebyscoreWithScoresInfinity() throws Exception {
+    public void zrangebyscoreWithScoresInfinity() {
 
         redis.zadd(key, Double.POSITIVE_INFINITY, "a", Double.NEGATIVE_INFINITY, "b");
 
@@ -292,7 +292,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrangebyscoreWithScoresStreaming() throws Exception {
+    public void zrangebyscoreWithScoresStreaming() {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
 
@@ -317,7 +317,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrank() throws Exception {
+    public void zrank() {
         assertThat(redis.zrank(key, "a")).isNull();
         setup();
         assertThat(redis.zrank(key, "a")).isEqualTo(0);
@@ -325,7 +325,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrem() throws Exception {
+    public void zrem() {
         assertThat(redis.zrem(key, "a")).isEqualTo(0);
         setup();
         assertThat(redis.zrem(key, "b")).isEqualTo(1);
@@ -335,7 +335,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zremrangebyscore() throws Exception {
+    public void zremrangebyscore() {
 
         setup();
         assertThat(redis.zremrangebyscore(key, 1.0, 2.0)).isEqualTo(2);
@@ -355,7 +355,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zremrangebyrank() throws Exception {
+    public void zremrangebyrank() {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         assertThat(redis.zremrangebyrank(key, 1, 2)).isEqualTo(2);
         assertThat(redis.zrange(key, 0, -1)).isEqualTo(list("a", "d"));
@@ -366,20 +366,20 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrevrange() throws Exception {
+    public void zrevrange() {
         setup();
         assertThat(redis.zrevrange(key, 0, -1)).isEqualTo(list("c", "b", "a"));
     }
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zrevrangeWithScores() throws Exception {
+    public void zrevrangeWithScores() {
         setup();
         assertThat(redis.zrevrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b"), sv(1.0, "a")));
     }
 
     @Test
-    public void zrevrangeStreaming() throws Exception {
+    public void zrevrangeStreaming() {
         setup();
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
         Long count = redis.zrevrange(streamingAdapter, key, 0, -1);
@@ -389,7 +389,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zrevrangeWithScoresStreaming() throws Exception {
+    public void zrevrangeWithScoresStreaming() {
         setup();
         ScoredValueStreamingAdapter<String> streamingAdapter = new ScoredValueStreamingAdapter<>();
         Long count = redis.zrevrangeWithScores(streamingAdapter, key, 0, -1);
@@ -398,7 +398,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrevrangebylex() throws Exception {
+    public void zrevrangebylex() {
 
         setup100KeyValues(new HashSet<>());
 
@@ -411,7 +411,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrevrangebyscore() throws Exception {
+    public void zrevrangebyscore() {
 
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
 
@@ -432,7 +432,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zrevrangebyscoreWithScores() throws Exception {
+    public void zrevrangebyscoreWithScores() {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
 
         assertThat(redis.zrevrangebyscoreWithScores(key, 3.0, 2.0)).isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
@@ -457,7 +457,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrevrangebyscoreStreaming() throws Exception {
+    public void zrevrangebyscoreStreaming() {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
 
@@ -482,7 +482,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zrevrangebyscoreWithScoresStreaming() throws Exception {
+    public void zrevrangebyscoreWithScoresStreaming() {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
 
         ScoredValueStreamingAdapter<String> streamingAdapter = new ScoredValueStreamingAdapter<>();
@@ -507,7 +507,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrevrank() throws Exception {
+    public void zrevrank() {
         assertThat(redis.zrevrank(key, "a")).isNull();
         setup();
         assertThat(redis.zrevrank(key, "c")).isEqualTo(0);
@@ -515,7 +515,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zscore() throws Exception {
+    public void zscore() {
         assertThat(redis.zscore(key, "a")).isNull();
         redis.zadd(key, 1.0, "a");
         assertThat(redis.zscore(key, "a")).isEqualTo(1.0);
@@ -523,7 +523,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zunionstore() throws Exception {
+    public void zunionstore() {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");
         redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
         assertThat(redis.zunionstore(key, "zset1", "zset2")).isEqualTo(3);
@@ -545,7 +545,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings({ "unchecked" })
-    public void zStoreArgs() throws Exception {
+    public void zStoreArgs() {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");
         redis.zadd("zset2", 2.0, "a", 3.0, "b", 4.0, "c");
 
@@ -572,7 +572,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zsscan() throws Exception {
+    public void zsscan() {
         redis.zadd(key, 1, value);
         ScoredValueScanCursor<String> cursor = redis.zscan(key);
 
@@ -582,7 +582,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zsscanWithCursor() throws Exception {
+    public void zsscanWithCursor() {
         redis.zadd(key, 1, value);
 
         ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanCursor.INITIAL);
@@ -593,7 +593,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zsscanWithCursorAndArgs() throws Exception {
+    public void zsscanWithCursorAndArgs() {
         redis.zadd(key, 1, value);
 
         ScoredValueScanCursor<String> cursor = redis.zscan(key, ScanCursor.INITIAL, ScanArgs.Builder.limit(5));
@@ -604,7 +604,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zscanStreaming() throws Exception {
+    public void zscanStreaming() {
         redis.zadd(key, 1, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -617,7 +617,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zscanStreamingWithCursor() throws Exception {
+    public void zscanStreamingWithCursor() {
         redis.zadd(key, 1, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -629,7 +629,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zscanStreamingWithCursorAndArgs() throws Exception {
+    public void zscanStreamingWithCursorAndArgs() {
         redis.zadd(key, 1, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -641,7 +641,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zscanStreamingWithArgs() throws Exception {
+    public void zscanStreamingWithArgs() {
         redis.zadd(key, 1, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -654,7 +654,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zscanMultiple() throws Exception {
+    public void zscanMultiple() {
 
         Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);
@@ -670,7 +670,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zscanMatch() throws Exception {
+    public void zscanMatch() {
 
         Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);
@@ -684,7 +684,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zlexcount() throws Exception {
+    public void zlexcount() {
 
         setup100KeyValues(new HashSet<>());
 
@@ -698,7 +698,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zrangebylex() throws Exception {
+    public void zrangebylex() {
         setup100KeyValues(new HashSet<>());
 
         assertThat(redis.zrangebylex(key, "-", "+")).hasSize(100);
@@ -713,7 +713,7 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void zremrangebylex() throws Exception {
+    public void zremrangebylex() {
 
         setup100KeyValues(new HashSet<>());
         assertThat(redis.zremrangebylex(key, "(aaa", "[zzz")).isEqualTo(100);

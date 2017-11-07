@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.lambdaworks.redis.commands;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
+
+import com.lambdaworks.redis.AbstractRedisClientTest;
 
 /**
  * @author Will Glozer
@@ -29,31 +28,31 @@ import org.junit.Test;
  */
 public class NumericCommandTest extends AbstractRedisClientTest {
     @Test
-    public void decr() throws Exception {
+    public void decr() {
         assertThat((long) redis.decr(key)).isEqualTo(-1);
         assertThat((long) redis.decr(key)).isEqualTo(-2);
     }
 
     @Test
-    public void decrby() throws Exception {
+    public void decrby() {
         assertThat(redis.decrby(key, 3)).isEqualTo(-3);
         assertThat(redis.decrby(key, 3)).isEqualTo(-6);
     }
 
     @Test
-    public void incr() throws Exception {
+    public void incr() {
         assertThat((long) redis.incr(key)).isEqualTo(1);
         assertThat((long) redis.incr(key)).isEqualTo(2);
     }
 
     @Test
-    public void incrby() throws Exception {
+    public void incrby() {
         assertThat(redis.incrby(key, 3)).isEqualTo(3);
         assertThat(redis.incrby(key, 3)).isEqualTo(6);
     }
 
     @Test
-    public void incrbyfloat() throws Exception {
+    public void incrbyfloat() {
 
         assertThat(redis.incrbyfloat(key, 3.0)).isEqualTo(3.0, offset(0.1));
         assertThat(redis.incrbyfloat(key, 0.2)).isEqualTo(3.2, offset(0.1));

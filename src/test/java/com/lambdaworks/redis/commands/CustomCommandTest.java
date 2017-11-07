@@ -15,14 +15,14 @@
  */
 package com.lambdaworks.redis.commands;
 
-import static com.lambdaworks.redis.protocol.CommandType.ZRANGEBYLEX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.junit.Test;
+
+import rx.Observable;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
 import com.lambdaworks.redis.ReactiveCommandDispatcher;
@@ -30,10 +30,7 @@ import com.lambdaworks.redis.RedisCommandExecutionException;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
-import com.lambdaworks.redis.output.ValueListOutput;
 import com.lambdaworks.redis.protocol.*;
-
-import rx.Observable;
 
 /**
  * @author Mark Paluch
@@ -43,7 +40,7 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     protected final Utf8StringCodec utf8StringCodec = new Utf8StringCodec();
 
     @Test
-    public void dispatchSet() throws Exception {
+    public void dispatchSet() {
 
         String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(utf8StringCodec),
                 new CommandArgs<>(utf8StringCodec).addKey(key).addValue(value));
@@ -52,7 +49,7 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void dispatchWithoutArgs() throws Exception {
+    public void dispatchWithoutArgs() {
 
         String response = redis.dispatch(MyCommands.INFO, new StatusOutput<>(utf8StringCodec));
 
@@ -60,18 +57,18 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = RedisCommandExecutionException.class)
-    public void dispatchShouldFailForWrongDataType() throws Exception {
+    public void dispatchShouldFailForWrongDataType() {
 
         redis.hset(key, key, value);
         redis.dispatch(CommandType.GET, new StatusOutput<>(utf8StringCodec), new CommandArgs<>(utf8StringCodec).addKey(key));
     }
 
     @Test
-    public void dispatchTransactions() throws Exception {
+    public void dispatchTransactions() {
 
         redis.multi();
-        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey(key).addValue(value));
+        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(utf8StringCodec), new CommandArgs<>(
+                utf8StringCodec).addKey(key).addValue(value));
 
         List<Object> exec = redis.exec();
 
@@ -80,22 +77,22 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void standaloneAsyncPing() throws Exception {
+    public void standaloneAsyncPing() {
 
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(new Utf8StringCodec()),
-                null);
+        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
+                new StatusOutput<>(new Utf8StringCodec()), null);
 
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         getStandaloneConnection().dispatch(async);
 
-        assertThat(async.get()).isEqualTo("PONG");
+        assertThat(async.join()).isEqualTo("PONG");
     }
 
     @Test
-    public void standaloneFireAndForget() throws Exception {
+    public void standaloneFireAndForget() {
 
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(new Utf8StringCodec()),
-                null);
+        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
+                new StatusOutput<>(new Utf8StringCodec()), null);
         getStandaloneConnection().dispatch(command);
         assertThat(command.isCancelled()).isFalse();
 
@@ -104,8 +101,8 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     @Test
     public void standaloneReactivePing() throws Exception {
 
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(new Utf8StringCodec()),
-                null);
+        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
+                new StatusOutput<>(new Utf8StringCodec()), null);
         ReactiveCommandDispatcher<String, String, String> dispatcher = new ReactiveCommandDispatcher<>(command,
                 getStandaloneConnection(), false);
 

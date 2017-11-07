@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.lambdaworks.Wait;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -54,10 +55,10 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void bgsave() throws Exception {
-        while (redis.info().contains("aof_rewrite_in_progress:1")) {
-            Thread.sleep(100);
-        }
+    public void bgsave() {
+
+        Wait.untilTrue(() -> !redis.info().contains("aof_rewrite_in_progress:1")).waitOrTimeout();
+
         String msg = "Background saving started";
         assertThat(redis.bgsave()).isEqualTo(msg);
     }
@@ -285,11 +286,10 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void save() throws Exception {
+    public void save() {
 
-        while (redis.info().contains("aof_rewrite_in_progress:1")) {
-            Thread.sleep(100);
-        }
+        Wait.untilTrue(() -> !redis.info().contains("aof_rewrite_in_progress:1")).waitOrTimeout();
+
         assertThat(redis.save()).isEqualTo("OK");
     }
 

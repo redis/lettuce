@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
+    public void openConnection() {
         redis = connect();
         ClusterTestUtil.flushDatabaseOfAllNodes(clusterConnection);
     }
@@ -69,7 +69,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     }
 
     @Test
-    public void msetnx() throws Exception {
+    public void msetnx() {
         redis.set("one", "1");
         Map<String, String> map = new LinkedHashMap<>();
         map.put("one", "1");
@@ -82,7 +82,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     }
 
     @Test
-    public void mgetStreaming() throws Exception {
+    public void mgetStreaming() {
         setupMget();
 
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
