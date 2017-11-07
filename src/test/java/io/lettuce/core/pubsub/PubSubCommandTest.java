@@ -55,7 +55,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     private String message = "msg!";
 
     @Before
-    public void openPubSubConnection() throws Exception {
+    public void openPubSubConnection() {
         pubsub = client.connectPubSub().async();
         pubsub.getStatefulConnection().addListener(this);
         channels = LettuceFactories.newBlockingQueue();
@@ -65,12 +65,12 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     }
 
     @After
-    public void closePubSubConnection() throws Exception {
+    public void closePubSubConnection() {
         pubsub.getStatefulConnection().close();
     }
 
     @Test
-    public void auth() throws Exception {
+    public void auth() {
         new WithPasswordRequired() {
             @Override
             protected void run(RedisClient client) throws Exception {
@@ -85,7 +85,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     }
 
     @Test
-    public void authWithReconnect() throws Exception {
+    public void authWithReconnect() {
 
         new WithPasswordRequired() {
             @Override
@@ -194,7 +194,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void pubsubEmptyChannels() throws Exception {
+    public void pubsubEmptyChannels() {
         pubsub.subscribe();
         fail("Missing IllegalArgumentException: channels must not be empty");
     }
@@ -276,7 +276,7 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
     }
 
     @Test
-    public void pubsubCloseOnClientShutdown() throws Exception {
+    public void pubsubCloseOnClientShutdown() {
 
         RedisClient redisClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
 

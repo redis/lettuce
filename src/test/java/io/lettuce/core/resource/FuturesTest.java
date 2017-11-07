@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,11 @@
  */
 package io.lettuce.core.resource;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
-import com.google.code.tempusfugit.temporal.Condition;
-import com.google.code.tempusfugit.temporal.WaitFor;
-
+import io.lettuce.Wait;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.ImmediateEventExecutor;
@@ -35,39 +31,38 @@ import io.netty.util.concurrent.Promise;
 public class FuturesTest {
 
     @Test(expected = IllegalArgumentException.class)
-    public void testPromise() throws Exception {
+    public void testPromise() {
         new Futures.PromiseAggregator(null);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void notArmed() throws Exception {
+    public void notArmed() {
         Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
-                new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE));
-        sut.add(new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE));
+                new DefaultPromise<>(ImmediateEventExecutor.INSTANCE));
+        sut.add(new DefaultPromise<>(ImmediateEventExecutor.INSTANCE));
     }
 
     @Test(expected = IllegalStateException.class)
-    public void expectAfterArmed() throws Exception {
+    public void expectAfterArmed() {
         Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
-                new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE));
+                new DefaultPromise<>(ImmediateEventExecutor.INSTANCE));
         sut.arm();
 
         sut.expectMore(1);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void armTwice() throws Exception {
+    public void armTwice() {
         Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
-                new DefaultPromise<Boolean>(ImmediateEventExecutor.INSTANCE));
+                new DefaultPromise<>(ImmediateEventExecutor.INSTANCE));
         sut.arm();
         sut.arm();
     }
 
     @Test
-    public void regularUse() throws Exception {
-        final DefaultPromise<Boolean> target = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
-                target);
+    public void regularUse() {
+        final DefaultPromise<Boolean> target = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+        Futures.PromiseAggregator<Boolean, Promise<Boolean>> sut = new Futures.PromiseAggregator<>(target);
 
         sut.expectMore(1);
         sut.arm();
@@ -78,12 +73,7 @@ public class FuturesTest {
 
         part.setSuccess(true);
 
-        WaitFor.waitOrTimeout(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                return target.isDone();
-            }
-        }, timeout(seconds(5)));
+        Wait.untilTrue(target::isDone).waitOrTimeout();
 
         assertThat(target.isDone()).isTrue();
     }

@@ -170,6 +170,7 @@ public class Wait {
 
     @FunctionalInterface
     public interface Supplier<T> {
+
         T get() throws Exception;
     }
 

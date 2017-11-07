@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,16 @@
  */
 package io.lettuce.core.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static io.lettuce.core.cluster.ClusterTestUtil.getNodeId;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
-import io.lettuce.TestClientResources;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
-import com.google.code.tempusfugit.temporal.WaitFor;
+import io.lettuce.TestClientResources;
+import io.lettuce.Wait;
 import io.lettuce.core.FastShutdown;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
@@ -53,9 +50,10 @@ public class ClusterCommandTest extends AbstractClusterTest {
     protected RedisClusterCommands<String, String> sync;
 
     @BeforeClass
-    public static void setupClient() throws Exception {
+    public static void setupClient() {
         client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
-        clusterClient = RedisClusterClient.create(TestClientResources.get(), LettuceLists.newList(RedisURI.Builder.redis(host, port1).build()));
+        clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                LettuceLists.newList(RedisURI.Builder.redis(host, port1).build()));
 
     }
 
@@ -77,7 +75,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @After
-    public void after() throws Exception {
+    public void after() {
         connection.close();
     }
 
@@ -104,7 +102,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testClusterNodes() throws Exception {
+    public void testClusterNodes() {
 
         String result = sync.clusterNodes();
 
@@ -114,7 +112,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testClusterNodesSync() throws Exception {
+    public void testClusterNodesSync() {
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
 
@@ -135,7 +133,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testAsking() throws Exception {
+    public void testAsking() {
         assertThat(sync.asking()).isEqualTo("OK");
     }
 
@@ -144,8 +142,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
 
         clusterClient.reloadPartitions();
 
-        StatefulRedisClusterConnection<String, String> clusterConnection = clusterClient
-                .connect();
+        StatefulRedisClusterConnection<String, String> clusterConnection = clusterClient.connect();
 
         RedisFuture<String> setA = clusterConnection.async().set("a", "myValue1");
         setA.get();
@@ -162,7 +159,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testClusterSlots() throws Exception {
+    public void testClusterSlots() {
 
         List<Object> reply = sync.clusterSlots();
         assertThat(reply.size()).isGreaterThan(1);
@@ -220,13 +217,11 @@ public class ClusterCommandTest extends AbstractClusterTest {
 
     }
 
-    protected void waitUntilValueIsVisible(String key, RedisCommands<String, String> commands) throws InterruptedException,
-            TimeoutException {
-        WaitFor.waitOrTimeout(() -> commands.get(key) != null, timeout(seconds(5)));
+    protected void waitUntilValueIsVisible(String key, RedisCommands<String, String> commands) {
+        Wait.untilTrue(() -> commands.get(key) != null).waitOrTimeout();
     }
 
-    protected void prepareReadonlyTest(String key) throws InterruptedException, TimeoutException,
-            java.util.concurrent.ExecutionException {
+    protected void prepareReadonlyTest(String key) throws InterruptedException, java.util.concurrent.ExecutionException {
 
         async.set(key, value);
 
@@ -264,7 +259,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void clusterSlaves() throws Exception {
+    public void clusterSlaves() {
 
         String nodeId = getNodeId(sync);
         List<String> result = sync.clusterSlaves(nodeId);
