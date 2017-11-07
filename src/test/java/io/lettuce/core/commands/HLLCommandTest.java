@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package io.lettuce.core.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-import io.lettuce.core.cluster.SlotHash;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -35,7 +34,7 @@ public class HLLCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pfadd() throws Exception {
+    public void pfadd() {
 
         assertThat(commands().pfadd(key, value, value)).isEqualTo(1);
         assertThat(commands().pfadd(key, value, value)).isEqualTo(0);
@@ -43,12 +42,12 @@ public class HLLCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void pfaddNoValues() throws Exception {
+    public void pfaddNoValues() {
         commands().pfadd(key);
     }
 
     @Test
-    public void pfaddNullValues() throws Exception {
+    public void pfaddNullValues() {
         try {
             commands().pfadd(key, null);
             fail("Missing IllegalArgumentException");
@@ -62,7 +61,7 @@ public class HLLCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pfmerge() throws Exception {
+    public void pfmerge() {
         commands().pfadd(key, value);
         commands().pfadd("key2", "value2");
         commands().pfadd("key3", "value3");
@@ -79,12 +78,12 @@ public class HLLCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void pfmergeNoKeys() throws Exception {
+    public void pfmergeNoKeys() {
         commands().pfmerge(key);
     }
 
     @Test
-    public void pfcount() throws Exception {
+    public void pfcount() {
         commands().pfadd(key, value);
         commands().pfadd("key2", "value2");
         assertThat(commands().pfcount(key)).isEqualTo(1);
@@ -92,12 +91,12 @@ public class HLLCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void pfcountNoKeys() throws Exception {
+    public void pfcountNoKeys() {
         commands().pfcount();
     }
 
     @Test
-    public void pfaddPfmergePfCount() throws Exception {
+    public void pfaddPfmergePfCount() {
 
         commands().pfadd("key2660", "rand", "mat");
         commands().pfadd("key7112", "mat", "perrin");

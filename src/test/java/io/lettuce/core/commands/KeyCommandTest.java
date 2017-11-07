@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     public ExpectedException exception = ExpectedException.none();
 
     @Test
-    public void del() throws Exception {
+    public void del() {
         redis.set(key, value);
         assertThat((long) redis.del(key)).isEqualTo(1);
         redis.set(key + "1", value);
@@ -48,7 +48,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void unlink() throws Exception {
+    public void unlink() {
 
         assumeTrue(RedisConditions.of(redis).hasCommand("UNLINK"));
 
@@ -60,21 +60,21 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void dump() throws Exception {
+    public void dump() {
         assertThat(redis.dump("invalid")).isNull();
         redis.set(key, value);
         assertThat(redis.dump(key).length > 0).isTrue();
     }
 
     @Test
-    public void exists() throws Exception {
+    public void exists() {
         assertThat(redis.exists(key)).isEqualTo(0);
         redis.set(key, value);
         assertThat(redis.exists(key)).isEqualTo(1);
     }
 
     @Test
-    public void existsVariadic() throws Exception {
+    public void existsVariadic() {
         assertThat(redis.exists(key, "key2", "key3")).isEqualTo(0);
         redis.set(key, value);
         redis.set("key2", value);
@@ -82,7 +82,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void expire() throws Exception {
+    public void expire() {
         assertThat(redis.expire(key, 10)).isFalse();
         redis.set(key, value);
         assertThat(redis.expire(key, 10)).isTrue();
@@ -90,7 +90,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void expireat() throws Exception {
+    public void expireat() {
         Date expiration = new Date(System.currentTimeMillis() + 10000);
         assertThat(redis.expireat(key, expiration)).isFalse();
         redis.set(key, value);
@@ -100,7 +100,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void keys() throws Exception {
+    public void keys() {
         assertThat(redis.keys("*")).isEqualTo(list());
         Map<String, String> map = new LinkedHashMap<>();
         map.put("one", "1");
@@ -114,7 +114,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void keysStreaming() throws Exception {
+    public void keysStreaming() {
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
         assertThat(redis.keys("*")).isEqualTo(list());
@@ -133,7 +133,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void move() throws Exception {
+    public void move() {
         redis.set(key, value);
         redis.move(key, 1);
         assertThat(redis.get(key)).isNull();
@@ -142,7 +142,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void objectEncoding() throws Exception {
+    public void objectEncoding() {
         redis.set(key, value);
         assertThat(redis.objectEncoding(key)).isEqualTo("embstr");
         redis.set(key, String.valueOf(1));
@@ -150,19 +150,19 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void objectIdletime() throws Exception {
+    public void objectIdletime() {
         redis.set(key, value);
         assertThat((long) redis.objectIdletime(key)).isLessThan(2);
     }
 
     @Test
-    public void objectRefcount() throws Exception {
+    public void objectRefcount() {
         redis.set(key, value);
         assertThat(redis.objectRefcount(key)).isGreaterThan(0);
     }
 
     @Test
-    public void persist() throws Exception {
+    public void persist() {
         assertThat(redis.persist(key)).isFalse();
         redis.set(key, value);
         assertThat(redis.persist(key)).isFalse();
@@ -171,7 +171,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pexpire() throws Exception {
+    public void pexpire() {
         assertThat(redis.pexpire(key, 5000)).isFalse();
         redis.set(key, value);
         assertThat(redis.pexpire(key, 5000)).isTrue();
@@ -179,7 +179,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pexpireat() throws Exception {
+    public void pexpireat() {
         Date expiration = new Date(System.currentTimeMillis() + 5000);
         assertThat(redis.pexpireat(key, expiration)).isFalse();
         redis.set(key, value);
@@ -188,7 +188,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pttl() throws Exception {
+    public void pttl() {
         assertThat((long) redis.pttl(key)).isEqualTo(-2);
         redis.set(key, value);
         assertThat((long) redis.pttl(key)).isEqualTo(-1);
@@ -197,14 +197,14 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void randomkey() throws Exception {
+    public void randomkey() {
         assertThat(redis.randomkey()).isNull();
         redis.set(key, value);
         assertThat(redis.randomkey()).isEqualTo(key);
     }
 
     @Test
-    public void rename() throws Exception {
+    public void rename() {
         redis.set(key, value);
 
         assertThat(redis.rename(key, key + "X")).isEqualTo("OK");
@@ -216,12 +216,12 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = RedisException.class)
-    public void renameNonexistentKey() throws Exception {
+    public void renameNonexistentKey() {
         redis.rename(key, key + "X");
     }
 
     @Test
-    public void renamenx() throws Exception {
+    public void renamenx() {
         redis.set(key, value);
         assertThat(redis.renamenx(key, key + "X")).isTrue();
         assertThat(redis.get(key + "X")).isEqualTo(value);
@@ -230,12 +230,12 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = RedisException.class)
-    public void renamenxNonexistentKey() throws Exception {
+    public void renamenxNonexistentKey() {
         redis.renamenx(key, key + "X");
     }
 
     @Test
-    public void restore() throws Exception {
+    public void restore() {
         redis.set(key, value);
         byte[] bytes = redis.dump(key);
         redis.del(key);
@@ -252,7 +252,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void touch() throws Exception {
+    public void touch() {
 
         assumeTrue(RedisConditions.of(redis).hasCommand("TOUCH"));
 
@@ -262,7 +262,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void ttl() throws Exception {
+    public void ttl() {
         assertThat((long) redis.ttl(key)).isEqualTo(-2);
         redis.set(key, value);
         assertThat((long) redis.ttl(key)).isEqualTo(-1);
@@ -271,7 +271,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void type() throws Exception {
+    public void type() {
         assertThat(redis.type(key)).isEqualTo("none");
 
         redis.set(key, value);
@@ -291,7 +291,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void scan() throws Exception {
+    public void scan() {
         redis.set(key, value);
 
         KeyScanCursor<String> cursor = redis.scan();
@@ -301,7 +301,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void scanWithArgs() throws Exception {
+    public void scanWithArgs() {
         redis.set(key, value);
 
         KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(10));
@@ -311,7 +311,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void scanInitialCursor() throws Exception {
+    public void scanInitialCursor() {
         redis.set(key, value);
 
         KeyScanCursor<String> cursor = redis.scan(ScanCursor.INITIAL);
@@ -321,19 +321,19 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void scanFinishedCursor() throws Exception {
+    public void scanFinishedCursor() {
         redis.set(key, value);
         redis.scan(ScanCursor.FINISHED);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void scanNullCursor() throws Exception {
+    public void scanNullCursor() {
         redis.set(key, value);
         redis.scan((ScanCursor) null);
     }
 
     @Test
-    public void scanStreaming() throws Exception {
+    public void scanStreaming() {
         redis.set(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
@@ -346,7 +346,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void scanStreamingWithCursor() throws Exception {
+    public void scanStreamingWithCursor() {
         redis.set(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
@@ -358,7 +358,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void scanStreamingWithCursorAndArgs() throws Exception {
+    public void scanStreamingWithCursorAndArgs() {
         redis.set(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
@@ -370,7 +370,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void scanStreamingArgs() throws Exception {
+    public void scanStreamingArgs() {
         redis.set(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
 
@@ -383,7 +383,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void scanMultiple() throws Exception {
+    public void scanMultiple() {
 
         Set<String> expect = new HashSet<>();
         Set<String> check = new HashSet<>();
@@ -407,7 +407,7 @@ public class KeyCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void scanMatch() throws Exception {
+    public void scanMatch() {
 
         Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);

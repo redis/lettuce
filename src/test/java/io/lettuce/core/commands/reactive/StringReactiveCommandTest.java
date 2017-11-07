@@ -19,7 +19,6 @@ import org.junit.Test;
 
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
-
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -37,7 +36,7 @@ public class StringReactiveCommandTest extends StringCommandTest {
     }
 
     @Test
-    public void mget() throws Exception {
+    public void mget() {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
@@ -52,7 +51,7 @@ public class StringReactiveCommandTest extends StringCommandTest {
     }
 
     @Test
-    public void mgetEmpty() throws Exception {
+    public void mgetEmpty() {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 

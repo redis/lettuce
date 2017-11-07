@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
 import java.io.IOException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -62,17 +61,17 @@ public class ClusterPartiallyDownTest extends AbstractTest {
     }
 
     @Before
-    public void before() throws Exception {
+    public void before() {
 
     }
 
     @After
-    public void after() throws Exception {
+    public void after() {
         redisClusterClient.shutdown();
     }
 
     @Test
-    public void connectToPartiallyDownCluster() throws Exception {
+    public void connectToPartiallyDownCluster() throws IOException {
 
         List<RedisURI> seed = LettuceLists.unmodifiableList(URI_1, URI_2, URI_3, URI_4);
         redisClusterClient = RedisClusterClient.create(clientResources, seed);
@@ -84,7 +83,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
     }
 
     @Test
-    public void operateOnPartiallyDownCluster() throws Exception {
+    public void operateOnPartiallyDownCluster() {
 
         List<RedisURI> seed = LettuceLists.unmodifiableList(URI_1, URI_2, URI_3, URI_4);
         redisClusterClient = RedisClusterClient.create(clientResources, seed);
@@ -104,7 +103,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
     }
 
     @Test
-    public void seedNodesAreOffline() throws Exception {
+    public void seedNodesAreOffline() {
 
         List<RedisURI> seed = LettuceLists.unmodifiableList(URI_1, URI_2, URI_3);
         redisClusterClient = RedisClusterClient.create(clientResources, seed);
@@ -119,7 +118,7 @@ public class ClusterPartiallyDownTest extends AbstractTest {
     }
 
     @Test
-    public void partitionNodesAreOffline() throws Exception {
+    public void partitionNodesAreOffline() {
 
         List<RedisURI> seed = LettuceLists.unmodifiableList(URI_1, URI_2, URI_3);
         redisClusterClient = RedisClusterClient.create(clientResources, seed);

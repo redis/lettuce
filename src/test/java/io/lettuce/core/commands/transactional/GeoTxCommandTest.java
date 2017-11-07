@@ -32,41 +32,41 @@ public class GeoTxCommandTest extends GeoCommandTest {
 
     @Ignore
     @Override
-    public void georadiusbymemberWithArgsAndTransaction() throws Exception {
+    public void georadiusbymemberWithArgsAndTransaction() {
     }
 
     @Ignore
     @Override
-    public void geoaddWithTransaction() throws Exception {
+    public void geoaddWithTransaction() {
     }
 
     @Ignore
     @Override
-    public void geoaddMultiWithTransaction() throws Exception {
+    public void geoaddMultiWithTransaction() {
     }
 
     @Ignore
     @Override
-    public void geoposWithTransaction() throws Exception {
+    public void geoposWithTransaction() {
     }
 
     @Ignore
     @Override
-    public void georadiusWithArgsAndTransaction() throws Exception {
+    public void georadiusWithArgsAndTransaction() {
     }
 
     @Ignore
     @Override
-    public void georadiusWithTransaction() throws Exception {
+    public void georadiusWithTransaction() {
     }
 
     @Ignore
     @Override
-    public void geodistWithTransaction() throws Exception {
+    public void geodistWithTransaction() {
     }
 
     @Ignore
     @Override
-    public void geohashWithTransaction() throws Exception {
+    public void geohashWithTransaction() {
     }
 }

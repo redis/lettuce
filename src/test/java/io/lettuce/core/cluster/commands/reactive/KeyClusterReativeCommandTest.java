@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package io.lettuce.core.cluster.commands.reactive;
 
-import io.lettuce.TestClientResources;
-import io.lettuce.util.ReactiveSyncInvocationHandler;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import io.lettuce.TestClientResources;
 import io.lettuce.core.FastShutdown;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSettings;
@@ -29,6 +28,7 @@ import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.commands.KeyClusterCommandTest;
+import io.lettuce.util.ReactiveSyncInvocationHandler;
 
 /**
  * @author Mark Paluch
@@ -49,7 +49,7 @@ public class KeyClusterReativeCommandTest extends KeyClusterCommandTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
+    public void openConnection() {
         redis = connect();
         ClusterTestUtil.flushDatabaseOfAllNodes(clusterConnection);
     }

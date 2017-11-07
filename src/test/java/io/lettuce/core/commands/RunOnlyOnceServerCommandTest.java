@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package io.lettuce.core.commands;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static io.lettuce.core.TestSettings.host;
 import static io.lettuce.core.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,8 +26,8 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.google.code.tempusfugit.temporal.WaitFor;
 import io.lettuce.CanConnect;
+import io.lettuce.Wait;
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.MigrateArgs;
 import io.lettuce.core.RedisURI;
@@ -46,20 +44,18 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
     /**
      * Executed in order: 1 this test causes a stop of the redis. This means, you cannot repeat the test without restarting your
      * redis.
-     *
-     * @throws Exception
      */
     @Test
-    public void debugSegfault() throws Exception {
+    public void debugSegfault() {
 
         assumeTrue(CanConnect.to(host(), port(1)));
 
-        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(1))
-                .build()).async();
+        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(1)).build())
+                .async();
         try {
             commands.debugSegfault();
 
-            WaitFor.waitOrTimeout(() -> !commands.getStatefulConnection().isOpen(), timeout(seconds(5)));
+            Wait.untilTrue(() -> !commands.getStatefulConnection().isOpen()).waitOrTimeout();
             assertThat(commands.getStatefulConnection().isOpen()).isFalse();
         } finally {
             commands.getStatefulConnection().close();
@@ -68,11 +64,9 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
 
     /**
      * Executed in order: 2
-     *
-     * @throws Exception
      */
     @Test
-    public void migrate() throws Exception {
+    public void migrate() {
 
         assumeTrue(CanConnect.to(host(), port(2)));
 
@@ -84,11 +78,9 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
 
     /**
      * Executed in order: 3
-     *
-     * @throws Exception
      */
     @Test
-    public void migrateCopyReplace() throws Exception {
+    public void migrateCopyReplace() {
 
         assumeTrue(CanConnect.to(host(), port(2)));
 
@@ -99,28 +91,27 @@ public class RunOnlyOnceServerCommandTest extends AbstractRedisClientTest {
         String result = redis.migrate("localhost", TestSettings.port(2), 0, 10, MigrateArgs.Builder.keys(key).copy().replace());
         assertThat(result).isEqualTo("OK");
 
-        result = redis.migrate("localhost", TestSettings.port(2), 0, 10, MigrateArgs.Builder.keys(Arrays.asList("key1", "key2")).replace());
+        result = redis.migrate("localhost", TestSettings.port(2), 0, 10, MigrateArgs.Builder
+                .keys(Arrays.asList("key1", "key2")).replace());
         assertThat(result).isEqualTo("OK");
     }
 
     /**
      * Executed in order: 4 this test causes a stop of the redis. This means, you cannot repeat the test without restarting your
      * redis.
-     *
-     * @throws Exception
      */
     @Test
-    public void shutdown() throws Exception {
+    public void shutdown() {
 
         assumeTrue(CanConnect.to(host(), port(2)));
 
-        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(2))
-                .build()).async();
+        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(2)).build())
+                .async();
         try {
 
             commands.shutdown(true);
             commands.shutdown(false);
-            WaitFor.waitOrTimeout(() -> !commands.getStatefulConnection().isOpen(), timeout(seconds(5)));
+            Wait.untilTrue(() -> !commands.getStatefulConnection().isOpen()).waitOrTimeout();
 
             assertThat(commands.getStatefulConnection().isOpen()).isFalse();
 

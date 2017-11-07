@@ -19,7 +19,6 @@ import org.junit.Test;
 
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
-
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.commands.CustomCommandTest;
@@ -40,7 +39,7 @@ public class CustomReactiveCommandTest extends CustomCommandTest {
     }
 
     @Test
-    public void dispatchGetAndSet() throws Exception {
+    public void dispatchGetAndSet() {
 
         redis.set(key, value);
         RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
@@ -52,7 +51,7 @@ public class CustomReactiveCommandTest extends CustomCommandTest {
     }
 
     @Test
-    public void dispatchList() throws Exception {
+    public void dispatchList() {
 
         redis.rpush(key, "a", "b", "c");
         RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
