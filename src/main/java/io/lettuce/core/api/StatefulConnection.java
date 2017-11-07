@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
@@ -31,7 +32,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface StatefulConnection<K, V> extends AutoCloseable {
+public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable {
 
     /**
      * Set the default command timeout for this connection.
@@ -91,6 +92,7 @@ public interface StatefulConnection<K, V> extends AutoCloseable {
      *         successful or because of an error.
      * @since 5.1
      */
+    @Override
     CompletableFuture<Void> closeAsync();
 
     /**

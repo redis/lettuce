@@ -34,21 +34,26 @@ import org.springframework.util.StopWatch;
 
 import reactor.core.publisher.Mono;
 import io.lettuce.TestClientResources;
-import io.lettuce.core.*;
+import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.SocketOptions;
+import io.lettuce.core.TestSettings;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterNodeConnectionFactory.ConnectionKey;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.AsyncConnectionProvider;
+import io.netty.channel.ConnectTimeoutException;
 
 /**
  * @author Mark Paluch
  */
-public class SynchronizingClusterConnectionProviderTest {
+public class AsyncConnectionProviderTest {
 
     private static RedisClusterClient redisClient;
     private ServerSocket serverSocket;
     private CountDownLatch connectInitiated = new CountDownLatch(1);
 
-    private SynchronizingClusterConnectionProvider<String, String> sut;
+    private AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<String, String>, ConnectionFuture<StatefulRedisConnection<String, String>>> sut;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -65,8 +70,8 @@ public class SynchronizingClusterConnectionProviderTest {
 
         serverSocket = new ServerSocket(SocketUtils.findAvailableTcpPort(), 1);
 
-        sut = new SynchronizingClusterConnectionProvider<>(new AbstractClusterNodeConnectionFactory<String, String>(
-                redisClient.getResources()) {
+        sut = new AsyncConnectionProvider<>(
+                new AbstractClusterNodeConnectionFactory<String, String>(redisClient.getResources()) {
             @Override
             public ConnectionFuture<StatefulRedisConnection<String, String>> apply(ConnectionKey connectionKey) {
 
@@ -99,9 +104,9 @@ public class SynchronizingClusterConnectionProviderTest {
 
         ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
                 TestSettings.port());
-        StatefulRedisConnection<String, String> connection = sut.getConnection(connectionKey);
+        StatefulRedisConnection<String, String> connection = sut.getConnection(connectionKey).toCompletableFuture().join();
 
-        assertThat(sut.getConnection(connectionKey)).isSameAs(connection);
+        assertThat(sut.getConnection(connectionKey).toCompletableFuture().join()).isSameAs(connection);
         sut.close();
         serverSocket.accept();
     }
@@ -114,7 +119,7 @@ public class SynchronizingClusterConnectionProviderTest {
 
         assertThat(sut.getConnectionCount()).isEqualTo(0);
 
-        sut.getConnection(connectionKey);
+        sut.getConnection(connectionKey).toCompletableFuture().join();
 
         assertThat(sut.getConnectionCount()).isEqualTo(1);
         sut.close();
@@ -167,18 +172,18 @@ public class SynchronizingClusterConnectionProviderTest {
         StopWatch stopWatch = new StopWatch();
 
         try {
-            sut.getConnection(connectionKey);
+            sut.getConnection(connectionKey).toCompletableFuture().get();
             fail("Missing RedisConnectionException because of Timeout");
         } catch (Exception e) {
-            assertThat(e).isInstanceOf(RedisConnectionException.class);
+            assertThat(e).hasCauseInstanceOf(ConnectTimeoutException.class);
         }
         stopWatch.start();
 
         try {
-            sut.getConnection(connectionKey);
+            sut.getConnection(connectionKey).toCompletableFuture().join();
             fail("Missing RedisConnectionException because of Timeout");
         } catch (Exception e) {
-            assertThat(e).isInstanceOf(RedisConnectionException.class);
+            assertThat(e).hasCauseInstanceOf(ConnectTimeoutException.class);
         }
 
         stopWatch.stop();
@@ -253,7 +258,8 @@ public class SynchronizingClusterConnectionProviderTest {
         CompletableFuture<StatefulRedisConnection<String, String>> createdConnection = new CompletableFuture<>();
         Thread t1 = new Thread(() -> {
             try {
-                StatefulRedisConnection<String, String> connection = sut.getConnection(connectionKey);
+                StatefulRedisConnection<String, String> connection = sut.getConnection(connectionKey).toCompletableFuture()
+                        .join();
                 createdConnection.complete(connection);
             } catch (Exception e) {
                 createdConnection.completeExceptionally(e);

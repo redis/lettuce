@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ import io.lettuce.core.cluster.ClusterNodeConnectionFactory.ConnectionKey;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.AsyncConnectionProvider;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisInstance;
@@ -60,7 +62,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     private final ClusterNodeConnectionFactory<K, V> connectionFactory;
     private final RedisChannelWriter clusterWriter;
     private final RedisCodec<K, V> redisCodec;
-    private final SynchronizingClusterConnectionProvider<K, V> connectionProvider;
+    private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, ConnectionFuture<StatefulRedisConnection<K, V>>> connectionProvider;
 
     private Partitions partitions;
     private boolean autoFlushCommands = true;
@@ -73,7 +75,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         this.redisClusterClient = redisClusterClient;
         this.clusterWriter = clusterWriter;
         this.connectionFactory = new NodeConnectionPostProcessor(getConnectionFactory(redisClusterClient));
-        this.connectionProvider = new SynchronizingClusterConnectionProvider<>(this.connectionFactory);
+        this.connectionProvider = new AsyncConnectionProvider<>(this.connectionFactory);
     }
 
     @Override
@@ -141,7 +143,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         return writer;
     }
 
-    protected CompletableFuture<StatefulRedisConnection<K, V>> getReadConnection(int slot) {
+    private CompletableFuture<StatefulRedisConnection<K, V>> getReadConnection(int slot) {
 
         CompletableFuture<StatefulRedisConnection<K, V>> readerCandidates[];// avoid races when reconfiguring partitions.
 
@@ -297,7 +299,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             logger.debug("getConnection(" + intent + ", " + nodeId + ")");
         }
 
-        return connectionProvider.getConnection(new ConnectionKey(intent, nodeId));
+        return getConnection(new ConnectionKey(intent, nodeId));
     }
 
     @Override
@@ -312,7 +314,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     protected ConnectionFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionKey key) {
 
-        ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectionProvider.getConnectionAsync(key);
+        ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectionProvider.getConnection(key);
         CompletableFuture<StatefulRedisConnection<K, V>> result = new CompletableFuture<>();
 
         connectionFuture.handle((connection, throwable) -> {
@@ -337,12 +339,22 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         try {
             beforeGetConnection(intent, host, port);
 
-            ConnectionKey key = new ConnectionKey(intent, host, port);
-            return connectionProvider.getConnection(key);
+            return getConnection(new ConnectionKey(intent, host, port));
         } catch (RedisException e) {
             throw e;
         } catch (RuntimeException e) {
             throw new RedisException(e);
+        }
+    }
+
+    private StatefulRedisConnection<K, V> getConnection(ConnectionKey key) {
+
+        ConnectionFuture<StatefulRedisConnection<K, V>> future = getConnectionAsync(key);
+
+        try {
+            return future.join();
+        } catch (CompletionException e) {
+            throw RedisConnectionException.create(future.getRemoteAddress(), e.getCause());
         }
     }
 
@@ -352,7 +364,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         try {
             beforeGetConnection(intent, host, port);
 
-            return connectionProvider.getConnectionAsync(new ConnectionKey(intent, host, port)).toCompletableFuture();
+            return connectionProvider.getConnection(new ConnectionKey(intent, host, port)).toCompletableFuture();
         } catch (RedisException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -397,7 +409,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         resetFastConnectionCache();
 
-        return connectionProvider.closeAsync();
+        return connectionProvider.close();
     }
 
     @Override
@@ -533,7 +545,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 + " not allowed. This connection point is not known in the cluster view");
     }
 
-    boolean validateClusterNodeMembership() {
+    private boolean validateClusterNodeMembership() {
         return redisClusterClient.getClusterClientOptions() == null
                 || redisClusterClient.getClusterClientOptions().isValidateClusterNodeMembership();
     }
@@ -545,11 +557,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         return new DefaultClusterNodeConnectionFactory<>(redisClusterClient, redisCodec, clusterWriter);
     }
 
-    private class NodeConnectionPostProcessor implements ClusterNodeConnectionFactory<K, V> {
-
+    class NodeConnectionPostProcessor implements ClusterNodeConnectionFactory<K, V> {
         private final ClusterNodeConnectionFactory<K, V> delegate;
 
-        public NodeConnectionPostProcessor(ClusterNodeConnectionFactory<K, V> delegate) {
+        NodeConnectionPostProcessor(ClusterNodeConnectionFactory<K, V> delegate) {
             this.delegate = delegate;
         }
 
@@ -610,7 +621,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         private final RedisCodec<K, V> redisCodec;
         private final RedisChannelWriter clusterWriter;
 
-        public DefaultClusterNodeConnectionFactory(RedisClusterClient redisClusterClient, RedisCodec<K, V> redisCodec,
+        DefaultClusterNodeConnectionFactory(RedisClusterClient redisClusterClient, RedisCodec<K, V> redisCodec,
                 RedisChannelWriter clusterWriter) {
 
             super(redisClusterClient.getResources());

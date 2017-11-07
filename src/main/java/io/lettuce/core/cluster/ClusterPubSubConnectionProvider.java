@@ -51,7 +51,7 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
      * @param redisCodec must not be {@literal null}.
      * @param notificationTarget must not be {@literal null}.
      */
-    public ClusterPubSubConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
+    ClusterPubSubConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
             RedisCodec<K, V> redisCodec, RedisClusterPubSubListener<K, V> notificationTarget) {
 
         super(redisClusterClient, clusterWriter, redisCodec);
@@ -67,9 +67,9 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
     }
 
     @SuppressWarnings("unchecked")
-    private class PubSubNodeConnectionFactory extends AbstractClusterNodeConnectionFactory<K, V> {
+    class PubSubNodeConnectionFactory extends AbstractClusterNodeConnectionFactory<K, V> {
 
-        public PubSubNodeConnectionFactory(ClientResources clientResources) {
+        PubSubNodeConnectionFactory(ClientResources clientResources) {
             super(clientResources);
         }
 
@@ -90,11 +90,11 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
     }
 
     @SuppressWarnings("unchecked")
-    private class DecoratingClusterNodeConnectionFactory implements ClusterNodeConnectionFactory<K, V> {
+    class DecoratingClusterNodeConnectionFactory implements ClusterNodeConnectionFactory<K, V> {
 
         private final ClusterNodeConnectionFactory<K, V> delegate;
 
-        public DecoratingClusterNodeConnectionFactory(ClusterNodeConnectionFactory<K, V> delegate) {
+        DecoratingClusterNodeConnectionFactory(ClusterNodeConnectionFactory<K, V> delegate) {
             this.delegate = delegate;
         }
 
@@ -124,20 +124,20 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
         }
     }
 
-    private class DelegatingRedisClusterPubSubListener extends RedisPubSubAdapter<K, V> {
+    class DelegatingRedisClusterPubSubListener extends RedisPubSubAdapter<K, V> {
 
         private final String nodeId;
         private final String host;
         private final int port;
 
-        public DelegatingRedisClusterPubSubListener(String nodeId) {
+        DelegatingRedisClusterPubSubListener(String nodeId) {
 
             this.nodeId = nodeId;
             this.host = null;
             this.port = 0;
         }
 
-        public DelegatingRedisClusterPubSubListener(String host, int port) {
+        DelegatingRedisClusterPubSubListener(String host, int port) {
 
             this.nodeId = null;
             this.host = host;

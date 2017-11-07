@@ -19,6 +19,7 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.RedisCommand;
 
@@ -28,7 +29,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Mark Paluch
  * @since 3.0
  */
-public interface RedisChannelWriter extends Closeable {
+public interface RedisChannelWriter extends Closeable, AsyncCloseable {
 
     /**
      * Write a command on the channel. The command may be changed/wrapped during write and the written instance is returned
@@ -62,6 +63,7 @@ public interface RedisChannelWriter extends Closeable {
      * @return future for result synchronization.
      * @since 5.1
      */
+    @Override
     CompletableFuture<Void> closeAsync();
 
     /**
