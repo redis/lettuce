@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import io.lettuce.RedisConditions;
+import io.lettuce.Wait;
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.TestSettings;
@@ -55,10 +56,10 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void bgsave() throws Exception {
-        while (redis.info().contains("aof_rewrite_in_progress:1")) {
-            Thread.sleep(100);
-        }
+    public void bgsave() {
+
+        Wait.untilTrue(() -> !redis.info().contains("aof_rewrite_in_progress:1")).waitOrTimeout();
+
         String msg = "Background saving started";
         assertThat(redis.bgsave()).isEqualTo(msg);
     }
@@ -285,11 +286,10 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void save() throws Exception {
+    public void save() {
 
-        while (redis.info().contains("aof_rewrite_in_progress:1")) {
-            Thread.sleep(100);
-        }
+        Wait.untilTrue(() -> !redis.info().contains("aof_rewrite_in_progress:1")).waitOrTimeout();
+
         assertThat(redis.save()).isEqualTo("OK");
     }
 

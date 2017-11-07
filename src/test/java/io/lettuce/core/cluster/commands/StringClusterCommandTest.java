@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import io.lettuce.TestClientResources;
-import io.lettuce.core.*;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.lettuce.TestClientResources;
+import io.lettuce.core.FastShutdown;
+import io.lettuce.core.KeyValueStreamingAdapter;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSettings;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.RedisClusterClient;
@@ -52,7 +55,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
+    public void openConnection() {
         redis = connect();
         ClusterTestUtil.flushDatabaseOfAllNodes(clusterConnection);
     }
@@ -65,7 +68,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     }
 
     @Test
-    public void msetnx() throws Exception {
+    public void msetnx() {
         redis.set("one", "1");
         Map<String, String> map = new LinkedHashMap<>();
         map.put("one", "1");
@@ -78,7 +81,7 @@ public class StringClusterCommandTest extends StringCommandTest {
     }
 
     @Test
-    public void mgetStreaming() throws Exception {
+    public void mgetStreaming() {
         setupMget();
 
         KeyValueStreamingAdapter<String, String> streamingAdapter = new KeyValueStreamingAdapter<>();

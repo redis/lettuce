@@ -61,14 +61,14 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
+    public void openConnection() {
         redisClusterConnection = redisClusterClient.connect();
         redis = redisClusterConnection.sync();
         ClusterTestUtil.flushDatabaseOfAllNodes(redisClusterConnection);
     }
 
     @Test
-    public void dispatchSet() throws Exception {
+    public void dispatchSet() {
 
         String response = redis.dispatch(CustomCommandTest.MyCommands.SET, new StatusOutput<>(utf8StringCodec),
                 new CommandArgs<>(utf8StringCodec).addKey(key).addValue(value));
@@ -77,7 +77,7 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void dispatchWithoutArgs() throws Exception {
+    public void dispatchWithoutArgs() {
 
         String response = redis.dispatch(CustomCommandTest.MyCommands.INFO, new StatusOutput<>(utf8StringCodec));
 
@@ -85,14 +85,14 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test(expected = RedisCommandExecutionException.class)
-    public void dispatchShouldFailForWrongDataType() throws Exception {
+    public void dispatchShouldFailForWrongDataType() {
 
         redis.hset(key, key, value);
         redis.dispatch(CommandType.GET, new StatusOutput<>(utf8StringCodec), new CommandArgs<>(utf8StringCodec).addKey(key));
     }
 
     @Test
-    public void clusterAsyncPing() throws Exception {
+    public void clusterAsyncPing() {
 
         RedisCommand<String, String, String> command = new Command<>(CustomCommandTest.MyCommands.PING, new StatusOutput<>(
                 utf8StringCodec), null);
@@ -100,11 +100,11 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         redisClusterConnection.dispatch(async);
 
-        assertThat(async.get()).isEqualTo("PONG");
+        assertThat(async.join()).isEqualTo("PONG");
     }
 
     @Test
-    public void clusterAsyncBatchPing() throws Exception {
+    public void clusterAsyncBatchPing() {
 
         RedisCommand<String, String, String> command1 = new Command<>(CustomCommandTest.MyCommands.PING, new StatusOutput<>(
                 utf8StringCodec), null);
@@ -116,12 +116,12 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
         AsyncCommand<String, String, String> async2 = new AsyncCommand<>(command2);
         redisClusterConnection.dispatch(Arrays.asList(async1, async2));
 
-        assertThat(async1.get()).isEqualTo("PONG");
-        assertThat(async2.get()).isEqualTo("PONG");
+        assertThat(async1.join()).isEqualTo("PONG");
+        assertThat(async2.join()).isEqualTo("PONG");
     }
 
     @Test
-    public void clusterAsyncBatchSet() throws Exception {
+    public void clusterAsyncBatchSet() {
 
         RedisCommand<String, String, String> command1 = new Command<>(CommandType.SET, new StatusOutput<>(utf8StringCodec),
                 new CommandArgs<>(utf8StringCodec).addKey("key1").addValue("value"));
@@ -137,13 +137,13 @@ public class CustomClusterCommandTest extends AbstractClusterTest {
         AsyncCommand<String, String, String> async3 = new AsyncCommand<>(command3);
         redisClusterConnection.dispatch(Arrays.asList(async1, async2, async3));
 
-        assertThat(async1.get()).isEqualTo("OK");
-        assertThat(async2.get()).isEqualTo("value");
-        assertThat(async3.get()).isEqualTo("OK");
+        assertThat(async1.join()).isEqualTo("OK");
+        assertThat(async2.join()).isEqualTo("value");
+        assertThat(async3.join()).isEqualTo("OK");
     }
 
     @Test
-    public void clusterFireAndForget() throws Exception {
+    public void clusterFireAndForget() {
 
         RedisCommand<String, String, String> command = new Command<>(CustomCommandTest.MyCommands.PING, new StatusOutput<>(
                 utf8StringCodec), null);

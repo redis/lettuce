@@ -38,7 +38,7 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     protected final Utf8StringCodec utf8StringCodec = new Utf8StringCodec();
 
     @Test
-    public void dispatchSet() throws Exception {
+    public void dispatchSet() {
 
         String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(utf8StringCodec),
                 new CommandArgs<>(utf8StringCodec).addKey(key).addValue(value));
@@ -47,7 +47,7 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void dispatchWithoutArgs() throws Exception {
+    public void dispatchWithoutArgs() {
 
         String response = redis.dispatch(MyCommands.INFO, new StatusOutput<>(utf8StringCodec));
 
@@ -55,14 +55,14 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = RedisCommandExecutionException.class)
-    public void dispatchShouldFailForWrongDataType() throws Exception {
+    public void dispatchShouldFailForWrongDataType() {
 
         redis.hset(key, key, value);
         redis.dispatch(CommandType.GET, new StatusOutput<>(utf8StringCodec), new CommandArgs<>(utf8StringCodec).addKey(key));
     }
 
     @Test
-    public void dispatchTransactions() throws Exception {
+    public void dispatchTransactions() {
 
         redis.multi();
         String response = redis.dispatch(CommandType.SET, new StatusOutput<>(utf8StringCodec), new CommandArgs<>(
@@ -75,18 +75,18 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void standaloneAsyncPing() throws Exception {
+    public void standaloneAsyncPing() {
 
         RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec), null);
 
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         getStandaloneConnection().dispatch(async);
 
-        assertThat(async.get()).isEqualTo("PONG");
+        assertThat(async.join()).isEqualTo("PONG");
     }
 
     @Test
-    public void standaloneAsyncBatchPing() throws Exception {
+    public void standaloneAsyncBatchPing() {
 
         RedisCommand<String, String, String> command1 = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec),
                 null);
@@ -98,12 +98,12 @@ public class CustomCommandTest extends AbstractRedisClientTest {
         AsyncCommand<String, String, String> async2 = new AsyncCommand<>(command2);
         getStandaloneConnection().dispatch(Arrays.asList(async1, async2));
 
-        assertThat(async1.get()).isEqualTo("PONG");
-        assertThat(async2.get()).isEqualTo("PONG");
+        assertThat(async1.join()).isEqualTo("PONG");
+        assertThat(async2.join()).isEqualTo("PONG");
     }
 
     @Test
-    public void standaloneAsyncBatchTransaction() throws Exception {
+    public void standaloneAsyncBatchTransaction() {
 
         RedisCommand<String, String, String> multi = new Command<>(CommandType.MULTI, new StatusOutput<>(utf8StringCodec));
 
@@ -117,16 +117,16 @@ public class CustomCommandTest extends AbstractRedisClientTest {
         AsyncCommand<String, String, TransactionResult> async3 = new AsyncCommand<>(exec);
         getStandaloneConnection().dispatch(Arrays.asList(async1, async2, async3));
 
-        assertThat(async1.get()).isEqualTo("OK");
-        assertThat(async2.get()).isEqualTo("OK");
+        assertThat(async1.join()).isEqualTo("OK");
+        assertThat(async2.join()).isEqualTo("OK");
 
-        TransactionResult transactionResult = async3.get();
+        TransactionResult transactionResult = async3.join();
         assertThat(transactionResult.wasRolledBack()).isFalse();
         assertThat(transactionResult.<String> get(0)).isEqualTo("OK");
     }
 
     @Test
-    public void standaloneFireAndForget() throws Exception {
+    public void standaloneFireAndForget() {
 
         RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec), null);
         getStandaloneConnection().dispatch(command);

@@ -32,6 +32,6 @@ public class KeyTxCommandTest extends KeyCommandTest {
 
     @Ignore
     @Override
-    public void move() throws Exception {
+    public void move() {
     }
 }

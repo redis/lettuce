@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.FixMethodOrder;
@@ -31,8 +32,8 @@ import org.junit.runners.MethodSorters;
 import io.lettuce.Wait;
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.RedisException;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.RedisNoScriptException;
+import io.lettuce.core.api.StatefulRedisConnection;
 
 /**
  * @author Will Glozer
@@ -44,7 +45,7 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
     public ExpectedException exception = ExpectedException.none();
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
 
         Wait.untilNoException(() -> {
             try {
@@ -58,7 +59,7 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void eval() throws Exception {
+    public void eval() {
         assertThat((Boolean) redis.eval("return 1 + 1 == 4", BOOLEAN)).isEqualTo(false);
         assertThat((Number) redis.eval("return 1 + 1", INTEGER)).isEqualTo(2L);
         assertThat((String) redis.eval("return {ok='status'}", STATUS)).isEqualTo("status");
@@ -69,28 +70,28 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void evalWithSingleKey() throws Exception {
+    public void evalWithSingleKey() {
         assertThat((List<?>) redis.eval("return KEYS[1]", MULTI, "one")).isEqualTo(list("one"));
     }
 
     @Test
-    public void evalReturningNullInMulti() throws Exception {
+    public void evalReturningNullInMulti() {
         assertThat((List<?>) redis.eval("return nil", MULTI, "one")).isEqualTo(Collections.singletonList(null));
     }
 
     @Test
-    public void evalWithKeys() throws Exception {
+    public void evalWithKeys() {
         assertThat((List<?>) redis.eval("return {KEYS[1], KEYS[2]}", MULTI, "one", "two")).isEqualTo(list("one", "two"));
     }
 
     @Test
-    public void evalWithArgs() throws Exception {
+    public void evalWithArgs() {
         String[] keys = new String[0];
         assertThat((List<?>) redis.eval("return {ARGV[1], ARGV[2]}", MULTI, keys, "a", "b")).isEqualTo(list("a", "b"));
     }
 
     @Test
-    public void evalsha() throws Exception {
+    public void evalsha() {
         redis.scriptFlush();
         String script = "return 1 + 1";
         String digest = redis.digest(script);
@@ -102,7 +103,7 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void evalshaWithMulti() throws Exception {
+    public void evalshaWithMulti() {
         redis.scriptFlush();
         String digest = redis.digest("return {1234, 5678}");
         exception.expect(RedisNoScriptException.class);
@@ -111,14 +112,14 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void evalshaWithKeys() throws Exception {
+    public void evalshaWithKeys() {
         redis.scriptFlush();
         String digest = redis.scriptLoad("return {KEYS[1], KEYS[2]}");
         assertThat((Object) redis.evalsha(digest, MULTI, "one", "two")).isEqualTo(list("one", "two"));
     }
 
     @Test
-    public void evalshaWithArgs() throws Exception {
+    public void evalshaWithArgs() {
         redis.scriptFlush();
         String digest = redis.scriptLoad("return {ARGV[1], ARGV[2]}");
         String[] keys = new String[0];
@@ -126,7 +127,7 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void script() throws Exception {
+    public void script() throws InterruptedException {
         assertThat(redis.scriptFlush()).isEqualTo("OK");
 
         String script1 = "return 1 + 1";
@@ -145,8 +146,8 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
         redis.configSet("lua-time-limit", "10");
         StatefulRedisConnection<String, String> connection = client.connect();
         try {
-            connection.async().eval("while true do end", STATUS, new String[0]);
-            Thread.sleep(100);
+            connection.async().eval("while true do end", STATUS, new String[0]).await(100, TimeUnit.MILLISECONDS);
+
             assertThat(redis.scriptKill()).isEqualTo("OK");
         } finally {
             connection.close();

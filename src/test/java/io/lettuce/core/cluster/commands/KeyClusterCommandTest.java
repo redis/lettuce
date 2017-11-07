@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
+    public void openConnection() {
         redis = connect();
         ClusterTestUtil.flushDatabaseOfAllNodes(clusterConnection);
     }
@@ -67,7 +67,7 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void del() throws Exception {
+    public void del() {
 
         redis.set(key, "value");
         redis.set("a", "value");
@@ -80,7 +80,7 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void exists() throws Exception {
+    public void exists() {
 
         assertThat(redis.exists(key, "a", "b")).isEqualTo(0);
 
@@ -92,7 +92,7 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void touch() throws Exception {
+    public void touch() {
 
         assumeTrue(RedisConditions.of(redis).hasCommand("TOUCH"));
 
@@ -105,7 +105,7 @@ public class KeyClusterCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void unlink() throws Exception {
+    public void unlink() {
 
         assumeTrue(RedisConditions.of(redis).hasCommand("UNLINK"));
 

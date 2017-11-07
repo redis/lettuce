@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@ package io.lettuce.core.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
-
-import io.lettuce.core.TransactionResult;
-import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -28,6 +24,7 @@ import org.junit.rules.ExpectedException;
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.sync.RedisCommands;
 
 /**
@@ -39,7 +36,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     public ExpectedException exception = ExpectedException.none();
 
     @Test
-    public void discard() throws Exception {
+    public void discard() {
         assertThat(redis.multi()).isEqualTo("OK");
         redis.set(key, value);
         assertThat(redis.discard()).isEqualTo("OK");
@@ -47,7 +44,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void exec() throws Exception {
+    public void exec() {
         assertThat(redis.multi()).isEqualTo("OK");
         redis.set(key, value);
         assertThat(redis.exec()).contains("OK");
@@ -55,7 +52,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void watch() throws Exception {
+    public void watch() {
         assertThat(redis.watch(key)).isEqualTo("OK");
 
         RedisCommands<String, String> redis2 = client.connect().sync();
@@ -73,12 +70,12 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void unwatch() throws Exception {
+    public void unwatch() {
         assertThat(redis.unwatch()).isEqualTo("OK");
     }
 
     @Test
-    public void commandsReturnNullInMulti() throws Exception {
+    public void commandsReturnNullInMulti() {
 
         assertThat(redis.multi()).isEqualTo("OK");
         assertThat(redis.set(key, value)).isNull();
@@ -92,7 +89,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void execmulti() throws Exception {
+    public void execmulti() {
         redis.multi();
         redis.set("one", "1");
         redis.set("two", "2");
@@ -102,7 +99,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void emptyMulti() throws Exception {
+    public void emptyMulti() {
         redis.multi();
         TransactionResult exec = redis.exec();
         assertThat(exec.wasRolledBack()).isFalse();
@@ -110,7 +107,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void errorInMulti() throws Exception {
+    public void errorInMulti() {
         redis.multi();
         redis.set(key, value);
         redis.lpop(key);
@@ -123,7 +120,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void execWithoutMulti() throws Exception {
+    public void execWithoutMulti() {
         exception.expect(RedisCommandExecutionException.class);
         exception.expectMessage("ERR EXEC without MULTI");
         redis.exec();

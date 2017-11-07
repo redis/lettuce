@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
 
 import reactor.test.StepVerifier;
-
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -50,7 +49,7 @@ public class BitReactiveCommandTest extends BitCommandTest {
     }
 
     @Test
-    public void bitfield() throws Exception {
+    public void bitfield() {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).set(5, 1).incrBy(2, 3).get().get(2);
 
@@ -61,7 +60,7 @@ public class BitReactiveCommandTest extends BitCommandTest {
     }
 
     @Test
-    public void bitfieldGetWithOffset() throws Exception {
+    public void bitfieldGetWithOffset() {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).get(signed(2), typeWidthBasedOffset(1));
 
@@ -71,7 +70,7 @@ public class BitReactiveCommandTest extends BitCommandTest {
     }
 
     @Test
-    public void bitfieldSet() throws Exception {
+    public void bitfieldSet() {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).set(5);
 
@@ -81,7 +80,7 @@ public class BitReactiveCommandTest extends BitCommandTest {
     }
 
     @Test
-    public void bitfieldWithOffsetSet() throws Exception {
+    public void bitfieldWithOffsetSet() {
 
         StepVerifier.create(reactive.bitfield(key, BitFieldArgs.Builder.set(signed(8), typeWidthBasedOffset(2), 5)))
                 .expectNextCount(1).verifyComplete();
@@ -95,7 +94,7 @@ public class BitReactiveCommandTest extends BitCommandTest {
     }
 
     @Test
-    public void bitfieldIncrBy() throws Exception {
+    public void bitfieldIncrBy() {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).incrBy(1);
 
@@ -105,7 +104,7 @@ public class BitReactiveCommandTest extends BitCommandTest {
     }
 
     @Test
-    public void bitfieldOverflow() throws Exception {
+    public void bitfieldOverflow() {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.overflow(FAIL).set(signed(8), 9, 5)
                 .incrBy(signed(8), Integer.MAX_VALUE);

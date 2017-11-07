@@ -22,7 +22,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import reactor.test.StepVerifier;
-
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.commands.GeoCommandTest;
@@ -40,7 +39,7 @@ public class GeoReactiveCommandTest extends GeoCommandTest {
 
     @Test
     @Override
-    public void geopos() throws Exception {
+    public void geopos() {
 
         RedisReactiveCommands<String, String> reactive = client.connect().reactive();
 
@@ -59,6 +58,6 @@ public class GeoReactiveCommandTest extends GeoCommandTest {
     @Test
     @Ignore("API differences")
     @Override
-    public void geoposWithTransaction() throws Exception {
+    public void geoposWithTransaction() {
     }
 }
