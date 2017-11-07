@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.WaitFor.waitOrTimeout;
 import static com.lambdaworks.Connections.getStatefulConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,8 +23,8 @@ import java.net.SocketAddress;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.code.tempusfugit.temporal.Timeout;
 import com.lambdaworks.TestClientResources;
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.resource.ClientResources;
@@ -62,7 +60,7 @@ public class RedisClientListenerTest extends AbstractTest {
 
         StatefulRedisConnection<String, String> statefulRedisConnection = getStatefulConnection(connection);
 
-        waitOrTimeout(() -> listener.onConnected != null, Timeout.timeout(seconds(2)));
+        Wait.untilTrue(() -> listener.onConnected != null).waitOrTimeout();
         assertThat(listener.onConnectedSocketAddress).isNotNull();
 
         assertThat(listener.onConnected).isEqualTo(statefulRedisConnection);
@@ -71,7 +69,7 @@ public class RedisClientListenerTest extends AbstractTest {
         connection.set(key, value).get();
         connection.close();
 
-        waitOrTimeout(() -> listener.onDisconnected != null, Timeout.timeout(seconds(2)));
+        Wait.untilTrue(() -> listener.onDisconnected != null).waitOrTimeout();
 
         assertThat(listener.onConnected).isEqualTo(statefulRedisConnection);
         assertThat(listener.onDisconnected).isEqualTo(statefulRedisConnection);
@@ -93,7 +91,7 @@ public class RedisClientListenerTest extends AbstractTest {
         // that's the sut call
         client.connect().close();
 
-        waitOrTimeout(() -> retainedListener.onConnected != null, Timeout.timeout(seconds(2)));
+        Wait.untilTrue(() -> retainedListener.onConnected != null).waitOrTimeout();
 
         assertThat(retainedListener.onConnected).isNotNull();
 

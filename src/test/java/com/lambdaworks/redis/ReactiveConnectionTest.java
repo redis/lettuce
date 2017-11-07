@@ -15,14 +15,15 @@
  */
 package com.lambdaworks.redis;
 
-import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -50,20 +51,20 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     private StatefulRedisConnection<String, String> stateful;
 
     @Before
-    public void openReactiveConnection() throws Exception {
+    public void openReactiveConnection() {
         stateful = client.connect();
         reactive = stateful.reactive();
     }
 
     @After
-    public void closeReactiveConnection() throws Exception {
+    public void closeReactiveConnection() {
         reactive.close();
     }
 
     @Test
-    public void doNotFireCommandUntilObservation() throws Exception {
+    public void doNotFireCommandUntilObservation() {
         Observable<String> set = reactive.set(key, value);
-        Delay.delay(millis(200));
+        Delay.delay(Duration.ofMillis(200));
         assertThat(redis.get(key)).isNull();
         set.subscribe();
         Wait.untilEquals(value, () -> redis.get(key)).waitOrTimeout();
@@ -72,18 +73,18 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void fireCommandAfterObserve() throws Exception {
+    public void fireCommandAfterObserve() {
         assertThat(reactive.set(key, value).toBlocking().first()).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
-    public void isOpen() throws Exception {
+    public void isOpen() {
         assertThat(reactive.isOpen()).isTrue();
     }
 
     @Test
-    public void getStatefulConnection() throws Exception {
+    public void getStatefulConnection() {
         assertThat(reactive.getStatefulConnection()).isSameAs(stateful);
     }
 
@@ -143,15 +144,15 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void auth() throws Exception {
+    public void auth() {
         List<Throwable> errors = new ArrayList<>();
         reactive.auth("error").doOnError(errors::add).subscribe(new TestSubscriber<>());
-        Delay.delay(millis(50));
+        Delay.delay(Duration.ofMillis(50));
         assertThat(errors).hasSize(1);
     }
 
     @Test
-    public void subscriberCompletingWithExceptionShouldBeHandledSafely() throws Exception {
+    public void subscriberCompletingWithExceptionShouldBeHandledSafely() throws ExecutionException, InterruptedException {
 
         Observable.concat(reactive.set("keyA", "valueA"), reactive.set("keyB", "valueB")).toBlocking().last();
 

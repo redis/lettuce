@@ -51,7 +51,7 @@ public class PubSubClusterTest extends AbstractClusterTest {
     private StatefulRedisPubSubConnection<String, String> pubSubConnection2;
 
     @Before
-    public void openPubSubConnection() throws Exception {
+    public void openPubSubConnection() {
 
         pubSubConnection = clusterClient.connectPubSub();
         pubSubConnection2 = clusterClient.connectPubSub();
@@ -60,7 +60,7 @@ public class PubSubClusterTest extends AbstractClusterTest {
     }
 
     @After
-    public void closePubSubConnection() throws Exception {
+    public void closePubSubConnection() {
         pubSubConnection.close();
         pubSubConnection2.close();
     }

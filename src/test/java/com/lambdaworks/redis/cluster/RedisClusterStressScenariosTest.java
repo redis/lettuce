@@ -15,8 +15,6 @@
  */
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,9 +27,6 @@ import org.apache.logging.log4j.Logger;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
-import com.google.code.tempusfugit.temporal.Duration;
-import com.google.code.tempusfugit.temporal.ThreadSleep;
-import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
@@ -65,11 +60,10 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     public ClusterRule clusterRule = new ClusterRule(clusterClient, AbstractClusterTest.port5, AbstractClusterTest.port6);
 
     @BeforeClass
-    public static void setupClient() throws Exception {
+    public static void setupClient() {
         client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
         clusterClient = RedisClusterClient.create(TestClientResources.get(),
-                Collections.singletonList(RedisURI.Builder.redis(host, AbstractClusterTest.port5)
-                .build()));
+                Collections.singletonList(RedisURI.Builder.redis(host, AbstractClusterTest.port5).build()));
     }
 
     @AfterClass
@@ -89,14 +83,12 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
         redissync6 = redis6.sync();
         clusterClient.reloadPartitions();
 
-        WaitFor.waitOrTimeout(() -> {
-            return clusterRule.isStable();
-        }, timeout(seconds(5)), new ThreadSleep(Duration.millis(500)));
+        Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
 
     }
 
     @After
-    public void after() throws Exception {
+    public void after() {
         redis5.close();
 
         redissync5.close();
@@ -104,11 +96,11 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     }
 
     @Test
-    public void testClusterFailover() throws Exception {
+    public void testClusterFailover() {
 
         log.info("Cluster node 5 is master");
         log.info("Cluster nodes seen from node 5:\n" + redissync5.clusterNodes());
-        log.info("Cluster nodes seen from node 6:\n"  + redissync6.clusterNodes());
+        log.info("Cluster nodes seen from node 6:\n" + redissync6.clusterNodes());
 
         Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.MASTER)).waitOrTimeout();
         Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.SLAVE)).waitOrTimeout();
@@ -131,12 +123,12 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
     }
 
     @Test
-    public void testClusterConnectionStability() throws Exception {
+    public void testClusterConnectionStability() {
 
         RedisAdvancedClusterAsyncCommandsImpl<String, String> connection = (RedisAdvancedClusterAsyncCommandsImpl<String, String>) clusterClient
                 .connectClusterAsync();
 
-        RedisChannelHandler<String, String> statefulConnection = (RedisChannelHandler) connection.getStatefulConnection();
+        RedisChannelHandler<String, String> statefulConnection = connection.getStatefulConnection();
 
         connection.set("a", "b");
         ClusterDistributionChannelWriter<String, String> writer = (ClusterDistributionChannelWriter) statefulConnection
@@ -150,7 +142,7 @@ public class RedisClusterStressScenariosTest extends AbstractTest {
         slotConnection.set("a", "b");
         slotConnection.close();
 
-        WaitFor.waitOrTimeout(() -> !slotConnection.isOpen(), timeout(seconds(5)));
+        Wait.untilTrue(() -> !slotConnection.isOpen()).waitOrTimeout();
 
         assertThat(statefulSlotConnection.isClosed()).isTrue();
         assertThat(statefulSlotConnection.isOpen()).isFalse();

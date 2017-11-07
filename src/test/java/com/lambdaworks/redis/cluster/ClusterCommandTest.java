@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,15 @@
  */
 package com.lambdaworks.redis.cluster;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
-import static com.google.code.tempusfugit.temporal.Timeout.timeout;
 import static com.lambdaworks.redis.cluster.ClusterTestUtil.getNodeId;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
+import com.lambdaworks.Wait;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
-import com.google.code.tempusfugit.temporal.WaitFor;
 import com.lambdaworks.TestClientResources;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
@@ -48,7 +45,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     protected RedisClusterCommands<String, String> sync;
 
     @BeforeClass
-    public static void setupClient() throws Exception {
+    public static void setupClient() {
         client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
         clusterClient = RedisClusterClient.create(TestClientResources.get(),
                 LettuceLists.newList(RedisURI.Builder.redis(host, port1).build()));
@@ -72,7 +69,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @After
-    public void after() throws Exception {
+    public void after() {
         connection.close();
     }
 
@@ -111,7 +108,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testClusterNodes() throws Exception {
+    public void testClusterNodes() {
 
         String result = sync.clusterNodes();
 
@@ -121,7 +118,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testClusterNodesSync() throws Exception {
+    public void testClusterNodesSync() {
 
         RedisClusterConnection<String, String> connection = clusterClient.connectCluster();
 
@@ -142,7 +139,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testAsking() throws Exception {
+    public void testAsking() {
         assertThat(sync.asking()).isEqualTo("OK");
     }
 
@@ -152,6 +149,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
         clusterClient.reloadPartitions();
         RedisAdvancedClusterAsyncCommandsImpl<String, String> connection = (RedisAdvancedClusterAsyncCommandsImpl) clusterClient
                 .connectClusterAsync();
+
 
         RedisFuture<String> setA = connection.set("a", "myValue1");
         setA.get();
@@ -168,7 +166,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void testClusterSlots() throws Exception {
+    public void testClusterSlots() {
 
         List<Object> reply = sync.clusterSlots();
         assertThat(reply.size()).isGreaterThan(1);
@@ -229,13 +227,11 @@ public class ClusterCommandTest extends AbstractClusterTest {
 
     }
 
-    protected void waitUntilValueIsVisible(String key, RedisConnection<String, String> connection) throws InterruptedException,
-            TimeoutException {
-        WaitFor.waitOrTimeout(() -> connection.get(key) != null, timeout(seconds(5)));
+    protected void waitUntilValueIsVisible(String key, RedisConnection<String, String> connection) {
+        Wait.untilTrue(() -> connection.get(key) != null).waitOrTimeout();
     }
 
-    protected void prepareReadonlyTest(String key) throws InterruptedException, TimeoutException,
-            java.util.concurrent.ExecutionException {
+    protected void prepareReadonlyTest(String key) throws InterruptedException, java.util.concurrent.ExecutionException {
 
         async.set(key, value);
 
@@ -273,7 +269,7 @@ public class ClusterCommandTest extends AbstractClusterTest {
     }
 
     @Test
-    public void clusterSlaves() throws Exception {
+    public void clusterSlaves() {
 
         String nodeId = getNodeId(sync);
         List<String> result = sync.clusterSlaves(nodeId);

@@ -15,10 +15,10 @@
  */
 package com.lambdaworks.redis.pubsub;
 
-import static com.google.code.tempusfugit.temporal.Duration.millis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +32,7 @@ import org.junit.Test;
 import rx.Observable;
 import rx.Subscription;
 import rx.observables.BlockingObservable;
+
 import com.lambdaworks.Delay;
 import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
@@ -65,7 +66,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     private String message = "msg!";
 
     @Before
-    public void openPubSubConnection() throws Exception {
+    public void openPubSubConnection() {
 
         pubsub = client.connectPubSub().reactive();
         pubsub2 = client.connectPubSub().reactive();
@@ -77,7 +78,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     }
 
     @After
-    public void closePubSubConnection() throws Exception {
+    public void closePubSubConnection() {
         pubsub.close();
         pubsub2.close();
     }
@@ -100,7 +101,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
 
         subscription.unsubscribe();
         redis.publish(channel, message);
-        Delay.delay(millis(500));
+        Delay.delay(Duration.ofMillis(500));
         assertThat(channelMessages).hasSize(3);
 
         ChannelMessage<String, String> channelMessage = channelMessages.take();
@@ -109,7 +110,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     }
 
     @Test
-    public void observeChannelsUnsubscribe() throws Exception {
+    public void observeChannelsUnsubscribe() {
 
         block(pubsub.subscribe(channel));
 
@@ -120,7 +121,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         block(redis.getStatefulConnection().reactive().publish(channel, message));
         block(redis.getStatefulConnection().reactive().publish(channel, message));
 
-        Delay.delay(millis(500));
+        Delay.delay(Duration.ofMillis(500));
         assertThat(channelMessages).isEmpty();
     }
 
@@ -147,7 +148,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     }
 
     @Test
-    public void observePatternsWithUnsubscribe() throws Exception {
+    public void observePatternsWithUnsubscribe() {
 
         block(pubsub.psubscribe(pattern));
 
@@ -167,7 +168,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
         redis.publish(channel, message);
         redis.publish(channel, message);
 
-        Delay.delay(millis(500));
+        Delay.delay(Duration.ofMillis(500));
 
         assertThat(patternMessages).hasSize(3);
     }
@@ -211,14 +212,14 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void pubsubEmptyChannels() throws Exception {
+    public void pubsubEmptyChannels() {
 
         pubsub.subscribe();
         fail("Missing IllegalArgumentException: channels must not be empty");
     }
 
     @Test
-    public void pubsubChannels() throws Exception {
+    public void pubsubChannels() {
 
         block(pubsub.subscribe(channel));
         List<String> result = first(pubsub2.pubsubChannels().toList());
@@ -226,7 +227,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     }
 
     @Test
-    public void pubsubMultipleChannels() throws Exception {
+    public void pubsubMultipleChannels() {
 
         block(pubsub.subscribe(channel, "channel1", "channel3"));
 
@@ -235,7 +236,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     }
 
     @Test
-    public void pubsubChannelsWithArg() throws Exception {
+    public void pubsubChannelsWithArg() {
 
         pubsub.subscribe(channel).subscribe();
         Wait.untilTrue(() -> first(pubsub2.pubsubChannels(pattern).filter(s -> channel.equals(s))) != null).waitOrTimeout();
@@ -245,7 +246,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     }
 
     @Test
-    public void pubsubNumsub() throws Exception {
+    public void pubsubNumsub() {
 
         pubsub.subscribe(channel).subscribe();
         Wait.untilEquals(1, () -> first(pubsub2.pubsubNumsub(channel).toList()).size()).waitOrTimeout();
@@ -256,7 +257,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     }
 
     @Test
-    public void pubsubNumpat() throws Exception {
+    public void pubsubNumpat() {
 
         Wait.untilEquals(0L, () -> first(pubsub2.pubsubNumpat())).waitOrTimeout();
 
@@ -299,7 +300,7 @@ public class PubSubRxTest extends AbstractRedisClientTest implements RedisPubSub
     }
 
     @Test
-    public void pubsubCloseOnClientShutdown() throws Exception {
+    public void pubsubCloseOnClientShutdown() {
 
         RedisClient redisClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
         RedisPubSubCommands<String, String> connection = redisClient.connectPubSub().sync();

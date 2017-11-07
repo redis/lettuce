@@ -15,11 +15,11 @@
  */
 package com.lambdaworks.redis.sentinel;
 
-import static com.google.code.tempusfugit.temporal.Duration.seconds;
 import static com.lambdaworks.Delay.delay;
 import static com.lambdaworks.redis.TestSettings.port;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,7 +73,7 @@ public class SentinelFailoverTest extends AbstractSentinelTest {
         sentinelRule.waitForConnectedSlaves(MASTER_ID);
         sentinel.failover(MASTER_ID);
 
-        delay(seconds(5));
+        delay(Duration.ofMillis(5));
 
         sentinelRule.waitForConnectedSlaves(MASTER_ID);
 
