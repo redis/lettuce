@@ -16,6 +16,7 @@
 package io.lettuce.core;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.RedisCommand;
@@ -40,6 +41,11 @@ public class EmptyRedisChannelWriter implements RedisChannelWriter {
     @Override
     public void close() {
 
+    }
+
+    @Override
+    public CompletableFuture<Void> closeAsync() {
+        return null;
     }
 
     @Override
