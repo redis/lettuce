@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,26 +62,26 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void getMasterAddr() throws Exception {
+    public void getMasterAddr() {
         SocketAddress result = sentinel.getMasterAddrByName(MASTER_ID);
         InetSocketAddress socketAddress = (InetSocketAddress) result;
-        assertThat(socketAddress.getHostName()).contains(TestSettings.host());
+        assertThat(socketAddress.getHostName()).contains(TestSettings.hostAddr());
     }
 
     @Test
-    public void getMasterAddrButNoMasterPresent() throws Exception {
+    public void getMasterAddrButNoMasterPresent() {
         InetSocketAddress socketAddress = (InetSocketAddress) sentinel.getMasterAddrByName("unknown");
         assertThat(socketAddress).isNull();
     }
 
     @Test
-    public void getMasterAddrByName() throws Exception {
+    public void getMasterAddrByName() {
         InetSocketAddress socketAddress = (InetSocketAddress) sentinel.getMasterAddrByName(MASTER_ID);
         assertThat(socketAddress.getPort()).isBetween(6479, 6485);
     }
 
     @Test
-    public void masters() throws Exception {
+    public void masters() {
 
         List<Map<String, String>> result = sentinel.masters();
 
@@ -94,7 +94,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void sentinelConnectWith() throws Exception {
+    public void sentinelConnectWith() {
 
         RedisClient client = RedisClient.create(TestClientResources.get(),
                 RedisURI.Builder.sentinel(TestSettings.host(), 1234, MASTER_ID).withSentinel(TestSettings.host()).build());
@@ -116,7 +116,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void sentinelConnectWrongMaster() throws Exception {
+    public void sentinelConnectWrongMaster() {
 
         RedisClient client = RedisClient.create(TestClientResources.get(),
                 RedisURI.Builder.sentinel(TestSettings.host(), 1234, "nonexistent").withSentinel(TestSettings.host()).build());
@@ -130,7 +130,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void sentinelConnect() throws Exception {
+    public void sentinelConnect() {
 
         RedisClient client = DefaultRedisClient.get();
 
@@ -142,7 +142,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void getMaster() throws Exception {
+    public void getMaster() {
 
         Map<String, String> result = sentinel.master(MASTER_ID);
         assertThat(result.get("ip")).isEqualTo(hostAddr()); // !! IPv4/IPv6
@@ -169,7 +169,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void getSlaves() throws Exception {
+    public void getSlaves() {
 
         List<Map<String, String>> result = sentinel.slaves(MASTER_ID);
         assertThat(result).hasSize(1);
@@ -177,14 +177,14 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void reset() throws Exception {
+    public void reset() {
 
         Long result = sentinel.reset("other");
         assertThat(result.intValue()).isEqualTo(0);
     }
 
     @Test
-    public void failover() throws Exception {
+    public void failover() {
 
         try {
             sentinel.failover("other");
@@ -194,7 +194,7 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void monitor() throws Exception {
+    public void monitor() {
 
         try {
             sentinel.remove("mymaster2");
@@ -206,28 +206,28 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void ping() throws Exception {
+    public void ping() {
 
         String result = sentinel.ping();
         assertThat(result).isEqualTo("PONG");
     }
 
     @Test
-    public void set() throws Exception {
+    public void set() {
 
         String result = sentinel.set(MASTER_ID, "down-after-milliseconds", "1000");
         assertThat(result).isEqualTo("OK");
     }
 
     @Test
-    public void connectToRedisUsingSentinel() throws Exception {
+    public void connectToRedisUsingSentinel() {
         RedisCommands<String, String> connect = sentinelClient.connect().sync();
         connect.ping();
         connect.getStatefulConnection().close();
     }
 
     @Test
-    public void connectToRedisUsingSentinelWithReconnect() throws Exception {
+    public void connectToRedisUsingSentinelWithReconnect() {
         RedisCommands<String, String> connect = sentinelClient.connect().sync();
         connect.ping();
         connect.quit();
