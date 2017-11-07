@@ -49,7 +49,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     protected String key = "key";
 
     @Before
-    public void before() throws Exception {
+    public void before() {
         client.setOptions(ClientOptions.builder().autoReconnect(false).build());
 
         // needs to be increased on slow systems...perhaps...
@@ -62,7 +62,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void connectionIsConnectedAfterConnect() throws Exception {
+    public void connectionIsConnectedAfterConnect() {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
@@ -72,7 +72,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void noReconnectHandler() throws Exception {
+    public void noReconnectHandler() {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
@@ -83,7 +83,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void basicOperations() throws Exception {
+    public void basicOperations() {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
@@ -94,7 +94,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void noBufferedCommandsAfterExecute() throws Exception {
+    public void noBufferedCommandsAfterExecute() {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
@@ -107,7 +107,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandIsExecutedOnce() throws Exception {
+    public void commandIsExecutedOnce() {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
@@ -125,7 +125,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandNotExecutedFailsOnEncode() throws Exception {
+    public void commandNotExecutedFailsOnEncode() {
 
         RedisCommands<String, String> connection = client.connect().sync();
         RedisChannelWriter<String, String> channelWriter = getRedisChannelHandler(connection).getChannelWriter();
@@ -151,6 +151,9 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isFalse();
         assertThat(getException(command)).isInstanceOf(EncoderException.class);
+
+        Wait.untilTrue(() -> !getStack(getRedisChannelHandler(connection)).isEmpty()).waitOrTimeout();
+
         assertThat(getStack(getRedisChannelHandler(connection))).isNotEmpty();
         getStack(getRedisChannelHandler(connection)).clear();
 
@@ -163,7 +166,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandNotExecutedChannelClosesWhileFlush() throws Exception {
+    public void commandNotExecutedChannelClosesWhileFlush() {
 
         assumeTrue(Version.identify().get("netty-transport").artifactVersion().startsWith("4.0.2"));
 
@@ -211,7 +214,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandFailsDuringDecode() throws Exception {
+    public void commandFailsDuringDecode() {
 
         RedisCommands<String, String> connection = client.connect().sync();
         RedisChannelWriter<String, String> channelWriter = getRedisChannelHandler(connection).getChannelWriter();
@@ -235,7 +238,7 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void noCommandsExecutedAfterConnectionIsDisconnected() throws Exception {
+    public void noCommandsExecutedAfterConnectionIsDisconnected() {
 
         RedisCommands<String, String> connection = client.connect().sync();
         connection.quit();
