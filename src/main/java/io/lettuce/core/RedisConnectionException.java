@@ -53,7 +53,33 @@ public class RedisConnectionException extends RedisException {
      * @since 4.4
      */
     public static RedisConnectionException create(SocketAddress remoteAddress, Throwable cause) {
+
+        if (remoteAddress == null) {
+
+            if (cause instanceof RedisConnectionException) {
+                return new RedisConnectionException(cause.getMessage(), cause.getCause());
+            }
+
+            return new RedisConnectionException(null, cause);
+        }
+
         return new RedisConnectionException(String.format("Unable to connect to %s", remoteAddress), cause);
+    }
+
+    /**
+     * Create a new {@link RedisConnectionException} given {@link Throwable cause}.
+     *
+     * @param cause the exception.
+     * @return the {@link RedisConnectionException}.
+     * @since 5.1
+     */
+    public static RedisConnectionException create(Throwable cause) {
+
+        if (cause instanceof RedisConnectionException) {
+            return new RedisConnectionException(cause.getMessage(), cause.getCause());
+        }
+
+        return new RedisConnectionException("Unable to connect", cause);
     }
 
     /**

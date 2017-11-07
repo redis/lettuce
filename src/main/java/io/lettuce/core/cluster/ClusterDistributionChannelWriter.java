@@ -324,16 +324,30 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             return;
         }
 
+        closeAsync().join();
+    }
+
+    @Override
+    public CompletableFuture<Void> closeAsync() {
+
+        if (closed) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         closed = true;
 
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
         if (defaultWriter != null) {
-            defaultWriter.close();
+            futures.add(defaultWriter.closeAsync());
         }
 
         if (clusterConnectionProvider != null) {
-            clusterConnectionProvider.close();
+            futures.add(clusterConnectionProvider.closeAsync());
             clusterConnectionProvider = null;
         }
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     @Override

@@ -19,6 +19,7 @@ import static io.lettuce.core.TimeoutOptions.TimeoutSource;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -126,6 +127,11 @@ public class CommandExpiryWriter implements RedisChannelWriter {
     @Override
     public void close() {
         writer.close();
+    }
+
+    @Override
+    public CompletableFuture<Void> closeAsync() {
+        return writer.closeAsync();
     }
 
     @Override

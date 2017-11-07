@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.*;
@@ -42,7 +43,7 @@ public class ConnectionBuilder {
     private static final Supplier<AsyncCommand<?, ?, ?>> PING_COMMAND_SUPPLIER = () -> new AsyncCommand<>(
             INITIALIZING_CMD_BUILDER.ping());
 
-    private Supplier<SocketAddress> socketAddressSupplier;
+    private Mono<SocketAddress> socketAddressSupplier;
     private ConnectionEvents connectionEvents;
     private RedisChannelHandler<?, ?> connection;
     private Endpoint endpoint;
@@ -122,14 +123,14 @@ public class ConnectionBuilder {
         return new PlainChannelInitializer(pingCommandSupplier, this::buildHandlers, clientResources, timeout);
     }
 
-    public ConnectionBuilder socketAddressSupplier(Supplier<SocketAddress> socketAddressSupplier) {
+    public ConnectionBuilder socketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
         this.socketAddressSupplier = socketAddressSupplier;
         return this;
     }
 
-    public SocketAddress socketAddress() {
+    public Mono<SocketAddress> socketAddress() {
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set");
-        return socketAddressSupplier.get();
+        return socketAddressSupplier;
     }
 
     public ConnectionBuilder timeout(Duration timeout) {

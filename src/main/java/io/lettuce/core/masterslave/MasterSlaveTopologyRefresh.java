@@ -50,7 +50,7 @@ class MasterSlaveTopologyRefresh {
 
     public MasterSlaveTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
 
-        this.nodeConnectionFactory = new ReflectiveNodeConnectionFactory(client);
+        this.nodeConnectionFactory = new RedisClientNodeConnectionFactory(client);
         this.topologyProvider = topologyProvider;
     }
 

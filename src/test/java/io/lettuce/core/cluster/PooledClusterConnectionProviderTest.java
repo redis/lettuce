@@ -70,7 +70,9 @@ public class PooledClusterConnectionProviderTest {
     @Mock
     RedisChannelWriter writerMock;
 
-    @Mock
+    @Mock(extraInterfaces = StatefulRedisConnection.class)
+    RedisChannelHandler<String, String> channelHandlerMock;
+
     StatefulRedisConnection<String, String> nodeConnectionMock;
 
     @Mock
@@ -86,6 +88,8 @@ public class PooledClusterConnectionProviderTest {
 
     @Before
     public void before() {
+
+        nodeConnectionMock = (StatefulRedisConnection) channelHandlerMock;
 
         sut = new PooledClusterConnectionProvider<>(clientMock, writerMock, CODEC);
 
@@ -259,6 +263,7 @@ public class PooledClusterConnectionProviderTest {
     @Test
     public void shouldCloseConnections() {
 
+        when(channelHandlerMock.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
         when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:1"), any(), any())).thenReturn(
                 Futures.createConnectionFuture(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
 
@@ -267,7 +272,6 @@ public class PooledClusterConnectionProviderTest {
 
         sut.close();
 
-        verify(nodeConnectionMock).close();
+        verify(channelHandlerMock).closeAsync();
     }
-
 }

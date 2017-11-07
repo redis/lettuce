@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
+    public void openConnection() {
         connection = sentinelClient.connectSentinel();
         sentinel = connection.sync();
         sentinelAsync = connection.async();
@@ -83,14 +83,14 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void testStatefulConnection() throws Exception {
+    public void testStatefulConnection() {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         assertThat(statefulConnection).isSameAs(statefulConnection.async().getStatefulConnection());
     }
 
     @Test
-    public void testSyncConnection() throws Exception {
+    public void testSyncConnection() {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         RedisSentinelCommands<String, String> sync = statefulConnection.sync();
@@ -98,7 +98,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void testSyncAsyncConversion() throws Exception {
+    public void testSyncAsyncConversion() {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         assertThat(statefulConnection.sync().getStatefulConnection()).isSameAs(statefulConnection);
@@ -106,7 +106,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void testSyncClose() throws Exception {
+    public void testSyncClose() {
 
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         statefulConnection.sync().getStatefulConnection().close();
@@ -118,7 +118,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void testAsyncClose() throws Exception {
+    public void testAsyncClose() {
         StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
         statefulConnection.async().getStatefulConnection().close();
 
@@ -129,7 +129,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void connectToOneNode() throws Exception {
+    public void connectToOneNode() {
         RedisSentinelCommands<String, String> connection = sentinelClient.connectSentinel(
                 RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build()).sync();
         assertThat(connection.ping()).isEqualTo("PONG");
@@ -137,14 +137,14 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void connectWithByteCodec() throws Exception {
+    public void connectWithByteCodec() {
         RedisSentinelCommands<byte[], byte[]> connection = sentinelClient.connectSentinel(new ByteArrayCodec()).sync();
         assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
         connection.getStatefulConnection().close();
     }
 
     @Test
-    public void sentinelConnectionPingBeforeConnectShouldDiscardPassword() throws Exception {
+    public void sentinelConnectionPingBeforeConnectShouldDiscardPassword() {
 
         RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withPassword("hello-world").build();
 
@@ -159,7 +159,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void sentinelConnectionShouldSetClientName() throws Exception {
+    public void sentinelConnectionShouldSetClientName() {
 
         RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withClientName("my-client").build();
 
@@ -171,7 +171,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void sentinelManagedConnectionShouldSetClientName() throws Exception {
+    public void sentinelManagedConnectionShouldSetClientName() {
 
         RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withClientName("my-client").build();
 

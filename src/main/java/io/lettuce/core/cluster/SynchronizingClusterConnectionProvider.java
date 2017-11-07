@@ -16,6 +16,8 @@
 package io.lettuce.core.cluster;
 
 import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -25,6 +27,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulConnection;
@@ -137,12 +140,27 @@ class SynchronizingClusterConnectionProvider<K, V> {
      * Close all connections. Pending connections are closed using future chaining.
      */
     public void close() {
+        closeAsync().join();
+    }
+
+    /**
+     * Close all connections. Pending connections are closed using future chaining.
+     */
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<Void> closeAsync() {
 
         this.closed = true;
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
         forEach((connectionKey, connection) -> {
-            connection.close();
+
+            RedisChannelHandler handler = (RedisChannelHandler) connection;
+            futures.add(handler.closeAsync());
             connections.remove(connectionKey);
         });
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     /**

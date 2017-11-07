@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -30,6 +31,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -50,7 +52,9 @@ public class MasterSlaveConnectionProviderTest {
     @Mock
     RedisClient clientMock;
 
-    @Mock
+    @Mock(extraInterfaces = StatefulRedisConnection.class)
+    RedisChannelHandler<String, String> channelHandlerMock;
+
     StatefulRedisConnection<String, String> nodeConnectionMock;
 
     @Mock
@@ -59,6 +63,7 @@ public class MasterSlaveConnectionProviderTest {
     @Before
     public void before() {
 
+        nodeConnectionMock = (StatefulRedisConnection) channelHandlerMock;
         sut = new MasterSlaveConnectionProvider<>(clientMock, CODEC, RedisURI.create("localhost", 1), Collections.emptyMap());
         sut.setKnownNodes(Arrays.asList(new RedisMasterSlaveNode("localhost", 1, RedisURI.create("localhost", 1),
                 RedisInstance.Role.MASTER)));
@@ -67,6 +72,8 @@ public class MasterSlaveConnectionProviderTest {
     @Test
     public void shouldCloseConnections() {
 
+        when(channelHandlerMock.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+
         when(clientMock.connect(eq(CODEC), any())).thenReturn(nodeConnectionMock);
 
         StatefulRedisConnection<String, String> connection = sut.getConnection(MasterSlaveConnectionProvider.Intent.READ);
@@ -74,7 +81,6 @@ public class MasterSlaveConnectionProviderTest {
 
         sut.close();
 
-        verify(nodeConnectionMock).close();
+        verify(channelHandlerMock).closeAsync();
     }
-
 }

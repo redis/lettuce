@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,6 +53,7 @@ import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultChannelPromise;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -250,6 +252,10 @@ public class DefaultEndpointTest {
     @Test
     public void closeCleansUpResources() {
 
+        ChannelFuture future = mock(ChannelFuture.class);
+        when(future.isSuccess()).thenReturn(true);
+        when(channel.close()).thenReturn(future);
+
         sut.notifyChannelActive(channel);
         sut.registerConnectionWatchdog(connectionWatchdog);
 
@@ -261,6 +267,10 @@ public class DefaultEndpointTest {
 
     @Test
     public void closeAllowsOnlyOneCall() {
+
+        ChannelFuture future = mock(ChannelFuture.class);
+        when(future.isSuccess()).thenReturn(true);
+        when(channel.close()).thenReturn(future);
 
         sut.notifyChannelActive(channel);
         sut.registerConnectionWatchdog(connectionWatchdog);

@@ -16,6 +16,7 @@
 package io.lettuce.core.masterslave;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelWriter;
@@ -116,17 +117,30 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
 
     @Override
     public void close() {
+        closeAsync().join();
+    }
+
+    @Override
+    public CompletableFuture<Void> closeAsync() {
 
         if (closed) {
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
         closed = true;
 
+        CompletableFuture<Void> future = null;
+
         if (masterSlaveConnectionProvider != null) {
-            masterSlaveConnectionProvider.close();
+            future = masterSlaveConnectionProvider.closeAsync();
             masterSlaveConnectionProvider = null;
         }
+
+        if (future == null) {
+            future = CompletableFuture.completedFuture(null);
+        }
+
+        return future;
     }
 
     public MasterSlaveConnectionProvider<K, V> getMasterSlaveConnectionProvider() {

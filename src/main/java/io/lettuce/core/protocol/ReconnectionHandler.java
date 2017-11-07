@@ -18,12 +18,9 @@ package io.lettuce.core.protocol;
 import java.net.ConnectException;
 import java.net.SocketAddress;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
+import java.util.concurrent.*;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelInitializer;
 import io.lettuce.core.RedisCommandTimeoutException;
@@ -51,7 +48,7 @@ class ReconnectionHandler {
 
     private final ClientOptions clientOptions;
     private final Bootstrap bootstrap;
-    private final Supplier<SocketAddress> socketAddressSupplier;
+    private final Mono<SocketAddress> socketAddressSupplier;
     private final Timer timer;
     private final ExecutorService reconnectWorkers;
     private final ConnectionFacade connectionFacade;
@@ -59,10 +56,10 @@ class ReconnectionHandler {
     private TimeUnit timeoutUnit = TimeUnit.SECONDS;
     private long timeout = 60;
 
-    private volatile ChannelFuture currentFuture;
+    private volatile CompletableFuture<Channel> currentFuture;
     private volatile boolean reconnectSuspended;
 
-    ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap, Supplier<SocketAddress> socketAddressSupplier,
+    ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap, Mono<SocketAddress> socketAddressSupplier,
             Timer timer, ExecutorService reconnectWorkers, ConnectionFacade connectionFacade) {
 
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
@@ -86,14 +83,37 @@ class ReconnectionHandler {
      *
      * @return reconnect {@link ChannelFuture}.
      */
-    protected ChannelFuture reconnect() {
+    protected CompletableFuture<Channel> reconnect() {
 
-        SocketAddress remoteAddress = socketAddressSupplier.get();
+        CompletableFuture<Channel> future = new CompletableFuture<>();
 
-        logger.debug("Reconnecting to Redis at {}", remoteAddress);
+        socketAddressSupplier.subscribe(remoteAddress -> {
+
+            if (future.isCancelled()) {
+                return;
+            }
+
+            reconnect0(future, remoteAddress);
+
+        }, future::completeExceptionally);
+
+        return this.currentFuture = future;
+    }
+
+    private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {
 
         ChannelFuture connectFuture = bootstrap.connect(remoteAddress);
         ChannelPromise initFuture = connectFuture.channel().newPromise();
+
+        logger.debug("Reconnecting to Redis at {}", remoteAddress);
+
+        result.whenComplete((c, t) -> {
+
+            if (t instanceof CancellationException) {
+                connectFuture.cancel(true);
+                initFuture.cancel(true);
+            }
+        });
 
         initFuture.addListener((ChannelFuture it) -> {
 
@@ -101,6 +121,9 @@ class ReconnectionHandler {
 
                 connectFuture.cancel(true);
                 close(it.channel());
+                result.completeExceptionally(it.cause());
+            } else {
+                result.complete(connectFuture.channel());
             }
         });
 
@@ -113,7 +136,6 @@ class ReconnectionHandler {
             }
 
             ChannelPipeline pipeline = it.channel().pipeline();
-
             RedisChannelInitializer channelInitializer = pipeline.get(RedisChannelInitializer.class);
 
             if (channelInitializer == null) {
@@ -180,8 +202,6 @@ class ReconnectionHandler {
         }, this.timeout, timeoutUnit);
 
         initFuture.addListener(it -> timeoutHandle.cancel());
-
-        return this.currentFuture = initFuture;
     }
 
     private void close(Channel channel) {
@@ -208,7 +228,7 @@ class ReconnectionHandler {
 
     void prepareClose() {
 
-        ChannelFuture currentFuture = this.currentFuture;
+        CompletableFuture<?> currentFuture = this.currentFuture;
         if (currentFuture != null && !currentFuture.isDone()) {
             currentFuture.cancel(true);
         }

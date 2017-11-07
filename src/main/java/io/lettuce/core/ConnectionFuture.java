@@ -58,7 +58,7 @@ public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
     /**
      * Return the remote {@link SocketAddress}.
      *
-     * @return the remote {@link SocketAddress}.
+     * @return the remote {@link SocketAddress}. May be {@literal null} until the socket address is resolved.
      */
     SocketAddress getRemoteAddress();
 

@@ -166,8 +166,6 @@ public class MasterSlave {
                 codec, redisURI.getTimeout());
         connection.setOptions(redisClient.getOptions());
 
-        connection.setOptions(redisClient.getOptions());
-
         Runnable runnable = () -> {
             try {
 

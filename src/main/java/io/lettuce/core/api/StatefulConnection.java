@@ -17,6 +17,7 @@ package io.lettuce.core.api;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.ClientOptions;
@@ -81,6 +82,16 @@ public interface StatefulConnection<K, V> extends AutoCloseable {
      * Close the connection. The connection will become not usable anymore as soon as this method was called.
      */
     void close();
+
+    /**
+     * Request to close the connection and return the {@link CompletableFuture} that is notified about its progress. The
+     * connection will become not usable anymore as soon as this method was called.
+     * 
+     * @return a {@link CompletableFuture} that is notified once the operation completes, either because the operation was
+     *         successful or because of an error.
+     * @since 5.1
+     */
+    CompletableFuture<Void> closeAsync();
 
     /**
      * @return true if the connection is open (connected and not closed).

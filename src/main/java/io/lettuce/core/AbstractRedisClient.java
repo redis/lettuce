@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.core.Transports.NativeTransports;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
@@ -139,7 +139,7 @@ public abstract class AbstractRedisClient {
      * @param connectionBuilder connection builder to configure the connection
      * @param redisURI URI of the redis instance
      */
-    protected void connectionBuilder(Supplier<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
+    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
             RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
@@ -238,6 +238,33 @@ public abstract class AbstractRedisClient {
     }
 
     /**
+     * Retrieve the connection from {@link ConnectionFuture}. Performs a blocking {@link ConnectionFuture#get()} to synchronize
+     * the channel/connection initialization. Any exception is rethrown as {@link RedisConnectionException}.
+     *
+     * @param connectionFuture must not be null.
+     * @param <T> Connection type.
+     * @return the connection.
+     * @throws RedisConnectionException in case of connection failures.
+     * @since 5.0
+     */
+    protected <T> T getConnection(CompletableFuture<T> connectionFuture) {
+
+        try {
+            return connectionFuture.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw RedisConnectionException.create(e);
+        } catch (Exception e) {
+
+            if (e instanceof ExecutionException) {
+                throw RedisConnectionException.create(e.getCause());
+            }
+
+            throw RedisConnectionException.create(e);
+        }
+    }
+
+    /**
      * Connect and initialize a channel from {@link ConnectionBuilder}.
      *
      * @param connectionBuilder must not be {@literal null}.
@@ -248,15 +275,33 @@ public abstract class AbstractRedisClient {
     protected <K, V, T extends RedisChannelHandler<K, V>> ConnectionFuture<T> initializeChannelAsync(
             ConnectionBuilder connectionBuilder) {
 
-        SocketAddress redisAddress = connectionBuilder.socketAddress();
+        Mono<SocketAddress> socketAddressSupplier = connectionBuilder.socketAddress();
 
         if (clientResources.eventExecutorGroup().isShuttingDown()) {
             throw new IllegalStateException("Cannot connect, Event executor group is terminated.");
         }
 
+        CompletableFuture<SocketAddress> socketAddressFuture = new CompletableFuture<>();
+        CompletableFuture<Channel> channelReadyFuture = new CompletableFuture<>();
+
+        socketAddressSupplier.doOnError(socketAddressFuture::completeExceptionally).doOnNext(socketAddressFuture::complete)
+                .subscribe(redisAddress -> {
+
+                    if (channelReadyFuture.isCancelled()) {
+                        return;
+                    }
+                    initializeChannelAsync0(connectionBuilder, channelReadyFuture, redisAddress);
+                }, channelReadyFuture::completeExceptionally);
+
+        return new DefaultConnectionFuture<>(socketAddressFuture, channelReadyFuture.thenApply(channel -> (T) connectionBuilder
+                .connection()));
+    }
+
+    private void initializeChannelAsync0(ConnectionBuilder connectionBuilder, CompletableFuture<Channel> channelReadyFuture,
+            SocketAddress redisAddress) {
+
         logger.debug("Connecting to Redis at {}", redisAddress);
 
-        CompletableFuture<Channel> channelReadyFuture = new CompletableFuture<>();
         Bootstrap redisBootstrap = connectionBuilder.bootstrap();
 
         RedisChannelInitializer initializer = connectionBuilder.build();
@@ -265,6 +310,14 @@ public abstract class AbstractRedisClient {
         clientResources.nettyCustomizer().afterBootstrapInitialized(redisBootstrap);
         CompletableFuture<Boolean> initFuture = initializer.channelInitialized();
         ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
+
+        channelReadyFuture.whenComplete((c, t) -> {
+
+            if (t instanceof CancellationException) {
+                connectFuture.cancel(true);
+                initFuture.cancel(true);
+            }
+        });
 
         connectFuture.addListener(future -> {
 
@@ -279,6 +332,7 @@ public abstract class AbstractRedisClient {
             initFuture.whenComplete((success, throwable) -> {
 
                 if (throwable == null) {
+
                     logger.debug("Connecting to Redis at {}: Success", redisAddress);
                     RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
                     connection.registerCloseables(closeableResources, connection);
@@ -299,15 +353,8 @@ public abstract class AbstractRedisClient {
                     failure = throwable;
                 }
                 channelReadyFuture.completeExceptionally(failure);
-
-                CompletableFuture<Boolean> response = new CompletableFuture<>();
-                response.completeExceptionally(failure);
-
             });
         });
-
-        return new DefaultConnectionFuture<T>(redisAddress, channelReadyFuture.thenApply(channel -> (T) connectionBuilder
-                .connection()));
     }
 
     /**

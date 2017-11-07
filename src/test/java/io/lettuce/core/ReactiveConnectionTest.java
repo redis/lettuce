@@ -35,7 +35,6 @@ import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
 import io.lettuce.Delay;
 import io.lettuce.Wait;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -142,11 +141,15 @@ public class ReactiveConnectionTest extends AbstractRedisClientTest {
 
     @Test
     public void multiSubscribe() throws Exception {
-        reactive.set(key, "1").subscribe();
+
+        CountDownLatch latch = new CountDownLatch(4);
+        reactive.set(key, "1").subscribe(s -> latch.countDown());
         Mono<Long> incr = reactive.incr(key);
-        incr.subscribe();
-        incr.subscribe();
-        incr.subscribe();
+        incr.subscribe(s -> latch.countDown());
+        incr.subscribe(s -> latch.countDown());
+        incr.subscribe(s -> latch.countDown());
+
+        latch.await();
 
         Wait.untilEquals("4", () -> redis.get(key)).waitOrTimeout();
 

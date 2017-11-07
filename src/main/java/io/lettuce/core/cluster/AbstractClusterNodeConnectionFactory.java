@@ -18,12 +18,12 @@ package io.lettuce.core.cluster;
 import java.net.SocketAddress;
 import java.util.function.Supplier;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.SocketAddressResolver;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -62,7 +62,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
     }
 
     /**
-     * Get a {@link Supplier} of {@link SocketAddress} for a
+     * Get a {@link Mono} of {@link SocketAddress} for a
      * {@link io.lettuce.core.cluster.ClusterNodeConnectionFactory.ConnectionKey}.
      * <p>
      * This {@link Supplier} resolves the requested endpoint on each {@link Supplier#get()}.
@@ -70,9 +70,9 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
      * @param connectionKey must not be {@literal null}.
      * @return
      */
-    protected Supplier<SocketAddress> getSocketAddressSupplier(ConnectionKey connectionKey) {
+    Mono<SocketAddress> getSocketAddressSupplier(ConnectionKey connectionKey) {
 
-        return () -> {
+        return Mono.fromCallable(() -> {
 
             if (connectionKey.nodeId != null) {
 
@@ -85,7 +85,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
             logger.debug("Resolved SocketAddress {} using for Cluster node at {}:{}", socketAddress, connectionKey.host,
                     connectionKey.port);
             return socketAddress;
-        };
+        });
     }
 
     /**
@@ -95,7 +95,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
      * @return the {@link SocketAddress}.
      * @throws IllegalArgumentException if {@code nodeId} cannot be looked up.
      */
-    protected SocketAddress getSocketAddress(String nodeId) {
+    private SocketAddress getSocketAddress(String nodeId) {
 
         for (RedisClusterNode partition : partitions) {
             if (partition.getNodeId().equals(nodeId)) {

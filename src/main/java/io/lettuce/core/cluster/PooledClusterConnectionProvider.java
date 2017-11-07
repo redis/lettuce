@@ -389,10 +389,15 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
     @Override
     public void close() {
+        closeAsync().join();
+    }
+
+    @Override
+    public CompletableFuture<Void> closeAsync() {
 
         resetFastConnectionCache();
 
-        connectionProvider.close();
+        return connectionProvider.closeAsync();
     }
 
     @Override

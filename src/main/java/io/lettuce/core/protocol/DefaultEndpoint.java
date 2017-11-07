@@ -20,12 +20,13 @@ import static io.lettuce.core.protocol.CommandHandler.SUPPRESS_IO_EXCEPTION_MESS
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import io.lettuce.core.*;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
 import io.netty.channel.Channel;
@@ -49,6 +50,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     private static final AtomicIntegerFieldUpdater<DefaultEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater.newUpdater(
             DefaultEndpoint.class, "queueSize");
 
+    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> STATUS = AtomicIntegerFieldUpdater.newUpdater(
+            DefaultEndpoint.class, "status");
+
+    private static final int ST_OPEN = 0;
+    private static final int ST_CLOSED = 1;
+
     protected volatile Channel channel;
 
     private final Reliability reliability;
@@ -58,9 +65,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     private final boolean boundedQueues;
 
     private final long endpointId = ENDPOINT_COUNTER.incrementAndGet();
-    private final AtomicBoolean closed = new AtomicBoolean();
     private final SharedLock sharedLock = new SharedLock();
     private final boolean debugEnabled = logger.isDebugEnabled();
+    private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
     private String logPrefix;
     private boolean autoFlushCommands = true;
@@ -73,6 +80,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     // access via QUEUE_SIZE
     @SuppressWarnings("unused")
     private volatile int queueSize = 0;
+
+    // access via STATUS
+    @SuppressWarnings("unused")
+    private volatile int status = ST_OPEN;
 
     /**
      * Create a new {@link DefaultEndpoint}.
@@ -476,11 +487,21 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             logger.debug("{} close()", logPrefix());
         }
 
-        if (isClosed()) {
-            return;
+        closeAsync().join();
+    }
+
+    @Override
+    public CompletableFuture<Void> closeAsync() {
+
+        if (debugEnabled) {
+            logger.debug("{} closeAsync()", logPrefix());
         }
 
-        if (closed.compareAndSet(false, true)) {
+        if (isClosed()) {
+            return closeFuture;
+        }
+
+        if (STATUS.compareAndSet(this, ST_OPEN, ST_CLOSED)) {
 
             if (connectionWatchdog != null) {
                 connectionWatchdog.prepareClose();
@@ -488,15 +509,28 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             cancelBufferedCommands("Close");
 
-            Channel currentChannel = this.channel;
-            if (currentChannel != null) {
+            Channel channel = getOpenChannel();
 
-                ChannelFuture close = currentChannel.close();
-                if (currentChannel.isOpen()) {
-                    close.syncUninterruptibly();
-                }
+            if (channel != null) {
+                Futures.adapt(channel.close(), closeFuture);
+            } else {
+                closeFuture.complete(null);
             }
         }
+
+        return closeFuture;
+
+    }
+
+    private Channel getOpenChannel() {
+
+        Channel currentChannel = this.channel;
+
+        if (currentChannel != null) {
+            return currentChannel;
+        }
+
+        return null;
     }
 
     /**
@@ -581,7 +615,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     }
 
     public boolean isClosed() {
-        return closed.get();
+        return STATUS.get(this) == ST_CLOSED;
     }
 
     /**

@@ -16,6 +16,7 @@
 package io.lettuce.core.cluster;
 
 import java.io.Closeable;
+import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisException;
@@ -72,6 +73,13 @@ interface ClusterConnectionProvider extends Closeable {
      */
     @Override
     void close();
+
+    /**
+     * Close the connections and free all resources asynchronously.
+     * 
+     * @since 5.1
+     */
+    CompletableFuture<Void> closeAsync();
 
     /**
      * Reset the writer state. Queued commands will be canceled and the internal state will be reset. This is useful when the

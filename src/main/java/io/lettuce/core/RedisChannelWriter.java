@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.RedisCommand;
@@ -54,6 +55,14 @@ public interface RedisChannelWriter extends Closeable {
 
     @Override
     void close();
+
+    /**
+     * Asynchronously close the {@link RedisChannelWriter}.
+     * 
+     * @return future for result synchronization.
+     * @since 5.1
+     */
+    CompletableFuture<Void> closeAsync();
 
     /**
      * Reset the writer state. Queued commands will be canceled and the internal state will be reset. This is useful when the

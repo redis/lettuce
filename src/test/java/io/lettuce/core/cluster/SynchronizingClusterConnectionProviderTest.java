@@ -32,6 +32,7 @@ import org.junit.*;
 import org.springframework.util.SocketUtils;
 import org.springframework.util.StopWatch;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.TestClientResources;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -74,7 +75,7 @@ public class SynchronizingClusterConnectionProviderTest {
 
                 ConnectionFuture<StatefulRedisConnection<String, String>> future = redisClient.connectToNodeAsync(
                         StringCodec.UTF8, "", null,
-                        () -> new InetSocketAddress(connectionKey.host, serverSocket.getLocalPort()));
+                        Mono.just(new InetSocketAddress(connectionKey.host, serverSocket.getLocalPort())));
 
                 connectInitiated.countDown();
 

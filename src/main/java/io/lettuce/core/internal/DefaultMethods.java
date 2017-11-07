@@ -25,8 +25,8 @@ import java.util.Arrays;
 import java.util.Optional;
 
 /**
- * Collection of utility methods to lookup {@link MethodHandle}s for default interface {@link Method}s.This class is part of the
- * internal API and may change without further notice.
+ * Collection of utility methods to lookup {@link MethodHandle}s for default interface {@link Method}s. This class is part of
+ * the internal API and may change without further notice.
  *
  * @author Mark Paluch
  * @since 4.4

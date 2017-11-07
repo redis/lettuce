@@ -18,13 +18,11 @@ package io.lettuce.core.masterslave;
 import static io.lettuce.core.masterslave.MasterSlaveUtils.findNodeByHostAndPort;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import io.lettuce.core.ReadFrom;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisException;
-import io.lettuce.core.RedisURI;
+import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -70,9 +68,9 @@ public class MasterSlaveConnectionProvider<K, V> {
 
     /**
      * Retrieve a {@link StatefulRedisConnection} by the intent.
-     * {@link io.lettuce.core.masterslave.MasterSlaveConnectionProvider.Intent#WRITE} intentions use the master
-     * connection, {@link io.lettuce.core.masterslave.MasterSlaveConnectionProvider.Intent#READ} intentions lookup one or
-     * more read candidates using the {@link ReadFrom} setting.
+     * {@link io.lettuce.core.masterslave.MasterSlaveConnectionProvider.Intent#WRITE} intentions use the master connection,
+     * {@link io.lettuce.core.masterslave.MasterSlaveConnectionProvider.Intent#READ} intentions lookup one or more read
+     * candidates using the {@link ReadFrom} setting.
      *
      * @param intent command intent
      * @return the connection.
@@ -119,9 +117,8 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     protected StatefulRedisConnection<K, V> getConnection(RedisNodeDescription redisNodeDescription) {
-        return connections.computeIfAbsent(
-                new ConnectionKey(redisNodeDescription.getUri().getHost(), redisNodeDescription.getUri().getPort()),
-                connectionFactory);
+        return connections.computeIfAbsent(new ConnectionKey(redisNodeDescription.getUri().getHost(), redisNodeDescription
+                .getUri().getPort()), connectionFactory);
     }
 
     /**
@@ -143,8 +140,7 @@ public class MasterSlaveConnectionProvider<K, V> {
 
         for (ConnectionKey connectionKey : map.keySet()) {
 
-            if (connectionKey.host != null
-                    && findNodeByHostAndPort(knownNodes, connectionKey.host, connectionKey.port) != null) {
+            if (connectionKey.host != null && findNodeByHostAndPort(knownNodes, connectionKey.host, connectionKey.port) != null) {
                 continue;
             }
             stale.add(connectionKey);
@@ -179,10 +175,28 @@ public class MasterSlaveConnectionProvider<K, V> {
      * Close all connections.
      */
     public void close() {
+        closeAsync().join();
+    }
+
+    /**
+     * Close all connections asynchronously.
+     * 
+     * @since 5.1
+     */
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<Void> closeAsync() {
 
         Collection<StatefulRedisConnection<K, V>> connections = allConnections();
         this.connections.clear();
-        connections.forEach(StatefulRedisConnection::close);
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        connections.forEach(c -> {
+
+            RedisChannelHandler handler = (RedisChannelHandler) c;
+            futures.add(handler.closeAsync());
+        });
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     public void flushCommands() {
@@ -191,14 +205,12 @@ public class MasterSlaveConnectionProvider<K, V> {
 
     public void setAutoFlushCommands(boolean autoFlushCommands) {
         synchronized (stateLock) {
+            allConnections().forEach(connection -> connection.setAutoFlushCommands(autoFlushCommands));
         }
-        allConnections().forEach(connection -> connection.setAutoFlushCommands(autoFlushCommands));
     }
 
     protected Collection<StatefulRedisConnection<K, V>> allConnections() {
-
-        Set<StatefulRedisConnection<K, V>> connections = LettuceSets.newHashSet(this.connections.values());
-        return (Collection) connections;
+        return LettuceSets.newHashSet(this.connections.values());
     }
 
     /**

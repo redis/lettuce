@@ -21,7 +21,9 @@ import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -42,14 +44,22 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public abstract class RedisChannelHandler<K, V> implements Closeable, ConnectionFacade {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
+    private static final AtomicIntegerFieldUpdater<RedisChannelHandler> CLOSED = AtomicIntegerFieldUpdater.newUpdater(
+            RedisChannelHandler.class, "closed");
+
+    private static final int ST_OPEN = 0;
+    private static final int ST_CLOSED = 1;
 
     private Duration timeout;
     private CloseEvents closeEvents = new CloseEvents();
 
     private final RedisChannelWriter channelWriter;
     private final boolean debugEnabled = logger.isDebugEnabled();
+    private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
-    private volatile boolean closed;
+    // accessed via CLOSED
+    @SuppressWarnings("unused")
+    private volatile int closed = ST_OPEN;
     private volatile boolean active = true;
     private volatile ClientOptions clientOptions;
 
@@ -96,27 +106,55 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     * Close the connection.
+     * Close the connection (synchronous).
      */
     @Override
-    public synchronized void close() {
+    public void close() {
 
         if (debugEnabled) {
             logger.debug("close()");
         }
 
-        if (closed) {
-            logger.warn("Connection is already closed");
-            return;
+        closeAsync().join();
+    }
+
+    /**
+     * Close the connection (asynchronous).
+     * 
+     * @since 5.1
+     */
+    public CompletableFuture<Void> closeAsync() {
+
+        if (debugEnabled) {
+            logger.debug("closeAsync()");
         }
 
-        if (!closed) {
-            active = false;
-            closed = true;
-            channelWriter.close();
-            closeEvents.fireEventClosed(this);
-            closeEvents = new CloseEvents();
+        if (CLOSED.get(this) == ST_CLOSED) {
+            logger.warn("Connection is already closed");
+            return closeFuture;
         }
+
+        if (CLOSED.compareAndSet(this, ST_OPEN, ST_CLOSED)) {
+
+            active = false;
+            CompletableFuture<Void> future = channelWriter.closeAsync();
+
+            future.whenComplete((v, t) -> {
+
+                closeEvents.fireEventClosed(this);
+                closeEvents = new CloseEvents();
+
+                if (t != null) {
+                    closeFuture.completeExceptionally(t);
+                } else {
+                    closeFuture.complete(v);
+                }
+            });
+        } else {
+            logger.warn("Connection is already closed (concurrently)");
+        }
+
+        return closeFuture;
     }
 
     protected <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
@@ -143,7 +181,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
      * @param registry registry of closeables
      * @param closeables closeables to register
      */
-    public void registerCloseables(final Collection<Closeable> registry, final Closeable... closeables) {
+    public void registerCloseables(final Collection<Closeable> registry, Closeable... closeables) {
+
         registry.addAll(Arrays.asList(closeables));
 
         addListener(resource -> {
@@ -170,11 +209,10 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     *
      * @return true if the connection is closed (final state in the connection lifecyle).
      */
     public boolean isClosed() {
-        return closed;
+        return CLOSED.get(this) == ST_CLOSED;
     }
 
     /**
@@ -182,7 +220,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
      */
     public void activated() {
         active = true;
-        closed = false;
+        CLOSED.set(this, ST_OPEN);
     }
 
     /**
@@ -193,7 +231,6 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     *
      * @return the channel writer
      */
     public RedisChannelWriter getChannelWriter() {
@@ -201,7 +238,6 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     *
      * @return true if the connection is active and not closed.
      */
     public boolean isOpen() {

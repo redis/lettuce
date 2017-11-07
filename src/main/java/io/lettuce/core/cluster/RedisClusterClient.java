@@ -19,6 +19,7 @@ import java.io.Closeable;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,6 +28,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
@@ -42,8 +45,10 @@ import io.lettuce.core.cluster.topology.NodeConnectionFactory;
 import io.lettuce.core.cluster.topology.TopologyComparators;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
+import io.lettuce.core.models.command.CommandDetailParser;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
@@ -337,7 +342,38 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     @SuppressWarnings("unchecked")
     public <K, V> StatefulRedisClusterConnection<K, V> connect(RedisCodec<K, V> codec) {
-        return connectClusterImpl(codec);
+
+        if (partitions == null) {
+            initializePartitions();
+        }
+
+        return getConnection(connectAsync(codec));
+    }
+
+    /**
+     * Connect asynchronously to a Redis Cluster. Use the supplied {@link RedisCodec codec} to encode/decode keys and values.
+     * Connecting asynchronously requires an initialized topology. Call {@link #getPartitions()} first, otherwise the connect
+     * will fail with a{@link IllegalStateException}.
+     * <p>
+     * What to expect from this connection:
+     * </p>
+     * <ul>
+     * <li>A <i>default</i> connection is created to the node with the lowest latency</li>
+     * <li>Keyless commands are send to the default connection</li>
+     * <li>Single-key keyspace commands are routed to the appropriate node</li>
+     * <li>Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node</li>
+     * <li>Pub/sub commands are sent to the node that handles the slot derived from the pub/sub channel</li>
+     * </ul>
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return a {@link CompletableFuture} that is notified with the connection progress.
+     * @since 5.1
+     */
+    @SuppressWarnings("unchecked")
+    public <K, V> CompletableFuture<StatefulRedisClusterConnection<K, V>> connectAsync(RedisCodec<K, V> codec) {
+        return connectClusterAsync(codec);
     }
 
     /**
@@ -380,11 +416,42 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     @SuppressWarnings("unchecked")
     public <K, V> StatefulRedisClusterPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
-        return connectClusterPubSubImpl(codec);
+
+        if (partitions == null) {
+            initializePartitions();
+        }
+
+        return getConnection(connectPubSubAsync(codec));
     }
 
-    protected StatefulRedisConnection<String, String> connectToNode(final SocketAddress socketAddress) {
-        return connectToNode(newStringStringCodec(), socketAddress.toString(), null, () -> socketAddress);
+    /**
+     * Connect asynchronously to a Redis Cluster using pub/sub connections. Use the supplied {@link RedisCodec codec} to
+     * encode/decode keys and values. Connecting asynchronously requires an initialized topology. Call {@link #getPartitions()}
+     * first, otherwise the connect will fail with a{@link IllegalStateException}.
+     * <p>
+     * What to expect from this connection:
+     * </p>
+     * <ul>
+     * <li>A <i>default</i> connection is created to the node with the least number of clients</li>
+     * <li>Pub/sub commands are sent to the node with the least number of clients</li>
+     * <li>Keyless commands are send to the default connection</li>
+     * <li>Single-key keyspace commands are routed to the appropriate node</li>
+     * <li>Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node</li>
+     * </ul>
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return a {@link CompletableFuture} that is notified with the connection progress.
+     * @since 5.1
+     */
+    @SuppressWarnings("unchecked")
+    public <K, V> CompletableFuture<StatefulRedisClusterPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec) {
+        return connectClusterPubSubAsync(codec);
+    }
+
+    StatefulRedisConnection<String, String> connectToNode(SocketAddress socketAddress) {
+        return connectToNode(newStringStringCodec(), socketAddress.toString(), null, Mono.just(socketAddress));
     }
 
     /**
@@ -399,7 +466,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return A new connection
      */
     <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, String nodeId, RedisChannelWriter clusterWriter,
-            final Supplier<SocketAddress> socketAddressSupplier) {
+            Mono<SocketAddress> socketAddressSupplier) {
         return getConnection(connectToNodeAsync(codec, nodeId, clusterWriter, socketAddressSupplier));
     }
 
@@ -415,15 +482,11 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return A new connection
      */
     <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec, String nodeId,
-            RedisChannelWriter clusterWriter, final Supplier<SocketAddress> socketAddressSupplier) {
+            RedisChannelWriter clusterWriter, Mono<SocketAddress> socketAddressSupplier) {
 
         assertNotNull(codec);
         assertNotEmpty(initialUris);
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
-
-        SocketAddress socketAddress = socketAddressSupplier.get();
-
-        logger.debug(String.format("connectToNodeAsync(%s at %s)", nodeId, socketAddress));
 
         ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(clientOptions, getResources(), clusterWriter);
 
@@ -455,23 +518,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value type
      * @return A new connection
      */
-    <K, V> StatefulRedisPubSubConnection<K, V> connectPubSubToNode(RedisCodec<K, V> codec, String nodeId,
-            Supplier<SocketAddress> socketAddressSupplier) {
-        return getConnection(connectPubSubToNodeAsync(codec, nodeId, socketAddressSupplier));
-    }
-
-    /**
-     * Create a pub/sub connection to a redis socket address.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param nodeId the nodeId
-     * @param socketAddressSupplier supplier for the socket address
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new connection
-     */
     <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubToNodeAsync(RedisCodec<K, V> codec,
-            String nodeId, Supplier<SocketAddress> socketAddressSupplier) {
+            String nodeId, Mono<SocketAddress> socketAddressSupplier) {
 
         assertNotNull(codec);
         assertNotEmpty(initialUris);
@@ -509,17 +557,18 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value type
      * @return a new connection
      */
-    <K, V> StatefulRedisClusterConnectionImpl<K, V> connectClusterImpl(RedisCodec<K, V> codec) {
+    private <K, V> CompletableFuture<StatefulRedisClusterConnection<K, V>> connectClusterAsync(RedisCodec<K, V> codec) {
 
         if (partitions == null) {
-            initializePartitions();
+            return Futures.failed(new IllegalStateException(
+                    "Partitions not initialized. Initialize via RedisClusterClient.getPartitions()."));
         }
 
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectCluster(" + initialUris + ")");
 
-        Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
+        Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
         DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
         RedisChannelWriter writer = endpoint;
@@ -541,33 +590,33 @@ public class RedisClusterClient extends AbstractRedisClient {
         connection.setReadFrom(ReadFrom.MASTER);
         connection.setPartitions(partitions);
 
-        boolean connected = false;
-        RedisException causingException = null;
-        int connectionAttempts = Math.max(1, partitions.size());
+        Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(clientOptions, clientResources, endpoint);
 
-        for (int i = 0; i < connectionAttempts; i++) {
-            try {
-                connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier, () -> new CommandHandler(
-                        clientOptions, clientResources, endpoint));
-                connection.inspectRedisState();
-                connected = true;
-                break;
-            } catch (RedisException e) {
-                logger.warn(e.getMessage());
-                causingException = e;
-            }
+        Mono<StatefulRedisClusterConnectionImpl<K, V>> connectionMono = Mono.defer(() -> connect(socketAddressSupplier,
+                endpoint, connection, commandHandlerSupplier));
+
+        for (int i = 1; i < getConnectionAttempts(); i++) {
+            connectionMono = connectionMono.onErrorResume(t -> connect(socketAddressSupplier, endpoint, connection,
+                    commandHandlerSupplier));
         }
 
-        if (!connected) {
-            connection.close();
-            if (causingException != null) {
-                throw causingException;
-            }
-        }
+        return connectionMono
+                .flatMap(c -> c.reactive().command().collectList() //
+                        .map(CommandDetailParser::parse) //
+                        .doOnNext(detail -> c.setState(new RedisState(detail))) //
+                        .then(Mono.just(c)))
+                .doOnNext(
+                        c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
+                .map(it -> (StatefulRedisClusterConnection<K, V>) it).toFuture();
+    }
 
-        connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
+    private <T, K, V> Mono<T> connect(Mono<SocketAddress> socketAddressSupplier, DefaultEndpoint endpoint,
+            RedisChannelHandler<K, V> connection, Supplier<CommandHandler> commandHandlerSupplier) {
 
-        return connection;
+        ConnectionFuture<T> future = connectStatefulAsync(connection, endpoint, getFirstUri(), socketAddressSupplier,
+                commandHandlerSupplier);
+
+        return Mono.fromCompletionStage(future).doOnError(t -> logger.warn(t.getMessage()));
     }
 
     /**
@@ -578,17 +627,19 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value type
      * @return a new connection
      */
-    <K, V> StatefulRedisClusterPubSubConnection<K, V> connectClusterPubSubImpl(RedisCodec<K, V> codec) {
+    private <K, V> CompletableFuture<StatefulRedisClusterPubSubConnection<K, V>> connectClusterPubSubAsync(
+            RedisCodec<K, V> codec) {
 
         if (partitions == null) {
-            initializePartitions();
+            return Futures.failed(new IllegalStateException(
+                    "Partitions not initialized. Initialize via RedisClusterClient.getPartitions()."));
         }
 
         activateTopologyRefreshIfNeeded();
 
         logger.debug("connectClusterPubSub(" + initialUris + ")");
 
-        Supplier<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
+        Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
         PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<K, V>(clientOptions);
 
@@ -607,58 +658,31 @@ public class RedisClusterClient extends AbstractRedisClient {
                 clusterWriter, codec, connection.getUpstreamListener());
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
-
         connection.setPartitions(partitions);
 
-        boolean connected = false;
-        RedisException causingException = null;
-        int connectionAttempts = Math.max(1, partitions.size());
+        Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(clientOptions, clientResources,
+                codec, endpoint);
 
-        for (int i = 0; i < connectionAttempts; i++) {
-            try {
-                connectStateful(connection, endpoint, getFirstUri(), socketAddressSupplier, () -> new PubSubCommandHandler<>(
-                        clientOptions, clientResources, codec, endpoint));
-                connection.inspectRedisState();
-                connected = true;
-                break;
-            } catch (RedisException e) {
-                logger.warn(e.getMessage());
-                causingException = e;
-            }
+        Mono<StatefulRedisClusterPubSubConnectionImpl<K, V>> connectionMono = Mono.defer(() -> connect(socketAddressSupplier,
+                endpoint, connection, commandHandlerSupplier));
+
+        for (int i = 1; i < getConnectionAttempts(); i++) {
+            connectionMono = connectionMono.onErrorResume(t -> connect(socketAddressSupplier, endpoint, connection,
+                    commandHandlerSupplier));
         }
 
-        if (!connected) {
-            connection.close();
-            if (causingException != null) {
-                throw causingException;
-            }
-        }
-
-        connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
-
-        return connection;
+        return connectionMono
+                .flatMap(c -> c.reactive().command().collectList() //
+                        .map(CommandDetailParser::parse) //
+                        .doOnNext(detail -> c.setState(new RedisState(detail))) //
+                        .then(Mono.just(c)))
+                .doOnNext(
+                        c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
+                .map(it -> (StatefulRedisClusterPubSubConnection<K, V>) it).toFuture();
     }
 
-    /**
-     * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (authentication, SSL) from
-     * {@code connectionSettings}.
-     */
-    private <K, V> void connectStateful(StatefulRedisConnectionImpl<K, V> connection, DefaultEndpoint endpoint,
-            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
-            Supplier<CommandHandler> commandHandlerSupplier) {
-        getConnection(connectStatefulAsync(connection, endpoint, connectionSettings, socketAddressSupplier,
-                commandHandlerSupplier));
-    }
-
-    /**
-     * Connect to a endpoint provided by {@code socketAddressSupplier} using connection settings (authentication, SSL) from
-     * {@code connectionSettings}.
-     */
-    private <K, V> void connectStateful(StatefulRedisClusterConnectionImpl<K, V> connection, DefaultEndpoint endpoint,
-            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
-            Supplier<CommandHandler> commandHandlerSupplier) {
-        getConnection(connectStatefulAsync(connection, endpoint, connectionSettings, socketAddressSupplier,
-                commandHandlerSupplier));
+    private int getConnectionAttempts() {
+        return Math.max(1, partitions.size());
     }
 
     /**
@@ -666,7 +690,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * options.
      */
     private <K, V, T extends RedisChannelHandler<K, V>, S> ConnectionFuture<S> connectStatefulAsync(T connection,
-            DefaultEndpoint endpoint, RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
+            DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder = createConnectionBuilder(connection, endpoint, connectionSettings,
@@ -721,7 +745,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     private <K, V> ConnectionBuilder createConnectionBuilder(RedisChannelHandler<K, V> connection, DefaultEndpoint endpoint,
-            RedisURI connectionSettings, Supplier<SocketAddress> socketAddressSupplier,
+            RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
@@ -943,21 +967,26 @@ public class RedisClusterClient extends AbstractRedisClient {
      *        parameter but create a new collection with the desired order, must not be {@literal null}.
      * @return {@link Supplier} for {@link SocketAddress connection points}.
      */
-    protected Supplier<SocketAddress> getSocketAddressSupplier(Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
+    protected Mono<SocketAddress> getSocketAddressSupplier(Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
 
         LettuceAssert.notNull(sortFunction, "Sort function must not be null");
 
         final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions,
                 sortFunction, clientResources);
-        return () -> {
+
+        return Mono.defer(() -> {
+
             if (partitions.isEmpty()) {
-                SocketAddress socketAddress = SocketAddressResolver.resolve(getFirstUri(), clientResources.dnsResolver());
-                logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
-                return socketAddress;
+                return Mono.fromCallable(() -> {
+                    SocketAddress socketAddress = SocketAddressResolver.resolve(getFirstUri(), clientResources.dnsResolver());
+                    logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
+                    return socketAddress;
+
+                }).subscribeOn(Schedulers.fromExecutor(clientResources.eventExecutorGroup()));
             }
 
-            return socketAddressSupplier.get();
-        };
+            return Mono.fromCallable(socketAddressSupplier::get);
+        });
     }
 
     /**
@@ -1089,13 +1118,13 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         @Override
         public <K, V> StatefulRedisConnection<K, V> connectToNode(RedisCodec<K, V> codec, SocketAddress socketAddress) {
-            return RedisClusterClient.this.connectToNode(codec, socketAddress.toString(), null, () -> socketAddress);
+            return RedisClusterClient.this.connectToNode(codec, socketAddress.toString(), null, Mono.just(socketAddress));
         }
 
         @Override
         public <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec,
                 SocketAddress socketAddress) {
-            return RedisClusterClient.this.connectToNodeAsync(codec, socketAddress.toString(), null, () -> socketAddress);
+            return RedisClusterClient.this.connectToNodeAsync(codec, socketAddress.toString(), null, Mono.just(socketAddress));
         }
     }
 }

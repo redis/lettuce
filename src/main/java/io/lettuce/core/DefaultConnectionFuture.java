@@ -30,17 +30,28 @@ import java.util.function.Function;
  */
 class DefaultConnectionFuture<T> extends CompletableFuture<T> implements ConnectionFuture<T> {
 
-    private final SocketAddress remoteAddress;
+    private final CompletableFuture<SocketAddress> remoteAddress;
     private final CompletableFuture<T> delegate;
 
     public DefaultConnectionFuture(SocketAddress remoteAddress, CompletableFuture<T> delegate) {
+
+        this.remoteAddress = CompletableFuture.completedFuture(remoteAddress);
+        this.delegate = delegate;
+    }
+
+    public DefaultConnectionFuture(CompletableFuture<SocketAddress> remoteAddress, CompletableFuture<T> delegate) {
 
         this.remoteAddress = remoteAddress;
         this.delegate = delegate;
     }
 
     public SocketAddress getRemoteAddress() {
-        return remoteAddress;
+
+        if (remoteAddress.isDone() && !remoteAddress.isCompletedExceptionally()) {
+            return remoteAddress.join();
+        }
+
+        return null;
     }
 
     private <U> DefaultConnectionFuture<U> adopt(CompletableFuture<U> newFuture) {
