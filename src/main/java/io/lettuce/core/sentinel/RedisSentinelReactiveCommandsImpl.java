@@ -15,18 +15,15 @@
  */
 package io.lettuce.core.sentinel;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Map;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import io.lettuce.core.AbstractRedisReactiveCommands;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 
@@ -50,20 +47,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
 
     @Override
     public Mono<SocketAddress> getMasterAddrByName(K key) {
-
-        Flux<V> flux = createDissolvingFlux(() -> commandBuilder.getMasterAddrByKey(key));
-
-        return flux.collectList().flatMap(list -> {
-
-            if (list.isEmpty()) {
-                return Mono.empty();
-            }
-
-            LettuceAssert.isTrue(list.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
-            String hostname = (String) list.get(0);
-            String port = (String) list.get(1);
-            return Mono.just(new InetSocketAddress(hostname, Integer.parseInt(port)));
-        }).cast(SocketAddress.class);
+        return createMono(() -> commandBuilder.getMasterAddrByKey(key));
     }
 
     @Override
