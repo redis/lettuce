@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis.sentinel;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -26,7 +25,6 @@ import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.ReactiveCommandDispatcher;
 import com.lambdaworks.redis.api.StatefulConnection;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.RedisCommand;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
 import com.lambdaworks.redis.sentinel.api.rx.RedisSentinelReactiveCommands;
@@ -51,23 +49,12 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
 
     @Override
     public Observable<SocketAddress> getMasterAddrByName(K key) {
-
-        Observable<V> observable = createDissolvingObservable(() -> commandBuilder.getMasterAddrByKey(key));
-        return observable.buffer(2).map(list -> {
-            if (list.isEmpty()) {
-                return null;
-            }
-
-            LettuceAssert.isTrue(list.size() == 2, "List must contain exact 2 entries (Hostname, Port)");
-            String hostname = (String) list.get(0);
-            String port = (String) list.get(1);
-            return new InetSocketAddress(hostname, Integer.parseInt(port));
-        });
+        return createObservable(() -> commandBuilder.getMasterAddrByKey(key));
     }
 
     @Override
     public Observable<Map<K, V>> masters() {
-        return createDissolvingObservable(() -> commandBuilder.masters());
+        return createDissolvingObservable(commandBuilder::masters);
     }
 
     @Override
@@ -107,7 +94,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> implements RedisSentinelRea
 
     @Override
     public Observable<String> ping() {
-        return createObservable(() -> commandBuilder.ping());
+        return createObservable(commandBuilder::ping);
     }
 
     @Override
