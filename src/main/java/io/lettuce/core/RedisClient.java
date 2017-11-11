@@ -725,9 +725,14 @@ public class RedisClient extends AbstractRedisClient {
 
     private Mono<SocketAddress> lookupRedis(RedisURI sentinelUri) {
 
-        return Mono.fromCompletionStage(connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout)).flatMap(
-                c -> c.reactive().getMasterAddrByName(sentinelUri.getSentinelMasterId()).timeout(timeout)
-                        .doFinally(s -> c.close()));
+        Mono<StatefulRedisSentinelConnection<String, String>> connection = Mono.fromCompletionStage(connectSentinelAsync(
+                newStringStringCodec(), sentinelUri, timeout));
+
+        return connection.flatMap(c -> c.reactive() //
+                .getMasterAddrByName(sentinelUri.getSentinelMasterId()) //
+                .timeout(this.timeout) //
+                .flatMap(it -> Mono.fromCompletionStage(c.closeAsync()) //
+                        .then(Mono.just(it))));
     }
 
     private static void checkValidRedisURI(RedisURI redisURI) {

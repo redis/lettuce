@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import reactor.core.publisher.Mono;
 import io.lettuce.core.Transports.NativeTransports;
+import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.resource.ClientResources;
@@ -432,17 +433,23 @@ public abstract class AbstractRedisClient {
 
         if (shutdown.compareAndSet(false, true)) {
 
+            List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
+
             while (!closeableResources.isEmpty()) {
                 Closeable closeableResource = closeableResources.iterator().next();
-                try {
-                    closeableResource.close();
-                } catch (Exception e) {
-                    logger.debug("Exception on Close: " + e.getMessage(), e);
+
+                if (closeableResource instanceof AsyncCloseable) {
+
+                    closeFutures.add(((AsyncCloseable) closeableResource).closeAsync());
+                } else {
+                    try {
+                        closeableResource.close();
+                    } catch (Exception e) {
+                        logger.debug("Exception on Close: " + e.getMessage(), e);
+                    }
                 }
                 closeableResources.remove(closeableResource);
             }
-
-            List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
 
             for (Channel c : channels) {
 
