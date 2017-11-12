@@ -396,7 +396,9 @@
                                 <link>http://netty.io/4.1/api/</link>
                                 <link>http://commons.apache.org/proper/commons-pool/api-2.4.2/</link>
                                 <link>http://docs.guava-libraries.googlecode.com/git/javadoc/</link>
+                                <link>http://reactivex.io/RxJava/1.x/javadoc/</link>
                                 <link>http://reactivex.io/RxJava/javadoc/</link>
+                                <link>https://projectreactor.io/docs/core/release/api/</link>
                                 <link>https://docs.spring.io/spring/docs/current/javadoc-api/</link>
                             </links>
                             <additionalparam>-Xdoclint:none</additionalparam>
