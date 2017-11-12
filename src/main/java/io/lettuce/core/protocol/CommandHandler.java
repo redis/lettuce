@@ -743,10 +743,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             return logPrefix;
         }
 
-        StringBuilder buffer = new StringBuilder(64);
-        buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(", ").append("chid=0x")
-                .append(Long.toHexString(commandHandlerId)).append(']');
-        return logPrefix = buffer.toString();
+        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "chid=0x"
+                + Long.toHexString(commandHandlerId) + ']';
+        return logPrefix = buffer;
     }
 
     private static long nanoTime() {

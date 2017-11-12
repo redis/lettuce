@@ -686,10 +686,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             return logPrefix;
         }
 
-        StringBuffer buffer = new StringBuffer(64);
-        buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(", ").append("epid=0x")
-                .append(Long.toHexString(endpointId)).append(']');
-        return logPrefix = buffer.toString();
+        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "epid=0x" + Long.toHexString(endpointId)
+                + ']';
+        return logPrefix = buffer;
     }
 
     private class ListenerSupport {
