@@ -1247,10 +1247,9 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             return logPrefix;
         }
 
-        StringBuffer buffer = new StringBuffer(64);
-        buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(", ").append("chid=0x")
-                .append(Long.toHexString(commandHandlerId)).append(']');
-        return logPrefix = buffer.toString();
+        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "chid=0x"
+                + Long.toHexString(commandHandlerId) + ']';
+        return logPrefix = buffer;
     }
 
     protected static <T> List<T> drainCommands(Queue<T> source) {
