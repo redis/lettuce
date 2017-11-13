@@ -13,26 +13,19 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.service;
+package org.mybatis.spring.sample;
 
-import org.mybatis.spring.sample.domain.User;
-import org.mybatis.spring.sample.mapper.UserMapper;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportResource;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-/**
- * FooService simply receives a userId and uses a mapper to get a record from the database.
- */
-@Transactional
-public class FooService {
+@SpringJUnitConfig({AbstractSampleJobTest.LocalContext.class,
+    SampleJobXmlConfigTest.LocalContext.class})
+class SampleJobXmlConfigTest extends AbstractSampleJobTest {
 
-  private final UserMapper userMapper;
-
-  public FooService(UserMapper userMapper) {
-    this.userMapper = userMapper;
-  }
-
-  public User doSomeBusinessStuff(String userId) {
-    return this.userMapper.getUser(userId);
+  @ImportResource("classpath:org/mybatis/spring/sample/config/applicationContext-job.xml")
+  @Configuration
+  static class LocalContext {
   }
 
 }
