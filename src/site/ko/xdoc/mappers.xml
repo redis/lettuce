@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -32,16 +32,16 @@
       <p>데이터 접근 객체인 DAO를 만든것보다 직접 <code>SqlSessionDaoSupport</code> 나 <code>SqlSessionTemplate</code> 를 사용하자.
        마이바티스 스프링 연동모듈은 다른 빈에 직접 주입할 수 있는 쓰레드에 안전한 매퍼를 생성할 수 있다. </p>
 
-      <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
-  <property name="userMapper" ref="userMapper" />
+      <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceImpl">
+  <constructor-arg ref="userMapper" />
 </bean>]]></source>
  
       <p>한번 주입하고나면 매퍼는 애플리케이션 로직에서 사용할수 있는 준비가 된다. </p>
          <source><![CDATA[public class FooServiceImpl implements FooService {
 
-  private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-  public void setUserMapper(UserMapper userMapper) {
+  public FooServiceImpl(UserMapper userMapper) {
     this.userMapper = userMapper;
   }
 
@@ -76,20 +76,13 @@
        <h4>자바설정 사용</h4>
        
        <p>스프링의 Java Config기능을 사용하면 다음처럼 <code>SqlSessionTemplate</code> 에서 직접 매퍼를 얻을 수 있다. </p>
-        
-<source><![CDATA[    @Bean
-    public SqlSessionFactory sqlSessionFactory() throws Exception {
-      SqlSessionFactoryBean sqlSessionFactory = new SqlSessionFactoryBean();
-      sqlSessionFactory.setDataSource(dataSource());
-      return (SqlSessionFactory) sqlSessionFactory.getObject();
-    }
 
-    @Bean
-    public UserMapper userMapper() throws Exception {
-      SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
-      return sessionTemplate.getMapper(UserMapper.class);
-    }
-]]></source>
+    <source><![CDATA[
+@Bean
+public UserMapper userMapper() throws Exception {
+  SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+  return sessionTemplate.getMapper(UserMapper.class);
+}]]></source>
 
        <p>마이바티스의 디폴트 <code>SqlSession</code>에서 매퍼를 리턴받을수 없다. 
        디폴트 <code>SqlSession</code>은 쓰레드에 안전하지 않고 생성된 <code>SqlSession</code>이 닫힐때까지만 살아있기 때문이다.
@@ -120,10 +113,12 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:mybatis="http://mybatis.org/schema/mybatis-spring"
   xsi:schemaLocation="
-  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
   http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring.xsd">
  
   <mybatis:scan base-package="org.mybatis.spring.sample.mapper" />
+
+  <!-- ... -->
 
 </beans>]]></source>
 
@@ -143,7 +138,7 @@
        디폴트로 이 두가지 프로퍼티는 모두 null이다. 
        그래서 base-package프로퍼티에 설정된 패키지 아래 모든 인터페이스가 매퍼로 로드될 것이다. </p>
 
-      <p>발견된 매퍼는 자동검색된 컴포넌트를 위한 스프링의 디폴트 명명규칙 전략(스프링 메뉴얼의 3.14.4를 보라)을 사용해서 빈이름이 명명된다.
+      <p>발견된 매퍼는 자동검색된 컴포넌트를 위한 스프링의 디폴트 명명규칙 전략(see <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-scanning-name-generator">the Spring reference document(Core Technologies -Naming autodetected components-)</a>)을 사용해서 빈이름이 명명된다.
        빈 이름을 정하는 애노테이션이 없다면 매퍼의 이름에서 첫글자를 소문자로 변환한 형태로 빈 이름을 사용할 것이다.
       @Component 나 JSR-330의 @Named 애노테이션이 있다면 애노테이션에 정의한 이름을 그대로 사용할 것이다. 
       <code>annotation</code> 프로퍼티를 <code>org.springframework.stereotype.Component</code>, 
@@ -164,18 +159,7 @@
    <source><![CDATA[@Configuration
 @MapperScan("org.mybatis.spring.sample.mapper")
 public class AppConfig {
-
-  @Bean
-  public DataSource dataSource() {
-    return new EmbeddedDatabaseBuilder().addScript("schema.sql").build()
-  }
-
-  @Bean
-  public SqlSessionFactory sqlSessionFactory() throws Exception {
-    SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
-    sessionFactory.setDataSource(dataSource());
-    return sessionFactory.getObject();
-  }
+  // ...
 }
 ]]></source>
 	

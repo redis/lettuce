@@ -49,39 +49,66 @@
   <subsection name="Requirements">
     <p>마이바티스 스프링 연동을 시작하기 전에, 마이바티스와 스프링의 용어를 맞추는 일이 굉장히 중요했다. 
     이 문서는 배경지식이나 기본적인 셋업방법 그리고 마이바티스와 스프링의 설정에 대한 튜토리얼등은 제공하지 않는다. </p>
-    <p>마이바티스 스프링 연동모듈을 사용하려면 자바 1.5이상의 버전이 필요하고 마이바티스와 스프링은 각각 버전별로 조금씩 다르다. 
-    세부정보는 아래의 표를 참고하자.</p>
-	<table>
-		<thead>
-			<tr>
-				<th>마이바티스 스프링 연동모듈</th>
-				<th>마이바티스</th>
-				<th>스프링</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td>1.0.0 그리고 1.0.1</td>
-				<td>3.0.1 에서 3.0.5까지</td>
-				<td>3.0.0 또는 그 이상</td>
-			</tr>
-			<tr>
-				<td>1.0.2</td>
-				<td>3.0.6</td>
-				<td>3.0.0 또는 그 이상</td>
-			</tr>
-			<tr>
-				<td>1.1.0 또는 그 이상</td>
-				<td>3.1.0 또는 그 이상</td>
-				<td>3.0.0 또는 그 이상</td>
-			</tr>
-			<tr>
-				<td>1.3.0 또는 그 이상</td>
-				<td>3.4.0 또는 그 이상</td>
-				<td>3.0.0 또는 그 이상</td>
-			</tr>
-		</tbody>
-	</table>
+    <p>
+      MyBatis-Spring requires following versions:
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>
+            MyBatis-Spring
+          </th>
+          <th>
+            MyBatis
+          </th>
+          <th>
+            Spring Framework
+          </th>
+          <th>
+            Spring Batch
+          </th>
+          <th>
+            Java
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            2.0
+          </td>
+          <td>
+            3.4+
+          </td>
+          <td>
+            5.0+
+          </td>
+          <td>
+            4.0+
+          </td>
+          <td>
+            Java 8+
+          </td>
+        </tr>
+        <tr>
+          <td>
+            1.3
+          </td>
+          <td>
+            3.4+
+          </td>
+          <td>
+            3.2.2+
+          </td>
+          <td>
+            2.1+
+          </td>
+          <td>
+            Java 6+
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </subsection>
 
   <subsection name="Acknowledgements">

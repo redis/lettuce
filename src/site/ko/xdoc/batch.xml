@@ -28,9 +28,12 @@
 
   <body>
     <section name="Spring Batch">
-      <p>마이바티스 스프링 연동모듈의 1.1.0버전에서는 스프링 배치 애플리케이션을 만들기 위해 두개의 빈을 제공한다. 
-       두개의 빈은 <code>MyBatisPagingItemReader</code> 와 <code>MyBatisBatchItemWriter</code>이다. 
-       이 두개의 빈과 이 문서는 스프링 배치에서 이미 기본적으로 제공하는 것으로 아이바티스 2.x 버전에서 제공했다. </p>
+      <p>
+        마이바티스 스프링 연동모듈의 1.1.0버전에서는 스프링 배치 애플리케이션을 만들기 위해 두개의 빈을 제공한다.
+        두개의 빈은 <code>MyBatisPagingItemReader</code> 와 <code>MyBatisCursorItemReader</code> 와 <code>MyBatisBatchItemWriter</code>이다.
+        Also, As of version 2.0.0 provides three builder classes for supporting the Java Configuration: the <code>MyBatisPagingItemReaderBuilder</code>,
+        the <code>MyBatisCursorItemReaderBuilder</code> and the <code>MyBatisBatchItemWriterBuilder</code>.
+      </p>
       
       <p><span class="label important">중요</span> 이 문서는 <a href="http://static.springsource.org/spring-batch/">스프링 배치</a>에 대한 것으로 
        마이바티스 배치 SqlSession을 다루지는 않는다. 배치 세션에 대해서는 <a href="sqlsession.html">SqlSession 사용</a>에서 좀더 다루었다. </p>
@@ -59,29 +62,63 @@
         
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-  <property name="queryId" value="getEmployee" />
+  <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
 </bean>]]></source>
+
+        <source><![CDATA[
+@Bean
+public MyBatisPagingItemReader<Employee> reader() {
+  return new MyBatisPagingItemReaderBuilder<Employee>()
+      .sqlSessionFactory(sqlSessionFactory())
+      .queryId("com.my.name.space.batch.EmployeeMapper.getEmployee")
+      .build();
+}]]></source>
 
         <p><strong>좀더 복잡한 예제를 보자. </strong></p>
 
-        <source><![CDATA[<bean id="dateBasedCriteriaReader"
-    class="org.mybatis.spring.batch.MyBatisPagingItemReader"
-    p:sqlSessionFactory-ref="batchReadingSessionFactory"
-    p:parameterValues-ref="datesParameters"
-    p:queryId="com.my.name.space.batch.ExampleMapper.queryUserInteractionsOnSpecificTimeSlot"
-    p:pageSize="${200}"
-    scope="step"/>
+        <source><![CDATA[
+<bean id="dateBasedCriteriaReader"
+  class="org.mybatis.spring.batch.MyBatisPagingItemReader"
+  p:sqlSessionFactory-ref="batchReadingSessionFactory"
+  p:parameterValues-ref="datesParameters"
+  p:queryId="com.my.name.space.batch.ExampleMapper.queryUserInteractionsOnSpecificTimeSlot"
+  p:pageSize="200"
+  scope="step"/>
 
-<util:map id="datesParameters" key-type="or.joda.time.DateTime" scope="step">
-  <entry key="yesterday" 
-    value="#{jobExecutionContext['EXTRACTION_START_DATE']}"/>
-  <entry key="today" 
-    value="#{jobExecutionContext['TODAY_DATE']}"/>
-  <entry key="first_day_of_the_month" 
-    value="#{jobExecutionContext['FIRST_DAY_OF_THE_MONTH_DATE']}"/>
-  <entry key="first_day_of_the_previous_month" 
-    value="#{jobExecutionContext['FIRST_DAY_OF_THE_PREVIOUS_MONTH_DATE']}"/>
+<util:map id="datesParameters" scope="step">
+  <entry key="yesterday" value="#{jobExecutionContext['EXTRACTION_START_DATE']}"/>
+  <entry key="today" value="#{jobExecutionContext['TODAY_DATE']}"/>
+  <entry key="first_day_of_the_month" value="#{jobExecutionContext['FIRST_DAY_OF_THE_MONTH_DATE']}"/>
+  <entry key="first_day_of_the_previous_month" value="#{jobExecutionContext['FIRST_DAY_OF_THE_PREVIOUS_MONTH_DATE']}"/>
 </util:map>]]></source>
+
+        <source><![CDATA[
+@StepScope
+@Bean
+public MyBatisPagingItemReader<User> dateBasedCriteriaReader(
+    @Value("#{@datesParameters}") Map<String, Object> datesParameters) throws Exception {
+  return new MyBatisPagingItemReaderBuilder<User>()
+      .sqlSessionFactory(batchReadingSessionFactory())
+      .queryId("com.my.name.space.batch.ExampleMapper.queryUserInteractionsOnSpecificTimeSlot")
+      .parameterValues(datesParameters)
+      .pageSize(200)
+      .build();
+}
+
+@StepScope
+@Bean
+public Map<String, Object> datesParameters(
+    @Value("#{jobExecutionContext['EXTRACTION_START_DATE']}") LocalDate yesterday,
+    @Value("#{jobExecutionContext['TODAY_DATE']}") LocalDate today,
+    @Value("#{jobExecutionContext['FIRST_DAY_OF_THE_MONTH_DATE']}") LocalDate firstDayOfTheMonth,
+    @Value("#{jobExecutionContext['FIRST_DAY_OF_THE_PREVIOUS_MONTH_DATE']}") LocalDate firstDayOfThePreviousMonth) {
+  Map<String, Object> map = new HashMap<>();
+  map.put("yesterday", yesterday);
+  map.put("today", today);
+  map.put("first_day_of_the_month", firstDayOfTheMonth);
+  map.put("first_day_of_the_previous_month", firstDayOfThePreviousMonth);
+  return map;
+}]]></source>
 
         <p>앞의 예제와는 몇가지 차이점이 있다. </p>
         
@@ -131,8 +168,17 @@
         
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-  <property name="queryId" value="getEmployee" />
+  <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
 </bean>]]></source>
+
+        <source><![CDATA[
+@Bean
+public MyBatisCursorItemReader<Employee> reader() {
+  return new MyBatisCursorItemReaderBuilder<Employee>()
+      .sqlSessionFactory(sqlSessionFactory())
+      .queryId("com.my.name.space.batch.EmployeeMapper.getEmployee")
+      .build();
+}]]></source>
 
       </subsection>
 
@@ -148,8 +194,17 @@
         
         <source><![CDATA[<bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
-  <property name="statementId" value="updateEmployee" />
+  <property name="statementId" value="com.my.name.space.batch.EmployeeMapper.updateEmployee" />
 </bean>]]></source>
+
+        <source><![CDATA[
+@Bean
+public MyBatisBatchItemWriter<User> writer() {
+  return new MyBatisBatchItemWriterBuilder<User>()
+      .sqlSessionFactory(sqlSessionFactory())
+      .statementId("com.my.name.space.batch.EmployeeMapper.updateEmployee")
+      .build();
+}]]></source>
 
         <p><strong>여러개의 테이블에 데이터를 쓰려면 한꺼번에 처리할 수 있도록 만든 writer(몇가지 규칙을 가지고)를 사용하자. </strong></p>
 
@@ -193,7 +248,20 @@ public class Interaction {
   </property>
 </bean>]]></source>
 
-        <p>각각의 전용(delegate) writer는 필요할 만큼 설정할 수 있다. 
+        <source><![CDATA[
+@Bean
+public CompositeItemWriter<?> interactionsItemWriter() {
+  CompositeItemWriter compositeItemWriter = new CompositeItemWriter();
+  List<ItemWriter<?>> writers = new ArrayList<>(4);
+  writers.add(visitorInteractionsWriter());
+  writers.add(customerInteractionsWriter());
+  writers.add(interactionMetadataWriter());
+  writers.add(interactionWriter());
+  compositeItemWriter.setDelegates(writers);
+  return compositeItemWriter;
+}]]></source>
+
+        <p>각각의 전용(delegate) writer는 필요할 만큼 설정할 수 있다.
          예를들면 <em>Interaction</em> 과 <em>InteractionMetadata</em>를 위한 writer가 있다. </p>
 
         <source><![CDATA[<bean id="interactionMetadataWriter"

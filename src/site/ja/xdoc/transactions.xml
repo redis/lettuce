@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -45,11 +45,18 @@
   
     <subsection name="標準的な設定" id="configuration">
       <p>
-        Spring の XML 設定ファイルで <code>DataSourceTransactionManager</code> を生成するだけで、Spring のトランザクション処理が有効となります。
+        Spring の 設定ファイルで <code>DataSourceTransactionManager</code> を生成するだけで、Spring のトランザクション処理が有効となります。
       </p>
         <source><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public DataSourceTransactionManager transactionManager() {
+  return new DataSourceTransactionManager(dataSource());
+}]]></source>
+
       <p>
         ここで指定する <code>DataSource</code> は、通常 Spring で利用される JDBC <code>DataSource</code> であればどのようなデータソースでも構いません。
         例えば、コネクションプールや JNDI 経由で取得した <code>DataSource</code> などです。
@@ -62,9 +69,16 @@
     <subsection name="Container Managed Transactions" id="container">
       <p>
         JEEコンテナを利用していて、Spring の処理を CMT (Container Managed Transaction) の一部として利用したい場合、<code>JtaTransactionManager</code> あるいはそのコンテナ固有のサブクラスを使って Spring を設定する必要があります。
-        最も簡単なのは、Spring のトランザクション名前空間を使う方法です。
+        最も簡単なのは、Spring のトランザクション名前空間 又は <code>JtaTransactionManagerFactoryBean</code> を使う方法です。
       </p>
       <source><![CDATA[<tx:jta-transaction-manager />]]></source>
+
+      <source><![CDATA[
+@Bean
+public JtaTransactionManager transactionManager() {
+  return new JtaTransactionManagerFactoryBean().getObject();
+}]]></source>
+
       <p>
         このように設定しておくと MyBatis は、CMT を使うように設定された他の Spring リソースと同じように動作します。
         Spring は、既存のコンテナ管理されたトランザクションがあれば、そのトランザクションに <code>SqlSession</code> を付加して利用します。
@@ -80,6 +94,16 @@
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
   </property>  
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionFactory sqlSessionFactory() {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  factoryBean.setTransactionFactory(new ManagedTransactionFactory());
+  return factoryBean.getObject();
+}]]></source>
+
     </subsection>
   
     <subsection name="トランザクションをプログラム的に制御する" id="programmatic">
@@ -97,21 +121,31 @@
         Spring が管理するトランザクションの外側で <code>SqlSession</code> のデータメソッドあるいは Mapper メソッドを呼び出した場合、JDBC 接続に対する auto-commit の設定に関わらず、変更は直ちにコミットされます。
       </p>
       <p>
-        もしあなたがトランザクションをプログラム的に制御したいのであれば、Spring リファレンスの 10.6 章を参照してください。
-        以下のコードは、10.6.2 節で解説されている <code>PlatformTransactionManager</code> を使ってトランザクションを手動で制御する例です。
+        もしあなたがトランザクションをプログラム的に制御したいのであれば、<a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#transaction-programmatic">the Spring reference document(Data Access -Programmatic transaction management-)</a> を参照してください。
+        以下のコードは、<code>PlatformTransactionManager</code> を使ってトランザクションを手動で制御する例です。
       </p>
-        <source><![CDATA[DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-
-TransactionStatus status = txManager.getTransaction(def);
+      <source><![CDATA[
+TransactionStatus txStatus =
+    transactionManager.getTransaction(new DefaultTransactionDefinition());
 try {
   userMapper.insertUser(user);
+} catch (Exception e) {
+  transactionManager.rollback(txStatus);
+  throw e;
 }
-catch (MyException ex) {
-  txManager.rollback(status);
-  throw ex;
-}
-txManager.commit(status);]]></source>
+transactionManager.commit(txStatus);]]></source>
+
+      <p>
+        <code>TransactionTemplate</code> を使用して <code>commit</code> と <code>rollback</code> メソッドを省略することもできます。
+      </p>
+
+      <source><![CDATA[
+TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+transactionTemplate.execute(txStatus -> {
+  userMapper.insertUser(user);
+  return null;
+});]]></source>
+
       <p>
         ここでは Mapper を使っていますが、<code>SqlSession</code> を使うこともできます。
       </p>

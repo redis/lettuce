@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -35,9 +35,7 @@
     <subsection name="インストール">
       <p>
         MyBatis-Spring を使うためには、
-        <code>
-          mybatis-spring-x.x.x.jar
-        </code> と依存するライブラリをクラスパスに追加するだけで OK です。
+        <code>mybatis-spring-${project.version}.jar</code> と依存するライブラリをクラスパスに追加するだけで OK です。
       </p>
       <p>
         Maven をお使いの場合は、
@@ -47,7 +45,7 @@
 <dependency>
   <groupId>org.mybatis</groupId>
   <artifactId>mybatis-spring</artifactId>
-  <version>x.x.x</version>
+  <version>${project.version}</version>
 </dependency>]]></source>
     </subsection>
 
@@ -59,13 +57,21 @@
 
       <p>
         MyBatis-Spring では
-        <code>SqlSessionFactory</code> の生成に <code>SqlSessionFactoryBean</code> を使います。この Factory Bean を設定するため、Spring の XML 設定ファイルに次の Bean を追加してください。
+        <code>SqlSessionFactory</code> の生成に <code>SqlSessionFactoryBean</code> を使います。この Factory Bean を設定するため、Spring の 設定ファイルに次の Bean を追加してください。
       </p>
 
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionFactoryBean sqlSessionFactory() throws Exception {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  return factoryBean.getObject();
+}]]></source>
 
       <p>
         <code>SqlSessionFactory</code> が <code>DataSource</code> を必要としている点に注意してください。
@@ -102,19 +108,31 @@
       </p>
 
       <p>
+        Java Configurationを使用する場合:
+      </p>
+
+      <source><![CDATA[
+@Bean
+public UserMapper userMapper() throws Exception {
+  SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+  return sqlSessionTemplate.getMapper(UserMapper.class);
+}]]></source>
+
+      <p>
         MyBatis のデータメソッドは、一行だけで実行可能となります。
       </p>
-        <source><![CDATA[
+      <source><![CDATA[
 public class FooServiceImpl implements FooService {
 
-private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-public void setUserMapper(UserMapper userMapper) {
-  this.userMapper = userMapper;
-}
+  public FooServiceImpl(UserMapper userMapper) {
+    this.userMapper = userMapper;
+  }
 
-public User doSomeBusinessStuff(String userId) {
-  return this.userMapper.getUser(userId);
+  public User doSomeBusinessStuff(String userId) {
+    return this.userMapper.getUser(userId);
+  }
 }]]></source>
       </subsection>
     </section>

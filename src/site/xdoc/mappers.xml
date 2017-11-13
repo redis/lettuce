@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@
         thread safe mapper that you can inject directly into other beans:
       </p>
 
-      <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
-  <property name="userMapper" ref="userMapper" />
+      <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceImpl">
+  <constructor-arg ref="userMapper" />
 </bean>]]></source>
  
       <p>
@@ -44,9 +44,9 @@
       </p>
          <source><![CDATA[public class FooServiceImpl implements FooService {
 
-  private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-  public void setUserMapper(UserMapper userMapper) {
+  public FooServiceImpl(UserMapper userMapper) {
     this.userMapper = userMapper;
   }
 
@@ -98,31 +98,24 @@
       </p>
       
        <h4>With Java Config</h4>
-       
-       <p>
-         When using Spring Java Config you can get a mapper directly out 
-         of an <code>SqlSessionTemplate</code> like follows: 
-       </p>
-        
-<source><![CDATA[    @Bean
-    public SqlSessionFactory sqlSessionFactory() throws Exception {
-      SqlSessionFactoryBean sqlSessionFactory = new SqlSessionFactoryBean();
-      sqlSessionFactory.setDataSource(dataSource());
-      return (SqlSessionFactory) sqlSessionFactory.getObject();
-    }
 
-    @Bean
-    public UserMapper userMapper() throws Exception {
-      SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
-      return sessionTemplate.getMapper(UserMapper.class);
-    }
-]]></source>
+       <p>
+         When using Spring Java Config you can get a mapper directly out
+         of an <code>SqlSessionTemplate</code> like follows:
+       </p>
+
+    <source><![CDATA[
+@Bean
+public UserMapper userMapper() throws Exception {
+  SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+  return sessionTemplate.getMapper(UserMapper.class);
+}]]></source>
 
        <p>
          Note that you can not return a mapper got from the MyBatis default <code>SqlSession</code> because
          it would not be thread safe and will only live until the <code>SqlSession</code>
-         it was created from is closed. You must use an 
-         <code><a href="sqlsession.html#SqlSessionTemplate">SqlSessionTemplate</a></code> instead, 
+         it was created from is closed. You must use an
+         <code><a href="sqlsession.html#SqlSessionTemplate">SqlSessionTemplate</a></code> instead,
          as shown in the sample.
        </p>
     </subsection>
@@ -159,10 +152,12 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:mybatis="http://mybatis.org/schema/mybatis-spring"
   xsi:schemaLocation="
-  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
   http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring.xsd">
  
   <mybatis:scan base-package="org.mybatis.spring.sample.mapper" />
+
+  <!-- ... -->
 
 </beans>]]></source>
 
@@ -195,7 +190,7 @@
 
       <p>
         Discovered mappers will be named using Spring default naming strategy for
-        autodetected components (see section 3.14.4 of the Spring manual).
+        autodetected components (see <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-scanning-name-generator">the Spring reference document(Core Technologies -Naming autodetected components-)</a>).
         That is, if no annotation is found, it will use the uncapitalized non-qualified class
         name of the mapper. But if either a @Component or a JSR-330 @Named annotation is
         found it will get the name from the annotation.
@@ -226,18 +221,7 @@
    <source><![CDATA[@Configuration
 @MapperScan("org.mybatis.spring.sample.mapper")
 public class AppConfig {
-
-  @Bean
-  public DataSource dataSource() {
-    return new EmbeddedDatabaseBuilder().addScript("schema.sql").build()
-  }
-
-  @Bean
-  public SqlSessionFactory sqlSessionFactory() throws Exception {
-    SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
-    sessionFactory.setDataSource(dataSource());
-    return sessionFactory.getObject();
-  }
+  // ...
 }
 ]]></source>
 	

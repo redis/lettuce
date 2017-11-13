@@ -57,58 +57,65 @@
       MyBatis o Spring. 
     </p>
     <p>
-      MyBatis-Spring requiere Java 5 o superior y las siguientes versiones de MyBatis y Spring:
+      MyBatis-Spring requires following versions:
     </p>
-	<table>
-		<thead>
-			<tr>
-				<th>
-					MyBatis-Spring
-				</th>
-				<th>
-					MyBatis
-				</th>
-				<th>
-					Spring
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td>
-					1.0.0 y 1.0.1
-				</td>
-				<td>
-					3.0.1 to 3.0.5
-				</td>
-				<td>
-					3.0.0 o superior
-				</td>
-			</tr>
-			<tr>
-				<td>
-					1.0.2
-				</td>
-				<td>
-					3.0.6
-				</td>
-				<td>
-					3.0.0 o superior
-				</td>
-			</tr>
-			<tr>
-				<td>
-					1.1.0
-				</td>
-				<td>
-					3.1.0 o superior
-				</td>
-				<td>
-					3.0.0 o superior
-				</td>
-			</tr>
-		</tbody>
-	</table>
+    <table>
+      <thead>
+        <tr>
+          <th>
+            MyBatis-Spring
+          </th>
+          <th>
+            MyBatis
+          </th>
+          <th>
+            Spring Framework
+          </th>
+          <th>
+            Spring Batch
+          </th>
+          <th>
+            Java
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            2.0
+          </td>
+          <td>
+            3.4+
+          </td>
+          <td>
+            5.0+
+          </td>
+          <td>
+            4.0+
+          </td>
+          <td>
+            Java 8+
+          </td>
+        </tr>
+        <tr>
+          <td>
+            1.3
+          </td>
+          <td>
+            3.4+
+          </td>
+          <td>
+            3.2.2+
+          </td>
+          <td>
+            2.1+
+          </td>
+          <td>
+            Java 6+
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </subsection>
 
   <subsection name="Agradecimientos">

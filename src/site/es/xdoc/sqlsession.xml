@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -63,8 +63,14 @@
       </p>
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
-</bean>]]></source>        
-     
+</bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionTemplate sqlSession() throws Exception {
+  return new SqlSessionTemplate(sqlSessionFactory());
+}]]></source>
+
       <p>
         Este bean puede ser inyectado directamente en tus DAOs. Necesitarás una propiedad
         <code>SqlSession</code> en tu bean como se muestra a continuación:
@@ -78,7 +84,7 @@
   }
 
   public User getUser(String userId) {
-    return (User) sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    return sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
       <p>
@@ -97,14 +103,22 @@
   <constructor-arg index="0" ref="sqlSessionFactory" />
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionTemplate sqlSession() throws Exception {
+  return new SqlSessionTemplate(sqlSessionFactory(), ExecutorType.BATCH);
+}]]></source>
+
       <p>
         Ahora todos tus statements se ejecutarán en batch de forma que puedes programar lo siguiente:
       </p>
-        <source><![CDATA[public void insertUsers(User[] users) {
-   for (User user : users) {
-     sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
-   }
- }]]></source> 
+        <source><![CDATA[
+public void insertUsers(List<User> users) {
+  for (User user : users) {
+    sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
+  }
+}]]></source>
   
       <p>
         Fijate que esta configuración si el método de ejecución deseado es distinto del establecido por defecto
@@ -126,7 +140,7 @@
       </p>
         <source><![CDATA[public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
   public User getUser(String userId) {
-    return (User) getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    return getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
       <p>
@@ -145,7 +159,7 @@
         Asumiendo una clase <code>UserDaoImpl</code> que extiende 
         <code>SqlSessionDaoSupport</code>, se puede configurar Spring de la siguiente forma:
       </p>
-        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl">
+      <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
       </subsection>

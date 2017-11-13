@@ -29,14 +29,14 @@
 
 			<p>
 				<span class="label important">NOTE</span>
-				查看 <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> 获取更多关于 Spring 在完整的应用服务上面的使用例子..
+				查看 <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> 获取更多关于 Spring 在完整的应用服务上面的使用例子.
 			</p>
 
 			<p>
 				您可以从此处查看 MyBatis-Spring 的示例代码 <a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">repo</a>:
 			</p>
 			<p>
-				任何一个示例都在 JUnit 4 中运行.
+				任何一个示例都在 JUnit 5 中运行.
 			</p>
 			<p>
 				示例代码显示了事务服务从数据访问层获取域对象的典型设计.
@@ -48,9 +48,9 @@
 @Transactional
 public class FooService {
 
-  private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-  public void setUserMapper(UserMapper userMapper) {
+  public FooService(UserMapper userMapper) {
     this.userMapper = userMapper;
   }
 
@@ -114,14 +114,6 @@ public interface UserMapper {
 					</tr>
 					<tr>
 						<td>
-							<code>SampleConfigurationTest.java</code>
-						</td>
-						<td>
-							显示如何使用 Spring 的 <code>@Configuration</code> 来手动创建 MyBatis beans .
-						</td>
-					</tr>
-					<tr>
-						<td>
 							<code>SampleEnableTest</code>
 						</td>
 						<td>
@@ -136,6 +128,30 @@ public interface UserMapper {
 							显示如何使用自定义 MyBatis XML 命名空间. 
 						</td>
 					</tr>
+          <tr>
+            <td>
+              <code>SampleJavaConfigTest.java</code>
+            </td>
+            <td>
+              Shows how to use Spring's <code>@Configuration</code> to create MyBatis beans manually.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>SampleJobJavaConfigTest.java</code>
+            </td>
+            <td>
+              Shows how to use <code>ItemReader</code> and <code>ItemWriter</code> on Spring Batch using Java Configuration.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>SampleJobXmlConfigTest.java</code>
+            </td>
+            <td>
+              Shows how to use <code>ItemReader</code> and <code>ItemWriter</code> on Spring Batch using XML Configuration.
+            </td>
+          </tr>
 				</tbody>
 			</table>
 			<p>

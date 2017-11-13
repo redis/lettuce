@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -47,12 +47,20 @@ DataSourceTransactionManager。
   
     <subsection name="标准配置" id="configuration">
       <p>
-要 开 启 Spring 的 事 务 处 理 , 在 Spring 的 XML 配 置 文 件 中 简 单 创 建 一 个
+要 开 启 Spring 的 事 务 处 理 , 在 Spring 的 配 置 文 件 中 简 单 创 建 一 个
 DataSourceTransactionManager 对象:
       </p>
-        <source><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-  <property name="dataSource" ref="dataSource" />
+      <source><![CDATA[
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <constructor-arg ref="dataSource" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public DataSourceTransactionManager transactionManager() {
+  return new DataSourceTransactionManager(dataSource());
+}]]></source>
+
       <p>
 指定的 DataSource 一般可以是你使用 Spring 的任意 JDBC DataSource。这包含了连接
 池和通过 JNDI 查找获得的 DataSource。
@@ -68,9 +76,16 @@ DataSourceTransactionManager 对象:
       <p>
 如果你正使用一个 JEE 容器而且想让 Spring 参与到容器管理事务(Container managed
 transactions,CMT,译者注)中,那么 Spring 应该使用 JtaTransactionManager 或它的容
-器指定的子类来配置。做这件事情的最方便的方式是用 Spring 的事务命名空间:
+器指定的子类来配置。做这件事情的最方便的方式是用 Spring 的事务命名空间 or the <code>JtaTransactionManagerFactoryBean</code>:
       </p>
       <source><![CDATA[<tx:jta-transaction-manager />]]></source>
+
+      <source><![CDATA[
+@Bean
+public JtaTransactionManager transactionManager() {
+  return new JtaTransactionManagerFactoryBean().getObject();
+}]]></source>
+
       <p>
 在这种配置中,MyBatis 将会和其它由 CMT 配置的 Spring 事务资源一样。Spring 会自动
 使用任意存在的容器事务,在上面附加一个 SqlSession。如果没有开始事务,或者需要基
@@ -87,6 +102,16 @@ SqlSessionFactoryBean 来使用基本的 MyBatis 的 ManagedTransactionFactory �
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
   </property>  
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionFactory sqlSessionFactory() {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  factoryBean.setTransactionFactory(new ManagedTransactionFactory());
+  return factoryBean.getObject();
+}]]></source>
+
     </subsection>
   
     <subsection name="编程式事务管理" id="programmatic">
@@ -109,21 +134,31 @@ SqlSession 数据方法的执行或在 Spring 事务之外
 任意调用映射器方法都将会自动被提交。
       </p>
       <p>
-如果你想编程式地控制事务,请参考 Spring 手册的 10.6 节。这段代码展示了如何手动
-使用在 10.6.2 章节描述的 PlatformTransactionManager 来处理事务。
+如果你想编程式地控制事务,请参考 <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#transaction-programmatic">the Spring reference document(Data Access -Programmatic transaction management-)</a>。这段代码展示了如何手动
+使用在 节描述的 PlatformTransactionManager 来处理事务。
       </p>
-        <source><![CDATA[DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-
-TransactionStatus status = txManager.getTransaction(def);
+      <source><![CDATA[
+TransactionStatus txStatus =
+    transactionManager.getTransaction(new DefaultTransactionDefinition());
 try {
   userMapper.insertUser(user);
+} catch (Exception e) {
+  transactionManager.rollback(txStatus);
+  throw e;
 }
-catch (MyException ex) {
-  txManager.rollback(status);
-  throw ex;
-}
-txManager.commit(status);]]></source>
+transactionManager.commit(txStatus);]]></source>
+
+      <p>
+        You can omit to call the <code>commit</code> and <code>rollback</code> method using the <code>TransactionTemplate</code>.
+      </p>
+
+      <source><![CDATA[
+TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+transactionTemplate.execute(txStatus -> {
+  userMapper.insertUser(user);
+  return null;
+});]]></source>
+
       <p>
 注意这段代码展示了一个映射器,但它也能和 SqlSession 一起使用。
       </p>
