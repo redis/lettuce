@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -35,9 +35,7 @@
     <subsection name="Instalación">
       <p>
         Para usar el módulo MyBatis-Spring, debes incluir el fichero
-        <code>
-          mybatis-spring-x.x.x.jar
-        </code>
+        <code>mybatis-spring-${project.version}.jar</code>
         y sus dependencias en el classpath.
       </p>
       <p>
@@ -47,7 +45,7 @@
 <dependency>
   <groupId>org.mybatis</groupId>
   <artifactId>mybatis-spring</artifactId>
-  <version>x.x.x</version>
+  <version>${project.version}</version>
 </dependency>]]></source>
     </subsection>
 
@@ -63,13 +61,21 @@
         para crear una 
         <code>SqlSessionFactory</code>
         . Para configurar la factory bean pon lo siguiente en tu 
-        fichero de configuración XML de Spring:
+        fichero de configuración de Spring:
       </p>
 
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionFactoryBean sqlSessionFactory() throws Exception {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  return factoryBean.getObject();
+}]]></source>
 
       <p>
         Observa que la <code>SqlSessionFactory</code>
@@ -120,19 +126,31 @@
       </p>
 
       <p>
+        If you use the Java Configuration:
+      </p>
+
+      <source><![CDATA[
+@Bean
+public UserMapper userMapper() throws Exception {
+  SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+  return sqlSessionTemplate.getMapper(UserMapper.class);
+}]]></source>
+
+      <p>
         Invocar a MyBatis es sólo una línea de código:
       </p>
-        <source><![CDATA[
+      <source><![CDATA[
 public class FooServiceImpl implements FooService {
 
-private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-public void setUserMapper(UserMapper userMapper) {
-  this.userMapper = userMapper;
-}
+  public FooServiceImpl(UserMapper userMapper) {
+    this.userMapper = userMapper;
+  }
 
-public User doSomeBusinessStuff(String userId) {
-  return this.userMapper.getUser(userId);
+  public User doSomeBusinessStuff(String userId) {
+    return this.userMapper.getUser(userId);
+  }
 }]]></source>
       </subsection>
     </section>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -39,10 +39,18 @@
       DAO클래스에 어떠한 추가적인 코드를 넣을 필요가 없다. </p>
   
     <subsection name="Standard Configuration" id="configuration">
-      <p>스프링 트랜잭션을 가능하게 하려면, 스프링 XML설정파일에 <code>DataSourceTransactionManager</code>를 생성하자. </p>
-        <source><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-  <property name="dataSource" ref="dataSource" />
+      <p>스프링 트랜잭션을 가능하게 하려면, 스프링 설정파일에 <code>DataSourceTransactionManager</code>를 생성하자. </p>
+      <source><![CDATA[
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <constructor-arg ref="dataSource" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public DataSourceTransactionManager transactionManager() {
+  return new DataSourceTransactionManager(dataSource());
+}]]></source>
+
       <p>명시된 <code>DataSource</code>는 스프링을 사용할때 일반적으로 사용한다면 어떠한 JDBC <code>DataSource</code>도 될수 있다.
        JNDI룩업을 통해 얻어진 <code>DataSource</code>뿐 아니라 커넥션 풀링 기능도 포함한다. </p>
       <p>트랜잭션 관리자에 명시된 <code>DataSource</code>가 <code>SqlSessionFactoryBean</code>을 생성할때 사용된 것과 <strong>반드시</strong> 동일한 것이어야 하는 것만 꼭 기억하자.
@@ -52,9 +60,17 @@
     <subsection name="Container Managed Transactions" id="container">
       <p>만약에 JEE컨테이너를 사용하고 스프링을 컨테이너 관리 트랜잭션(container managed transactions, CMT)에 두려한다면, 
       스프링은 <code>JtaTransactionManager</code>나 그 하위 클래스로 설정되어야 한다. 
-      이러한 설정을 가장 쉽게 하는 방법은 스프링의 트랜잭션 네임스페이스를 사용하는 것이다. </p>
+      이러한 설정을 가장 쉽게 하는 방법은 스프링의 트랜잭션 네임스페이스 or <code>JtaTransactionManagerFactoryBean</code> 를 사용하는 것이다. </p>
+
       <source><![CDATA[<tx:jta-transaction-manager />]]></source>
-      <p>이 설정에서, 마이바티스는 CMT와 함께 설정된 스프링 트랜잭션 리소스처럼 동작할 것이다. 
+
+      <source><![CDATA[
+@Bean
+public JtaTransactionManager transactionManager() {
+  return new JtaTransactionManagerFactoryBean().getObject();
+}]]></source>
+
+      <p>이 설정에서, 마이바티스는 CMT와 함께 설정된 스프링 트랜잭션 리소스처럼 동작할 것이다.
       스프링은 이미 설정된 트랜잭션을 사용해서 <code>SqlSession</code>을 이미 동작중인 트랜잭션에 넣을 것이다. 
       시작된 트랜잭션이 없고 트랜잭션이 필요한 경우라면 스프링은 새로운 컨테이너 관리 트랜잭션을 시작할 것이다. </p>
       <p>CMT는 사용하지만 스프링 트랜잭션 관리를 원하지 <strong>않는다면</strong> 어떠한 스프링 트랜잭션 관리자를 설정해서도 <strong>안되고</strong> 
@@ -65,6 +81,16 @@
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
   </property>  
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionFactory sqlSessionFactory() {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  factoryBean.setTransactionFactory(new ManagedTransactionFactory());
+  return factoryBean.getObject();
+}]]></source>
+
     </subsection>
   
     <subsection name="Programmatic Transaction Management" id="programmatic">
@@ -76,20 +102,31 @@
         그럼에도 불구하고 이 메서드들을 사용하면 <code>UnsupportedOperationException</code> 예외가 발생한다. 
         이러한 메서드는 주입된 매퍼 클래스에서는 사용할 수 없다. </p>
       <p>JDBC연결의 자동커밋 설정을 어떻게 하더라도 스프링 트랜잭션 밖의 <code>SqlSession</code> 데이터 메서드나 매퍼 메서드의 실행은 자동으로 커밋된다. </p>
-      <p>트래잭션을 수동으로 제어하고자 한다면 스프링 레퍼런스의 10.6절을 참고하자. 
-      다음의 코드는 스프링 레퍼런스 10.6.2절에서 언급된 내용으로 <code>PlatformTransactionManager</code>를 사용해서 수동으로 트랜잭션을 다루는 방법을 보여준다.</p>
-        <source><![CDATA[DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+      <p>트래잭션을 수동으로 제어하고자 한다면 <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#transaction-programmatic">the Spring reference document(Data Access -Programmatic transaction management-)</a> 을 참고하자.
+      다음의 코드는 스프링 레퍼런스 에서 언급된 내용으로 <code>PlatformTransactionManager</code>를 사용해서 수동으로 트랜잭션을 다루는 방법을 보여준다.</p>
 
-TransactionStatus status = txManager.getTransaction(def);
+      <source><![CDATA[
+TransactionStatus txStatus =
+    transactionManager.getTransaction(new DefaultTransactionDefinition());
 try {
   userMapper.insertUser(user);
+} catch (Exception e) {
+  transactionManager.rollback(txStatus);
+  throw e;
 }
-catch (MyException ex) {
-  txManager.rollback(status);
-  throw ex;
-}
-txManager.commit(status);]]></source>
+transactionManager.commit(txStatus);]]></source>
+
+      <p>
+        You can omit to call the <code>commit</code> and <code>rollback</code> method using the <code>TransactionTemplate</code>.
+      </p>
+
+      <source><![CDATA[
+TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+transactionTemplate.execute(txStatus -> {
+  userMapper.insertUser(user);
+  return null;
+});]]></source>
+
       <p>이 코드는 매퍼를 사용하지만 <code>SqlSession</code>를 사용해서 잘 동작할 것이다. </p>
       </subsection>
     </section>

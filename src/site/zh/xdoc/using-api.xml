@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -33,22 +33,18 @@
 使用 MyBatis-Spring,你可以继续直接使用 MyBatis 的 API。仅仅在代码中使用 Spring 中
 的 SqlSessionFactoryBean 来创建一个 SqlSessionFactory。
       </p>
-        <source><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
+      <source><![CDATA[public class UserDaoImpl implements UserDao {
   // SqlSessionFactory would normally be set by SqlSessionDaoSupport
-  private SqlSessionFactory sqlSessionFactory;
+  private final SqlSessionFactory sqlSessionFactory;
 
-  public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+  public UserDaoImpl(SqlSessionFactory sqlSessionFactory) {
     this.sqlSessionFactory = sqlSessionFactory;
   }
 
   public User getUser(String userId) {
     // note standard MyBatis API usage - opening and closing the session manually
-    SqlSession session = sqlSessionFactory.openSession();
-
-    try {
-      return (User) session.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
-    } finally {
-      session.close();
+    try (SqlSession session = sqlSessionFactory.openSession()) {
+      return session.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
     }
   }
 }]]></source>

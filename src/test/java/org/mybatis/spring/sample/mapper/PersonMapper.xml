@@ -20,14 +20,10 @@
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.mybatis.spring.sample.mapper.UserMapper">
+<mapper namespace="org.mybatis.spring.sample.mapper.PersonMapper">
 
-  <select id="getUsers" resultType="org.mybatis.spring.sample.domain.User">
-    select * from users order by id
-  </select>
-
-  <select id="getUser" resultType="org.mybatis.spring.sample.domain.User">
-        select * from users where id=#{value}
-  </select>
+    <select id="createPerson" resultType="org.mybatis.spring.sample.domain.Person">
+        insert into persons (first_name, last_name) values(#{firstName}, #{lastName})
+    </select>
 
 </mapper>

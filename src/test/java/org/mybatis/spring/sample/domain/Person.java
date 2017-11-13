@@ -13,26 +13,39 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.service;
+package org.mybatis.spring.sample.domain;
 
-import org.mybatis.spring.sample.domain.User;
-import org.mybatis.spring.sample.mapper.UserMapper;
-import org.springframework.transaction.annotation.Transactional;
+public class Person {
 
-/**
- * FooService simply receives a userId and uses a mapper to get a record from the database.
- */
-@Transactional
-public class FooService {
+  private String lastName;
+  private String firstName;
 
-  private final UserMapper userMapper;
+  public Person() {}
 
-  public FooService(UserMapper userMapper) {
-    this.userMapper = userMapper;
+  public Person(String firstName, String lastName) {
+    this.firstName = firstName;
+    this.lastName = lastName;
   }
 
-  public User doSomeBusinessStuff(String userId) {
-    return this.userMapper.getUser(userId);
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
+  }
+
+  public String getFirstName() {
+    return firstName;
+  }
+
+  public String getLastName() {
+    return lastName;
+  }
+
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
+  }
+
+  @Override
+  public String toString() {
+    return "firstName: " + firstName + ", lastName: " + lastName;
   }
 
 }

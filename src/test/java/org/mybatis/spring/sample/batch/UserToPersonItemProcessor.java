@@ -13,26 +13,23 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package org.mybatis.spring.sample.service;
+package org.mybatis.spring.sample.batch;
+
+import org.mybatis.spring.sample.domain.Person;
 
 import org.mybatis.spring.sample.domain.User;
-import org.mybatis.spring.sample.mapper.UserMapper;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.batch.item.ItemProcessor;
 
-/**
- * FooService simply receives a userId and uses a mapper to get a record from the database.
- */
-@Transactional
-public class FooService {
+public class UserToPersonItemProcessor implements ItemProcessor<User, Person> {
 
-  private final UserMapper userMapper;
-
-  public FooService(UserMapper userMapper) {
-    this.userMapper = userMapper;
-  }
-
-  public User doSomeBusinessStuff(String userId) {
-    return this.userMapper.getUser(userId);
+  @Override
+  public Person process(final User user) throws Exception {
+    final String[] names = user.getName().split(" ");
+    if (names.length == 1) {
+      return new Person(names[0], null);
+    } else {
+      return new Person(names[0], names[1]);
+    }
   }
 
 }

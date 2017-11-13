@@ -15,24 +15,24 @@
  */
 package org.mybatis.spring.sample.service;
 
+import org.mybatis.spring.sample.dao.UserDao;
 import org.mybatis.spring.sample.domain.User;
-import org.mybatis.spring.sample.mapper.UserMapper;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * FooService simply receives a userId and uses a mapper to get a record from the database.
+ * BarService simply receives a userId and uses a dao to get a record from the database.
  */
 @Transactional
-public class FooService {
+public class BarService {
 
-  private final UserMapper userMapper;
+  private final UserDao userDao;
 
-  public FooService(UserMapper userMapper) {
-    this.userMapper = userMapper;
+  public BarService(UserDao userDao) {
+    this.userDao = userDao;
   }
 
   public User doSomeBusinessStuff(String userId) {
-    return this.userMapper.getUser(userId);
+    return this.userDao.getUser(userId);
   }
 
 }

@@ -36,9 +36,7 @@
     <subsection name="Installation">
       <p>
 要使用 MyBatis-Spring 模块,你只需要包含
-        <code>
-          mybatis-spring-x.x.x.jar
-        </code>
+        <code>mybatis-spring-${project.version}.jar</code>
 文 件就可以了,并在类路径中加入相关的依赖。
       </p>
       <p>
@@ -48,7 +46,7 @@
 <dependency>
   <groupId>org.mybatis</groupId>
   <artifactId>mybatis-spring</artifactId>
-  <version>x.x.x</version>
+  <version>${project.version}</version>
 </dependency>]]></source>
     </subsection>
 
@@ -60,13 +58,21 @@ SqlSessionFactory 和至少一个数据映射器类。
 
       <p>
 在 MyBatis-Spring 中,SqlSessionFactoryBean 是用于创建 SqlSessionFactory 的。要
-配置这个工厂 bean,放置下面的代码在 Spring 的 XML 配置文件中:
+配置这个工厂 bean,放置下面的代码在 Spring 的 配置文件中:
       </p>
 
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionFactoryBean sqlSessionFactory() throws Exception {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  return factoryBean.getObject();
+}]]></source>
 
       <p>
 要注意 SqlSessionFactory 需要一个 DataSource(数据源,译者注)
@@ -105,19 +111,31 @@ business/service 对象中。MapperFactoryBean 处理 SqlSession 的创建和关
       </p>
 
       <p>
+        If you use the Java Configuration:
+      </p>
+
+      <source><![CDATA[
+@Bean
+public UserMapper userMapper() throws Exception {
+  SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+  return sqlSessionTemplate.getMapper(UserMapper.class);
+}]]></source>
+
+      <p>
 调用 MyBatis 数据方法现在只需一行代码:
       </p>
-        <source><![CDATA[
+      <source><![CDATA[
 public class FooServiceImpl implements FooService {
 
-private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-public void setUserMapper(UserMapper userMapper) {
-  this.userMapper = userMapper;
-}
+  public FooServiceImpl(UserMapper userMapper) {
+    this.userMapper = userMapper;
+  }
 
-public User doSomeBusinessStuff(String userId) {
-  return this.userMapper.getUser(userId);
+  public User doSomeBusinessStuff(String userId) {
+    return this.userMapper.getUser(userId);
+  }
 }]]></source>
       </subsection>
     </section>

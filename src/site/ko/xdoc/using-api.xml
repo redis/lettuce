@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -31,22 +31,18 @@
     <section name="Using the MyBatis API">
       <p>마이바티스 스프링 연동모듈을 사용해더라도 마이바티스 API를 직접 사용할 수 있다. 
       <code>SqlSessionFactoryBean</code>을 사용해서 스프링에서 <code>SqlSessionFactory</code>를 생성하고 팩토리를 사용하자. </p>
-        <source><![CDATA[public class UserMapperSqlSessionImpl implements UserMapper {
+      <source><![CDATA[public class UserDaoImpl implements UserDao {
   // SqlSessionFactory would normally be set by SqlSessionDaoSupport
-  private SqlSessionFactory sqlSessionFactory;
+  private final SqlSessionFactory sqlSessionFactory;
 
-  public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+  public UserDaoImpl(SqlSessionFactory sqlSessionFactory) {
     this.sqlSessionFactory = sqlSessionFactory;
   }
 
   public User getUser(String userId) {
     // note standard MyBatis API usage - opening and closing the session manually
-    SqlSession session = sqlSessionFactory.openSession();
-
-    try {
-      return (User) session.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
-    } finally {
-      session.close();
+    try (SqlSession session = sqlSessionFactory.openSession()) {
+      return session.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
     }
   }
 }]]></source>

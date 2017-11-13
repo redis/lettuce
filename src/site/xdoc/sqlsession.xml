@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@
         directly because your beans can be injected with a thread safe
         <code>SqlSession</code> that automatically commits, rollbacks and
         closes the session based on Spring's transaction configuration.
-      </p>  
-    
+      </p>
+
     <subsection name="SqlSessionTemplate">
       <p>
         <code>SqlSessionTemplate</code> is the heart of MyBatis-Spring.
@@ -72,8 +72,14 @@
       </p>
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
-</bean>]]></source>        
-     
+</bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionTemplate sqlSession() throws Exception {
+  return new SqlSessionTemplate(sqlSessionFactory());
+}]]></source>
+
       <p>
         This bean can now be injected directly in your DAO beans. You need a
         <code>SqlSession</code> property in your bean like the following
@@ -87,35 +93,43 @@
   }
 
   public User getUser(String userId) {
-    return (User) sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    return sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
       <p>
         And inject the <code>SqlSessionTemplate</code> as follows
-      </p>      
+      </p>
       <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSession" ref="sqlSession" />
 </bean>]]></source>
-      
+
       <p>
         <code>SqlSessionTemplate</code> has also a constructor that takes
         an <code>ExecutorType</code> as an argument. This allows you to
         construct, for example, a batch <code>SqlSession</code> by using
-        the following in Spring's configuration xml:
+        the following in Spring's configuration file:
       </p>
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionTemplate sqlSession() throws Exception {
+  return new SqlSessionTemplate(sqlSessionFactory(), ExecutorType.BATCH);
+}]]></source>
+
       <p>
         Now all your statements will be batched so the following could be coded
         in a DAO
       </p>
-        <source><![CDATA[public void insertUsers(User[] users) {
-   for (User user : users) {
-     sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
-   }
- }]]></source> 
+        <source><![CDATA[
+public void insertUsers(List<User> users) {
+  for (User user : users) {
+    sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
+  }
+}]]></source>
   
       <p>
         Note that this configuration style only needs to be used if the desired
@@ -142,7 +156,7 @@
       </p>
         <source><![CDATA[public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
   public User getUser(String userId) {
-    return (User) getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    return getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
       <p>
@@ -164,7 +178,7 @@
         <code>SqlSessionDaoSupport</code>, it can be configured in Spring
         like the following:
       </p>
-        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl">
+        <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
       </subsection>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -28,7 +28,16 @@
     <!-- import common beans  -->
     <import resource="classpath:org/mybatis/spring/sample/config/applicationContext-infrastructure.xml"/>
 
-    <!-- Classic DAO pattern built with an interface and an implementation. 
-    In this case, the inteface should have been called UserDao but we keep its name for simiplicity-->
-    <bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl" autowire="byType" />
+    <!-- Mock for preventing bean creation error -->
+    <bean id="userMapper" class="org.mockito.Mockito" factory-method="mock">
+      <constructor-arg value="org.mybatis.spring.sample.mapper.UserMapper"/>
+    </bean>
+
+    <!-- Classic DAO pattern built with an interface and an implementation. -->
+    <bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl" autowire="byType" />
+
+    <bean id="barService" class="org.mybatis.spring.sample.service.BarService">
+      <constructor-arg ref="userDao"/>
+    </bean>
+
 </beans>

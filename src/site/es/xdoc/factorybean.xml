@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -41,9 +41,10 @@
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
-	  <p>
-	    La clase <code>SqlSessionFactoryBean</code> implementa el interfaz <code>FactoryBean</code>
-        (see section 3.8 of the Spring documentation). Lo cual significa que el bean que crea Spring
+      <p>
+        La clase <code>SqlSessionFactoryBean</code> implementa el interfaz <code>FactoryBean</code>
+        (see <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-extension-factorybean">the Spring documentation(Core Technologies -Customizing instantiation logic with a FactoryBean-)</a>).
+        Lo cual significa que el bean que crea Spring
         en última instancia <b>no</b> es un <code>SqlSessionFactoryBean</code> en si mismo, sino el 
         objeto que la factoria devuelve como resultado de la llamada al método
         <code>getObject()</code>. En este caso, Spring creará un bean
@@ -52,8 +53,12 @@
       </p>
 
       <source><![CDATA[
-SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
-SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
+@Bean
+public SqlSessionFactory sqlSessionFactory() {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  return factoryBean.getObject();
+}]]></source>
 
       <p>
         Normalmente no necesitarás utilizar directamente un <code>SqlSessionFactoryBean</code>
@@ -114,27 +119,23 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
          En caso de usar la característica multi-db necesitarás informar la propiedad <code>databaseIdProvider</code> 
          de la siguiente forma:  
       </p>
-      
-<source><![CDATA[      
-<bean id="vendorProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
-    <property name="properties">
-        <props>
-            <prop key="SQL Server">sqlserver</prop>
-            <prop key="DB2">db2</prop>
-            <prop key="Oracle">oracle</prop>
-            <prop key="MySQL">mysql</prop>
-        </props>
-    </property>
-</bean>
 
+      <source><![CDATA[
 <bean id="databaseIdProvider" class="org.apache.ibatis.mapping.VendorDatabaseIdProvider">
-    <property name="properties" ref="vendorProperties"/>
+  <property name="properties">
+    <props>
+      <prop key="SQL Server">sqlserver</prop>
+      <prop key="DB2">db2</prop>
+      <prop key="Oracle">oracle</prop>
+      <prop key="MySQL">mysql</prop>
+    </props>
+  </property>
 </bean>
 
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-    <property name="dataSource" ref="dataSource" />
-    <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
-    <property name="databaseIdProvider" ref="databaseIdProvider"/>
+  <property name="dataSource" ref="dataSource" />
+  <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
+  <property name="databaseIdProvider" ref="databaseIdProvider"/>
 </bean>]]></source>
 
       <p>

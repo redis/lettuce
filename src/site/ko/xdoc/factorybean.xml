@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -37,14 +37,18 @@
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
-	  <p><code>SqlSessionFactoryBean</code> 은 스프링의 <code>FactoryBean</code> 인터페이스를 구현(스프링 문서의 3.8절을 보자)한다는 점을 알아야 한다.
+	  <p><code>SqlSessionFactoryBean</code> 은 스프링의 <code>FactoryBean</code> 인터페이스를 구현(see <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-extension-factorybean">the Spring documentation(Core Technologies -Customizing instantiation logic with a FactoryBean-)</a>)한다는 점을 알아야 한다.
 	   이 설정은 스프링이 <code>SqlSessionFactoryBean</code> 자체를 생성하는 것이 <b>아니라</b> 팩토리에서 <code>getObject()</code> 메서드를 호출한 결과를 리턴한다는 것을 의미한다.
 	   이 경우, 스프링은 애플리케이션 시작 시점에 <code>SqlSessionFactory</code>를 빌드하고 <code>sqlSessionFactory</code> 라는 이름으로 저장한다. 
 	   자바에서 코드로 표현하면 아래와 같다. </p>
 
       <source><![CDATA[
-SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
-SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
+@Bean
+public SqlSessionFactory sqlSessionFactory() {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  return factoryBean.getObject();
+}]]></source>
 
       <p>일반적인 마이바티스 스프링 사용법에서는, <code>SqlSessionFactoryBean</code>이나 관련된 <code>SqlSessionFactory</code>를 직접 사용할 필요가 없다.
        대신 세션 팩토리가 <code>MapperFactoryBean</code>나 <code>SqlSessionDaoSupport</code>를 확장하는 다른 DAO에 주입될것이다. </p>
@@ -83,6 +87,28 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
 
       <p>컨테이너 관리 트랜잭션을 사용하는 환경에서 필요한 하나의 프로퍼티는 <code>transactionFactoryClass</code> 이다. 
       이에 관련해서는 트랜잭션을 다루는 장에서 볼수 있다. </p>
+
+      <p>
+        In case you are using the multi-db feature you will need to set the <code>databaseIdProvider</code> property:
+      </p>
+
+      <source><![CDATA[
+<bean id="databaseIdProvider" class="org.apache.ibatis.mapping.VendorDatabaseIdProvider">
+  <property name="properties">
+    <props>
+      <prop key="SQL Server">sqlserver</prop>
+      <prop key="DB2">db2</prop>
+      <prop key="Oracle">oracle</prop>
+      <prop key="MySQL">mysql</prop>
+    </props>
+  </property>
+</bean>
+
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
+  <property name="databaseIdProvider" ref="databaseIdProvider"/>
+</bean>]]></source>
 
       <p>
         <span class="label important">NOTE</span>

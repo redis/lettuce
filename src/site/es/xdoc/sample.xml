@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -29,14 +29,14 @@
 
 			<p>
 				<span class="label important">NOTE</span>
-				See <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> to know about how to use Spring with a full web application server.				.
+				See <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> to know about how to use Spring with a full web application server.
 			</p>
 
 			<p>
 				You can check out sample code from the MyBatis-Spring <a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">repo</a>:
 			</p>
 			<p>
-				Any of the samples can be run with JUnit 4.
+				Any of the samples can be run with JUnit 5.
 			</p>
 			<p>
 				The sample code shows a typical design where a transactional service gets domain objects from a data access layer.
@@ -48,9 +48,9 @@
 @Transactional
 public class FooService {
 
-  private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-  public void setUserMapper(UserMapper userMapper) {
+  public FooService(UserMapper userMapper) {
     this.userMapper = userMapper;
   }
 
@@ -126,14 +126,6 @@ public interface UserMapper {
 					</tr>
 					<tr>
 						<td>
-							<code>SampleConfigurationTest.java</code>
-						</td>
-						<td>
-							Shows how to use Spring's <code>@Configuration</code> to create MyBatis beans manually.
-						</td>
-					</tr>
-					<tr>
-						<td>
 							<code>SampleEnableTest</code>
 						</td>
 						<td>
@@ -149,6 +141,30 @@ public interface UserMapper {
 							Shows how to use the custom MyBatis XML namespace. 
 						</td>
 					</tr>
+          <tr>
+            <td>
+              <code>SampleJavaConfigTest.java</code>
+            </td>
+            <td>
+              Shows how to use Spring's <code>@Configuration</code> to create MyBatis beans manually.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>SampleJobJavaConfigTest.java</code>
+            </td>
+            <td>
+              Shows how to use <code>ItemReader</code> and <code>ItemWriter</code> on Spring Batch using Java Configuration.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>SampleJobXmlConfigTest.java</code>
+            </td>
+            <td>
+              Shows how to use <code>ItemReader</code> and <code>ItemWriter</code> on Spring Batch using XML Configuration.
+            </td>
+          </tr>
 				</tbody>
 			</table>
 			<p>
