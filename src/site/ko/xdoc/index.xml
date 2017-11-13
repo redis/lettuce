@@ -132,11 +132,11 @@
       <subsection name="Translations">
         <p>사용자들은 다음의 번역문서별로 마이바티스 스프링 연동모듈에 대해 알수 있다. </p>
         <ul class="i18n">
-          <li class="en"><a href="./getting-started.html">영어</a></li>
-          <li class="es"><a href="./es/index.html">스페인어</a></li>
-          <li class="zh"><a href="./zh/index.html">중국어</a></li>
-          <li class="ja"><a href="./ja/index.html">일본어</a></li>
-          <li class="ko"><a href="./ko/index.html">한국어</a></li>
+          <li class="en"><a href="./../index.html">English</a></li>
+          <li class="es"><a href="./../es/index.html">Español</a></li>
+          <li class="zh"><a href="./../zh/index.html">简体中文</a></li>
+          <li class="ja"><a href="./../ja/index.html">日本語</a></li>
+          <li class="ko"><a href="./getting-started.html">한국어</a></li>
         </ul>
         <p>위 번역문서에는 없지만 자국의 언어로 문서로 보고 싶다면, 자국의 언어로 된 문서를 만들어서 우리에게 보내달라. </p>
       </subsection>
