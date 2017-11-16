@@ -61,7 +61,7 @@
         <skipTests>true</skipTests>
         <netty-version>4.1.17.Final</netty-version>
         <spring-version>4.3.12.RELEASE</spring-version>
-        <reactor-version>Bismuth-RELEASE</reactor-version>
+        <reactor-version>Bismuth-SR4</reactor-version>
     </properties>
 
     <scm>
