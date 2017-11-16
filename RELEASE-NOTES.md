@@ -1,10 +1,10 @@
 Lettuce 5.0.1 RELEASE NOTES
 ===========================
 
-This is the first bugfix release for Lettuce 5 shipping with 13 tickets fixed. It contains 
-fixes for resilience and error scenario handling and the dynamic command interfaces support. 
-It also fixes an issue in the reactive API when using two or more threads to consume a 
-RedisPublisher where it's possible the publisher never completes.
+This is the first bugfix release for Lettuce 5 shipping with 19 tickets fixed and dependency
+upgrades. It contains fixes for resilience and error scenario handling and the dynamic 
+command interfaces support. It also fixes an issue in the reactive API when using 
+two or more threads to consume a RedisPublisher where it's possible the publisher never completes.
 
 Upgrading is strongly recommended upgrade when using the reactive API.  
 
