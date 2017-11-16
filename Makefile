@@ -4,7 +4,7 @@ STUNNEL_BIN := $(shell which stunnel)
 BREW_BIN := $(shell which brew)
 YUM_BIN := $(shell which yum)
 APT_BIN := $(shell which apt-get)
-PROFILE ?= netty-41
+PROFILE ?= ci
 REDIS ?= 4.0.2
 
 define REDIS_CLUSTER_CONFIG1

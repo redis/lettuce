@@ -375,6 +375,10 @@
     <profiles>
 
         <profile>
+            <id>ci</id>
+        </profile>
+
+        <profile>
 
             <id>sonatype-oss-release</id>
 
