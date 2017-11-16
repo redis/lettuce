@@ -164,6 +164,13 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>org.hdrhistogram</groupId>
+            <artifactId>HdrHistogram</artifactId>
+            <version>2.1.10</version>
+            <optional>true</optional>
+        </dependency>
+
         <!-- End of Core Dependencies -->
 
         <!-- Reactive Dependencies -->
