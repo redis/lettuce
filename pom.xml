@@ -59,7 +59,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipTests>true</skipTests>
-        <netty-version>4.1.15.Final</netty-version>
+        <netty-version>4.1.17.Final</netty-version>
         <spring-version>4.3.11.RELEASE</spring-version>
         <reactor-version>Bismuth-RELEASE</reactor-version>
     </properties>
