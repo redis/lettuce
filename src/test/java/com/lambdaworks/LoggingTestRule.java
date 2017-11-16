@@ -17,6 +17,8 @@ package com.lambdaworks;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -50,8 +52,9 @@ public class LoggingTestRule implements MethodRule {
                         + method.getName());
                 logger.info("---------------------------------------");
 
+
                 try {
-                    base.evaluate();
+                    runTest();
                 } catch (Throwable t) {
                     if (threadDumpOnFailure) {
                         printThreadDump(logger);
@@ -63,6 +66,23 @@ public class LoggingTestRule implements MethodRule {
                     logger.info("-- Finished method " + method.getMethod().getDeclaringClass().getSimpleName() + "."
                             + method.getName());
                     logger.info("---------------------------------------");
+                }
+            }
+
+            protected void runTest() throws Throwable {
+                try {
+                    base.evaluate();
+                } catch (Throwable throwable) {
+
+                    StringWriter writer = new StringWriter();
+
+                    throwable.printStackTrace(new PrintWriter(writer));
+
+                    if (writer.getBuffer().toString().contains("CLUSTERDOWN")) {
+                        base.evaluate();
+                    } else {
+                        throw throwable;
+                    }
                 }
             }
         };
