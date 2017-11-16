@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>29</version>
+    <version>30-SNAPSHOT</version>
     <relativePath/>
   </parent>
 
@@ -109,15 +109,19 @@
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
-    <spring.version>5.0.0.RELEASE</spring.version>
-    <spring-batch.version>4.0.0.M3</spring-batch.version>
-    <junit-platform.version>1.0.1</junit-platform.version>
-    <junit.version>5.0.1</junit.version>
+    <spring.version>5.0.1.RELEASE</spring.version>
+    <spring-batch.version>4.0.0.RC1</spring-batch.version>
+    <junit-platform.version>1.0.2</junit-platform.version>
+    <junit.version>5.0.2</junit.version>
 
     <!-- Override: Animal Sniffer Signature -->
     <signature.group>org.codehaus.mojo.signature</signature.group>
     <signature.artifact>java18</signature.artifact>
     <signature.version>1.0</signature.version>
+
+    <!-- Override: The JUnit 5 not supported maven-surefire-plugin 2.20.x yet. -->
+    <!-- See https://github.com/junit-team/junit5/issues/809 -->
+    <surefire.version>2.19.1</surefire.version>
   </properties>
 
   <dependencies>
@@ -208,6 +212,20 @@
     </dependency>
 
     <dependency>
+      <groupId>org.springframework.batch</groupId>
+      <artifactId>spring-batch-core</artifactId>
+      <version>${spring-batch.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.batch</groupId>
+      <artifactId>spring-batch-test</artifactId>
+      <version>${spring-batch.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.hsqldb</groupId>
       <artifactId>hsqldb</artifactId>
       <version>2.4.0</version>
@@ -224,7 +242,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>2.8.47</version>
+      <version>2.11.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -291,13 +309,21 @@
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
-      <version>3.1.0</version>
+      <version>4.0.0</version>
       <scope>test</scope>
     </dependency>
 
   </dependencies>
 
   <repositories>
+    <repository>
+      <id>sonatype-oss-snapshots</id>
+      <name>Sonatype OSS Snapshots Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
     <repository>
       <id>spring-milestones</id>
       <name>Spring Milestones</name>

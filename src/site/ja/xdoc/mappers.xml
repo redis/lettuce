@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@
         生成された Mapper は他の Bean に注入することができます。
       </p>
 
-      <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.mapper.FooServiceImpl">
-  <property name="userMapper" ref="userMapper" />
+      <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceImpl">
+  <constructor-arg ref="userMapper" />
 </bean>]]></source>
  
       <p>
@@ -43,9 +43,9 @@
       </p>
         <source><![CDATA[public class FooServiceImpl implements FooService {
 
-  private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-  public void setUserMapper(UserMapper userMapper) {
+  public FooServiceImpl(UserMapper userMapper) {
     this.userMapper = userMapper;
   }
 
@@ -89,20 +89,13 @@
        <p>
          Java Config を使って Spring を設定する場合は、次のようにして <code>SqlSessionTemplate</code> から直接 Mapper を取得することができます。
        </p>
-        
-<source><![CDATA[    @Bean
-    public SqlSessionFactory sqlSessionFactory() throws Exception {
-      SqlSessionFactoryBean sqlSessionFactory = new SqlSessionFactoryBean();
-      sqlSessionFactory.setDataSource(dataSource());
-      return (SqlSessionFactory) sqlSessionFactory.getObject();
-    }
 
-    @Bean
-    public UserMapper userMapper() throws Exception {
-      SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
-      return sessionTemplate.getMapper(UserMapper.class);
-    }
-]]></source>
+    <source><![CDATA[
+@Bean
+public UserMapper userMapper() throws Exception {
+  SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+  return sessionTemplate.getMapper(UserMapper.class);
+}]]></source>
 
        <p>
          ここで、MyBatis のデフォルトの <code>SqlSession</code> から取得した Mapper を返してはいけません。
@@ -139,10 +132,12 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:mybatis="http://mybatis.org/schema/mybatis-spring"
   xsi:schemaLocation="
-  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
   http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring.xsd">
  
   <mybatis:scan base-package="org.mybatis.spring.sample.mapper" />
+
+  <!-- ... -->
 
 </beans>]]></source>
 
@@ -166,7 +161,7 @@
       </p>
 
       <p>
-        検出された Mapper は、Spring の自動検出コンポーネントに対するデフォルト命名規則によって Bean 名が決められます（Spring マニュアルの 3.14.4 節を参照してください）。
+        検出された Mapper は、Spring の自動検出コンポーネントに対するデフォルト命名規則によって Bean 名が決められます（<a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-scanning-name-generator">the Spring reference document(Core Technologies -Naming autodetected components-)</a> を参照してください）。
         アノテーションによる指定がない場合はクラス名の先頭を小文字にした文字列が Bean 名となりますが、@Component あるいは JSR-330 の @Named アノテーションを使って Bean 名を明示的に指定することもできます。
         先に説明した <code>annotation</code> 属性で <code>org.springframework.stereotype.Component</code> や <code>javax.inject.Named</code> （Java 6 以降を利用している場合のみ）を指定すれば、検出時のマーカーと Bean 名の指定を１つのアノテーションで兼ねることができます。
         同じ目的で独自に定義したアノテーションを使うこともできますが、このアノテーション自体に @Component か @Named を付加しておく必要があります。
@@ -188,18 +183,7 @@
    <source><![CDATA[@Configuration
 @MapperScan("org.mybatis.spring.sample.mapper")
 public class AppConfig {
-
-  @Bean
-  public DataSource dataSource() {
-    return new EmbeddedDatabaseBuilder().addScript("schema.sql").build()
-  }
-
-  @Bean
-  public SqlSessionFactory sqlSessionFactory() throws Exception {
-    SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
-    sessionFactory.setDataSource(dataSource());
-    return sessionFactory.getObject();
-  }
+  // ...
 }
 ]]></source>
 	

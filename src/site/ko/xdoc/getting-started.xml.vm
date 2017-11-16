@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@
       그리고 트랜잭션을 사용하는 간단한 애플리케이션을 만드는 방법까지 다룰 것이다. </p>
 
     <subsection name="Installation">
-      <p>마이바티스 스프링 연동모듈을 사용하기 위해서, 클래스패스에 <code>mybatis-spring-x.x.x.jar</code>를 포함시켜야 한다. </p>
+      <p>마이바티스 스프링 연동모듈을 사용하기 위해서, 클래스패스에 <code>mybatis-spring-${project.version}.jar</code>를 포함시켜야 한다. </p>
       <p>메이븐을 사용하고 있다면 pom.xml에 다음처럼 의존성을 추가하면 된다. </p>
         <source><![CDATA[
 <dependency>
   <groupId>org.mybatis</groupId>
   <artifactId>mybatis-spring</artifactId>
-  <version>x.x.x</version>
+  <version>${project.version}</version>
 </dependency>]]></source>
     </subsection>
 
@@ -47,7 +47,7 @@
       두가지는 <code>SqlSessionFactory</code>와 한개 이상의 매퍼 인터페이스이다. </p>
 
       <p>마이바티스 스프링 연동모듈에서, <code>SqlSessionFactoryBean</code>은 <code>SqlSessionFactory</code>를 만들기 위해 사용된다. 
-      팩토리 빈을 설정하기 위해, 스프링 XML설정파일에 다음 설정을 추가하자. 
+      팩토리 빈을 설정하기 위해, 스프링 설정파일에 다음 설정을 추가하자.
       </p>
 
         <source><![CDATA[
@@ -55,7 +55,15 @@
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
 
-      <p><code>SqlSessionFactory</code>는 <code>DataSource</code>를 필요로 하는 것을 알아둘 필요가 있다. 
+      <source><![CDATA[
+@Bean
+public SqlSessionFactoryBean sqlSessionFactory() throws Exception {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  return factoryBean.getObject();
+}]]></source>
+
+      <p><code>SqlSessionFactory</code>는 <code>DataSource</code>를 필요로 하는 것을 알아둘 필요가 있다.
       어떤 <code>DataSource</code>도 상관없지만 다른 스프링의 데이터베이스 연결과 동일하게 설정되어야 한다. </p>
 
       <p>매퍼 인터페이스가 다음처럼 정의되었다고 가정해보자. </p>
@@ -79,18 +87,30 @@
        실행중인 스프링 트랜잭션이 있다면, 트랜잭션이 완료되는 시점에 커밋이나 롤백이 될 것이다. 
         마지막으로 예외가 발생하면 스프링의 <code>DataAccessException</code>예외가 발생한다. </p>
 
+      <p>
+        If you use the Java Configuration:
+      </p>
+
+      <source><![CDATA[
+@Bean
+public UserMapper userMapper() throws Exception {
+  SqlSessionTemplate sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
+  return sqlSessionTemplate.getMapper(UserMapper.class);
+}]]></source>
+
       <p>마이바티스의 데이터 관련 메서드는 호출하는 것은 한줄이면 된다. </p>
-        <source><![CDATA[
+      <source><![CDATA[
 public class FooServiceImpl implements FooService {
 
-private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-public void setUserMapper(UserMapper userMapper) {
-  this.userMapper = userMapper;
-}
+  public FooServiceImpl(UserMapper userMapper) {
+    this.userMapper = userMapper;
+  }
 
-public User doSomeBusinessStuff(String userId) {
-  return this.userMapper.getUser(userId);
+  public User doSomeBusinessStuff(String userId) {
+    return this.userMapper.getUser(userId);
+  }
 }]]></source>
       </subsection>
     </section>

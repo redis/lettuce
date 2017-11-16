@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -41,15 +41,19 @@
   <property name="dataSource" ref="dataSource" />
 </bean>]]></source>
       <p>
-        <code>SqlSessionFactoryBean</code> は Spring の <code>FactoryBean</code> インターフェイス（Spring ドキュメントの 3.8 章を参照してください）を実装しています。
+        <code>SqlSessionFactoryBean</code> は Spring の <code>FactoryBean</code> インターフェイス（<a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-extension-factorybean">the Spring documentation(Core Technologies -Customizing instantiation logic with a FactoryBean-</a>) を参照してください）を実装しています。
         これはつまり、最終的に Spring が生成するのは <code>SqlSessionFactoryBean</code> ではなく、Factory の <code>getObject()</code> メソッドによって返されるオブジェクトであるということです。<br />
         上記の設定では、Spring は <code>SqlSessionFactory</code> を生成し、<code>sqlSessionFactory</code> という名前の Bean として登録します。
         これに相当する Java のコードは下記のようになるでしょう。
       </p>
 
       <source><![CDATA[
-SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
-SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
+@Bean
+public SqlSessionFactory sqlSessionFactory() {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  return factoryBean.getObject();
+}]]></source>
 
       <p>
         通常 MyBatis-Spring を使う場合、<code>SqlSessionFactoryBean</code> や対応する <code>SqlSessionFactory</code> を直接利用する必要はありません。
@@ -102,6 +106,28 @@ SqlSessionFactory sessionFactory = factoryBean.getObject();]]></source>
         Container-Managed トランザクションを利用する環境では、<code>transactionFactoryClass</code> プロパティが必須となります。
         「トランザクション」章の該当する節を参照してください。
       </p>
+
+      <p>
+        複数のデータベースを使用する場合は、<code>databaseIdProvider</code>プロパティを設定する必要があります。
+      </p>
+
+      <source><![CDATA[
+<bean id="databaseIdProvider" class="org.apache.ibatis.mapping.VendorDatabaseIdProvider">
+  <property name="properties">
+    <props>
+      <prop key="SQL Server">sqlserver</prop>
+      <prop key="DB2">db2</prop>
+      <prop key="Oracle">oracle</prop>
+      <prop key="MySQL">mysql</prop>
+    </props>
+  </property>
+</bean>
+
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+  <property name="dataSource" ref="dataSource" />
+  <property name="mapperLocations" value="classpath*:sample/config/mappers/**/*.xml" />
+  <property name="databaseIdProvider" ref="databaseIdProvider"/>
+</bean>]]></source>
 
       <p>
         <span class="label important">NOTE</span>

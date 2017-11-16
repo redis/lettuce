@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2017 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -20,14 +20,14 @@ import org.mybatis.spring.sample.mapper.UserMapper;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * FooService simply receives a userId and uses a mapper/dao to get a record from the database.
+ * FooService simply receives a userId and uses a mapper to get a record from the database.
  */
 @Transactional
 public class FooService {
 
-  private UserMapper userMapper;
+  private final UserMapper userMapper;
 
-  public void setUserMapper(UserMapper userMapper) {
+  public FooService(UserMapper userMapper) {
     this.userMapper = userMapper;
   }
 

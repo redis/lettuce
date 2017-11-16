@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -52,8 +52,14 @@
       <p><code>SqlSessionTemplate</code>은 생성자 인자로 <code>SqlSessionFactory</code>를 사용해서 생성될 수 있다. </p>
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
-</bean>]]></source>        
-     
+</bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionTemplate sqlSession() throws Exception {
+  return new SqlSessionTemplate(sqlSessionFactory());
+}]]></source>
+
       <p>이 빈은 DAO빈에 직접 주입될 수 있다. 다음처럼 빈 설정에서 <code>SqlSession</code> 프로퍼티를 설정하면 된다. </p>
         <source><![CDATA[public class UserDaoImpl implements UserDao {
 
@@ -64,7 +70,7 @@
   }
 
   public User getUser(String userId) {
-    return (User) sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    return sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
       <p>그리고 다음처럼 <code>SqlSessionTemplate</code> 를 주입하자. </p>      
@@ -78,12 +84,20 @@
   <constructor-arg index="0" ref="sqlSessionFactory" />
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionTemplate sqlSession() throws Exception {
+  return new SqlSessionTemplate(sqlSessionFactory(), ExecutorType.BATCH);
+}]]></source>
+
       <p>DAO의 코드를 다음처럼 작성했다면 모든 구문은 배치형태로 실행이 될 것이다. </p>
-        <source><![CDATA[public void insertUsers(User[] users) {
-   for (User user : users) {
-     sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
-   }
- }]]></source> 
+        <source><![CDATA[
+public void insertUsers(List<User> users) {
+  for (User user : users) {
+    sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
+  }
+}]]></source>
   
       <p>이러한 설정형태는 <code>SqlSessionFactory</code>의 디폴트 형태가 아닌 다른형태로 메서드를 실행해야 할때만 사용할 필요가 있다. </p>
 
@@ -96,7 +110,7 @@
       <code>getSqlSession()</code>메서드를 호출해서 다음처럼 SQL을 처리하는 마이바티스 메서드를 호출하기 위해 사용할 <code>SqlSessionTemplate</code>을 얻을 수 있다. </p>
         <source><![CDATA[public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
   public User getUser(String userId) {
-    return (User) getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    return getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
       <p>대개 <code>MapperFactoryBean</code>은 추가적인 코드가 필요없기 때문에 이 클래스를 선호한다. 
@@ -106,7 +120,7 @@
       두개의 프로퍼티를 모두 셋팅하면 <code>sqlSessionFactory</code>는 무시된다. </p>
 
       <p><code>SqlSessionDaoSupport</code>의 하위클래스인 <code>UserDaoImpl</code>가 있다고 하면 스프링에서는 다음처럼 설정될 수 있다. </p>
-        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl">
+      <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
       </subsection>

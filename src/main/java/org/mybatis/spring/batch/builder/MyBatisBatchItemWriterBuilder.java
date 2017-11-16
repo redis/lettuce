@@ -31,7 +31,7 @@ public class MyBatisBatchItemWriterBuilder<T> {
   private SqlSessionTemplate sqlSessionTemplate;
   private SqlSessionFactory sqlSessionFactory;
   private String statementId;
-  private Boolean assertUpdates = true;
+  private Boolean assertUpdates;
 
   /**
    * Set the {@link SqlSessionTemplate} to be used by writer for database access.

@@ -18,23 +18,16 @@ package org.mybatis.spring.sample;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mybatis.spring.sample.domain.User;
 import org.mybatis.spring.sample.service.FooService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(SpringExtension.class)
 @DirtiesContext
 public abstract class AbstractSampleTest {
 
   @Autowired
   protected FooService fooService;
-
-  public final void setFooService(FooService fooService) {
-    this.fooService = fooService;
-  }
 
   @Test
   final void testFooService() {

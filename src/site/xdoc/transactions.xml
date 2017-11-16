@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -51,12 +51,21 @@
     <subsection name="Standard Configuration" id="configuration">
       <p>
         To enable Spring transaction processing, simply create a
-        <code>DataSourceTransactionManager</code> in your Spring XML
+        <code>DataSourceTransactionManager</code> in your Spring
         configuration file:
       </p>
-        <source><![CDATA[<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-  <property name="dataSource" ref="dataSource" />
+
+        <source><![CDATA[
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+  <constructor-arg ref="dataSource" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public DataSourceTransactionManager transactionManager() {
+  return new DataSourceTransactionManager(dataSource());
+}]]></source>
+
       <p>
         The <code>DataSource</code> specified can be any JDBC
         <code>DataSource</code> you would normally
@@ -77,9 +86,16 @@
         container managed transactions (CMT), then Spring should be configured
         with a <code>JtaTransactionManager</code> or one of its container
         specific subclasses. The easiest way to do this is to use the Spring
-        transaction namespace:
+        transaction namespace or the <code>JtaTransactionManagerFactoryBean</code>:
       </p>
       <source><![CDATA[<tx:jta-transaction-manager />]]></source>
+
+      <source><![CDATA[
+@Bean
+public JtaTransactionManager transactionManager() {
+  return new JtaTransactionManagerFactoryBean().getObject();
+}]]></source>
+
       <p>
         In this configuration, MyBatis will behave like any other Spring
         transactional resource configured with CMT. Spring will automatically use
@@ -100,8 +116,17 @@
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
   </property>  
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionFactory sqlSessionFactory() {
+  SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+  factoryBean.setDataSource(dataSource());
+  factoryBean.setTransactionFactory(new ManagedTransactionFactory());
+  return factoryBean.getObject();
+}]]></source>
     </subsection>
-  
+
     <subsection name="Programmatic Transaction Management" id="programmatic">
       <p>
         MyBatis <code>SqlSession</code> provides you with specific methods to handle
@@ -121,22 +146,32 @@
         method outside a Spring transaction will be automatically committed.
       </p>
       <p>
-        If you want to control your transactions programmatically please refer to chapter 10.6 of
-        the Spring reference manual. This code shows how to handle a transaction manually
-        using the <code>PlatformTransactionManager</code> described in section 10.6.2.
+        If you want to control your transactions programmatically please refer to
+        <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#transaction-programmatic">the Spring reference document(Data Access -Programmatic transaction management-)</a>.
+        This code shows how to handle a transaction manually using the <code>PlatformTransactionManager</code>.
       </p>
-        <source><![CDATA[DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-
-TransactionStatus status = txManager.getTransaction(def);
+        <source><![CDATA[
+TransactionStatus txStatus =
+    transactionManager.getTransaction(new DefaultTransactionDefinition());
 try {
   userMapper.insertUser(user);
+} catch (Exception e) {
+  transactionManager.rollback(txStatus);
+  throw e;
 }
-catch (MyException ex) {
-  txManager.rollback(status);
-  throw ex;
-}
-txManager.commit(status);]]></source>
+transactionManager.commit(txStatus);]]></source>
+
+      <p>
+        You can omit to call the <code>commit</code> and <code>rollback</code> method using the <code>TransactionTemplate</code>.
+      </p>
+
+      <source><![CDATA[
+TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+transactionTemplate.execute(txStatus -> {
+  userMapper.insertUser(user);
+  return null;
+});]]></source>
+
       <p>
         Notice that this code uses a mapper, but it will also work with a <code>SqlSession</code>.
       </p>

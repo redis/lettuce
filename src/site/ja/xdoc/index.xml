@@ -47,59 +47,65 @@
       このドキュメントには MyBatis や Spring についての説明や基本設定といった情報は含まれていません。
     </p>
     <p>
-      MyBatis-Spring の動作には Java 5 以降が必要です。<br />
-      また、各ライブラリの適切なバージョンを使用する必要があります。
+      MyBatis-Spring は以下のバージョンを必要とします。
     </p>
-	<table>
-		<thead>
-			<tr>
-				<th>
-					MyBatis-Spring
-				</th>
-				<th>
-					MyBatis
-				</th>
-				<th>
-					Spring
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td>
-					1.0.0 and 1.0.1
-				</td>
-				<td>
-					3.0.1 to 3.0.5
-				</td>
-				<td>
-					3.0.0 or higher
-				</td>
-			</tr>
-			<tr>
-				<td>
-					1.0.2
-				</td>
-				<td>
-					3.0.6
-				</td>
-				<td>
-					3.0.0 or higher
-				</td>
-			</tr>
-			<tr>
-				<td>
-					1.1.0 or higher
-				</td>
-				<td>
-					3.1.0 or higher
-				</td>
-				<td>
-					3.0.0 or higher
-				</td>
-			</tr>
-		</tbody>
-	</table>
+    <table>
+      <thead>
+        <tr>
+          <th>
+            MyBatis-Spring
+          </th>
+          <th>
+            MyBatis
+          </th>
+          <th>
+            Spring Framework
+          </th>
+          <th>
+            Spring Batch
+          </th>
+          <th>
+            Java
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            2.0
+          </td>
+          <td>
+            3.4+
+          </td>
+          <td>
+            5.0+
+          </td>
+          <td>
+            4.0+
+          </td>
+          <td>
+            Java 8+
+          </td>
+        </tr>
+        <tr>
+          <td>
+            1.3
+          </td>
+          <td>
+            3.4+
+          </td>
+          <td>
+            3.2.2+
+          </td>
+          <td>
+            2.1+
+          </td>
+          <td>
+            Java 6+
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </subsection>
 
   <subsection name="謝辞">
@@ -125,6 +131,17 @@
     </p>
   </subsection>
 
+   <subsection name="Translations">
+     <p>MyBatis-Spring は以下の言語の翻訳を用意しています。</p>
+     <ul class="i18n">
+       <li class="en"><a href="./../index.html">English</a></li>
+       <li class="es"><a href="./../es/index.html">Español</a></li>
+       <li class="ja"><a href="./getting-started.html">日本語</a></li>
+       <li class="ko"><a href="./../ko/index.html">한국어</a></li>
+       <li class="zh"><a href="./../zh/index.html">简体中文</a></li>
+     </ul>
+     <p>母国語でMyBatis Springのリファレンスを読んでみませんか？ ぜひドキュメントを母国語へ翻訳するためのIssue(パッチ)を作成してください！</p>
+   </subsection>
 </section>
 </body>
 

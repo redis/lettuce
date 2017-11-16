@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2016 the original author or authors.
+       Copyright 2010-2017 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -79,8 +79,14 @@ SqlSessionTemplate 对象可以使用 SqlSessionFactory 作为构造方法的参
       </p>
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
-</bean>]]></source>        
-     
+</bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionTemplate sqlSession() throws Exception {
+  return new SqlSessionTemplate(sqlSessionFactory());
+}]]></source>
+
       <p>
 这个 bean 现在可以直接注入到 DAO bean 中。你需要在 bean 中添加一个 SqlSession
 属性,就像下面的代码:
@@ -94,7 +100,7 @@ SqlSessionTemplate 对象可以使用 SqlSessionFactory 作为构造方法的参
   }
 
   public User getUser(String userId) {
-    return (User) sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    return sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
       <p>
@@ -106,20 +112,28 @@ SqlSessionTemplate 对象可以使用 SqlSessionFactory 作为构造方法的参
 
       <p>
 SqlSessionTemplate 有一个使用 ExecutorType 作为参数的构造方法。这允许你用来
-创建对象,比如,一个批量 SqlSession,但是使用了下列 Spring 配置的 XML 文件:
+创建对象,比如,一个批量 SqlSession,但是使用了下列 Spring 配置的 文件:
       </p>
       <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
   <constructor-arg index="1" value="BATCH" />
 </bean>]]></source>
+
+      <source><![CDATA[
+@Bean
+public SqlSessionTemplate sqlSession() throws Exception {
+  return new SqlSessionTemplate(sqlSessionFactory(), ExecutorType.BATCH);
+}]]></source>
+
       <p>
 现在你所有的语句可以批量操作了,下面的语句就可以在 DAO 中使用了。
       </p>
-        <source><![CDATA[public void insertUsers(User[] users) {
-   for (User user : users) {
-     sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
-   }
- }]]></source> 
+        <source><![CDATA[
+public void insertUsers(List<User> users) {
+  for (User user : users) {
+    sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
+  }
+}]]></source>
   
       <p>
 注意,如果所需的执行方法和默认的 SqlSessionFactory 设置不同,这种配置风格才
@@ -141,7 +155,7 @@ getSqlSession()方法你会得到一个 SqlSessionTemplate,之后可以用于执
       </p>
         <source><![CDATA[public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
   public User getUser(String userId) {
-    return (User) getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
+    return getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
       <p>
@@ -159,7 +173,7 @@ SqlSessionFactory 是被忽略的。
 假设类 UserMapperImpl 是 SqlSessionDaoSupport 的子类,它可以在 Spring 中进行如
 下的配置:
       </p>
-        <source><![CDATA[<bean id="userMapper" class="org.mybatis.spring.sample.mapper.UserDaoImpl">
+      <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
       </subsection>
