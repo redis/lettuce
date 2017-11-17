@@ -111,7 +111,7 @@ public class ZStoreArgs {
 
     <K, V> void build(CommandArgs<K, V> args) {
 
-        if (weights != null) {
+        if (weights != null && !weights.isEmpty()) {
 
             args.add(WEIGHTS);
             for (double weight : weights) {
