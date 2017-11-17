@@ -26,10 +26,10 @@
   </properties>
                              
   <body>
-    <section name="Using Spring Boot">
+    <section name="스프링 부트 사용하기">
       <p>
-        Please see the <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-stater</a> 
-        subproject docs for details.
+        자세한 내용은 <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-stater</a> 
+        하위 프로젝트 문서를 참조하십시오.
       </p>
     </section>
   </body>
