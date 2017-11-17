@@ -73,6 +73,7 @@ public class ClusterTopologyRefresh {
             NodeTopologyViews nodeSpecificViews = getNodeSpecificViews(requestedTopology, requestedClients, commandTimeoutNs);
 
             if (discovery) {
+
                 Set<RedisURI> allKnownUris = nodeSpecificViews.getClusterNodes();
                 Set<RedisURI> discoveredNodes = difference(allKnownUris, toSet(seed));
 
@@ -91,7 +92,6 @@ public class ClusterTopologyRefresh {
             }
 
             return nodeSpecificViews.toMap();
-
         } catch (InterruptedException e) {
 
             Thread.currentThread().interrupt();
