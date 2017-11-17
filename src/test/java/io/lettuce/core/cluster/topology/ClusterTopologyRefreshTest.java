@@ -91,7 +91,7 @@ public class ClusterTopologyRefreshTest {
     private RedisAsyncCommands<String, String> asyncCommands2;
 
     @Before
-    public void before() throws Exception {
+    public void before() {
 
         when(clientResources.dnsResolver()).thenReturn(DnsResolvers.JVM_DEFAULT);
         when(connection1.async()).thenReturn(asyncCommands1);
@@ -209,7 +209,7 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
-    public void shouldAttemptToConnectOnlyOnce() throws Exception {
+    public void shouldAttemptToConnectOnlyOnce() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381));
 
@@ -225,7 +225,7 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
-    public void shouldFailIfNoNodeConnects() throws Exception {
+    public void shouldFailIfNoNodeConnects() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381));
 
@@ -247,7 +247,7 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
-    public void shouldShouldDiscoverNodes() throws Exception {
+    public void shouldShouldDiscoverNodes() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
@@ -263,7 +263,7 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
-    public void shouldShouldNotDiscoverNodes() throws Exception {
+    public void shouldShouldNotDiscoverNodes() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
@@ -277,7 +277,7 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
-    public void shouldNotFailOnDuplicateSeedNodes() throws Exception {
+    public void shouldNotFailOnDuplicateSeedNodes() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381),
                 RedisURI.create("127.0.0.1", 7381));
@@ -295,7 +295,7 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
-    public void undiscoveredAdditionalNodesShouldBeLastUsingClientCount() throws Exception {
+    public void undiscoveredAdditionalNodesShouldBeLastUsingClientCount() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
@@ -313,7 +313,7 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
-    public void discoveredAdditionalNodesShouldBeOrderedUsingClientCount() throws Exception {
+    public void discoveredAdditionalNodesShouldBeOrderedUsingClientCount() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
@@ -333,7 +333,7 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
-    public void undiscoveredAdditionalNodesShouldBeLastUsingLatency() throws Exception {
+    public void undiscoveredAdditionalNodesShouldBeLastUsingLatency() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 
@@ -351,7 +351,7 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
-    public void discoveredAdditionalNodesShouldBeOrderedUsingLatency() throws Exception {
+    public void discoveredAdditionalNodesShouldBeOrderedUsingLatency() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package io.lettuce.core.cluster.topology;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -33,6 +35,7 @@ import io.lettuce.core.protocol.CommandType;
 class Connections {
 
     private final Map<RedisURI, StatefulRedisConnection<String, String>> connections;
+    private volatile boolean closed = false;
 
     public Connections() {
         connections = new TreeMap<>(TopologyComparators.RedisURIComparator.INSTANCE);
@@ -49,7 +52,14 @@ class Connections {
      * @param connection
      */
     public void addConnection(RedisURI redisURI, StatefulRedisConnection<String, String> connection) {
+
         synchronized (connections) {
+
+            if (closed) {
+                connection.close();
+                return;
+            }
+
             connections.put(redisURI, connection);
         }
     }
@@ -113,17 +123,58 @@ class Connections {
      * Close all connections.
      */
     public void close() {
-        for (StatefulRedisConnection<String, String> connection : connections.values()) {
-            connection.close();
+
+        this.closed = true;
+
+        while (hasConnections()) {
+
+            for (StatefulRedisConnection<String, String> connection : drainConnections()) {
+                connection.closeAsync();
+            }
         }
     }
 
+    private boolean hasConnections() {
+        synchronized (connections) {
+            return !this.connections.isEmpty();
+        }
+    }
+
+    private Collection<StatefulRedisConnection<String, String>> drainConnections() {
+
+        synchronized (this.connections) {
+
+            Map<RedisURI, StatefulRedisConnection<String, String>> connections = new HashMap<>(this.connections);
+            connections.forEach((k, v) -> {
+                this.connections.remove(k);
+            });
+        }
+
+        return connections.values();
+    }
+
+    /**
+     * Merges this and {@code discoveredConnections} into a new {@link Connections} instance. This instance is marked as closed
+     * to prevent lingering connections.
+     *
+     * @param discoveredConnections
+     * @return
+     */
     public Connections mergeWith(Connections discoveredConnections) {
 
         Map<RedisURI, StatefulRedisConnection<String, String>> result = new TreeMap<>(
                 TopologyComparators.RedisURIComparator.INSTANCE);
-        result.putAll(this.connections);
-        result.putAll(discoveredConnections.connections);
+
+        synchronized (this.connections) {
+            synchronized (discoveredConnections.connections) {
+
+                this.closed = true;
+                discoveredConnections.closed = true;
+
+                result.putAll(this.connections);
+                result.putAll(discoveredConnections.connections);
+            }
+        }
 
         return new Connections(result);
     }
