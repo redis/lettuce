@@ -53,6 +53,11 @@ class Connections {
      */
     public void addConnection(RedisURI redisURI, StatefulRedisConnection<String, String> connection) {
 
+        if (closed) { // fastpath
+            connection.close();
+            return;
+        }
+
         synchronized (connections) {
 
             if (closed) {
@@ -165,11 +170,11 @@ class Connections {
         Map<RedisURI, StatefulRedisConnection<String, String>> result = new TreeMap<>(
                 TopologyComparators.RedisURIComparator.INSTANCE);
 
+        this.closed = true;
+        discoveredConnections.closed = true;
+
         synchronized (this.connections) {
             synchronized (discoveredConnections.connections) {
-
-                this.closed = true;
-                discoveredConnections.closed = true;
 
                 result.putAll(this.connections);
                 result.putAll(discoveredConnections.connections);
