@@ -56,7 +56,7 @@ public class AsyncConnectionProviderTest {
     private AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<String, String>, ConnectionFuture<StatefulRedisConnection<String, String>>> sut;
 
     @BeforeClass
-    public static void beforeClass() throws Exception {
+    public static void beforeClass() {
 
         RedisURI redisURI = RedisURI.create(TestSettings.host(), 1);
         redisURI.setTimeout(Duration.ofSeconds(5));
@@ -149,10 +149,10 @@ public class AsyncConnectionProviderTest {
                 TestSettings.port());
 
         sut.getConnection(connectionKey);
-        sut.close();
+        sut.close().join();
 
         assertThat(sut.getConnectionCount()).isEqualTo(0);
-        sut.close();
+        sut.close().join();
 
         serverSocket.accept();
     }
