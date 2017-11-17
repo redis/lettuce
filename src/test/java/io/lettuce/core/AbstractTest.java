@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Rule;
 
+import io.lettuce.LenientClusterDownRule;
 import io.lettuce.LoggingTestRule;
 import io.lettuce.core.internal.LettuceSets;
 
@@ -37,6 +38,9 @@ public class AbstractTest {
 
     @Rule
     public LoggingTestRule loggingTestRule = new LoggingTestRule(false);
+
+    @Rule
+    public LenientClusterDownRule clusterDownRule = new LenientClusterDownRule();
 
     protected Logger log = LogManager.getLogger(getClass());
     protected String key = "key";
