@@ -38,7 +38,7 @@
       <p>마이바티스 스프링 연동모듈은 한번 셋업되면 트랜잭션을 투명하게 관리한다. 
       DAO클래스에 어떠한 추가적인 코드를 넣을 필요가 없다. </p>
   
-    <subsection name="Standard Configuration" id="configuration">
+    <subsection name="표준 설정" id="configuration">
       <p>스프링 트랜잭션을 가능하게 하려면, 스프링 설정파일에 <code>DataSourceTransactionManager</code>를 생성하자. </p>
       <source><![CDATA[
 <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
@@ -127,7 +127,7 @@ transactionTemplate.execute(txStatus -> {
   return null;
 });]]></source>
 
-      <p>이 코드는 매퍼를 사용하지만 <code>SqlSession</code>를 사용해서 잘 동작할 것이다. </p>
+      <p>이 코드는 매퍼를 사용하지만 <code>SqlSession</code>를 사용해도 잘 동작한다. </p>
       </subsection>
     </section>
   </body>
