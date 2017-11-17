@@ -40,7 +40,7 @@
        마이바티스 배치 SqlSession을 다루지는 않는다. 배치 세션에 대해서는 <a href="sqlsession.html">SqlSession 사용</a>에서 좀더 다루었다. </p>
       
       <subsection name="MyBatisPagingItemReader">
-        <p>이 빈은 마이바티스로 페이지를 처리하는 형태로 데이터베이스 데이터를 읽어오는 <code>IteamReader</code>이다. </p>
+        <p>이 빈은 마이바티스로 페이지를 처리하는 형태로 데이터베이스 데이터를 읽어오는 <code>ItemReader</code>이다. </p>
         
         <p>요청된 데이터를 가져오기 위해 <code>setQueryId</code> 프로퍼티에 명시된 쿼리를 실행한다.
          쿼리는 <code>setPageSize</code> 프로퍼티에 명시된 크기만큼 데이터를 가져오도록 실행된다.
@@ -141,7 +141,7 @@ public Map<String, Object> datesParameters(
 
       <subsection name="MyBatisCursorItemReader">
         <p>
-          이 빈은 cursor 를 사용하여 데이터베이스에서 레코드를 읽는 <code>IteamReader</code> 이다.
+          이 빈은 cursor 를 사용하여 데이터베이스에서 레코드를 읽는 <code>ItemReader</code> 이다.
         </p>
 
         <p>
