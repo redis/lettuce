@@ -28,7 +28,7 @@
   </properties>
 
   <body>
-    <section name="Injecting Mappers">
+    <section name="매퍼 주입">
       <p>데이터 접근 객체인 DAO를 만든것보다 직접 <code>SqlSessionDaoSupport</code> 나 <code>SqlSessionTemplate</code> 를 사용하자.
        마이바티스 스프링 연동모듈은 다른 빈에 직접 주입할 수 있는 쓰레드에 안전한 매퍼를 생성할 수 있다. </p>
 
@@ -53,7 +53,7 @@
        게다가 세션을 생성하거나 열고 닫을필요도 없어보인다. 
        마이바티스 스프링 연동모듈이 알아서 처리할 것이다. </p>
 
-	<subsection name="Registering a mapper" id="register">
+	<subsection name="매퍼 등록하기" id="register">
 	  <p>매퍼를 등록하는 방법은 기존의 전통적인 XML설정법을 사용하거나 새로운 3.0 이후의 자바설정(일명 @Configuration)을 사용하느냐에 따라 다르다. </p>
 	
       <h4>XML설정 사용</h4>
@@ -89,7 +89,7 @@ public UserMapper userMapper() throws Exception {
        대신 샘플코드에서 보여주는 것처럼 <code><a href="sqlsession.html#SqlSessionTemplate">SqlSessionTemplate</a></code> 를 사용해야만 한다. </p>
     </subsection>
 
-    <subsection name="Scanning for mappers" id="scan">
+    <subsection name="매퍼 스캔" id="scan">
       <p>하나씩 매퍼를 모두 등록할 필요가 없다. 
        대신 클래스패스를 지정해서 마이바티스 스프링 연동모듈의 자동스캔기능을 사용할 수 있다. </p>
       

@@ -31,7 +31,7 @@
       <p>마이바티스만 사용하면, <code>SqlSessionFactory</code>는 <code>SqlSessionFactoryBuilder</code>를 사용해서 생성한다. 
       마이바티스 스프링 연동모듈에서는, <code>SqlSessionFactoryBean</code>가 대신 사용된다. </p>
       
-    <subsection name="Setup">
+    <subsection name="설정">
       <p>팩토리 빈을 생성하기 위해, 스프링 XML설정파일에 다음설정을 추가하자. </p>
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
@@ -54,7 +54,7 @@ public SqlSessionFactory sqlSessionFactory() {
        대신 세션 팩토리가 <code>MapperFactoryBean</code>나 <code>SqlSessionDaoSupport</code>를 확장하는 다른 DAO에 주입될것이다. </p>
     </subsection>
 
-    <subsection name="Properties">
+    <subsection name="속성">
 
       <p><code>SqlSessionFactory</code>는 JDBC <code>DataSource</code>의 필수 프로퍼티가 필요하다.
       어떤 <code>DataSource</code>라도 상관없고 다른 스프링 데이터베이스 연결처럼 설정되어야만 한다. </p>
@@ -65,7 +65,7 @@ public SqlSessionFactory sqlSessionFactory() {
 
       <p>설정파일이 마이바티스 설정을 완전히 다룰 필요는 없다. 
       어떤 환경, 어떤 데이터소스 그리고 마이바티스 트랜잭션 관리자가 <b>무시</b>될수도 있다.
-      <code>SqlSessionFactoryBean</code> creates its own, custom MyBatis <code>Environment</code> with these values set as required. </p>
+      <code>SqlSessionFactoryBean</code> 는 필요에 따라 이 값들을 설정하여 자체적인 MyBatis <code>Environment</code> 를 만든다. </p>
 
       <p>설정파일이 필요한 다른 이유는 마이바티스 XML파일이 매퍼 클래스와 동일한 클래스패스에 있지 않은 경우이다.  
       이 설정을 사용하면 두가지 옵션이 있다. 
@@ -89,7 +89,7 @@ public SqlSessionFactory sqlSessionFactory() {
       이에 관련해서는 트랜잭션을 다루는 장에서 볼수 있다. </p>
 
       <p>
-        In case you are using the multi-db feature you will need to set the <code>databaseIdProvider</code> property:
+        만약 multi-db 기능을 사용한다면 다음과 같이 <code>databaseIdProvider</code> 속성을 설정해야 한다.
       </p>
 
       <source><![CDATA[
@@ -112,9 +112,8 @@ public SqlSessionFactory sqlSessionFactory() {
 
       <p>
         <span class="label important">NOTE</span>
-        Since 1.3.0, <code>configuration</code> property has been added.
-        It can be specified a <code>Configuration</code> instance directly without MyBatis XML configuration file.
-        For example:
+        1.3.0 버전 부터 <code>configuration</code> 속성이 추가되었다.
+        다음과 같이 MyBatis XML 설정 파일없이 <code>Configuration</code> 인스턴스를 직접 지정할 수 있습니다.
       </p>
 
       <source><![CDATA[

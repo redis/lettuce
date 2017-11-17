@@ -27,11 +27,11 @@
   </properties>
 
   <body>
-    <section name="Getting Started">
+    <section name="시작하기">
       <p>이 장은 마이바티스 스프링 연동모듈을 설치하고 셋팅하는 방법에 대해 간단히 보여준다. 
       그리고 트랜잭션을 사용하는 간단한 애플리케이션을 만드는 방법까지 다룰 것이다. </p>
 
-    <subsection name="Installation">
+    <subsection name="설치">
       <p>마이바티스 스프링 연동모듈을 사용하기 위해서, 클래스패스에 <code>mybatis-spring-${project.version}.jar</code>를 포함시켜야 한다. </p>
       <p>메이븐을 사용하고 있다면 pom.xml에 다음처럼 의존성을 추가하면 된다. </p>
         <source><![CDATA[
@@ -42,7 +42,7 @@
 </dependency>]]></source>
     </subsection>
 
-    <subsection name="Quick Setup">
+    <subsection name="빠른 설정">
       <p>마이바티스를 스프링과 함께 사용하려면 스프링의 애플리케이션 컨텍스트에 적어도 두개를 정의해줄 필요가 있다. 
       두가지는 <code>SqlSessionFactory</code>와 한개 이상의 매퍼 인터페이스이다. </p>
 
@@ -88,7 +88,7 @@ public SqlSessionFactoryBean sqlSessionFactory() throws Exception {
         마지막으로 예외가 발생하면 스프링의 <code>DataAccessException</code>예외가 발생한다. </p>
 
       <p>
-        If you use the Java Configuration:
+        자바로 설정하면 다음과 같다.
       </p>
 
       <source><![CDATA[

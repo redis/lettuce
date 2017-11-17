@@ -31,15 +31,16 @@
       <p>
         마이바티스 스프링 연동모듈의 1.1.0버전에서는 스프링 배치 애플리케이션을 만들기 위해 두개의 빈을 제공한다.
         두개의 빈은 <code>MyBatisPagingItemReader</code> 와 <code>MyBatisCursorItemReader</code> 와 <code>MyBatisBatchItemWriter</code>이다.
-        Also, As of version 2.0.0 provides three builder classes for supporting the Java Configuration: the <code>MyBatisPagingItemReaderBuilder</code>,
-        the <code>MyBatisCursorItemReaderBuilder</code> and the <code>MyBatisBatchItemWriterBuilder</code>.
+        
+        또한 2.0.0 버전에서는 Java Configuration 을 지원하는 다음의 세 가지 Builder class 를 제공한다. 
+        <code>MyBatisPagingItemReaderBuilder</code>, <code>MyBatisCursorItemReaderBuilder</code> 그리고 <code>MyBatisBatchItemWriterBuilder</code> 이다.
       </p>
       
       <p><span class="label important">중요</span> 이 문서는 <a href="http://static.springsource.org/spring-batch/">스프링 배치</a>에 대한 것으로 
        마이바티스 배치 SqlSession을 다루지는 않는다. 배치 세션에 대해서는 <a href="sqlsession.html">SqlSession 사용</a>에서 좀더 다루었다. </p>
       
       <subsection name="MyBatisPagingItemReader">
-        <p>이 빈은 마이바티스로 페이지를 처리하는 형태로 데이터베이스 데이터를 읽어오는 <code>IteamReader</code>이다. </p>
+        <p>이 빈은 마이바티스로 페이지를 처리하는 형태로 데이터베이스 데이터를 읽어오는 <code>ItemReader</code>이다. </p>
         
         <p>요청된 데이터를 가져오기 위해 <code>setQueryId</code> 프로퍼티에 명시된 쿼리를 실행한다.
          쿼리는 <code>setPageSize</code> 프로퍼티에 명시된 크기만큼 데이터를 가져오도록 실행된다.
@@ -140,31 +141,28 @@ public Map<String, Object> datesParameters(
 
       <subsection name="MyBatisCursorItemReader">
         <p>
-          This bean is an <code>IteamReader</code> that reads records from a database using a cursor.
+          이 빈은 cursor 를 사용하여 데이터베이스에서 레코드를 읽는 <code>ItemReader</code> 이다.
         </p>
 
         <p>
-          <span class="label important">NOTE</span> To use this bean you need at least MyBatis 3.4.0 or a newer version.
+          <span class="label important">중요</span> 이 빈을 사용하려면 최소한 MyBatis 3.4.0 이나 그 이상이어야 한다.
         </p>
         
         <p>
-          It executes the query specified as the <code>setQueryId</code> property to retrieve requested data
-          by using the method <code>selectCursor()</code>.
-          Each time a <code>read()</code> method is called it will return the next element of the cursor until no more
-          elements are left.
+          <code>setQueryId</code> 속성으로 지정된 쿼리를 실행하여 <code>selectCursor()</code> 메서드를 사용하여 요청 된 데이터를 검색한다.
+          <code>read()</code> 메서드가 호출 될 때마다 요소가 더 이상 남아 있지 않을 때까지 cursor 의 다음 요소를 반환한다.
         </p>
         
         <p>
-          The reader will use a separate connection so the select statement does no participate in any transactions created 
-          as part of the step processing.
+          reader 는 별도의 connection 을 사용하므로 select 문은 step processing 일부로 생성된 트랜잭션에 속하지 않는다.
         </p>
 
-        <p>When using the cursor you can just execute a regular query:</p>
+        <p>cursor 를 사용할 때 다음과 같이 일반 쿼리를 실행할 수 있다.</p>
         <source><![CDATA[<select id="getEmployee" resultMap="employeeBatchResult">
   SELECT id, name, job FROM employees ORDER BY id ASC
 </select>]]></source>
 
-        <p>Follows below a sample configuration snippet:</p>
+        <p>아래는 샘플 설정이다.</p>
         
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />

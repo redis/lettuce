@@ -25,24 +25,24 @@
 	</properties>
 
 	<body>
-		<section name="Sample Code">
+		<section name="샘플 코드">
 
 			<p>
-				<span class="label important">NOTE</span>
-				See <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> to know about how to use Spring with a full web application server.
+				<span class="label important">중요</span>
+				전체 웹 애플리케이션 서버에서 Spring을 사용하는 방법을 알고 싶다면 <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> 를 참조하십시오.
 			</p>
 
 			<p>
-				You can check out sample code from the MyBatis-Spring <a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">repo</a>:
+			  MyBatis-Spring <a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">repository</a> 에서 샘플 코드를 확인할 수 있다.
 			</p>
 			<p>
-				Any of the samples can be run with JUnit 5.
+			  모든 샘플은 JUnit5 에서 실행할 수 있다.
 			</p>
 			<p>
-				The sample code shows a typical design where a transactional service gets domain objects from a data access layer.
+			  샘플 코드는 트랜잭션 서비스가 data access layer 에서 도메인 개체를 가져 오는 일반적인 디자인을 보여준다.
 			</p>
 			<p>
-				<code>FooService.java</code> acts as the service:
+				다음 <code>FooService.java</code> 는 서비스처럼 작동한다.
 			</p>
 			<source><![CDATA[
 @Transactional
@@ -61,18 +61,13 @@ public class FooService {
 }
 ]]></source>
 			<p>
-				It is a transactional bean, so a transaction is started when any of its methods is called
-				and committed when the method ends without throwing an unchecked exception.
-				Notice that transactional behaviour is configured with the
-				<code>@Transactional</code>
-				attribute. This is not required; any other way provided by Spring can be used to demarcate
-				your transactions.
+			  이것은 트랜잭션 빈이다. 따라서 어떤 메서드든 실행이 되면 트랜잭션이 시작되고 예외가 발생하지 않았을 때 커밋된다.
+				트랜잭션은 <code>@Transactional</code> annotation 을 통해 설정할 수 있다.
+				이것은 필수가 아니다. Spring이 제공하는 다른 방법을 사용하여 트랜잭션을 구분할 수 있다.
 			</p>
 			<p>
-				This service calls a data access layer built with MyBatis. This layer
-				consists on a just an interface <code>UserMapper.java</code>
-				that will be used with a dynamic proxy built by MyBatis at
-				runtime and injected into the service by Spring.
+			  이 서비스는 MyBatis로 이루어진 DAO layer 를 호출한다.
+				이 layer는 런타임시 MyBatis에 의해 작성되고 Spring에 의해 서비스에 주입되는 동적 프록시와 함께 사용되는 <code>UserMapper.java</code> 인터페이스로 구성된다.
 			</p>
 			<source><![CDATA[
 public interface UserMapper {
@@ -82,19 +77,18 @@ public interface UserMapper {
 }
 ]]></source>			
 			<p> 
-			    Note that, for the sake of simplicity we used the interface <code>UserMapper.java</code> for the DAO scenario
-			    where a DAO is built with an interface and a implementation though in this case it would have been more
-			    adequate to use an interface called <code>UserDao.java</code> instead.
+			    단순함을 위해서 DAO가 인터페이스와 그 구현체로 만들어진 DAO 시나리오를 위해 <code>UserMapper.java</code> 인터페이스를 사용했지만,
+					이 경우 대신 <code>UserDao.java</code>라는 인터페이스를 사용하는 것이 더 적절하다.
 			</p>
 			<p>
-				We will see different ways to find the mapper interface, register it to Spring and inject it into the service bean:
+			  매퍼 인터페이스를 찾고 Spring에 등록하고 서비스 빈에 주입하는 여러 가지 방법을 살펴본다.
 			</p>
 			<table>
-				<caption>Scenarios</caption>
+				<caption>시나리오</caption>
 				<thead>
 					<tr>
-						<th>Sample test</th>
-						<th>Description</th>
+						<th>샘플 테스트</th>
+						<th>설명</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -103,8 +97,7 @@ public interface UserMapper {
 							<code>SampleMapperTest.java</code>
 						</td>
 						<td>
-							Shows you the base configuration based on a <code>MapperFactoryBean</code>
-							that will dynamically build an implementation for <code>UserMapper</code>
+						  <code>UserMapper</code> 구현체를 동적으로 빌드 할 <code>MapperFactoryBean</code>에 기반한 기본 구성을 보여준다.
 						</td>
 					</tr>
 					<tr>
@@ -112,7 +105,7 @@ public interface UserMapper {
 							<code>SampleScannerTest.java</code>
 						</td>
 						<td>
-							Shows how to use the <code>MapperScannerConfigurer</code> so all the mappers in a project are autodiscovered.
+						  <code>MapperScannerConfigurer</code> 를 사용하여 어떻게 프로젝트의 모든 매퍼들을 자동으로 검색되도록 하는 방법을 보여준다.
 						</td>
 					</tr>
 					<tr>
@@ -120,8 +113,7 @@ public interface UserMapper {
 							<code>SampleSqlSessionTest.java</code>
 						</td>
 						<td>
-							Shows how to hand code a DAO using a Spring managed <code>SqlSession</code>
-							and providing your own implementation <code>UserDaoImpl.java</code>.
+						  Spring에서 관리하는 <code>SqlSession</code>을 사용하여 DAO를 코딩하고 자체적인 구현체인 <code>UserDaoImpl.java</code> 를 제공하는 방법을 보여준다.
 						</td>
 					</tr>
 					<tr>
@@ -129,8 +121,7 @@ public interface UserMapper {
 							<code>SampleEnableTest</code>
 						</td>
 						<td>
-							Shows how to use Spring's <code>@Configuration</code> with the <code>@MapperScann</code> annotation so
-							mappers are autodiscovered.
+						  스프링의 <code>@Configuration</code>과 <code>@MapperScann</code> annotation을 함께 사용하여 매퍼를 자동으로 검색하는 방법을 보여준다.
 						</td>
 					</tr>
 					<tr>
@@ -138,7 +129,7 @@ public interface UserMapper {
 							<code>SampleNamespaceTest</code>
 						</td>
 						<td>
-							Shows how to use the custom MyBatis XML namespace. 
+						  커스텀 MyBatis XML 네임스페이스를 사용하는 방법을 보여준다.
 						</td>
 					</tr>
           <tr>
@@ -146,7 +137,7 @@ public interface UserMapper {
               <code>SampleJavaConfigTest.java</code>
             </td>
             <td>
-              Shows how to use Spring's <code>@Configuration</code> to create MyBatis beans manually.
+						  스프링의 <code>@Configuration</code>을 사용하여 MyBatis 빈들을 수동적으로 생성하는 방법을 보여준다.
             </td>
           </tr>
           <tr>
@@ -154,7 +145,7 @@ public interface UserMapper {
               <code>SampleJobJavaConfigTest.java</code>
             </td>
             <td>
-              Shows how to use <code>ItemReader</code> and <code>ItemWriter</code> on Spring Batch using Java Configuration.
+						  Java Configuration을 이용하여 Spring Batch에서 어떻게 <code>ItemReader</code>과 <code>ItemWriter</code>를 사용하는지 보여준다.
             </td>
           </tr>
           <tr>
@@ -162,13 +153,13 @@ public interface UserMapper {
               <code>SampleJobXmlConfigTest.java</code>
             </td>
             <td>
-              Shows how to use <code>ItemReader</code> and <code>ItemWriter</code> on Spring Batch using XML Configuration.
+						  XML Configuration을 이용하여 Spring Batch에서 어떻게 <code>ItemReader</code>과 <code>ItemWriter</code>를 사용하는지 보여준다.
             </td>
           </tr>
         </tbody>
 			</table>
 			<p>
-				Please take a look at the different <code>applicationContext.xml</code> files to see MyBatis-Spring in action.
+			  MyBatis-Spring이 실제로 어떻게 다르게 작동하는지 보려면 <code>applicationContext.xml</code> 파일을 살펴보십시오.
 			</p>
 
 		</section>
