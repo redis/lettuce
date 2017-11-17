@@ -28,7 +28,7 @@
   </properties>
 
   <body>
-    <section name="Using an SqlSession">
+    <section name="SqlSession 사용">
       <p>마이바티스에서는 <code>SqlSession</code>를 생성하기 위해 <code>SqlSessionFactory</code>를 사용한다. 
       세션을 한번 생성하면 매핑구문을 실행하거나 커밋 또는 롤백을 하기 위해 세션을 사용할수 있다. 
       마지막으로 더 이상 필요하지 않은 상태가 되면 세션을 닫는다. 
