@@ -29,7 +29,7 @@
 
  <body>
  <section name="简介">
-  <subsection name="What is MyBatis-Spring?">
+  <subsection name="什么是 MyBatis-Spring?">
       <p>
  MyBatis-Spring 会帮助你将 MyBatis 代码无缝地整合到 Spring 中。
 使用这个类库中的类,
@@ -43,7 +43,7 @@ MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
       </p>
   </subsection>
 
-  <subsection name="Motivation">
+  <subsection name="我们的目的">
       <p>
  正如第二版那样,Spring 3.0 也仅支持 iBatis2。那么,我们就想将 MyBatis3 的支持添加
 到 Spring3.0(参考 Spring Jira 中的问题)中。而不幸的是,Spring 3.0 的开发在 MyBatis 3.0
@@ -55,7 +55,7 @@ MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
      </p>
   </subsection>
 
-  <subsection name="Requirements">
+  <subsection name="使用之前的预备知识">
     <p>
 在开始使用 MyBatis-Spring 的整合之前,很重要的一点是,你要熟悉 Spring 和 MyBatis
 这两个框架还有和它们有关的术语,本手册中不会提供二者的基本内容,安装和配置教程。
@@ -122,7 +122,7 @@ MyBatis 数据映射器和 SqlSession 到业务层的 bean 中。
     </table>
   </subsection>
 
-  <subsection name="Acknowledgements">
+  <subsection name="致谢">
     <p>
 特别感谢那些使得本项目成为现实的人们(按字母顺序排序)。 
 Eduardo Macarron, Hunter Presnall和Putthiphong Boonphong的编码,
@@ -133,7 +133,7 @@ Giovanni Cuccu,Raj Nagappan和Tomas Pinos的贡献;而Simone Tripodi发现了这
     </p>
   </subsection>
   
-	<subsection name="Help make this documentation better…">
+	<subsection name="来使它变得更好…">
 		<p>
 			如果你以任何方式发现文档的缺失，或者文档缺少某一个功能点，最好的方式是你学习它
 			并自己写文档！
@@ -147,8 +147,8 @@ Giovanni Cuccu,Raj Nagappan和Tomas Pinos的贡献;而Simone Tripodi发现了这
 			你是该文档最好的作者，像你一样大家都要阅读它！
 		</p>
 	</subsection>
-   <subsection name="Translations">
-     <p>Users can read about MyBatis-Spring in the following translations:</p>
+   <subsection name="不同的语言版本">
+     <p>可以在以下的翻译版本中阅读 MyBatis-Spring 文档:</p>
      <ul class="i18n">
        <li class="en"><a href="./../index.html">English</a></li>
        <li class="es"><a href="./../es/index.html">Español</a></li>
@@ -156,8 +156,7 @@ Giovanni Cuccu,Raj Nagappan和Tomas Pinos的贡献;而Simone Tripodi发现了这
        <li class="ko"><a href="./../ko/index.html">한국어</a></li>
        <li class="zh"><a href="./../zh/getting-started.html">简体中文</a></li>
      </ul>
-     <p>Do you want to read about MyBatis in your own native language? Fill an issue providing patches with your
-       mother tongue documentation!</p>
+     <p>想用本土语言阅读这篇文档吗？那就用你的母语文档来丰富它吧！</p>
    </subsection>
 
  </section>
