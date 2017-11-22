@@ -32,7 +32,7 @@
 本章将会以简略的步骤告诉你如何安装和创建 MyBatis-Spring，并构建一个简单的数据访问事务性的应用程序。
       </p>
 
-    <subsection name="Installation">
+    <subsection name="安装">
       <p>
 要使用MyBatis-Spring模块，只需要在类路径下包含
         <code>mybatis-spring-${project.version}.jar</code>
@@ -49,7 +49,7 @@
 </dependency>]]></source>
     </subsection>
 
-    <subsection name="Quick Setup">
+    <subsection name="快速上手">
       <p>
 要和Spring一起使用MyBatis，需要在Spring应用上下文中定义至少两样东西：一个SqlSessionFactory和至少一个数据映射器类。
       </p>
