@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,16 @@ import java.util.List;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
- * Argument list builder for the redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a> and
- * <a href="http://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the methods from {@link Builder} and
+ * Argument list builder for the redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a> and <a
+ * href="http://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the methods from {@link Builder} and
  * chain the method calls: {@code weights(1, 2).max()}.
- * 
+ *
  * @author Will Glozer
+ * @author Xy Ma
  */
 public class ZStoreArgs {
 
-    private static enum Aggregate {
+    private enum Aggregate {
         SUM, MIN, MAX
     }
 
