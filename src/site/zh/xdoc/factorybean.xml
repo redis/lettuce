@@ -20,7 +20,7 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | SqlSessionFactoryBean</title>
+    <title>MyBatis-Spring | 第三章 使用SqlSessionFactoryBean</title>
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
     <author email="nanlei1987@gmail.com">Nan Lei</author>
@@ -33,7 +33,7 @@
 MyBatis-Spring中，则使用SqlSessionFactoryBean来创建。
       </p>
       
-    <subsection name="Setup">
+    <subsection name="设置">
       <p>
 要创建工厂bean，将下面的代码放到Spring的XML配置文件中：
       </p>
