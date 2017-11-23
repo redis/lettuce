@@ -61,8 +61,8 @@ public class FooService {
 }
 ]]></source>
 			<p>
-				It is a transactional bean, so a transaction is started when any of its methods is called
-				and committed when the method ends without throwing an unchecked exception.
+				It is a transactional bean, so when the method is called, the transaction is started 
+				and the transaction is committed when the method ends without throwing an uncaught exception.
 				Notice that transactional behaviour is configured with the
 				<code>@Transactional</code>
 				attribute. This is not required; any other way provided by Spring can be used to demarcate
