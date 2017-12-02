@@ -48,9 +48,13 @@ class MasterSlaveTopologyRefresh {
     private final NodeConnectionFactory nodeConnectionFactory;
     private final TopologyProvider topologyProvider;
 
-    public MasterSlaveTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
+    MasterSlaveTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
+        this(new RedisClientNodeConnectionFactory(client), topologyProvider);
+    }
 
-        this.nodeConnectionFactory = new RedisClientNodeConnectionFactory(client);
+    MasterSlaveTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, TopologyProvider topologyProvider) {
+
+        this.nodeConnectionFactory = nodeConnectionFactory;
         this.topologyProvider = topologyProvider;
     }
 
@@ -108,7 +112,7 @@ class MasterSlaveTopologyRefresh {
 
             TimedAsyncCommand<String, String, String> future = requestedPing.getRequest(node.getUri());
 
-            if (!future.isDone()) {
+            if (future == null || !future.isDone()) {
                 continue;
             }
 

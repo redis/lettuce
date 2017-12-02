@@ -172,6 +172,10 @@ public class MasterSlave {
                 LOG.debug("Refreshing topology");
                 List<RedisNodeDescription> nodes = refresh.getNodes(redisURI);
 
+                if (nodes.isEmpty()) {
+                    LOG.warn("Topology refresh returned no nodes from {}", redisURI);
+                }
+
                 LOG.debug("New topology: {}", nodes);
                 connectionProvider.setKnownNodes(nodes);
             } catch (Exception e) {
