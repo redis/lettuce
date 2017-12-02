@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Utility to refresh the Master-Slave topology view based on {@link RedisNodeDescription}.
- * 
+ *
  * @author Mark Paluch
  */
 class MasterSlaveTopologyRefresh {
@@ -49,16 +49,20 @@ class MasterSlaveTopologyRefresh {
     private final NodeConnectionFactory nodeConnectionFactory;
     private final TopologyProvider topologyProvider;
 
-    public MasterSlaveTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
+    MasterSlaveTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
+        this(new ReflectiveNodeConnectionFactory(client), topologyProvider);
+    }
 
-        this.nodeConnectionFactory = new ReflectiveNodeConnectionFactory(client);
+    MasterSlaveTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, TopologyProvider topologyProvider) {
+
+        this.nodeConnectionFactory = nodeConnectionFactory;
         this.topologyProvider = topologyProvider;
     }
 
     /**
      * Load master slave nodes. Result contains an ordered list of {@link RedisNodeDescription}s. The sort key is the latency.
      * Nodes with lower latency come first.
-     * 
+     *
      * @param seed collection of {@link RedisURI}s
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
@@ -110,7 +114,7 @@ class MasterSlaveTopologyRefresh {
 
             TimedAsyncCommand<String, String, String> future = requestedPing.getRequest(node.getUri());
 
-            if (!future.isDone()) {
+            if (future == null || !future.isDone()) {
                 continue;
             }
 
