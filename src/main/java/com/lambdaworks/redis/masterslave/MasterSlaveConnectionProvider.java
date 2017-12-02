@@ -55,7 +55,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     private List<RedisNodeDescription> knownNodes = new ArrayList<>();
 
     private boolean autoFlushCommands = true;
-    private Object stateLock = new Object();
+    private final Object stateLock = new Object();
     private ReadFrom readFrom;
 
     @Deprecated
@@ -206,9 +206,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     protected Collection<StatefulRedisConnection<K, V>> allConnections() {
-
-        Set<StatefulRedisConnection<K, V>> connections = LettuceSets.newHashSet(this.connections.values());
-        return (Collection) connections;
+        return LettuceSets.newHashSet(this.connections.values());
     }
 
     /**
