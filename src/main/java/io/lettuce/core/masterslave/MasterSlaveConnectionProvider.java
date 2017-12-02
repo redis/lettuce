@@ -52,7 +52,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     private List<RedisNodeDescription> knownNodes = new ArrayList<>();
 
     private boolean autoFlushCommands = true;
-    private Object stateLock = new Object();
+    private final Object stateLock = new Object();
     private ReadFrom readFrom;
 
     MasterSlaveConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
