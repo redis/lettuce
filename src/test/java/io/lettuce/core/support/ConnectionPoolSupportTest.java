@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.TestClientResources;
+import io.lettuce.Wait;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -87,6 +88,8 @@ public class ConnectionPoolSupportTest extends AbstractTest {
 
         pool.close();
 
+        Wait.untilTrue(channels::isEmpty).waitOrTimeout();
+
         assertThat(channels).isEmpty();
     }
 
@@ -116,6 +119,8 @@ public class ConnectionPoolSupportTest extends AbstractTest {
         assertThat(channels).hasSize(2);
 
         pool.close();
+
+        Wait.untilTrue(channels::isEmpty).waitOrTimeout();
 
         assertThat(channels).isEmpty();
     }
@@ -289,6 +294,8 @@ public class ConnectionPoolSupportTest extends AbstractTest {
 
         connection.close();
         pool.close();
+
+        Wait.untilTrue(channels::isEmpty).waitOrTimeout();
 
         assertThat(channels).isEmpty();
     }
