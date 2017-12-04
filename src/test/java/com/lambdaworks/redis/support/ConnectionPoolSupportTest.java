@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.TestClientResources;
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
@@ -87,6 +88,8 @@ public class ConnectionPoolSupportTest extends AbstractTest {
 
         pool.close();
 
+        Wait.untilTrue(channels::isEmpty).waitOrTimeout();
+
         assertThat(channels).isEmpty();
     }
 
@@ -116,6 +119,8 @@ public class ConnectionPoolSupportTest extends AbstractTest {
         assertThat(channels).hasSize(2);
 
         pool.close();
+
+        Wait.untilTrue(channels::isEmpty).waitOrTimeout();
 
         assertThat(channels).isEmpty();
     }
@@ -288,6 +293,8 @@ public class ConnectionPoolSupportTest extends AbstractTest {
         sync.close();
 
         pool.close();
+
+        Wait.untilTrue(channels::isEmpty).waitOrTimeout();
 
         assertThat(channels).isEmpty();
     }
