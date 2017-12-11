@@ -16,7 +16,6 @@
 package com.lambdaworks.redis.cluster;
 
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -39,11 +38,10 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RoundRobinSocketAddressSupplier.class);
 
     private final Collection<RedisClusterNode> partitions;
-    private final Collection<RedisClusterNode> clusterNodes = new ArrayList<>();
     private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction;
     private final ClientResources clientResources;
 
-    private RoundRobin<? extends RedisClusterNode> roundRobin;
+    private RoundRobin<RedisClusterNode> roundRobin;
 
     public RoundRobinSocketAddressSupplier(Collection<RedisClusterNode> partitions,
             Function<? extends Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction,
@@ -53,8 +51,7 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
         LettuceAssert.notNull(sortFunction, "Sort-Function must not be null");
 
         this.partitions = partitions;
-        this.clusterNodes.addAll(partitions);
-        this.roundRobin = new RoundRobin<>(clusterNodes);
+        this.roundRobin = new RoundRobin<>();
         this.sortFunction = (Function) sortFunction;
         this.clientResources = clientResources;
         resetRoundRobin();
@@ -63,7 +60,7 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
     @Override
     public SocketAddress get() {
 
-        if (!clusterNodes.containsAll(partitions) || !partitions.containsAll(clusterNodes)) {
+        if (!roundRobin.isConsistent(partitions)) {
             resetRoundRobin();
         }
 
@@ -72,10 +69,7 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
     }
 
     protected void resetRoundRobin() {
-
-        clusterNodes.clear();
-        clusterNodes.addAll(sortFunction.apply(partitions));
-        roundRobin.offset = null;
+        roundRobin.rebuild(sortFunction.apply(partitions));
     }
 
     protected SocketAddress getSocketAddress(RedisClusterNode redisClusterNode) {

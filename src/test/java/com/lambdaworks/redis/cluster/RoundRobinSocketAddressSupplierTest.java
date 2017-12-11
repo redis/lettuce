@@ -51,7 +51,7 @@ public class RoundRobinSocketAddressSupplierTest {
     private ClientResources clientResourcesMock;
 
     @BeforeClass
-    public static void beforeClass() throws Exception {
+    public static void beforeClass() {
 
         hap1.getResolvedAddress();
         hap2.getResolvedAddress();
@@ -75,7 +75,7 @@ public class RoundRobinSocketAddressSupplierTest {
     }
 
     @Test
-    public void noOffset() throws Exception {
+    public void noOffset() {
 
         RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions, redisClusterNodes -> redisClusterNodes,
                 clientResourcesMock);
@@ -89,7 +89,7 @@ public class RoundRobinSocketAddressSupplierTest {
     }
 
     @Test
-    public void partitionTableChangesNewNode() throws Exception {
+    public void partitionTableChangesNewNode() {
 
         RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions, redisClusterNodes -> redisClusterNodes,
                 clientResourcesMock);
@@ -108,7 +108,7 @@ public class RoundRobinSocketAddressSupplierTest {
     }
 
     @Test
-    public void partitionTableChangesNodeRemoved() throws Exception {
+    public void partitionTableChangesNodeRemoved() {
 
         RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);

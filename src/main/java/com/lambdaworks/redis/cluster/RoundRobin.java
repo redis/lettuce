@@ -15,35 +15,57 @@
  */
 package com.lambdaworks.redis.cluster;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Circular element provider. This class allows infinite scrolling over a collection with the possibility to provide an initial
  * offset.
- * 
+ *
  * @author Mark Paluch
  */
 class RoundRobin<V> {
 
-    protected final Collection<? extends V> collection;
+    protected volatile Collection<? extends V> collection = Collections.emptyList();
 
-    protected V offset;
+    protected volatile V offset;
 
-    public RoundRobin(Collection<? extends V> collection) {
-        this(collection, null);
+    /**
+     * Return whether this {@link RoundRobin} is still consistent and contains all items from the master {@link Collection} and
+     * vice versa.
+     *
+     * @param master the master collection containing source elements for this {@link RoundRobin}.
+     * @return {@literal true} if this {@link RoundRobin} is consistent with the master {@link Collection}.
+     */
+    public boolean isConsistent(Collection<? extends V> master) {
+
+        Collection<? extends V> collection = this.collection;
+
+        return collection.containsAll(master) && master.containsAll(collection);
     }
 
-    public RoundRobin(Collection<? extends V> collection, V offset) {
-        this.collection = collection;
-        this.offset = offset;
+    /**
+     * Rebuild the {@link RoundRobin} from the master {@link Collection}.
+     *
+     * @param master the master collection containing source elements for this {@link RoundRobin}.
+     */
+    public void rebuild(Collection<? extends V> master) {
+
+        this.collection = new ArrayList<>(master);
+        this.offset = null;
     }
 
     /**
      * Returns the next item.
-     * 
+     *
      * @return the next item
      */
     public V next() {
+
+        Collection<? extends V> collection = this.collection;
+        V offset = this.offset;
+
         if (offset != null) {
             boolean accept = false;
             for (V element : collection) {
@@ -53,11 +75,11 @@ class RoundRobin<V> {
                 }
 
                 if (accept) {
-                    return offset = element;
+                    return this.offset = element;
                 }
             }
         }
 
-        return offset = collection.iterator().next();
+        return this.offset = collection.iterator().next();
     }
 }
