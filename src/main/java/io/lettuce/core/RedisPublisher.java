@@ -163,7 +163,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         volatile boolean allDataRead = false;
 
-        Subscriber<? super T> subscriber;
+        volatile Subscriber<? super T> subscriber;
 
         @SuppressWarnings("unchecked")
         RedisSubscription(StatefulConnection<?, ?> connection, RedisCommand<?, ?, T> command, boolean dissolve) {
@@ -274,6 +274,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             if (!data.offer(t)) {
 
+                Subscriber<?> subscriber = this.subscriber;
                 Context context = Context.empty();
                 if (subscriber instanceof CoreSubscriber) {
                     context = ((CoreSubscriber) subscriber).currentContext();
@@ -666,8 +667,10 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 readData(subscription);
 
-                if (subscription.subscriber != null) {
-                    subscription.subscriber.onComplete();
+                Subscriber<?> subscriber = subscription.subscriber;
+
+                if (subscriber != null) {
+                    subscriber.onComplete();
                 }
             }
         }
@@ -678,8 +681,9 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 readData(subscription);
 
-                if (subscription.subscriber != null) {
-                    subscription.subscriber.onError(t);
+                Subscriber<?> subscriber = subscription.subscriber;
+                if (subscriber != null) {
+                    subscriber.onError(t);
                 }
             }
         }
