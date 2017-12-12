@@ -15,14 +15,18 @@
  */
 package io.lettuce.core.masterslave;
 
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.models.role.RoleParser;
 import io.netty.util.internal.logging.InternalLogger;
@@ -56,55 +60,57 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
     @SuppressWarnings("rawtypes")
     public List<RedisNodeDescription> getNodes() {
 
-        List<StatefulRedisConnection<String, String>> connections = new ArrayList<>();
-        Map<RedisURI, RedisFuture<List<Object>>> roles = new HashMap<>();
+        RedisURI next = redisURIs.iterator().next();
 
         try {
-            for (RedisURI redisURI : redisURIs) {
-                try {
-                    StatefulRedisConnection<String, String> connection = redisClient.connect(redisURI);
-                    connections.add(connection);
-
-                    roles.put(redisURI, connection.async().role());
-                } catch (RuntimeException e) {
-                    logger.warn("Cannot connect to {}", redisURI, e);
-                }
-            }
-
-            RedisURI next = redisURIs.iterator().next();
-            boolean success = LettuceFutures.awaitAll(next.getTimeout(), roles.values().toArray(new Future[roles.size()]));
-
-            if (success) {
-
-                List<RedisNodeDescription> result = new ArrayList<>();
-                for (Map.Entry<RedisURI, RedisFuture<List<Object>>> entry : roles.entrySet()) {
-
-                    if (!entry.getValue().isDone()) {
-                        continue;
-                    }
-
-                    RedisURI key = entry.getKey();
-
-                    RedisInstance redisInstance = RoleParser.parse(entry.getValue().get());
-                    result.add(new RedisMasterSlaveNode(key.getHost(), key.getPort(), key, redisInstance.getRole()));
-                }
-
-                return result;
-            }
-        } catch (ExecutionException e) {
-            throw new IllegalStateException(e);
-        } catch (InterruptedException e) {
-
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
-
-        } finally {
-
-            for (StatefulRedisConnection<String, String> connection : connections) {
-                connection.close();
-            }
+            return getNodesAsync().get(next.getTimeout().toMillis(), TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            throw Exceptions.bubble(e);
         }
+    }
 
-        return Collections.emptyList();
+    @Override
+    public CompletableFuture<List<RedisNodeDescription>> getNodesAsync() {
+
+        List<StatefulRedisConnection<String, String>> connections = new CopyOnWriteArrayList<>();
+
+        Flux<RedisURI> uris = Flux.fromIterable(redisURIs);
+        Mono<List<RedisNodeDescription>> nodes = uris.flatMap(uri -> getNodeDescription(connections, uri)) //
+                .collectList() //
+                .doFinally(it -> {
+
+                    for (StatefulRedisConnection<String, String> connection : connections) {
+                        connection.closeAsync();
+                    }
+                });
+
+        return nodes.toFuture();
+    }
+
+    private Mono<RedisNodeDescription> getNodeDescription(List<StatefulRedisConnection<String, String>> connections,
+            RedisURI uri) {
+
+        return Mono.fromCompletionStage(redisClient.connectAsync(StringCodec.UTF8, uri)) //
+                .onErrorResume(t -> {
+
+                    logger.warn("Cannot connect to {}", uri, t);
+                    return Mono.empty();
+                }) //
+                .doOnNext(connections::add) //
+                .flatMap(connection -> {
+
+                    Mono<RedisNodeDescription> instance = getNodeDescription(uri, connection);
+
+                    return instance.flatMap(it -> ResumeAfter.close(connection).thenEmit(it)).doFinally(s -> {
+                        connections.remove(connection);
+                    });
+                });
+    }
+
+    private static Mono<RedisNodeDescription> getNodeDescription(RedisURI uri,
+            StatefulRedisConnection<String, String> connection) {
+
+        return connection.reactive().role().collectList().map(RoleParser::parse)
+                .map(it -> new RedisMasterSlaveNode(uri.getHost(), uri.getPort(), uri, it.getRole()));
     }
 }

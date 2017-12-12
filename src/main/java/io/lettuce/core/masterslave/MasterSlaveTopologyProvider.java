@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,17 @@ package io.lettuce.core.masterslave;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.lettuce.core.RedisException;
+import reactor.core.publisher.Mono;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -76,11 +77,26 @@ public class MasterSlaveTopologyProvider implements TopologyProvider {
         try {
             return getNodesFromInfo(info);
         } catch (RuntimeException e) {
-            throw new RedisException(e);
+            throw Exceptions.bubble(e);
+        }
+    }
+
+    @Override
+    public CompletableFuture<List<RedisNodeDescription>> getNodesAsync() {
+
+        logger.debug("Performing topology lookup");
+
+        RedisFuture<String> info = connection.async().info("replication");
+
+        try {
+            return Mono.fromCompletionStage(info).timeout(redisURI.getTimeout()).map(this::getNodesFromInfo).toFuture();
+        } catch (RuntimeException e) {
+            throw Exceptions.bubble(e);
         }
     }
 
     protected List<RedisNodeDescription> getNodesFromInfo(String info) {
+
         List<RedisNodeDescription> result = new ArrayList<>();
 
         RedisNodeDescription currentNodeDescription = getCurrentNodeDescription(info);

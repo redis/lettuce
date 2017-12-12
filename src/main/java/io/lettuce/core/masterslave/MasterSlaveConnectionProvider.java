@@ -19,17 +19,22 @@ import static io.lettuce.core.masterslave.MasterSlaveUtils.findNodeByHostAndPort
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.LettuceSets;
+import io.lettuce.core.internal.AsyncConnectionProvider;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
+import io.netty.util.internal.ConcurrentSet;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -44,10 +49,8 @@ public class MasterSlaveConnectionProvider<K, V> {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterSlaveConnectionProvider.class);
     private final boolean debugEnabled = logger.isDebugEnabled();
 
-    // Contains HostAndPort-identified connections.
-    private final Map<ConnectionKey, StatefulRedisConnection<K, V>> connections = new ConcurrentHashMap<>();
-    private final ConnectionFactory<K, V> connectionFactory;
     private final RedisURI initialRedisUri;
+    private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, CompletionStage<StatefulRedisConnection<K, V>>> connectionProvider;
 
     private List<RedisNodeDescription> knownNodes = new ArrayList<>();
 
@@ -59,10 +62,14 @@ public class MasterSlaveConnectionProvider<K, V> {
             Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections) {
 
         this.initialRedisUri = initialRedisUri;
-        this.connectionFactory = new ConnectionFactory<>(redisClient, redisCodec);
+
+        Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> connectionFactory = new DefaultMasterSlaveNodeConnectionFactory(
+                redisClient, redisCodec);
+
+        this.connectionProvider = new AsyncConnectionProvider<>(connectionFactory);
 
         for (Map.Entry<RedisURI, StatefulRedisConnection<K, V>> entry : initialConnections.entrySet()) {
-            connections.put(toConnectionKey(entry.getKey()), entry.getValue());
+            connectionProvider.register(toConnectionKey(entry.getKey()), entry.getValue());
         }
     }
 
@@ -79,6 +86,36 @@ public class MasterSlaveConnectionProvider<K, V> {
 
         if (debugEnabled) {
             logger.debug("getConnection(" + intent + ")");
+        }
+
+        try {
+            return getConnectionAsync(intent).get();
+        } catch (RedisException e) {
+            throw e;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RedisCommandInterruptedException(e);
+        } catch (ExecutionException e) {
+            throw new RedisException(e.getCause());
+        } catch (RuntimeException e) {
+            throw new RedisException(e);
+        }
+    }
+
+    /**
+     * Retrieve a {@link StatefulRedisConnection} by the intent.
+     * {@link io.lettuce.core.masterslave.MasterSlaveConnectionProvider.Intent#WRITE} intentions use the master connection,
+     * {@link io.lettuce.core.masterslave.MasterSlaveConnectionProvider.Intent#READ} intentions lookup one or more read
+     * candidates using the {@link ReadFrom} setting.
+     *
+     * @param intent command intent
+     * @return the connection.
+     * @throws RedisException if the host is not part of the cluster
+     */
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(Intent intent) {
+
+        if (debugEnabled) {
+            logger.debug("getConnectionAsync(" + intent + ")");
         }
 
         if (readFrom != null && intent == Intent.READ) {
@@ -98,35 +135,36 @@ public class MasterSlaveConnectionProvider<K, V> {
                 throw new RedisException(String.format("Cannot determine a node to read (Known nodes: %s) with setting %s",
                         knownNodes, readFrom));
             }
+
             try {
-                for (RedisNodeDescription redisNodeDescription : selection) {
-                    StatefulRedisConnection<K, V> readerCandidate = getConnection(redisNodeDescription);
-                    if (!readerCandidate.isOpen()) {
-                        continue;
-                    }
-                    return readerCandidate;
+
+                Flux<StatefulRedisConnection<K, V>> connections = Flux.empty();
+
+                for (RedisNodeDescription node : selection) {
+                    connections = connections.concatWith(Mono.fromFuture(getConnection(node)));
                 }
 
-                return getConnection(selection.get(0));
+                return connections.filter(StatefulConnection::isOpen).next().switchIfEmpty(connections.next()).toFuture();
             } catch (RuntimeException e) {
-                throw new RedisException(e);
+                throw Exceptions.bubble(e);
             }
         }
 
         return getConnection(getMaster());
     }
 
-    protected StatefulRedisConnection<K, V> getConnection(RedisNodeDescription redisNodeDescription) {
-        return connections.computeIfAbsent(new ConnectionKey(redisNodeDescription.getUri().getHost(), redisNodeDescription
-                .getUri().getPort()), connectionFactory);
+    protected CompletableFuture<StatefulRedisConnection<K, V>> getConnection(RedisNodeDescription redisNodeDescription) {
+
+        RedisURI uri = redisNodeDescription.getUri();
+
+        return connectionProvider.getConnection(toConnectionKey(uri)).toCompletableFuture();
     }
 
     /**
-     *
      * @return number of connections.
      */
     protected long getConnectionCount() {
-        return connections.size();
+        return connectionProvider.getConnectionCount();
     }
 
     /**
@@ -135,7 +173,10 @@ public class MasterSlaveConnectionProvider<K, V> {
      * @return Set of {@link ConnectionKey}s
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
-        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = new HashMap<>(connections);
+
+        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = new ConcurrentHashMap<>();
+        connectionProvider.forEach(map::put);
+
         Set<ConnectionKey> stale = new HashSet<>();
 
         for (ConnectionKey connectionKey : map.keySet()) {
@@ -152,23 +193,25 @@ public class MasterSlaveConnectionProvider<K, V> {
      * Close stale connections.
      */
     public void closeStaleConnections() {
+
         logger.debug("closeStaleConnections() count before expiring: {}", getConnectionCount());
 
         Set<ConnectionKey> stale = getStaleConnectionKeys();
 
         for (ConnectionKey connectionKey : stale) {
-            StatefulRedisConnection<K, V> connection = connections.get(connectionKey);
-            if (connection != null) {
-                connections.remove(connectionKey);
-                connection.close();
-            }
+            connectionProvider.close(connectionKey);
         }
 
         logger.debug("closeStaleConnections() count after expiring: {}", getConnectionCount());
     }
 
+    /**
+     * Reset the command state of all connections.
+     *
+     * @see StatefulRedisConnection#reset()
+     */
     public void reset() {
-        allConnections().forEach(StatefulRedisConnection::reset);
+        connectionProvider.forEach(StatefulRedisConnection::reset);
     }
 
     /**
@@ -180,41 +223,49 @@ public class MasterSlaveConnectionProvider<K, V> {
 
     /**
      * Close all connections asynchronously.
-     * 
+     *
      * @since 5.1
      */
     @SuppressWarnings("unchecked")
     public CompletableFuture<Void> closeAsync() {
-
-        Collection<StatefulRedisConnection<K, V>> connections = allConnections();
-        this.connections.clear();
-
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
-        connections.forEach(c -> {
-
-            RedisChannelHandler handler = (RedisChannelHandler) c;
-            futures.add(handler.closeAsync());
-        });
-
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-    }
-
-    public void flushCommands() {
-        allConnections().forEach(StatefulConnection::flushCommands);
-    }
-
-    public void setAutoFlushCommands(boolean autoFlushCommands) {
-        synchronized (stateLock) {
-            allConnections().forEach(connection -> connection.setAutoFlushCommands(autoFlushCommands));
-        }
-    }
-
-    protected Collection<StatefulRedisConnection<K, V>> allConnections() {
-        return LettuceSets.newHashSet(this.connections.values());
+        return connectionProvider.close();
     }
 
     /**
+     * Flush pending commands on all connections.
      *
+     * @see StatefulConnection#flushCommands()
+     */
+    public void flushCommands() {
+        connectionProvider.forEach(StatefulConnection::flushCommands);
+    }
+
+    /**
+     * Disable or enable auto-flush behavior for all connections.
+     *
+     * @param autoFlush state of autoFlush.
+     * @see StatefulConnection#setAutoFlushCommands(boolean)
+     */
+    public void setAutoFlushCommands(boolean autoFlush) {
+
+        synchronized (stateLock) {
+            this.autoFlushCommands = autoFlush;
+            connectionProvider.forEach(connection -> connection.setAutoFlushCommands(autoFlush));
+        }
+    }
+
+    /**
+     * @return all connections that are connected.
+     */
+    @Deprecated
+    protected Collection<StatefulRedisConnection<K, V>> allConnections() {
+
+        Set<StatefulRedisConnection<K, V>> set = new ConcurrentSet<>();
+        connectionProvider.forEach(set::add);
+        return set;
+    }
+
+    /**
      * @param knownNodes
      */
     public void setKnownNodes(Collection<RedisNodeDescription> knownNodes) {
@@ -227,8 +278,13 @@ public class MasterSlaveConnectionProvider<K, V> {
         }
     }
 
+    /**
+     * @return the current read-from setting.
+     */
     public ReadFrom getReadFrom() {
-        return readFrom;
+        synchronized (stateLock) {
+            return readFrom;
+        }
     }
 
     public void setReadFrom(ReadFrom readFrom) {
@@ -238,6 +294,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     public RedisNodeDescription getMaster() {
+
         for (RedisNodeDescription knownNode : knownNodes) {
             if (knownNode.getRole() == RedisInstance.Role.MASTER) {
                 return knownNode;
@@ -247,18 +304,19 @@ public class MasterSlaveConnectionProvider<K, V> {
         throw new RedisException(String.format("Master is currently unknown: %s", knownNodes));
     }
 
-    private class ConnectionFactory<K, V> implements Function<ConnectionKey, StatefulRedisConnection<K, V>> {
+    class DefaultMasterSlaveNodeConnectionFactory implements
+            Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> {
 
         private final RedisClient redisClient;
         private final RedisCodec<K, V> redisCodec;
 
-        public ConnectionFactory(RedisClient redisClient, RedisCodec<K, V> redisCodec) {
+        DefaultMasterSlaveNodeConnectionFactory(RedisClient redisClient, RedisCodec<K, V> redisCodec) {
             this.redisClient = redisClient;
             this.redisCodec = redisCodec;
         }
 
         @Override
-        public StatefulRedisConnection<K, V> apply(ConnectionKey key) {
+        public ConnectionFuture<StatefulRedisConnection<K, V>> apply(ConnectionKey key) {
 
             RedisURI.Builder builder = RedisURI.Builder.redis(key.host, key.port);
 
@@ -271,28 +329,32 @@ public class MasterSlaveConnectionProvider<K, V> {
             }
             builder.withDatabase(initialRedisUri.getDatabase());
 
-            StatefulRedisConnection<K, V> connection = redisClient.connect(redisCodec, builder.build());
+            ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = redisClient.connectAsync(redisCodec,
+                    builder.build());
 
-            synchronized (stateLock) {
+            connectionFuture.thenAccept(connection -> {
+                synchronized (stateLock) {
                 connection.setAutoFlushCommands(autoFlushCommands);
             }
+            });
 
-            return connection;
+            return connectionFuture;
         }
     }
 
-    private ConnectionKey toConnectionKey(RedisURI redisURI) {
+    private static ConnectionKey toConnectionKey(RedisURI redisURI) {
         return new ConnectionKey(redisURI.getHost(), redisURI.getPort());
     }
 
     /**
      * Connection to identify a connection by host/port.
      */
-    private static class ConnectionKey {
+    static class ConnectionKey {
+
         private final String host;
         private final int port;
 
-        public ConnectionKey(String host, int port) {
+        ConnectionKey(String host, int port) {
             this.host = host;
             this.port = port;
         }

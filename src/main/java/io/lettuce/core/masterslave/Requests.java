@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,71 @@
  */
 package io.lettuce.core.masterslave;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
+import static io.lettuce.core.masterslave.MasterSlaveUtils.findNodeByUri;
 
+import java.util.*;
+
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
  * Encapsulates asynchronously executed commands to multiple {@link RedisURI nodes}.
  *
  * @author Mark Paluch
  */
-class Requests {
+class Requests extends
+        CompletableEventLatchSupport<Tuple2<RedisURI, TimedAsyncCommand<String, String, String>>, List<RedisNodeDescription>> {
 
     private final Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = new TreeMap<>(
             MasterSlaveUtils.RedisURIComparator.INSTANCE);
+    private final List<RedisNodeDescription> nodes;
 
-    public Requests() {
+    public Requests(int expectedCount, List<RedisNodeDescription> nodes) {
+        super(expectedCount);
+        this.nodes = nodes;
     }
 
     protected void addRequest(RedisURI redisURI, TimedAsyncCommand<String, String, String> command) {
+
         rawViews.put(redisURI, command);
+        command.onComplete((s, throwable) -> {
+
+            if (throwable != null) {
+                accept(throwable);
+            } else {
+                accept(Tuples.of(redisURI, command));
+            }
+        });
     }
 
-    protected long await(long timeout, TimeUnit timeUnit) throws InterruptedException {
-        return RefreshFutures.awaitAll(timeout, timeUnit, rawViews.values());
+    @Override
+    protected void onEmit(Emission<List<RedisNodeDescription>> emission) {
+
+        List<RedisNodeDescription> result = new ArrayList<>();
+
+        Map<RedisNodeDescription, Long> latencies = new HashMap<>();
+
+        for (RedisNodeDescription node : nodes) {
+
+            TimedAsyncCommand<String, String, String> future = getRequest(node.getUri());
+
+            if (future == null || !future.isDone()) {
+                continue;
+            }
+
+            RedisNodeDescription redisNodeDescription = findNodeByUri(nodes, node.getUri());
+            latencies.put(redisNodeDescription, future.duration());
+            result.add(redisNodeDescription);
+        }
+
+        TopologyComparators.LatencyComparator comparator = new TopologyComparators.LatencyComparator(latencies);
+
+        result.sort(comparator);
+
+        emission.success(result);
+
     }
 
     protected Set<RedisURI> nodes() {

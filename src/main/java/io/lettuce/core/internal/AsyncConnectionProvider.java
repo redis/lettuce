@@ -119,6 +119,16 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
     }
 
     /**
+     * Register a connection identified by {@code key}. Overwrites existing entries.
+     *
+     * @param key the connection {@code key}.
+     * @param connection the connection object.
+     */
+    public void register(K key, T connection) {
+        connections.put(key, new Sync<>(key, connection));
+    }
+
+    /**
      * @return number of established connections.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -230,6 +240,15 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
                     }
                 }
             });
+        }
+
+        @SuppressWarnings("unchecked")
+        public Sync(K key, T value) {
+
+            this.key = key;
+            this.connection = value;
+            this.future = (F) CompletableFuture.completedFuture(value);
+            PHASE.set(this, PHASE_COMPLETE);
         }
 
         public void cancel() {

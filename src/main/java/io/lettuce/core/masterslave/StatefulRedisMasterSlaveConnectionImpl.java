@@ -34,7 +34,7 @@ class StatefulRedisMasterSlaveConnectionImpl<K, V> extends StatefulRedisConnecti
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      */
-    public StatefulRedisMasterSlaveConnectionImpl(MasterSlaveChannelWriter<K, V> writer, RedisCodec<K, V> codec,
+    StatefulRedisMasterSlaveConnectionImpl(MasterSlaveChannelWriter writer, RedisCodec<K, V> codec,
             Duration timeout) {
         super(writer, codec, timeout);
     }
@@ -50,7 +50,7 @@ class StatefulRedisMasterSlaveConnectionImpl<K, V> extends StatefulRedisConnecti
     }
 
     @Override
-    public MasterSlaveChannelWriter<K, V> getChannelWriter() {
-        return (MasterSlaveChannelWriter<K, V>) super.getChannelWriter();
+    public MasterSlaveChannelWriter getChannelWriter() {
+        return (MasterSlaveChannelWriter) super.getChannelWriter();
     }
 }

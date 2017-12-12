@@ -21,19 +21,19 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisException;
-import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
+import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -76,26 +76,43 @@ public class SentinelTopologyProvider implements TopologyProvider {
 
         logger.debug("lookup topology for masterId {}", masterId);
 
-        try (StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel(CODEC, sentinelUri)) {
+        try {
+            return getNodesAsync().get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            throw Exceptions.bubble(e);
+        }
+    }
 
-            RedisFuture<Map<String, String>> masterFuture = connection.async().master(masterId);
-            RedisFuture<List<Map<String, String>>> slavesFuture = connection.async().slaves(masterId);
+    @Override
+    public CompletableFuture<List<RedisNodeDescription>> getNodesAsync() {
+
+        logger.debug("lookup topology for masterId {}", masterId);
+
+        Mono<StatefulRedisSentinelConnection<String, String>> connect = Mono.fromFuture(redisClient.connectSentinelAsync(CODEC,
+                sentinelUri));
+
+        return connect.flatMap(this::getNodes).toFuture();
+    }
+
+    protected Mono<List<RedisNodeDescription>> getNodes(StatefulRedisSentinelConnection<String, String> connection) {
+
+        RedisSentinelReactiveCommands<String, String> reactive = connection.reactive();
+
+        Mono<Tuple2<Map<String, String>, List<Map<String, String>>>> masterAndSlaves = reactive.master(masterId)
+                .zipWith(reactive.slaves(masterId).collectList()).timeout(this.timeout).flatMap(tuple -> {
+                    return ResumeAfter.close(connection).thenEmit(tuple);
+                }).doOnError(e -> connection.closeAsync());
+
+        return masterAndSlaves.map(tuple -> {
 
             List<RedisNodeDescription> result = new ArrayList<>();
-            try {
-                Map<String, String> master = masterFuture.get(timeout.toNanos(), TimeUnit.NANOSECONDS);
-                List<Map<String, String>> slaves = slavesFuture.get(timeout.toNanos(), TimeUnit.NANOSECONDS);
 
-                result.add(toNode(master, RedisInstance.Role.MASTER));
-                result.addAll(slaves.stream().filter(SentinelTopologyProvider::isAvailable)
-                        .map(map -> toNode(map, RedisInstance.Role.SLAVE)).collect(Collectors.toList()));
-
-            } catch (ExecutionException | InterruptedException | TimeoutException e) {
-                throw new RedisException(e);
-            }
+            result.add(toNode(tuple.getT1(), RedisInstance.Role.MASTER));
+            result.addAll(tuple.getT2().stream().filter(SentinelTopologyProvider::isAvailable)
+                    .map(map -> toNode(map, RedisInstance.Role.SLAVE)).collect(Collectors.toList()));
 
             return result;
-        }
+        });
     }
 
     private static boolean isAvailable(Map<String, String> map) {

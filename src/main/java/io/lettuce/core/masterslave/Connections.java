@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,20 @@
  */
 package io.lettuce.core.masterslave;
 
-import java.util.Map;
-import java.util.TreeMap;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledExecutorService;
 
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.AsyncCloseable;
+import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -28,25 +36,65 @@ import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 
 /**
+ * Connection collector with non-blocking synchronization. This synchronizer emits itself through a {@link Mono} as soon as it
+ * gets synchronized via either receiving connects/exceptions from all connections or timing out.
+ * <p/>
+ * It can be used only once via {@link #getOrTimeout(Duration, ScheduledExecutorService)}.
+ * <p/>
+ * Synchronizer uses a gate to determine whether it was already emitted or awaiting incoming events (exceptions, successful
+ * connects). Connections arriving after closing the gate are discarded.
+ *
  * @author Mark Paluch
  */
-class Connections {
+class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, StatefulRedisConnection<String, String>>, Connections>
+        implements AsyncCloseable {
 
     private final Map<RedisURI, StatefulRedisConnection<String, String>> connections = new TreeMap<>(
             MasterSlaveUtils.RedisURIComparator.INSTANCE);
 
-    public Connections() {
+    private final List<Throwable> exceptions = new CopyOnWriteArrayList<>();
+    private final List<RedisNodeDescription> nodes;
+
+    public Connections(int expectedConnectionCount, List<RedisNodeDescription> nodes) {
+        super(expectedConnectionCount);
+        this.nodes = nodes;
     }
 
-    /**
-     * Add a connection for a {@link RedisURI}
-     *
-     * @param redisURI
-     * @param connection
-     */
-    public void addConnection(RedisURI redisURI, StatefulRedisConnection<String, String> connection) {
+    @Override
+    protected void onAccept(Tuple2<RedisURI, StatefulRedisConnection<String, String>> value) {
+
         synchronized (connections) {
-            connections.put(redisURI, connection);
+            connections.put(value.getT1(), value.getT2());
+        }
+    }
+
+    @Override
+    protected void onError(Throwable value) {
+        exceptions.add(value);
+    }
+
+    @Override
+    protected void onDrop(Tuple2<RedisURI, StatefulRedisConnection<String, String>> value) {
+        value.getT2().closeAsync();
+    }
+
+    @Override
+    protected void onDrop(Throwable value) {
+
+    }
+
+    @Override
+    protected void onEmit(Emission<Connections> emission) {
+
+        if (getExpectedCount() != 0 && connections.isEmpty() && !exceptions.isEmpty()) {
+
+            RedisConnectionException collector = new RedisConnectionException(
+                    "Unable to establish a connection to Redis Cluster");
+            exceptions.forEach(collector::addSuppressed);
+
+            emission.error(collector);
+        } else {
+            emission.success(this);
         }
     }
 
@@ -66,9 +114,10 @@ class Connections {
      */
     public Requests requestPing() {
 
-        Requests requests = new Requests();
+        Set<Map.Entry<RedisURI, StatefulRedisConnection<String, String>>> entries = new LinkedHashSet<>(connections.entrySet());
+        Requests requests = new Requests(entries.size(), nodes);
 
-        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
+        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : entries) {
 
             CommandArgs<String, String> args = new CommandArgs<>(StringCodec.ASCII).add(CommandKeyword.NODES);
             Command<String, String, String> command = new Command<>(CommandType.PING, new StatusOutput<>(StringCodec.ASCII),
@@ -85,9 +134,21 @@ class Connections {
     /**
      * Close all connections.
      */
-    public void close() {
-        for (StatefulRedisConnection<String, String> connection : connections.values()) {
-            connection.close();
+    public CompletableFuture<Void> closeAsync() {
+
+        List<CompletableFuture> close = new ArrayList<>(connections.size());
+        List<RedisURI> toRemove = new ArrayList<>(connections.size());
+
+        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
+
+            toRemove.add(entry.getKey());
+            close.add(entry.getValue().closeAsync());
         }
+
+        for (RedisURI redisURI : toRemove) {
+            connections.remove(redisURI);
+        }
+
+        return CompletableFuture.allOf(close.toArray(new CompletableFuture[0]));
     }
 }

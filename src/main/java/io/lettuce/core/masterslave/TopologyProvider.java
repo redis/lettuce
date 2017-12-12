@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package io.lettuce.core.masterslave;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.RedisException;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -34,7 +35,18 @@ public interface TopologyProvider {
      * Lookup nodes within the topology.
      *
      * @return list of {@link RedisNodeDescription} instances
-     * @throws RedisException on errors that occured during the lookup
+     * @throws RedisException on errors that occurred during the lookup
      */
     List<RedisNodeDescription> getNodes();
+
+    /**
+     * Lookup nodes asynchronously within the topology.
+     *
+     * @return list of {@link RedisNodeDescription} instances
+     * @throws RedisException on errors that occurred during the lookup
+     * @since 5.1
+     */
+    default CompletableFuture<List<RedisNodeDescription>> getNodesAsync() {
+        return CompletableFuture.completedFuture(getNodes());
+    }
 }

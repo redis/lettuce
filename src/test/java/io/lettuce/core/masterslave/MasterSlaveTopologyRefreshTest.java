@@ -23,7 +23,9 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,6 +38,7 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.protocol.RedisCommand;
+import io.netty.util.concurrent.DefaultThreadFactory;
 
 /**
  * @author Mark Paluch
@@ -58,11 +61,15 @@ public class MasterSlaveTopologyRefreshTest {
     @Mock
     RedisAsyncCommands<String, String> async;
 
+    ScheduledThreadPoolExecutor executorService;
+
     TopologyProvider provider;
 
     @Before
     public void before() {
 
+        executorService = new ScheduledThreadPoolExecutor(1, new DefaultThreadFactory(getClass().getSimpleName(), true));
+        when(connection.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
         when(connection.async()).thenReturn(async);
         when(connection.dispatch(any(RedisCommand.class))).then(invocation -> {
 
@@ -75,10 +82,15 @@ public class MasterSlaveTopologyRefreshTest {
         provider = () -> Arrays.asList(MASTER, SLAVE);
     }
 
+    @After
+    public void tearDown() {
+        executorService.shutdown();
+    }
+
     @Test
     public void shouldRetrieveTopology() {
 
-        MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(connectionFactory, provider);
+        MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(connectionFactory, executorService, provider);
 
         CompletableFuture<StatefulRedisConnection<String, String>> master = CompletableFuture.completedFuture(connection);
         CompletableFuture<StatefulRedisConnection<String, String>> slave = CompletableFuture.completedFuture(connection);
@@ -88,7 +100,7 @@ public class MasterSlaveTopologyRefreshTest {
         RedisURI redisURI = new RedisURI();
         redisURI.setTimeout(Duration.ofMillis(1));
 
-        List<RedisNodeDescription> nodes = refresh.getNodes(redisURI);
+        List<RedisNodeDescription> nodes = refresh.getNodes(redisURI).block();
 
         assertThat(nodes).hasSize(2);
     }
@@ -96,7 +108,7 @@ public class MasterSlaveTopologyRefreshTest {
     @Test
     public void shouldRetrieveTopologyWithFailedNode() {
 
-        MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(connectionFactory, provider);
+        MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(connectionFactory, executorService, provider);
 
         CompletableFuture<StatefulRedisConnection<String, String>> connected = CompletableFuture.completedFuture(connection);
         CompletableFuture<StatefulRedisConnection<String, String>> pending = new CompletableFuture<>();
@@ -106,7 +118,7 @@ public class MasterSlaveTopologyRefreshTest {
         RedisURI redisURI = new RedisURI();
         redisURI.setTimeout(Duration.ofMillis(1));
 
-        List<RedisNodeDescription> nodes = refresh.getNodes(redisURI);
+        List<RedisNodeDescription> nodes = refresh.getNodes(redisURI).block();
 
         assertThat(nodes).hasSize(1).containsOnly(MASTER);
     }

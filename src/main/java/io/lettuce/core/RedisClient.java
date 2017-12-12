@@ -31,10 +31,8 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.CommandExpiryWriter;
-import io.lettuce.core.protocol.CommandHandler;
-import io.lettuce.core.protocol.DefaultEndpoint;
-import io.lettuce.core.protocol.Endpoint;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.*;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -279,7 +277,7 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, codec, timeout);
-        ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
+        ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, codec, endpoint, redisURI,
                 () -> new CommandHandler(clientOptions, clientResources, endpoint));
 
         future.whenComplete((channelHandler, throwable) -> {
@@ -293,7 +291,8 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     @SuppressWarnings("unchecked")
-    private <K, V, S> ConnectionFuture<S> connectStatefulAsync(StatefulRedisConnectionImpl<K, V> connection, Endpoint endpoint,
+    private <K, V, S> ConnectionFuture<S> connectStatefulAsync(StatefulRedisConnectionImpl<K, V> connection,
+            RedisCodec<K, V> codec, Endpoint endpoint,
             RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
@@ -322,19 +321,19 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
+        ConnectionFuture<?> sync = future;
 
         if (!clientOptions.isPingBeforeActivateConnection() && hasPassword(redisURI)) {
 
-            future = future.thenApplyAsync(channelHandler -> {
+            sync = sync.thenCompose(channelHandler -> {
 
-                connection.async().auth(new String(redisURI.getPassword()));
-
-                return channelHandler;
-            }, clientResources.eventExecutorGroup());
+                CommandArgs<K, V> args = new CommandArgs<>(codec).add(redisURI.getPassword());
+                return connection.async().dispatch(CommandType.AUTH, new StatusOutput<>(codec), args);
+            });
         }
 
         if (LettuceStrings.isNotEmpty(redisURI.getClientName())) {
-            future.thenApply(channelHandler -> {
+            sync = sync.thenApply(channelHandler -> {
                 connection.setClientName(redisURI.getClientName());
                 return channelHandler;
             });
@@ -342,15 +341,14 @@ public class RedisClient extends AbstractRedisClient {
 
         if (redisURI.getDatabase() != 0) {
 
-            future = future.thenApplyAsync(channelHandler -> {
+            sync = sync.thenCompose(channelHandler -> {
 
-                connection.async().select(redisURI.getDatabase());
-
-                return channelHandler;
-            }, clientResources.eventExecutorGroup());
+                CommandArgs<K, V> args = new CommandArgs<>(codec).add(redisURI.getDatabase());
+                return connection.async().dispatch(CommandType.SELECT, new StatusOutput<>(codec), args);
+            });
         }
 
-        return future.thenApply(channelHandler -> (S) connection);
+        return sync.thenApply(channelHandler -> (S) connection);
     }
 
     private static boolean hasPassword(RedisURI redisURI) {
@@ -442,7 +440,8 @@ public class RedisClient extends AbstractRedisClient {
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout);
 
-        ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
+        ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, codec, endpoint,
+                redisURI,
                 () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
 
         return future.whenComplete((conn, throwable) -> {
@@ -503,6 +502,25 @@ public class RedisClient extends AbstractRedisClient {
 
         assertNotNull(redisURI);
         return getConnection(connectSentinelAsync(codec, redisURI, redisURI.getTimeout()));
+    }
+
+    /**
+     * Open asynchronously a connection to a Redis Sentinel using the supplied {@link RedisURI} and use the supplied
+     * {@link RedisCodec codec} to encode/decode keys and values. The client {@link RedisURI} must contain one or more
+     * sentinels.
+     *
+     * @param codec the Redis server to connect to, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
+     * @since 5.1
+     */
+    public <K, V> CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectSentinelAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI) {
+
+        assertNotNull(redisURI);
+        return connectSentinelAsync(codec, redisURI, redisURI.getTimeout());
     }
 
     private <K, V> CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectSentinelAsync(RedisCodec<K, V> codec,

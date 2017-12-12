@@ -15,22 +15,19 @@
  */
 package io.lettuce.core.masterslave;
 
-import static io.lettuce.core.masterslave.MasterSlaveUtils.findNodeByUri;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisCommandInterruptedException;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -47,14 +44,17 @@ class MasterSlaveTopologyRefresh {
 
     private final NodeConnectionFactory nodeConnectionFactory;
     private final TopologyProvider topologyProvider;
+    private ScheduledExecutorService eventExecutors;
 
     MasterSlaveTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
-        this(new RedisClientNodeConnectionFactory(client), topologyProvider);
+        this(new RedisClientNodeConnectionFactory(client), client.getResources().eventExecutorGroup(), topologyProvider);
     }
 
-    MasterSlaveTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, TopologyProvider topologyProvider) {
+    MasterSlaveTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, ScheduledExecutorService eventExecutors,
+            TopologyProvider topologyProvider) {
 
         this.nodeConnectionFactory = nodeConnectionFactory;
+        this.eventExecutors = eventExecutors;
         this.topologyProvider = topologyProvider;
     }
 
@@ -65,67 +65,27 @@ class MasterSlaveTopologyRefresh {
      * @param seed collection of {@link RedisURI}s
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
-    public List<RedisNodeDescription> getNodes(RedisURI seed) {
+    public Mono<List<RedisNodeDescription>> getNodes(RedisURI seed) {
 
-        List<RedisNodeDescription> nodes = topologyProvider.getNodes();
+        CompletableFuture<List<RedisNodeDescription>> future = topologyProvider.getNodesAsync();
 
-        addPasswordIfNeeded(nodes, seed);
+        Mono<List<RedisNodeDescription>> initialNodes = Mono.fromFuture(future).doOnNext(nodes -> {
+            addPasswordIfNeeded(nodes, seed);
+        });
 
-        AsyncConnections asyncConnections = getConnections(nodes);
-        Connections connections = null;
+        return initialNodes
+                .map(this::getConnections)
+                .flatMap(asyncConnections -> asyncConnections.asMono(seed.getTimeout(), eventExecutors))
+                .flatMap(
+                        connections -> {
 
-        try {
-            connections = asyncConnections.get(seed.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
-            Requests requestedPing = connections.requestPing();
+                            Requests requests = connections.requestPing();
 
-            return getNodeSpecificViews(requestedPing, nodes, seed);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
-        } finally {
-            if (connections != null) {
-                connections.close();
-            }
-        }
-    }
+                            CompletionStage<List<RedisNodeDescription>> nodes = requests.getOrTimeout(seed.getTimeout(),
+                                    eventExecutors);
 
-    private void addPasswordIfNeeded(List<RedisNodeDescription> nodes, RedisURI seed) {
-
-        if (seed.getPassword() != null && seed.getPassword().length != 0) {
-            for (RedisNodeDescription node : nodes) {
-                node.getUri().setPassword(new String(seed.getPassword()));
-            }
-        }
-    }
-
-    private List<RedisNodeDescription> getNodeSpecificViews(Requests requestedPing, List<RedisNodeDescription> nodes,
-            RedisURI seed) throws InterruptedException {
-
-        List<RedisNodeDescription> result = new ArrayList<>();
-
-        long timeout = seed.getTimeout().toNanos();
-        Map<RedisNodeDescription, Long> latencies = new HashMap<>();
-
-        requestedPing.await(timeout, TimeUnit.NANOSECONDS);
-
-        for (RedisNodeDescription node : nodes) {
-
-            TimedAsyncCommand<String, String, String> future = requestedPing.getRequest(node.getUri());
-
-            if (future == null || !future.isDone()) {
-                continue;
-            }
-
-            RedisNodeDescription redisNodeDescription = findNodeByUri(nodes, node.getUri());
-            latencies.put(redisNodeDescription, future.duration());
-            result.add(redisNodeDescription);
-        }
-
-        TopologyComparators.LatencyComparator comparator = new TopologyComparators.LatencyComparator(latencies);
-
-        result.sort(comparator);
-
-        return result;
+                            return Mono.fromCompletionStage(nodes).flatMap(it -> ResumeAfter.close(connections).thenEmit(it));
+                        });
     }
 
     /*
@@ -133,9 +93,10 @@ class MasterSlaveTopologyRefresh {
      */
     private AsyncConnections getConnections(Iterable<RedisNodeDescription> nodes) {
 
-        AsyncConnections connections = new AsyncConnections();
+        List<RedisNodeDescription> nodeList = LettuceLists.newList(nodes);
+        AsyncConnections connections = new AsyncConnections(nodeList);
 
-        for (RedisNodeDescription node : nodes) {
+        for (RedisNodeDescription node : nodeList) {
 
             RedisURI redisURI = node.getUri();
             String message = String.format("Unable to connect to %s", redisURI);
@@ -173,5 +134,14 @@ class MasterSlaveTopologyRefresh {
         }
 
         return connections;
+    }
+
+    private static void addPasswordIfNeeded(List<RedisNodeDescription> nodes, RedisURI seed) {
+
+        if (seed.getPassword() != null && seed.getPassword().length != 0) {
+            for (RedisNodeDescription node : nodes) {
+                node.getUri().setPassword(new String(seed.getPassword()));
+            }
+        }
     }
 }

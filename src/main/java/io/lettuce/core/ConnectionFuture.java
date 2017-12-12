@@ -46,6 +46,18 @@ public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
     }
 
     /**
+     * Create a completed {@link ConnectionFuture} given {@link SocketAddress} and {@code value} holding the value.
+     *
+     * @param remoteAddress initial connection endpoint, must not be {@literal null}.
+     * @param value must not be {@literal null}.
+     * @return the {@link ConnectionFuture} for {@link SocketAddress} and {@code value}.
+     * @since 5.1
+     */
+    static <T> ConnectionFuture<T> completed(SocketAddress remoteAddress, T value) {
+        return new DefaultConnectionFuture<>(remoteAddress, CompletableFuture.completedFuture(value));
+    }
+
+    /**
      * Waits if necessary for the computation to complete, and then retrieves its result.
      *
      * @return the computed result

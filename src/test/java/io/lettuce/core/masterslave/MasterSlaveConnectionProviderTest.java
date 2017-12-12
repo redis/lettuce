@@ -31,6 +31,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -74,7 +75,7 @@ public class MasterSlaveConnectionProviderTest {
 
         when(channelHandlerMock.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
 
-        when(clientMock.connect(eq(CODEC), any())).thenReturn(nodeConnectionMock);
+        when(clientMock.connectAsync(eq(CODEC), any())).thenReturn(ConnectionFuture.completed(null, nodeConnectionMock));
 
         StatefulRedisConnection<String, String> connection = sut.getConnection(MasterSlaveConnectionProvider.Intent.READ);
         assertThat(connection).isNotNull();

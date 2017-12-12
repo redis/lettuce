@@ -15,19 +15,17 @@
  */
 package io.lettuce.core.masterslave;
 
-import java.util.*;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
+import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
-import io.lettuce.core.models.role.RedisInstance;
-import io.lettuce.core.models.role.RedisNodeDescription;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Master-Slave connection API.
@@ -84,8 +82,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 public class MasterSlave {
 
-    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(MasterSlave.class);
-
     /**
      * Open a new connection to a Redis Master-Slave server/servers using the supplied {@link RedisURI} and the supplied
      * {@link RedisCodec codec} to encode/decode keys.
@@ -94,25 +90,46 @@ public class MasterSlave {
      * can point to either a master or a slave host.
      * </p>
      *
-     * @param redisClient the Redis client
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param redisURI the Redis server to connect to, must not be {@literal null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new connection
+     * @param redisClient the Redis client.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
+     * @param redisURI the Redis server to connect to, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new connection.
      */
     public static <K, V> StatefulRedisMasterSlaveConnection<K, V> connect(RedisClient redisClient, RedisCodec<K, V> codec,
             RedisURI redisURI) {
+        return getConnection(connectAsync(redisClient, codec, redisURI));
+    }
+
+    /**
+     * Open asynchronously a new connection to a Redis Master-Slave server/servers using the supplied {@link RedisURI} and the
+     * supplied {@link RedisCodec codec} to encode/decode keys.
+     * <p>
+     * This {@link MasterSlave} performs auto-discovery of nodes using either Redis Sentinel or Master/Slave. A {@link RedisURI}
+     * can point to either a master or a slave host.
+     * </p>
+     *
+     * @param redisClient the Redis client.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
+     * @param redisURI the Redis server to connect to, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return {@link CompletableFuture} that is notified once the connect is finished.
+     * @since
+     */
+    public static <K, V> CompletableFuture<StatefulRedisMasterSlaveConnection<K, V>> connectAsync(RedisClient redisClient,
+            RedisCodec<K, V> codec, RedisURI redisURI) {
 
         LettuceAssert.notNull(redisClient, "RedisClient must not be null");
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
         LettuceAssert.notNull(redisURI, "RedisURI must not be null");
 
         if (isSentinel(redisURI)) {
-            return connectSentinel(redisClient, codec, redisURI);
-        } else {
-            return connectMasterSlave(redisClient, codec, redisURI);
+            return new SentinelConnector<>(redisClient, codec, redisURI).connectAsync();
         }
+
+        return new AutodiscoveryConnector<>(redisClient, codec, redisURI).connectAsync();
     }
 
     /**
@@ -124,15 +141,36 @@ public class MasterSlave {
      * discover the roles of the supplied {@link RedisURI URIs} and issue commands to the appropriate node.
      * </p>
      *
-     * @param redisClient the Redis client
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param redisURIs the Redis server to connect to, must not be {@literal null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new connection
+     * @param redisClient the Redis client.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
+     * @param redisURIs the Redis server to connect to, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new connection.
      */
     public static <K, V> StatefulRedisMasterSlaveConnection<K, V> connect(RedisClient redisClient, RedisCodec<K, V> codec,
             Iterable<RedisURI> redisURIs) {
+        return getConnection(connectAsync(redisClient, codec, redisURIs));
+    }
+
+    /**
+     * Open asynchronously a new connection to a Redis Master-Slave server/servers using the supplied {@link RedisURI} and the
+     * supplied {@link RedisCodec codec} to encode/decode keys.
+     * <p>
+     * This {@link MasterSlave} performs auto-discovery of nodes if the URI is a Redis Sentinel URI. Master/Slave URIs will be
+     * treated as static topology and no additional hosts are discovered in such case. Redis Standalone Master/Slave will
+     * discover the roles of the supplied {@link RedisURI URIs} and issue commands to the appropriate node.
+     * </p>
+     *
+     * @param redisClient the Redis client.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
+     * @param redisURIs the Redis server to connect to, must not be {@literal null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return {@link CompletableFuture} that is notified once the connect is finished.
+     */
+    public static <K, V> CompletableFuture<StatefulRedisMasterSlaveConnection<K, V>> connectAsync(RedisClient redisClient,
+            RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
 
         LettuceAssert.notNull(redisClient, "RedisClient must not be null");
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
@@ -142,163 +180,39 @@ public class MasterSlave {
         LettuceAssert.isTrue(!uriList.isEmpty(), "RedisURIs must not be empty");
 
         if (isSentinel(uriList.get(0))) {
-            return connectSentinel(redisClient, codec, uriList.get(0));
-        } else {
-            return connectStaticMasterSlave(redisClient, codec, uriList);
-        }
-    }
-
-    private static <K, V> StatefulRedisMasterSlaveConnection<K, V> connectSentinel(RedisClient redisClient,
-            RedisCodec<K, V> codec, RedisURI redisURI) {
-
-        TopologyProvider topologyProvider = new SentinelTopologyProvider(redisURI.getSentinelMasterId(), redisClient, redisURI);
-        SentinelTopologyRefresh sentinelTopologyRefresh = new SentinelTopologyRefresh(redisClient,
-                redisURI.getSentinelMasterId(), redisURI.getSentinels());
-
-        MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(redisClient, topologyProvider);
-        MasterSlaveConnectionProvider<K, V> connectionProvider = new MasterSlaveConnectionProvider<>(redisClient, codec,
-                redisURI, Collections.emptyMap());
-
-        connectionProvider.setKnownNodes(refresh.getNodes(redisURI));
-
-        MasterSlaveChannelWriter<K, V> channelWriter = new MasterSlaveChannelWriter<>(connectionProvider);
-        StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(channelWriter,
-                codec, redisURI.getTimeout());
-        connection.setOptions(redisClient.getOptions());
-
-        Runnable runnable = () -> {
-            try {
-
-                LOG.debug("Refreshing topology");
-                List<RedisNodeDescription> nodes = refresh.getNodes(redisURI);
-
-                if (nodes.isEmpty()) {
-                    LOG.warn("Topology refresh returned no nodes from {}", redisURI);
-                }
-
-                LOG.debug("New topology: {}", nodes);
-                connectionProvider.setKnownNodes(nodes);
-            } catch (Exception e) {
-                LOG.error("Error during background refresh", e);
-            }
-        };
-
-        try {
-            connection.registerCloseables(new ArrayList<>(), sentinelTopologyRefresh);
-            sentinelTopologyRefresh.bind(runnable);
-        } catch (RuntimeException e) {
-
-            connection.close();
-            throw e;
+            return new SentinelConnector<>(redisClient, codec, uriList.get(0)).connectAsync();
         }
 
-        return connection;
-    }
-
-    private static <K, V> StatefulRedisMasterSlaveConnection<K, V> connectMasterSlave(RedisClient redisClient,
-            RedisCodec<K, V> codec, RedisURI redisURI) {
-
-        Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections = new HashMap<>();
-
-        try {
-
-            StatefulRedisConnection<K, V> nodeConnection = redisClient.connect(codec, redisURI);
-            initialConnections.put(redisURI, nodeConnection);
-
-            TopologyProvider topologyProvider = new MasterSlaveTopologyProvider(nodeConnection, redisURI);
-
-            List<RedisNodeDescription> nodes = topologyProvider.getNodes();
-            RedisNodeDescription node = getConnectedNode(redisURI, nodes);
-
-            if (node.getRole() != RedisInstance.Role.MASTER) {
-
-                RedisNodeDescription master = lookupMaster(nodes);
-                nodeConnection = redisClient.connect(codec, master.getUri());
-                initialConnections.put(master.getUri(), nodeConnection);
-                topologyProvider = new MasterSlaveTopologyProvider(nodeConnection, master.getUri());
-            }
-
-            MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(redisClient, topologyProvider);
-            MasterSlaveConnectionProvider<K, V> connectionProvider = new MasterSlaveConnectionProvider<>(redisClient, codec,
-                    redisURI, initialConnections);
-
-            connectionProvider.setKnownNodes(refresh.getNodes(redisURI));
-
-            MasterSlaveChannelWriter<K, V> channelWriter = new MasterSlaveChannelWriter<>(connectionProvider);
-
-            StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(
-                    channelWriter, codec, redisURI.getTimeout());
-
-            connection.setOptions(redisClient.getOptions());
-
-            return connection;
-
-        } catch (RuntimeException e) {
-            for (StatefulRedisConnection<K, V> connection : initialConnections.values()) {
-                connection.close();
-            }
-            throw e;
-        }
-    }
-
-    private static <K, V> StatefulRedisMasterSlaveConnection<K, V> connectStaticMasterSlave(RedisClient redisClient,
-            RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
-
-        Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections = new HashMap<>();
-
-        try {
-            TopologyProvider topologyProvider = new StaticMasterSlaveTopologyProvider(redisClient, redisURIs);
-
-            RedisURI seedNode = redisURIs.iterator().next();
-
-            MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(redisClient, topologyProvider);
-            MasterSlaveConnectionProvider<K, V> connectionProvider = new MasterSlaveConnectionProvider<>(redisClient, codec,
-                    seedNode, initialConnections);
-
-            List<RedisNodeDescription> nodes = refresh.getNodes(seedNode);
-            if (nodes.isEmpty()) {
-                throw new RedisException(String.format("Cannot determine topology from %s", redisURIs));
-            }
-
-            connectionProvider.setKnownNodes(nodes);
-
-            MasterSlaveChannelWriter<K, V> channelWriter = new MasterSlaveChannelWriter<>(connectionProvider);
-
-            StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(
-                    channelWriter, codec, seedNode.getTimeout());
-            connection.setOptions(redisClient.getOptions());
-
-            connection.setOptions(redisClient.getOptions());
-
-            return connection;
-
-        } catch (RuntimeException e) {
-            for (StatefulRedisConnection<K, V> connection : initialConnections.values()) {
-                connection.close();
-            }
-            throw e;
-        }
-    }
-
-    private static RedisNodeDescription lookupMaster(List<RedisNodeDescription> nodes) {
-
-        Optional<RedisNodeDescription> first = nodes.stream().filter(n -> n.getRole() == RedisInstance.Role.MASTER).findFirst();
-        return first.orElseThrow(() -> new IllegalStateException("Cannot lookup master from " + nodes));
-    }
-
-    private static RedisNodeDescription getConnectedNode(RedisURI redisURI, List<RedisNodeDescription> nodes) {
-
-        Optional<RedisNodeDescription> first = nodes.stream().filter(n -> equals(redisURI, n)).findFirst();
-        return first.orElseThrow(() -> new IllegalStateException("Cannot lookup node descriptor for connected node at "
-                + redisURI));
-    }
-
-    private static boolean equals(RedisURI redisURI, RedisNodeDescription node) {
-        return node.getUri().getHost().equals(redisURI.getHost()) && node.getUri().getPort() == redisURI.getPort();
+        return new StaticMasterSlaveConnector<>(redisClient, codec, uriList).connectAsync();
     }
 
     private static boolean isSentinel(RedisURI redisURI) {
         return !redisURI.getSentinels().isEmpty();
     }
 
+    /**
+     * Retrieve the connection from {@link ConnectionFuture}. Performs a blocking {@link ConnectionFuture#get()} to synchronize
+     * the channel/connection initialization. Any exception is rethrown as {@link RedisConnectionException}.
+     *
+     * @param connectionFuture must not be null.
+     * @param <T> Connection type.
+     * @return the connection.
+     * @throws RedisConnectionException in case of connection failures.
+     */
+    private static <T> T getConnection(CompletableFuture<T> connectionFuture) {
+
+        try {
+            return connectionFuture.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw RedisConnectionException.create(null, e);
+        } catch (Exception e) {
+
+            if (e instanceof ExecutionException) {
+                throw RedisConnectionException.create(null, e.getCause());
+            }
+
+            throw RedisConnectionException.create(null, e);
+        }
+    }
 }

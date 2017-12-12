@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,30 @@
  */
 package io.lettuce.core.masterslave;
 
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ScheduledExecutorService;
 
-import io.lettuce.core.RedisConnectionException;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
  * @author Mark Paluch
  */
 class AsyncConnections {
 
-    private final Map<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> futures = new TreeMap<>(
+    private final Map<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> connections = new TreeMap<>(
             MasterSlaveUtils.RedisURIComparator.INSTANCE);
+    private final List<RedisNodeDescription> nodeList;
 
-    public AsyncConnections() {
+    AsyncConnections(List<RedisNodeDescription> nodeList) {
+        this.nodeList = nodeList;
     }
 
     /**
@@ -46,44 +48,28 @@ class AsyncConnections {
      * @param connection
      */
     public void addConnection(RedisURI redisURI, CompletableFuture<StatefulRedisConnection<String, String>> connection) {
-        futures.put(redisURI, connection);
+        connections.put(redisURI, connection);
     }
 
-    /**
-     * @return the {@link Connections}.
-     * @throws RedisConnectionException if no connection could be established.
-     */
-    public Connections get(long timeout, TimeUnit timeUnit) throws InterruptedException {
+    public Mono<Connections> asMono(Duration timeout, ScheduledExecutorService timeoutExecutor) {
 
-        Connections connections = new Connections();
-        List<Throwable> exceptions = new CopyOnWriteArrayList<>();
-        List<Future<?>> sync = new ArrayList<>(this.futures.size());
+        Connections connections = new Connections(this.connections.size(), nodeList);
 
-        for (Map.Entry<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> entry : this.futures.entrySet()) {
+        for (Map.Entry<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> entry : this.connections
+                .entrySet()) {
 
             CompletableFuture<StatefulRedisConnection<String, String>> future = entry.getValue();
 
-            sync.add(future.whenComplete((connection, throwable) -> {
+            future.whenComplete((connection, throwable) -> {
 
                 if (throwable != null) {
-                    exceptions.add(throwable);
+                    connections.accept(throwable);
                 } else {
-                    connections.addConnection(entry.getKey(), connection);
+                    connections.accept(Tuples.of(entry.getKey(), connection));
                 }
-            }));
+            });
         }
 
-        RefreshFutures.awaitAll(timeout, timeUnit, sync);
-
-        if (connections.isEmpty() && !sync.isEmpty() && !exceptions.isEmpty()) {
-
-            RedisConnectionException collector = new RedisConnectionException(
-                    "Unable to establish a connection to Redis Cluster");
-            exceptions.forEach(collector::addSuppressed);
-
-            throw collector;
-        }
-
-        return connections;
+        return Mono.fromCompletionStage(connections.getOrTimeout(timeout, timeoutExecutor));
     }
 }

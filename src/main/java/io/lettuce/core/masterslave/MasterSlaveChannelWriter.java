@@ -33,16 +33,17 @@ import io.lettuce.core.protocol.RedisCommand;
  *
  * @author Mark Paluch
  */
-class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
+class MasterSlaveChannelWriter implements RedisChannelWriter {
 
-    private MasterSlaveConnectionProvider<K, V> masterSlaveConnectionProvider;
+    private MasterSlaveConnectionProvider<?, ?> masterSlaveConnectionProvider;
     private boolean closed = false;
 
-    public MasterSlaveChannelWriter(MasterSlaveConnectionProvider<K, V> masterSlaveConnectionProvider) {
+    MasterSlaveChannelWriter(MasterSlaveConnectionProvider<?, ?> masterSlaveConnectionProvider) {
         this.masterSlaveConnectionProvider = masterSlaveConnectionProvider;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
 
         LettuceAssert.notNull(command, "Command must not be null");
@@ -52,13 +53,36 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
         }
 
         Intent intent = getIntent(command.getType());
-        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection) masterSlaveConnectionProvider
-                .getConnection(intent);
+        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterSlaveConnectionProvider
+                .getConnectionAsync(intent);
 
-        return connection.dispatch(command);
+        if (isSuccessfullyCompleted(future)) {
+            writeCommand(command, future.join(), null);
+        } else {
+            future.whenComplete((c, t) -> writeCommand(command, c, t));
+        }
+
+        return command;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <K, V> void writeCommand(RedisCommand<K, V, ?> command, StatefulRedisConnection<K, V> connection,
+            Throwable throwable) {
+
+        if (throwable != null) {
+            command.completeExceptionally(throwable);
+            return;
+        }
+
+        try {
+            connection.dispatch(command);
+        } catch (Exception e) {
+            command.completeExceptionally(e);
+        }
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands) {
 
         LettuceAssert.notNull(commands, "Commands must not be null");
@@ -71,10 +95,32 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
         // Currently: Retain order
         Intent intent = getIntent(commands);
 
-        StatefulRedisConnection<K, V> connection = (StatefulRedisConnection) masterSlaveConnectionProvider
-                .getConnection(intent);
+        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterSlaveConnectionProvider
+                .getConnectionAsync(intent);
 
-        return connection.dispatch(commands);
+        if (isSuccessfullyCompleted(future)) {
+            writeCommands(commands, future.join(), null);
+        } else {
+            future.whenComplete((c, t) -> writeCommands(commands, c, t));
+        }
+
+        return (Collection) commands;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <K, V> void writeCommands(Collection<? extends RedisCommand<K, V, ?>> commands,
+            StatefulRedisConnection<K, V> connection, Throwable throwable) {
+
+        if (throwable != null) {
+            commands.forEach(c -> c.completeExceptionally(throwable));
+            return;
+        }
+
+        try {
+            connection.dispatch(commands);
+        } catch (Exception e) {
+            commands.forEach(c -> c.completeExceptionally(e));
+        }
     }
 
     /**
@@ -143,7 +189,7 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
         return future;
     }
 
-    public MasterSlaveConnectionProvider<K, V> getMasterSlaveConnectionProvider() {
+    MasterSlaveConnectionProvider<?, ?> getMasterSlaveConnectionProvider() {
         return masterSlaveConnectionProvider;
     }
 
@@ -185,4 +231,7 @@ class MasterSlaveChannelWriter<K, V> implements RedisChannelWriter {
         return masterSlaveConnectionProvider.getReadFrom();
     }
 
+    private static boolean isSuccessfullyCompleted(CompletableFuture<?> connectFuture) {
+        return connectFuture.isDone() && !connectFuture.isCompletedExceptionally();
+    }
 }
