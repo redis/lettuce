@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.resource.ClientResources;
-
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
@@ -79,7 +78,7 @@ public class SentinelTopologyRefreshTest {
     private SentinelTopologyRefresh sut;
 
     @Before
-    public void before() throws Exception {
+    public void before() {
 
         when(redisClient.connectPubSub(any(StringCodec.class), eq(host1))).thenReturn(connection);
         when(clientResources.eventExecutorGroup()).thenReturn(eventExecutors);
@@ -90,7 +89,7 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void bind() throws Exception {
+    public void bind() {
 
         sut.bind(refreshRunnable);
 
@@ -99,7 +98,7 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void bindWithSecondSentinelFails() throws Exception {
+    public void bindWithSecondSentinelFails() {
 
         sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2));
 
@@ -114,7 +113,7 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void bindWithSentinelRecovery() throws Exception {
+    public void bindWithSentinelRecovery() {
 
         StatefulRedisPubSubConnection<String, String> connection2 = mock(StatefulRedisPubSubConnection.class);
         RedisPubSubAsyncCommands<String, String> async2 = mock(RedisPubSubAsyncCommands.class);
@@ -138,13 +137,16 @@ public class SentinelTopologyRefreshTest {
         adapter.message("*", "+sentinel",
                 "sentinel c14cc895bb0479c91312cee0e0440b7d99ad367b 127.0.0.1 26380 @ mymaster 127.0.0.1 6483");
 
+        verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
+        captor.getValue().run();
+
         verify(redisClient, times(2)).connectPubSub(any(), eq(host2));
         assertThat(connections).containsKey(host1).containsKey(host2).hasSize(2);
         verify(refreshRunnable, never()).run();
     }
 
     @Test
-    public void bindDuringClose() throws Exception {
+    public void bindDuringClose() {
 
         sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2));
 
@@ -171,7 +173,7 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void close() throws Exception {
+    public void close() {
 
         sut.bind(refreshRunnable);
         sut.close();
@@ -181,7 +183,7 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void bindAfterClose() throws Exception {
+    public void bindAfterClose() {
 
         sut.close();
         sut.bind(refreshRunnable);
@@ -191,9 +193,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldNotProcessOtherEvents() throws Exception {
+    public void shouldNotProcessOtherEvents() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
 
         adapter.message("*", "*", "irreleval");
 
@@ -203,9 +206,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldProcessElectedLeader() throws Exception {
+    public void shouldProcessElectedLeader() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
 
         adapter.message("*", "+elected-leader", "master mymaster 127.0.0.1");
 
@@ -215,9 +219,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldProcessSwitchMaster() throws Exception {
+    public void shouldProcessSwitchMaster() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
 
         adapter.message("*", "+switch-master", "mymaster 127.0.0.1");
 
@@ -227,9 +232,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldProcessFixSlaveConfig() throws Exception {
+    public void shouldProcessFixSlaveConfig() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
 
         adapter.message("*", "fix-slave-config", "@ mymaster 127.0.0.1");
 
@@ -239,9 +245,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldProcessConvertToSlave() throws Exception {
+    public void shouldProcessConvertToSlave() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
 
         adapter.message("*", "+convert-to-slave", "@ mymaster 127.0.0.1");
 
@@ -251,9 +258,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldProcessRoleChange() throws Exception {
+    public void shouldProcessRoleChange() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
 
         adapter.message("*", "+role-change", "@ mymaster 127.0.0.1");
 
@@ -263,9 +271,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldProcessFailoverEnd() throws Exception {
+    public void shouldProcessFailoverEnd() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
 
         adapter.message("*", "failover-end", "");
 
@@ -275,9 +284,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldProcessFailoverTimeout() throws Exception {
+    public void shouldProcessFailoverTimeout() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
 
         adapter.message("*", "failover-end-for-timeout", "");
 
@@ -287,9 +297,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldExecuteOnceWithinATimeout() throws Exception {
+    public void shouldExecuteOnceWithinATimeout() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
 
         adapter.message("*", "failover-end-for-timeout", "");
         adapter.message("*", "failover-end-for-timeout", "");
@@ -300,9 +311,10 @@ public class SentinelTopologyRefreshTest {
     }
 
     @Test
-    public void shouldNotProcessIfExecutorIsShuttingDown() throws Exception {
+    public void shouldNotProcessIfExecutorIsShuttingDown() {
 
         RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
         when(eventExecutors.isShuttingDown()).thenReturn(true);
 
         adapter.message("*", "failover-end-for-timeout", "");
@@ -312,8 +324,6 @@ public class SentinelTopologyRefreshTest {
     }
 
     private RedisPubSubAdapter<String, String> getAdapter() {
-
-        sut.bind(refreshRunnable);
         return (RedisPubSubAdapter<String, String>) ReflectionTestUtils.getField(sut, "adapter");
     }
 }
