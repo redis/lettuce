@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,7 +215,7 @@ class SentinelTopologyRefresh implements Closeable {
 
         /**
          * Rate-limited method that notifies the given {@link Consumer} once the current {@link Timeout} is expired.
-         * 
+         *
          * @param timeoutConsumer callback.
          */
         protected void onEvent(Consumer<Timeout> timeoutConsumer) {
@@ -237,7 +237,7 @@ class SentinelTopologyRefresh implements Closeable {
         }
     }
 
-    static interface MessagePredicate extends BiPredicate<String, String> {
+    interface MessagePredicate extends BiPredicate<String, String> {
 
         @Override
         boolean test(String message, String channel);
@@ -294,7 +294,8 @@ class SentinelTopologyRefresh implements Closeable {
     private static class SentinelReconnectMessagePredicate implements MessagePredicate {
 
         @Override
-        public boolean test(String message, String channel) {
+        public boolean test(String channel, String message) {
+
             if (channel.equals("+sentinel")) {
                 return true;
             }
