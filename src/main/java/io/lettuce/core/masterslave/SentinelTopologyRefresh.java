@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.protocol.LettuceCharsets;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
-
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -237,7 +236,7 @@ class SentinelTopologyRefresh implements Closeable {
         }
     }
 
-    static interface MessagePredicate extends BiPredicate<String, String> {
+    interface MessagePredicate extends BiPredicate<String, String> {
 
         @Override
         boolean test(String message, String channel);
@@ -294,7 +293,8 @@ class SentinelTopologyRefresh implements Closeable {
     private static class SentinelReconnectMessagePredicate implements MessagePredicate {
 
         @Override
-        public boolean test(String message, String channel) {
+        public boolean test(String channel, String message) {
+
             if (channel.equals("+sentinel")) {
                 return true;
             }
