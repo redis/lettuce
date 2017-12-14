@@ -26,7 +26,6 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
@@ -703,8 +702,7 @@ public class RedisClient extends AbstractRedisClient {
                                 + redisURI.getSentinelMasterId())));
 
             } else {
-                return Mono.fromCallable(() -> SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver()))
-                        .subscribeOn(Schedulers.fromExecutor(clientResources.eventExecutorGroup()));
+                return Mono.fromCallable(() -> SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver()));
             }
         });
     }

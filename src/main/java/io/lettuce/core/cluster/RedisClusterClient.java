@@ -29,7 +29,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
@@ -989,8 +988,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                     SocketAddress socketAddress = SocketAddressResolver.resolve(getFirstUri(), clientResources.dnsResolver());
                     logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
                     return socketAddress;
-
-                }).subscribeOn(Schedulers.fromExecutor(clientResources.eventExecutorGroup()));
+                });
             }
 
             return Mono.fromCallable(socketAddressSupplier::get);
