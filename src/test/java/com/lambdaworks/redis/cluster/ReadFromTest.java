@@ -111,6 +111,11 @@ public class ReadFromTest {
         assertThat(ReadFrom.valueOf("slave")).isEqualTo(ReadFrom.SLAVE);
     }
 
+    @Test
+    public void valueOfSlavePreferred() throws Exception {
+        assertThat(ReadFrom.valueOf("slavePreferred")).isEqualTo(ReadFrom.SLAVE_PREFERRED);
+    }
+
     private ReadFrom.Nodes getNodes() {
         return new ReadFrom.Nodes() {
             @Override
