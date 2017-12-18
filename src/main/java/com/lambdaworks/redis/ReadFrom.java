@@ -23,6 +23,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
  * Defines from which Redis nodes data is read.
  *
  * @author Mark Paluch
+ * @author Ryosuke Hasebe
  * @since 4.0
  */
 public abstract class ReadFrom {
@@ -70,6 +71,7 @@ public abstract class ReadFrom {
      * @throws IllegalArgumentException if {@code name} is empty, {@literal null} or the {@link ReadFrom} preset is unknown.
      */
     public static ReadFrom valueOf(String name) {
+
         if (LettuceStrings.isEmpty(name)) {
             throw new IllegalArgumentException("Name must not be empty");
         }
@@ -110,5 +112,4 @@ public abstract class ReadFrom {
          */
         List<RedisNodeDescription> getNodes();
     }
-
 }

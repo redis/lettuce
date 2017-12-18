@@ -31,6 +31,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
  * @author Mark Paluch
+ * @author Ryosuke Hasebe
  */
 public class ReadFromTest {
 
@@ -40,7 +41,7 @@ public class ReadFromTest {
     private RedisClusterNode slave = new RedisClusterNode();
 
     @Before
-    public void before() throws Exception {
+    public void before() {
 
         master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
         nearest.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
@@ -52,67 +53,67 @@ public class ReadFromTest {
     }
 
     @Test
-    public void master() throws Exception {
+    public void master() {
         List<RedisNodeDescription> result = ReadFrom.MASTER.select(getNodes());
         assertThat(result).hasSize(1).containsOnly(master);
     }
 
     @Test
-    public void masterPreferred() throws Exception {
+    public void masterPreferred() {
         List<RedisNodeDescription> result = ReadFrom.MASTER_PREFERRED.select(getNodes());
         assertThat(result).hasSize(3).containsExactly(master, nearest, slave);
     }
 
     @Test
-    public void slave() throws Exception {
+    public void slave() {
         List<RedisNodeDescription> result = ReadFrom.SLAVE.select(getNodes());
         assertThat(result).hasSize(2).contains(nearest, slave);
     }
 
     @Test
-    public void slavePreferred() throws Exception {
+    public void slavePreferred() {
         List<RedisNodeDescription> result = ReadFrom.SLAVE_PREFERRED.select(getNodes());
         assertThat(result).hasSize(3).containsExactly(nearest, slave, master);
     }
 
     @Test
-    public void nearest() throws Exception {
+    public void nearest() {
         List<RedisNodeDescription> result = ReadFrom.NEAREST.select(getNodes());
         assertThat(result).hasSize(3).containsExactly(nearest, master, slave);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void valueOfNull() throws Exception {
+    public void valueOfNull() {
         ReadFrom.valueOf(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void valueOfUnknown() throws Exception {
+    public void valueOfUnknown() {
         ReadFrom.valueOf("unknown");
     }
 
     @Test
-    public void valueOfNearest() throws Exception {
+    public void valueOfNearest() {
         assertThat(ReadFrom.valueOf("nearest")).isEqualTo(ReadFrom.NEAREST);
     }
 
     @Test
-    public void valueOfMaster() throws Exception {
+    public void valueOfMaster() {
         assertThat(ReadFrom.valueOf("master")).isEqualTo(ReadFrom.MASTER);
     }
 
     @Test
-    public void valueOfMasterPreferred() throws Exception {
+    public void valueOfMasterPreferred() {
         assertThat(ReadFrom.valueOf("masterPreferred")).isEqualTo(ReadFrom.MASTER_PREFERRED);
     }
 
     @Test
-    public void valueOfSlave() throws Exception {
+    public void valueOfSlave() {
         assertThat(ReadFrom.valueOf("slave")).isEqualTo(ReadFrom.SLAVE);
     }
 
     @Test
-    public void valueOfSlavePreferred() throws Exception {
+    public void valueOfSlavePreferred() {
         assertThat(ReadFrom.valueOf("slavePreferred")).isEqualTo(ReadFrom.SLAVE_PREFERRED);
     }
 
