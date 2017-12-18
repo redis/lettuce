@@ -86,6 +86,10 @@ public abstract class ReadFrom {
             return SLAVE;
         }
 
+        if (name.equalsIgnoreCase("slavePreferred")) {
+            return SLAVE_PREFERRED;
+        }
+
         if (name.equalsIgnoreCase("nearest")) {
             return NEAREST;
         }
