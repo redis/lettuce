@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,15 +35,15 @@ public class CommandArgsTest {
     private Utf8StringCodec codec = new Utf8StringCodec();
 
     @Test
-    public void getFirstIntegerShouldReturnNull() throws Exception {
+    public void getFirstIntegerShouldReturnNull()  {
 
-        CommandArgs<String, String> args = new CommandArgs<>(codec);
+        CommandArgs<String, String> args = new CommandArgs<>(codec).add("foo");
 
         assertThat(CommandArgsAccessor.getFirstInteger(args)).isNull();
     }
 
     @Test
-    public void getFirstIntegerShouldReturnFirstInteger() throws Exception {
+    public void getFirstIntegerShouldReturnFirstInteger()  {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec).add(1L).add(127).add(128).add(129).add(0).add(-1);
 
@@ -51,7 +51,7 @@ public class CommandArgsTest {
     }
 
     @Test
-    public void getFirstIntegerShouldReturnFirstNegativeInteger() throws Exception {
+    public void getFirstIntegerShouldReturnFirstNegativeInteger()  {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec).add(-1L).add(-127).add(-128).add(-129);
 
@@ -59,15 +59,15 @@ public class CommandArgsTest {
     }
 
     @Test
-    public void getFirstStringShouldReturnNull() throws Exception {
+    public void getFirstStringShouldReturnNull()  {
 
-        CommandArgs<String, String> args = new CommandArgs<>(codec);
+        CommandArgs<String, String> args = new CommandArgs<>(codec).add(1);
 
         assertThat(CommandArgsAccessor.getFirstString(args)).isNull();
     }
 
     @Test
-    public void getFirstStringShouldReturnFirstString() throws Exception {
+    public void getFirstStringShouldReturnFirstString()  {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec).add("one").add("two");
 
@@ -75,15 +75,31 @@ public class CommandArgsTest {
     }
 
     @Test
-    public void getFirstEncodedKeyShouldReturnNull() throws Exception {
+    public void getFirstCharArrayShouldReturnCharArray()  {
 
-        CommandArgs<String, String> args = new CommandArgs<>(codec);
+        CommandArgs<String, String> args = new CommandArgs<>(codec).add(1L).add("two".toCharArray());
+
+        assertThat(CommandArgsAccessor.getFirstCharArray(args)).isEqualTo("two".toCharArray());
+    }
+
+    @Test
+    public void getFirstCharArrayShouldReturnNull()  {
+
+        CommandArgs<String, String> args = new CommandArgs<>(codec).add(1L);
+
+        assertThat(CommandArgsAccessor.getFirstCharArray(args)).isNull();
+    }
+
+    @Test
+    public void getFirstEncodedKeyShouldReturnNull()  {
+
+        CommandArgs<String, String> args = new CommandArgs<>(codec).add(1L);
 
         assertThat(CommandArgsAccessor.getFirstString(args)).isNull();
     }
 
     @Test
-    public void getFirstEncodedKeyShouldReturnFirstKey() throws Exception {
+    public void getFirstEncodedKeyShouldReturnFirstKey()  {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec).addKey("one").addKey("two");
 
@@ -91,7 +107,7 @@ public class CommandArgsTest {
     }
 
     @Test
-    public void addValues() throws Exception {
+    public void addValues()  {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec).addValues(Arrays.asList("1", "2"));
 
@@ -105,7 +121,7 @@ public class CommandArgsTest {
     }
 
     @Test
-    public void addByte() throws Exception {
+    public void addByte()  {
 
         CommandArgs<String, String> args = new CommandArgs<>(codec).add("one".getBytes());
 
@@ -119,7 +135,7 @@ public class CommandArgsTest {
     }
 
     @Test
-    public void addByteUsingByteCodec() throws Exception {
+    public void addByteUsingByteCodec()  {
 
         CommandArgs<byte[], byte[]> args = new CommandArgs<>(ByteArrayCodec.INSTANCE).add("one".getBytes());
 
@@ -133,7 +149,7 @@ public class CommandArgsTest {
     }
 
     @Test
-    public void addValueUsingByteCodec() throws Exception {
+    public void addValueUsingByteCodec()  {
 
         CommandArgs<byte[], byte[]> args = new CommandArgs<>(ByteArrayCodec.INSTANCE).addValue("one".getBytes());
 
@@ -147,7 +163,7 @@ public class CommandArgsTest {
     }
 
     @Test
-    public void addKeyUsingByteCodec() throws Exception {
+    public void addKeyUsingByteCodec()  {
 
         CommandArgs<byte[], byte[]> args = new CommandArgs<>(ByteArrayCodec.INSTANCE).addValue("one".getBytes());
 

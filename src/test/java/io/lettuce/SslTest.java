@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -30,6 +31,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -244,22 +246,24 @@ public class SslTest extends AbstractTest {
         redisClient.setOptions(ClientOptions.builder().suspendReconnectOnProtocolFailure(true).build());
 
         RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub(redisURI).async();
-        connection.subscribe("c1").get();
-        connection.subscribe("c2").get();
-        Thread.sleep(200);
-
         RedisPubSubAsyncCommands<String, String> connection2 = redisClient.connectPubSub(redisURI).async();
 
-        assertThat(connection2.pubsubChannels().get()).contains("c1", "c2");
-
         redisURI.setVerifyPeer(true);
+        connection.subscribe("c1");
+        connection.subscribe("c2");
 
-        connection.quit();
-        Thread.sleep(500);
+        Wait.untilTrue(() -> connection2.pubsubChannels().get().containsAll(Arrays.asList("c1", "c2"))).waitOrTimeout();
 
-        RedisFuture<List<String>> future = connection2.pubsubChannels();
-        assertThat(future.get()).doesNotContain("c1", "c2");
-        assertThat(future.isDone()).isEqualTo(true);
+        try {
+            connection.quit().get();
+        } catch (Exception e) {
+        }
+
+        List<String> future = connection2.pubsubChannels().get();
+        assertThat(future).doesNotContain("c1", "c2");
+
+        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection.getStatefulConnection());
+        Wait.untilNotEquals(null, () -> ReflectionTestUtils.getField(channelWriter, "connectionError")).waitOrTimeout();
 
         RedisFuture<List<String>> defectFuture = connection.pubsubChannels();
 
@@ -273,7 +277,7 @@ public class SslTest extends AbstractTest {
             assertThat(e).hasRootCauseInstanceOf(CertificateException.class);
         }
 
-        assertThat(defectFuture.isDone()).isEqualTo(true);
+        assertThat(defectFuture).isDone();
 
         connection.getStatefulConnection().close();
         connection2.getStatefulConnection().close();
