@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,30 +30,26 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 class DefaultTransactionResult implements Iterable<Object>, TransactionResult {
 
-    private final boolean wasRolledBack;
+    private final boolean discarded;
     private final List<Object> result;
 
     /**
      * Creates a new {@link DefaultTransactionResult}.
      *
-     * @param wasRolledBack {@literal true} if the transaction was rolled back.
+     * @param discarded {@literal true} if the transaction is discarded.
      * @param result the transaction result, must not be {@literal null}.
      */
-    public DefaultTransactionResult(boolean wasRolledBack, List<Object> result) {
+    public DefaultTransactionResult(boolean discarded, List<Object> result) {
 
         LettuceAssert.notNull(result, "Result must not be null");
 
-        this.wasRolledBack = wasRolledBack;
+        this.discarded = discarded;
         this.result = result;
     }
 
-    /**
-     *
-     * @return {@literal true} if the transaction was rolled back
-     */
     @Override
-    public boolean wasRolledBack() {
-        return wasRolledBack;
+    public boolean wasDiscarded() {
+        return discarded;
     }
 
     @Override
@@ -86,7 +82,7 @@ class DefaultTransactionResult implements Iterable<Object>, TransactionResult {
 
         StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
-        sb.append(" [wasRolledBack=").append(wasRolledBack);
+        sb.append(" [wasRolledBack=").append(discarded);
         sb.append(", responses=").append(size());
         sb.append(']');
         return sb.toString();

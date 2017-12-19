@@ -38,7 +38,7 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
 
     private final Queue<RedisCommand<K, V, ?>> queue;
     private List<Object> responses = new ArrayList<>();
-    private Boolean rolledBack;
+    private Boolean discarded;
 
     public MultiOutput(RedisCodec<K, V> codec) {
         super(codec, null);
@@ -74,8 +74,8 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
     @Override
     public void multi(int count) {
 
-        if (rolledBack == null) {
-            rolledBack = count == -1;
+        if (discarded == null) {
+            discarded = count == -1;
         } else {
             if (!queue.isEmpty()) {
                 queue.peek().getOutput().multi(count);
@@ -115,6 +115,6 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
 
     @Override
     public TransactionResult get() {
-        return new DefaultTransactionResult(rolledBack == null ? false : rolledBack, responses);
+        return new DefaultTransactionResult(discarded == null ? false : discarded, responses);
     }
 }

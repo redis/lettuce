@@ -64,7 +64,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
 
         TransactionResult transactionResult = redis.exec();
 
-        assertThat(transactionResult.wasRolledBack()).isTrue();
+        assertThat(transactionResult.wasDiscarded()).isTrue();
         assertThat(transactionResult).isEmpty();
 
     }
@@ -82,7 +82,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
         assertThat(redis.get(key)).isNull();
 
         TransactionResult exec = redis.exec();
-        assertThat(exec.wasRolledBack()).isFalse();
+        assertThat(exec.wasDiscarded()).isFalse();
         assertThat(exec).contains("OK", value);
 
         assertThat(redis.get(key)).isEqualTo(value);
@@ -102,7 +102,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
     public void emptyMulti() {
         redis.multi();
         TransactionResult exec = redis.exec();
-        assertThat(exec.wasRolledBack()).isFalse();
+        assertThat(exec.wasDiscarded()).isFalse();
         assertThat(exec).isEmpty();
     }
 
@@ -113,7 +113,7 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
         redis.lpop(key);
         redis.get(key);
         TransactionResult values = redis.exec();
-        assertThat(values.wasRolledBack()).isFalse();
+        assertThat(values.wasDiscarded()).isFalse();
         assertThat((String) values.get(0)).isEqualTo("OK");
         assertThat(values.get(1) instanceof RedisException).isTrue();
         assertThat((String) values.get(2)).isEqualTo(value);

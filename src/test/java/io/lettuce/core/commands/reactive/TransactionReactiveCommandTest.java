@@ -85,7 +85,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
 
         StepVerifier.create(commands.exec()).consumeNextWith(actual -> {
             assertThat(actual).isNotNull();
-            assertThat(actual.wasRolledBack()).isTrue();
+            assertThat(actual.wasDiscarded()).isTrue();
         });
     }
 

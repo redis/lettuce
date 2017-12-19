@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,18 @@ import java.util.stream.Stream;
 public interface TransactionResult extends Iterable<Object> {
 
     /**
-     *
-     * @return {@literal true} if the transaction was rolled back
+     * @return {@literal true} if the transaction batch was discarded.
+     * @since 5.1
      */
-    boolean wasRolledBack();
+    boolean wasDiscarded();
+
+    /**
+     * @return {@literal true} if the transaction batch was discarded.
+     * @deprecated use renamed method {@link #wasDiscarded()} as Redis has no notion of rollback.
+     */
+    default boolean wasRolledBack() {
+        return wasDiscarded();
+    }
 
     /**
      * Returns the number of elements in this collection. If this {@link TransactionResult} contains more than

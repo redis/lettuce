@@ -121,7 +121,7 @@ public class CustomCommandTest extends AbstractRedisClientTest {
         assertThat(async2.join()).isEqualTo("OK");
 
         TransactionResult transactionResult = async3.join();
-        assertThat(transactionResult.wasRolledBack()).isFalse();
+        assertThat(transactionResult.wasDiscarded()).isFalse();
         assertThat(transactionResult.<String> get(0)).isEqualTo("OK");
     }
 
