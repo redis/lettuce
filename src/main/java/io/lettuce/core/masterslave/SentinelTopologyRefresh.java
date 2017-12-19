@@ -358,6 +358,8 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
     private static class TopologyRefreshMessagePredicate implements MessagePredicate {
 
         private final String masterId;
+        private Set<String> TOPOLOGY_CHANGE_CHANNELS = new HashSet<>(Arrays.asList("+slave", "+sdown", "-sdown",
+                "fix-slave-config", "+convert-to-slave", "+role-change"));
 
         TopologyRefreshMessagePredicate(String masterId) {
             this.masterId = masterId;
@@ -367,26 +369,20 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
         public boolean test(String channel, String message) {
 
             // trailing spaces after the master name are not bugs
-            if (channel.equals("+elected-leader")) {
+            if (channel.equals("+elected-leader") || channel.equals("+reset-master")) {
                 if (message.startsWith(String.format("master %s ", masterId))) {
+                    return true;
+                }
+            }
+
+            if (TOPOLOGY_CHANGE_CHANNELS.contains(channel)) {
+                if (message.contains(String.format("@ %s ", masterId))) {
                     return true;
                 }
             }
 
             if (channel.equals("+switch-master")) {
                 if (message.startsWith(String.format("%s ", masterId))) {
-                    return true;
-                }
-            }
-
-            if (channel.equals("fix-slave-config")) {
-                if (message.contains(String.format("@ %s ", masterId))) {
-                    return true;
-                }
-            }
-
-            if (channel.equals("+convert-to-slave") || channel.equals("+role-change")) {
-                if (message.contains(String.format("@ %s ", masterId))) {
                     return true;
                 }
             }
