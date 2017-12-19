@@ -199,11 +199,50 @@ public class SentinelTopologyRefreshTest {
         RedisPubSubAdapter<String, String> adapter = getAdapter();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "*", "irreleval");
+        adapter.message("*", "*", "irrelevant");
 
         verify(redisClient, times(2)).getResources();
         verify(redisClient).connectPubSub(any(), any());
         verifyNoMoreInteractions(redisClient);
+    }
+
+    @Test
+    public void shouldProcessSlaveDown() {
+
+        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
+
+        adapter.message("*", "+sdown", "slave 127.0.0.1:6483 127.0.0.1 6483 @ mymaster 127.0.0.1 6482");
+
+        verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
+        captor.getValue().run();
+        verify(refreshRunnable, times(1)).run();
+    }
+
+    @Test
+    public void shouldProcessSlaveAdded() {
+
+        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
+
+        adapter.message("*", "+slave", "slave 127.0.0.1:8483 127.0.0.1 8483 @ mymaster 127.0.0.1 6482");
+
+        verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
+        captor.getValue().run();
+        verify(refreshRunnable, times(1)).run();
+    }
+
+    @Test
+    public void shouldProcessSlaveBackUp() {
+
+        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        sut.bind(refreshRunnable);
+
+        adapter.message("*", "-sdown", "slave 127.0.0.1:6483 127.0.0.1 6483 @ mymaster 127.0.0.1 6482");
+
+        verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
+        captor.getValue().run();
+        verify(refreshRunnable, times(1)).run();
     }
 
     @Test
