@@ -59,7 +59,7 @@ public class AbstractClusterTest extends AbstractTest {
     public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2, port3, port4);
 
     @BeforeClass
-    public static void setupClusterClient() throws Exception {
+    public static void setupClusterClient() {
         clusterClient = RedisClusterClient.create(LettuceLists.unmodifiableList(RedisURI.Builder.redis(host, port1).build()));
     }
 
