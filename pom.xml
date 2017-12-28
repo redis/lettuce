@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>30-SNAPSHOT</version>
+    <version>30</version>
     <relativePath/>
   </parent>
 
@@ -158,7 +158,7 @@
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-jdbc</artifactId>
-      <version>4.0.4</version>
+      <version>4.0.5</version>
       <scope>test</scope>
     </dependency>
 
