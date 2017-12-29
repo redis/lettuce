@@ -20,7 +20,7 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | 第三章 使用SqlSessionFactoryBean</title>
+    <title>MyBatis-Spring | 使用 SqlSessionFactoryBean</title>
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
     <author email="nanlei1987@gmail.com">Nan Lei</author>
@@ -29,13 +29,13 @@
   <body>
     <section name="SqlSessionFactoryBean">
       <p>
-在基础的MyBatis中，通过SqlSessionFactoryBuilder来创建SqlSessionFactory。而在
-MyBatis-Spring中，则使用SqlSessionFactoryBean来创建。
+      在基础的 MyBatis 用法中，是通过 <code>SqlSessionFactoryBuilder</code> 来创建 <code>SqlSessionFactory</code> 的。
+      而在 MyBatis-Spring 中，则使用 <code>SqlSessionFactoryBean</code> 来创建。
       </p>
       
     <subsection name="设置">
       <p>
-要创建工厂bean，将下面的代码放到Spring的XML配置文件中：
+      要创建工厂 bean，将下面的代码放到 Spring 的 XML 配置文件中：
       </p>
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
@@ -43,10 +43,11 @@ MyBatis-Spring中，则使用SqlSessionFactoryBean来创建。
 </bean>]]></source>
 
 <p>
-需要注意的是SqlSessionFactoryBean实现了Spring的FactoryBean接口(可查看官方文档<a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-extension-factorybean">通过工厂bean自定义实例化逻辑</a>)。这意味着由Spring最终创建的bean并不是SqlSessionFactoryBean本身，
-而是工厂类（SqlSessionFactoryBean）的 getObject()方法的返回结果。这种情况下，Spring
-将会在应用启动时为你创建SqlSessionFactory的bean对象，然后将其名字设为sqlSessionFactory。
-在 Java 中的等效代码如下:
+需要注意的是 <code>SqlSessionFactoryBean</code> 实现了 Spring 的 <code>FactoryBean</code> 接口（参见 Spring 官方文档 3.8 节 <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-extension-factorybean">通过工厂 bean 自定义实例化逻辑</a>)。
+这意味着由 Spring 最终创建的 bean <b>并不是</b> <code>SqlSessionFactoryBean</code> 本身，
+而是工厂类（<code>SqlSessionFactoryBean</code>）的 getObject() 方法的返回结果。
+这种情况下，Spring 将会在应用启动时为你创建 <code>SqlSessionFactory</code>，并使用 <code>sqlSessionFactory</code> 这个名字存储起来。
+等效的 Java 代码如下:
 </p>
 
       <source><![CDATA[
@@ -58,41 +59,39 @@ public SqlSessionFactory sqlSessionFactory() {
 }]]></source>
 
       <p>
-在通常的MyBatis-Spring 用法中，你不需要直接使用SqlSessionFactoryBean或对
-应的SqlSessionFactory。相反，session的工厂bean将会被注入到MapperFactoryBean或其它扩
-展了SqlSessionDaoSupport的DAO（Data Access Object，数据访问对象，译者注）中。
+      通常，在 MyBatis-Spring 中，你不需要直接使用 <code>SqlSessionFactoryBean</code> 或对应的 <code>SqlSessionFactory</code>。
+      相反，session 的工厂 bean 将会被注入到 <code>MapperFactoryBean</code> 或其它继承于 <code>SqlSessionDaoSupport</code> 的 DAO（Data Access Object，数据访问对象，译者注）中。
       </p>
     </subsection>
 
     <subsection name="属性">
 
       <p>
-SqlSessionFactory有一个唯一的必要属性：用于JDBC的DataSource。这可以是任意
-的DataSource对象，它的配置应该和其它Spring数据库连接是一样的。
+      <code>SqlSessionFactory</code> 有一个唯一的必要属性：用于 JDBC 的 <code>DataSource</code>。
+      这可以是任意的 <code>DataSource</code> 对象，它的配置方法和其它 Spring 数据库连接是一样的。
       </p>
 
       <p>
-一个通用的属性是configLocation，它用来指定MyBatis的XML配置文件路径。
-如果需要修改MyBatis的基础配置，那么它就有用了。通常这会是<code>&lt;settings&gt;</code>
-或<code>&lt;typeAliases&gt;</code>的部分。
+      一个常用的属性是 <code>configLocation</code>，它用来指定 MyBatis 的 XML 配置文件路径。
+      它在需要修改 MyBatis 的基础配置非常有用。通常，基础配置指的是 <code>&lt;settings&gt;</code> 或 <code>&lt;typeAliases&gt;</code>。
       </p>
 
       <p>
-需要注意的是，这个配置文件并不需要是一个完整的MyBatis配置。确切地说，任何环境，数据源
-和MyBatis的事务管理器都会被忽略。SqlSessionFactoryBean会创建它自己的,使用这些
-值定制MyBatis的Environment时是需要的。
+      需要注意的是，这个配置文件并不需要是一个完整的 MyBatis 配置。确切地说，任何环境配置（<code>&lt;environments&gt;</code>），数据源（<code>&lt;DataSource&gt;</code>）
+      和 MyBatis 的事务管理器（<code>&lt;transactionManager&gt;</code>）都会被<b>忽略</b>。
+      <code>SqlSessionFactoryBean</code> 会创建它自有的 MyBatis <code>Environment</code>，并按要求设置自定义环境的值。
       </p>
 
       <p>
-如果MyBatis在映射器类对应的路径下不存在与之相应的映射器XML文件，那么此时也需要配置文件。
-有两种方式来使用配置：第一种是是手动在MyBatis的XML配置文件中使用&lt;mappers&gt;部分来
-指定类路径；第二种是使用工厂bean的mapperLocations属性。
+      如果 MyBatis 在 Mapper 类对应的路径下不存在与之相对应的映射器 XML 文件，那么也需要配置文件。
+      这时有两种解决办法：第一种是手动在 MyBatis 的 XML 配置文件中的 &lt;mappers&gt; 部分中指定 XML 文件的类路径；
+      第二种是使用工厂 bean 的 <code>mapperLocations</code> 属性。
       </p>
 
       <p>
-mapperLocations属性使用list来表示资源位置。这个属性可以用来指定MyBatis的XML
-映射器文件的位置。它的值可以包含Ant样式来加载一个目录中所有文件,或者从基路径下
-递归搜索所有路径。比如:
+      <code>mapperLocations</code> 属性接受多个资源位置。这个属性可以用来指定 MyBatis 的 Mapper XML 配置文件的位置。
+      属性的值是一个 Ant 风格的字符串，可以指定加载一个目录中的所有文件，或者从一个目录开始递归搜索所有目录。
+      比如:
       </p>
       
         <source><![CDATA[
@@ -102,16 +101,15 @@ mapperLocations属性使用list来表示资源位置。这个属性可以用来�
 </bean>]]></source>
 
       <p>
-这会从类路径下加载在sample.config.mappers包和它的子包中所有的MyBatis映射器XML文件。
+      这会从类路径下加载所有在 sample.config.mappers 包和它的子包中的 MyBatis Mapper XML 配置文件。
       </p>
 
       <p>
-在容器环境管理事务中,一个可能需要的属性是transactionFactoryClass。请参考第四章(4.2 节)中来查看有关部分。
-如果你正在使用多数据库功能，那么就需要设置databaseIdProvider属性。
+      在容器环境管理事务中，可能需要的一个属性是 <code>transactionFactoryClass</code>。请参考事务一章的相关章节。
       </p>
 
       <p>
-        如果你使用了多数据库，那么需要设置<code>databaseIdProvider</code>属性：
+       如果你使用了多个数据库，那么需要设置<code>databaseIdProvider</code>属性：
       </p>
 
       <source><![CDATA[
@@ -133,10 +131,10 @@ mapperLocations属性使用list来表示资源位置。这个属性可以用来�
 </bean>]]></source>
 
         <p>
-            <span class="label important">NOTE</span>
-            自1.3.0版本开始添加<code>configuration</code>属性。
-            它能够在没有MyBatis对应的XML配置文件的情况下直接指定<code>Configuration</code>实例。
-            举个栗子:
+            <span class="label important">备注</span>
+            自 1.3.0 版本开始，新增的<code>configuration</code>属性能够在没有对应的 MyBatis XML 配置文件的情况下，
+            直接设置 <code>Configuration</code> 实例（也就是可以直接在 bean 的 property 中直接设置 XML 中的属性，译者注）。
+            例如：
         </p>
 
         <source><![CDATA[
