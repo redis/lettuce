@@ -29,9 +29,7 @@ import com.lambdaworks.redis.resource.Delay.StatefulDelay;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
-import io.netty.util.Timeout;
 import io.netty.util.Timer;
-import io.netty.util.TimerTask;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
@@ -44,7 +42,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  */
 @ChannelHandler.Sharable
-public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements TimerTask {
+public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     public static final long LOGGING_QUIET_TIME_MS = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
 
@@ -65,7 +63,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     private volatile int attempts;
     private volatile boolean listenOnChannelInactive;
-    private volatile Timeout reconnectScheduleTimeout;
+    private volatile boolean isWaitingReconnection;
     private volatile String logPrefix;
 
     /**
@@ -161,7 +159,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             this.commandHandler = ctx.pipeline().get(CommandHandler.class);
         }
 
-        reconnectScheduleTimeout = null;
+        isWaitingReconnection = false;
         logPrefix = null;
         channel = ctx.channel();
         remoteAddress = channel.remoteAddress();
@@ -208,14 +206,15 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             return;
         }
 
-        if ((channel == null || !channel.isActive()) && reconnectScheduleTimeout == null) {
+        if ((channel == null || !channel.isActive()) && !isWaitingReconnection) {
             attempts++;
 
             final int attempt = attempts;
             int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempt));
             logger.debug("Reconnect attempt {}, delay {}ms", attempt, timeout);
 
-            this.reconnectScheduleTimeout = timer.newTimeout(it -> {
+            isWaitingReconnection = true;
+            timer.newTimeout(it -> {
 
                 if (!isEventLoopGroupActive()) {
                     logger.debug("isEventLoopGroupActive() == false");
@@ -223,7 +222,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                 }
 
                 reconnectWorkers.submit(() -> {
-                    ConnectionWatchdog.this.run(it);
+                    ConnectionWatchdog.this.run();
                     return null;
                 });
             }, timeout, TimeUnit.MILLISECONDS);
@@ -236,14 +235,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * Reconnect to the remote address that the closed channel was connected to. This creates a new {@link ChannelPipeline} with
      * the same handler instances contained in the old channel's pipeline.
      *
-     * @param timeout Timer task handle.
-     *
      * @throws Exception when reconnection fails.
      */
-    @Override
-    public void run(Timeout timeout) throws Exception {
+    public void run() throws Exception {
 
-        reconnectScheduleTimeout = null;
+        isWaitingReconnection = false;
 
         if (!isEventLoopGroupActive()) {
             logger.debug("isEventLoopGroupActive() == false");
