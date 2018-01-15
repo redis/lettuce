@@ -17,6 +17,7 @@ package io.lettuce.core.protocol;
 
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ClientOptions;
@@ -58,6 +59,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     private long lastReconnectionLogging = -1;
     private String logPrefix;
 
+    private final AtomicBoolean isWaitingReconnection;
     private volatile int attempts;
     private volatile boolean armed;
     private volatile boolean listenOnChannelInactive;
@@ -93,6 +95,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.timer = timer;
         this.reconnectWorkers = reconnectWorkers;
         this.reconnectionListener = reconnectionListener;
+        this.isWaitingReconnection = new AtomicBoolean(false);
 
         Supplier<SocketAddress> wrappedSocketAddressSupplier = new Supplier<SocketAddress>() {
             @Override
@@ -141,6 +144,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
+        isWaitingReconnection.set(false);
         channel = ctx.channel();
         reconnectScheduleTimeout = null;
         logPrefix = null;
@@ -182,7 +186,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     /**
      * Schedule reconnect if channel is not available/not active.
      */
-    public synchronized void scheduleReconnect() {
+    public void scheduleReconnect() {
 
         logger.debug("{} scheduleReconnect()", logPrefix());
 
@@ -196,9 +200,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             return;
         }
 
-        if ((channel == null || !channel.isActive()) && reconnectScheduleTimeout == null) {
+        if ((channel == null || !channel.isActive()) && !isWaitingReconnection.get()) {
+            if (!isWaitingReconnection.compareAndSet(false, true)) {
+                return;
+            }
             attempts++;
-
             final int attempt = attempts;
             int timeout = (int) reconnectDelay.createDelay(attempt).toMillis();
             logger.debug("{} Reconnect attempt {}, delay {}ms", logPrefix(), attempt, timeout);
@@ -215,6 +221,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
                     return null;
                 });
             }, timeout, TimeUnit.MILLISECONDS);
+
+            // Set back to null when ConnectionWatchdog#run runs earlier than reconnectScheduleTimeout's assignment.
+            if (!isWaitingReconnection.get()) {
+                reconnectScheduleTimeout = null;
+            }
         } else {
             logger.debug("{} Skipping scheduleReconnect() because I have an active channel", logPrefix());
         }
@@ -230,6 +241,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      */
     public void run(int attempt) throws Exception {
 
+        isWaitingReconnection.set(false);
         reconnectScheduleTimeout = null;
 
         if (!isEventLoopGroupActive()) {
