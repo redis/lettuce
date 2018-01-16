@@ -202,7 +202,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
             assertThat(connection.isOpen()).isFalse();
             connectionWatchdog.setReconnectSuspended(false);
-            connectionWatchdog.run();
+            connectionWatchdog.run(null);
             Thread.sleep(500);
             assertThat(connection.isOpen()).isFalse();
 
