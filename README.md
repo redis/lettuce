@@ -51,8 +51,8 @@ Example for Maven:
 
 ```xml
 <dependency>
-  <groupId>biz.paluch.redis</groupId>
-  <artifactId>lettuce</artifactId>
+  <groupId>io.lettuce</groupId>
+  <artifactId>lettuce-core</artifactId>
   <version>x.y.z</version>
 </dependency>
 ```
@@ -61,9 +61,9 @@ Using Snapshots:
 
 ```xml
 <dependency>
-  <groupId>biz.paluch.redis</groupId>
-  <artifactId>lettuce</artifactId>
-  <version>x.y.z</version>
+  <groupId>io.lettuce</groupId>
+  <artifactId>lettuce-core</artifactId>
+  <version>x.y.z.BUILD-SNAPSHOT</version>
 </dependency>
 
 <repositories>
