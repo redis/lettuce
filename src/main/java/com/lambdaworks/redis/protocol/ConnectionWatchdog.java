@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Koji Lin
  */
 @ChannelHandler.Sharable
 public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements TimerTask {
@@ -64,7 +65,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private long lastReconnectionLogging = -1;
     private CommandHandler<?, ?> commandHandler;
 
-    private final AtomicBoolean isWaitingReconnection;
+    private final AtomicBoolean reconnectSchedulerSync;
     private volatile int attempts;
     private volatile boolean listenOnChannelInactive;
     private volatile Timeout reconnectScheduleTimeout;
@@ -98,7 +99,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         this.timer = timer;
         this.reconnectWorkers = reconnectWorkers;
         this.reconnectionListener = reconnectionListener;
-        this.isWaitingReconnection = new AtomicBoolean(false);
+        this.reconnectSchedulerSync = new AtomicBoolean(false);
 
         Supplier<SocketAddress> wrappedSocketAddressSupplier = new Supplier<SocketAddress>() {
             @Override
@@ -154,6 +155,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         setReconnectSuspended(true);
         prepareClose.getPrepareCloseFuture().complete(true);
 
+        Timeout reconnectScheduleTimeout = this.reconnectScheduleTimeout;
+        if (reconnectScheduleTimeout != null && !reconnectScheduleTimeout.isCancelled()) {
+            reconnectScheduleTimeout.cancel();
+        }
+
         reconnectionHandler.prepareClose();
     }
 
@@ -164,7 +170,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             this.commandHandler = ctx.pipeline().get(CommandHandler.class);
         }
 
-        isWaitingReconnection.set(false);
+        reconnectSchedulerSync.set(false);
         reconnectScheduleTimeout = null;
         logPrefix = null;
         channel = ctx.channel();
@@ -212,10 +218,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             return;
         }
 
-        if ((channel == null || !channel.isActive()) && !isWaitingReconnection.get()) {
-            if (!isWaitingReconnection.compareAndSet(false, true)) {
-                return;
-            }
+        if ((channel == null || !channel.isActive()) && reconnectSchedulerSync.compareAndSet(false, true)) {
+
             attempts++;
             final int attempt = attempts;
             int timeout = (int) reconnectDelay.getTimeUnit().toMillis(reconnectDelay.createDelay(attempt));
@@ -223,8 +227,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
             this.reconnectScheduleTimeout = timer.newTimeout(it -> {
 
+                reconnectScheduleTimeout = null;
+
                 if (!isEventLoopGroupActive()) {
-                    logger.debug("isEventLoopGroupActive() == false");
+                    logger.warn("Cannot execute scheduled reconnect timer, reconnect workers are terminated");
                     return;
                 }
 
@@ -235,7 +241,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             }, timeout, TimeUnit.MILLISECONDS);
 
             // Set back to null when ConnectionWatchdog#run runs earlier than reconnectScheduleTimeout's assignment.
-            if (!isWaitingReconnection.get()) {
+            if (!reconnectSchedulerSync.get()) {
                 reconnectScheduleTimeout = null;
             }
         } else {
@@ -254,7 +260,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void run(Timeout timeout) throws Exception {
 
-        isWaitingReconnection.set(false);
+        reconnectSchedulerSync.set(false);
         reconnectScheduleTimeout = null;
 
         if (!isEventLoopGroupActive()) {
@@ -264,6 +270,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         if (commandHandler != null && commandHandler.isClosed()) {
             logger.debug("Skip reconnect scheduling, CommandHandler is closed");
+            return;
+        }
+
+        if (isReconnectSuspended()) {
+            logger.debug("Skip reconnect scheduling, reconnect is suspended");
             return;
         }
 
