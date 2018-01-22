@@ -50,9 +50,17 @@ Releases of lettuce are available in the maven central repository. Take also a l
 Example for Maven:
 
 ```xml
+<!-- Lettuce 4 -->
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
+  <version>x.y.z</version>
+</dependency>
+
+<!-- Lettuce 5 -->
+<dependency>
+  <groupId>io.lettuce</groupId>
+  <artifactId>lettuce-core</artifactId>
   <version>x.y.z</version>
 </dependency>
 ```
@@ -60,11 +68,20 @@ Example for Maven:
 Using Snapshots:
 
 ```xml
+<!-- Lettuce 4 -->
 <dependency>
   <groupId>biz.paluch.redis</groupId>
   <artifactId>lettuce</artifactId>
-  <version>x.y.z</version>
+  <version>x.y.z-SNAPSHOT</version>
 </dependency>
+
+<!-- Lettuce 5 -->
+<dependency>
+  <groupId>io.lettuce</groupId>
+  <artifactId>lettuce-core</artifactId>
+  <version>x.y.z.BUILD-SNAPSHOT</version>
+</dependency>
+
 
 <repositories>
   <repository>
