@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             local.setOutput((MultiOutput) multiOutput);
         }
 
-        if (multi != null) {
+        if (multi != null && !local.getType().name().equals(MULTI.name())) {
             local = new TransactionalCommand<>(local);
             multi.add(local);
         }
