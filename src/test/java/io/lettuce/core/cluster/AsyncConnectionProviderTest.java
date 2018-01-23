@@ -246,6 +246,7 @@ public class AsyncConnectionProviderTest {
         assumeTrue(System.getProperty("os.name").toLowerCase().contains("mac"));
 
         Socket socket = new Socket("localhost", serverSocket.getLocalPort());
+        CountDownLatch connectInitiated = new CountDownLatch(1);
 
         ClusterClientOptions clientOptions = ClusterClientOptions.builder()
                 .socketOptions(SocketOptions.builder().connectTimeout(1, TimeUnit.SECONDS).build()).build();
@@ -258,8 +259,11 @@ public class AsyncConnectionProviderTest {
         CompletableFuture<StatefulRedisConnection<String, String>> createdConnection = new CompletableFuture<>();
         Thread t1 = new Thread(() -> {
             try {
-                StatefulRedisConnection<String, String> connection = sut.getConnection(connectionKey).toCompletableFuture()
-                        .join();
+                CompletableFuture<StatefulRedisConnection<String, String>> future = sut.getConnection(connectionKey)
+                        .toCompletableFuture();
+
+                connectInitiated.countDown();
+                StatefulRedisConnection<String, String> connection = future.join();
                 createdConnection.complete(connection);
             } catch (Exception e) {
                 createdConnection.completeExceptionally(e);
