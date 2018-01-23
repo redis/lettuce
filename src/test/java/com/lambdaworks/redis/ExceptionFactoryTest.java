@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,5 +54,15 @@ public class ExceptionFactoryTest {
                 .hasRootCauseInstanceOf(IllegalStateException.class);
         assertThat(ExceptionFactory.createExecutionException(null, new IllegalStateException())).isInstanceOf(
                 RedisCommandExecutionException.class).hasRootCauseInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    public void shouldCreateLoadingException() {
+
+        assertThat(ExceptionFactory.createExecutionException("LOADING foo bar")).isInstanceOf(RedisLoadingException.class)
+                .hasMessage("LOADING foo bar").hasNoCause();
+        assertThat(ExceptionFactory.createExecutionException("LOADING foo bar", new IllegalStateException()))
+                .isInstanceOf(RedisLoadingException.class).hasMessage("LOADING foo bar")
+                .hasRootCauseInstanceOf(IllegalStateException.class);
     }
 }
