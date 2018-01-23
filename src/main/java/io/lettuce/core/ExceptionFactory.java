@@ -23,7 +23,7 @@ import java.time.temporal.ChronoField;
 
 /**
  * Factory for Redis exceptions.
- * 
+ *
  * @author Mark Paluch
  * @since 4.5
  */
@@ -43,7 +43,7 @@ public abstract class ExceptionFactory {
 
     /**
      * Create a {@link RedisCommandTimeoutException} with a detail message given the timeout.
-     * 
+     *
      * @param timeout the timeout value.
      * @return the {@link RedisCommandTimeoutException}.
      */
@@ -53,7 +53,7 @@ public abstract class ExceptionFactory {
 
     /**
      * Create a {@link RedisCommandTimeoutException} with a detail message given the message and timeout.
-     * 
+     *
      * @param message the detail message.
      * @param timeout the timeout value.
      * @return the {@link RedisCommandTimeoutException}.
@@ -100,7 +100,7 @@ public abstract class ExceptionFactory {
     /**
      * Create a {@link RedisCommandExecutionException} with a detail message. Specific Redis error messages may create subtypes
      * of {@link RedisCommandExecutionException}.
-     * 
+     *
      * @param message the detail message.
      * @return the {@link RedisCommandExecutionException}.
      */
@@ -111,7 +111,7 @@ public abstract class ExceptionFactory {
     /**
      * Create a {@link RedisCommandExecutionException} with a detail message and optionally a {@link Throwable cause}. Specific
      * Redis error messages may create subtypes of {@link RedisCommandExecutionException}.
-     * 
+     *
      * @param message the detail message.
      * @param cause the nested exception, may be {@literal null}.
      * @return the {@link RedisCommandExecutionException}.
@@ -126,6 +126,10 @@ public abstract class ExceptionFactory {
 
             if (message.startsWith("NOSCRIPT")) {
                 return cause != null ? new RedisNoScriptException(message, cause) : new RedisNoScriptException(message);
+            }
+
+            if (message.startsWith("LOADING")) {
+                return cause != null ? new RedisLoadingException(message, cause) : new RedisLoadingException(message);
             }
 
             return cause != null ? new RedisCommandExecutionException(message, cause) : new RedisCommandExecutionException(
