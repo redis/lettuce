@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.lambdaworks.redis.RedisException;
  * @author Mark Paluch
  */
 public class TransactionCommandTest extends AbstractRedisClientTest {
+
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
@@ -109,4 +110,12 @@ public class TransactionCommandTest extends AbstractRedisClientTest {
         redis.exec();
     }
 
+    @Test
+    public void multiCalledTwiceShouldFail() {
+        exception.expect(RedisCommandExecutionException.class);
+        exception.expectMessage("ERR MULTI calls can not be nested");
+
+        redis.multi();
+        redis.multi();
+    }
 }
