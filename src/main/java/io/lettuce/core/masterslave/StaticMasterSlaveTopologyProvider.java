@@ -56,6 +56,17 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
     @SuppressWarnings("rawtypes")
     public List<RedisNodeDescription> getNodes() {
 
+        List<RedisNodeDescription> nodes = doGetNodes();
+
+        if(nodes.isEmpty()){
+            throw new RedisConnectionException(String.format("Failed to connect to any nodes in %s", redisURIs));
+        }
+
+        return nodes;
+    }
+
+    private List<RedisNodeDescription> doGetNodes() {
+
         List<StatefulRedisConnection<String, String>> connections = new ArrayList<>();
         Map<RedisURI, RedisFuture<List<Object>>> roles = new HashMap<>();
 
