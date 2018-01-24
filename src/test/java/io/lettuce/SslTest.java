@@ -22,7 +22,11 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.cert.CertificateException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -36,10 +40,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.masterslave.MasterSlave;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.ssl.OpenSsl;
+
 
 /**
  * @author Mark Paluch
@@ -48,28 +55,65 @@ public class SslTest extends AbstractTest {
 
     private static final String KEYSTORE = "work/keystore.jks";
     private static final String TRUSTSTORE = "work/truststore.jks";
-    private static RedisClient redisClient;
+    private static final File TRUSTSTORE_FILE = new File(TRUSTSTORE);
+    private static final int MASTER_SLAVE_BASE_PORT_OFFSET = 2000;
 
-    private static final RedisURI URI_NO_VERIFY = RedisURI.Builder.redis(host(), sslPort()) //
-            .withSsl(true) //
+    private static final RedisURI URI_NO_VERIFY = sslURIBuilder(0) //
             .withVerifyPeer(false) //
             .build();
 
-    private static final RedisURI URI_VERIFY = RedisURI.Builder.redis(host(), sslPort(1)) //
-            .withSsl(true) //
+    private static final RedisURI URI_VERIFY = sslURIBuilder(1) //
             .withVerifyPeer(true) //
             .build();
 
-    private static final RedisURI URI_CLIENT_CERT_AUTH = RedisURI.Builder.redis(host(), sslPort(2)) //
-            .withSsl(true) //
+
+    private static final RedisURI URI_CLIENT_CERT_AUTH = sslURIBuilder(2) //
             .withVerifyPeer(true) //
             .build();
+
+    private static final List<RedisURI> MASTER_SLAVE_URIS_NO_VERIFY = Arrays.asList(
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
+                    .withVerifyPeer(false)
+                    .build(),
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
+                    .withVerifyPeer(false)
+                    .build());
+
+
+    private static final List<RedisURI> MASTER_SLAVE_URIS_VERIFY = Arrays.asList(
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
+                    .withVerifyPeer(true)
+                    .build(),
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
+                    .withVerifyPeer(true)
+                    .build());
+
+    private static final List<RedisURI> MASTER_SLAVE_URIS_WITH_ONE_INVALID = Arrays.asList(
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
+                    .withVerifyPeer(true)
+                    .build(),
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
+                    .withVerifyPeer(true)
+                    .build(),
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 2)
+                    .withVerifyPeer(true)
+                    .build());
+
+    private static final List<RedisURI> MASTER_SLAVE_URIS_WITH_ALL_INVALID = Arrays.asList(
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 2)
+                    .withVerifyPeer(true)
+                    .build(),
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 3)
+                    .withVerifyPeer(true)
+                    .build());
+
+    private static RedisClient redisClient;
 
     @BeforeClass
     public static void beforeClass() {
 
         assumeTrue("Assume that stunnel runs on port 6443", Sockets.isOpen(host(), sslPort()));
-        assertThat(new File(TRUSTSTORE)).exists();
+        assertThat(TRUSTSTORE_FILE).exists();
 
         redisClient = RedisClient.create(TestClientResources.get());
     }
@@ -98,7 +142,7 @@ public class SslTest extends AbstractTest {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(new File(TRUSTSTORE)) //
+                .truststore(TRUSTSTORE_FILE) //
                 .build();
         setOptions(sslOptions);
 
@@ -110,7 +154,7 @@ public class SslTest extends AbstractTest {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(new File(TRUSTSTORE)) //
+                .truststore(truststoreURL()) //
                 .build();
         setOptions(sslOptions);
 
@@ -123,7 +167,7 @@ public class SslTest extends AbstractTest {
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
                 .keystore(new File(KEYSTORE), "changeit".toCharArray()) //
-                .truststore(new File(TRUSTSTORE)) //
+                .truststore(TRUSTSTORE_FILE) //
                 .build();
         setOptions(sslOptions);
 
@@ -135,7 +179,7 @@ public class SslTest extends AbstractTest {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(new File(TRUSTSTORE)) //
+                .truststore(TRUSTSTORE_FILE) //
                 .build();
         setOptions(sslOptions);
 
@@ -147,7 +191,7 @@ public class SslTest extends AbstractTest {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(new File(TRUSTSTORE), "knödel") //
+                .truststore(truststoreURL(), "knödel") //
                 .build();
         setOptions(sslOptions);
 
@@ -172,7 +216,7 @@ public class SslTest extends AbstractTest {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .openSslProvider() //
-                .truststore(new File(TRUSTSTORE)) //
+                .truststore(TRUSTSTORE_FILE) //
                 .build();
         setOptions(sslOptions);
 
@@ -215,6 +259,110 @@ public class SslTest extends AbstractTest {
 
         RedisURI redisUri = RedisURI.create("rediss://" + host() + ":" + sslPort());
         redisClient.connect(redisUri).sync();
+    }
+
+    @Test
+    public void masterSlaveWithSsl() {
+
+        RedisCommands<String, String> connection =
+                MasterSlave.connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_NO_VERIFY).sync();
+        connection.set("key", "value");
+        assertThat(connection.get("key")).isEqualTo("value");
+        connection.getStatefulConnection().close();
+    }
+
+    @Test
+    public void masterSlaveWithJdkSsl() {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(TRUSTSTORE_FILE) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY);
+    }
+
+    @Test
+    public void masterSlaveWithJdkSslUsingTruststoreUrl() throws Exception {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(truststoreURL()) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY);
+    }
+
+    @Test(expected = RedisConnectionException.class)
+    public void masterSlaveWithJdkSslUsingTruststoreUrlWithWrongPassword() throws Exception {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(truststoreURL(), "knödel") //
+                .build();
+        setOptions(sslOptions);
+
+        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY);
+    }
+
+    @Test(expected = RedisConnectionException.class)
+    public void masterSlaveWithJdkSslFailsWithWrongTruststore() {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .build();
+        setOptions(sslOptions);
+
+        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY);
+    }
+
+    @Test
+    public void masterSlavePingBeforeActivate() {
+
+        redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+
+        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_NO_VERIFY);
+    }
+
+    @Test
+    public void masterSlaveSslWithReconnect() throws Exception {
+        RedisCommands<String, String> connection =
+                MasterSlave.connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_NO_VERIFY).sync();
+        connection.quit();
+        Thread.sleep(200);
+        assertThat(connection.ping()).isEqualTo("PONG");
+        connection.getStatefulConnection().close();
+    }
+
+    @Test(expected = RedisConnectionException.class)
+    public void masterSlaveSslWithVerificationWillFail() {
+        MasterSlave.connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_VERIFY);
+    }
+
+    @Test
+    public void masterSlaveSslWithOneInvalidHostWillSucceed() {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(TRUSTSTORE_FILE) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_WITH_ONE_INVALID);
+    }
+
+    @Test(expected = RedisConnectionException.class)
+    public void masterSlaveSslWithAllInvalidHostsWillFail() {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(TRUSTSTORE_FILE) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_WITH_ALL_INVALID);
     }
 
     @Test
@@ -283,6 +431,16 @@ public class SslTest extends AbstractTest {
         connection2.getStatefulConnection().close();
     }
 
+
+    private static RedisURI.Builder sslURIBuilder(int portOffset) {
+        return RedisURI.Builder.redis(host(), sslPort(portOffset))
+                .withSsl(true);
+    }
+
+    private URL truststoreURL() throws MalformedURLException {
+        return TRUSTSTORE_FILE.toURI().toURL();
+    }
+
     private void setOptions(SslOptions sslOptions) {
         ClientOptions clientOptions = ClientOptions.builder().sslOptions(sslOptions).build();
         redisClient.setOptions(clientOptions);
@@ -290,6 +448,13 @@ public class SslTest extends AbstractTest {
 
     private void verifyConnection(RedisURI redisUri) {
         StatefulRedisConnection<String, String> connection = redisClient.connect(redisUri);
+        connection.sync().ping();
+        connection.close();
+    }
+
+    private void verifyMasterSlaveConnection(List<RedisURI> redisUris) {
+        StatefulRedisConnection<String, String> connection =
+                MasterSlave.connect(redisClient, StringCodec.UTF8, redisUris);
         connection.sync().ping();
         connection.close();
     }
