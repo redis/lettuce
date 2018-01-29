@@ -15,20 +15,11 @@
  */
 package io.lettuce;
 
-import io.lettuce.core.*;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.masterslave.MasterSlave;
-import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
-import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
-import io.netty.handler.codec.DecoderException;
-import io.netty.handler.ssl.OpenSsl;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.springframework.test.util.ReflectionTestUtils;
+import static io.lettuce.core.TestSettings.host;
+import static io.lettuce.core.TestSettings.sslPort;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -40,11 +31,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import static io.lettuce.core.TestSettings.host;
-import static io.lettuce.core.TestSettings.sslPort;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.junit.Assume.assumeTrue;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import io.lettuce.core.*;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.masterslave.MasterSlave;
+import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.ssl.OpenSsl;
+
 
 /**
  * @author Mark Paluch
