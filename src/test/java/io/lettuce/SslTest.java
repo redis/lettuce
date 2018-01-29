@@ -58,13 +58,14 @@ public class SslTest extends AbstractTest {
     private static final File TRUSTSTORE_FILE = new File(TRUSTSTORE);
     private static final int MASTER_SLAVE_BASE_PORT_OFFSET = 2000;
 
+    private static final RedisURI URI_NO_VERIFY = sslURIBuilder(0) //
+            .withVerifyPeer(false) //
+            .build();
+
     private static final RedisURI URI_VERIFY = sslURIBuilder(1) //
             .withVerifyPeer(true) //
             .build();
 
-    private static final RedisURI URI_NO_VERIFY = sslURIBuilder(0)
-            .withVerifyPeer(false) //
-            .build();
 
     private static final RedisURI URI_CLIENT_CERT_AUTH = sslURIBuilder(2) //
             .withVerifyPeer(true) //
