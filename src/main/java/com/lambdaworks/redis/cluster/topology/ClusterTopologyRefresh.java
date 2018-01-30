@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.lambdaworks.redis.cluster.topology;
+
+import static com.lambdaworks.redis.cluster.topology.TopologyComparators.SortAction;
 
 import java.net.SocketAddress;
 import java.util.*;
@@ -167,8 +169,10 @@ public class ClusterTopologyRefresh {
             node.setLatencyNs(latencies.get(node.getNodeId()));
         }
 
+        SortAction sortAction = SortAction.getSortAction();
         for (NodeTopologyView view : views) {
-            view.getPartitions().getPartitions().sort(TopologyComparators.LatencyComparator.INSTANCE);
+
+            sortAction.sort(view.getPartitions());
             view.getPartitions().updateCache();
         }
 

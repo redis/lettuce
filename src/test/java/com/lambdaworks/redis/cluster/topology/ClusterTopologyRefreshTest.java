@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,8 +152,36 @@ public class ClusterTopologyRefreshTest {
         assertThat(values).hasSize(2);
 
         for (Partitions value : values) {
-            assertThat(value).extracting("nodeId").containsExactly("1", "2");
+            assertThat(value).extracting("nodeId").containsSequence("1", "2");
         }
+    }
+
+    @Test
+    public void partitionsReturnedAsReported() throws Exception {
+
+        System.setProperty("io.lettuce.core.topology.sort", "none");
+
+        String NODE_1_VIEW = "2 127.0.0.1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
+                + "1 127.0.0.1:7380 master,myself - 0 1401258245007 2 disconnected 8000-11999\n";
+        String NODE_2_VIEW = "2 127.0.0.1:7381 master,myself - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
+                + "1 127.0.0.1:7380 master - 0 1401258245007 2 disconnected 8000-11999\n";
+
+        Requests requests = createClusterNodesRequests(1, NODE_1_VIEW);
+        requests = createClusterNodesRequests(2, NODE_2_VIEW).mergeWith(requests);
+
+        Requests clientRequests = createClientListRequests(1, "c1\nc2\n").mergeWith(createClientListRequests(2, "c1\nc2\n"));
+
+        NodeTopologyViews nodeSpecificViews = sut.getNodeSpecificViews(requests, clientRequests, COMMAND_TIMEOUT_NS);
+
+        Collection<Partitions> values = nodeSpecificViews.toMap().values();
+
+        assertThat(values).hasSize(2);
+
+        for (Partitions value : values) {
+            assertThat(value).extracting("nodeId").containsSequence("2", "1");
+        }
+
+        System.getProperties().remove("io.lettuce.core.topology.sort");
     }
 
     @Test

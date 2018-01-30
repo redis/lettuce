@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.lambdaworks.redis.masterslave;
 
 import static com.lambdaworks.redis.masterslave.MasterSlaveUtils.findNodeByUri;
+import static com.lambdaworks.redis.masterslave.TopologyComparators.LatencyComparator;
+import static com.lambdaworks.redis.masterslave.TopologyComparators.SortAction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,9 +125,8 @@ class MasterSlaveTopologyRefresh {
             result.add(redisNodeDescription);
         }
 
-        TopologyComparators.LatencyComparator comparator = new TopologyComparators.LatencyComparator(latencies);
-
-        result.sort(comparator);
+        SortAction sortAction = SortAction.getSortAction();
+        sortAction.sort(result, new LatencyComparator(latencies));
 
         return result;
     }
