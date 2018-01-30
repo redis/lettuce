@@ -35,6 +35,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
+import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
@@ -1261,6 +1262,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             dequeue();
 
             if (!success) {
+                if (cause instanceof EncoderException || cause instanceof Error || cause.getCause() instanceof Error) {
+                    complete(cause);
+                    return;
+                }
+
                 Channel channel = CommandHandler.this.channel;
                 if (channel != null) {
                     channel.eventLoop().submit(this::requeueCommands);
@@ -1300,7 +1306,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                         complete(e);
                     }
                 }
-
             }
         }
     }
