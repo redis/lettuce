@@ -256,7 +256,11 @@ public class MasterSlaveConnectionProvider<K, V> {
         @Override
         public StatefulRedisConnection<K, V> apply(ConnectionKey key) {
 
-            RedisURI.Builder builder = RedisURI.Builder.redis(key.host, key.port);
+            RedisURI.Builder builder = RedisURI.Builder
+                    .redis(key.host, key.port)
+                    .withSsl(initialRedisUri.isSsl())
+                    .withVerifyPeer(initialRedisUri.isVerifyPeer())
+                    .withStartTls(initialRedisUri.isStartTls());
 
             if (initialRedisUri.getPassword() != null && initialRedisUri.getPassword().length != 0) {
                 builder.withPassword(initialRedisUri.getPassword());
