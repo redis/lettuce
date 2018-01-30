@@ -31,6 +31,7 @@ import io.lettuce.core.internal.LettuceFactories;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
@@ -734,6 +735,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             dequeue();
 
             if (!success) {
+
+                if (cause instanceof EncoderException || cause instanceof Error || cause.getCause() instanceof Error) {
+                    complete(cause);
+                    return;
+                }
+
                 Channel channel = DefaultEndpoint.this.channel;
                 if (channel != null) {
                     channel.eventLoop().submit(this::requeueCommands);

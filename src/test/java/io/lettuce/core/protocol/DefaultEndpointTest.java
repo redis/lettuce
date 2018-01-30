@@ -50,9 +50,10 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
 import io.netty.channel.DefaultChannelPromise;
+import io.netty.handler.codec.EncoderException;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultEndpointTest {
@@ -69,9 +70,6 @@ public class DefaultEndpointTest {
 
     @Mock
     private ConnectionFacade connectionFacade;
-
-    @Mock
-    private ClientResources clientResources;
 
     @Mock
     private ConnectionWatchdog connectionWatchdog;
@@ -201,6 +199,32 @@ public class DefaultEndpointTest {
         sut.notifyDrainQueuedCommands(() -> q);
 
         verify(channel).writeAndFlush(eq(Arrays.asList(command)));
+    }
+
+    @Test
+    public void shouldCancelCommandsOnEncoderException() {
+
+        when(channel.isActive()).thenReturn(true);
+        sut.notifyChannelActive(channel);
+
+        DefaultChannelPromise promise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+
+        when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
+            if (invocation.getArguments()[0] instanceof RedisCommand) {
+                queue.add((RedisCommand) invocation.getArguments()[0]);
+            }
+
+            if (invocation.getArguments()[0] instanceof Collection) {
+                queue.addAll((Collection) invocation.getArguments()[0]);
+            }
+            return promise;
+        });
+
+        promise.setFailure(new EncoderException("foo"));
+
+        sut.write(command);
+
+        assertThat(command.exception).isInstanceOf(EncoderException.class);
     }
 
     @Test
