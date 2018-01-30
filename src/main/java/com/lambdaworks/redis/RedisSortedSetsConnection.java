@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@ package com.lambdaworks.redis;
 
 import java.util.List;
 
-import com.lambdaworks.redis.api.sync.RedisSortedSetCommands;
 import com.lambdaworks.redis.output.ScoredValueStreamingChannel;
 import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * Synchronous executed commands for Sorted Sets.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -34,13 +33,13 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 public interface RedisSortedSetsConnection<K, V> {
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
-     * 
+     *
      * @param key the key
      * @param score the score
      * @param member the member
-     * 
+     *
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
      *         updated.
      */
@@ -48,11 +47,11 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
-     * 
+     *
      * @param key the key
      * @param scoresAndValues the scoresAndValue tuples (score,value,score,value,...)
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
      *         updated.
      */
@@ -111,7 +110,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Get the number of members in a sorted set.
-     * 
+     *
      * @param key the key
      * @return Long integer-reply the cardinality (number of elements) of the sorted set, or {@literal false} if {@code key}
      *         does not exist.
@@ -120,7 +119,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Count the members in a sorted set with scores within the given values.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -130,7 +129,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Count the members in a sorted set with scores within the given values.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -140,7 +139,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Increment the score of a member in a sorted set.
-     * 
+     *
      * @param key the key
      * @param amount the increment type: long
      * @param member the member type: key
@@ -151,7 +150,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
-     * 
+     *
      * @param destination the destination
      * @param keys the keys
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
@@ -160,7 +159,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
-     * 
+     *
      * @param destination the destination
      * @param storeArgs the storeArgs
      * @param keys the keys
@@ -170,7 +169,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by index.
-     * 
+     *
      * @param key the key
      * @param start the start
      * @param stop the stop
@@ -180,7 +179,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with scores in a sorted set, by index.
-     * 
+     *
      * @param key the key
      * @param start the start
      * @param stop the stop
@@ -190,7 +189,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -200,7 +199,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -210,7 +209,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -222,7 +221,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -234,7 +233,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with score in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -244,7 +243,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with score in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -254,7 +253,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with score in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -266,7 +265,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with score in a sorted set, by score.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -278,7 +277,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by index.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param start the start
@@ -289,7 +288,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by index.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param start the start
@@ -300,7 +299,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -311,7 +310,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -322,7 +321,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over range of members in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -335,7 +334,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -348,7 +347,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -359,7 +358,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -370,7 +369,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -383,7 +382,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -396,7 +395,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Determine the index of a member in a sorted set.
-     * 
+     *
      * @param key the key
      * @param member the member type: value
      * @return Long integer-reply the rank of {@code member}. If {@code member} does not exist in the sorted set or {@code key}
@@ -406,18 +405,18 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Remove one or more members from a sorted set.
-     * 
+     *
      * @param key the key
      * @param members the member type: value
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The number of members removed from the sorted set, not including non existing members.
      */
     Long zrem(K key, V... members);
 
     /**
      * Remove all members in a sorted set within the given indexes.
-     * 
+     *
      * @param key the key
      * @param start the start type: long
      * @param stop the stop type: long
@@ -427,7 +426,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Remove all members in a sorted set within the given scores.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -437,7 +436,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Remove all members in a sorted set within the given scores.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -447,7 +446,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by index, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param start the start
      * @param stop the stop
@@ -457,7 +456,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with scores in a sorted set, by index, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param start the start
      * @param stop the stop
@@ -467,7 +466,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -477,7 +476,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -487,7 +486,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param max max score
      * @param min min score
@@ -499,7 +498,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param max max score
      * @param min min score
@@ -511,7 +510,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param max max score
      * @param min min score
@@ -521,7 +520,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param max max score
      * @param min min score
@@ -531,7 +530,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param max max score
      * @param min min score
@@ -543,7 +542,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param max max score
      * @param min min score
@@ -555,7 +554,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by index, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param start the start
@@ -566,7 +565,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by index, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param start the start
@@ -577,7 +576,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param max max score
@@ -588,7 +587,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -599,7 +598,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -612,7 +611,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -625,7 +624,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -636,7 +635,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -647,7 +646,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -661,7 +660,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param min min score
@@ -675,7 +674,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Determine the index of a member in a sorted set, with scores ordered from high to low.
-     * 
+     *
      * @param key the key
      * @param member the member type: value
      * @return Long integer-reply the rank of {@code member}. If {@code member} does not exist in the sorted set or {@code key}
@@ -685,7 +684,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Get the score associated with the given member in a sorted set.
-     * 
+     *
      * @param key the key
      * @param member the member type: value
      * @return Double bulk-string-reply the score of {@code member} (a double precision floating point number), represented as
@@ -704,7 +703,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Add multiple sorted sets and store the resulting sorted set in a new key.
-     * 
+     *
      * @param destination the destination
      * @param storeArgs the storeArgs
      * @param keys the keys
@@ -769,7 +768,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Incrementally iterate sorted sets elements and associated scores.
-     * 
+     *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
@@ -790,7 +789,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Count the number of members in a sorted set between a given lexicographical range.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -800,7 +799,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Remove all members in a sorted set between the given lexicographical range.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -810,7 +809,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by lexicographical range.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -820,7 +819,7 @@ public interface RedisSortedSetsConnection<K, V> {
 
     /**
      * Return a range of members in a sorted set, by lexicographical range.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score

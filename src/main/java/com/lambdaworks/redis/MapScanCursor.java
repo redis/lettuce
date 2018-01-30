@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * Scan cursor for maps.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -31,7 +31,7 @@ public class MapScanCursor<K, V> extends ScanCursor {
     private final Map<K, V> map = new LinkedHashMap<>();
 
     /**
-     * 
+     *
      * @return the map result.
      */
     public Map<K, V> getMap() {

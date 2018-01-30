@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.lambdaworks.redis;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -26,7 +25,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 /**
  * Streaming adapter which stores every key or/and value in a list. This adapter can be used in KeyStreamingChannels and
  * ValueStreamingChannels.
- * 
+ *
  * @author Mark Paluch
  * @param <T> Valu-Type.
  * @since 3.0

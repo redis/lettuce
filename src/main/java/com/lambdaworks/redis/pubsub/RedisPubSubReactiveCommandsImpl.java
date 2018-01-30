@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,21 @@
  */
 package com.lambdaworks.redis.pubsub;
 
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import java.util.Map;
 
-import com.lambdaworks.redis.protocol.Command;
 import rx.Observable;
 import rx.Subscriber;
 
 import com.lambdaworks.redis.RedisReactiveCommandsImpl;
 import com.lambdaworks.redis.api.rx.Success;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.pubsub.api.rx.ChannelMessage;
 import com.lambdaworks.redis.pubsub.api.rx.PatternMessage;
 import com.lambdaworks.redis.pubsub.api.rx.RedisPubSubReactiveCommands;
 
-import java.util.Map;
-
 /**
  * A reactive and thread-safe API for a Redis pub/sub connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -57,7 +53,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
 
     /**
      * Add a new listener.
-     * 
+     *
      * @param listener Listener.
      */
     @Override
@@ -115,7 +111,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
 
     /**
      * Remove an existing listener.
-     * 
+     *
      * @param listener Listener.
      */
     @Override

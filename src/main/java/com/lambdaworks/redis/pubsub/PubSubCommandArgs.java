@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 /**
  *
  * Command args for Pub/Sub connections. This implementation hides the first key as PubSub keys are not keys from the key-space.
- * 
+ *
  * @author Mark Paluch
  * @since 4.2
  */

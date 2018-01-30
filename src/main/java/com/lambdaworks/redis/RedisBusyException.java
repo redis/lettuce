@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.lambdaworks.redis;
 
 /**
  * Exception that gets thrown when Redis is busy executing a Lua script with a {@code BUSY} error response.
- * 
+ *
  * @author Mark Paluch
  * @since 4.5
  */
@@ -26,7 +26,7 @@ public class RedisBusyException extends RedisCommandExecutionException {
 
     /**
      * Create a {@code RedisBusyException} with the specified detail message.
-     * 
+     *
      * @param msg the detail message.
      */
     public RedisBusyException(String msg) {
@@ -35,7 +35,7 @@ public class RedisBusyException extends RedisCommandExecutionException {
 
     /**
      * Create a {@code RedisNoScriptException} with the specified detail message and nested exception.
-     * 
+     *
      * @param msg the detail message.
      * @param cause the nested exception.
      */

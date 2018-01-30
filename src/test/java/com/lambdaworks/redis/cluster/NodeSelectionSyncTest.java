@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import static org.assertj.core.api.Fail.fail;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.internal.LettuceSets;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +36,7 @@ import com.lambdaworks.redis.cluster.api.sync.NodeSelection;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * @author Mark Paluch

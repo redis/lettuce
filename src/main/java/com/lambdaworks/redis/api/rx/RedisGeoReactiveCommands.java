@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.lambdaworks.redis.api.rx;
 
+import rx.Observable;
+
 import com.lambdaworks.redis.GeoArgs;
 import com.lambdaworks.redis.GeoCoordinates;
 import com.lambdaworks.redis.GeoRadiusStoreArgs;
 import com.lambdaworks.redis.GeoWithin;
-
-import rx.Observable;
 
 /**
  * Observable commands for the Geo-API.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.lambdaworks.redis.protocol.CommandKeyword;
 
 /**
  * Args for {@literal GEORADIUS} and {@literal GEORADIUSBYMEMBER} commands.
- * 
+ *
  * @author Mark Paluch
  */
 public class GeoArgs {
@@ -34,7 +34,7 @@ public class GeoArgs {
 
     /**
      * Request distance for results.
-     * 
+     *
      * @return {@code this}
      */
     public GeoArgs withDistance() {
@@ -44,7 +44,7 @@ public class GeoArgs {
 
     /**
      * Request coordinates for results.
-     * 
+     *
      * @return {@code this}
      */
     public GeoArgs withCoordinates() {
@@ -54,7 +54,7 @@ public class GeoArgs {
 
     /**
      * Request geohash for results.
-     * 
+     *
      * @return {@code this}
      */
     public GeoArgs withHash() {
@@ -64,7 +64,7 @@ public class GeoArgs {
 
     /**
      * Limit results to {@code count} entries.
-     * 
+     *
      * @param count number greater 0
      * @return {@code this}
      */
@@ -75,7 +75,7 @@ public class GeoArgs {
     }
 
     /**
-     * 
+     *
      * @return {@literal true} if distance is requested.
      */
     public boolean isWithDistance() {
@@ -83,7 +83,7 @@ public class GeoArgs {
     }
 
     /**
-     * 
+     *
      * @return {@literal true} if coordinates are requested.
      */
     public boolean isWithCoordinates() {
@@ -91,7 +91,7 @@ public class GeoArgs {
     }
 
     /**
-     * 
+     *
      * @return {@literal true} if geohash is requested.
      */
     public boolean isWithHash() {
@@ -100,7 +100,7 @@ public class GeoArgs {
 
     /**
      * Sort results ascending.
-     * 
+     *
      * @return {@code this}
      */
     public GeoArgs asc() {
@@ -109,7 +109,7 @@ public class GeoArgs {
 
     /**
      * Sort results descending.
-     * 
+     *
      * @return {@code this}
      */
     public GeoArgs desc() {
@@ -118,7 +118,7 @@ public class GeoArgs {
 
     /**
      * Sort results.
-     * 
+     *
      * @param sort sort order, must not be {@literal null}
      * @return {@code this}
      */

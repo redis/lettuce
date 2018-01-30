@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * connection facade. Registered {@link RedisPubSubListener} will receive messages from individual node subscriptions.
      * <p>
      * Node event propagation is disabled by default.
-     * 
+     *
      * @param enabled {@literal true} to enable node message propagation; {@literal false} (default) to disable message
      *        propagation.
      */

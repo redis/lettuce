@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@ package com.lambdaworks.redis.issue42;
 
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.category.SlowTests;
-import com.lambdaworks.redis.DefaultRedisClient;
-import com.lambdaworks.redis.RedisClient;
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import com.lambdaworks.category.SlowTests;
+import com.lambdaworks.redis.DefaultRedisClient;
+import com.lambdaworks.redis.RedisClient;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 @SlowTests
 @Ignore("Run me manually")

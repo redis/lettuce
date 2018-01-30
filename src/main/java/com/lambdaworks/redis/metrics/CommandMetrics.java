@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Latency metrics for commands. This class provides the count, time unit and firstResponse/completion latencies.
- * 
+ *
  * @author Mark Paluch
  */
 public class CommandMetrics {
@@ -38,7 +38,7 @@ public class CommandMetrics {
     }
 
     /**
-     * 
+     *
      * @return the count
      */
     public long getCount() {
@@ -46,7 +46,7 @@ public class CommandMetrics {
     }
 
     /**
-     * 
+     *
      * @return the time unit for the {@link #getFirstResponse()} and {@link #getCompletion()} latencies.
      */
     public TimeUnit getTimeUnit() {
@@ -54,7 +54,7 @@ public class CommandMetrics {
     }
 
     /**
-     * 
+     *
      * @return latencies between send and the first command response
      */
     public CommandLatency getFirstResponse() {
@@ -62,7 +62,7 @@ public class CommandMetrics {
     }
 
     /**
-     * 
+     *
      * @return latencies between send and the command completion
      */
     public CommandLatency getCompletion() {
@@ -92,7 +92,7 @@ public class CommandMetrics {
         }
 
         /**
-         * 
+         *
          * @return the minimum time
          */
         public long getMin() {
@@ -100,7 +100,7 @@ public class CommandMetrics {
         }
 
         /**
-         * 
+         *
          * @return the maximum time
          */
         public long getMax() {
@@ -108,7 +108,7 @@ public class CommandMetrics {
         }
 
         /**
-         * 
+         *
          * @return percentile mapping
          */
         public Map<Double, Long> getPercentiles() {

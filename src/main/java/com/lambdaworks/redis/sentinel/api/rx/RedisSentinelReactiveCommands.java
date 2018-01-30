@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@ package com.lambdaworks.redis.sentinel.api.rx;
 
 import java.io.Closeable;
 import java.net.SocketAddress;
-import java.util.List;
 import java.util.Map;
+
+import rx.Observable;
+
 import com.lambdaworks.redis.KillArgs;
 import com.lambdaworks.redis.sentinel.api.StatefulRedisSentinelConnection;
-import rx.Observable;
 
 /**
  * Observable commands for Redis Sentinel.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -36,7 +37,7 @@ public interface RedisSentinelReactiveCommands<K, V> extends Closeable {
 
     /**
      * Return the ip and port number of the master with that name.
-     * 
+     *
      * @param key the key
      * @return SocketAddress;
      */
@@ -44,14 +45,14 @@ public interface RedisSentinelReactiveCommands<K, V> extends Closeable {
 
     /**
      * Enumerates all the monitored masters and their states.
-     * 
+     *
      * @return Map&lt;K, V&gt;&gt;
      */
     Observable<Map<K, V>> masters();
 
     /**
      * Show the state and info of the specified master.
-     * 
+     *
      * @param key the key
      * @return Map&lt;K, V&gt;
      */
@@ -59,7 +60,7 @@ public interface RedisSentinelReactiveCommands<K, V> extends Closeable {
 
     /**
      * Provides a list of slaves for the master with the specified name.
-     * 
+     *
      * @param key the key
      * @return Map&lt;K, V&gt;
      */
@@ -67,7 +68,7 @@ public interface RedisSentinelReactiveCommands<K, V> extends Closeable {
 
     /**
      * This command will reset all the masters with matching name.
-     * 
+     *
      * @param key the key
      * @return Long
      */
@@ -75,7 +76,7 @@ public interface RedisSentinelReactiveCommands<K, V> extends Closeable {
 
     /**
      * Perform a failover.
-     * 
+     *
      * @param key the master id
      * @return String
      */
@@ -83,7 +84,7 @@ public interface RedisSentinelReactiveCommands<K, V> extends Closeable {
 
     /**
      * This command tells the Sentinel to start monitoring a new master with the specified name, ip, port, and quorum.
-     * 
+     *
      * @param key the key
      * @param ip the IP address
      * @param port the port
@@ -94,18 +95,18 @@ public interface RedisSentinelReactiveCommands<K, V> extends Closeable {
 
     /**
      * Multiple option / value pairs can be specified (or none at all).
-     * 
+     *
      * @param key the key
      * @param option the option
      * @param value the value
-     * 
+     *
      * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
     Observable<String> set(K key, String option, V value);
 
     /**
      * remove the specified master.
-     * 
+     *
      * @param key the key
      * @return String
      */
@@ -175,7 +176,7 @@ public interface RedisSentinelReactiveCommands<K, V> extends Closeable {
 
     /**
      * Ping the server.
-     * 
+     *
      * @return String simple-string-reply
      */
     Observable<String> ping();

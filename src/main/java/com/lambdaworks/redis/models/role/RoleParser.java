@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Parser for redis <a href="http://redis.io/commands/role">ROLE</a> command output.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -58,7 +58,7 @@ public class RoleParser {
 
     /**
      * Parse the output of the redis ROLE command and convert to a RedisInstance.
-     * 
+     *
      * @param roleOutput output of the redis ROLE command
      * @return RedisInstance
      */

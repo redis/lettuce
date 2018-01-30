@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
  * <li>Latency between command send and first response (first response received)</li>
  * <li>Latency between command send and command completion (complete response received)</li>
  * </ul>
- * 
+ *
  * @author Mark Paluch
  * @since 3.4
  */
@@ -36,7 +36,7 @@ public interface CommandLatencyCollector extends MetricCollector<Map<CommandLate
 
     /**
      * Record the command latency per {@code connectionPoint} and {@code commandType}.
-     * 
+     *
      * @param local the local address
      * @param remote the remote address
      * @param commandType the command type

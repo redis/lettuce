@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.lambdaworks.redis.internal.AbstractInvocationHandler;
 
 /**
  * Invocation handler for testing purposes that wraps each call into a transaction.
- * 
+ *
  * @param <K>
  * @param <V>
  */
@@ -99,7 +99,7 @@ public class TxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     /**
      * Create a transactional wrapper proxy for {@link RedisCommands}.
-     * 
+     *
      * @param connection the connection
      * @return the wrapper proxy.
      */

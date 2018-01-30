@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class RedisClusterURIUtil {
      * Parse a Redis Cluster URI with potentially multiple hosts into a {@link List} of {@link RedisURI}.
      *
      * An URI follows the syntax: {@code redis://[password@]host[:port][,host2[:port2]]}
-     * 
+     *
      * @param uri must not be empty or {@literal null}.
      * @return {@link List} of {@link RedisURI}.
      */
@@ -62,7 +62,7 @@ public class RedisClusterURIUtil {
 
     /**
      * Apply {@link RedisURI} settings such as SSL/Timeout/password.
-     * 
+     *
      * @param from from {@link RedisURI}.
      * @param to from {@link RedisURI}.
      */

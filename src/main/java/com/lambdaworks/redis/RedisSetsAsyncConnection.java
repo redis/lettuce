@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * Asynchronous executed commands for Sets.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -35,7 +35,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Add one or more members to a set.
-     * 
+     *
      * @param key the key
      * @param members the member type: value
      * @return RedisFuture&lt;Long&gt; integer-reply the number of elements that were added to the set, not including all the
@@ -45,7 +45,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Get the number of members in a set.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;Long&gt; integer-reply the cardinality (number of elements) of the set, or {@literal false} if
      *         {@code key} does not exist.
@@ -54,7 +54,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Subtract multiple sets.
-     * 
+     *
      * @param keys the key
      * @return RedisFuture&lt;Set&lt;V&gt;&gt; array-reply list with members of the resulting set.
      */
@@ -62,7 +62,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Subtract multiple sets.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param keys the keys
      * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
@@ -71,7 +71,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Subtract multiple sets and store the resulting set in a key.
-     * 
+     *
      * @param destination the destination type: key
      * @param keys the key
      * @return RedisFuture&lt;Long&gt; integer-reply the number of elements in the resulting set.
@@ -80,7 +80,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Intersect multiple sets.
-     * 
+     *
      * @param keys the key
      * @return RedisFuture&lt;Set&lt;V&gt;&gt; array-reply list with members of the resulting set.
      */
@@ -88,7 +88,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Intersect multiple sets.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param keys the keys
      * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
@@ -97,7 +97,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Intersect multiple sets and store the resulting set in a key.
-     * 
+     *
      * @param destination the destination type: key
      * @param keys the key
      * @return RedisFuture&lt;Long&gt; integer-reply the number of elements in the resulting set.
@@ -106,11 +106,11 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Determine if a given value is a member of a set.
-     * 
+     *
      * @param key the key
      * @param member the member type: value
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if the element is a member of the set. {@literal false} if the element is not a member of the
      *         set, or if {@code key} does not exist.
      */
@@ -118,12 +118,12 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Move a member from one set to another.
-     * 
+     *
      * @param source the source key
      * @param destination the destination type: key
      * @param member the member type: value
      * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     * 
+     *
      *         {@literal true} if the element is moved. {@literal false} if the element is not a member of {@code source} and no
      *         operation was performed.
      */
@@ -131,7 +131,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Get all the members in a set.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;Set&lt;V&gt;&gt; array-reply all elements of the set.
      */
@@ -139,7 +139,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Get all the members in a set.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
@@ -148,7 +148,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Remove and return a random member from a set.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;V&gt; bulk-string-reply the removed element, or {@literal null} when {@code key} does not exist.
      */
@@ -165,9 +165,9 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Get one or multiple random members from a set.
-     * 
+     *
      * @param key the key
-     * 
+     *
      * @return RedisFuture&lt;V&gt; bulk-string-reply without the additional {@code count} argument the command returns a Bulk
      *         Reply with the randomly selected element, or {@literal null} when {@code key} does not exist.
      */
@@ -185,7 +185,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Get one or multiple random members from a set.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param count the count
@@ -195,7 +195,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Remove one or more members from a set.
-     * 
+     *
      * @param key the key
      * @param members the member type: value
      * @return RedisFuture&lt;Long&gt; integer-reply the number of members that were removed from the set, not including non
@@ -205,7 +205,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Add multiple sets.
-     * 
+     *
      * @param keys the key
      * @return RedisFuture&lt;Set&lt;V&gt;&gt; array-reply list with members of the resulting set.
      */
@@ -213,7 +213,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Add multiple sets.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param keys the key
      * @return RedisFuture&lt;Long&gt; count of members of the resulting set.
@@ -222,7 +222,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Add multiple sets and store the resulting set in a key.
-     * 
+     *
      * @param destination the destination type: key
      * @param keys the key
      * @return RedisFuture&lt;Long&gt; integer-reply the number of elements in the resulting set.
@@ -231,7 +231,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;ValueScanCursor&gt;V&lt;&gt; scan cursor.
      */
@@ -239,7 +239,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
-     * 
+     *
      * @param key the key
      * @param scanArgs scan arguments
      * @return RedisFuture&lt;ValueScanCursor&gt;V&lt;&gt; scan cursor.
@@ -248,7 +248,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
-     * 
+     *
      * @param key the key
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @param scanArgs scan arguments
@@ -258,7 +258,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
-     * 
+     *
      * @param key the key
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
      * @return RedisFuture&lt;ValueScanCursor&gt;V&lt;&gt; scan cursor.
@@ -267,7 +267,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @return RedisFuture&lt;StreamScanCursor&gt; scan cursor.
@@ -276,7 +276,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param scanArgs scan arguments
@@ -286,7 +286,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
@@ -297,7 +297,7 @@ public interface RedisSetsAsyncConnection<K, V> {
 
     /**
      * Incrementally iterate Set elements.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}

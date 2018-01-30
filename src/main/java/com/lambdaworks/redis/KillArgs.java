@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
-import static com.lambdaworks.redis.protocol.CommandType.*;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ADDR;
+import static com.lambdaworks.redis.protocol.CommandKeyword.ID;
+import static com.lambdaworks.redis.protocol.CommandKeyword.SKIPME;
+import static com.lambdaworks.redis.protocol.CommandType.TYPE;
 
 import com.lambdaworks.redis.protocol.CommandArgs;
 

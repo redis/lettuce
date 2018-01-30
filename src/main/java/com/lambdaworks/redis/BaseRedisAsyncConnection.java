@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
 /**
- * 
+ *
  * Basic asynchronous executed commands.
- * 
+ *
  * @author Mark Paluch
  * @param <K> Key type.
  * @param <V> Value type.
@@ -39,7 +39,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
 
     /**
      * Post a message to a channel.
-     * 
+     *
      * @param channel the channel type: key
      * @param message the message type: value
      * @return RedisFuture&lt;Long&gt; integer-reply the number of clients that received the message.
@@ -48,7 +48,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
 
     /**
      * Lists the currently *active channels*.
-     * 
+     *
      * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply a list of active channels, optionally matching the specified
      *         pattern.
      */
@@ -56,7 +56,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
 
     /**
      * Lists the currently *active channels*.
-     * 
+     *
      * @param channel the key
      * @return RedisFuture&lt;List&lt;K&gt;&gt; array-reply a list of active channels, optionally matching the specified
      *         pattern.
@@ -73,14 +73,14 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
 
     /**
      * Returns the number of subscriptions to patterns.
-     * 
+     *
      * @return RedisFuture&lt;Long&gt; integer-reply the number of patterns all the clients are subscribed to.
      */
     RedisFuture<Long> pubsubNumpat();
 
     /**
      * Echo the given string.
-     * 
+     *
      * @param msg the message type: value
      * @return RedisFuture&lt;V&gt; bulk-string-reply
      */
@@ -96,21 +96,21 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
 
     /**
      * Ping the server.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> ping();
 
     /**
      * Close the connection.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply always OK.
      */
     RedisFuture<String> quit();
 
     /**
      * Create a SHA1 digest from a Lua script.
-     * 
+     *
      * @param script script content
      * @return the SHA1 value
      */
@@ -118,31 +118,31 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
 
     /**
      * Discard all commands issued after MULTI.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> discard();
 
     /**
      * Execute all commands issued after MULTI.
-     * 
+     *
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply each element being the reply to each of the commands in the
      *         atomic transaction.
-     * 
+     *
      *         When using {@code WATCH}, {@code EXEC} can return a
      */
     RedisFuture<List<Object>> exec();
 
     /**
      * Mark the start of a transaction block.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> multi();
 
     /**
      * Watch the given keys to determine execution of the MULTI/EXEC block.
-     * 
+     *
      * @param keys the key
      * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
@@ -150,14 +150,14 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
 
     /**
      * Forget about all watched keys.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> unwatch();
 
     /**
      * Wait for replication.
-     * 
+     *
      * @param replicas minimum number of replicas
      * @param timeout timeout in milliseconds
      * @return number of replicas
@@ -192,7 +192,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
     void close();
 
     /**
-     * 
+     *
      * @return true if the connection is open (connected and not closed).
      */
     boolean isOpen();
@@ -201,7 +201,7 @@ public interface BaseRedisAsyncConnection<K, V> extends Closeable, BaseRedisAsyn
      * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
      * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
-     * 
+     *
      * @param autoFlush state of autoFlush.
      */
     void setAutoFlushCommands(boolean autoFlush);

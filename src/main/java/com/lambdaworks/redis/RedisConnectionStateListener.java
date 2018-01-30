@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import java.net.SocketAddress;
 
 /**
  * Simple interface for Redis connection state monitoring.
- * 
+ *
  * @author ze
  * @author Mark Paluch
  */
@@ -27,7 +27,7 @@ public interface RedisConnectionStateListener {
 
     /**
      * Event handler for successful connection event.
-     * 
+     *
      * @param connection Source connection.
      * @deprecated since 4.4, use {@link RedisConnectionStateListener#onRedisConnected(RedisChannelHandler, SocketAddress)}.
      */
@@ -48,17 +48,17 @@ public interface RedisConnectionStateListener {
 
     /**
      * Event handler for disconnection event.
-     * 
+     *
      * @param connection Source connection.
      */
     void onRedisDisconnected(RedisChannelHandler<?, ?> connection);
 
     /**
-     * 
+     *
      * Event handler for exceptions.
-     * 
+     *
      * @param connection Source connection.
-     * 
+     *
      * @param cause Caught exception.
      */
     void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause);

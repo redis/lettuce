@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@ package com.lambdaworks.redis.support;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.lambdaworks.redis.api.sync.RedisCommands;
 import org.junit.Test;
 
 import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.RedisConnection;
 import com.lambdaworks.redis.RedisConnectionPool;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 public class WithConnectionTest extends AbstractRedisClientTest {
 

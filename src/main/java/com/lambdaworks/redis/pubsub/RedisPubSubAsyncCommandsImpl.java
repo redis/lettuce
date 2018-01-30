@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,17 @@
  */
 package com.lambdaworks.redis.pubsub;
 
-import static com.lambdaworks.redis.protocol.CommandType.PSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.PUNSUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.SUBSCRIBE;
-import static com.lambdaworks.redis.protocol.CommandType.UNSUBSCRIBE;
+import java.util.List;
+import java.util.Map;
 
 import com.lambdaworks.redis.RedisAsyncCommandsImpl;
 import com.lambdaworks.redis.RedisFuture;
 import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
-import rx.Observable;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * An asynchronous and thread-safe API for a Redis pub/sub connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
@@ -44,7 +37,7 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
 
     /**
      * Initialize a new connection.
-     * 
+     *
      * @param connection the connection .
      * @param codec Codec used to encode/decode keys and values.
      */
@@ -56,7 +49,7 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
 
     /**
      * Add a new listener.
-     * 
+     *
      * @param listener Listener.
      */
     @Override
@@ -66,7 +59,7 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
 
     /**
      * Remove an existing listener.
-     * 
+     *
      * @param listener Listener.
      */
     @Override

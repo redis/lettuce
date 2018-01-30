@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.nio.charset.Charset;
 
 /**
  * {@link Charset}-related utilities.
- * 
+ *
  * @author Will Glozer
  */
 public class LettuceCharsets {
@@ -44,7 +44,7 @@ public class LettuceCharsets {
 
     /**
      * Create a ByteBuffer from a string using ASCII encoding.
-     * 
+     *
      * @param s the string
      * @return ByteBuffer
      */

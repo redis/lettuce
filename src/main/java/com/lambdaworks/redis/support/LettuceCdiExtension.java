@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.lambdaworks.redis.support;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.enterprise.event.Observes;
@@ -53,12 +53,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *     public RedisURI redisURI() {
  *         return RedisURI.Builder.redis("localhost", 6379).build();
  *     }
- * 
+ *
  *     &#64;Produces
  *     public ClientResources clientResources() {
  *         return DefaultClientResources.create()
  *     }
- * 
+ *
  *     public void shutdownClientResources(@Disposes ClientResources clientResources) throws Exception {
  *         clientResources.shutdown().get();
  *     }
@@ -72,13 +72,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *   public class Consumer {
  *      &#64;Inject
  *      private RedisClient client;
- * 
+ *
  *      &#64;Inject
  *      private RedisClusterClient clusterClient;
  * }
  *  </code>
  * </pre>
- * 
+ *
  * @author Mark Paluch
  */
 public class LettuceCdiExtension implements Extension {

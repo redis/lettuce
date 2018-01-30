@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package com.lambdaworks.redis.cluster.api.rx;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.api.rx.*;
-
 import rx.Observable;
+
+import com.lambdaworks.redis.api.rx.*;
 
 /**
  * A complete reactive and thread-safe cluster Redis API with 400+ Methods.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -37,7 +37,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
 
     /**
      * Set the default timeout for operations.
-     * 
+     *
      * @param timeout the timeout value
      * @param unit the unit of the timeout value
      */
@@ -45,7 +45,7 @@ public interface RedisClusterReactiveCommands<K, V> extends RedisHashReactiveCom
 
     /**
      * Authenticate to the server.
-     * 
+     *
      * @param password the password
      * @return String simple-string-reply
      */

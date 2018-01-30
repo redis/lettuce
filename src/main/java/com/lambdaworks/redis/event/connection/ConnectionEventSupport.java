@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
 
     /**
      * Returns the local address.
-     * 
+     *
      * @return the local address
      */
     public SocketAddress localAddress() {
@@ -47,7 +47,7 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
 
     /**
      * Returns the remote address.
-     * 
+     *
      * @return the remote address
      */
     public SocketAddress remoteAddress() {

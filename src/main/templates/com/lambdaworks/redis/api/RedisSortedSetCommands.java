@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * ${intent} for Sorted Sets.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -33,13 +33,13 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
-     * 
+     *
      * @param key the key
      * @param score the score
      * @param member the member
-     * 
+     *
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
      *         updated.
      */
@@ -47,11 +47,11 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
-     * 
+     *
      * @param key the key
      * @param scoresAndValues the scoresAndValue tuples (score,value,score,value,...)
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
      *         updated.
      */
@@ -59,11 +59,11 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
-     * 
+     *
      * @param key the key
      * @param scoredValues the scored values
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
      *         updated.
      */
@@ -99,12 +99,12 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.
-     * 
+     *
      * @param key the ke
      * @param zAddArgs arguments for zadd
      * @param scoredValues the scored values
      * @return Long integer-reply specifically:
-     * 
+     *
      *         The number of elements added to the sorted sets, not including elements already existing for which the score was
      *         updated.
      */
@@ -136,7 +136,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Get the number of members in a sorted set.
-     * 
+     *
      * @param key the key
      * @return Long integer-reply the cardinality (number of elements) of the sorted set, or {@literal false} if {@code key}
      *         does not exist.
@@ -145,7 +145,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Count the members in a sorted set with scores within the given values.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -157,7 +157,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Count the members in a sorted set with scores within the given values.
-     * 
+     *
      * @param key the key
      * @param min min score
      * @param max max score
@@ -179,7 +179,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Increment the score of a member in a sorted set.
-     * 
+     *
      * @param key the key
      * @param amount the increment type: long
      * @param member the member type: key
@@ -190,7 +190,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
-     * 
+     *
      * @param destination the destination
      * @param keys the keys
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
@@ -199,7 +199,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
-     * 
+     *
      * @param destination the destination
      * @param storeArgs the storeArgs
      * @param keys the keys
@@ -393,7 +393,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -406,7 +406,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -430,7 +430,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Stream over range of members in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score
@@ -445,7 +445,7 @@ public interface RedisSortedSetCommands<K, V> {
 
     /**
      * Stream over a range of members in a sorted set, by score.
-     * 
+     *
      * @param channel streaming channel that receives a call for every value
      * @param key the key
      * @param min min score

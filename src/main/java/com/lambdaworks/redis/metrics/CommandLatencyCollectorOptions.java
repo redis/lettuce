@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Configuration interface for command latency collection.
- * 
+ *
  * @author Mark Paluch
  */
 public interface CommandLatencyCollectorOptions {
@@ -40,7 +40,7 @@ public interface CommandLatencyCollectorOptions {
 
     /**
      * Returns whether the latencies should be reset once an event is emitted.
-     * 
+     *
      * @return {@literal true} if the latencies should be reset once an event is emitted.
      */
     boolean resetLatenciesAfterEvent();
@@ -50,14 +50,14 @@ public interface CommandLatencyCollectorOptions {
      * host/connection point will be recorded separately which allows to inspect every connection individually. If
      * {@literal false}, multiple connections to the same host/connection point will be recorded together. This allows a
      * consolidated view on one particular service.
-     * 
+     *
      * @return {@literal true} if latencies are recorded distinct on local level (per connection)
      */
     boolean localDistinction();
 
     /**
      * Returns whether the latency collector is enabled.
-     * 
+     *
      * @return {@literal true} if the latency collector is enabled
      */
     boolean isEnabled();

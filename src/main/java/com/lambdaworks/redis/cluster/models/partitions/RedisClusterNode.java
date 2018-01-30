@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
  * {@link RedisClusterNode} can be a {@link #getRole() responsible master} for zero to
  * {@link com.lambdaworks.redis.cluster.SlotHash#SLOT_COUNT 16384} slots, a slave of one {@link #getSlaveOf() master} of carry
  * different {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag flags}.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -79,7 +79,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Create a new instance of {@link RedisClusterNode} by passing the {@code nodeId}
-     * 
+     *
      * @param nodeId the nodeId
      * @return a new instance of {@link RedisClusterNode}
      */
@@ -95,7 +95,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Sets thhe connection point details. Usually the host/ip/port where a particular Redis Cluster node server is running.
-     * 
+     *
      * @param uri the {@link RedisURI}, must not be {@literal null}
      */
     public void setUri(RedisURI uri) {
@@ -109,7 +109,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Sets {@code nodeId}.
-     * 
+     *
      * @param nodeId the {@code nodeId}
      */
     public void setNodeId(String nodeId) {
@@ -124,7 +124,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the {@code connected} flag. The {@code connected} flag describes whether the node which provided details about the
      * node is connected to the particular {@link RedisClusterNode}.
-     * 
+     *
      * @param connected the {@code connected} flag
      */
     public void setConnected(boolean connected) {
@@ -137,7 +137,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Sets the replication source.
-     * 
+     *
      * @param slaveOf the replication source, can be {@literal null}
      */
     public void setSlaveOf(String slaveOf) {
@@ -150,7 +150,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Sets the last {@code pingSentTimestamp}.
-     * 
+     *
      * @param pingSentTimestamp the last {@code pingSentTimestamp}
      */
     public void setPingSentTimestamp(long pingSentTimestamp) {
@@ -163,7 +163,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Sets the last {@code pongReceivedTimestamp}.
-     * 
+     *
      * @param pongReceivedTimestamp the last {@code pongReceivedTimestamp}
      */
     public void setPongReceivedTimestamp(long pongReceivedTimestamp) {
@@ -176,7 +176,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Sets the {@code configEpoch}.
-     * 
+     *
      * @param configEpoch the {@code configEpoch}
      */
     public void setConfigEpoch(long configEpoch) {
@@ -191,7 +191,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * Sets the list of slots for which this {@link RedisClusterNode} is the
      * {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag#MASTER}. The list is empty if this node
      * is not a master or the node is not responsible for any slots at all.
-     * 
+     *
      * @param slots list of slots, must not be {@literal null} but may be empty
      */
     public void setSlots(List<Integer> slots) {
@@ -206,7 +206,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Set of {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag node flags}.
-     * 
+     *
      * @param flags the set of node flags.
      */
     public void setFlags(Set<NodeFlag> flags) {
@@ -257,7 +257,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * 
+     *
      * @param nodeFlag the node flag
      * @return true if the {@linkplain NodeFlag} is contained within the flags.
      */
@@ -266,7 +266,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * 
+     *
      * @param slot the slot hash
      * @return true if the slot is contained within the handled slots.
      */
@@ -277,7 +277,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Returns the {@link com.lambdaworks.redis.models.role.RedisInstance.Role} of the Redis Cluster node based on the
      * {@link #getFlags() flags}.
-     * 
+     *
      * @return the Redis Cluster node role
      */
     @Override

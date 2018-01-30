@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
 /**
  * Synchronous and thread-safe Redis PubSub API.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -31,7 +31,7 @@ public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
 
     /**
      * Add a new listener.
-     * 
+     *
      * @param listener Listener.
      * @deprecated Use {@link #getStatefulConnection()} and
      *             {@link StatefulRedisPubSubConnection#addListener(RedisPubSubListener)}.
@@ -41,7 +41,7 @@ public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
 
     /**
      * Remove an existing listener.
-     * 
+     *
      * @param listener Listener.
      * @deprecated Use {@link #getStatefulConnection()} and
      *             {@link StatefulRedisPubSubConnection#removeListener(RedisPubSubListener)}.
@@ -51,28 +51,28 @@ public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
 
     /**
      * Listen for messages published to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
      */
     void psubscribe(K... patterns);
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
      */
     void punsubscribe(K... patterns);
 
     /**
      * Listen for messages published to the given channels.
-     * 
+     *
      * @param channels the channels
      */
     void subscribe(K... channels);
 
     /**
      * Stop listening for messages posted to the given channels.
-     * 
+     *
      * @param channels the channels
      */
     void unsubscribe(K... channels);

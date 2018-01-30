@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,14 @@ import com.google.code.tempusfugit.temporal.Timeout;
 
 /**
  * Wait-Until helper.
- * 
+ *
  * @author Mark Paluch
  */
 public class Wait {
 
     /**
      * Initialize a {@link com.lambdaworks.Wait.WaitBuilder} to wait until the {@code supplier} supplies {@literal true}
-     * 
+     *
      * @param supplier
      * @return
      */
@@ -49,7 +49,7 @@ public class Wait {
 
     /**
      * Initialize a {@link com.lambdaworks.Wait.WaitBuilder} to wait until the {@code condition} does not throw exceptions
-     * 
+     *
      * @param condition
      * @return
      */
@@ -75,7 +75,7 @@ public class Wait {
     /**
      * Initialize a {@link com.lambdaworks.Wait.WaitBuilder} to wait until the {@code actualSupplier} provides an object that is
      * not equal to {@code expectation}
-     * 
+     *
      * @param expectation
      * @param actualSupplier
      * @param <T>

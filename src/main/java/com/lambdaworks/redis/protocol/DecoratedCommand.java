@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,14 @@ package com.lambdaworks.redis.protocol;
 
 /**
  * A decorated command allowing access to the underlying {@link #getDelegate()}.
- * 
+ *
  * @author Mark Paluch
  */
 public interface DecoratedCommand<K, V, T> {
 
     /**
      * The underlying command.
-     * 
+     *
      * @return never {@literal null}.
      */
     RedisCommand<K, V, T> getDelegate();

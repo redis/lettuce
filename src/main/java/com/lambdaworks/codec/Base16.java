@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.lambdaworks.codec;
 
 /**
  * High-performance base16 (AKA hex) codec.
- * 
+ *
  * @author Will Glozer
  */
 public class Base16 {
@@ -42,10 +42,10 @@ public class Base16 {
 
     /**
      * Encode bytes to base16 chars.
-     * 
+     *
      * @param src Bytes to encode.
      * @param upper Use upper or lowercase chars.
-     * 
+     *
      * @return Encoded chars.
      */
     public static char[] encode(byte[] src, boolean upper) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import io.netty.util.concurrent.Promise;
  * A {@link com.lambdaworks.redis.resource.EventLoopGroupProvider} suitable for testing. Preserves the event loop groups between
  * tests. Every time a new {@link TestEventLoopGroupProvider} instance is created, shutdown hook is added
  * {@link Runtime#addShutdownHook(Thread)}.
- * 
+ *
  * @author Mark Paluch
  */
 public class TestEventLoopGroupProvider extends DefaultEventLoopGroupProvider {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.lambdaworks.redis.pubsub.api.rx;
 
-import com.lambdaworks.redis.api.rx.Success;
 import rx.Observable;
 
 import com.lambdaworks.redis.api.rx.RedisReactiveCommands;
+import com.lambdaworks.redis.api.rx.Success;
 import com.lambdaworks.redis.pubsub.RedisPubSubListener;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnection;
 
@@ -34,7 +34,7 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
 
     /**
      * Add a new listener.
-     * 
+     *
      * @param listener Listener.
      * @deprecated Use {@link #getStatefulConnection()} and
      *             {@link StatefulRedisPubSubConnection#addListener(RedisPubSubListener)}.
@@ -44,7 +44,7 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
 
     /**
      * Remove an existing listener.
-     * 
+     *
      * @param listener Listener.
      * @deprecated Use {@link #getStatefulConnection()} and
      *             {@link StatefulRedisPubSubConnection#removeListener(RedisPubSubListener)}.
@@ -55,7 +55,7 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
     /**
      * Observable for messages ({@literal pmessage}) received though pattern subscriptions. The connection needs to be
      * subscribed to one or more patterns using {@link #psubscribe(Object[])}.
-     * 
+     *
      * @return hot observable for subscriptions to {@literal pmessage}'s.
      */
     Observable<PatternMessage<K, V>> observePatterns();
@@ -63,14 +63,14 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
     /**
      * Observable for messages ({@literal message}) received though channel subscriptions. The connection needs to be subscribed
      * to one or more channels using {@link #subscribe(Object[])}.
-     * 
+     *
      * @return hot observable for subscriptions to {@literal message}'s.
      */
     Observable<ChannelMessage<K, V>> observeChannels();
 
     /**
      * Listen for messages published to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
      * @return Observable&lt;Success&gt; Observable for {@code psubscribe} command
      */
@@ -78,7 +78,7 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
      * @return Observable&lt;Success&gt; Observable for {@code punsubscribe} command
      */
@@ -86,7 +86,7 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
 
     /**
      * Listen for messages published to the given channels.
-     * 
+     *
      * @param channels the channels
      * @return Observable&lt;Success&gt; Observable for {@code subscribe} command
      */
@@ -94,7 +94,7 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
 
     /**
      * Stop listening for messages posted to the given channels.
-     * 
+     *
      * @param channels the channels
      * @return Observable&lt;Success&gt; Observable for {@code unsubscribe} command.
      */

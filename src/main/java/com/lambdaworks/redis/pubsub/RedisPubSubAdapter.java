@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.lambdaworks.redis.pubsub;
 
 /**
  * Convenience adapter with an empty implementation of all {@link RedisPubSubListener} callback methods.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
- * 
+ *
  * @author Will Glozer
  */
 public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {

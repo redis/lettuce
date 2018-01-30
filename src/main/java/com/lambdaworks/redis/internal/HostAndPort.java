@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.lambdaworks.redis.LettuceStrings;
 
 /**
  * An immutable representation of a host and port.
- * 
+ *
  * @author Mark Paluch
  * @since 4.2
  */
@@ -31,7 +31,7 @@ public class HostAndPort {
     public final int port;
 
     /**
-     * 
+     *
      * @param hostText must not be empty or {@literal null}.
      * @param port
      */
@@ -44,7 +44,7 @@ public class HostAndPort {
 
     /**
      * Create a {@link HostAndPort} of {@code host} and {@code port}
-     * 
+     *
      * @param host the hostname
      * @param port a valid port
      * @return the {@link HostAndPort} of {@code host} and {@code port}

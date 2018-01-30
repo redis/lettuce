@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.lambdaworks.redis;
 
-import static com.lambdaworks.redis.protocol.CommandKeyword.*;
+import static com.lambdaworks.redis.protocol.CommandKeyword.COUNT;
+import static com.lambdaworks.redis.protocol.CommandKeyword.MATCH;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
@@ -23,7 +24,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 /**
  * Argument list builder for the redis scan commans (scan, hscan, sscan, zscan) . Static import the methods from {@link Builder}
  * and chain the method calls: {@code matches("weight_*").limit(0, 2)}.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -46,7 +47,7 @@ public class ScanArgs {
 
         /**
          * Create a new instance of {@link ScanArgs} with limit.
-         * 
+         *
          * @param count number of elements to scan
          * @return a new instance of {@link ScanArgs}
          */
@@ -56,7 +57,7 @@ public class ScanArgs {
 
         /**
          * Create a new instance of {@link ScanArgs} with match filter.
-         * 
+         *
          * @param matches the filter
          * @return a new instance of {@link ScanArgs}
          */
@@ -67,7 +68,7 @@ public class ScanArgs {
 
     /**
      * Match filter
-     * 
+     *
      * @param match the filter
      * @return the current instance of {@link ScanArgs}
      */
@@ -79,7 +80,7 @@ public class ScanArgs {
 
     /**
      * Limit the scan by count
-     * 
+     *
      * @param count number of elements to scan
      * @return the current instance of {@link ScanArgs}
      */

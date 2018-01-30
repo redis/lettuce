@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.lambdaworks.redis.protocol.LettuceCharsets;
 
 /**
  * A {@link RedisCodec} that handles UTF-8 encoded keys and values.
- * 
+ *
  * @author Will Glozer
  */
 public class Utf8StringCodec implements RedisCodec<String, String> {

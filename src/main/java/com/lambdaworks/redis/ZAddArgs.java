@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 /**
  * Argument list builder for the improved redis <a href="http://redis.io/commands/zadd">ZADD</a> command starting from Redis
  * 3.0.2. Static import the methods from {@link Builder} and call the methods: {@code xx()} or {@code nx()} .
- * 
+ *
  * @author Mark Paluch
  */
 public class ZAddArgs {

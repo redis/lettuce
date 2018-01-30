@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
 
     /**
      * Creates a new {@link DirContextDnsResolver} using a collection of DNS servers.
-     * 
+     *
      * @param dnsServer must not be {@literal null} and not empty.
      */
     public DirContextDnsResolver(String dnsServer) {
@@ -93,7 +93,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
 
     /**
      * Creates a new {@link DirContextDnsResolver} for the given stack preference and {@code properties}.
-     * 
+     *
      * @param preferIpv4 flag to prefer IPv4 over IPv6 address resolution.
      * @param preferIpv6 flag to prefer IPv6 over IPv4 address resolution.
      * @param properties custom properties for creating the context, must not be {@literal null}.
@@ -147,7 +147,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
 
     /**
      * Perform hostname to address resolution.
-     * 
+     *
      * @param host the hostname, must not be empty or {@literal null}.
      * @return array of one or more {@link InetAddress adresses}
      * @throws UnknownHostException
@@ -175,7 +175,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
 
     /**
      * Resolve a hostname
-     * 
+     *
      * @param hostname
      * @param inetAddresses
      * @throws NamingException
@@ -200,7 +200,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
 
     /**
      * Resolves {@code CNAME} records to {@link InetAddress adresses}.
-     * 
+     *
      * @param hostname
      * @return
      * @throws NamingException
@@ -239,7 +239,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
 
     /**
      * Resolve an attribute for a hostname.
-     * 
+     *
      * @param hostname
      * @param attrName
      * @return

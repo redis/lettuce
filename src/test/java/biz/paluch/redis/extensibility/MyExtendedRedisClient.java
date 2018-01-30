@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
  */
 package biz.paluch.redis.extensibility;
 
+import java.util.concurrent.TimeUnit;
+
+import javax.enterprise.inject.Alternative;
+
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.pubsub.PubSubCommandHandler;
 import com.lambdaworks.redis.pubsub.StatefulRedisPubSubConnectionImpl;
 
-import javax.enterprise.inject.Alternative;
-import java.util.concurrent.TimeUnit;
-
 /**
  * Demo code for extending a RedisClient.
- * 
+ *
  * @author Mark Paluch
  */
 @Alternative

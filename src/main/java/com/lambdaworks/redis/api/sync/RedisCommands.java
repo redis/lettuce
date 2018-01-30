@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
 
 /**
- * 
+ *
  * A complete synchronous and thread-safe Redis API with 400+ Methods.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -37,7 +37,7 @@ public interface RedisCommands<K, V> extends RedisHashCommands<K, V>, RedisKeyCo
 
     /**
      * Set the default timeout for operations.
-     * 
+     *
      * @param timeout the timeout value
      * @param unit the unit of the timeout value
      */
@@ -45,7 +45,7 @@ public interface RedisCommands<K, V> extends RedisHashCommands<K, V>, RedisKeyCo
 
     /**
      * Authenticate to the server.
-     * 
+     *
      * @param password the password
      * @return String simple-string-reply
      */
@@ -53,7 +53,7 @@ public interface RedisCommands<K, V> extends RedisHashCommands<K, V>, RedisKeyCo
 
     /**
      * Change the selected database for the current Commands.
-     * 
+     *
      * @param db the database number
      * @return String simple-string-reply
      */

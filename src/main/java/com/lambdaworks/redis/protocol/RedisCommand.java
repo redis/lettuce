@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.protocol;
 
 import com.lambdaworks.redis.output.CommandOutput;
+
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -23,7 +24,7 @@ import io.netty.buffer.ByteBuf;
  *
  * Commands can be wrapped. Outer commands have to notify inner commands but inner commands do not communicate with outer
  * commands.
- * 
+ *
  * @author Mark Paluch
  * @param <K> Key type.
  * @param <V> Value type.
@@ -34,7 +35,7 @@ public interface RedisCommand<K, V, T> {
 
     /**
      * The command output. Can be null.
-     * 
+     *
      * @return the command output.
      */
     CommandOutput<K, V, T> getOutput();
@@ -50,7 +51,7 @@ public interface RedisCommand<K, V, T> {
     void cancel();
 
     /**
-     * 
+     *
      * @return the current command args
      */
     CommandArgs<K, V> getArgs();
@@ -90,7 +91,7 @@ public interface RedisCommand<K, V, T> {
 
     /**
      * Set a new output. Only possible as long as the command is not completed/cancelled.
-     * 
+     *
      * @param output the new command output
      * @throws IllegalStateException if the command is cancelled/completed
      */

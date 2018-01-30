@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.lambdaworks.redis;
 /**
  * Exception that gets thrown when Redis indicates absence of a Lua script referenced by its SHA1 digest with a {@code NOSCRIPT}
  * error response.
- * 
+ *
  * @author Mark Paluch
  * @since 4.5
  */
@@ -27,7 +27,7 @@ public class RedisNoScriptException extends RedisCommandExecutionException {
 
     /**
      * Create a {@code RedisNoScriptException} with the specified detail message.
-     * 
+     *
      * @param msg the detail message.
      */
     public RedisNoScriptException(String msg) {
@@ -36,7 +36,7 @@ public class RedisNoScriptException extends RedisCommandExecutionException {
 
     /**
      * Create a {@code RedisNoScriptException} with the specified detail message and nested exception.
-     * 
+     *
      * @param msg the detail message.
      * @param cause the nested exception.
      */

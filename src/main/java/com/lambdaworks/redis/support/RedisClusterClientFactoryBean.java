@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,11 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Factory Bean for {@link RedisClusterClient} instances. Needs either a {@link URI} or a {@link RedisURI} as input and allows
- * to reuse {@link com.lambdaworks.redis.resource.ClientResources}. URI Format: {@code
+ * to reuse {@link com.lambdaworks.redis.resource.ClientResources}. URI Format:
+ * {@code
  *     redis://[password@]host[:port][,host2[:port2]]
  * }
- * 
+ *
  * {@code
  *     rediss://[password@]host[:port][,host2[:port2]]
  * }

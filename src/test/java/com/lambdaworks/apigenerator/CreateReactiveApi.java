@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 package com.lambdaworks.apigenerator;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.lambdaworks.redis.internal.LettuceSets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -31,10 +33,11 @@ import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
+import com.lambdaworks.redis.internal.LettuceSets;
 
 /**
  * Create reactive API based on the templates.
- * 
+ *
  * @author Mark Paluch
  */
 @RunWith(Parameterized.class)
@@ -79,7 +82,7 @@ public class CreateReactiveApi {
 
     /**
      * Mutate type comment.
-     * 
+     *
      * @return
      */
     protected Function<String, String> commentMutator() {
@@ -98,7 +101,7 @@ public class CreateReactiveApi {
 
     /**
      * Mutate type to async result.
-     * 
+     *
      * @return
      */
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
@@ -127,7 +130,7 @@ public class CreateReactiveApi {
 
     /**
      * Supply additional imports.
-     * 
+     *
      * @return
      */
     protected Supplier<List<String>> importSupplier() {

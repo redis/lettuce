@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 /**
  * Parser for redis <a href="http://redis.io/commands/command">COMMAND</a>/<a
  * href="http://redis.io/commands/command-info">COMMAND INFO</a>command output.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -61,7 +61,7 @@ public class CommandDetailParser {
 
     /**
      * Parse the output of the redis COMMAND/COMMAND INFO command and convert to a list of {@link CommandDetail}.
-     * 
+     *
      * @param commandOutput the command output, must not be {@literal null}
      * @return RedisInstance
      */

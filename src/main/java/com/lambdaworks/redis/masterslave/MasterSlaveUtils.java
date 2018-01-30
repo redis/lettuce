@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class MasterSlaveUtils {
 
     /**
      * Check if properties changed.
-     * 
+     *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
      * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the URIs are changed.
@@ -52,7 +52,7 @@ class MasterSlaveUtils {
 
     /**
      * Lookup a {@link RedisNodeDescription} by {@link RedisURI}.
-     * 
+     *
      * @param nodes
      * @param lookupUri
      * @return the {@link RedisNodeDescription} or {@literal null}
@@ -63,7 +63,7 @@ class MasterSlaveUtils {
 
     /**
      * Lookup a {@link RedisNodeDescription} by {@code host} and {@code port}.
-     * 
+     *
      * @param nodes
      * @param host
      * @param port
@@ -81,7 +81,7 @@ class MasterSlaveUtils {
 
     /**
      * Check for {@code MASTER} or {@code SLAVE} roles and the URI.
-     * 
+     *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
      * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the URI changed.

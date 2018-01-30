@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.lambdaworks.redis.cluster.api.NodeSelectionSupport;
  * the quality or performance of the API in question, only the fact that it is not "API-frozen."
  *
  * The NodeSelection command API and its result types are a base for discussions.
- * 
+ *
  * @author Mark Paluch
  * @since 4.0
  */

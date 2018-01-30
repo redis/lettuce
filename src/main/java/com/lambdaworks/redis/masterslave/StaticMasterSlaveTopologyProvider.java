@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Topology provider for a static node collection. This provider uses a static collection of nodes to determine the role of each
  * {@link RedisURI node}. Node roles may change during runtime but the configuration must remain the same. This
  * {@link TopologyProvider} does not auto-discover nodes.
- * 
+ *
  * @author Mark Paluch
  */
 public class StaticMasterSlaveTopologyProvider implements TopologyProvider {

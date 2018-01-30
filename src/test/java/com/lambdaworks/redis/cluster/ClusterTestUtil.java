@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class ClusterTestUtil {
 
     /**
      * Retrieve the cluster node Id from the {@code connection}.
-     * 
+     *
      * @param connection
      * @return
      */
@@ -48,7 +48,7 @@ public class ClusterTestUtil {
 
     /**
      * Retrieve the {@link RedisClusterNode} from the {@code connection}.
-     * 
+     *
      * @param connection
      * @return
      */
@@ -65,7 +65,7 @@ public class ClusterTestUtil {
 
     /**
      * Flush databases of all cluster nodes.
-     * 
+     *
      * @param connection the cluster connection
      */
     public static void flushDatabaseOfAllNodes(StatefulRedisClusterConnection<?, ?> connection) {
@@ -81,7 +81,7 @@ public class ClusterTestUtil {
 
     /**
      * Create an API wrapper which exposes the {@link RedisCommands} API by using internally a cluster connection.
-     * 
+     *
      * @param connection
      * @return
      */
