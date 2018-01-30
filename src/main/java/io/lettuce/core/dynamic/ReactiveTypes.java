@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,13 @@ import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
 
-import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.internal.LettuceClassUtils;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import rx.Completable;
 import rx.Observable;
 import rx.Single;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceClassUtils;
 
 /**
  * Utility class to expose details about reactive wrapper types. This class exposes whether a reactive wrapper is supported in

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * Generic fallback command to collect arbitrary Redis responses in a {@link List} represented as String. Used as buffer when
  * received a Redis response without a command to correlate.
- * 
+ *
  * @author Mark Paluch
  * @since 4.5
  */

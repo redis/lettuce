@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import io.netty.channel.ChannelFuture;
 /**
  * Utility methods for {@link java.util.concurrent.Future} handling. This class is part of the internal API and may change
  * without further notice.
- * 
+ *
  * @author Mark Paluch
  * @since 5.1
  */
@@ -34,7 +34,7 @@ public abstract class Futures {
 
     /**
      * Create a {@link CompletableFuture} that is completed exceptionally with {@code throwable}.
-     * 
+     *
      * @param throwable must not be {@literal null}.
      * @return the exceptionally completed {@link CompletableFuture}.
      */
@@ -50,7 +50,7 @@ public abstract class Futures {
 
     /**
      * Adapt Netty's {@link ChannelFuture} emitting a {@link Void} result.
-     * 
+     *
      * @param future the {@link ChannelFuture} to adapt.
      * @return the {@link CompletableFuture}.
      */
@@ -66,7 +66,7 @@ public abstract class Futures {
 
     /**
      * Adapt Netty's {@link ChannelFuture} emitting a {@link Void} result into a {@link CompletableFuture}.
-     * 
+     *
      * @param future
      * @return the {@link CompletableFuture}.
      */

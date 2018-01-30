@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
     /**
      * Request to close the connection and return the {@link CompletableFuture} that is notified about its progress. The
      * connection will become not usable anymore as soon as this method was called.
-     * 
+     *
      * @return a {@link CompletableFuture} that is notified once the operation completes, either because the operation was
      *         successful or because of an error.
      * @since 5.1

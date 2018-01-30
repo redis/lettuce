@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandKeyword.*;
-import static io.lettuce.core.protocol.CommandType.*;
+import static io.lettuce.core.protocol.CommandKeyword.ADDR;
+import static io.lettuce.core.protocol.CommandKeyword.ID;
+import static io.lettuce.core.protocol.CommandKeyword.SKIPME;
+import static io.lettuce.core.protocol.CommandType.TYPE;
 
 import io.lettuce.core.protocol.CommandArgs;
 

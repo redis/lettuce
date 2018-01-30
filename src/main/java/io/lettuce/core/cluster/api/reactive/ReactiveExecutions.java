@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ package io.lettuce.core.cluster.api.reactive;
 
 import java.util.Collection;
 
-import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-
 import reactor.core.publisher.Flux;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 
 /**
  * Execution holder for a reactive command to be executed on multiple nodes.

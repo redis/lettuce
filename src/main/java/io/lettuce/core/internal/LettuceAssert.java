@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package io.lettuce.core.internal;
 
-import io.lettuce.core.LettuceStrings;
-
 import java.util.Collection;
+
+import io.lettuce.core.LettuceStrings;
 
 /**
  * Assertion utility class that assists in validating arguments. This class is part of the internal API and may change without
