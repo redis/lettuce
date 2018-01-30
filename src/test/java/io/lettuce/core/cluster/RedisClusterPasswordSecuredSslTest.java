@@ -132,7 +132,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
     @Test
     public void connectionWithoutPasswordShouldFail() throws Exception {
 
-        RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
+        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
         try {
@@ -147,7 +147,7 @@ public class RedisClusterPasswordSecuredSslTest extends AbstractTest {
     @Test
     public void connectionWithoutPasswordShouldFail2() throws Exception {
 
-        RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
+        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
         try {
