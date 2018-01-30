@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -277,6 +277,64 @@ public class TopologyComparators {
             }
 
             return h1.compareToIgnoreCase(h2);
+        }
+    }
+
+    /**
+     * Sort action for topology. Defaults to sort by latency. Can be set via {@code io.lettuce.core.topology.sort} system
+     * property.
+     *
+     * @since 4.5
+     */
+    enum SortAction {
+
+        /**
+         * Sort by latency.
+         */
+        BY_LATENCY {
+            @Override
+            void sort(Partitions partitions) {
+                partitions.getPartitions().sort(TopologyComparators.LatencyComparator.INSTANCE);
+            }
+        },
+
+        /**
+         * Do not sort.
+         */
+        NONE {
+            @Override
+            void sort(Partitions partitions) {
+
+            }
+        },
+
+        /**
+         * Randomize nodes.
+         */
+        RANDOMIZE {
+            @Override
+            void sort(Partitions partitions) {
+                Collections.shuffle(partitions.getPartitions());
+            }
+        };
+
+        abstract void sort(Partitions partitions);
+
+        /**
+         * @return determine {@link SortAction} and fall back to {@link SortAction#BY_LATENCY} if sort action cannot be
+         *         resolved.
+         */
+        static SortAction getSortAction() {
+
+            String sortAction = System.getProperty("io.lettuce.core.topology.sort", BY_LATENCY.name());
+
+            for (SortAction action : values()) {
+                if (sortAction.equalsIgnoreCase(action.name())) {
+                    return action;
+                }
+            }
+
+            return BY_LATENCY;
         }
     }
 }

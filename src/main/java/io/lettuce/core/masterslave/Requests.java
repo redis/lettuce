@@ -16,12 +16,14 @@
 package io.lettuce.core.masterslave;
 
 import static io.lettuce.core.masterslave.MasterSlaveUtils.findNodeByUri;
+import static io.lettuce.core.masterslave.TopologyComparators.LatencyComparator;
 
 import java.util.*;
 
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.masterslave.TopologyComparators.SortAction;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
@@ -74,12 +76,11 @@ class Requests extends
             result.add(redisNodeDescription);
         }
 
-        TopologyComparators.LatencyComparator comparator = new TopologyComparators.LatencyComparator(latencies);
 
-        result.sort(comparator);
+        SortAction sortAction = SortAction.getSortAction();
+        sortAction.sort(result, new LatencyComparator(latencies));
 
         emission.success(result);
-
     }
 
     protected Set<RedisURI> nodes() {

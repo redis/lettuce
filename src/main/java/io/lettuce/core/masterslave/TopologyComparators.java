@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package io.lettuce.core.masterslave;
 
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.RedisURI;
@@ -62,26 +64,60 @@ class TopologyComparators {
     }
 
     /**
-     * Compare {@link RedisURI} based on their host and port representation.
+     * Sort action for topology. Defaults to sort by latency. Can be set via {@code io.lettuce.core.topology.sort} system
+     * property.
+     *
+     * @since 4.5
      */
-    enum RedisURIComparator implements Comparator<RedisURI> {
+    enum SortAction {
 
-        INSTANCE;
+        /**
+         * Sort by latency.
+         */
+        BY_LATENCY {
+            @Override
+            void sort(List<RedisNodeDescription> nodes, Comparator<? super RedisNodeDescription> latencyComparator) {
+                nodes.sort(latencyComparator);
+            }
+        },
 
-        @Override
-        public int compare(RedisURI o1, RedisURI o2) {
-            String h1 = "";
-            String h2 = "";
+        /**
+         * Do not sort.
+         */
+        NONE {
+            @Override
+            void sort(List<RedisNodeDescription> nodes, Comparator<? super RedisNodeDescription> latencyComparator) {
 
-            if (o1 != null) {
-                h1 = o1.getHost() + ":" + o1.getPort();
+            }
+        },
+
+        /**
+         * Randomize nodes.
+         */
+        RANDOMIZE {
+            @Override
+            void sort(List<RedisNodeDescription> nodes, Comparator<? super RedisNodeDescription> latencyComparator) {
+                Collections.shuffle(nodes);
+            }
+        };
+
+        abstract void sort(List<RedisNodeDescription> nodes, Comparator<? super RedisNodeDescription> latencyComparator);
+
+        /**
+         * @return determine {@link SortAction} and fall back to {@link SortAction#BY_LATENCY} if sort action cannot be
+         *         resolved.
+         */
+        static SortAction getSortAction() {
+
+            String sortAction = System.getProperty("io.lettuce.core.topology.sort", BY_LATENCY.name());
+
+            for (SortAction action : values()) {
+                if (sortAction.equalsIgnoreCase(action.name())) {
+                    return action;
+                }
             }
 
-            if (o2 != null) {
-                h2 = o2.getHost() + ":" + o2.getPort();
-            }
-
-            return h1.compareToIgnoreCase(h2);
+            return BY_LATENCY;
         }
     }
 }

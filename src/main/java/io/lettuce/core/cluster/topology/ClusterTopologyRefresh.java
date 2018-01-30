@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.cluster.topology.TopologyComparators.SortAction;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.SocketAddressResolver;
@@ -166,8 +167,10 @@ public class ClusterTopologyRefresh {
             node.setLatencyNs(latencies.get(node.getNodeId()));
         }
 
+        SortAction sortAction = SortAction.getSortAction();
         for (NodeTopologyView view : views) {
-            view.getPartitions().getPartitions().sort(TopologyComparators.LatencyComparator.INSTANCE);
+
+            sortAction.sort(view.getPartitions());
             view.getPartitions().updateCache();
         }
 
