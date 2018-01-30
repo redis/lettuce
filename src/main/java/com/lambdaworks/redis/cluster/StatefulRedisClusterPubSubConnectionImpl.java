@@ -17,14 +17,12 @@ package com.lambdaworks.redis.cluster;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.AbstractRedisClient;
-import com.lambdaworks.redis.RedisChannelWriter;
-import com.lambdaworks.redis.RedisException;
-import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 import com.lambdaworks.redis.cluster.pubsub.RedisClusterPubSubAdapter;
@@ -112,7 +110,11 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     }
 
     void inspectRedisState() {
-        this.state = new RedisState(CommandDetailParser.parse(sync().command()));
+        try {
+            this.state = new RedisState(CommandDetailParser.parse(sync().command()));
+        } catch (RedisCommandExecutionException e) {
+            this.state = new RedisState(Collections.emptyList());
+        }
     }
 
     RedisState getState() {
