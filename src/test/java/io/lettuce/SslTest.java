@@ -88,6 +88,25 @@ public class SslTest extends AbstractTest {
                     .withVerifyPeer(true)
                     .build());
 
+    private static final List<RedisURI> MASTER_SLAVE_URIS_WITH_ONE_INVALID = Arrays.asList(
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
+                    .withVerifyPeer(true)
+                    .build(),
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
+                    .withVerifyPeer(true)
+                    .build(),
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 2)
+                    .withVerifyPeer(true)
+                    .build());
+
+    private static final List<RedisURI> MASTER_SLAVE_URIS_WITH_ALL_INVALID = Arrays.asList(
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 2)
+                    .withVerifyPeer(true)
+                    .build(),
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 3)
+                    .withVerifyPeer(true)
+                    .build());
+
     private static RedisClient redisClient;
 
     @BeforeClass
@@ -320,6 +339,30 @@ public class SslTest extends AbstractTest {
     @Test(expected = RedisConnectionException.class)
     public void masterSlaveSslWithVerificationWillFail() {
         MasterSlave.connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_VERIFY);
+    }
+
+    @Test
+    public void masterSlaveSslWithOneInvalidHostWillSucceed() {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(TRUSTSTORE_FILE) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_WITH_ONE_INVALID);
+    }
+
+    @Test(expected = RedisConnectionException.class)
+    public void masterSlaveSslWithAllInvalidHostsWillFail() {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(TRUSTSTORE_FILE) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_WITH_ALL_INVALID);
     }
 
     @Test
