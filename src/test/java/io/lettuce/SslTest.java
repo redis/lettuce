@@ -300,33 +300,6 @@ public class SslTest extends AbstractTest {
     }
 
     @Test
-    public void masterSlaveWithOpenSsl() {
-
-        assumeTrue(OpenSsl.isAvailable());
-
-        SslOptions sslOptions = SslOptions.builder() //
-                .openSslProvider() //
-                .truststore(TRUSTSTORE_FILE) //
-                .build();
-        setOptions(sslOptions);
-
-        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY);
-    }
-
-    @Test(expected = RedisConnectionException.class)
-    public void masterSlaveWithOpenSslFailsWithWrongTruststore() {
-
-        assumeTrue(OpenSsl.isAvailable());
-
-        SslOptions sslOptions = SslOptions.builder() //
-                .openSslProvider() //
-                .build();
-        setOptions(sslOptions);
-
-        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY);
-    }
-
-    @Test
     public void masterSlavePingBeforeActivate() {
 
         redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
