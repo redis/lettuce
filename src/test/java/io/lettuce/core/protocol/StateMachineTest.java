@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.*;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 

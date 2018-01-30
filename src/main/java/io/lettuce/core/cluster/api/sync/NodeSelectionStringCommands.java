@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,11 @@ package io.lettuce.core.cluster.api.sync;
 
 import java.util.List;
 import java.util.Map;
-import io.lettuce.core.output.KeyValueStreamingChannel;
-import io.lettuce.core.output.ValueStreamingChannel;
+
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.SetArgs;
-import io.lettuce.core.Value;
-import reactor.core.publisher.Mono;
+import io.lettuce.core.output.KeyValueStreamingChannel;
 
 /**
  * Synchronous executed commands on a node selection for Strings.

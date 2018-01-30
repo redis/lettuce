@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.models.role.RedisNodeDescription;
-
-import reactor.core.publisher.Mono;
 
 /**
  * Methods to support a Cluster-wide SCAN operation over multiple hosts.

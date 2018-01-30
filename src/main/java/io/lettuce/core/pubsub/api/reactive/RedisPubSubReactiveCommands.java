@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package io.lettuce.core.pubsub.api.reactive;
 
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
 /**
  * Asynchronous and thread-safe Redis PubSub API.

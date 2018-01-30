@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.dynamic.CommandMethod;
 import io.lettuce.core.dynamic.annotation.Command;
 import io.lettuce.core.dynamic.annotation.CommandNaming;
 import io.lettuce.core.dynamic.annotation.CommandNaming.LetterCase;
 import io.lettuce.core.dynamic.annotation.CommandNaming.Strategy;
-import io.lettuce.core.dynamic.CommandMethod;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
