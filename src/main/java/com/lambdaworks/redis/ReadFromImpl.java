@@ -18,6 +18,7 @@ package com.lambdaworks.redis;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import com.lambdaworks.redis.internal.LettuceLists;
 import com.lambdaworks.redis.models.role.RedisInstance;
@@ -110,6 +111,36 @@ class ReadFromImpl {
                     result.add(node);
                 }
             }
+
+            for (RedisNodeDescription node : nodes) {
+                if (node.getRole() == RedisInstance.Role.MASTER) {
+                    result.add(node);
+                }
+            }
+
+            return result;
+        }
+    }
+
+    /**
+     * Read from master and slaves. Prefer slave reads and fall back to master if the no slave is not available. Order slaves randomly.
+     */
+    static final class ReadFromRandomSlavePreferred extends ReadFrom {
+
+        private final Random rnd = new Random(System.nanoTime());
+
+        @Override
+        public List<RedisNodeDescription> select(Nodes nodes) {
+
+            List<RedisNodeDescription> result = new ArrayList<>(nodes.getNodes().size());
+
+            for (RedisNodeDescription node : nodes) {
+                if (node.getRole() == RedisInstance.Role.SLAVE) {
+                    result.add(node);
+                }
+            }
+
+            Collections.shuffle(result, rnd);
 
             for (RedisNodeDescription node : nodes) {
                 if (node.getRole() == RedisInstance.Role.MASTER) {
