@@ -285,22 +285,6 @@ work/stunnel.conf:
 	@echo capath=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
 	@echo cafile=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
 
-	@echo [stunnel-master-slave-client-cert-node-1] >> $@
-	@echo accept = 127.0.0.1:8445 >> $@
-	@echo connect = 127.0.0.1:6482 >> $@
-	@echo cert=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
-	@echo key=$(ROOT_DIR)/work/ca/private/localhost.decrypted.key.pem >> $@
-	@echo cafile=$(ROOT_DIR)/work/ca/certs/ca.cert.pem >> $@
-	@echo verify=2 >> $@
-
-	@echo [stunnel-master-slave-client-cert-node-2] >> $@
-	@echo accept = 127.0.0.1:8446 >> $@
-	@echo connect = 127.0.0.1:6483 >> $@
-	@echo cert=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
-	@echo key=$(ROOT_DIR)/work/ca/private/localhost.decrypted.key.pem >> $@
-	@echo cafile=$(ROOT_DIR)/work/ca/certs/ca.cert.pem >> $@
-	@echo verify=2 >> $@
-
 work/stunnel.pid: work/stunnel.conf ssl-keys
 	which stunnel4 >/dev/null 2>&1 && stunnel4 $(ROOT_DIR)/work/stunnel.conf || stunnel $(ROOT_DIR)/work/stunnel.conf
 

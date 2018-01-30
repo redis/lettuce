@@ -88,15 +88,6 @@ public class SslTest extends AbstractTest {
                     .withVerifyPeer(true)
                     .build());
 
-
-    private static final List<RedisURI> MASTER_SLAVE_URIS_CLIENT_CERT_AUTH = Arrays.asList(
-            masterSlaveSSLURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 2)
-                    .withVerifyPeer(true)
-                    .build(),
-            masterSlaveSSLURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 3)
-                    .withVerifyPeer(true)
-                    .build());
-
     private static RedisClient redisClient;
 
     @BeforeClass
@@ -283,32 +274,6 @@ public class SslTest extends AbstractTest {
         setOptions(sslOptions);
 
         verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY);
-    }
-
-    @Test
-    public void masterSlaveWithClientCertificates() throws Exception {
-
-        SslOptions sslOptions = SslOptions.builder() //
-                .jdkSslProvider() //
-                .keystore(new File(KEYSTORE), "changeit".toCharArray()) //
-                .truststore(TRUSTSTORE_FILE) //
-                .build();
-        setOptions(sslOptions);
-
-        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_CLIENT_CERT_AUTH);
-    }
-
-
-    @Test(expected = RedisConnectionException.class)
-    public void masterSlaveWithClientCertificatesWithoutKeystore() throws Exception {
-
-        SslOptions sslOptions = SslOptions.builder() //
-                .jdkSslProvider() //
-                .truststore(TRUSTSTORE_FILE) //
-                .build();
-        setOptions(sslOptions);
-
-        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_CLIENT_CERT_AUTH);
     }
 
     @Test(expected = RedisConnectionException.class)
