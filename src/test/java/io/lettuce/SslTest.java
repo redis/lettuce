@@ -72,19 +72,19 @@ public class SslTest extends AbstractTest {
             .build();
 
     private static final List<RedisURI> MASTER_SLAVE_URIS_NO_VERIFY = Arrays.asList(
-            masterSlaveSSLURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
                     .withVerifyPeer(false)
                     .build(),
-            masterSlaveSSLURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
                     .withVerifyPeer(false)
                     .build());
 
 
     private static final List<RedisURI> MASTER_SLAVE_URIS_VERIFY = Arrays.asList(
-            masterSlaveSSLURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
                     .withVerifyPeer(true)
                     .build(),
-            masterSlaveSSLURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
+            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
                     .withVerifyPeer(true)
                     .build());
 
@@ -392,12 +392,6 @@ public class SslTest extends AbstractTest {
     private static RedisURI.Builder sslURIBuilder(int portOffset) {
         return RedisURI.Builder.redis(host(), sslPort(portOffset))
                 .withSsl(true);
-    }
-
-    private static RedisURI.Builder masterSlaveSSLURIBuilder(int portOffset) {
-        return sslURIBuilder(portOffset)
-                // TODO - why do the master/slave tests need this but the standalone ones don't???
-                .withTimeout(Duration.of(500, ChronoUnit.MILLIS));
     }
 
     private URL truststoreURL() throws MalformedURLException {

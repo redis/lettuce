@@ -91,11 +91,7 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
             RedisURI uri) {
 
         return Mono.fromCompletionStage(redisClient.connectAsync(StringCodec.UTF8, uri)) //
-                .onErrorResume(t -> {
-
-                    logger.warn("Cannot connect to {}", uri, t);
-                    return Mono.empty();
-                }) //
+                .doOnError(t -> logger.warn("Cannot connect to {}", uri, t)) //
                 .doOnNext(connections::add) //
                 .flatMap(connection -> {
 
