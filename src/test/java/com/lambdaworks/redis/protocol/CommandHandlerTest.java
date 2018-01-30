@@ -56,6 +56,7 @@ import edu.umd.cs.mtc.MultithreadedTestCase;
 import edu.umd.cs.mtc.TestFramework;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
+import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.ImmediateEventExecutor;
@@ -430,10 +431,21 @@ public class CommandHandlerTest {
     }
 
     @Test
-    public void isConnectedShouldReportFalseForCLOSED() throws Exception {
+    public void isConnectedShouldReportFalseForCLOSED() {
 
         sut.setState(CommandHandler.LifecycleState.CLOSED);
         assertThat(sut.isConnected()).isFalse();
+    }
+
+    @Test
+    public void shouldCancelCommandsOnEncoderException() throws Exception {
+
+        sut.channelActive(context);
+        when(promise.cause()).thenReturn(new EncoderException("foo"));
+
+        sut.write(command);
+
+        assertThat(command.exception).isInstanceOf(EncoderException.class);
     }
 
     @Test
