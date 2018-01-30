@@ -80,8 +80,7 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
                 .collectList() //
                 .map((nodeDescriptions) -> {
                     if (nodeDescriptions.isEmpty()) {
-                        String msg = String.format("Failed to connect to any nodes in %s", redisURIs);
-                        throw new RedisConnectionException(msg);
+                        throw new RedisConnectionException(String.format("Failed to connect to any nodes in %s", redisURIs));
                     } else {
                         return nodeDescriptions;
                     }
