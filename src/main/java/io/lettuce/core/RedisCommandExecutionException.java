@@ -45,7 +45,6 @@ public class RedisCommandExecutionException extends RedisException {
     /**
      * Create a {@code RedisCommandExecutionException} with the specified nested exception.
      *
-     * @param msg the detail message.
      * @param cause the nested exception.
      */
     public RedisCommandExecutionException(Throwable cause) {

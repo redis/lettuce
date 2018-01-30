@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import io.lettuce.core.AbstractRedisReactiveCommands;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -39,6 +40,8 @@ import io.lettuce.core.models.command.CommandDetail;
 import io.lettuce.core.models.command.CommandDetailParser;
 import io.lettuce.core.protocol.LettuceCharsets;
 import io.lettuce.core.protocol.RedisCommand;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Factory to create Redis Command interface instances.
@@ -86,6 +89,7 @@ import io.lettuce.core.protocol.RedisCommand;
  */
 public class RedisCommandFactory {
 
+    private final InternalLogger log = InternalLoggerFactory.getInstance(getClass());
     private final StatefulConnection<?, ?> connection;
     private final DefaultCommandMethodVerifier commandMethodVerifier;
     private final List<RedisCodec<?, ?>> redisCodecs = new ArrayList<>();
@@ -117,24 +121,27 @@ public class RedisCommandFactory {
 
         this.connection = connection;
         this.redisCodecs.addAll(LettuceLists.newList(redisCodecs));
-
-        commandMethodVerifier = new DefaultCommandMethodVerifier(getCommands(connection));
+        this.commandMethodVerifier = new DefaultCommandMethodVerifier(getCommands(connection));
     }
 
     @SuppressWarnings("unchecked")
     private List<CommandDetail> getCommands(StatefulConnection<?, ?> connection) {
 
         List<Object> commands = Collections.emptyList();
-        if (connection instanceof StatefulRedisConnection) {
-            commands = ((StatefulRedisConnection) connection).sync().command();
-        }
+        try {
+            if (connection instanceof StatefulRedisConnection) {
+                commands = ((StatefulRedisConnection) connection).sync().command();
+            }
 
-        if (connection instanceof StatefulRedisClusterConnection) {
-            commands = ((StatefulRedisClusterConnection) connection).sync().command();
+            if (connection instanceof StatefulRedisClusterConnection) {
+                commands = ((StatefulRedisClusterConnection) connection).sync().command();
+            }
+        } catch (RedisCommandExecutionException e) {
+            log.debug("Cannot obtain command metadata", e);
         }
 
         if (commands.isEmpty()) {
-            verifyCommandMethods = false;
+            setVerifyCommandMethods(false);
         }
 
         return CommandDetailParser.parse(commands);

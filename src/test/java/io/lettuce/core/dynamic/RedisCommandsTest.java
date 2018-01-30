@@ -17,10 +17,16 @@ package io.lettuce.core.dynamic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
 
 /**
  * @author Mark Paluch
@@ -28,21 +34,44 @@ import io.lettuce.core.AbstractRedisClientTest;
 public class RedisCommandsTest extends AbstractRedisClientTest {
 
     @Test
-    public void verifierShouldCatchMisspelledDeclarations() throws Exception {
+    public void verifierShouldCatchMisspelledDeclarations() {
 
         RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
 
+        assertThat(factory).hasFieldOrPropertyWithValue("verifyCommandMethods", true);
         try {
             factory.getCommands(WithTypo.class);
             fail("Missing CommandCreationException");
         } catch (CommandCreationException e) {
             assertThat(e).hasMessageContaining("Command GAT does not exist.");
         }
-
     }
 
     @Test
-    public void verifierShouldCatchTooFewParametersDeclarations() throws Exception {
+    public void disabledVerifierDoesNotReportTypo() {
+
+        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        factory.setVerifyCommandMethods(false);
+
+        assertThat(factory.getCommands(WithTypo.class)).isNotNull();
+    }
+
+    @Test
+    public void doesNotFailIfCommandRetrievalFails() {
+
+        StatefulRedisConnection connectionMock = Mockito.mock(StatefulRedisConnection.class);
+        RedisCommands commandsMock = Mockito.mock(RedisCommands.class);
+
+        when(connectionMock.sync()).thenReturn(commandsMock);
+        doThrow(new RedisCommandExecutionException("ERR unknown command 'COMMAND'")).when(commandsMock).command();
+
+        RedisCommandFactory factory = new RedisCommandFactory(connectionMock);
+
+        assertThat(factory).hasFieldOrPropertyWithValue("verifyCommandMethods", false);
+    }
+
+    @Test
+    public void verifierShouldCatchTooFewParametersDeclarations() {
 
         RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
 
@@ -52,16 +81,15 @@ public class RedisCommandsTest extends AbstractRedisClientTest {
         } catch (CommandCreationException e) {
             assertThat(e).hasMessageContaining("Command GET accepts 1 parameters but method declares 0 parameter");
         }
-
     }
 
-    static interface TooFewParameters extends Commands {
+    interface TooFewParameters extends Commands {
 
         String get();
 
     }
 
-    static interface WithTypo extends Commands {
+    interface WithTypo extends Commands {
 
         String gat(String key);
 

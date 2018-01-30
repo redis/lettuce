@@ -604,7 +604,8 @@ public class RedisClusterClient extends AbstractRedisClient {
                 .flatMap(c -> c.reactive().command().collectList() //
                         .map(CommandDetailParser::parse) //
                         .doOnNext(detail -> c.setState(new RedisState(detail))) //
-                        .then(Mono.just(c)))
+                                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
+                                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
                 .doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterConnection<K, V>) it).toFuture();
@@ -675,8 +676,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         return connectionMono
                 .flatMap(c -> c.reactive().command().collectList() //
                         .map(CommandDetailParser::parse) //
-                        .doOnNext(detail -> c.setState(new RedisState(detail))) //
-                        .then(Mono.just(c)))
+                                .doOnNext(detail -> c.setState(new RedisState(detail)))
+                                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
+                                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
                 .doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterPubSubConnection<K, V>) it).toFuture();
