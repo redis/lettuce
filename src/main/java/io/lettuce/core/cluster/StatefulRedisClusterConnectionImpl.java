@@ -24,6 +24,7 @@ import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -110,7 +111,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     void inspectRedisState() {
-        this.state = new RedisState(CommandDetailParser.parse(sync().command()));
+        try {
+            this.state = new RedisState(CommandDetailParser.parse(sync().command()));
+        } catch (RedisCommandExecutionException e) {
+            this.state = new RedisState(Collections.emptyList());
+        }
     }
 
     RedisState getState() {

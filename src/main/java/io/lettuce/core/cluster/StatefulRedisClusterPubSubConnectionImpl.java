@@ -18,12 +18,10 @@ package io.lettuce.core.cluster;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-import io.lettuce.core.AbstractRedisClient;
-import io.lettuce.core.RedisChannelWriter;
-import io.lettuce.core.RedisException;
-import io.lettuce.core.RedisURI;
+import io.lettuce.core.*;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
@@ -106,7 +104,11 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     }
 
     void inspectRedisState() {
-        this.redisState = new RedisState(CommandDetailParser.parse(sync().command()));
+        try {
+            this.redisState = new RedisState(CommandDetailParser.parse(sync().command()));
+        } catch (RedisCommandExecutionException e) {
+            this.redisState = new RedisState(Collections.emptyList());
+        }
     }
 
     RedisState getState() {
