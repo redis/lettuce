@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.RedisConnectionException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisClient;
@@ -77,6 +78,13 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
         Flux<RedisURI> uris = Flux.fromIterable(redisURIs);
         Mono<List<RedisNodeDescription>> nodes = uris.flatMap(uri -> getNodeDescription(connections, uri)) //
                 .collectList() //
+                .flatMap((nodeDescriptions) -> {
+                    if (nodeDescriptions.isEmpty()) {
+                        return Mono.error(new RedisConnectionException(String.format("Failed to connect to any nodes in %s", redisURIs)));
+                    } else {
+                        return Mono.just(nodeDescriptions);
+                    }
+                }) //
                 .doFinally(it -> {
 
                     for (StatefulRedisConnection<String, String> connection : connections) {
