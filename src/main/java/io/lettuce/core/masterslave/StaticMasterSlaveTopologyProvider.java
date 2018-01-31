@@ -78,11 +78,11 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
         Flux<RedisURI> uris = Flux.fromIterable(redisURIs);
         Mono<List<RedisNodeDescription>> nodes = uris.flatMap(uri -> getNodeDescription(connections, uri)) //
                 .collectList() //
-                .map((nodeDescriptions) -> {
+                .flatMap((nodeDescriptions) -> {
                     if (nodeDescriptions.isEmpty()) {
-                        throw new RedisConnectionException(String.format("Failed to connect to any nodes in %s", redisURIs));
+                        return Mono.error(new RedisConnectionException(String.format("Failed to connect to any nodes in %s", redisURIs)));
                     } else {
-                        return nodeDescriptions;
+                        return Mono.just(nodeDescriptions);
                     }
                 }) //
                 .doFinally(it -> {
