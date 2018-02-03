@@ -108,6 +108,12 @@ public class SentinelTopologyProvider implements TopologyProvider {
                 return false;
             }
         }
+
+        String priority = map.get("slave-priority");
+        if (priority != null && priority.equals("0")) {
+            return false;
+        }
+
         return true;
     }
 
