@@ -25,30 +25,33 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.cert.CertificateException;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.codec.StringCodec;
+import com.lambdaworks.redis.masterslave.MasterSlave;
 import com.lambdaworks.redis.pubsub.api.async.RedisPubSubAsyncCommands;
 import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 
+import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.ssl.OpenSsl;
 
-
 /**
+ * Tests using SSL via {@link RedisClient}.
+ *
  * @author Mark Paluch
+ * @author Adam McElwee
  */
 public class SslTest extends AbstractTest {
 
@@ -65,46 +68,21 @@ public class SslTest extends AbstractTest {
             .withVerifyPeer(true) //
             .build();
 
-
     private static final RedisURI URI_CLIENT_CERT_AUTH = sslURIBuilder(2) //
             .withVerifyPeer(true) //
             .build();
 
-    private static final List<RedisURI> MASTER_SLAVE_URIS_NO_VERIFY = Arrays.asList(
-            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
-                    .withVerifyPeer(false)
-                    .build(),
-            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
-                    .withVerifyPeer(false)
-                    .build());
+    private static final List<RedisURI> MASTER_SLAVE_URIS_NO_VERIFY = sslUris(IntStream.of(0, 1),
+            builder -> builder.withVerifyPeer(false));
 
+    private static final List<RedisURI> MASTER_SLAVE_URIS_VERIFY = sslUris(IntStream.of(0, 1),
+            builder -> builder.withVerifyPeer(true));
 
-    private static final List<RedisURI> MASTER_SLAVE_URIS_VERIFY = Arrays.asList(
-            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
-                    .withVerifyPeer(true)
-                    .build(),
-            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
-                    .withVerifyPeer(true)
-                    .build());
+    private static final List<RedisURI> MASTER_SLAVE_URIS_WITH_ONE_INVALID = sslUris(IntStream.of(0, 1, 2),
+            builder -> builder.withVerifyPeer(true));
 
-    private static final List<RedisURI> MASTER_SLAVE_URIS_WITH_ONE_INVALID = Arrays.asList(
-            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET)
-                    .withVerifyPeer(true)
-                    .build(),
-            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 1)
-                    .withVerifyPeer(true)
-                    .build(),
-            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 2)
-                    .withVerifyPeer(true)
-                    .build());
-
-    private static final List<RedisURI> MASTER_SLAVE_URIS_WITH_ALL_INVALID = Arrays.asList(
-            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 2)
-                    .withVerifyPeer(true)
-                    .build(),
-            sslURIBuilder(MASTER_SLAVE_BASE_PORT_OFFSET + 3)
-                    .withVerifyPeer(true)
-                    .build());
+    private static final List<RedisURI> MASTER_SLAVE_URIS_WITH_ALL_INVALID = sslUris(IntStream.of(2, 3),
+            builder -> builder.withVerifyPeer(true));
 
     private static RedisClient redisClient;
 
@@ -120,6 +98,14 @@ public class SslTest extends AbstractTest {
     @Before
     public void before() {
         redisClient.setOptions(ClientOptions.create());
+    }
+
+    @After
+    public void tearDown() {
+
+        ChannelGroup group = (ChannelGroup) ReflectionTestUtils.getField(redisClient, "channels");
+
+        assertThat((Iterable) group).as("Test completed without connection cleanup").isEmpty();
     }
 
     @AfterClass
@@ -263,8 +249,8 @@ public class SslTest extends AbstractTest {
     @Test
     public void masterSlaveWithSsl() {
 
-        RedisCommands<String, String> connection =
-                MasterSlave.connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_NO_VERIFY).sync();
+        RedisCommands<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
+                MASTER_SLAVE_URIS_NO_VERIFY).sync();
         connection.set("key", "value");
         assertThat(connection.get("key")).isEqualTo("value");
         connection.getStatefulConnection().close();
@@ -327,8 +313,8 @@ public class SslTest extends AbstractTest {
 
     @Test
     public void masterSlaveSslWithReconnect() throws Exception {
-        RedisCommands<String, String> connection =
-                MasterSlave.connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_NO_VERIFY).sync();
+        RedisCommands<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
+                MASTER_SLAVE_URIS_NO_VERIFY).sync();
         connection.quit();
         Thread.sleep(200);
         assertThat(connection.ping()).isEqualTo("PONG");
@@ -431,10 +417,16 @@ public class SslTest extends AbstractTest {
         connection2.close();
     }
 
-
     private static RedisURI.Builder sslURIBuilder(int portOffset) {
-        return RedisURI.Builder.redis(host(), sslPort(portOffset))
-                .withSsl(true);
+        return RedisURI.Builder.redis(host(), sslPort(portOffset)).withSsl(true);
+    }
+
+    private static List<RedisURI> sslUris(IntStream masterSlaveOffsets,
+            Function<RedisURI.Builder, RedisURI.Builder> builderCustomizer) {
+
+        return masterSlaveOffsets.map(it -> it + MASTER_SLAVE_BASE_PORT_OFFSET)
+                .mapToObj(offset -> RedisURI.Builder.redis(host(), sslPort(offset)).withSsl(true)).map(builderCustomizer)
+                .map(RedisURI.Builder::build).collect(Collectors.toList());
     }
 
     private URL truststoreURL() throws MalformedURLException {
@@ -447,15 +439,16 @@ public class SslTest extends AbstractTest {
     }
 
     private void verifyConnection(RedisURI redisUri) {
-        StatefulRedisConnection<String, String> connection = redisClient.connect(redisUri);
-        connection.sync().ping();
-        connection.close();
+
+        try (StatefulRedisConnection<String, String> connection = redisClient.connect(redisUri)) {
+            connection.sync().ping();
+        }
     }
 
     private void verifyMasterSlaveConnection(List<RedisURI> redisUris) {
-        StatefulRedisConnection<String, String> connection =
-                MasterSlave.connect(redisClient, StringCodec.UTF8, redisUris);
-        connection.sync().ping();
-        connection.close();
+
+        try (StatefulRedisConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8, redisUris)) {
+            connection.sync().ping();
+        }
     }
 }
