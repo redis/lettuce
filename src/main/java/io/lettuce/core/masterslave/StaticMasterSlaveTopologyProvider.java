@@ -20,10 +20,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.RedisConnectionException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
@@ -39,6 +39,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@link TopologyProvider} does not auto-discover nodes.
  *
  * @author Mark Paluch
+ * @author Adam McElwee
  */
 public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
 
@@ -76,21 +77,19 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
         List<StatefulRedisConnection<String, String>> connections = new CopyOnWriteArrayList<>();
 
         Flux<RedisURI> uris = Flux.fromIterable(redisURIs);
-        Mono<List<RedisNodeDescription>> nodes = uris.flatMap(uri -> getNodeDescription(connections, uri)) //
-                .collectList() //
-                .flatMap((nodeDescriptions) -> {
-                    if (nodeDescriptions.isEmpty()) {
-                        return Mono.error(new RedisConnectionException(String.format("Failed to connect to any nodes in %s", redisURIs)));
-                    } else {
-                        return Mono.just(nodeDescriptions);
-                    }
-                }) //
-                .doFinally(it -> {
+        Mono<List<RedisNodeDescription>> nodes = uris
+                .flatMap(uri -> getNodeDescription(connections, uri))
+                .collectList()
+                .flatMap(
+                        (nodeDescriptions) -> {
 
-                    for (StatefulRedisConnection<String, String> connection : connections) {
-                        connection.closeAsync();
-                    }
-                });
+                            if (nodeDescriptions.isEmpty()) {
+                                return Mono.error(new RedisConnectionException(String.format(
+                                        "Failed to connect to at leas one node in %s", redisURIs)));
+                            }
+
+                            return Mono.just(nodeDescriptions);
+                        });
 
         return nodes.toFuture();
     }

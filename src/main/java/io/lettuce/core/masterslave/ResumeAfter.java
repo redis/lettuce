@@ -21,11 +21,14 @@ import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.AsyncCloseable;
 
 /**
+ * Utility to resume a {@link org.reactivestreams.Publisher} after termination.
+ *
  * @author Mark Paluch
  */
-public class ResumeAfter {
+class ResumeAfter {
 
-    private static final AtomicIntegerFieldUpdater UPDATER = AtomicIntegerFieldUpdater.newUpdater(ResumeAfter.class, "closed");
+    private static final AtomicIntegerFieldUpdater<ResumeAfter> UPDATER = AtomicIntegerFieldUpdater.newUpdater(
+            ResumeAfter.class, "closed");
 
     private final AsyncCloseable closeable;
 
@@ -79,7 +82,7 @@ public class ResumeAfter {
         });
     }
 
-    boolean firstCloseLatch() {
-        return UPDATER.compareAndSet(ResumeAfter.this, ST_OPEN, ST_OPEN);
+    private boolean firstCloseLatch() {
+        return UPDATER.compareAndSet(ResumeAfter.this, ST_OPEN, ST_CLOSED);
     }
 }
