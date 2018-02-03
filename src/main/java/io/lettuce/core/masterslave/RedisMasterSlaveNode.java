@@ -22,13 +22,14 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * A node within a Redis Master-Slave setup.
  *
  * @author Mark Paluch
+ * @author Adam McElwee
  */
 class RedisMasterSlaveNode implements RedisNodeDescription {
 
     private final RedisURI redisURI;
     private final Role role;
 
-    public RedisMasterSlaveNode(String host, int port, RedisURI seed, Role role) {
+    RedisMasterSlaveNode(String host, int port, RedisURI seed, Role role) {
 
         RedisURI.Builder builder = RedisURI.Builder
                 .redis(host, port)
