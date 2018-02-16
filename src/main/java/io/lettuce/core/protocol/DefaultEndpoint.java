@@ -172,17 +172,19 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
         if (usesBoundedQueues()) {
 
+            boolean connected = isConnected();
+
             if (QUEUE_SIZE.get(this) + commands > clientOptions.getRequestQueueSize()) {
                 throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the queue size drops.");
             }
 
-            if (disconnectedBuffer.size() + commands > clientOptions.getRequestQueueSize()) {
+            if (!connected && disconnectedBuffer.size() + commands > clientOptions.getRequestQueueSize()) {
                 throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the queue size drops.");
             }
 
-            if (commandBuffer.size() + commands > clientOptions.getRequestQueueSize()) {
+            if (connected && commandBuffer.size() + commands > clientOptions.getRequestQueueSize()) {
                 throw new RedisException("Command buffer size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the queue size drops.");
             }

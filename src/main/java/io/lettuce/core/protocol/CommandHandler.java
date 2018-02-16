@@ -437,7 +437,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         if (usesBoundedQueues()) {
 
-            if (stack.size() + commands > clientOptions.getRequestQueueSize())
+            // number of maintenance commands (AUTH, CLIENT SETNAME, SELECT, READONLY) should be allowed on top
+            // of number of user commands to ensure the driver recovers properly from a disconnect
+            int maxMaintenanceCommands = 5;
+            int allowedRequestQueueSize = clientOptions.getRequestQueueSize() + maxMaintenanceCommands;
+            if (stack.size() + commands > allowedRequestQueueSize)
+
                 throw new RedisException("Internal stack size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the stack size drops.");
         }
