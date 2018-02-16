@@ -1,12 +1,13 @@
-lettuce 4.4.1 RELEASE NOTES
+lettuce 4.4.3 RELEASE NOTES
 ===========================
 
-This release ships with 15 tickets fixed along with a few dependency upgrades. 
-The most significant change improves retry behavior with more than 
-1000 queued commands and an issue when using default methods on Java 9.
+This is the third bugfix release for Lettuce 4.4 shipping with 16 tickets fixed along with a few dependency upgrades.
+It contains fixes for improved resilience behavior.
+ 
+Upgrading is recommended.  
 
 You can find the full change log at the end of this document. 
-Thanks to all contributors that made Lettuce 5.0.1.RELEASE possible.
+Thanks to all contributors that made Lettuce 4.4.3.Final possible.
 
 If you need any support, meet Lettuce at:
 
@@ -18,27 +19,28 @@ If you need any support, meet Lettuce at:
 
 Enhancements
 ------------
-* Add SocketAddressOutput to directly parse SENTINEL get-master-addr-by-name output #644
+* Do not fail if COMMAND command fails on startup #685 (Thanks to @pujian1984)
 
 Fixes
 -----
-* Lettuce doesn't fail early & cleanly with a host in protected mode #608 (Thanks to @exercitussolus)
-* Fix encapsulated default method lookup on interfaces #614
-* CommandHandler.rebuildQueue() causes long locks #615 (Thanks to @nikolayspb)
-* Request queue size is not cleared on reconnect #616 (Thanks to @nikolayspb)
-* BITPOS should allow to just specify start #623 (Thanks to @christophstrobl)
-* Command.isDone() not consistent with CompletableFuture.isDone() #629
-* Provide Javadoc path for Project Reactor #641
-* Debug logging of ConnectionWatchdog has wrong prefix after reconnect #645 (Thanks to @mlex)
+* Weights param should be ignored if it is empty #657 (Thanks to @garfeildma)
+* MasterSlave getNodeSpecificViews NPE with sync API #659 (Thanks to @boughtonp)
+* RandomServerHandler can respond zero bytes #660
+* ConcurrentModificationException when connecting a RedisClusterClient #663 (Thanks to @blahblahasdf)
+* Recovered Sentinels in Master/Slave not reconnected #668
+* Handling dead Sentinel slaves #669 (Thanks to @vleushin)
+* Support SLAVE_PREFERRED at valueOf method #671 (Thanks to @be-hase)
+* RedisCommandTimeoutException after two subsequent MULTI calls without executing the transaction #673 (Thanks to @destitutus)
+* Fix ConnectionWatchDog won't reconnect problem in edge case #679 (Thanks to @kojilin)
+* At least once mode keeps requeueing commands on non-recoverable errors #680 (Thanks to @mrvisser)
+* Retain ssl/tls config from seed uris in Master/Slave context #684 (Thanks to @acmcelwee)
+* NOAUTH after full queue and reconnect #691
+* RedisURI.create("localhost") causes NPE #694
 
 Other
 -----
-* Upgrade to netty 4.0.53.Final/4.1.17.Final #646
-* Upgrade to Spring Framework 4.3.12 #648
-* Upgrade to Commons Pool 2.4.3 #650
-* Upgrade to RxJava 1.3.3 #651
-* Upgrade to HdrHistogram 2.1.10 #653
-* Upgrade Redis versions on TravisCI #655
+* Upgrade to netty 4.1.21.Final #699
+* Upgrade to RxJava 1.3.6 #700
 
 Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
 against the latest Redis source-build.
