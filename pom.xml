@@ -179,7 +179,7 @@
         <dependency>
             <groupId>io.reactivex</groupId>
             <artifactId>rxjava</artifactId>
-            <version>1.3.3</version>
+            <version>1.3.6</version>
             <optional>true</optional>
         </dependency>
 
