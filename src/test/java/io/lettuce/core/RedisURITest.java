@@ -77,6 +77,11 @@ public class RedisURITest {
         assertThat(redisURI.toURI().toString()).isEqualTo("redis://localhost");
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowIllegalArgumentExceptionOnMalformedUri() {
+        RedisURI.create("localhost");
+    }
+
     @Test
     public void sslUriTest() {
         RedisURI redisURI = RedisURI.create("redis+ssl://localhost:6379");
