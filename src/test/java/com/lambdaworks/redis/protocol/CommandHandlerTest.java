@@ -466,7 +466,7 @@ public class CommandHandlerTest {
         RuntimeException exception = new RuntimeException();
         when(commandMock.getOutput()).thenThrow(exception);
 
-        ChannelPromise channelPromise = new DefaultChannelPromise(null, ImmediateEventExecutor.INSTANCE);
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
         try {
             sut.write(context, commandMock, channelPromise);
             fail("Missing RuntimeException");
@@ -486,7 +486,7 @@ public class CommandHandlerTest {
         RuntimeException exception = new RuntimeException();
         when(commandMock.getOutput()).thenThrow(exception);
 
-        ChannelPromise channelPromise = new DefaultChannelPromise(null, ImmediateEventExecutor.INSTANCE);
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
         try {
             sut.write(context, Arrays.asList(commandMock), channelPromise);
             fail("Missing RuntimeException");
