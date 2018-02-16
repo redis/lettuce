@@ -119,6 +119,66 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
         client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
+        testHitRequestQueueLimit(connection);
+    }
+
+    @Test
+    public void testHitRequestQueueLimitReconnectWithAuthCommand() {
+
+        new WithPasswordRequired() {
+
+            @Override
+            protected void run(RedisClient client) {
+
+                client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+
+                RedisAsyncCommands<String, String> connection = client.connect().async();
+                connection.auth(passwd);
+                testHitRequestQueueLimit(connection);
+            }
+        };
+    }
+
+    @Test
+    public void testHitRequestQueueLimitReconnectWithUriAuth() {
+
+        new WithPasswordRequired() {
+
+            @Override
+            protected void run(RedisClient client) {
+
+                client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+
+                RedisURI redisURI = RedisURI.create(host, port);
+                redisURI.setPassword(passwd);
+
+                RedisAsyncCommands<String, String> connection = client.connect(redisURI).async();
+                testHitRequestQueueLimit(connection);
+            }
+        };
+    }
+
+    @Test
+    public void testHitRequestQueueLimitReconnectWithUriAuthPingCommand() {
+
+        new WithPasswordRequired() {
+
+            @Override
+            protected void run(RedisClient client) {
+
+                client.setOptions(ClientOptions.builder().requestQueueSize(10).pingBeforeActivateConnection(true).build());
+
+                RedisURI redisURI = RedisURI.create(host, port);
+                redisURI.setPassword(passwd);
+
+                RedisAsyncCommands<String, String> connection = client.connect(redisURI).async();
+                testHitRequestQueueLimit(connection);
+            }
+        };
+    }
+
+    private void testHitRequestQueueLimit(RedisAsyncCommands<String, String> connection) {
+
         ConnectionWatchdog watchdog = getConnectionWatchdog(connection.getStatefulConnection());
 
         watchdog.setListenOnChannelInactive(false);
