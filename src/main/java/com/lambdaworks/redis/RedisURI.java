@@ -504,6 +504,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     private static RedisURI buildRedisUriFromUri(URI uri) {
+
+        LettuceAssert.notNull(uri, "URI must not be null");
+        LettuceAssert.notNull(uri.getScheme(), "URI scheme must not be null");
+
         Builder builder;
         if (uri.getScheme().equals(URI_SCHEME_REDIS_SENTINEL)) {
             builder = configureSentinel(uri);
