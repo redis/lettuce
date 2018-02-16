@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,17 +396,19 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         if (usesBoundedQueues()) {
 
+            boolean connected = isConnected();
+
             if (QUEUE_SIZE.get(this) + 1 > clientOptions.getRequestQueueSize()) {
                 throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the queue size drops.");
             }
 
-            if (disconnectedBuffer.size() + 1 > clientOptions.getRequestQueueSize()) {
+            if (!connected && disconnectedBuffer.size() + 1 > clientOptions.getRequestQueueSize()) {
                 throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the queue size drops.");
             }
 
-            if (commandBuffer.size() + 1 > clientOptions.getRequestQueueSize()) {
+            if (connected && commandBuffer.size() + 1 > clientOptions.getRequestQueueSize()) {
                 throw new RedisException("Command buffer size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the queue size drops.");
             }
@@ -759,7 +761,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         if (usesBoundedQueues()) {
 
-            if (stack.size() + commands > clientOptions.getRequestQueueSize())
+            // number of maintenance commands (AUTH, CLIENT SETNAME, SELECT, READONLY) should be allowed on top
+            // of number of user commands to ensure the driver recovers properly from a disconnect
+            int maxMaintenanceCommands = 5;
+            int allowedRequestQueueSize = clientOptions.getRequestQueueSize() + maxMaintenanceCommands;
+            if (stack.size() + commands > allowedRequestQueueSize)
                 throw new RedisException("Internal stack size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the stack size drops.");
         }

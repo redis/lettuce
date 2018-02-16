@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
-import com.lambdaworks.redis.codec.StringCodec;
 import org.junit.Test;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
+import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.protocol.*;
@@ -119,6 +119,66 @@ public class ClientOptionsTest extends AbstractRedisClientTest {
         client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
+        testHitRequestQueueLimit(connection);
+    }
+
+    @Test
+    public void testHitRequestQueueLimitReconnectWithAuthCommand() {
+
+        new WithPasswordRequired() {
+
+            @Override
+            protected void run(RedisClient client) {
+
+                client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+
+                RedisAsyncCommands<String, String> connection = client.connect().async();
+                connection.auth(passwd);
+                testHitRequestQueueLimit(connection);
+            }
+        };
+    }
+
+    @Test
+    public void testHitRequestQueueLimitReconnectWithUriAuth() {
+
+        new WithPasswordRequired() {
+
+            @Override
+            protected void run(RedisClient client) {
+
+                client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+
+                RedisURI redisURI = RedisURI.create(host, port);
+                redisURI.setPassword(passwd);
+
+                RedisAsyncCommands<String, String> connection = client.connect(redisURI).async();
+                testHitRequestQueueLimit(connection);
+            }
+        };
+    }
+
+    @Test
+    public void testHitRequestQueueLimitReconnectWithUriAuthPingCommand() {
+
+        new WithPasswordRequired() {
+
+            @Override
+            protected void run(RedisClient client) {
+
+                client.setOptions(ClientOptions.builder().requestQueueSize(10).pingBeforeActivateConnection(true).build());
+
+                RedisURI redisURI = RedisURI.create(host, port);
+                redisURI.setPassword(passwd);
+
+                RedisAsyncCommands<String, String> connection = client.connect(redisURI).async();
+                testHitRequestQueueLimit(connection);
+            }
+        };
+    }
+
+    private void testHitRequestQueueLimit(RedisAsyncCommands<String, String> connection) {
+
         ConnectionWatchdog watchdog = getConnectionWatchdog(connection.getStatefulConnection());
 
         watchdog.setListenOnChannelInactive(false);
