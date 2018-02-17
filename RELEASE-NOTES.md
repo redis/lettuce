@@ -58,6 +58,7 @@ Other
 * Upgrade to netty 4.1.21.Final #699
 * Upgrade to RxJava 1.3.6 #700
 * Upgrade to RxJava 2.1.9 #701
+* Upgrade to Reactor Bismuth SR5 #704
 
 
 Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
