@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2018 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
-    <spring.version>5.0.2.RELEASE</spring.version>
+    <spring.version>5.0.4.RELEASE</spring.version>
     <spring-batch.version>4.0.0.RELEASE</spring-batch.version>
     <junit-platform.version>1.0.2</junit-platform.version>
     <junit.version>5.0.2</junit.version>
