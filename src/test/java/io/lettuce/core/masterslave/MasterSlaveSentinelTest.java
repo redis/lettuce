@@ -111,7 +111,7 @@ public class MasterSlaveSentinelTest extends AbstractSentinelTest {
             MasterSlave.connect(sentinelClient, new Utf8StringCodec(), uri);
             fail("Missing RedisConnectionException");
         } catch (RedisConnectionException e) {
-            assertThat(e.getCause()).hasCauseInstanceOf(IOException.class);
+            assertThat(e.getCause()).hasRootCauseInstanceOf(IOException.class);
         }
     }
 

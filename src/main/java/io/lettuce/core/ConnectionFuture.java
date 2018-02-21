@@ -172,6 +172,8 @@ public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
     @Override
     <U> ConnectionFuture<U> thenCompose(Function<? super T, ? extends CompletionStage<U>> fn);
 
+    <U> ConnectionFuture<U> thenCompose(BiFunction<? super T, ? super Throwable, ? extends CompletionStage<U>> fn);
+
     @Override
     <U> ConnectionFuture<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn);
 

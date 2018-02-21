@@ -242,6 +242,36 @@ class DefaultConnectionFuture<T> extends CompletableFuture<T> implements Connect
     }
 
     @Override
+    public <U> ConnectionFuture<U> thenCompose(BiFunction<? super T, ? super Throwable, ? extends CompletionStage<U>> fn) {
+
+        CompletableFuture<U> future = new CompletableFuture<>();
+
+        delegate.whenComplete((v, e) -> {
+
+            try {
+                CompletionStage<U> apply = fn.apply(v, e);
+                apply.whenComplete((u, t) -> {
+
+                    if (t != null) {
+                        future.completeExceptionally(t);
+                    } else {
+                        future.complete(u);
+                    }
+                });
+            } catch (Exception ex) {
+                ExecutionException result = new ExecutionException("Exception while applying thenCompose", ex);
+
+                if (e != null) {
+                    result.addSuppressed(e);
+                }
+                future.completeExceptionally(result);
+            }
+        });
+
+        return adopt(future);
+    }
+
+    @Override
     public <U> DefaultConnectionFuture<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn) {
         return adopt(delegate.thenComposeAsync(fn));
     }

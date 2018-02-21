@@ -17,6 +17,7 @@ package io.lettuce.core.masterslave;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 import io.lettuce.core.ConnectionFuture;
@@ -24,6 +25,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
 
@@ -99,7 +101,12 @@ public class MasterSlave {
      */
     public static <K, V> StatefulRedisMasterSlaveConnection<K, V> connect(RedisClient redisClient, RedisCodec<K, V> codec,
             RedisURI redisURI) {
-        return getConnection(connectAsync(redisClient, codec, redisURI));
+
+        LettuceAssert.notNull(redisClient, "RedisClient must not be null");
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+
+        return getConnection(connectAsyncSentinelOrAutodiscovery(redisClient, codec, redisURI), redisURI);
     }
 
     /**
@@ -120,6 +127,11 @@ public class MasterSlave {
      */
     public static <K, V> CompletableFuture<StatefulRedisMasterSlaveConnection<K, V>> connectAsync(RedisClient redisClient,
             RedisCodec<K, V> codec, RedisURI redisURI) {
+        return transformAsyncConnectionException(connectAsyncSentinelOrAutodiscovery(redisClient, codec, redisURI), redisURI);
+    }
+
+    private static <K, V> CompletableFuture<StatefulRedisMasterSlaveConnection<K, V>> connectAsyncSentinelOrAutodiscovery(
+            RedisClient redisClient, RedisCodec<K, V> codec, RedisURI redisURI) {
 
         LettuceAssert.notNull(redisClient, "RedisClient must not be null");
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
@@ -150,7 +162,7 @@ public class MasterSlave {
      */
     public static <K, V> StatefulRedisMasterSlaveConnection<K, V> connect(RedisClient redisClient, RedisCodec<K, V> codec,
             Iterable<RedisURI> redisURIs) {
-        return getConnection(connectAsync(redisClient, codec, redisURIs));
+        return getConnection(connectAsyncSentinelOrStaticSetup(redisClient, codec, redisURIs), redisURIs);
     }
 
     /**
@@ -171,6 +183,11 @@ public class MasterSlave {
      */
     public static <K, V> CompletableFuture<StatefulRedisMasterSlaveConnection<K, V>> connectAsync(RedisClient redisClient,
             RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
+        return transformAsyncConnectionException(connectAsyncSentinelOrStaticSetup(redisClient, codec, redisURIs), redisURIs);
+    }
+
+    private static <K, V> CompletableFuture<StatefulRedisMasterSlaveConnection<K, V>> connectAsyncSentinelOrStaticSetup(
+            RedisClient redisClient, RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
 
         LettuceAssert.notNull(redisClient, "RedisClient must not be null");
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
@@ -195,24 +212,52 @@ public class MasterSlave {
      * the channel/connection initialization. Any exception is rethrown as {@link RedisConnectionException}.
      *
      * @param connectionFuture must not be null.
+     * @param context context information (single RedisURI, multiple URIs), used as connection target in the reported exception.
      * @param <T> Connection type.
      * @return the connection.
      * @throws RedisConnectionException in case of connection failures.
      */
-    private static <T> T getConnection(CompletableFuture<T> connectionFuture) {
+    private static <T> T getConnection(CompletableFuture<T> connectionFuture, Object context) {
 
         try {
             return connectionFuture.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw RedisConnectionException.create(null, e);
+            throw RedisConnectionException.create(context.toString(), e);
         } catch (Exception e) {
 
             if (e instanceof ExecutionException) {
-                throw RedisConnectionException.create(null, e.getCause());
+
+                // filter intermediate RedisConnectionException exceptions that bloat the stack trace
+                if (e.getCause() instanceof RedisConnectionException
+                        && e.getCause().getCause() instanceof RedisConnectionException) {
+                    throw RedisConnectionException.create(context.toString(), e.getCause().getCause());
+                }
+
+                throw RedisConnectionException.create(context.toString(), e.getCause());
             }
 
-            throw RedisConnectionException.create(null, e);
+            throw RedisConnectionException.create(context.toString(), e);
         }
+    }
+
+    private static <T> CompletableFuture<T> transformAsyncConnectionException(CompletionStage<T> future, Object context) {
+
+        return ConnectionFuture
+                .from(null, future.toCompletableFuture())
+                .thenCompose((v, e) -> {
+
+                    if (e != null) {
+
+                        // filter intermediate RedisConnectionException exceptions that bloat the stack trace
+                        if (e.getCause() instanceof RedisConnectionException
+                                && e.getCause().getCause() instanceof RedisConnectionException) {
+                            return Futures.failed(RedisConnectionException.create(context.toString(), e.getCause()));
+                        }
+                        return Futures.failed(RedisConnectionException.create(context.toString(), e));
+                    }
+
+                    return CompletableFuture.completedFuture(v);
+                }).toCompletableFuture();
     }
 }

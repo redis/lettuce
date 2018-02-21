@@ -20,6 +20,7 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -345,7 +346,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             initializePartitions();
         }
 
-        return getConnection(connectAsync(codec));
+        return getConnection(connectClusterAsync(codec));
     }
 
     /**
@@ -371,7 +372,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     @SuppressWarnings("unchecked")
     public <K, V> CompletableFuture<StatefulRedisClusterConnection<K, V>> connectAsync(RedisCodec<K, V> codec) {
-        return connectClusterAsync(codec);
+        return transformAsyncConnectionException(connectClusterAsync(codec), getInitialUris());
     }
 
     /**
@@ -419,7 +420,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             initializePartitions();
         }
 
-        return getConnection(connectPubSubAsync(codec));
+        return getConnection(connectClusterPubSubAsync(codec));
     }
 
     /**
@@ -445,7 +446,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     @SuppressWarnings("unchecked")
     public <K, V> CompletableFuture<StatefulRedisClusterPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec) {
-        return connectClusterPubSubAsync(codec);
+        return transformAsyncConnectionException(connectClusterPubSubAsync(codec), getInitialUris());
     }
 
     StatefulRedisConnection<String, String> connectToNode(SocketAddress socketAddress) {
@@ -1102,6 +1103,19 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     boolean expireStaleConnections() {
         return getClusterClientOptions() == null || getClusterClientOptions().isCloseStaleConnections();
+    }
+
+    protected static <T> CompletableFuture<T> transformAsyncConnectionException(CompletionStage<T> future,
+            Iterable<RedisURI> target) {
+
+        return ConnectionFuture.from(null, future.toCompletableFuture()).thenCompose((v, e) -> {
+
+            if (e != null) {
+                return Futures.failed(RedisConnectionException.create(target.toString(), e));
+            }
+
+            return CompletableFuture.completedFuture(v);
+        }).toCompletableFuture();
     }
 
     private static <K, V> void assertNotNull(RedisCodec<K, V> codec) {

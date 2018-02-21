@@ -23,12 +23,14 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
@@ -199,7 +201,8 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> StatefulRedisConnection<K, V> connect(RedisCodec<K, V> codec) {
 
         checkForRedisURI();
-        return connectStandalone(codec, this.redisURI, timeout);
+
+        return getConnection(connectStandaloneAsync(codec, this.redisURI, timeout));
     }
 
     /**
@@ -211,7 +214,8 @@ public class RedisClient extends AbstractRedisClient {
     public StatefulRedisConnection<String, String> connect(RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectStandalone(newStringStringCodec(), redisURI, redisURI.getTimeout());
+
+        return getConnection(connectStandaloneAsync(newStringStringCodec(), redisURI, redisURI.getTimeout()));
     }
 
     /**
@@ -227,7 +231,8 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> StatefulRedisConnection<K, V> connect(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectStandalone(codec, redisURI, redisURI.getTimeout());
+
+        return getConnection(connectStandaloneAsync(codec, redisURI, redisURI.getTimeout()));
     }
 
     /**
@@ -244,20 +249,8 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectStandaloneAsync(codec, redisURI, redisURI.getTimeout());
-    }
 
-    private <K, V> StatefulRedisConnection<K, V> connectStandalone(RedisCodec<K, V> codec, RedisURI redisURI, Duration timeout) {
-        return getConnection(connectStandaloneAsync(codec, redisURI, timeout));
-    }
-
-    // Required by ReflectiveNodeConnectionFactory.
-    @SuppressWarnings("unused")
-    private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
-            RedisURI redisURI) {
-
-        assertNotNull(redisURI);
-        return connectStandaloneAsync(codec, redisURI, redisURI.getTimeout());
+        return transformAsyncConnectionException(connectStandaloneAsync(codec, redisURI, redisURI.getTimeout()));
     }
 
     private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
@@ -421,7 +414,7 @@ public class RedisClient extends AbstractRedisClient {
             RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectPubSubAsync(codec, redisURI, redisURI.getTimeout());
+        return transformAsyncConnectionException(connectPubSubAsync(codec, redisURI, redisURI.getTimeout()));
     }
 
     private <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
@@ -484,6 +477,7 @@ public class RedisClient extends AbstractRedisClient {
     public StatefulRedisSentinelConnection<String, String> connectSentinel(RedisURI redisURI) {
 
         assertNotNull(redisURI);
+
         return getConnection(connectSentinelAsync(newStringStringCodec(), redisURI, redisURI.getTimeout()));
     }
 
@@ -500,6 +494,7 @@ public class RedisClient extends AbstractRedisClient {
     public <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec, RedisURI redisURI) {
 
         assertNotNull(redisURI);
+
         return getConnection(connectSentinelAsync(codec, redisURI, redisURI.getTimeout()));
     }
 
@@ -519,7 +514,8 @@ public class RedisClient extends AbstractRedisClient {
             RedisURI redisURI) {
 
         assertNotNull(redisURI);
-        return connectSentinelAsync(codec, redisURI, redisURI.getTimeout());
+
+        return transformAsyncConnectionException(connectSentinelAsync(codec, redisURI, redisURI.getTimeout()), redisURI);
     }
 
     private <K, V> CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectSentinelAsync(RedisCodec<K, V> codec,
@@ -749,6 +745,30 @@ public class RedisClient extends AbstractRedisClient {
                 .timeout(this.timeout) //
                 .flatMap(it -> Mono.fromCompletionStage(c.closeAsync()) //
                         .then(Mono.just(it))));
+    }
+
+    private static <T> ConnectionFuture<T> transformAsyncConnectionException(ConnectionFuture<T> future) {
+
+        return future.thenCompose((v, e) -> {
+
+            if (e != null) {
+                return Futures.failed(RedisConnectionException.create(future.getRemoteAddress(), e));
+            }
+
+            return CompletableFuture.completedFuture(v);
+        });
+    }
+
+    private static <T> CompletableFuture<T> transformAsyncConnectionException(CompletionStage<T> future, RedisURI target) {
+
+        return ConnectionFuture.from(null, future.toCompletableFuture()).thenCompose((v, e) -> {
+
+            if (e != null) {
+                return Futures.failed(RedisConnectionException.create(target.toString(), e));
+            }
+
+            return CompletableFuture.completedFuture(v);
+        }).toCompletableFuture();
     }
 
     private static void checkValidRedisURI(RedisURI redisURI) {

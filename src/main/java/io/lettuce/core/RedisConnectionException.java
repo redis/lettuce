@@ -53,6 +53,18 @@ public class RedisConnectionException extends RedisException {
      * @since 4.4
      */
     public static RedisConnectionException create(SocketAddress remoteAddress, Throwable cause) {
+        return create(remoteAddress == null ? null : remoteAddress.toString(), cause);
+    }
+
+    /**
+     * Create a new {@link RedisConnectionException} given {@code remoteAddress} and the {@link Throwable cause}.
+     *
+     * @param remoteAddress remote address.
+     * @param cause the nested exception.
+     * @return the {@link RedisConnectionException}.
+     * @since 5.1
+     */
+    public static RedisConnectionException create(String remoteAddress, Throwable cause) {
 
         if (remoteAddress == null) {
 
