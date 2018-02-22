@@ -16,6 +16,7 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -48,6 +49,10 @@ public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<
 
     @Override
     public void set(ByteBuffer bytes) {
+
+        if (!initialized) {
+            output = new ArrayList<>();
+        }
 
         if (keyIterator == null) {
             keyIterator = keys.iterator();
