@@ -15,6 +15,12 @@
  */
 package io.lettuce.core.protocol;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
@@ -28,6 +34,7 @@ import io.lettuce.core.output.ValueOutput;
  * Benchmark for {@link CommandHandler}. Test cases:
  * <ul>
  * <li>netty (in-eventloop) writes</li>
+ * <li>netty (in-eventloop) batch writes</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -43,6 +50,11 @@ public class CommandHandlerBenchmark {
 
     private CommandHandler commandHandler;
     private Command command;
+    private Command batchCommand;
+    private Collection<Command> commands1;
+    private List<Command> commands10;
+    private List<Command> commands100;
+    private List<Command> commands1000;
 
     @Setup
     public void setup() {
@@ -50,13 +62,63 @@ public class CommandHandlerBenchmark {
         commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new DefaultEndpoint(CLIENT_OPTIONS));
         command = new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
 
+
         commandHandler.setState(CommandHandler.LifecycleState.CONNECTED);
+
+        commands1 = Arrays.asList(command);
+        commands10 = IntStream.range(0, 10)
+                .mapToObj(i -> new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY)))
+                .collect(Collectors.toList());
+
+        commands100 = IntStream.range(0, 100)
+                .mapToObj(i -> new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY)))
+                .collect(Collectors.toList());
+
+        commands1000 = IntStream.range(0, 1000)
+                .mapToObj(i -> new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY)))
+                .collect(Collectors.toList());
     }
 
     @Benchmark
     public void measureNettyWrite() throws Exception {
 
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, PROMISE);
+
+        // Prevent OOME
+        commandHandler.getStack().clear();
+    }
+
+    @Benchmark
+    public void measureNettyWriteBatch1() throws Exception {
+
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands1, PROMISE);
+
+        // Prevent OOME
+        commandHandler.getStack().clear();
+    }
+
+    @Benchmark
+    public void measureNettyWriteBatch10() throws Exception {
+
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands10, PROMISE);
+
+        // Prevent OOME
+        commandHandler.getStack().clear();
+    }
+
+    @Benchmark
+    public void measureNettyWriteBatch100() throws Exception {
+
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands100, PROMISE);
+
+        // Prevent OOME
+        commandHandler.getStack().clear();
+    }
+
+    @Benchmark
+    public void measureNettyWriteBatch1000() throws Exception {
+
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands1000, PROMISE);
 
         // Prevent OOME
         commandHandler.getStack().clear();

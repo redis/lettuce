@@ -21,10 +21,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +40,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionEvents;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.output.StatusOutput;
@@ -61,7 +59,7 @@ public class CommandHandlerTest {
     private CommandHandler sut;
 
     private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<>(
-            new Utf8StringCodec()), null);
+            StringCodec.UTF8), null);
 
     @Mock
     private ChannelHandlerContext context;
@@ -294,6 +292,18 @@ public class CommandHandlerTest {
     }
 
     @Test
+    public void shouldFailOnDuplicateCommands() throws Exception {
+
+        Command<String, String, String> commandMock = mock(Command.class);
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        sut.write(context, Arrays.asList(commandMock, commandMock), channelPromise);
+
+        assertThat(stack).isEmpty();
+        verify(commandMock).completeExceptionally(any(RedisException.class));
+    }
+
+    @Test
     public void shouldWriteActiveCommands() throws Exception {
 
         when(promise.isVoid()).thenReturn(true);
@@ -315,28 +325,41 @@ public class CommandHandlerTest {
     }
 
     @Test
-    public void shouldWriteActiveCommandsInBatch() throws Exception {
+    public void shouldWriteSingleActiveCommandsInBatch() throws Exception {
 
         List<Command<String, String, String>> commands = Arrays.asList(command);
         when(promise.isVoid()).thenReturn(true);
         sut.write(context, commands, promise);
 
-        verify(context).write(commands, promise);
+        verify(context).write(command, promise);
         assertThat(stack).hasSize(1);
+    }
+
+    @Test
+    public void shouldWriteActiveCommandsInBatch() throws Exception {
+
+        Command<String, String, String> anotherCommand = new Command<>(CommandType.APPEND,
+                new StatusOutput<>(StringCodec.UTF8), null);
+
+        List<Command<String, String, String>> commands = Arrays.asList(command, anotherCommand);
+        when(promise.isVoid()).thenReturn(true);
+        sut.write(context, commands, promise);
+
+        verify(context).write(any(Set.class), eq(promise));
+        assertThat(stack).hasSize(2);
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void shouldWriteActiveCommandsInMixedBatch() throws Exception {
 
-        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
-                null);
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8), null);
         command.cancel();
         when(promise.isVoid()).thenReturn(true);
 
         sut.write(context, Arrays.asList(command, command2), promise);
 
-        ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<Collection> captor = ArgumentCaptor.forClass(Collection.class);
         verify(context).write(captor.capture(), any());
 
         assertThat(captor.getValue()).containsOnly(command2);

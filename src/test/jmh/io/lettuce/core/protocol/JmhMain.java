@@ -37,12 +37,12 @@ public class JmhMain {
         // run selectively
         // runCommandBenchmark();
         runCommandHandlerBenchmark();
-        runRedisEndpointBenchmark();
+        // runRedisEndpointBenchmark();
         // runRedisStateMachineBenchmark();
         // runCommandEncoderBenchmark();
 
         // or all
-        //runBenchmarks();
+        // runBenchmarks();
     }
 
     private static void runBenchmarks() throws RunnerException {
