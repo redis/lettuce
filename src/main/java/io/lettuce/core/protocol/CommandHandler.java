@@ -334,8 +334,25 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             return;
         }
 
+        if (msg instanceof List) {
+
+            List<RedisCommand<?, ?, ?>> batch = (List<RedisCommand<?, ?, ?>>) msg;
+
+            if (batch.size() == 1) {
+
+                writeSingleCommand(ctx, batch.get(0), promise);
+                return;
+            }
+
+            writeBatch(ctx, batch, promise);
+            return;
+        }
+
         if (msg instanceof Collection) {
-            writeBatch(ctx, (Collection<RedisCommand<?, ?, ?>>) msg, promise);
+
+            Collection<RedisCommand<?, ?, ?>> batch = (Collection<RedisCommand<?, ?, ?>>) msg;
+
+            writeBatch(ctx, batch, promise);
         }
     }
 
@@ -353,25 +370,22 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<?, ?, ?>> batch, ChannelPromise promise)
             throws Exception {
 
-        Collection<RedisCommand<?, ?, ?>> toWrite = batch;
-        int commandsToWrite = 0;
+        Collection<RedisCommand<?, ?, ?>> deduplicated = new LinkedHashSet<>(batch.size(), 1);
 
-        boolean cancelledCommands = false;
         for (RedisCommand<?, ?, ?> command : batch) {
 
-            if (!isWriteable(command)) {
-                cancelledCommands = true;
-                break;
+            if (isWriteable(command) && !deduplicated.add(command)) {
+                deduplicated.remove(command);
+                command.completeExceptionally(new RedisException(
+                        "Attempting to write duplicate command that is already enqueued: " + command));
             }
-
-            commandsToWrite++;
         }
 
         try {
-            validateWrite(commandsToWrite);
+            validateWrite(deduplicated.size());
         } catch (Exception e) {
 
-            for (RedisCommand<?, ?, ?> redisCommand : toWrite) {
+            for (RedisCommand<?, ?, ?> redisCommand : deduplicated) {
                 redisCommand.completeExceptionally(e);
             }
 
@@ -379,26 +393,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             return;
         }
 
-        if (cancelledCommands) {
-
-            toWrite = new ArrayList<>(batch.size());
-
-            for (RedisCommand<?, ?, ?> command : batch) {
-
-                if (!isWriteable(command)) {
-                    continue;
-                }
-
-                toWrite.add(command);
-            }
-        }
-
-        for (RedisCommand<?, ?, ?> command : toWrite) {
+        for (RedisCommand<?, ?, ?> command : deduplicated) {
             addToStack(command, promise);
         }
 
-        if (!toWrite.isEmpty()) {
-            ctx.write(toWrite, promise);
+        if (!deduplicated.isEmpty()) {
+            ctx.write(deduplicated, promise);
         }
     }
 
@@ -411,11 +411,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             if (command.getOutput() == null) {
                 // fire&forget commands are excluded from metrics
                 command.complete();
-            } else {
-
-                if (stack.contains(command)) {
-                    throw new RedisException("Attempting to write duplicate command that is already enqueued: " + command);
-                }
             }
 
             RedisCommand<?, ?, ?> redisCommand = potentiallyWrapLatencyCommand(command);
