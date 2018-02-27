@@ -499,6 +499,18 @@ public class CommandHandlerTest {
     }
 
     @Test
+    public void shouldFailOnDuplicateCommands() throws Exception {
+
+        Command<String, String, String> commandMock = mock(Command.class);
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        sut.write(context, Arrays.asList(commandMock, commandMock), channelPromise);
+
+        assertThat(stack).isEmpty();
+        verify(commandMock).completeExceptionally(any(RedisException.class));
+    }
+
+    @Test
     public void shouldWriteActiveCommands() throws Exception {
 
         when(promise.isSuccess()).thenReturn(true);
@@ -520,15 +532,27 @@ public class CommandHandlerTest {
     }
 
     @Test
-    public void shouldWriteActiveCommandsInBatch() throws Exception {
+    public void shouldWriteSingleActiveCommandsInBatch() throws Exception {
 
         when(promise.isSuccess()).thenReturn(true);
 
         List<Command<String, String, String>> commands = Arrays.asList(command);
         sut.write(context, commands, promise);
 
-        verify(context).write(commands, promise);
+        verify(context).write(command, promise);
         assertThat(stack).hasSize(1);
+    }
+
+    @Test
+    public void shouldWriteActiveCommandsInBatch() throws Exception {
+
+        Command<String, String, String> anotherCommand = new Command<>(CommandType.APPEND,
+                new StatusOutput<>(StringCodec.UTF8), null);
+
+        List<Command<String, String, String>> commands = Arrays.asList(command, anotherCommand);
+        sut.write(context, commands, promise);
+
+        verify(context).write(any(Set.class), eq(promise));
     }
 
     @Test
@@ -543,7 +567,7 @@ public class CommandHandlerTest {
 
         sut.write(context, Arrays.asList(command, command2), promise);
 
-        ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<Collection> captor = ArgumentCaptor.forClass(Collection.class);
         verify(context).write(captor.capture(), any());
 
         assertThat(captor.getValue()).containsOnly(command2);
