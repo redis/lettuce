@@ -77,34 +77,38 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
     Flux<ChannelMessage<K, V>> observeChannels(FluxSink.OverflowStrategy overflowStrategy);
 
     /**
-     * Listen for messages published to channels matching the given patterns.
+     * Listen for messages published to channels matching the given patterns. The {@link Mono} completes without a result as
+     * soon as the pattern subscription is registered.
      *
-     * @param patterns the patterns
-     * @return Flux&lt;Success&gt; Flux for {@code psubscribe} command
+     * @param patterns the patterns.
+     * @return Mono&lt;Void&gt; Mono for {@code psubscribe} command.
      */
     Mono<Void> psubscribe(K... patterns);
 
     /**
-     * Stop listening for messages posted to channels matching the given patterns.
+     * Stop listening for messages posted to channels matching the given patterns. The {@link Mono} completes without a result
+     * as soon as the pattern subscription is unregistered.
      *
-     * @param patterns the patterns
-     * @return Flux&lt;Success&gt; Flux for {@code punsubscribe} command
+     * @param patterns the patterns.
+     * @return Mono&lt;Void&gt; Mono for {@code punsubscribe} command.
      */
     Mono<Void> punsubscribe(K... patterns);
 
     /**
-     * Listen for messages published to the given channels.
+     * Listen for messages published to the given channels. The {@link Mono} completes without a result as soon as the *
+     * subscription is registered.
      *
-     * @param channels the channels
-     * @return Flux&lt;Success&gt; Flux for {@code subscribe} command
+     * @param channels the channels.
+     * @return Mono&lt;Void&gt; Mono for {@code subscribe} command.
      */
     Mono<Void> subscribe(K... channels);
 
     /**
-     * Stop listening for messages posted to the given channels.
+     * Stop listening for messages posted to the given channels. The {@link Mono} completes without a result as soon as the
+     * subscription is unregistered.
      *
-     * @param channels the channels
-     * @return Flux&lt;Success&gt; Flux for {@code unsubscribe} command.
+     * @param channels the channels.
+     * @return Mono&lt;Void&gt; Mono for {@code unsubscribe} command.
      */
     Mono<Void> unsubscribe(K... channels);
 
