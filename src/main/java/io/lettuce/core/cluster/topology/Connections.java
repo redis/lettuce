@@ -147,15 +147,16 @@ class Connections {
 
     private Collection<StatefulRedisConnection<String, String>> drainConnections() {
 
+        Map<RedisURI, StatefulRedisConnection<String, String>> drainedConnections;
         synchronized (this.connections) {
 
-            Map<RedisURI, StatefulRedisConnection<String, String>> connections = new HashMap<>(this.connections);
-            connections.forEach((k, v) -> {
+            drainedConnections = new HashMap<>(this.connections);
+            drainedConnections.forEach((k, v) -> {
                 this.connections.remove(k);
             });
         }
 
-        return connections.values();
+        return drainedConnections.values();
     }
 
     /**

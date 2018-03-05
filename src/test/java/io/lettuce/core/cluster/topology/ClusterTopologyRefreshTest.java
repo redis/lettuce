@@ -323,6 +323,22 @@ public class ClusterTopologyRefreshTest {
     }
 
     @Test
+    public void shouldCloseConnections() {
+
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381));
+
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+            .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+            .thenReturn(completedFuture((StatefulRedisConnection) connection2));
+
+        sut.loadViews(seed, true);
+
+        verify(connection1).close();
+        verify(connection2).close();
+    }
+
+    @Test
     public void undiscoveredAdditionalNodesShouldBeLastUsingClientCount() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
