@@ -55,6 +55,8 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
     private final List<Throwable> exceptions = new CopyOnWriteArrayList<>();
     private final List<RedisNodeDescription> nodes;
 
+    private volatile boolean closed = false;
+
     public Connections(int expectedConnectionCount, List<RedisNodeDescription> nodes) {
         super(expectedConnectionCount);
         this.nodes = nodes;
@@ -63,14 +65,19 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
     @Override
     protected void onAccept(Tuple2<RedisURI, StatefulRedisConnection<String, String>> value) {
 
-        synchronized (connections) {
-            connections.put(value.getT1(), value.getT2());
+        if (this.closed) {
+            value.getT2().closeAsync();
+            return;
+        }
+
+        synchronized (this.connections) {
+            this.connections.put(value.getT1(), value.getT2());
         }
     }
 
     @Override
     protected void onError(Throwable value) {
-        exceptions.add(value);
+        this.exceptions.add(value);
     }
 
     @Override
@@ -86,11 +93,11 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
     @Override
     protected void onEmit(Emission<Connections> emission) {
 
-        if (getExpectedCount() != 0 && connections.isEmpty() && !exceptions.isEmpty()) {
+        if (getExpectedCount() != 0 && this.connections.isEmpty() && !this.exceptions.isEmpty()) {
 
             RedisConnectionException collector = new RedisConnectionException(
                     "Unable to establish a connection to Redis Cluster");
-            exceptions.forEach(collector::addSuppressed);
+            this.exceptions.forEach(collector::addSuppressed);
 
             emission.error(collector);
         } else {
@@ -102,8 +109,8 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
      * @return {@literal true} if no connections present.
      */
     public boolean isEmpty() {
-        synchronized (connections) {
-            return connections.isEmpty();
+        synchronized (this.connections) {
+            return this.connections.isEmpty();
         }
     }
 
@@ -114,8 +121,9 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
      */
     public Requests requestPing() {
 
-        Set<Map.Entry<RedisURI, StatefulRedisConnection<String, String>>> entries = new LinkedHashSet<>(connections.entrySet());
-        Requests requests = new Requests(entries.size(), nodes);
+        Set<Map.Entry<RedisURI, StatefulRedisConnection<String, String>>> entries = new LinkedHashSet<>(
+                this.connections.entrySet());
+        Requests requests = new Requests(entries.size(), this.nodes);
 
         for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : entries) {
 
@@ -136,17 +144,19 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
      */
     public CompletableFuture<Void> closeAsync() {
 
-        List<CompletableFuture> close = new ArrayList<>(connections.size());
-        List<RedisURI> toRemove = new ArrayList<>(connections.size());
+        List<CompletableFuture> close = new ArrayList<>(this.connections.size());
+        List<RedisURI> toRemove = new ArrayList<>(this.connections.size());
 
-        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
+        this.closed = true;
+
+        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
             toRemove.add(entry.getKey());
             close.add(entry.getValue().closeAsync());
         }
 
         for (RedisURI redisURI : toRemove) {
-            connections.remove(redisURI);
+            this.connections.remove(redisURI);
         }
 
         return CompletableFuture.allOf(close.toArray(new CompletableFuture[0]));
