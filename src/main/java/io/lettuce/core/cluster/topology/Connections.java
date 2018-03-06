@@ -15,10 +15,8 @@
  */
 package io.lettuce.core.cluster.topology;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -31,6 +29,7 @@ import io.lettuce.core.protocol.CommandType;
 
 /**
  * @author Mark Paluch
+ * @author Christian Weitendorf
  */
 class Connections {
 
@@ -53,19 +52,19 @@ class Connections {
      */
     public void addConnection(RedisURI redisURI, StatefulRedisConnection<String, String> connection) {
 
-        if (closed) { // fastpath
-            connection.close();
+        if (this.closed) { // fastpath
+            connection.closeAsync();
             return;
         }
 
-        synchronized (connections) {
+        synchronized (this.connections) {
 
-            if (closed) {
-                connection.close();
+            if (this.closed) {
+                connection.closeAsync();
                 return;
             }
 
-            connections.put(redisURI, connection);
+            this.connections.put(redisURI, connection);
         }
     }
 
@@ -73,8 +72,8 @@ class Connections {
      * @return {@literal true} if no connections present.
      */
     public boolean isEmpty() {
-        synchronized (connections) {
-            return connections.isEmpty();
+        synchronized (this.connections) {
+            return this.connections.isEmpty();
         }
     }
 
@@ -87,7 +86,7 @@ class Connections {
 
         Requests requests = new Requests();
 
-        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
+        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
             CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.NODES);
             Command<String, String, String> command = new Command<>(CommandType.CLUSTER, new StatusOutput<>(StringCodec.UTF8),
@@ -110,7 +109,7 @@ class Connections {
 
         Requests requests = new Requests();
 
-        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : connections.entrySet()) {
+        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
             CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.LIST);
             Command<String, String, String> command = new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8),
@@ -131,16 +130,19 @@ class Connections {
 
         this.closed = true;
 
+        List<CompletableFuture<?>> closeFutures = new ArrayList<>();
         while (hasConnections()) {
-
             for (StatefulRedisConnection<String, String> connection : drainConnections()) {
-                connection.closeAsync();
+                closeFutures.add(connection.closeAsync());
             }
         }
+
+        CompletableFuture.allOf(closeFutures.toArray(new CompletableFuture[0])).join();
     }
 
     private boolean hasConnections() {
-        synchronized (connections) {
+
+        synchronized (this.connections) {
             return !this.connections.isEmpty();
         }
     }
@@ -148,6 +150,7 @@ class Connections {
     private Collection<StatefulRedisConnection<String, String>> drainConnections() {
 
         Map<RedisURI, StatefulRedisConnection<String, String>> drainedConnections;
+
         synchronized (this.connections) {
 
             drainedConnections = new HashMap<>(this.connections);

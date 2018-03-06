@@ -53,7 +53,9 @@ import io.lettuce.core.resource.DnsResolvers;
 
 /**
  * @author Mark Paluch
+ * @author Christian Weitendorf
  */
+@SuppressWarnings("unchecked")
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterTopologyRefreshTest {
 
@@ -96,6 +98,8 @@ public class ClusterTopologyRefreshTest {
         when(clientResources.dnsResolver()).thenReturn(DnsResolvers.JVM_DEFAULT);
         when(connection1.async()).thenReturn(asyncCommands1);
         when(connection2.async()).thenReturn(asyncCommands2);
+        when(connection1.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+        when(connection2.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
 
         when(connection1.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 
@@ -277,7 +281,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void shouldShouldDiscoverNodes() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -293,7 +297,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void shouldShouldNotDiscoverNodes() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -334,14 +338,14 @@ public class ClusterTopologyRefreshTest {
 
         sut.loadViews(seed, true);
 
-        verify(connection1).close();
-        verify(connection2).close();
+        verify(connection1).closeAsync();
+        verify(connection2).closeAsync();
     }
 
     @Test
     public void undiscoveredAdditionalNodesShouldBeLastUsingClientCount() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -359,7 +363,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void discoveredAdditionalNodesShouldBeOrderedUsingClientCount() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -379,7 +383,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void undiscoveredAdditionalNodesShouldBeLastUsingLatency() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -397,7 +401,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void discoveredAdditionalNodesShouldBeOrderedUsingLatency() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
