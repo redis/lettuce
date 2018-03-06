@@ -225,7 +225,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test
     public void pubsubMultipleChannels() {
 
-        pubsub.subscribe(channel, "channel1", "channel3").subscribe();
+        StepVerifier.create(pubsub.subscribe(channel, "channel1", "channel3")).verifyComplete();
 
         StepVerifier.create(pubsub2.pubsubChannels().collectList())
                 .consumeNextWith(actual -> assertThat(actual).contains(channel, "channel1", "channel3")).verifyComplete();
@@ -234,7 +234,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test
     public void pubsubChannelsWithArg() {
 
-        pubsub.subscribe(channel).subscribe();
+        StepVerifier.create(pubsub.subscribe(channel)).verifyComplete();
         Wait.untilTrue(() -> mono(pubsub2.pubsubChannels(pattern).filter(s -> channel.equals(s))) != null).waitOrTimeout();
 
         String result = mono(pubsub2.pubsubChannels(pattern).filter(s -> channel.equals(s)));
@@ -244,7 +244,8 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test
     public void pubsubNumsub() {
 
-        pubsub.subscribe(channel).subscribe();
+        StepVerifier.create(pubsub.subscribe(channel)).verifyComplete();
+
         Wait.untilEquals(1, () -> block(pubsub2.pubsubNumsub(channel)).size()).waitOrTimeout();
 
         Map<String, Long> result = block(pubsub2.pubsubNumsub(channel));
@@ -257,7 +258,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
 
         Wait.untilEquals(0L, () -> block(pubsub2.pubsubNumpat())).waitOrTimeout();
 
-        pubsub.psubscribe(pattern).subscribe();
+        StepVerifier.create(pubsub.psubscribe(pattern)).verifyComplete();
         Wait.untilEquals(1L, () -> redis.pubsubNumpat()).waitOrTimeout();
 
         Long result = block(pubsub2.pubsubNumpat());
@@ -267,7 +268,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test(timeout = 2000)
     public void punsubscribe() throws Exception {
 
-        pubsub.punsubscribe(pattern).subscribe();
+        StepVerifier.create(pubsub.punsubscribe(pattern)).verifyComplete();
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(0);
 
@@ -276,7 +277,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test(timeout = 2000)
     public void subscribe() throws Exception {
 
-        pubsub.subscribe(channel).subscribe();
+        StepVerifier.create(pubsub.subscribe(channel)).verifyComplete();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isGreaterThan(0);
     }
@@ -284,7 +285,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test(timeout = 2000)
     public void unsubscribe() throws Exception {
 
-        pubsub.unsubscribe(channel).subscribe();
+        StepVerifier.create(pubsub.unsubscribe(channel)).verifyComplete();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(0);
 
@@ -315,7 +316,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
         block(pubsub.subscribe(channel));
         assertThat(channels.take()).isEqualTo(channel);
 
-        pubsub2.publish(channel, message).subscribe();
+        StepVerifier.create(pubsub2.publish(channel, message)).expectNextCount(1).verifyComplete();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
     }
@@ -323,7 +324,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test(timeout = 2000)
     public void resubscribeChannelsOnReconnect() throws Exception {
 
-        pubsub.subscribe(channel).subscribe();
+        StepVerifier.create(pubsub.subscribe(channel)).verifyComplete();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat((long) counts.take()).isEqualTo(1);
 
@@ -341,7 +342,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test(timeout = 2000)
     public void resubscribePatternsOnReconnect() throws Exception {
 
-        pubsub.psubscribe(pattern).subscribe();
+        StepVerifier.create(pubsub.psubscribe(pattern)).verifyComplete();
         assertThat(patterns.take()).isEqualTo(pattern);
         assertThat((long) counts.take()).isEqualTo(1);
 
@@ -352,7 +353,7 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
 
         Wait.untilTrue(pubsub::isOpen).waitOrTimeout();
 
-        pubsub2.publish(channel, message).subscribe();
+        StepVerifier.create(pubsub2.publish(channel, message)).expectNextCount(1).verifyComplete();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
     }
@@ -377,14 +378,14 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
         };
 
         pubsub.getStatefulConnection().addListener(adapter);
-        pubsub.subscribe(channel).subscribe();
-        pubsub.psubscribe(pattern).subscribe();
+        StepVerifier.create(pubsub.subscribe(channel)).verifyComplete();
+        StepVerifier.create(pubsub.psubscribe(pattern)).verifyComplete();
 
         assertThat((long) localCounts.take()).isEqualTo(1L);
 
-        pubsub2.publish(channel, message).subscribe();
-        pubsub.punsubscribe(pattern).subscribe();
-        pubsub.unsubscribe(channel).subscribe();
+        StepVerifier.create(pubsub2.publish(channel, message)).expectNextCount(1).verifyComplete();
+        StepVerifier.create(pubsub.punsubscribe(pattern)).verifyComplete();
+        StepVerifier.create(pubsub.unsubscribe(channel)).verifyComplete();
 
         assertThat((long) localCounts.take()).isEqualTo(0L);
     }
@@ -392,16 +393,16 @@ public class PubSubReactiveTest extends AbstractRedisClientTest implements Redis
     @Test(timeout = 2000)
     public void removeListener() throws Exception {
 
-        pubsub.subscribe(channel).subscribe();
+        StepVerifier.create(pubsub.subscribe(channel)).verifyComplete();
         assertThat(channels.take()).isEqualTo(channel);
 
-        pubsub2.publish(channel, message).subscribe();
+        StepVerifier.create(pubsub2.publish(channel, message)).expectNextCount(1).verifyComplete();
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
 
         pubsub.getStatefulConnection().removeListener(this);
 
-        pubsub2.publish(channel, message).subscribe();
+        StepVerifier.create(pubsub2.publish(channel, message)).expectNextCount(1).verifyComplete();
         assertThat(channels.poll(10, TimeUnit.MILLISECONDS)).isNull();
         assertThat(messages.poll(10, TimeUnit.MILLISECONDS)).isNull();
     }
