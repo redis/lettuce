@@ -53,7 +53,9 @@ import io.lettuce.core.resource.DnsResolvers;
 
 /**
  * @author Mark Paluch
+ * @author Christian Weitendorf
  */
+@SuppressWarnings("unchecked")
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterTopologyRefreshTest {
 
@@ -249,7 +251,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void shouldShouldDiscoverNodes() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -265,7 +267,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void shouldShouldNotDiscoverNodes() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -313,7 +315,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void undiscoveredAdditionalNodesShouldBeLastUsingClientCount() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -331,7 +333,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void discoveredAdditionalNodesShouldBeOrderedUsingClientCount() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -351,7 +353,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void undiscoveredAdditionalNodesShouldBeLastUsingLatency() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
@@ -369,7 +371,7 @@ public class ClusterTopologyRefreshTest {
     @Test
     public void discoveredAdditionalNodesShouldBeOrderedUsingLatency() {
 
-        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380));
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
                 .thenReturn(completedFuture((StatefulRedisConnection) connection1));
