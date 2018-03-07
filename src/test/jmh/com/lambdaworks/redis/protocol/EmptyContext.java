@@ -19,6 +19,7 @@ import java.net.SocketAddress;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
@@ -29,9 +30,11 @@ import io.netty.util.concurrent.EventExecutor;
  */
 class EmptyContext implements ChannelHandlerContext {
 
+    private final static Channel CHANNEL = new EmptyChannel();
+
     @Override
     public Channel channel() {
-        return null;
+        return CHANNEL;
     }
 
     @Override
@@ -208,7 +211,7 @@ class EmptyContext implements ChannelHandlerContext {
 
     @Override
     public ByteBufAllocator alloc() {
-        return null;
+        return PooledByteBufAllocator.DEFAULT;
     }
 
     @Override

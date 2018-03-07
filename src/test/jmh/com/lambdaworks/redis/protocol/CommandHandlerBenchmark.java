@@ -15,7 +15,11 @@
  */
 package com.lambdaworks.redis.protocol;
 
-import java.util.Collection;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.openjdk.jmh.annotations.*;
 
@@ -23,9 +27,7 @@ import com.lambdaworks.redis.ClientOptions;
 import com.lambdaworks.redis.codec.ByteArrayCodec;
 import com.lambdaworks.redis.output.ValueOutput;
 
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Benchmark for {@link CommandHandler}. Test cases:
@@ -40,79 +42,108 @@ import io.netty.channel.embedded.EmbeddedChannel;
 public class CommandHandlerBenchmark {
 
     private final static ByteArrayCodec CODEC = new ByteArrayCodec();
-    private final static ClientOptions CLIENT_OPTIONS = ClientOptions.builder().build();
+    private final static ClientOptions CLIENT_OPTIONS = ClientOptions.create();
     private final static EmptyContext CHANNEL_HANDLER_CONTEXT = new EmptyContext();
     private final static byte[] KEY = "key".getBytes();
-    private final static EmptyPromise EMPTY = new EmptyPromise();
+    private static final String VALUE = "value\r\n";
+    private final EmptyPromise PROMISE = new EmptyPromise();
 
     private CommandHandler commandHandler;
-    private Collection<?> stack;
-    private Command command;
+    private ByteBuf reply1;
+    private ByteBuf reply10;
+    private ByteBuf reply100;
+    private ByteBuf reply1000;
 
     @Setup
-    public void setup() {
-
-        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE) {
-            @Override
-            protected void setState(LifecycleState lifecycleState) {
-                CommandHandlerBenchmark.this.stack = super.stack;
-                super.setState(lifecycleState);
-            }
-        };
-
-        command = new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
-
+    public void setup() throws Exception {
+        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE);
+        commandHandler.channelRegistered(CHANNEL_HANDLER_CONTEXT);
         commandHandler.setState(CommandHandler.LifecycleState.CONNECTED);
 
-        commandHandler.channel = new MyLocalChannel();
+        reply1 = strToByteBuf(String.format("+%s", VALUE));
+        reply10 = strToByteBuf(makeBulkReply(10));
+        reply100 = strToByteBuf(makeBulkReply(100));
+        reply1000 = strToByteBuf(makeBulkReply(1000));
+        for (ByteBuf buf : Arrays.asList(reply1, reply10, reply100, reply1000)) {
+            buf.retain();
+        }
     }
 
-    @TearDown(Level.Iteration)
-    public void tearDown() {
-        commandHandler.reset();
-        stack.clear();
+    @TearDown
+    public void tearDown() throws Exception {
+        commandHandler.channelUnregistered(CHANNEL_HANDLER_CONTEXT);
+        for (ByteBuf buf : Arrays.asList(reply1, reply10, reply100, reply1000)) {
+            buf.release(2);
+        }
+    }
+
+    private ByteBuf strToByteBuf(String str) {
+        ByteBuf buf = CHANNEL_HANDLER_CONTEXT.alloc().directBuffer();
+        buf.writeBytes(str.getBytes());
+        return buf;
+    }
+
+    private String makeBulkReply(int numOfReplies) {
+        String baseReply = String.format("$%d\r\n%s\r\n", VALUE.length(), VALUE);
+        return String.join("", Collections.nCopies(numOfReplies, baseReply));
+    }
+
+    private Command makeCommand() {
+        return new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
     }
 
     @Benchmark
-    public void measureUserWrite() {
-        commandHandler.write(command);
+    public void measureNettyWriteAndRead() throws Exception {
+        Command command = makeCommand();
+
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, PROMISE);
+
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply1);
+        reply1.resetReaderIndex();
+        reply1.retain();
     }
 
     @Benchmark
-    public void measureNettyWrite() throws Exception {
-        commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, EMPTY);
-        stack.remove(command);
+    public void measureNettyWriteAndReadBatch1() throws Exception {
+        List<Command> commands = Collections.singletonList(makeCommand());
+
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
+
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply1);
+        reply1.resetReaderIndex();
+        reply1.retain();
     }
 
-    private final static class MyLocalChannel extends EmbeddedChannel {
-        @Override
-        public boolean isActive() {
-            return true;
-        }
+    @Benchmark
+    public void measureNettyWriteAndReadBatch10() throws Exception {
+        List<Command> commands = IntStream.range(0, 10).mapToObj(i -> makeCommand()).collect(Collectors.toList());
 
-        @Override
-        public boolean isOpen() {
-            return true;
-        }
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        @Override
-        public ChannelFuture write(Object msg) {
-            return EMPTY;
-        }
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply10);
+        reply10.resetReaderIndex();
+        reply10.retain();
+    }
 
-        @Override
-        public ChannelFuture write(Object msg, ChannelPromise promise) {
-            return promise;
-        }
+    @Benchmark
+    public void measureNettyWriteAndReadBatch100() throws Exception {
+        List<Command> commands = IntStream.range(0, 100).mapToObj(i -> makeCommand()).collect(Collectors.toList());
 
-        @Override
-        public ChannelFuture writeAndFlush(Object msg) {
-            return EMPTY;
-        }
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        @Override
-        public ChannelFuture writeAndFlush(Object msg, ChannelPromise promise) {
-            return promise;
-        }
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply100);
+        reply100.resetReaderIndex();
+        reply100.retain();
+    }
+
+    @Benchmark
+    public void measureNettyWriteAndReadBatch1000() throws Exception {
+        List<Command> commands = IntStream.range(0, 1000).mapToObj(i -> makeCommand()).collect(Collectors.toList());
+
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
+
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply1000);
+        reply1000.resetReaderIndex();
+        reply1000.retain();
     }
 }
