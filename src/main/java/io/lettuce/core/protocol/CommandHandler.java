@@ -562,7 +562,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             }
 
             if (buffer.refCnt() != 0) {
-                buffer.discardReadBytes();
+                buffer.discardSomeReadBytes();
             }
 
             afterComplete(ctx, command);
