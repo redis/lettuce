@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -25,10 +24,12 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.output.ValueOutput;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Benchmark for {@link CommandHandler}. Test cases:
@@ -46,81 +47,91 @@ public class CommandHandlerBenchmark {
     private final static ClientOptions CLIENT_OPTIONS = ClientOptions.create();
     private final static EmptyContext CHANNEL_HANDLER_CONTEXT = new EmptyContext();
     private final static byte[] KEY = "key".getBytes();
+    private static final String VALUE = "value\r\n";
     private final EmptyPromise PROMISE = new EmptyPromise();
 
     private CommandHandler commandHandler;
-    private Command command;
-    private Command batchCommand;
-    private Collection<Command> commands1;
-    private List<Command> commands10;
-    private List<Command> commands100;
-    private List<Command> commands1000;
 
     @Setup
-    public void setup() {
-
+    public void setup() throws Exception {
         commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new DefaultEndpoint(CLIENT_OPTIONS));
-        command = new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
-
-
+        commandHandler.channelRegistered(CHANNEL_HANDLER_CONTEXT);
         commandHandler.setState(CommandHandler.LifecycleState.CONNECTED);
+    }
 
-        commands1 = Arrays.asList(command);
-        commands10 = IntStream.range(0, 10)
-                .mapToObj(i -> new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY)))
-                .collect(Collectors.toList());
+    @TearDown
+    public void tearDown() throws Exception {
+        commandHandler.channelUnregistered(CHANNEL_HANDLER_CONTEXT);
+    }
 
-        commands100 = IntStream.range(0, 100)
-                .mapToObj(i -> new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY)))
-                .collect(Collectors.toList());
+    private ByteBuf strToByteBuf(String str) {
+        ByteBuf buf = CHANNEL_HANDLER_CONTEXT.alloc().directBuffer();
+        buf.writeBytes(str.getBytes());
+        return buf;
+    }
 
-        commands1000 = IntStream.range(0, 1000)
-                .mapToObj(i -> new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY)))
-                .collect(Collectors.toList());
+    private String makeBulkReply(int numOfReplies) {
+        String baseReply = String.format("$%d\r\n%s\r\n", VALUE.length(), VALUE);
+        return String.join("", Collections.nCopies(numOfReplies, baseReply));
+    }
+
+    private Command makeCommand() {
+        return new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
     }
 
     @Benchmark
-    public void measureNettyWrite() throws Exception {
+    public void measureNettyWriteAndRead() throws Exception {
+        ByteBuf reply = strToByteBuf(String.format("+%s", VALUE));
+        Command command = makeCommand();
 
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, PROMISE);
 
-        // Prevent OOME
-        commandHandler.getStack().clear();
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
     }
 
     @Benchmark
-    public void measureNettyWriteBatch1() throws Exception {
+    public void measureNettyWriteAndReadBatch1() throws Exception {
+        ByteBuf reply = strToByteBuf(String.format("+%s", VALUE));
+        List<Command> commands = Collections.singletonList(makeCommand());
 
-        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands1, PROMISE);
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        // Prevent OOME
-        commandHandler.getStack().clear();
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
     }
 
     @Benchmark
-    public void measureNettyWriteBatch10() throws Exception {
+    public void measureNettyWriteAndReadBatch10() throws Exception {
+        ByteBuf reply = strToByteBuf(makeBulkReply(10));
+        List<Command> commands = IntStream.range(0, 10)
+                .mapToObj(i -> makeCommand())
+                .collect(Collectors.toList());
 
-        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands10, PROMISE);
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        // Prevent OOME
-        commandHandler.getStack().clear();
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
     }
 
     @Benchmark
-    public void measureNettyWriteBatch100() throws Exception {
+    public void measureNettyWriteAndReadBatch100() throws Exception {
+        ByteBuf reply = strToByteBuf(makeBulkReply(100));
+        List<Command> commands = IntStream.range(0, 100)
+                .mapToObj(i -> makeCommand())
+                .collect(Collectors.toList());
 
-        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands100, PROMISE);
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        // Prevent OOME
-        commandHandler.getStack().clear();
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
     }
 
     @Benchmark
-    public void measureNettyWriteBatch1000() throws Exception {
+    public void measureNettyWriteAndReadBatch1000() throws Exception {
+        ByteBuf reply = strToByteBuf(makeBulkReply(1000));
+        List<Command> commands = IntStream.range(0, 1000)
+                .mapToObj(i -> makeCommand())
+                .collect(Collectors.toList());
 
-        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands1000, PROMISE);
+        commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        // Prevent OOME
-        commandHandler.getStack().clear();
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
     }
 }
