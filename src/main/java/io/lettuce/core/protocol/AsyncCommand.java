@@ -125,7 +125,9 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     @Override
     public boolean completeExceptionally(Throwable ex) {
         boolean result = false;
-        if (COUNT_UPDATER.decrementAndGet(this) == 0) {
+
+        int ref = COUNT_UPDATER.get(this);
+        if (ref > 0 && COUNT_UPDATER.compareAndSet(this, ref, 0)) {
             result = doCompleteExceptionally(ex);
         }
         return result;
