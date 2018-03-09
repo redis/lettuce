@@ -32,6 +32,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.codec.EncoderException;
+import io.netty.util.Recycler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
@@ -256,12 +257,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
         if (reliability == Reliability.AT_MOST_ONCE) {
             // cancel on exceptions and remove from queue, because there is no housekeeping
-            channelWriteAndFlush(command).addListener(new AtMostOnceWriteListener(command));
+            channelWriteAndFlush(command).addListener(AtMostOnceWriteListener.newInstance(this, command));
         }
 
         if (reliability == Reliability.AT_LEAST_ONCE) {
             // commands are ok to stay within the queue, reconnect will retrigger them
-            channelWriteAndFlush(command).addListener(new RetryListener(command));
+            channelWriteAndFlush(command).addListener(RetryListener.newInstance(this, command));
         }
     }
 
@@ -273,7 +274,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             // cancel on exceptions and remove from queue, because there is no housekeeping
             for (RedisCommand<?, ?, ?> command : commands) {
-                channelWrite(command).addListener(new AtMostOnceWriteListener(command));
+                channelWrite(command).addListener(AtMostOnceWriteListener.newInstance(this, command));
             }
         }
 
@@ -281,7 +282,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             // commands are ok to stay within the queue, reconnect will retrigger them
             for (RedisCommand<?, ?, ?> command : commands) {
-                channelWrite(command).addListener(new RetryListener(command));
+                channelWrite(command).addListener(RetryListener.newInstance(this, command));
             }
         }
 
@@ -651,28 +652,18 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         return logPrefix = buffer;
     }
 
-    private class ListenerSupport {
+    static class ListenerSupport {
 
-        final Collection<? extends RedisCommand<?, ?, ?>> sentCommands;
-        final RedisCommand<?, ?, ?> sentCommand;
-
-        ListenerSupport(RedisCommand<?, ?, ?> sentCommand) {
-            this.sentCommand = sentCommand;
-            this.sentCommands = null;
-        }
-
-        ListenerSupport(Collection<? extends RedisCommand<?, ?, ?>> sentCommands) {
-            this.sentCommand = null;
-            this.sentCommands = sentCommands;
-        }
+        Collection<? extends RedisCommand<?, ?, ?>> sentCommands;
+        RedisCommand<?, ?, ?> sentCommand;
+        DefaultEndpoint endpoint;
 
         void dequeue() {
-            if (sentCommand != null) {
-                QUEUE_SIZE.decrementAndGet(DefaultEndpoint.this);
-            }
 
-            if (sentCommands != null) {
-                QUEUE_SIZE.addAndGet(DefaultEndpoint.this, -sentCommands.size());
+            if (sentCommand != null) {
+                QUEUE_SIZE.decrementAndGet(endpoint);
+            } else {
+                QUEUE_SIZE.addAndGet(endpoint, -sentCommands.size());
             }
         }
 
@@ -680,10 +671,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             if (sentCommand != null) {
                 sentCommand.completeExceptionally(t);
-            }
-
-            if (sentCommands != null) {
-
+            } else {
                 for (RedisCommand<?, ?, ?> sentCommand : sentCommands) {
                     sentCommand.completeExceptionally(t);
                 }
@@ -691,67 +679,151 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         }
     }
 
-    private class AtMostOnceWriteListener extends ListenerSupport implements ChannelFutureListener {
+    static class AtMostOnceWriteListener extends ListenerSupport implements ChannelFutureListener {
 
-        AtMostOnceWriteListener(RedisCommand<?, ?, ?> sentCommand) {
-            super(sentCommand);
+        private static final Recycler<AtMostOnceWriteListener> RECYCLER = new Recycler<AtMostOnceWriteListener>() {
+            @Override
+            protected AtMostOnceWriteListener newObject(Handle<AtMostOnceWriteListener> handle) {
+                return new AtMostOnceWriteListener(handle);
+            }
+        };
+
+        private final Recycler.Handle<AtMostOnceWriteListener> handle;
+
+        AtMostOnceWriteListener(Recycler.Handle<AtMostOnceWriteListener> handle) {
+            this.handle = handle;
         }
 
-        AtMostOnceWriteListener(Collection<? extends RedisCommand<?, ?, ?>> sentCommands) {
-            super(sentCommands);
+        static AtMostOnceWriteListener newInstance(DefaultEndpoint endpoint, RedisCommand<?, ?, ?> command) {
+
+            AtMostOnceWriteListener entry = RECYCLER.get();
+
+            entry.endpoint = endpoint;
+            entry.sentCommand = command;
+
+            return entry;
+        }
+
+        static AtMostOnceWriteListener newInstance(DefaultEndpoint endpoint,
+                Collection<? extends RedisCommand<?, ?, ?>> commands) {
+
+            AtMostOnceWriteListener entry = RECYCLER.get();
+
+            entry.endpoint = endpoint;
+            entry.sentCommands = commands;
+
+            return entry;
         }
 
         @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
+        public void operationComplete(ChannelFuture future) {
 
-            dequeue();
+            try {
 
-            if (future.cause() != null) {
-                complete(future.cause());
+                dequeue();
+
+                if (future.cause() != null) {
+                    complete(future.cause());
+                }
+            } finally {
+                recycle();
             }
+        }
+
+        private void recycle() {
+
+            this.endpoint = null;
+            this.sentCommand = null;
+            this.sentCommands = null;
+
+            handle.recycle(this);
         }
     }
 
     /**
      * A generic future listener which retries unsuccessful writes.
      */
-    private class RetryListener extends ListenerSupport implements GenericFutureListener<Future<Void>> {
+    static class RetryListener extends ListenerSupport implements GenericFutureListener<Future<Void>> {
 
-        RetryListener(RedisCommand<?, ?, ?> sentCommand) {
-            super(sentCommand);
+        private static final Recycler<RetryListener> RECYCLER = new Recycler<RetryListener>() {
+            @Override
+            protected RetryListener newObject(Handle<RetryListener> handle) {
+                return new RetryListener(handle);
+            }
+        };
+
+        private final Recycler.Handle<RetryListener> handle;
+
+        RetryListener(Recycler.Handle<RetryListener> handle) {
+            this.handle = handle;
         }
 
-        RetryListener(Collection<? extends RedisCommand<?, ?, ?>> sentCommands) {
-            super(sentCommands);
+        static RetryListener newInstance(DefaultEndpoint endpoint, RedisCommand<?, ?, ?> command) {
+
+            RetryListener entry = RECYCLER.get();
+
+            if (command == null) {
+                System.out.println();
+            }
+            entry.endpoint = endpoint;
+            entry.sentCommand = command;
+
+            return entry;
+        }
+
+        static RetryListener newInstance(DefaultEndpoint endpoint, Collection<? extends RedisCommand<?, ?, ?>> commands) {
+
+            RetryListener entry = RECYCLER.get();
+
+            entry.endpoint = endpoint;
+            entry.sentCommands = commands;
+
+            return entry;
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public void operationComplete(Future<Void> future) throws Exception {
+        public void operationComplete(Future<Void> future) {
 
-            logger.debug("operationComplete");
+            try {
+                doComplete(future);
+            } finally {
+                recycle();
+            }
+        }
+
+        private void doComplete(Future<Void> future) {
 
             Throwable cause = future.cause();
 
             boolean success = future.isSuccess();
             dequeue();
 
-            if (!success) {
-
-                if (cause instanceof EncoderException || cause instanceof Error || cause.getCause() instanceof Error) {
-                    complete(cause);
-                    return;
-                }
-
-                Channel channel = DefaultEndpoint.this.channel;
-                if (channel != null) {
-                    channel.eventLoop().submit(this::requeueCommands);
-                } else {
-                    requeueCommands();
-                }
+            if (success) {
+                return;
             }
 
-            if (!success && !(cause instanceof ClosedChannelException)) {
+            if (cause instanceof EncoderException || cause instanceof Error || cause.getCause() instanceof Error) {
+                complete(cause);
+                return;
+            }
+
+            Channel channel = endpoint.channel;
+            if (channel != null) {
+
+                // Capture values before recycler clears these.
+                RedisCommand<?, ?, ?> sentCommand = this.sentCommand;
+                Collection<? extends RedisCommand<?, ?, ?>> sentCommands = this.sentCommands;
+                DefaultEndpoint endpoint = this.endpoint;
+
+                channel.eventLoop().submit(() -> {
+                    requeueCommands(sentCommand, sentCommands, endpoint);
+                });
+            } else {
+                requeueCommands(sentCommand, sentCommands, endpoint);
+            }
+
+            if (!(cause instanceof ClosedChannelException)) {
 
                 String message = "Unexpected exception during request: {}";
                 InternalLogLevel logLevel = InternalLogLevel.WARN;
@@ -764,23 +836,29 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             }
         }
 
-        private void requeueCommands() {
-
+        private void requeueCommands(RedisCommand<?, ?, ?> sentCommand, Collection sentCommands, DefaultEndpoint endpoint) {
             if (sentCommand != null) {
                 try {
-                    write(sentCommand);
+                    endpoint.write(sentCommand);
                 } catch (Exception e) {
                     complete(e);
                 }
-            }
-
-            if (sentCommands != null) {
+            } else {
                 try {
-                    write((Collection) sentCommands);
+                    endpoint.write(sentCommands);
                 } catch (Exception e) {
                     complete(e);
                 }
             }
+        }
+
+        private void recycle() {
+
+            this.endpoint = null;
+            this.sentCommand = null;
+            this.sentCommands = null;
+
+            handle.recycle(this);
         }
     }
 

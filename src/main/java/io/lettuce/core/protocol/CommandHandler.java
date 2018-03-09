@@ -35,6 +35,9 @@ import io.lettuce.core.resource.ClientResources;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
+import io.netty.util.Recycler;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -63,7 +66,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final ClientResources clientResources;
     private final Endpoint endpoint;
 
-    private final Deque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
+    private final ArrayDeque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
     private final long commandHandlerId = COMMAND_HANDLER_COUNTER.incrementAndGet();
 
     private final RedisStateMachine rsm = new RedisStateMachine();
@@ -399,7 +402,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
-    private void addToStack(RedisCommand<?, ?, ?> command, ChannelPromise promise) throws Exception {
+    private void addToStack(RedisCommand<?, ?, ?> command, ChannelPromise promise) {
 
         try {
 
@@ -415,11 +418,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             if (promise.isVoid()) {
                 stack.add(redisCommand);
             } else {
-                promise.addListener(future -> {
-                    if (future.isSuccess()) {
-                        stack.add(redisCommand);
-                    }
-                });
+                promise.addListener(AddToStack.newInstance(stack, redisCommand));
             }
         } catch (Exception e) {
             command.completeExceptionally(e);
@@ -775,5 +774,64 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     enum EnableAutoRead {
         INSTANCE
+    }
+
+    /**
+     * Add to stack listener. This listener is pooled and must be {@link #recycle() recycled after usage}.
+     */
+    static class AddToStack implements GenericFutureListener<Future<Void>> {
+
+        private static final Recycler<AddToStack> RECYCLER = new Recycler<AddToStack>() {
+            @Override
+            protected AddToStack newObject(Handle<AddToStack> handle) {
+                return new AddToStack(handle);
+            }
+        };
+
+        private final Recycler.Handle<AddToStack> handle;
+        private ArrayDeque stack;
+        private RedisCommand<?, ?, ?> command;
+
+        AddToStack(Recycler.Handle<AddToStack> handle) {
+            this.handle = handle;
+        }
+
+        /**
+         * Allocate a new instance.
+         *
+         * @param stack
+         * @param command
+         * @return
+         */
+        static AddToStack newInstance(ArrayDeque stack, RedisCommand<?, ?, ?> command) {
+
+            AddToStack entry = RECYCLER.get();
+
+            entry.stack = stack;
+            entry.command = command;
+
+            return entry;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void operationComplete(Future<Void> future) {
+
+            try {
+                if (future.isSuccess()) {
+                    stack.add(command);
+                }
+            } finally {
+                recycle();
+            }
+        }
+
+        private void recycle() {
+
+            this.stack = null;
+            this.command = null;
+
+            handle.recycle(this);
+        }
     }
 }

@@ -45,8 +45,8 @@ public class JmhMain {
     private static void runRedisClientBenchmark() throws RunnerException {
 
         new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
-                .include(".RedisClientBenchmark.asyncSetBatchFlush") // .include(".RedisClientBenchmark.asyncSetBatch")
-                .build()).run();
+                .include(".RedisClientBenchmark.asyncSetBatchFlush").include(".RedisClientBenchmark.asyncSetBatch").build())
+                .run();
     }
 
     private static void runCommandBenchmark() throws RunnerException {
