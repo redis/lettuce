@@ -66,7 +66,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final ClientResources clientResources;
     private final Endpoint endpoint;
 
-    private final Deque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
+    private final ArrayDeque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
     private final long commandHandlerId = COMMAND_HANDLER_COUNTER.incrementAndGet();
 
     private final RedisStateMachine rsm = new RedisStateMachine();
@@ -402,7 +402,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
-    private void addToStack(RedisCommand<?, ?, ?> command, ChannelPromise promise) throws Exception {
+    private void addToStack(RedisCommand<?, ?, ?> command, ChannelPromise promise) {
 
         try {
 
@@ -418,7 +418,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             if (promise.isVoid()) {
                 stack.add(redisCommand);
             } else {
-                promise.addListener(AppendToStack.newInstance(stack, command));
+                promise.addListener(AddToStack.newInstance(stack, command));
             }
         } catch (Exception e) {
             command.completeExceptionally(e);
@@ -776,50 +776,62 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         INSTANCE
     }
 
-    static class AppendToStack implements GenericFutureListener<Future<Void>> {
+    /**
+     * Add to stack listener. This listener is pooled and must be {@link #recycle() recycled after usage}.
+     */
+    static class AddToStack implements GenericFutureListener<Future<Void>> {
 
-        private final Recycler.Handle<AppendToStack> handle;
-        private Collection<RedisCommand<?, ?, ?>> stack;
-        private RedisCommand<?, ?, ?> command;
-
-        private static final Recycler<AppendToStack> RECYCLER = new Recycler<AppendToStack>() {
+        private static final Recycler<AddToStack> RECYCLER = new Recycler<AddToStack>() {
             @Override
-            protected AppendToStack newObject(Handle<AppendToStack> handle) {
-                return new AppendToStack(handle);
+            protected AddToStack newObject(Handle<AddToStack> handle) {
+                return new AddToStack(handle);
             }
         };
 
-        private AppendToStack(Recycler.Handle<AppendToStack> handle) {
+        private final Recycler.Handle<AddToStack> handle;
+        private ArrayDeque stack;
+        private RedisCommand<?, ?, ?> command;
+
+        AddToStack(Recycler.Handle<AddToStack> handle) {
             this.handle = handle;
         }
 
-        static AppendToStack newInstance(Collection<RedisCommand<?, ?, ?>> stack, RedisCommand<?, ?, ?> command) {
-            return RECYCLER.get().init(stack, command);
+        /**
+         * Allocate a new instance.
+         *
+         * @param stack
+         * @param command
+         * @return
+         */
+        static AddToStack newInstance(ArrayDeque stack, RedisCommand<?, ?, ?> command) {
+
+            AddToStack entry = RECYCLER.get();
+
+            entry.stack = stack;
+            entry.command = command;
+
+            return entry;
         }
 
-        private AppendToStack init(Collection<RedisCommand<?, ?, ?>> stack, RedisCommand<?, ?, ?> command) {
-
-            this.stack = stack;
-            this.command = command;
-            return this;
-        }
-
-        public void recycle() {
-            handle.recycle(this);
-        }
-
+        @SuppressWarnings("unchecked")
         @Override
-        public void operationComplete(Future<Void> future) throws Exception {
+        public void operationComplete(Future<Void> future) {
 
-            if (future.isSuccess()) {
-
-                stack.add(command);
-
-                stack = null;
-                command = null;
+            try {
+                if (future.isSuccess()) {
+                    stack.add(command);
+                }
+            } finally {
+                recycle();
             }
+        }
 
-            recycle();
+        private void recycle() {
+
+            this.stack = null;
+            this.command = null;
+
+            handle.recycle(this);
         }
     }
 }
