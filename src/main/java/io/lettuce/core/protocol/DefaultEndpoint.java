@@ -125,7 +125,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             if (autoFlushCommands) {
 
                 if (isConnected()) {
-                    writeToChannel(command);
+                    writeToChannelAndFlush(command);
                 } else {
                     writeToDisconnectedBuffer(command);
                 }
@@ -157,7 +157,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             if (autoFlushCommands) {
 
                 if (isConnected()) {
-                    writeToChannel(commands);
+                    writeToChannelAndFlush(commands);
                 } else {
                     writeToDisconnectedBuffer(commands);
                 }
@@ -261,11 +261,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         commandBuffer.add(command);
     }
 
-    private void writeToChannel(RedisCommand<?, ?, ?> command) {
+    private void writeToChannelAndFlush(RedisCommand<?, ?, ?> command) {
 
         QUEUE_SIZE.incrementAndGet(this);
 
-        ChannelFuture channelFuture = writeAndFlush(command);
+        ChannelFuture channelFuture = channelWriteAndFlush(command);
 
         if (reliability == Reliability.AT_MOST_ONCE) {
             // cancel on exceptions and remove from queue, because there is no housekeeping
@@ -278,39 +278,54 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         }
     }
 
-    private void writeToChannel(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+    private void writeToChannelAndFlush(Collection<? extends RedisCommand<?, ?, ?>> commands) {
 
         QUEUE_SIZE.addAndGet(this, commands.size());
 
-        ChannelFuture channelFuture = writeAndFlush(commands);
-
         if (reliability == Reliability.AT_MOST_ONCE) {
+
             // cancel on exceptions and remove from queue, because there is no housekeeping
-            channelFuture.addListener(new AtMostOnceWriteListener(commands));
+            for (RedisCommand<?, ?, ?> command : commands) {
+                channelWrite(command).addListener(new AtMostOnceWriteListener(command));
+            }
         }
 
         if (reliability == Reliability.AT_LEAST_ONCE) {
+
             // commands are ok to stay within the queue, reconnect will retrigger them
-            channelFuture.addListener(new RetryListener(commands));
+            for (RedisCommand<?, ?, ?> command : commands) {
+                channelWrite(command).addListener(new AtMostOnceWriteListener(command));
+            }
         }
+
+        channelFlush();
     }
 
-    private ChannelFuture writeAndFlush(RedisCommand<?, ?, ?> command) {
+    private void channelFlush() {
+
+        if (debugEnabled) {
+            logger.debug("{} write() channelFlush", logPrefix());
+        }
+
+        channel.flush();
+    }
+
+    private ChannelFuture channelWrite(RedisCommand<?, ?, ?> command) {
+
+        if (debugEnabled) {
+            logger.debug("{} write() channelWrite command {}", logPrefix(), command);
+        }
+
+        return channel.write(command);
+    }
+
+    private ChannelFuture channelWriteAndFlush(RedisCommand<?, ?, ?> command) {
 
         if (debugEnabled) {
             logger.debug("{} write() writeAndFlush command {}", logPrefix(), command);
         }
 
         return channel.writeAndFlush(command);
-    }
-
-    private ChannelFuture writeAndFlush(Collection<? extends RedisCommand<?, ?, ?>> commands) {
-
-        if (debugEnabled) {
-            logger.debug("{} write() writeAndFlush commands {}", logPrefix(), commands);
-        }
-
-        return channel.writeAndFlush(commands);
     }
 
     private boolean isRejectCommand() {
@@ -462,20 +477,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             }
 
             if (!commands.isEmpty()) {
-
-                QUEUE_SIZE.addAndGet(this, commands.size());
-
-                ChannelFuture channelFuture = writeAndFlush(commands);
-
-                if (reliability == Reliability.AT_MOST_ONCE) {
-                    // cancel on exceptions and remove from queue, because there is no housekeeping
-                    channelFuture.addListener(new AtMostOnceWriteListener(commands));
-                }
-
-                if (reliability == Reliability.AT_LEAST_ONCE) {
-                    // commands are ok to stay within the queue, reconnect will retrigger them
-                    channelFuture.addListener(new RetryListener(commands));
-                }
+                writeToChannelAndFlush(commands);
             }
         }
     }
@@ -771,6 +773,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         @SuppressWarnings("unchecked")
         @Override
         public void operationComplete(Future<Void> future) throws Exception {
+
+            logger.debug("operationComplete");
 
             Throwable cause = future.cause();
 

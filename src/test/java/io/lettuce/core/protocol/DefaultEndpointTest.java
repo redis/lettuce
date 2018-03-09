@@ -24,7 +24,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -64,7 +63,7 @@ public class DefaultEndpointTest {
 
     private DefaultEndpoint sut;
 
-    private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<String, String>(
+    private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<>(
             new Utf8StringCodec()), null);
 
     @Mock
@@ -96,6 +95,17 @@ public class DefaultEndpointTest {
     public void before() {
 
         when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
+            if (invocation.getArguments()[0] instanceof RedisCommand) {
+                queue.add((RedisCommand) invocation.getArguments()[0]);
+            }
+
+            if (invocation.getArguments()[0] instanceof Collection) {
+                queue.addAll((Collection) invocation.getArguments()[0]);
+            }
+            return new DefaultChannelPromise(channel);
+        });
+
+        when(channel.write(any())).thenAnswer(invocation -> {
             if (invocation.getArguments()[0] instanceof RedisCommand) {
                 queue.add((RedisCommand) invocation.getArguments()[0]);
             }
@@ -186,7 +196,7 @@ public class DefaultEndpointTest {
         sut.notifyDrainQueuedCommands(() -> q);
 
         assertThat(ConnectionTestUtil.getDisconnectedBuffer(sut)).contains(command);
-        verify(channel, never()).writeAndFlush(any());
+        verify(channel, never()).write(any());
     }
 
     @Test
@@ -200,7 +210,9 @@ public class DefaultEndpointTest {
         sut.notifyChannelActive(channel);
         sut.notifyDrainQueuedCommands(() -> q);
 
-        verify(channel).writeAndFlush(eq(Arrays.asList(command)));
+        verify(channel).write(command);
+        verify(channel).flush();
+
     }
 
     @Test

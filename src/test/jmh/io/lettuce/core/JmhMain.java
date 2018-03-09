@@ -31,9 +31,23 @@ import org.openjdk.jmh.runner.options.TimeValue;
  */
 public class JmhMain {
 
-    public static void main(String... args) throws Exception {
+    public static void main(String... args) throws RunnerException {
 
+        // runCommandHandlerBenchmark();
         runRedisClientBenchmark();
+    }
+
+    private static void runBenchmarks() throws RunnerException {
+        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).build()).run();
+    }
+
+    private static void runCommandBenchmark() throws RunnerException {
+
+        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*CommandBenchmark.*")
+                .build()).run();
+
+        new Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandBenchmark.*").build())
+                .run();
     }
 
     private static void runRedisClientBenchmark() throws RunnerException {
