@@ -63,4 +63,31 @@ public class NodeTopologyViewsTest {
 
         new NodeTopologyView(localhost, viewByLocalhost, "", 0);
     }
+
+    @Test
+    public void shouldNotReuseLoadBalancerUris() throws Exception {
+
+        RedisURI loadBalancer = RedisURI.builder().withHost("loadbalancer").withPort(6479).withLoadBalancer(true).build();
+        RedisURI host1 = RedisURI.create("127.0.0.1", 7000);
+        RedisURI otherhost = RedisURI.create("127.0.0.2", 7000);
+
+        RedisURI host3 = RedisURI.create("127.0.0.3", 7000);
+
+        String viewByLoadBalancer = "1 127.0.0.1:7000 master,myself - 0 1401258245007 2 connected 8000-11999\n"
+                + "2 127.0.0.2:7000 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
+                + "3 127.0.0.3:7000 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
+
+        String viewByOtherhost = "1 127.0.0.1:7000 master - 0 1401258245007 2 connected 8000-11999\n"
+                + "2 127.0.0.2:7000 master,myself - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
+                + "3 127.0.0.3:7000 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
+
+        NodeTopologyView loadbalancerView = new NodeTopologyView(loadBalancer, viewByLoadBalancer, "", 0);
+        NodeTopologyView otherhostView = new NodeTopologyView(otherhost, viewByOtherhost, "", 0);
+
+        NodeTopologyViews nodeTopologyViews = new NodeTopologyViews(Arrays.asList(loadbalancerView, otherhostView));
+
+        Set<RedisURI> clusterNodes = nodeTopologyViews.getClusterNodes();
+        assertThat(clusterNodes).contains(host1, otherhost, host3);
+        assertThat(clusterNodes).doesNotContain(loadBalancer);
+    }
 }

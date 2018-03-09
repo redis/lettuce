@@ -61,6 +61,10 @@ class NodeTopologyView {
         this.clusterNodes = clusterNodes;
         this.clientList = clientList;
         this.latency = latency;
+
+        if(!redisURI.isLoadBalancer()){
+            getOwnPartition().setUri(redisURI);
+        }
     }
 
     static NodeTopologyView from(RedisURI redisURI, Requests clusterNodesRequests, Requests clientListRequests)
