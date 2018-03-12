@@ -17,6 +17,8 @@ package io.lettuce.core.cluster.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -62,22 +64,22 @@ public class TopologyRefreshTest extends AbstractTest {
     private RedisCommands<String, String> redis2;
 
     @Before
-    public void openConnection() throws Exception {
-        clusterClient = RedisClusterClient.create(client.getResources(),
-                RedisURI.Builder.redis(host, AbstractClusterTest.port1).build());
+    public void openConnection() {
+        clusterClient = RedisClusterClient.create(client.getResources(), RedisURI.Builder
+                .redis(host, AbstractClusterTest.port1).build());
         redis1 = client.connect(RedisURI.Builder.redis(AbstractClusterTest.host, AbstractClusterTest.port1).build()).sync();
         redis2 = client.connect(RedisURI.Builder.redis(AbstractClusterTest.host, AbstractClusterTest.port2).build()).sync();
     }
 
     @After
-    public void closeConnection() throws Exception {
+    public void closeConnection() {
         redis1.getStatefulConnection().close();
         redis2.getStatefulConnection().close();
         FastShutdown.shutdown(clusterClient);
     }
 
     @Test
-    public void shouldUnsubscribeTopologyRefresh() throws Exception {
+    public void shouldUnsubscribeTopologyRefresh() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
                 .enablePeriodicRefresh(true) //
@@ -89,8 +91,8 @@ public class TopologyRefreshTest extends AbstractTest {
         AtomicBoolean clusterTopologyRefreshActivated = (AtomicBoolean) ReflectionTestUtils.getField(clusterClient,
                 "clusterTopologyRefreshActivated");
 
-        AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = (AtomicReference) ReflectionTestUtils
-                .getField(clusterClient, "clusterTopologyRefreshFuture");
+        AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = (AtomicReference) ReflectionTestUtils.getField(
+                clusterClient, "clusterTopologyRefreshFuture");
 
         assertThat(clusterTopologyRefreshActivated.get()).isTrue();
         assertThat((Future) clusterTopologyRefreshFuture.get()).isNotNull();
@@ -107,7 +109,7 @@ public class TopologyRefreshTest extends AbstractTest {
     }
 
     @Test
-    public void changeTopologyWhileOperations() throws Exception {
+    public void changeTopologyWhileOperations() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
                 .enablePeriodicRefresh(true)//
@@ -126,7 +128,7 @@ public class TopologyRefreshTest extends AbstractTest {
     }
 
     @Test
-    public void dynamicSourcesProvidesClientCountForAllNodes() throws Exception {
+    public void dynamicSourcesProvidesClientCountForAllNodes() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.create();
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
@@ -143,7 +145,7 @@ public class TopologyRefreshTest extends AbstractTest {
     }
 
     @Test
-    public void staticSourcesProvidesClientCountForSeedNodes() throws Exception {
+    public void staticSourcesProvidesClientCountForSeedNodes() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
                 .dynamicRefreshSources(false).build();
@@ -161,7 +163,7 @@ public class TopologyRefreshTest extends AbstractTest {
     }
 
     @Test
-    public void adaptiveTopologyUpdateOnDisconnectNodeIdConnection() throws Exception {
+    public void adaptiveTopologyUpdateOnDisconnectNodeIdConnection() {
 
         runReconnectTest((clusterConnection, node) -> {
             RedisClusterAsyncCommands<String, String> connection = clusterConnection.getConnection(node.getUri().getHost(),
@@ -172,7 +174,7 @@ public class TopologyRefreshTest extends AbstractTest {
     }
 
     @Test
-    public void adaptiveTopologyUpdateOnDisconnectHostAndPortConnection() throws Exception {
+    public void adaptiveTopologyUpdateOnDisconnectHostAndPortConnection() {
 
         runReconnectTest((clusterConnection, node) -> {
             RedisClusterAsyncCommands<String, String> connection = clusterConnection.getConnection(node.getUri().getHost(),
@@ -183,7 +185,7 @@ public class TopologyRefreshTest extends AbstractTest {
     }
 
     @Test
-    public void adaptiveTopologyUpdateOnDisconnectDefaultConnection() throws Exception {
+    public void adaptiveTopologyUpdateOnDisconnectDefaultConnection() {
 
         runReconnectTest((clusterConnection, node) -> {
             return clusterConnection;
@@ -265,7 +267,7 @@ public class TopologyRefreshTest extends AbstractTest {
     }
 
     @Test
-    public void adaptiveTriggerOnMoveRedirection() throws Exception {
+    public void adaptiveTriggerOnMoveRedirection() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .enableAdaptiveRefreshTrigger(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT)//
@@ -279,8 +281,10 @@ public class TopologyRefreshTest extends AbstractTest {
         RedisClusterNode node1 = partitions.getPartitionBySlot(0);
         RedisClusterNode node2 = partitions.getPartitionBySlot(12000);
 
-        node2.getSlots().addAll(node1.getSlots());
-        node1.getSlots().clear();
+        List<Integer> slots = node2.getSlots();
+        slots.addAll(node1.getSlots());
+        node2.setSlots(slots);
+        node1.setSlots(Collections.emptyList());
         partitions.updateCache();
 
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots()).hasSize(0);
@@ -290,7 +294,7 @@ public class TopologyRefreshTest extends AbstractTest {
 
         Wait.untilEquals(12000, new Wait.Supplier<Integer>() {
             @Override
-            public Integer get() throws Exception {
+            public Integer get() {
                 return clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots().size();
             }
         }).waitOrTimeout();
@@ -301,8 +305,7 @@ public class TopologyRefreshTest extends AbstractTest {
     }
 
     private void runReconnectTest(
-            BiFunction<RedisAdvancedClusterAsyncCommands<String, String>, RedisClusterNode, BaseRedisAsyncCommands> function)
-            throws Exception {
+            BiFunction<RedisAdvancedClusterAsyncCommands<String, String>, RedisClusterNode, BaseRedisAsyncCommands> function) {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .refreshTriggersReconnectAttempts(0)//

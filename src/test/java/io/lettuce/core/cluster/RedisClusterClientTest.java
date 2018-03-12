@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.*;
 import org.junit.runners.MethodSorters;
@@ -292,13 +294,9 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
-            partition.setSlots(new ArrayList<>());
+            partition.setSlots(Collections.emptyList());
             if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-
-                int[] slots = createSlots(0, 16384);
-                for (int i = 0; i < slots.length; i++) {
-                    partition.getSlots().add(i);
-                }
+                partition.setSlots(IntStream.range(0, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList()));
             }
         }
         partitions.updateCache();
@@ -335,13 +333,9 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         for (RedisClusterNode partition : partitions) {
 
             if (partition.getSlots().contains(15495)) {
-                partition.setSlots(new ArrayList<>());
+                partition.setSlots(Collections.emptyList());
             } else {
-                partition.setSlots(new ArrayList<>());
-                int[] slots = createSlots(0, 16384);
-                for (int i = 0; i < slots.length; i++) {
-                    partition.getSlots().add(i);
-                }
+                partition.setSlots(IntStream.range(0, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList()));
             }
 
         }
