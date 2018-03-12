@@ -16,26 +16,29 @@
 package com.lambdaworks.redis.cluster.models.partitions;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.cluster.SlotHash;
 import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.internal.LettuceSets;
 import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
- * Representation of a Redis Cluster node. A {@link RedisClusterNode} is identified by its {@code nodeId}. A
- * {@link RedisClusterNode} can be a {@link #getRole() responsible master} for zero to
- * {@link com.lambdaworks.redis.cluster.SlotHash#SLOT_COUNT 16384} slots, a slave of one {@link #getSlaveOf() master} of carry
- * different {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag flags}.
+ * Representation of a Redis Cluster node. A {@link RedisClusterNode} is identified by its {@code nodeId}.
+ * <p/>
+ * A {@link RedisClusterNode} can be a {@link #getRole() responsible master} or slave. Masters can be responsible for zero to
+ * {@link com.lambdaworks.redis.cluster.SlotHash#SLOT_COUNT 16384} slots. Each slave refers to exactly one {@link #getSlaveOf()
+ * master}. Nodes can have different {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag flags}
+ * assigned.
+ * <p/>
+ * This class is mutable and not thread-safe if mutated by multiple threads concurrently.
  *
  * @author Mark Paluch
  * @since 3.0
  */
 @SuppressWarnings("serial")
 public class RedisClusterNode implements Serializable, RedisNodeDescription {
+
     private RedisURI uri;
     private String nodeId;
 
@@ -45,15 +48,15 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     private long pongReceivedTimestamp;
     private long configEpoch;
 
-    private List<Integer> slots;
-    private Set<NodeFlag> flags;
+    private BitSet slots;
+    private final Set<NodeFlag> flags = EnumSet.noneOf(NodeFlag.class);
 
     public RedisClusterNode() {
-
     }
 
     public RedisClusterNode(RedisURI uri, String nodeId, boolean connected, String slaveOf, long pingSentTimestamp,
             long pongReceivedTimestamp, long configEpoch, List<Integer> slots, Set<NodeFlag> flags) {
+
         this.uri = uri;
         this.nodeId = nodeId;
         this.connected = connected;
@@ -61,11 +64,15 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.pingSentTimestamp = pingSentTimestamp;
         this.pongReceivedTimestamp = pongReceivedTimestamp;
         this.configEpoch = configEpoch;
-        this.slots = slots;
-        this.flags = flags;
+
+        setSlotBits(slots);
+        setFlags(flags);
     }
 
     public RedisClusterNode(RedisClusterNode redisClusterNode) {
+
+        LettuceAssert.notNull(redisClusterNode, "RedisClusterNode must not be null");
+
         this.uri = redisClusterNode.uri;
         this.nodeId = redisClusterNode.nodeId;
         this.connected = redisClusterNode.connected;
@@ -73,8 +80,13 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.pingSentTimestamp = redisClusterNode.pingSentTimestamp;
         this.pongReceivedTimestamp = redisClusterNode.pongReceivedTimestamp;
         this.configEpoch = redisClusterNode.configEpoch;
-        this.slots = new ArrayList<>(redisClusterNode.slots);
-        this.flags = LettuceSets.newHashSet(redisClusterNode.flags);
+
+        if (redisClusterNode.slots != null && !redisClusterNode.slots.isEmpty()) {
+            this.slots = new BitSet(SlotHash.SLOT_COUNT);
+            this.slots.or(redisClusterNode.slots);
+        }
+
+        setFlags(redisClusterNode.flags);
     }
 
     /**
@@ -84,8 +96,12 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @return a new instance of {@link RedisClusterNode}
      */
     public static RedisClusterNode of(String nodeId) {
+
+        LettuceAssert.notNull(nodeId, "NodeId must not be null");
+
         RedisClusterNode redisClusterNode = new RedisClusterNode();
         redisClusterNode.setNodeId(nodeId);
+
         return redisClusterNode;
     }
 
@@ -94,11 +110,12 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * Sets thhe connection point details. Usually the host/ip/port where a particular Redis Cluster node server is running.
+     * Sets the connection point details. Usually the host/ip/port where a particular Redis Cluster node server is running.
      *
      * @param uri the {@link RedisURI}, must not be {@literal null}
      */
     public void setUri(RedisURI uri) {
+
         LettuceAssert.notNull(uri, "RedisURI must not be null");
         this.uri = uri;
     }
@@ -184,6 +201,20 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     public List<Integer> getSlots() {
+
+        if (slots == null || slots.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Integer> slots = new ArrayList<>();
+
+        for (int i = 0; i < SlotHash.SLOT_COUNT; i++) {
+
+            if (this.slots.get(i)) {
+                slots.add(i);
+            }
+        }
+
         return slots;
     }
 
@@ -195,9 +226,27 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @param slots list of slots, must not be {@literal null} but may be empty
      */
     public void setSlots(List<Integer> slots) {
+
         LettuceAssert.notNull(slots, "Slots must not be null");
 
-        this.slots = slots;
+        setSlotBits(slots);
+    }
+
+    private void setSlotBits(List<Integer> slots) {
+
+        if (slots.isEmpty() && this.slots == null) {
+            return;
+        }
+
+        if (this.slots == null) {
+            this.slots = new BitSet(SlotHash.SLOT_COUNT);
+        }
+
+        this.slots.clear();
+
+        for (Integer slot : slots) {
+            this.slots.set(slot);
+        }
     }
 
     public Set<NodeFlag> getFlags() {
@@ -210,7 +259,36 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @param flags the set of node flags.
      */
     public void setFlags(Set<NodeFlag> flags) {
-        this.flags = flags;
+
+        this.flags.clear();
+        this.flags.addAll(flags);
+    }
+
+    /**
+     * @param nodeFlag the node flag
+     * @return true if the {@linkplain NodeFlag} is contained within the flags.
+     */
+    public boolean is(NodeFlag nodeFlag) {
+        return getFlags().contains(nodeFlag);
+    }
+
+    /**
+     * @param slot the slot hash
+     * @return true if the slot is contained within the handled slots.
+     */
+    public boolean hasSlot(int slot) {
+        return slot <= SlotHash.SLOT_COUNT && this.slots != null && this.slots.get(slot);
+    }
+
+    /**
+     * Returns the {@link com.lambdaworks.redis.models.role.RedisInstance.Role} of the Redis Cluster node based on the
+     * {@link #getFlags() flags}.
+     *
+     * @return the Redis Cluster node role
+     */
+    @Override
+    public Role getRole() {
+        return is(NodeFlag.MASTER) ? Role.MASTER : Role.SLAVE;
     }
 
     @Override
@@ -233,13 +311,12 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     @Override
     public int hashCode() {
-        int result = 31 * (nodeId != null ? nodeId.hashCode() : 0);
-        return result;
+        return 31 * (nodeId != null ? nodeId.hashCode() : 0);
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [uri=").append(uri);
         sb.append(", nodeId='").append(nodeId).append('\'');
@@ -250,39 +327,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         sb.append(", configEpoch=").append(configEpoch);
         sb.append(", flags=").append(flags);
         if (slots != null) {
-            sb.append(", slot count=").append(slots.size());
+            sb.append(", slot count=").append(slots.cardinality());
         }
         sb.append(']');
         return sb.toString();
-    }
-
-    /**
-     *
-     * @param nodeFlag the node flag
-     * @return true if the {@linkplain NodeFlag} is contained within the flags.
-     */
-    public boolean is(NodeFlag nodeFlag) {
-        return getFlags().contains(nodeFlag);
-    }
-
-    /**
-     *
-     * @param slot the slot hash
-     * @return true if the slot is contained within the handled slots.
-     */
-    public boolean hasSlot(int slot) {
-        return getSlots().contains(slot);
-    }
-
-    /**
-     * Returns the {@link com.lambdaworks.redis.models.role.RedisInstance.Role} of the Redis Cluster node based on the
-     * {@link #getFlags() flags}.
-     *
-     * @return the Redis Cluster node role
-     */
-    @Override
-    public Role getRole() {
-        return is(NodeFlag.MASTER) ? Role.MASTER : Role.SLAVE;
     }
 
     /**
@@ -291,5 +339,4 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     public enum NodeFlag {
         NOFLAGS, MYSELF, SLAVE, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }
-
 }

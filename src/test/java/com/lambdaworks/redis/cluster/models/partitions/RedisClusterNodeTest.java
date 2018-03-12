@@ -17,13 +17,34 @@ package com.lambdaworks.redis.cluster.models.partitions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Arrays;
+
 import org.junit.Test;
 
 import com.lambdaworks.redis.RedisURI;
+import com.lambdaworks.redis.cluster.SlotHash;
 
+/**
+ * @author Mark Paluch
+ */
 public class RedisClusterNodeTest {
+
     @Test
-    public void testEquality() throws Exception {
+    public void shouldCopyNode() {
+
+        RedisClusterNode node = new RedisClusterNode();
+        node.setSlots(Arrays.asList(1, 2, 3, SlotHash.SLOT_COUNT - 1));
+
+        RedisClusterNode copy = new RedisClusterNode(node);
+
+        assertThat(copy.getSlots()).containsExactly(1, 2, 3, SlotHash.SLOT_COUNT - 1);
+        assertThat(copy.hasSlot(1)).isTrue();
+        assertThat(copy.hasSlot(SlotHash.SLOT_COUNT - 1)).isTrue();
+    }
+
+    @Test
+    public void testEquality() {
+
         RedisClusterNode node = new RedisClusterNode();
 
         assertThat(node).isEqualTo(new RedisClusterNode());
@@ -31,11 +52,11 @@ public class RedisClusterNodeTest {
 
         node.setUri(new RedisURI());
         assertThat(node.hashCode()).isNotEqualTo(new RedisClusterNode());
-
     }
 
     @Test
-    public void testToString() throws Exception {
+    public void testToString() {
+
         RedisClusterNode node = new RedisClusterNode();
 
         assertThat(node.toString()).contains(RedisClusterNode.class.getSimpleName());
