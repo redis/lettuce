@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,17 +52,32 @@ public class CommandHandlerBenchmark {
     private final EmptyPromise PROMISE = new EmptyPromise();
 
     private CommandHandler commandHandler;
+    private ByteBuf reply1;
+    private ByteBuf reply10;
+    private ByteBuf reply100;
+    private ByteBuf reply1000;
 
     @Setup
     public void setup() throws Exception {
         commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new DefaultEndpoint(CLIENT_OPTIONS));
         commandHandler.channelRegistered(CHANNEL_HANDLER_CONTEXT);
         commandHandler.setState(CommandHandler.LifecycleState.CONNECTED);
+
+        reply1 = strToByteBuf(String.format("+%s", VALUE));
+        reply10 = strToByteBuf(makeBulkReply(10));
+        reply100 = strToByteBuf(makeBulkReply(100));
+        reply1000 = strToByteBuf(makeBulkReply(1000));
+        for (ByteBuf buf: Arrays.asList(reply1, reply10, reply100, reply1000)) {
+            buf.retain();
+        }
     }
 
     @TearDown
     public void tearDown() throws Exception {
         commandHandler.channelUnregistered(CHANNEL_HANDLER_CONTEXT);
+        for (ByteBuf buf: Arrays.asList(reply1, reply10, reply100, reply1000)) {
+            buf.release(2);
+        }
     }
 
     private ByteBuf strToByteBuf(String str) {
@@ -81,57 +97,62 @@ public class CommandHandlerBenchmark {
 
     @Benchmark
     public void measureNettyWriteAndRead() throws Exception {
-        ByteBuf reply = strToByteBuf(String.format("+%s", VALUE));
         Command command = makeCommand();
 
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, command, PROMISE);
 
-        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply1);
+        reply1.resetReaderIndex();
+        reply1.retain();
     }
 
     @Benchmark
     public void measureNettyWriteAndReadBatch1() throws Exception {
-        ByteBuf reply = strToByteBuf(String.format("+%s", VALUE));
         List<Command> commands = Collections.singletonList(makeCommand());
 
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply1);
+        reply1.resetReaderIndex();
+        reply1.retain();
     }
 
     @Benchmark
     public void measureNettyWriteAndReadBatch10() throws Exception {
-        ByteBuf reply = strToByteBuf(makeBulkReply(10));
         List<Command> commands = IntStream.range(0, 10)
                 .mapToObj(i -> makeCommand())
                 .collect(Collectors.toList());
 
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply10);
+        reply10.resetReaderIndex();
+        reply10.retain();
     }
 
     @Benchmark
     public void measureNettyWriteAndReadBatch100() throws Exception {
-        ByteBuf reply = strToByteBuf(makeBulkReply(100));
         List<Command> commands = IntStream.range(0, 100)
                 .mapToObj(i -> makeCommand())
                 .collect(Collectors.toList());
 
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply100);
+        reply100.resetReaderIndex();
+        reply100.retain();
     }
 
     @Benchmark
     public void measureNettyWriteAndReadBatch1000() throws Exception {
-        ByteBuf reply = strToByteBuf(makeBulkReply(1000));
         List<Command> commands = IntStream.range(0, 1000)
                 .mapToObj(i -> makeCommand())
                 .collect(Collectors.toList());
 
         commandHandler.write(CHANNEL_HANDLER_CONTEXT, commands, PROMISE);
 
-        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply);
+        commandHandler.channelRead(CHANNEL_HANDLER_CONTEXT, reply1000);
+        reply1000.resetReaderIndex();
+        reply1000.retain();
     }
 }
