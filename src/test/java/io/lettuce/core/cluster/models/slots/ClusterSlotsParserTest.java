@@ -30,26 +30,26 @@ import io.lettuce.core.internal.LettuceLists;
 public class ClusterSlotsParserTest {
 
     @Test
-    public void testEmpty() throws Exception {
+    public void testEmpty() {
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(new ArrayList<>());
         assertThat(result).isNotNull().isEmpty();
     }
 
     @Test
-    public void testOneString() throws Exception {
+    public void testOneString() {
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(LettuceLists.newList(""));
         assertThat(result).isNotNull().isEmpty();
     }
 
     @Test
-    public void testOneStringInList() throws Exception {
+    public void testOneStringInList() {
         List<?> list = Arrays.asList(LettuceLists.newList("0"));
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).isNotNull().isEmpty();
     }
 
     @Test
-    public void testParse() throws Exception {
+    public void testParse() {
         List<?> list = Arrays.asList(LettuceLists.newList("0", "1", LettuceLists.newList("1", "2")));
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).hasSize(1);
@@ -58,7 +58,7 @@ public class ClusterSlotsParserTest {
     }
 
     @Test
-    public void testParseWithSlave() throws Exception {
+    public void testParseWithSlave() {
         List<?> list = Arrays.asList(LettuceLists.newList("100", "200", LettuceLists.newList("1", "2", "nodeId1"),
                 LettuceLists.newList("1", 2, "nodeId2")));
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
@@ -85,7 +85,7 @@ public class ClusterSlotsParserTest {
     }
 
     @Test
-    public void testSameNode() throws Exception {
+    public void testSameNode() {
         List<?> list = Arrays.asList(
                 LettuceLists.newList("100", "200", LettuceLists.newList("1", "2", "nodeId1"),
                         LettuceLists.newList("1", 2, "nodeId2")),
@@ -109,19 +109,19 @@ public class ClusterSlotsParserTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testParseInvalidMaster() throws Exception {
+    public void testParseInvalidMaster() {
         List<?> list = Arrays.asList(LettuceLists.newList("0", "1", LettuceLists.newList("1")));
         ClusterSlotsParser.parse(list);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testParseInvalidMaster2() throws Exception {
+    public void testParseInvalidMaster2() {
         List<?> list = Arrays.asList(LettuceLists.newList("0", "1", ""));
         ClusterSlotsParser.parse(list);
     }
 
     @Test
-    public void testModel() throws Exception {
+    public void testModel() {
 
         ClusterSlotRange range = new ClusterSlotRange();
         range.setFrom(1);
