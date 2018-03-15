@@ -50,6 +50,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Will Glozer
  * @author Mark Paluch
  * @author Jongyeol Choi
+ * @author Grzegorz Szpak
  */
 @ChannelHandler.Sharable
 public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisChannelWriter<K, V> {
@@ -312,11 +313,11 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 }
             }
 
-            if (buffer.refCnt() != 0) {
-                buffer.discardSomeReadBytes();
-            }
-
             afterComplete(ctx, command);
+        }
+
+        if (buffer.refCnt() != 0) {
+            buffer.discardReadBytes();
         }
     }
 
