@@ -530,6 +530,7 @@
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
+                            <argLine>-XX:-OmitStackTraceInFastThrow</argLine>
                             <skip>true</skip>
                         </configuration>
                     </plugin>

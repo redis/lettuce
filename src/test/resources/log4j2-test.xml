@@ -8,7 +8,7 @@
 
         <File name="File" fileName="target/lettuce.log" bufferedIO="true">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%-5p] [%t] %m (%c{1}:%L)%n"/>
-            <ThresholdFilter level="FATAL"/>
+            <ThresholdFilter level="INFO"/>
         </File>
     </Appenders>
 
