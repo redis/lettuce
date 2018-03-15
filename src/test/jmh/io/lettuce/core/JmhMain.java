@@ -15,7 +15,6 @@
  */
 package io.lettuce.core;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Mode;
@@ -32,9 +31,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
  */
 public class JmhMain {
 
-    public static void main(String... args) throws IOException, RunnerException {
-
-        // runCommandHandlerBenchmark();
+    public static void main(String... args) throws RunnerException {
         runRedisClientBenchmark();
     }
 
@@ -44,47 +41,8 @@ public class JmhMain {
 
     private static void runRedisClientBenchmark() throws RunnerException {
 
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
-                .include(".RedisClientBenchmark.asyncSetBatchFlush").include(".RedisClientBenchmark.asyncSetBatch").build())
-                .run();
-    }
-
-    private static void runCommandBenchmark() throws RunnerException {
-
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*CommandBenchmark.*")
+        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".RedisClientBenchmark.*")
                 .build()).run();
-
-        new Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandBenchmark.*").build())
-                .run();
-    }
-
-    private static void runCommandHandlerBenchmark() throws RunnerException {
-
-//        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS).include(".*RedisClientBenchmark.*")
-//                .build()).run();
-         new Runner(
-                 prepareOptions()
-                         .mode(Mode.Throughput)
-                         .timeUnit(TimeUnit.SECONDS)
-                         .include(".*CommandHandlerBenchmark.*")
-                         .build()
-         ).run();
-    }
-
-    private static void runCommandEncoderBenchmark() throws RunnerException {
-
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
-                .include(".*CommandEncoderBenchmark.*").build()).run();
-        // new
-        // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
-    }
-
-    private static void runRedisStateMachineBenchmark() throws RunnerException {
-
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
-                .include(".*RedisStateMachineBenchmark.*").build()).run();
-        // new
-        // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
     }
 
     private static ChainedOptionsBuilder prepareOptions() {
