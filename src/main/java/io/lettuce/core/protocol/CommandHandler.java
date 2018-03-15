@@ -48,6 +48,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Will Glozer
  * @author Mark Paluch
  * @author Jongyeol Choi
+ * @author Grzegorz Szpak
  */
 public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCommands {
 
@@ -560,11 +561,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 }
             }
 
-            if (buffer.refCnt() != 0) {
-                buffer.discardSomeReadBytes();
-            }
-
             afterComplete(ctx, command);
+        }
+
+        if (buffer.refCnt() != 0) {
+            buffer.discardReadBytes();
         }
     }
 
