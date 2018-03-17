@@ -722,7 +722,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
                 dequeue();
 
-                if (future.cause() != null) {
+                if (!future.isSuccess() && future.cause() != null) {
                     complete(future.cause());
                 }
             } finally {
@@ -815,7 +815,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
                 RedisCommand<?, ?, ?> sentCommand = this.sentCommand;
                 Collection<? extends RedisCommand<?, ?, ?>> sentCommands = this.sentCommands;
                 DefaultEndpoint endpoint = this.endpoint;
-
                 channel.eventLoop().submit(() -> {
                     requeueCommands(sentCommand, sentCommands, endpoint);
                 });
@@ -836,18 +835,22 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             }
         }
 
+        @SuppressWarnings("unchecked")
         private void requeueCommands(RedisCommand<?, ?, ?> sentCommand, Collection sentCommands, DefaultEndpoint endpoint) {
+
             if (sentCommand != null) {
                 try {
                     endpoint.write(sentCommand);
                 } catch (Exception e) {
-                    complete(e);
+                    sentCommand.completeExceptionally(e);
                 }
             } else {
                 try {
                     endpoint.write(sentCommands);
                 } catch (Exception e) {
-                    complete(e);
+                    for (RedisCommand<?, ?, ?> command : (Collection<RedisCommand>) sentCommands) {
+                        command.completeExceptionally(e);
+                    }
                 }
             }
         }

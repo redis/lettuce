@@ -18,10 +18,12 @@ package io.lettuce.core.protocol;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.channels.ClosedChannelException;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -36,6 +38,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -49,7 +52,9 @@ import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.output.StatusOutput;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultChannelPromise;
+import io.netty.channel.EventLoop;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
@@ -305,6 +310,32 @@ public class DefaultEndpointTest {
 
         verify(channel).close();
         verify(connectionWatchdog).prepareClose();
+    }
+
+    @Test
+    public void retryListenerCompletesSuccessfullyAfterDeferredRequeue() {
+
+        DefaultEndpoint.RetryListener listener = DefaultEndpoint.RetryListener.newInstance(sut, command);
+
+        ChannelFuture future = mock(ChannelFuture.class);
+        EventLoop eventLoopGroup = mock(EventLoop.class);
+
+        when(future.isSuccess()).thenReturn(false);
+        when(future.cause()).thenReturn(new ClosedChannelException());
+        when(channel.eventLoop()).thenReturn(eventLoopGroup);
+        when(channel.close()).thenReturn(mock(ChannelFuture.class));
+
+        sut.notifyChannelActive(channel);
+        sut.close();
+
+        listener.operationComplete(future);
+
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(eventLoopGroup).submit(runnableCaptor.capture());
+
+        runnableCaptor.getValue().run();
+
+        assertThat(command.exception).isInstanceOf(RedisException.class);
     }
 
     @Test
