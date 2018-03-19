@@ -57,12 +57,9 @@ class NodeTopologyView {
 
         this.partitions = ClusterPartitionParser.parse(clusterNodes);
         this.connectedClients = getClients(clientList);
-
         this.clusterNodes = clusterNodes;
         this.clientList = clientList;
         this.latency = latency;
-
-        getOwnPartition().setUri(redisURI);
     }
 
     static NodeTopologyView from(RedisURI redisURI, Requests clusterNodesRequests, Requests clientListRequests)
@@ -111,10 +108,15 @@ class NodeTopologyView {
     }
 
     RedisURI getRedisURI() {
+
+        if (partitions.isEmpty()) {
+            return redisURI;
+        }
+
         return getOwnPartition().getUri();
     }
 
-    private RedisClusterNode getOwnPartition() {
+    RedisClusterNode getOwnPartition() {
         for (RedisClusterNode partition : partitions) {
             if (partition.is(RedisClusterNode.NodeFlag.MYSELF)) {
                 return partition;

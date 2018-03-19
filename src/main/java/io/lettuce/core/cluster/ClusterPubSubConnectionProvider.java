@@ -175,7 +175,7 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
         }
 
         private RedisClusterNode getNode() {
-            return nodeId != null ? getPartitions().getPartitionByNodeId(nodeId) : getPartition(host, port);
+            return nodeId != null ? getPartitions().getPartitionByNodeId(nodeId) : getPartitions().getPartition(host, port);
         }
     }
 }

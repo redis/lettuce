@@ -34,12 +34,14 @@ public class RedisClusterNodeTest {
 
         RedisClusterNode node = new RedisClusterNode();
         node.setSlots(Arrays.asList(1, 2, 3, SlotHash.SLOT_COUNT - 1));
+        node.addAlias(RedisURI.create("foo", 6379));
 
         RedisClusterNode copy = new RedisClusterNode(node);
 
         assertThat(copy.getSlots()).containsExactly(1, 2, 3, SlotHash.SLOT_COUNT - 1);
         assertThat(copy.hasSlot(1)).isTrue();
         assertThat(copy.hasSlot(SlotHash.SLOT_COUNT - 1)).isTrue();
+        assertThat(copy.getAliases()).contains(RedisURI.create("foo", 6379));
     }
 
     @Test

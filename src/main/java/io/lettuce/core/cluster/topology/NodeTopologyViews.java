@@ -26,7 +26,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
  */
 class NodeTopologyViews {
 
-    private List<NodeTopologyView> views = new ArrayList<>();
+    private List<NodeTopologyView> views;
 
     public NodeTopologyViews(List<NodeTopologyView> views) {
         this.views = views;
