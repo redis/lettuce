@@ -30,9 +30,9 @@ import com.lambdaworks.redis.RedisURI;
 public class NodeTopologyViewsTest {
 
     @Test
-    public void shouldReuseKnownUris() throws Exception {
+    public void shouldReuseKnownUris() {
 
-        RedisURI localhost = RedisURI.create("localhost", 6479);
+        RedisURI localhost = RedisURI.create("127.0.0.1", 6479);
         RedisURI otherhost = RedisURI.create("127.0.0.2", 7000);
 
         RedisURI host3 = RedisURI.create("127.0.0.3", 7000);
@@ -41,7 +41,7 @@ public class NodeTopologyViewsTest {
                 + "2 127.0.0.2:7000 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
                 + "3 127.0.0.3:7000 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
 
-        String viewByOtherhost = "1 127.0.0.1:6479 master - 0 1401258245007 2 connected 8000-11999\n"
+        String viewByOtherhost = "1 127.0.0.2:6479 master - 0 1401258245007 2 connected 8000-11999\n"
                 + "2 127.0.0.2:7000 master,myself - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
                 + "3 127.0.0.3:7000 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
 
@@ -55,12 +55,12 @@ public class NodeTopologyViewsTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void shouldFailWithoutOwnPartition() throws Exception {
+    public void shouldFailWithoutOwnPartition() {
 
-        RedisURI localhost = RedisURI.create("localhost", 6479);
+        RedisURI localhost = RedisURI.create("127.0.0.1", 6479);
 
         String viewByLocalhost = "1 127.0.0.1:6479 master - 0 1401258245007 2 connected 8000-11999\n";
 
-        new NodeTopologyView(localhost, viewByLocalhost, "", 0);
+        new NodeTopologyView(localhost, viewByLocalhost, "", 0).getOwnPartition();
     }
 }

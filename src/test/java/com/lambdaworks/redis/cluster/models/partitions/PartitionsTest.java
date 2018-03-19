@@ -36,7 +36,7 @@ public class PartitionsTest {
             Arrays.asList(4, 5, 6), new HashSet<>());
 
     @Test
-    public void contains() throws Exception {
+    public void contains() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);
@@ -46,7 +46,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void containsUsesReadView() throws Exception {
+    public void containsUsesReadView() {
 
         Partitions partitions = new Partitions();
         partitions.getPartitions().add(node1);
@@ -57,7 +57,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void containsAll() throws Exception {
+    public void containsAll() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);
@@ -67,7 +67,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void containsAllUsesReadView() throws Exception {
+    public void containsAllUsesReadView() {
 
         Partitions partitions = new Partitions();
         partitions.getPartitions().add(node1);
@@ -78,7 +78,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void add() throws Exception {
+    public void add() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);
@@ -89,7 +89,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void addPartitionClearsCache() throws Exception {
+    public void addPartitionClearsCache() {
 
         Partitions partitions = new Partitions();
         partitions.addPartition(node1);
@@ -98,7 +98,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void addAll() throws Exception {
+    public void addAll() {
 
         Partitions partitions = new Partitions();
         partitions.addAll(Arrays.asList(node1, node2));
@@ -108,7 +108,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void getPartitionBySlot() throws Exception {
+    public void getPartitionBySlot() {
 
         Partitions partitions = new Partitions();
 
@@ -119,7 +119,19 @@ public class PartitionsTest {
     }
 
     @Test
-    public void remove() throws Exception {
+    public void getPartitionByAlias() {
+
+        Partitions partitions = new Partitions();
+        node1.addAlias(RedisURI.create("foobar", 1234));
+        partitions.add(node1);
+
+        assertThat(partitions.getPartition(node1.getUri().getHost(), node1.getUri().getPort())).isEqualTo(node1);
+        assertThat(partitions.getPartition("foobar", 1234)).isEqualTo(node1);
+        assertThat(partitions.getPartition("unknown", 1234)).isNull();
+    }
+
+    @Test
+    public void remove() {
 
         Partitions partitions = new Partitions();
         partitions.addAll(Arrays.asList(node1, node2));
@@ -130,7 +142,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void removeAll() throws Exception {
+    public void removeAll() {
 
         Partitions partitions = new Partitions();
         partitions.addAll(Arrays.asList(node1, node2));
@@ -141,7 +153,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void clear() throws Exception {
+    public void clear() {
 
         Partitions partitions = new Partitions();
         partitions.addAll(Arrays.asList(node1, node2));
@@ -152,7 +164,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void retainAll() throws Exception {
+    public void retainAll() {
 
         Partitions partitions = new Partitions();
         partitions.addAll(Arrays.asList(node1, node2));
@@ -163,7 +175,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void toArray() throws Exception {
+    public void toArray() {
 
         Partitions partitions = new Partitions();
         partitions.addAll(Arrays.asList(node1, node2));
@@ -172,7 +184,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void toArrayUsesReadView() throws Exception {
+    public void toArrayUsesReadView() {
 
         Partitions partitions = new Partitions();
         partitions.getPartitions().addAll(Arrays.asList(node1, node2));
@@ -183,7 +195,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void toArray2() throws Exception {
+    public void toArray2() {
 
         Partitions partitions = new Partitions();
         partitions.addAll(Arrays.asList(node1, node2));
@@ -192,7 +204,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void toArray2UsesReadView() throws Exception {
+    public void toArray2UsesReadView() {
 
         Partitions partitions = new Partitions();
         partitions.getPartitions().addAll(Arrays.asList(node1, node2));
@@ -205,7 +217,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void getPartitionByNodeId() throws Exception {
+    public void getPartitionByNodeId() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);
@@ -216,7 +228,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void reload() throws Exception {
+    public void reload() {
 
         RedisClusterNode other = new RedisClusterNode(RedisURI.create("localhost", 6666), "c", true, "", 0, 0, 0,
                 Arrays.asList(1, 2, 3, 4, 5, 6), new HashSet<>());
@@ -231,7 +243,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void reloadEmpty() throws Exception {
+    public void reloadEmpty() {
 
         Partitions partitions = new Partitions();
         partitions.reload(Arrays.asList());
@@ -240,7 +252,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void isEmpty() throws Exception {
+    public void isEmpty() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);
@@ -249,7 +261,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void size() throws Exception {
+    public void size() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);
@@ -258,7 +270,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void sizeUsesReadView() throws Exception {
+    public void sizeUsesReadView() {
 
         Partitions partitions = new Partitions();
         partitions.getPartitions().add(node1);
@@ -271,7 +283,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void getPartition() throws Exception {
+    public void getPartition() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);
@@ -280,7 +292,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void iterator() throws Exception {
+    public void iterator() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);
@@ -289,7 +301,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void iteratorUsesReadView() throws Exception {
+    public void iteratorUsesReadView() {
 
         Partitions partitions = new Partitions();
         partitions.getPartitions().add(node1);
@@ -301,7 +313,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void iteratorIsSafeDuringUpdate() throws Exception {
+    public void iteratorIsSafeDuringUpdate() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);
@@ -325,7 +337,7 @@ public class PartitionsTest {
     }
 
     @Test
-    public void testToString() throws Exception {
+    public void testToString() {
 
         Partitions partitions = new Partitions();
         partitions.add(node1);

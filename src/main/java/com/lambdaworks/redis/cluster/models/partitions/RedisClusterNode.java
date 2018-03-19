@@ -50,6 +50,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     private BitSet slots;
     private final Set<NodeFlag> flags = EnumSet.noneOf(NodeFlag.class);
+    private final List<RedisURI> aliases = new ArrayList<>();
 
     public RedisClusterNode() {
     }
@@ -80,6 +81,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.pingSentTimestamp = redisClusterNode.pingSentTimestamp;
         this.pongReceivedTimestamp = redisClusterNode.pongReceivedTimestamp;
         this.configEpoch = redisClusterNode.configEpoch;
+        this.aliases.addAll(redisClusterNode.aliases);
 
         if (redisClusterNode.slots != null && !redisClusterNode.slots.isEmpty()) {
             this.slots = new BitSet(SlotHash.SLOT_COUNT);
@@ -273,6 +275,21 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
+     * Add an alias to {@link RedisClusterNode}.
+     *
+     * @param alias must not be {@literal null}.
+     */
+    public void addAlias(RedisURI alias) {
+
+        LettuceAssert.notNull(alias, "Alias URI must not be null");
+        this.aliases.add(alias);
+    }
+
+    public List<RedisURI> getAliases() {
+        return aliases;
+    }
+
+    /**
      * @param slot the slot hash
      * @return true if the slot is contained within the handled slots.
      */
@@ -326,6 +343,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         sb.append(", pongReceivedTimestamp=").append(pongReceivedTimestamp);
         sb.append(", configEpoch=").append(configEpoch);
         sb.append(", flags=").append(flags);
+        sb.append(", aliases=").append(aliases);
         if (slots != null) {
             sb.append(", slot count=").append(slots.cardinality());
         }

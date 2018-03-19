@@ -124,13 +124,20 @@ public class ClusterTopologyRefresh {
         Set<RedisURI> nodes = requestedTopology.nodes();
 
         List<NodeTopologyView> views = new ArrayList<>();
-        for (RedisURI node : nodes) {
+        for (RedisURI nodeUri : nodes) {
 
             try {
-                NodeTopologyView nodeTopologyView = NodeTopologyView.from(node, requestedTopology, requestedClients);
+                NodeTopologyView nodeTopologyView = NodeTopologyView.from(nodeUri, requestedTopology, requestedClients);
 
                 if (!nodeTopologyView.isAvailable()) {
                     continue;
+                }
+
+                RedisClusterNode node = nodeTopologyView.getOwnPartition();
+                if (node.getUri() == null) {
+                    node.setUri(nodeUri);
+                } else {
+                    node.addAlias(nodeUri);
                 }
 
                 List<RedisClusterNodeSnapshot> nodeWithStats = nodeTopologyView.getPartitions() //
@@ -141,10 +148,6 @@ public class ClusterTopologyRefresh {
                 nodeWithStats.stream() //
                         .filter(partition -> partition.is(RedisClusterNode.NodeFlag.MYSELF)) //
                         .forEach(partition -> {
-
-                            if (partition.getUri() == null) {
-                                partition.setUri(node);
-                            }
 
                             // record latency for later partition ordering
                                 latencies.put(partition.getNodeId(), nodeTopologyView.getLatency());
@@ -160,7 +163,7 @@ public class ClusterTopologyRefresh {
 
                 views.add(nodeTopologyView);
             } catch (ExecutionException e) {
-                logger.warn(String.format("Cannot retrieve partition view from %s, error: %s", node, e));
+                logger.warn(String.format("Cannot retrieve partition view from %s, error: %s", nodeUri, e));
             }
         }
 

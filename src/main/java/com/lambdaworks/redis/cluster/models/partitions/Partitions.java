@@ -17,6 +17,7 @@ package com.lambdaworks.redis.cluster.models.partitions;
 
 import java.util.*;
 
+import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.cluster.SlotHash;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
@@ -61,8 +62,8 @@ public class Partitions implements Collection<RedisClusterNode> {
     /**
      * Retrieve a {@link RedisClusterNode} by its slot number. This method does not distinguish between masters and slaves.
      *
-     * @param slot the slot
-     * @return RedisClusterNode or {@literal null}
+     * @param slot the slot hash.
+     * @return the {@link RedisClusterNode} or {@literal null} if not found.
      */
     public RedisClusterNode getPartitionBySlot(int slot) {
         return slotCache[slot];
@@ -71,8 +72,8 @@ public class Partitions implements Collection<RedisClusterNode> {
     /**
      * Retrieve a {@link RedisClusterNode} by its node id.
      *
-     * @param nodeId the nodeId
-     * @return RedisClusterNode or {@literal null}
+     * @param nodeId the nodeId.
+     * @return the {@link RedisClusterNode} or {@literal null} if not found.
      */
     public RedisClusterNode getPartitionByNodeId(String nodeId) {
 
@@ -81,7 +82,40 @@ public class Partitions implements Collection<RedisClusterNode> {
                 return partition;
             }
         }
+
         return null;
+    }
+
+    /**
+     * Retrieve a {@link RedisClusterNode} by its hostname/port considering node aliases.
+     *
+     * @param host hostname.
+     * @param port port number.
+     * @return the {@link RedisClusterNode} or {@literal null} if not found.
+     */
+    public RedisClusterNode getPartition(String host, int port) {
+
+        for (RedisClusterNode partition : nodeReadView) {
+
+            RedisURI uri = partition.getUri();
+
+            if (matches(uri, host, port)) {
+                return partition;
+            }
+
+            for (RedisURI redisURI : partition.getAliases()) {
+
+                if (matches(redisURI, host, port)) {
+                    return partition;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static boolean matches(RedisURI uri, String host, int port) {
+        return uri.getPort() == port && host.equals(uri.getHost());
     }
 
     /**

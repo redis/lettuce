@@ -389,24 +389,13 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
 
         if (validateClusterNodeMembership()) {
-            RedisClusterNode redisClusterNode = getPartition(host, port);
+            RedisClusterNode redisClusterNode = partitions.getPartition(host, port);
 
             if (redisClusterNode == null) {
                 HostAndPort hostAndPort = HostAndPort.of(host, port);
                 throw invalidConnectionPoint(hostAndPort.toString());
             }
         }
-    }
-
-    protected RedisClusterNode getPartition(String host, int port) {
-
-        for (RedisClusterNode partition : partitions) {
-            RedisURI uri = partition.getUri();
-            if (port == uri.getPort() && host.equals(uri.getHost())) {
-                return partition;
-            }
-        }
-        return null;
     }
 
     @Override
@@ -481,7 +470,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             return false;
         }
 
-        if (connectionKey.host != null && getPartition(connectionKey.host, connectionKey.port) != null) {
+        if (connectionKey.host != null && partitions.getPartition(connectionKey.host, connectionKey.port) != null) {
             return false;
         }
 
@@ -587,7 +576,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             if (key.host != null) {
 
                 if (validateClusterNodeMembership()) {
-                    if (getPartition(key.host, key.port) == null) {
+                    if (partitions.getPartition(key.host, key.port) == null) {
                         throw invalidConnectionPoint(key.host + ":" + key.port);
                     }
                 }
