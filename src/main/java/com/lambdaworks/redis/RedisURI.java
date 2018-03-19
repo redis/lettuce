@@ -173,6 +173,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private long timeout = 60;
     private TimeUnit unit = TimeUnit.SECONDS;
     private final List<RedisURI> sentinels = new ArrayList<>();
+    private boolean isLoadBalancer = false;
 
     /**
      * Default empty constructor.
@@ -483,6 +484,24 @@ public class RedisURI implements Serializable, ConnectionPoint {
      */
     public List<RedisURI> getSentinels() {
         return sentinels;
+    }
+
+    /**
+     * Load balancer is not considered as cluster node, only for node discovery
+     *
+     * @return {@literal true} if it's a load balancer.
+     */
+    public boolean isLoadBalancer() {
+        return isLoadBalancer;
+    }
+
+    /**
+     * Sets whether it's a load balancer URI
+     *
+     * @param isLoadBalancer {@literal true} if it's a load balancer.
+     */
+    public void setLoadBalancer(boolean isLoadBalancer){
+        this.isLoadBalancer = isLoadBalancer;
     }
 
     /**
@@ -950,6 +969,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private long timeout = 60;
         private TimeUnit unit = TimeUnit.SECONDS;
         private final List<HostAndPort> sentinels = new ArrayList<>();
+        private boolean isLoadBalancer = false;
 
         /**
          * @deprecated Use {@link RedisURI#builder()}
@@ -1230,6 +1250,17 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
+         * If a {@link RedisURI} is load balancer, node with {@link com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode.NodeFlag#MYSELF} will not be replaced by this {@link RedisURI} in cluster node discovery
+         *
+         * @param isLoadBalancer {@literal true} if is load balancer
+         * @return the builder
+         */
+        public Builder withLoadBalancer(boolean isLoadBalancer) {
+            this.isLoadBalancer = isLoadBalancer;
+            return this;
+        }
+
+        /**
          * Configures a sentinel master Id.
          *
          * @param sentinelMasterId sentinel master id, must not be empty or {@literal null}
@@ -1275,6 +1306,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             redisURI.setTimeout(timeout);
             redisURI.setUnit(unit);
+            redisURI.setLoadBalancer(isLoadBalancer);
 
             return redisURI;
         }
