@@ -411,7 +411,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             if (command.getOutput() == null) {
                 // fire&forget commands are excluded from metrics
-                command.complete();
+                complete(command);
             }
 
             RedisCommand<?, ?, ?> redisCommand = potentiallyWrapLatencyCommand(command);
@@ -552,16 +552,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 onProtectedMode(command.getOutput().getError());
             } else {
 
-                stack.poll();
+                if (canComplete(command)) {
+                    stack.poll();
 
-                try {
-                    command.complete();
-                } catch (Exception e) {
-                    logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                    try {
+                        complete(command);
+                    } catch (Exception e) {
+                        logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                    }
                 }
             }
 
-            afterComplete(ctx, command);
+            afterDecode(ctx, command);
         }
 
         if (buffer.refCnt() != 0) {
@@ -569,8 +571,34 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
+    /**
+     * Decoding hook: Can the buffer be decoded to a command.
+     *
+     * @param buffer
+     * @return
+     */
     protected boolean canDecode(ByteBuf buffer) {
         return !stack.isEmpty() && buffer.isReadable();
+    }
+
+    /**
+     * Decoding hook: Can the command be completed.
+     *
+     * @param command
+     * @return
+     */
+    protected boolean canComplete(RedisCommand<?, ?, ?> command) {
+        return true;
+    }
+
+    /**
+     * Decoding hook: Complete a command.
+     *
+     * @param command
+     * @see RedisCommand#complete()
+     */
+    protected void complete(RedisCommand<?, ?, ?> command) {
+        command.complete();
     }
 
     private boolean decode(ChannelHandlerContext ctx, ByteBuf buffer, RedisCommand<?, ?, ?> command) {
@@ -596,7 +624,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private boolean decode0(ChannelHandlerContext ctx, ByteBuf buffer, RedisCommand<?, ?, ?> command) {
 
-        if (!decode(buffer, command, command.getOutput())) {
+        if (!decode(buffer, command, getCommandOutput(command))) {
 
             if (command instanceof DemandAware.Sink) {
 
@@ -614,6 +642,17 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         return true;
+    }
+
+    /**
+     * Decoding hook: Retrieve {@link CommandOutput} for {@link RedisCommand} decoding.
+     *
+     * @param command
+     * @return
+     * @see RedisCommand#getOutput()
+     */
+    protected CommandOutput<?, ?, ?> getCommandOutput(RedisCommand<?, ?, ?> command) {
+        return command.getOutput();
     }
 
     protected boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output) {
@@ -682,7 +721,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * @param ctx
      * @param command
      */
-    protected void afterComplete(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
+    protected void afterDecode(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
     }
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
