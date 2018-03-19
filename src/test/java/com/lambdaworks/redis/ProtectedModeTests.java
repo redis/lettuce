@@ -99,6 +99,21 @@ public class ProtectedModeTests {
     }
 
     @Test
+    public void pubSubClientFailsOnFirstCommand() {
+
+        try (StatefulRedisConnection<String, String> connect = client.connectPubSub()) {
+
+            connect.sync().ping();
+        } catch (RedisException e) {
+            if (e.getCause() instanceof IOException) {
+                assertThat(e).hasCauseInstanceOf(IOException.class);
+            } else {
+                assertThat(e.getCause()).hasMessageContaining("DENIED");
+            }
+        }
+    }
+
+    @Test
     public void regularClientFailsOnFirstCommandWithDelay() {
 
         try (StatefulRedisConnection<String, String> connect = client.connect()) {

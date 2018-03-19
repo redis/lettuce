@@ -29,6 +29,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.internal.LettuceClassUtils;
 import com.lambdaworks.redis.internal.LettuceFactories;
 import com.lambdaworks.redis.internal.LettuceSets;
+import com.lambdaworks.redis.output.CommandOutput;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import io.netty.buffer.ByteBuf;
@@ -143,6 +144,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         boundedQueue = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
+    }
+
+    protected Deque<RedisCommand<K, V, ?>> getStack() {
+        return stack;
     }
 
     @Override
@@ -301,19 +306,21 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
 
             if (isProtectedMode(command)) {
-                onProtectedMode(command.getOutput().getError());
+                onProtectedMode(getCommandOutput(command).getError());
             } else {
 
-                stack.poll();
+                if (canComplete(command)) {
+                    stack.poll();
 
-                try {
-                    command.complete();
-                } catch (Exception e) {
-                    logger.warn("{} Unexpected exception during command completion: {}", logPrefix, e.toString(), e);
+                    try {
+                        complete(command);
+                    } catch (Exception e) {
+                        logger.warn("{} Unexpected exception during command completion: {}", logPrefix, e.toString(), e);
+                    }
                 }
             }
 
-            afterComplete(ctx, command);
+            afterDecode(ctx, command);
         }
 
         if (buffer.refCnt() != 0) {
@@ -384,17 +391,55 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     }
 
     /**
+     * Decoding hook: Can the buffer be decoded to a command.
+     *
+     * @param buffer
+     * @return
+     */
+    protected boolean canDecode(ByteBuf buffer) {
+        return !stack.isEmpty() && buffer.isReadable();
+    }
+
+    /**
+     * Decoding hook: Can the command be completed.
+     *
+     * @param command
+     * @return
+     */
+    protected boolean canComplete(RedisCommand<?, ?, ?> command) {
+        return true;
+    }
+
+    /**
+     * Decoding hook: Complete a command.
+     *
+     * @param command
+     * @see RedisCommand#complete()
+     */
+    protected void complete(RedisCommand<?, ?, ?> command) {
+        command.complete();
+    }
+
+    /**
      * Hook method called after command completion.
      *
      * @param ctx
      * @param command
      */
-    protected void afterComplete(ChannelHandlerContext ctx, RedisCommand<K, V, ?> command) {
+    protected void afterDecode(ChannelHandlerContext ctx, RedisCommand<K, V, ?> command) {
     }
 
-    protected boolean canDecode(ByteBuf buffer) {
-        return !stack.isEmpty() && buffer.isReadable();
+    /**
+     * Decoding hook: Retrieve {@link CommandOutput} for {@link RedisCommand} decoding.
+     *
+     * @param command
+     * @return
+     * @see RedisCommand#getOutput()
+     */
+    protected CommandOutput<K, V, ?> getCommandOutput(RedisCommand<K, V, ?> command) {
+        return command.getOutput();
     }
+
 
     private boolean decode(ByteBuf buffer, RedisCommand<K, V, ?> command) {
 
@@ -405,7 +450,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                 withLatency.firstResponse(nanoTime());
             }
 
-            if (!rsm.decode(buffer, command, command.getOutput())) {
+            if (!rsm.decode(buffer, command, getCommandOutput(command))) {
                 return false;
             }
 
@@ -414,7 +459,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             return true;
         }
 
-        return rsm.decode(buffer, command, command.getOutput());
+        return rsm.decode(buffer, command, getCommandOutput(command));
     }
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {

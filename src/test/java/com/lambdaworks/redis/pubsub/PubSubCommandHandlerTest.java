@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collection;
@@ -27,6 +28,7 @@ import java.util.Queue;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -143,5 +145,80 @@ public class PubSubCommandHandlerTest {
         sut.channelRead(context, Unpooled.wrappedBuffer(":1000\r\n".getBytes()));
 
         assertThat(ReflectionTestUtils.getField(command, "exception")).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    public void shouldDecodeRegularCommand() throws Exception {
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command);
+
+        sut.channelRead(context, Unpooled.wrappedBuffer("+OK\r\n".getBytes()));
+
+        assertThat(command.get()).isEqualTo("OK");
+    }
+
+    @Test
+    public void shouldDecodeTwoCommands() throws Exception {
+
+        Command<String, String, String> command1 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
+                null);
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
+                null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command1);
+        stack.add(command2);
+
+        sut.channelRead(context, Unpooled.wrappedBuffer("+OK\r\n+YEAH\r\n".getBytes()));
+
+        assertThat(command1.get()).isEqualTo("OK");
+        assertThat(command2.get()).isEqualTo("YEAH");
+    }
+
+    @Test
+    public void shouldPropagatePubSubResponseToOutput() throws Exception {
+
+        Command<String, String, String> command1 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
+                null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command1);
+
+        sut.channelRead(context, Unpooled.wrappedBuffer("*3\r\n$7\r\nmessage\r\n$3\r\nfoo\r\n$3\r\nbar\r\n".getBytes()));
+
+        assertThat(command1.isDone()).isFalse();
+
+        verify(context).fireChannelRead(any());
+    }
+
+    @Test
+    public void shouldPropagateInterleavedPubSubResponseToOutput() throws Exception {
+
+        Command<String, String, String> command1 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
+                null);
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(new Utf8StringCodec()),
+                null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command1);
+        stack.add(command2);
+
+        sut.channelRead(context, Unpooled
+                .wrappedBuffer("+OK\r\n*4\r\n$8\r\npmessage\r\n$1\r\n*\r\n$3\r\nfoo\r\n$3\r\nbar\r\n+YEAH\r\n".getBytes()));
+
+        assertThat(command1.get()).isEqualTo("OK");
+        assertThat(command2.get()).isEqualTo("YEAH");
+
+        ArgumentCaptor<PubSubOutput> captor = ArgumentCaptor.forClass(PubSubOutput.class);
+        verify(context).fireChannelRead(captor.capture());
+
+        assertThat(captor.getValue().pattern()).isEqualTo("*");
+        assertThat(captor.getValue().channel()).isEqualTo("foo");
+        assertThat(captor.getValue().get()).isEqualTo("bar");
     }
 }
