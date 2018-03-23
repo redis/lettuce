@@ -728,7 +728,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null && remote() != null) {
 
-            long firstResponseLatency = withLatency.getSent() - withLatency.getFirstResponse();
+            long firstResponseLatency = withLatency.getFirstResponse() - withLatency.getSent();
             long completionLatency = nanoTime() - withLatency.getSent();
 
             clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType,
