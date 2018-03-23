@@ -1,6 +1,6 @@
 = Lettuce Reference Guide
 Mark Paluch <https://twitter.com/mp911de[@mp911de]>;
-:ext-doc: https://raw.githubusercontent.com/wiki/lettuce-core/lettuce-io
+:ext-doc: https://raw.githubusercontent.com/wiki/lettuce-io/lettuce-core
 {version}
 :doctype: book
 :icons: font
