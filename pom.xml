@@ -720,7 +720,7 @@
                                 <allow-uri-read>true</allow-uri-read>
                                 <toclevels>3</toclevels>
                                 <numbered>true</numbered>
-                                <ext-doc>https://raw.githubusercontent.com/wiki/mp911de/lettuce/</ext-doc>
+                                <ext-doc>https://raw.githubusercontent.com/wiki/lettuce-io/lettuce-core/</ext-doc>
                                 <allow-uri-read />
                                 <docinfo />
                                 <toc2 />
