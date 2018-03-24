@@ -51,6 +51,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Will Glozer
  * @author Mark Paluch
  * @author Jongyeol Choi
+ * @author Nick Vollmar
  */
 @ChannelHandler.Sharable
 public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisChannelWriter<K, V> {
