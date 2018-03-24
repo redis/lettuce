@@ -17,10 +17,13 @@ package com.lambdaworks.redis.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.mockito.AdditionalMatchers.gt;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -47,14 +50,14 @@ import com.lambdaworks.redis.RedisChannelHandler;
 import com.lambdaworks.redis.RedisException;
 import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
-import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollector;
-import com.lambdaworks.redis.metrics.DefaultCommandLatencyCollectorOptions;
+import com.lambdaworks.redis.metrics.CommandLatencyCollector;
 import com.lambdaworks.redis.output.StatusOutput;
 import com.lambdaworks.redis.resource.ClientResources;
 
 import edu.umd.cs.mtc.MultithreadedTestCase;
 import edu.umd.cs.mtc.TestFramework;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.Future;
@@ -93,6 +96,9 @@ public class CommandHandlerTest {
     @Mock
     private ChannelPromise promise;
 
+    @Mock
+    private CommandLatencyCollector latencyCollector;
+
     @BeforeClass
     public static void beforeClass() {
         LoggerContext ctx = (LoggerContext) LogManager.getContext();
@@ -116,14 +122,16 @@ public class CommandHandlerTest {
         when(context.channel()).thenReturn(channel);
         when(channel.pipeline()).thenReturn(pipeline);
         when(channel.eventLoop()).thenReturn(eventLoop);
+        when(channel.remoteAddress()).thenReturn(new InetSocketAddress(Inet4Address.getLocalHost(), 1234));
+        when(channel.localAddress()).thenReturn(new InetSocketAddress(Inet4Address.getLocalHost(), 1234));
         when(eventLoop.submit(any(Runnable.class))).thenAnswer(invocation -> {
             Runnable r = (Runnable) invocation.getArguments()[0];
             r.run();
             return null;
         });
 
-        when(clientResources.commandLatencyCollector()).thenReturn(
-                new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
+        when(latencyCollector.isEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyCollector()).thenReturn(latencyCollector);
 
         when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
 
@@ -573,6 +581,22 @@ public class CommandHandlerTest {
         assertThat(captor.getValue()).containsOnly(command2);
         assertThat(stack).hasSize(1).allMatch(o -> o instanceof LatencyMeteredCommand)
                 .allMatch(o -> CommandWrapper.unwrap((RedisCommand) o) == command2);
+    }
+
+    @Test
+    public void shouldRecordCorrectFirstResponseLatency() throws Exception {
+
+        when(promise.isSuccess()).thenReturn(true);
+        sut.channelActive(context);
+
+        LatencyMeteredCommand<String, String, String> wrapped = new LatencyMeteredCommand<>(command);
+
+        sut.write(context, wrapped, promise);
+        Thread.sleep(10);
+
+        sut.channelRead(context, Unpooled.wrappedBuffer("*1\r\n+OK\r\n".getBytes()));
+
+        verify(latencyCollector).recordCommandLatency(any(), any(), eq(CommandType.APPEND), gt(0L), gt(0L));
     }
 
     @Test
