@@ -632,4 +632,27 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         connection.getStatefulConnection().close();
     }
+
+    @Test
+    public void execAbortShouldFailTransaction() throws Exception {
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+
+        connection.sync().multi();
+        RedisFuture<String> success = connection.async().set("b", value);
+        RedisFuture<String> failed = connection.async().set(key, value);
+
+        RedisFuture<TransactionResult> exec = connection.async().exec();
+
+        exec.await(5, TimeUnit.SECONDS);
+
+        assertThat(success).isDone();
+        assertThat(failed).isDone();
+        assertThat(failed.getError()).startsWith("MOVED");
+
+        assertThat(exec).isDone();
+        assertThat(exec.getError()).startsWith("EXECABORT");
+
+        connection.close();
+    }
 }
