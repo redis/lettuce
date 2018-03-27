@@ -72,8 +72,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port1).build());
         clusterClient = RedisClusterClient.create(TestClientResources.get(),
-                Collections.singletonList(RedisURI.Builder.redis(host, port1)
-                .withClientName("my-client").build()));
+                Collections.singletonList(RedisURI.Builder.redis(host, port1).withClientName("my-client").build()));
     }
 
     @AfterClass
@@ -384,8 +383,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     public void clusterAuth() throws Exception {
 
         RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
-                RedisURI.Builder.redis(TestSettings.host(), port7)
-                .withPassword("foobared").build());
+                RedisURI.Builder.redis(TestSettings.host(), port7).withPassword("foobared").build());
 
         try (RedisAdvancedClusterConnection<String, String> connection = clusterClient.connectCluster()) {
 
@@ -408,8 +406,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
     public void clusterAuthPingBeforeConnect() throws Exception {
 
         RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
-                RedisURI.Builder.redis(TestSettings.host(), port7)
-                .withPassword("foobared").build());
+                RedisURI.Builder.redis(TestSettings.host(), port7).withPassword("foobared").build());
         clusterClient.setOptions(ClusterClientOptions.builder().pingBeforeActivateConnection(true).build());
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
@@ -618,6 +615,29 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         connection.pfmerge("key8885", "key2660", "key7112");
 
         assertThat(connection.pfcount("key8885")).isEqualTo(3);
+
+        connection.close();
+    }
+
+    @Test
+    public void execAbortShouldFailTransaction() throws Exception {
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+
+        connection.sync().multi();
+        RedisFuture<String> success = connection.async().set("b", value);
+        RedisFuture<String> failed = connection.async().set(key, value);
+
+        RedisFuture<List<Object>> exec = connection.async().exec();
+
+        exec.await(5, TimeUnit.SECONDS);
+
+        assertThat(success).isDone();
+        assertThat(failed).isDone();
+        assertThat(failed.getError()).startsWith("MOVED");
+
+        assertThat(exec).isDone();
+        assertThat(exec.getError()).startsWith("EXECABORT");
 
         connection.close();
     }
