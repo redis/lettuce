@@ -28,6 +28,7 @@ import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -409,7 +410,7 @@ public class SslTest extends AbstractTest {
             assertThat(e).hasRootCauseInstanceOf(CertificateException.class);
         }
 
-        assertThat(defectFuture).isDone();
+        assertThat(defectFuture.toCompletableFuture()).isDone();
 
         connection.getStatefulConnection().close();
         connection2.getStatefulConnection().close();

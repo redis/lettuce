@@ -45,7 +45,7 @@ public class ConnectionFutureTest {
 
         foo.complete("foo");
 
-        assertThat(transformed).isDone();
+        assertThat(transformed.toCompletableFuture()).isDone();
         assertThat(transformed.toCompletableFuture()).isCompletedExceptionally();
         assertThatThrownBy(transformed::join).hasRootCauseInstanceOf(IllegalStateException.class);
     }
@@ -61,7 +61,7 @@ public class ConnectionFutureTest {
 
         foo.complete("foo");
 
-        assertThat(transformed).isDone();
+        assertThat(transformed.toCompletableFuture()).isDone();
         assertThat(transformed.toCompletableFuture()).isCompletedExceptionally();
         assertThatThrownBy(transformed::join).hasRootCauseInstanceOf(IllegalStateException.class);
     }
@@ -78,7 +78,7 @@ public class ConnectionFutureTest {
         Throwable t = new Throwable();
         foo.completeExceptionally(t);
 
-        assertThat(transformed).isDone();
+        assertThat(transformed.toCompletableFuture()).isDone();
         assertThat(transformed.toCompletableFuture()).isCompletedExceptionally();
 
         try {
@@ -115,10 +115,10 @@ public class ConnectionFutureTest {
         foo.complete("foo");
         exceptional.completeExceptionally(new IllegalArgumentException("foo"));
 
-        assertThat(transformed1).isDone();
+        assertThat(transformed1.toCompletableFuture()).isDone();
         assertThat(transformed1.toCompletableFuture()).isCompletedWithValue("foo");
 
-        assertThat(transformed2).isDone();
+        assertThat(transformed2.toCompletableFuture()).isDone();
         assertThat(transformed2.toCompletableFuture()).isCompletedExceptionally();
         assertThatThrownBy(transformed2::join).hasCauseInstanceOf(IllegalStateException.class).hasRootCauseInstanceOf(
                 IllegalArgumentException.class);
