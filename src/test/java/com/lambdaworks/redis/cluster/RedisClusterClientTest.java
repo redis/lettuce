@@ -319,7 +319,7 @@ public class RedisClusterClientTest extends AbstractClusterTest {
         // appropriate cluster node
         RedisFuture<String> setB = connection.set(KEY_B, value);
 
-        assertThat(setB).isInstanceOf(AsyncCommand.class);
+        assertThat(setB.toCompletableFuture()).isInstanceOf(AsyncCommand.class);
 
         setB.get(10, TimeUnit.SECONDS);
         assertThat(setB.getError()).isNull();
@@ -638,11 +638,11 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
         exec.await(5, TimeUnit.SECONDS);
 
-        assertThat(success).isDone();
-        assertThat(failed).isDone();
+        assertThat(success.toCompletableFuture()).isDone();
+        assertThat(failed.toCompletableFuture()).isDone();
         assertThat(failed.getError()).startsWith("MOVED");
 
-        assertThat(exec).isDone();
+        assertThat(exec.toCompletableFuture()).isDone();
         assertThat(exec.getError()).startsWith("EXECABORT");
 
         connection.close();

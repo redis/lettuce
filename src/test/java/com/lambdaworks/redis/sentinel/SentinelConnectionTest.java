@@ -154,7 +154,7 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     @Test
     public void deprecatedConnectWithByteCodec() throws Exception {
         RedisSentinelAsyncCommands<byte[], byte[]> connection = sentinelClient.connectSentinelAsync(new ByteArrayCodec());
-        assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
+        assertThat(connection.master(MASTER_ID.getBytes()).toCompletableFuture()).isNotNull();
         connection.close();
     }
 
