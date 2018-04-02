@@ -157,6 +157,14 @@ public class HashCommandTest extends AbstractRedisClientTest {
         assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2")))).isTrue();
     }
 
+    @Test
+    public void hmgetlist() {
+        setupHmget();
+        List<String> values = redis.hmgetlist(key, "one", "two");
+        assertThat(values).hasSize(2);
+        assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2")))).isTrue();
+    }
+
     private void setupHmget() {
         assertThat(redis.hmget(key, "one", "two")).isEqualTo(list(KeyValue.empty("one"), KeyValue.empty("two")));
         redis.hset(key, "one", "1");
