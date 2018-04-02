@@ -710,6 +710,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<List<V>> hmgetlist(K key, K... fields) {
+        return dispatch(commandBuilder.hmget(key, fields));
+    }
+
+    @Override
     public RedisFuture<Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
         return dispatch(commandBuilder.hmget(channel, key, fields));
     }

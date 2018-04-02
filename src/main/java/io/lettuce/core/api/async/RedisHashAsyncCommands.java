@@ -136,9 +136,18 @@ public interface RedisHashAsyncCommands<K, V> {
      *
      * @param key the key
      * @param fields the field type: key
-     * @return List&lt;V&gt; array-reply list of values associated with the given fields, in the same
+     * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of KeyValue containing the keys and values associated with the given fields, in the same
      */
     RedisFuture<List<KeyValue<K, V>>> hmget(K key, K... fields);
+
+    /**
+     * Get the values of all the given hash fields.
+     *
+     * @param key the key
+     * @param fields the field type: key
+     * @return List&lt;V&gt; array-reply list of values associated with the given fields, in the same
+     */
+    RedisFuture<List<V>> hmgetlist(K key, K... fields);
 
     /**
      * Stream over the values of all the given hash fields.
