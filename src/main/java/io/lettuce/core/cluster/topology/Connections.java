@@ -89,15 +89,17 @@ class Connections {
 
         Requests requests = new Requests();
 
-        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
+        synchronized (this.connections) {
+            for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
-            CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.NODES);
-            Command<String, String, String> command = new Command<>(CommandType.CLUSTER, new StatusOutput<>(StringCodec.UTF8),
-                    args);
-            TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
+                CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.NODES);
+                Command<String, String, String> command = new Command<>(CommandType.CLUSTER, new StatusOutput<>(
+                        StringCodec.UTF8), args);
+                TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
 
-            entry.getValue().dispatch(timedCommand);
-            requests.addRequest(entry.getKey(), timedCommand);
+                entry.getValue().dispatch(timedCommand);
+                requests.addRequest(entry.getKey(), timedCommand);
+            }
         }
 
         return requests;
@@ -112,15 +114,17 @@ class Connections {
 
         Requests requests = new Requests();
 
-        for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
+        synchronized (this.connections) {
+            for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
-            CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.LIST);
-            Command<String, String, String> command = new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8),
-                    args);
-            TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
+                CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.LIST);
+                Command<String, String, String> command = new Command<>(CommandType.CLIENT,
+                        new StatusOutput<>(StringCodec.UTF8), args);
+                TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
 
-            entry.getValue().dispatch(timedCommand);
-            requests.addRequest(entry.getKey(), timedCommand);
+                entry.getValue().dispatch(timedCommand);
+                requests.addRequest(entry.getKey(), timedCommand);
+            }
         }
 
         return requests;
