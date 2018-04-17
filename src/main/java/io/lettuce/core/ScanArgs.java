@@ -22,8 +22,11 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
- * Argument list builder for the redis scan commans (scan, hscan, sscan, zscan) . Static import the methods from {@link Builder}
- * and chain the method calls: {@code matches("weight_*").limit(0, 2)}.
+ * Argument list builder for the Redis scan commands ({@literal SCAN, HSCAN, SSCAN, ZSCAN}). Static import the methods from
+ *
+ * {@link Builder} and chain the method calls: {@code matches("weight_*").limit(0, 2)}.
+ * <p/>
+ * {@link ScanArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
  * @since 3.0
@@ -34,7 +37,7 @@ public class ScanArgs implements CompositeArgument {
     private String match;
 
     /**
-     * Static builder methods.
+     * Builder entry points for {@link ScanArgs}.
      */
     public static class Builder {
 
@@ -42,24 +45,25 @@ public class ScanArgs implements CompositeArgument {
          * Utility constructor.
          */
         private Builder() {
-
         }
 
         /**
-         * Create a new instance of {@link ScanArgs} with limit.
+         * Creates new {@link ScanArgs} with {@literal LIMIT} set.
          *
          * @param count number of elements to scan
-         * @return a new instance of {@link ScanArgs}
+         * @return new {@link ScanArgs} with {@literal LIMIT} set.
+         * @see ScanArgs#limit(long)
          */
         public static ScanArgs limit(long count) {
             return new ScanArgs().limit(count);
         }
 
         /**
-         * Create a new instance of {@link ScanArgs} with match filter.
+         * Creates new {@link ScanArgs} with {@literal MATCH} set.
          *
-         * @param matches the filter
-         * @return a new instance of {@link ScanArgs}
+         * @param matches the filter.
+         * @return new {@link ScanArgs} with {@literal MATCH} set.
+         * @see ScanArgs#match(String)
          */
         public static ScanArgs matches(String matches) {
             return new ScanArgs().match(matches);
@@ -67,13 +71,15 @@ public class ScanArgs implements CompositeArgument {
     }
 
     /**
-     * Match filter
+     * Set the match filter.
      *
-     * @param match the filter
-     * @return the current instance of {@link ScanArgs}
+     * @param match the filter, must not be {@literal null}.
+     * @return {@literal this} {@link ScanArgs}.
      */
     public ScanArgs match(String match) {
+
         LettuceAssert.notNull(match, "Match must not be null");
+
         this.match = match;
         return this;
     }
@@ -82,9 +88,10 @@ public class ScanArgs implements CompositeArgument {
      * Limit the scan by count
      *
      * @param count number of elements to scan
-     * @return the current instance of {@link ScanArgs}
+     * @return {@literal this} {@link ScanArgs}.
      */
     public ScanArgs limit(long count) {
+
         this.count = count;
         return this;
     }
@@ -98,6 +105,5 @@ public class ScanArgs implements CompositeArgument {
         if (count != null) {
             args.add(COUNT).add(count);
         }
-
     }
 }

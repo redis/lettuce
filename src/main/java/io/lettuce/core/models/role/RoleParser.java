@@ -21,7 +21,7 @@ import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Parser for redis <a href="http://redis.io/commands/role">ROLE</a> command output.
+ * Parser for Redis <a href="http://redis.io/commands/role">ROLE</a> command output.
  *
  * @author Mark Paluch
  * @since 3.0
@@ -57,9 +57,9 @@ public class RoleParser {
     }
 
     /**
-     * Parse the output of the redis ROLE command and convert to a RedisInstance.
+     * Parse the output of the Redis ROLE command and convert to a RedisInstance.
      *
-     * @param roleOutput output of the redis ROLE command
+     * @param roleOutput output of the Redis ROLE command.
      * @return RedisInstance
      */
     public static RedisInstance parse(List<?> roleOutput) {

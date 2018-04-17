@@ -393,7 +393,7 @@ public class RedisClient extends AbstractRedisClient {
      * {@link RedisCodec codec} to encode/decode keys and values.
      *
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}
-     * @param redisURI the redis server to connect to, must not be {@literal null}
+     * @param redisURI the Redis server to connect to, must not be {@literal null}
      * @param <K> Key type
      * @param <V> Value type
      * @return A new connection

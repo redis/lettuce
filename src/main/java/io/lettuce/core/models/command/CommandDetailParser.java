@@ -20,8 +20,8 @@ import java.util.*;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Parser for redis <a href="http://redis.io/commands/command">COMMAND</a>/<a
- * href="http://redis.io/commands/command-info">COMMAND INFO</a>command output.
+ * Parser for Redis <a href="http://redis.io/commands/command">COMMAND</a>/<a
+ * href="http://redis.io/commands/command-info">COMMAND INFO</a> output.
  *
  * @author Mark Paluch
  * @since 3.0
@@ -60,7 +60,7 @@ public class CommandDetailParser {
     }
 
     /**
-     * Parse the output of the redis COMMAND/COMMAND INFO command and convert to a list of {@link CommandDetail}.
+     * Parse the output of the Redis COMMAND/COMMAND INFO command and convert to a list of {@link CommandDetail}.
      *
      * @param commandOutput the command output, must not be {@literal null}
      * @return RedisInstance
