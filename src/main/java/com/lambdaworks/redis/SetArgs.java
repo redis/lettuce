@@ -18,11 +18,14 @@ package com.lambdaworks.redis;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
 /**
- * Argument list builder for the new redis <a href="http://redis.io/commands/set">SET</a> command starting from Redis 2.6.12.
- * Static import the methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
- * 
+ * Argument list builder for the Redis <a href="http://redis.io/commands/set">SET</a> command starting from Redis 2.6.12. Static
+ * import the methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
+ * <p/>
+ * {@link SetArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
+ *
  * @author Will Glozer
  * @author Vincent Rischmann
+ * @author Mark Paluch
  */
 public class SetArgs {
 
@@ -31,52 +34,108 @@ public class SetArgs {
     private boolean nx = false;
     private boolean xx = false;
 
+    /**
+     * Builder entry points for {@link SetArgs}.
+     */
     public static class Builder {
+
         /**
          * Utility constructor.
          */
         private Builder() {
-
         }
 
-        public static SetArgs ex(long ex) {
-            return new SetArgs().ex(ex);
+        /**
+         * Creates new {@link SetArgs} and enabling {@literal EX}.
+         *
+         * @param timeout expire time in seconds.
+         * @return new {@link SetArgs} with {@literal EX} enabled.
+         * @see SetArgs#ex(long)
+         */
+        public static SetArgs ex(long timeout) {
+            return new SetArgs().ex(timeout);
         }
 
-        public static SetArgs px(long px) {
-            return new SetArgs().px(px);
+        /**
+         * Creates new {@link SetArgs} and enabling {@literal PX}.
+         *
+         * @param timeout expire time in milliseconds.
+         * @return new {@link SetArgs} with {@literal PX} enabled.
+         * @see SetArgs#px(long)
+         */
+        public static SetArgs px(long timeout) {
+            return new SetArgs().px(timeout);
         }
 
+        /**
+         * Creates new {@link SetArgs} and enabling {@literal NX}.
+         *
+         * @return new {@link SetArgs} with {@literal NX} enabled.
+         * @see SetArgs#nx()
+         */
         public static SetArgs nx() {
             return new SetArgs().nx();
         }
 
+        /**
+         * Creates new {@link SetArgs} and enabling {@literal XX}.
+         *
+         * @return new {@link SetArgs} with {@literal XX} enabled.
+         * @see SetArgs#xx()
+         */
         public static SetArgs xx() {
             return new SetArgs().xx();
         }
     }
 
-    public SetArgs ex(long ex) {
-        this.ex = ex;
+    /**
+     * Set the specified expire time, in seconds.
+     *
+     * @param timeout expire time in seconds.
+     * @return {@code this} {@link SetArgs}.
+     */
+    public SetArgs ex(long timeout) {
+
+        this.ex = timeout;
         return this;
     }
 
-    public SetArgs px(long px) {
-        this.px = px;
+    /**
+     * Set the specified expire time, in milliseconds.
+     *
+     * @param timeout expire time in milliseconds.
+     * @return {@code this} {@link SetArgs}.
+     */
+    public SetArgs px(long timeout) {
+
+        this.px = timeout;
         return this;
     }
 
+    /**
+     * Only set the key if it does not already exist.
+     *
+     * @return {@code this} {@link SetArgs}.
+     */
     public SetArgs nx() {
+
         this.nx = true;
         return this;
     }
 
+    /**
+     * Only set the key if it already exists.
+     *
+     * @return {@code this} {@link SetArgs}.
+     */
     public SetArgs xx() {
+
         this.xx = true;
         return this;
     }
 
     public <K, V> void build(CommandArgs<K, V> args) {
+
         if (ex != null) {
             args.add("EX").add(ex);
         }

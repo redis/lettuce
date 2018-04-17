@@ -21,8 +21,8 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.output.CommandOutput;
 
 /**
- * One element of the redis pub/sub stream. May be a message or notification of subscription details.
- * 
+ * One element of the Redis pub/sub stream. May be a message or notification of subscription details.
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Result type.
