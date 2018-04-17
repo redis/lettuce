@@ -152,7 +152,7 @@ public abstract class AbstractRedisClient {
      * @param connection implementation of a RedisConnection
      * @param socketAddressSupplier address supplier for initial connect and re-connect
      * @param connectionBuilder connection builder to configure the connection
-     * @param redisURI URI of the redis instance
+     * @param redisURI URI of the Redis instance
      */
     protected void connectionBuilder(CommandHandler<?, ?> handler, RedisChannelHandler<?, ?> connection,
             Supplier<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder, RedisURI redisURI) {

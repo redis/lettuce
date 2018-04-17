@@ -33,10 +33,10 @@ public interface RedisChannelWriter<K, V> extends Closeable {
      * Write a command on the channel. The command may be changed/wrapped during write and the written instance is returned
      * after the call.
      *
-     * @param command the redis command
+     * @param command the Redis command.
      * @param <T> result type
      * @param <C> command type
-     * @return the written redis command
+     * @return the written Redis command.
      */
     <T, C extends RedisCommand<K, V, T>> C write(C command);
 

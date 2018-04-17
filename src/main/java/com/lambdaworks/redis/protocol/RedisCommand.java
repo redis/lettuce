@@ -66,7 +66,7 @@ public interface RedisCommand<K, V, T> {
 
     /**
      *
-     * @return the redis command type like {@literal SADD}, {@literal HMSET}, {@literal QUIT}.
+     * @return the Redis command type like {@literal SADD}, {@literal HMSET}, {@literal QUIT}.
      */
     ProtocolKeyword getType();
 

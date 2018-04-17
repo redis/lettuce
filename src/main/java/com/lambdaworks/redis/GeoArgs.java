@@ -20,7 +20,11 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 
 /**
- * Args for {@literal GEORADIUS} and {@literal GEORADIUSBYMEMBER} commands.
+ *
+ * Argument list builder for the Redis <a href="http://redis.io/commands/georadius">GEORADIUS</a> and <a
+ * href="http://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> commands.
+ * <p/>
+ * {@link GeoArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
  */
@@ -33,11 +37,77 @@ public class GeoArgs {
     private Sort sort = Sort.none;
 
     /**
+     * Builder entry points for {@link GeoArgs}.
+     */
+    public static class Builder {
+
+        /**
+         * Utility constructor.
+         */
+        private Builder() {
+        }
+
+        /**
+         * Creates new {@link GeoArgs} with {@literal WITHDIST} enabled.
+         *
+         * @return new {@link GeoArgs} with {@literal WITHDIST} enabled.
+         * @see GeoArgs#withDistance()
+         */
+        public static GeoArgs distance() {
+            return new GeoArgs().withDistance();
+        }
+
+        /**
+         * Creates new {@link GeoArgs} with {@literal WITHCOORD} enabled.
+         *
+         * @return new {@link GeoArgs} with {@literal WITHCOORD} enabled.
+         * @see GeoArgs#withCoordinates()
+         */
+        public static GeoArgs coordinates() {
+            return new GeoArgs().withCoordinates();
+        }
+
+        /**
+         * Creates new {@link GeoArgs} with {@literal WITHHASH} enabled.
+         *
+         * @return new {@link GeoArgs} with {@literal WITHHASH} enabled.
+         * @see GeoArgs#withHash()
+         */
+        public static GeoArgs hash() {
+            return new GeoArgs().withHash();
+        }
+
+        /**
+         * Creates new {@link GeoArgs} with distance, coordinates and hash enabled.
+         *
+         * @return new {@link GeoArgs} with {@literal WITHDIST}, {@literal WITHCOORD}, {@literal WITHHASH} enabled.
+         * @see GeoArgs#withDistance()
+         * @see GeoArgs#withCoordinates()
+         * @see GeoArgs#withHash()
+         */
+        public static GeoArgs full() {
+            return new GeoArgs().withDistance().withCoordinates().withHash();
+        }
+
+        /**
+         * Creates new {@link GeoArgs} with {@literal COUNT} set.
+         *
+         * @param count number greater 0.
+         * @return new {@link GeoArgs} with {@literal COUNT} set.
+         * @see GeoArgs#withCount(long)
+         */
+        public static GeoArgs count(long count) {
+            return new GeoArgs().withCount(count);
+        }
+    }
+
+    /**
      * Request distance for results.
      *
-     * @return {@code this}
+     * @return {@code this} {@link GeoArgs}.
      */
     public GeoArgs withDistance() {
+
         withdistance = true;
         return this;
     }
@@ -45,9 +115,10 @@ public class GeoArgs {
     /**
      * Request coordinates for results.
      *
-     * @return {@code this}
+     * @return {@code this} {@link GeoArgs}.
      */
     public GeoArgs withCoordinates() {
+
         withcoordinates = true;
         return this;
     }
@@ -55,7 +126,7 @@ public class GeoArgs {
     /**
      * Request geohash for results.
      *
-     * @return {@code this}
+     * @return {@code this} {@link GeoArgs}.
      */
     public GeoArgs withHash() {
         withhash = true;
@@ -65,11 +136,13 @@ public class GeoArgs {
     /**
      * Limit results to {@code count} entries.
      *
-     * @param count number greater 0
-     * @return {@code this}
+     * @param count number greater 0.
+     * @return {@code this} {@link GeoArgs}.
      */
     public GeoArgs withCount(long count) {
+
         LettuceAssert.isTrue(count > 0, "Count must be greater 0");
+
         this.count = count;
         return this;
     }
@@ -123,6 +196,7 @@ public class GeoArgs {
      * @return {@code this}
      */
     public GeoArgs sort(Sort sort) {
+
         LettuceAssert.notNull(sort, "Sort must not be null");
 
         this.sort = sort;
@@ -133,6 +207,7 @@ public class GeoArgs {
      * Sort order.
      */
     public enum Sort {
+
         /**
          * ascending.
          */
@@ -153,18 +228,22 @@ public class GeoArgs {
      * Supported geo unit.
      */
     public enum Unit {
+
         /**
          * meter.
          */
         m,
+
         /**
          * kilometer.
          */
         km,
+
         /**
          * feet.
          */
         ft,
+
         /**
          * mile.
          */
@@ -172,16 +251,17 @@ public class GeoArgs {
     }
 
     public <K, V> void build(CommandArgs<K, V> args) {
+
         if (withdistance) {
-            args.add("withdist");
+            args.add("WITHDIST");
         }
 
         if (withhash) {
-            args.add("withhash");
+            args.add("WITHHASH");
         }
 
         if (withcoordinates) {
-            args.add("withcoord");
+            args.add("WITHCOORD");
         }
 
         if (sort != null && sort != Sort.none) {
@@ -191,6 +271,5 @@ public class GeoArgs {
         if (count != null) {
             args.add(CommandKeyword.COUNT).add(count);
         }
-
     }
 }
