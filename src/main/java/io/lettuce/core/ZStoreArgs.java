@@ -20,15 +20,20 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
- * Argument list builder for the redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a> and <a
+ * Argument list builder for the Redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a> and <a
  * href="http://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the methods from {@link Builder} and
  * chain the method calls: {@code weights(1, 2).max()}.
  *
+ * <p/>
+ * {@link ZAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
+ *
  * @author Will Glozer
  * @author Xy Ma
+ * @author Mark Paluch
  */
 public class ZStoreArgs implements CompositeArgument {
 
@@ -40,7 +45,7 @@ public class ZStoreArgs implements CompositeArgument {
     private Aggregate aggregate;
 
     /**
-     * Static builder methods.
+     * Builder entry points for {@link ScanArgs}.
      */
     public static class Builder {
 
@@ -48,37 +53,86 @@ public class ZStoreArgs implements CompositeArgument {
          * Utility constructor.
          */
         private Builder() {
-
         }
 
+        /**
+         * Creates new {@link ZStoreArgs} setting {@literal WEIGHTS} using long.
+         *
+         * @return new {@link ZAddArgs} with {@literal WEIGHTS} set.
+         * @see ZStoreArgs#weights(long[])
+         * @deprecated use {@link #weights(double...)}.
+         */
         @Deprecated
         public static ZStoreArgs weights(long[] weights) {
             return new ZStoreArgs().weights(toDoubleArray(weights));
         }
 
+        /**
+         * Creates new {@link ZStoreArgs} setting {@literal WEIGHTS}.
+         *
+         * @return new {@link ZAddArgs} with {@literal WEIGHTS} set.
+         * @see ZStoreArgs#weights(double...)
+         */
         public static ZStoreArgs weights(double... weights) {
             return new ZStoreArgs().weights(weights);
         }
 
+        /**
+         * Creates new {@link ZStoreArgs} setting {@literal AGGREGATE SUM}.
+         *
+         * @return new {@link ZAddArgs} with {@literal AGGREGATE SUM} set.
+         * @see ZStoreArgs#sum()
+         */
         public static ZStoreArgs sum() {
             return new ZStoreArgs().sum();
         }
 
+        /**
+         * Creates new {@link ZStoreArgs} setting {@literal AGGREGATE MIN}.
+         *
+         * @return new {@link ZAddArgs} with {@literal AGGREGATE MIN} set.
+         * @see ZStoreArgs#sum()
+         */
         public static ZStoreArgs min() {
             return new ZStoreArgs().min();
         }
 
+        /**
+         * Creates new {@link ZStoreArgs} setting {@literal AGGREGATE MAX}.
+         *
+         * @return new {@link ZAddArgs} with {@literal AGGREGATE MAX} set.
+         * @see ZStoreArgs#sum()
+         */
         public static ZStoreArgs max() {
             return new ZStoreArgs().max();
         }
     }
 
+    /**
+     * Specify a multiplication factor for each input sorted set.
+     *
+     * @param weights must not be {@literal null}.
+     * @return {@code this} {@link ZStoreArgs}.
+     * @deprecated use {@link #weights(double...)}
+     */
     @Deprecated
     public static ZStoreArgs weights(long[] weights) {
+
+        LettuceAssert.notNull(weights, "Weights must not be null");
+
         return new ZStoreArgs().weights(toDoubleArray(weights));
     }
 
+    /**
+     * Specify a multiplication factor for each input sorted set.
+     *
+     * @param weights must not be {@literal null}.
+     * @return {@code this} {@link ZStoreArgs}.
+     */
     public ZStoreArgs weights(double... weights) {
+
+        LettuceAssert.notNull(weights, "Weights must not be null");
+
         this.weights = new ArrayList<>(weights.length);
 
         for (double weight : weights) {
@@ -87,22 +141,41 @@ public class ZStoreArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Aggregate scores of elements existing across multiple sets by summing up.
+     *
+     * @return {@code this} {@link ZStoreArgs}.
+     */
     public ZStoreArgs sum() {
-        aggregate = Aggregate.SUM;
+
+        this.aggregate = Aggregate.SUM;
         return this;
     }
 
+    /**
+     * Aggregate scores of elements existing across multiple sets by using the lowest score.
+     *
+     * @return {@code this} {@link ZStoreArgs}.
+     */
     public ZStoreArgs min() {
-        aggregate = Aggregate.MIN;
+
+        this.aggregate = Aggregate.MIN;
         return this;
     }
 
+    /**
+     * Aggregate scores of elements existing across multiple sets by using the highest score.
+     *
+     * @return {@code this} {@link ZStoreArgs}.
+     */
     public ZStoreArgs max() {
-        aggregate = Aggregate.MAX;
+
+        this.aggregate = Aggregate.MAX;
         return this;
     }
 
     private static double[] toDoubleArray(long[] weights) {
+
         double result[] = new double[weights.length];
         for (int i = 0; i < weights.length; i++) {
             result[i] = weights[i];

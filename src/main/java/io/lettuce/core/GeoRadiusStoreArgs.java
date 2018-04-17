@@ -21,7 +21,10 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * Store Args for {@literal GEORADIUS} to store {@literal GEORADIUS} results or {@literal GEORADIUS} distances in a sorted set.
+ * Argument list builder for the Redis <a href="http://redis.io/commands/georadius">GEORADIUS</a> command to store
+ * {@literal GEORADIUS} results or {@literal GEORADIUS} distances in a sorted set.
+ * <p/>
+ * {@link GeoRadiusStoreArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
  */
@@ -33,14 +36,61 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
     private Sort sort = Sort.none;
 
     /**
+     * Builder entry points for {@link GeoRadiusStoreArgs}.
+     */
+    public static class Builder {
+
+        /**
+         * Utility constructor.
+         */
+        private Builder() {
+        }
+
+        /**
+         * Creates new {@link GeoRadiusStoreArgs} with {@literal STORE} enabled.
+         *
+         * @param key must not be {@literal null}.
+         * @return new {@link GeoRadiusStoreArgs} with {@literal STORE} enabled.
+         * @see GeoRadiusStoreArgs#withStore(Object)
+         */
+        public static <K> GeoRadiusStoreArgs store(K key) {
+            return new GeoRadiusStoreArgs<>().withStore(key);
+        }
+
+        /**
+         * Creates new {@link GeoRadiusStoreArgs} with {@literal STOREDIST} enabled.
+         *
+         * @param key must not be {@literal null}.
+         * @return new {@link GeoRadiusStoreArgs} with {@literal STOREDIST} enabled.
+         * @see GeoRadiusStoreArgs#withStoreDist(Object)
+         */
+        public static <K> GeoRadiusStoreArgs withStoreDist(K key) {
+            return new GeoRadiusStoreArgs<>().withStoreDist(key);
+        }
+
+        /**
+         * Creates new {@link GeoRadiusStoreArgs} with {@literal COUNT} set.
+         *
+         * @param count number greater 0.
+         * @return new {@link GeoRadiusStoreArgs} with {@literal COUNT} set.
+         * @see GeoRadiusStoreArgs#withStoreDist(Object)
+         */
+        public static <K> GeoRadiusStoreArgs count(long count) {
+            return new GeoRadiusStoreArgs<>().withCount(count);
+        }
+    }
+
+    /**
      * Store the resulting members with their location in the new Geo set {@code storeKey}. Cannot be used together with
      * {@link #withStoreDist(Object)}.
      *
      * @param storeKey the destination key.
-     * @return {@code this}
+     * @return {@code this} {@link GeoRadiusStoreArgs}.
      */
     public GeoRadiusStoreArgs withStore(K storeKey) {
+
         LettuceAssert.notNull(storeKey, "StoreKey must not be null");
+
         this.storeKey = storeKey;
         return this;
     }
@@ -50,10 +100,12 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
      * {@link #withStore(Object)}.
      *
      * @param storeKey the destination key.
-     * @return {@code this}
+     * @return {@code this} {@link GeoRadiusStoreArgs}.
      */
     public GeoRadiusStoreArgs withStoreDist(K storeKey) {
+
         LettuceAssert.notNull(storeKey, "StoreKey must not be null");
+
         this.storeDistKey = storeKey;
         return this;
     }
@@ -61,11 +113,13 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
     /**
      * Limit results to {@code count} entries.
      *
-     * @param count number greater 0
-     * @return {@code this}
+     * @param count number greater 0.
+     * @return {@code this} {@link GeoRadiusStoreArgs}.
      */
     public GeoRadiusStoreArgs withCount(long count) {
+
         LettuceAssert.isTrue(count > 0, "Count must be greater 0");
+
         this.count = count;
         return this;
     }
@@ -73,7 +127,7 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
     /**
      * Sort results ascending.
      *
-     * @return {@code this}
+     * @return {@code this} {@link GeoRadiusStoreArgs}.
      */
     public GeoRadiusStoreArgs asc() {
         return sort(Sort.asc);
@@ -82,14 +136,13 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
     /**
      * Sort results descending.
      *
-     * @return {@code this}
+     * @return {@code this} {@link GeoRadiusStoreArgs}.
      */
     public GeoRadiusStoreArgs desc() {
         return sort(Sort.desc);
     }
 
     /**
-     *
      * @return the key for storing results
      */
     public K getStoreKey() {
@@ -97,7 +150,6 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
     }
 
     /**
-     *
      * @return the key for storing distance results
      */
     public K getStoreDistKey() {
@@ -108,7 +160,7 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
      * Sort results.
      *
      * @param sort sort order, must not be {@literal null}
-     * @return {@code this}
+     * @return {@code this} {@link GeoRadiusStoreArgs}.
      */
     public GeoRadiusStoreArgs sort(Sort sort) {
         LettuceAssert.notNull(sort, "Sort must not be null");

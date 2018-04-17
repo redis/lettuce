@@ -20,19 +20,22 @@ import static io.lettuce.core.protocol.CommandKeyword.ID;
 import static io.lettuce.core.protocol.CommandKeyword.SKIPME;
 import static io.lettuce.core.protocol.CommandType.TYPE;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
  *
- * Argument list builder for the redis <a href="http://redis.io/commands/client-kill">CLIENT KILL</a> command. Static import the
+ * Argument list builder for the Redis <a href="http://redis.io/commands/client-kill">CLIENT KILL</a> command. Static import the
  * methods from {@link Builder} and chain the method calls: {@code id(1).skipme()}.
+ * <p/>
+ * {@link KillArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
  * @since 3.0
  */
 public class KillArgs implements CompositeArgument {
 
-    private static enum Type {
+    private enum Type {
         NORMAL, SLAVE, PUBSUB
     }
 
@@ -42,7 +45,7 @@ public class KillArgs implements CompositeArgument {
     private Type type;
 
     /**
-     * Static builder methods.
+     * Builder entry points for {@link KillArgs}.
      */
     public static class Builder {
 
@@ -50,55 +53,131 @@ public class KillArgs implements CompositeArgument {
          * Utility constructor.
          */
         private Builder() {
-
         }
 
+        /**
+         * Creates new {@link KillArgs} and enabling {@literal SKIPME YES}.
+         *
+         * @return new {@link KillArgs} with {@literal SKIPME YES} enabled.
+         * @see KillArgs#skipme()
+         */
         public static KillArgs skipme() {
             return new KillArgs().skipme();
         }
 
+        /**
+         * Creates new {@link KillArgs} setting {@literal ADDR}.
+         *
+         * @param addr must not be {@literal null}.
+         * @return new {@link KillArgs} with {@literal ADDR} set.
+         * @see KillArgs#addr(String)
+         */
         public static KillArgs addr(String addr) {
             return new KillArgs().addr(addr);
         }
 
+        /**
+         * Creates new {@link KillArgs} setting {@literal ID}.
+         *
+         * @param id client id.
+         * @return new {@link KillArgs} with {@literal ID} set.
+         * @see KillArgs#id(long)
+         */
         public static KillArgs id(long id) {
             return new KillArgs().id(id);
         }
 
+        /**
+         * Creates new {@link KillArgs} setting {@literal TYPE PUBSUB}.
+         *
+         * @return new {@link KillArgs} with {@literal TYPE PUBSUB} set.
+         * @see KillArgs#type(Type)
+         */
         public static KillArgs typePubsub() {
             return new KillArgs().type(Type.PUBSUB);
         }
 
+        /**
+         * Creates new {@link KillArgs} setting {@literal TYPE NORMAL}.
+         *
+         * @return new {@link KillArgs} with {@literal TYPE NORMAL} set.
+         * @see KillArgs#type(Type)
+         */
         public static KillArgs typeNormal() {
             return new KillArgs().type(Type.NORMAL);
         }
 
+        /**
+         * Creates new {@link KillArgs} setting {@literal TYPE SLAVE}.
+         *
+         * @return new {@link KillArgs} with {@literal TYPE SLAVE} set.
+         * @see KillArgs#type(Type)
+         */
         public static KillArgs typeSlave() {
             return new KillArgs().type(Type.SLAVE);
         }
-
     }
 
+    /**
+     * By default this option is enabled, that is, the client calling the command will not get killed, however setting this
+     * option to no will have the effect of also killing the client calling the command.
+     *
+     * @return {@code this} {@link MigrateArgs}.
+     */
     public KillArgs skipme() {
         return this.skipme(true);
     }
 
+    /**
+     * By default this option is enabled, that is, the client calling the command will not get killed, however setting this
+     * option to no will have the effect of also killing the client calling the command.
+     *
+     * @param state
+     * @return {@code this} {@link KillArgs}.
+     */
     public KillArgs skipme(boolean state) {
+
         this.skipme = state;
         return this;
     }
 
+    /**
+     * Kill the client at {@code addr}.
+     *
+     * @param addr must not be {@literal null}.
+     * @return {@code this} {@link KillArgs}.
+     */
     public KillArgs addr(String addr) {
+
+        LettuceAssert.notNull(addr, "Client address must not be null");
+
         this.addr = addr;
         return this;
     }
 
+    /**
+     * Kill the client with its client {@code id}.
+     *
+     * @param id
+     * @return {@code this} {@link KillArgs}.
+     */
     public KillArgs id(long id) {
+
         this.id = id;
         return this;
     }
 
+    /**
+     * This closes the connections of all the clients in the specified {@link Type class}. Note that clients blocked into the
+     * {@literal MONITOR} command are considered to belong to the normal class.
+     *
+     * @param type must not be {@literal null}.
+     * @return {@code this} {@link KillArgs}.
+     */
     public KillArgs type(Type type) {
+
+        LettuceAssert.notNull(type, "Type must not be null");
+
         this.type = type;
         return this;
     }
@@ -106,7 +185,7 @@ public class KillArgs implements CompositeArgument {
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (skipme != null) {
-            args.add(SKIPME).add(skipme.booleanValue() ? "yes" : "no");
+            args.add(SKIPME).add(skipme ? "YES" : "NO");
         }
 
         if (id != null) {
@@ -120,6 +199,5 @@ public class KillArgs implements CompositeArgument {
         if (type != null) {
             args.add(TYPE).add(type.name().toLowerCase());
         }
-
     }
 }

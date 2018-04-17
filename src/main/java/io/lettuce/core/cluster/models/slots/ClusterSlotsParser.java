@@ -21,7 +21,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 
 /**
- * Parser for redis <a href="http://redis.io/commands/cluster-slots">CLUSTER SLOTS</a> command output.
+ * Parser for Redis <a href="http://redis.io/commands/cluster-slots">CLUSTER SLOTS</a> command output.
  *
  * @author Mark Paluch
  * @since 3.0
@@ -36,7 +36,7 @@ public class ClusterSlotsParser {
     }
 
     /**
-     * Parse the output of the redis CLUSTER SLOTS command and convert it to a list of
+     * Parse the output of the Redis CLUSTER SLOTS command and convert it to a list of
      * {@link io.lettuce.core.cluster.models.slots.ClusterSlotRange}
      *
      * @param clusterSlotsOutput output of CLUSTER SLOTS command

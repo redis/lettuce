@@ -36,10 +36,8 @@ public interface RedisChannelWriter extends Closeable, AsyncCloseable {
      * after the call.
      *
      * @param command the Redis command.
-     * @param <K> key type
-     * @param <V> value type
      * @param <T> result type
-     * @return the written redis command
+     * @return the written Redis command.
      */
     <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
 
