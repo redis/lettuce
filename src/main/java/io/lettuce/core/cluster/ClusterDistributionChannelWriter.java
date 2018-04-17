@@ -60,7 +60,6 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         this.clusterEventListener = clusterEventListener;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
 
@@ -69,6 +68,11 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         if (closed) {
             throw new RedisException("Connection is closed");
         }
+
+        return doWrite(command);
+    }
+
+    private <K, V, T> RedisCommand<K, V, T> doWrite(RedisCommand<K, V, T> command) {
 
         if (command instanceof ClusterCommand && !command.isDone()) {
 
@@ -90,7 +94,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
                 command.getOutput().setError((String) null);
 
                 CompletableFuture<StatefulRedisConnection<K, V>> connectFuture = asyncClusterConnectionProvider
-                        .getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, target.getHostText(), target.getPort());
+                        .getConnectionAsync(Intent.WRITE, target.getHostText(), target.getPort());
 
                 if (isSuccessfullyCompleted(connectFuture)) {
                     writeCommand(command, asking, connectFuture.join(), null);
@@ -112,7 +116,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             if (encodedKey != null) {
 
                 int hash = getSlot(encodedKey);
-                ClusterConnectionProvider.Intent intent = getIntent(command.getType());
+                Intent intent = getIntent(command.getType());
 
                 CompletableFuture<StatefulRedisConnection<K, V>> connectFuture = ((AsyncClusterConnectionProvider) clusterConnectionProvider)
                         .getConnectionAsync(intent, hash);

@@ -128,10 +128,17 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     }
 
     @Override
-    public void onReconnection(int attempt) {
+    public void onReconnectAttempt(int attempt) {
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.PERSISTENT_RECONNECTS)
                 && attempt >= getClusterTopologyRefreshOptions().getRefreshTriggersReconnectAttempts()) {
+            indicateTopologyRefreshSignal();
+        }
+    }
+
+    @Override
+    public void onUnknownNode() {
+        if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.UNKNOWN_NODE)) {
             indicateTopologyRefreshSignal();
         }
     }

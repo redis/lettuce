@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,20 @@
  */
 package io.lettuce.core.cluster;
 
-import io.lettuce.core.ConnectionEvents.Reconnect;
-import io.lettuce.core.protocol.ReconnectionListener;
-
 /**
+ * Exception thrown when an unknown partition is requested.
+ *
  * @author Mark Paluch
+ * @since 5.1
  */
-class ReconnectEventListener implements ReconnectionListener {
+public class UnknownPartitionException extends PartitionException {
 
-    private final ClusterEventListener clusterEventListener;
-
-    public ReconnectEventListener(ClusterEventListener clusterEventListener) {
-        this.clusterEventListener = clusterEventListener;
-    }
-
-    @Override
-    public void onReconnectAttempt(Reconnect reconnect) {
-        clusterEventListener.onReconnectAttempt(reconnect.getAttempt());
+    /**
+     * Create a {@code UnknownPartitionException} with the specified detail message.
+     *
+     * @param msg the detail message.
+     */
+    public UnknownPartitionException(String msg) {
+        super(msg);
     }
 }

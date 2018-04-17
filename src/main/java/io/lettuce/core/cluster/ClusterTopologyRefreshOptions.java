@@ -425,5 +425,12 @@ public class ClusterTopologyRefreshOptions {
          * Connections to a particular host run into persistent reconnects (more than one attempt).
          */
         PERSISTENT_RECONNECTS,
+
+        /**
+         * Connection attempts to unknown nodes.
+         *
+         * @since 5.1
+         */
+        UNKNOWN_NODE
     }
 }
