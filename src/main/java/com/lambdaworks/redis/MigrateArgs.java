@@ -16,6 +16,7 @@
 package com.lambdaworks.redis;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -25,7 +26,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * Argument list builder for the new redis <a href="http://redis.io/commands/migrate">MIGRATE</a> command. Static import the
- * methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
+ * methods from {@link Builder} and chain the method calls: {@code copy().auth("foobar")}.
  *
  * @author Mark Paluch
  */
@@ -34,6 +35,7 @@ public class MigrateArgs<K> {
     private boolean copy = false;
     private boolean replace = false;
     List<K> keys = new ArrayList<>();
+    private char[] password;
 
     public static class Builder {
 
@@ -41,7 +43,6 @@ public class MigrateArgs<K> {
          * Utility constructor.
          */
         private Builder() {
-
         }
 
         public static <K> MigrateArgs<K> copy() {
@@ -56,6 +57,14 @@ public class MigrateArgs<K> {
             return new MigrateArgs<K>().key(key);
         }
 
+        public static <K> MigrateArgs<K> auth(CharSequence password) {
+            return new MigrateArgs<K>().auth(password);
+        }
+
+        public static <K> MigrateArgs<K> auth(char[] password) {
+            return new MigrateArgs<K>().auth(password);
+        }
+
         @SafeVarargs
         public static <K> MigrateArgs<K> keys(K... keys) {
             return new MigrateArgs<K>().keys(keys);
@@ -64,6 +73,7 @@ public class MigrateArgs<K> {
         public static <K> MigrateArgs<K> keys(Iterable<K> keys) {
             return new MigrateArgs<K>().keys(keys);
         }
+
     }
 
     public MigrateArgs<K> copy() {
@@ -85,9 +95,7 @@ public class MigrateArgs<K> {
     @SafeVarargs
     public final MigrateArgs<K> keys(K... keys) {
         LettuceAssert.notEmpty(keys, "Keys must not be empty");
-        for (K key : keys) {
-            this.keys.add(key);
-        }
+        this.keys.addAll(Arrays.asList(keys));
         return this;
     }
 
@@ -96,6 +104,42 @@ public class MigrateArgs<K> {
         for (K key : keys) {
             this.keys.add(key);
         }
+        return this;
+    }
+
+    /**
+     * Set {@literal AUTH} {@code password} option.
+     *
+     * @param password must not be {@literal null}.
+     * @return {@code this} {@link MigrateArgs}.
+     * @since 4.4.5
+     */
+    public MigrateArgs<K> auth(CharSequence password) {
+
+        LettuceAssert.notNull(password, "Password must not be null");
+
+        char[] chars = new char[password.length()];
+
+        for (int i = 0; i < password.length(); i++) {
+            chars[i] = password.charAt(i);
+        }
+
+        this.password = chars;
+        return this;
+    }
+
+    /**
+     * Set {@literal AUTH} {@code password} option.
+     *
+     * @param password must not be {@literal null}.
+     * @return {@code this} {@link MigrateArgs}.
+     * @since 4.4.5
+     */
+    public MigrateArgs<K> auth(char[] password) {
+
+        LettuceAssert.notNull(password, "Password must not be null");
+
+        this.password = Arrays.copyOf(password, password.length);
         return this;
     }
 
@@ -108,6 +152,10 @@ public class MigrateArgs<K> {
 
         if (replace) {
             args.add(CommandKeyword.REPLACE);
+        }
+
+        if (password != null) {
+            args.add(CommandType.AUTH).add(password);
         }
 
         if (keys.size() > 1) {
