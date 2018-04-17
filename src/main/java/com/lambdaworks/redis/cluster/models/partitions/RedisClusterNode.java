@@ -107,6 +107,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return redisClusterNode;
     }
 
+    @Override
+    public RedisClusterNode clone() {
+        return new RedisClusterNode(this);
+    }
+
     public RedisURI getUri() {
         return uri;
     }

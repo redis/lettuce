@@ -27,7 +27,7 @@ public interface ReconnectionListener {
 
     ReconnectionListener NO_OP = new ReconnectionListener() {
         @Override
-        public void onReconnect(ConnectionEvents.Reconnect reconnect) {
+        public void onReconnectAttempt(ConnectionEvents.Reconnect reconnect) {
 
         }
     };
@@ -37,6 +37,6 @@ public interface ReconnectionListener {
      *
      * @param reconnect the event payload.
      */
-    void onReconnect(ConnectionEvents.Reconnect reconnect);
+    void onReconnectAttempt(ConnectionEvents.Reconnect reconnect);
 
 }

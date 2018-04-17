@@ -61,6 +61,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     private final RedisClusterClient redisClusterClient;
     private final ClusterNodeConnectionFactory<K, V> connectionFactory;
     private final RedisChannelWriter<K, V> clusterWriter;
+    private final ClusterEventListener clusterEventListener;
     private final RedisCodec<K, V> redisCodec;
     private final SynchronizingClusterConnectionProvider<K, V> connectionProvider;
 
@@ -69,11 +70,12 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     private ReadFrom readFrom;
 
     public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter<K, V> clusterWriter,
-            RedisCodec<K, V> redisCodec) {
+            RedisCodec<K, V> redisCodec, ClusterEventListener clusterEventListener) {
 
         this.redisCodec = redisCodec;
         this.redisClusterClient = redisClusterClient;
         this.clusterWriter = clusterWriter;
+        this.clusterEventListener = clusterEventListener;
         this.connectionFactory = new NodeConnectionPostProcessor(getConnectionFactory(redisClusterClient));
         this.connectionProvider = new SynchronizingClusterConnectionProvider<>(this.connectionFactory);
     }
@@ -118,7 +120,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         if (writer == null) {
             RedisClusterNode partition = partitions.getPartitionBySlot(slot);
             if (partition == null) {
-                throw new RedisException("Cannot determine a partition for slot " + slot + " (Partitions: " + partitions + ")");
+                throw new PartitionSelectorException("Cannot determine a partition for slot " + slot + ".", partitions.clone());
             }
 
             // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
@@ -154,8 +156,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
             RedisClusterNode master = partitions.getPartitionBySlot(slot);
             if (master == null) {
-                throw new RedisException("Cannot determine a partition to read for slot " + slot + " (Partitions: "
-                        + partitions + ")");
+                throw new PartitionSelectorException(String.format("Cannot determine a partition to read for slot %d.", slot),
+                        partitions.clone());
             }
 
             List<RedisNodeDescription> candidates = getReadCandidates(master);
@@ -172,8 +174,9 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             });
 
             if (selection.isEmpty()) {
-                throw new RedisException("Cannot determine a partition to read for slot " + slot + " (Partitions: "
-                        + partitions + ") with setting " + readFrom);
+                throw new PartitionSelectorException(String.format(
+                        "Cannot determine a partition to read for slot %d with setting %s.", slot, readFrom),
+                        partitions.clone());
             }
 
             readerCandidates = getReadFromConnections(selection);
@@ -388,12 +391,14 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
         }
 
-        if (validateClusterNodeMembership()) {
-            RedisClusterNode redisClusterNode = partitions.getPartition(host, port);
+        RedisClusterNode redisClusterNode = partitions.getPartition(host, port);
 
-            if (redisClusterNode == null) {
+        if (redisClusterNode == null) {
+            clusterEventListener.onUnknownNode();
+
+            if (validateClusterNodeMembership()) {
                 HostAndPort hostAndPort = HostAndPort.of(host, port);
-                throw invalidConnectionPoint(hostAndPort.toString());
+                throw connectionAttemptRejected(hostAndPort.toString());
             }
         }
     }
@@ -534,9 +539,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         }
     }
 
-    private static RuntimeException invalidConnectionPoint(String message) {
-        return new IllegalArgumentException("Connection to " + message
-                + " not allowed. This connection point is not known in the cluster view");
+    private static RuntimeException connectionAttemptRejected(String message) {
+
+        return new UnknownPartitionException("Connection to " + message
+                + " not allowed. This partition is not known in the cluster view.");
     }
 
     boolean validateClusterNodeMembership() {
@@ -567,18 +573,15 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         @Override
         public ConnectionFuture<StatefulRedisConnection<K, V>> apply(ConnectionKey key) {
 
-            if (key.nodeId != null) {
-                if (getPartitions().getPartitionByNodeId(key.nodeId) == null) {
-                    throw invalidConnectionPoint("node id " + key.nodeId);
-                }
+            if (key.nodeId != null && getPartitions().getPartitionByNodeId(key.nodeId) == null) {
+                clusterEventListener.onUnknownNode();
+                throw connectionAttemptRejected("node id " + key.nodeId);
             }
 
-            if (key.host != null) {
-
+            if (key.host != null && partitions.getPartition(key.host, key.port) == null) {
+                clusterEventListener.onUnknownNode();
                 if (validateClusterNodeMembership()) {
-                    if (partitions.getPartition(key.host, key.port) == null) {
-                        throw invalidConnectionPoint(key.host + ":" + key.port);
-                    }
+                    throw connectionAttemptRejected(key.host + ":" + key.port);
                 }
             }
 

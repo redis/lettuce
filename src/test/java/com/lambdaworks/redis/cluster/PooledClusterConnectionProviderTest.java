@@ -16,6 +16,7 @@
 package com.lambdaworks.redis.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -82,12 +83,15 @@ public class PooledClusterConnectionProviderTest {
     @Mock
     ClientResources clientResourcesMock;
 
+    @Mock
+    ClusterEventListener clusterEventListener;
+
     Partitions partitions = new Partitions();
 
     @Before
     public void before() {
 
-        sut = new PooledClusterConnectionProvider<>(clientMock, writerMock, CODEC);
+        sut = new PooledClusterConnectionProvider<>(clientMock, writerMock, CODEC, clusterEventListener);
 
         List<Integer> slots1 = IntStream.range(0, 8192).boxed().collect(Collectors.toList());
         List<Integer> slots2 = IntStream.range(8192, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList());
@@ -270,4 +274,20 @@ public class PooledClusterConnectionProviderTest {
         verify(nodeConnectionMock).close();
     }
 
+    @Test
+    public void shouldRejectConnectionsToUnknownNodeId() {
+
+        assertThatThrownBy(() -> sut.getConnection(Intent.READ, "foobar")).isInstanceOf(UnknownPartitionException.class);
+
+        verify(clusterEventListener).onUnknownNode();
+    }
+
+    @Test
+    public void shouldRejectConnectionsToUnknownNodeHostAndPort() {
+
+        assertThatThrownBy(() -> sut.getConnection(Intent.READ, "localhost", 1234)).isInstanceOf(
+                UnknownPartitionException.class);
+
+        verify(clusterEventListener).onUnknownNode();
+    }
 }

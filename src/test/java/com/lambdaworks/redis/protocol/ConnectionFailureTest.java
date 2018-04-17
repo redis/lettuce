@@ -137,12 +137,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
             RedisAsyncCommands<String, String> connection = client.connectAsync(redisUri);
             ConnectionWatchdog connectionWatchdog = Connections.getConnectionWatchdog(connection.getStatefulConnection());
 
-            ReconnectionListener reconnectionListener = new ReconnectionListener() {
-                @Override
-                public void onReconnect(ConnectionEvents.Reconnect reconnect) {
-                    events.add(reconnect);
-                }
-            };
+            ReconnectionListener reconnectionListener = events::add;
 
             ReflectionTestUtils.setField(connectionWatchdog, "reconnectionListener", reconnectionListener);
 

@@ -581,7 +581,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<>(clientOptions, handler,
                 clusterTopologyRefreshScheduler);
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<>(this,
-                clusterWriter, codec);
+                clusterWriter, codec, clusterTopologyRefreshScheduler);
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
@@ -649,7 +649,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 clusterWriter, codec, timeout, unit);
 
         ClusterPubSubConnectionProvider<K, V> pooledClusterConnectionProvider = new ClusterPubSubConnectionProvider<>(this,
-                clusterWriter, codec, connection.getUpstreamListener());
+                clusterWriter, codec, connection.getUpstreamListener(), clusterTopologyRefreshScheduler);
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 

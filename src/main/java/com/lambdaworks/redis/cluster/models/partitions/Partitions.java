@@ -60,6 +60,27 @@ public class Partitions implements Collection<RedisClusterNode> {
     private volatile Collection<RedisClusterNode> nodeReadView = Collections.emptyList();
 
     /**
+     * Create a deep copy of this {@link Partitions} object.
+     *
+     * @return a deep copy of this {@link Partitions} object.
+     */
+    @Override
+    public Partitions clone() {
+
+        Collection<RedisClusterNode> readView = new ArrayList<>(nodeReadView);
+
+        Partitions copy = new Partitions();
+
+        for (RedisClusterNode node : readView) {
+            copy.addPartition(node.clone());
+        }
+
+        copy.updateCache();
+
+        return copy;
+    }
+
+    /**
      * Retrieve a {@link RedisClusterNode} by its slot number. This method does not distinguish between masters and slaves.
      *
      * @param slot the slot hash.

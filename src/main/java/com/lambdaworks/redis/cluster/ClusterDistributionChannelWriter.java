@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
+import com.lambdaworks.redis.cluster.ClusterConnectionProvider.Intent;
 import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 import com.lambdaworks.redis.internal.HostAndPort;
 import com.lambdaworks.redis.internal.LettuceAssert;
@@ -64,7 +65,6 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T, C extends RedisCommand<K, V, T>> C write(C command) {
 
         LettuceAssert.notNull(command, "Command must not be null");
@@ -72,6 +72,12 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         if (closed) {
             throw new RedisException("Connection is closed");
         }
+
+        return doWrite(command);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T, C extends RedisCommand<K, V, T>> C doWrite(C command) {
 
         if (command instanceof ClusterCommand && !command.isDone()) {
 
@@ -93,7 +99,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
                 command.getOutput().setError((String) null);
 
                 CompletableFuture<StatefulRedisConnection<K, V>> connectFuture = asyncClusterConnectionProvider
-                        .getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, target.getHostText(), target.getPort());
+                        .getConnectionAsync(Intent.WRITE, target.getHostText(), target.getPort());
 
                 if (isSuccessfullyCompleted(connectFuture)) {
                     writeCommand(command, asking, connectFuture.join(), null);
@@ -115,7 +121,7 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
             if (encodedKey != null) {
 
                 int hash = getSlot(encodedKey);
-                ClusterConnectionProvider.Intent intent = getIntent(command.getType());
+                Intent intent = getIntent(command.getType());
 
                 CompletableFuture<StatefulRedisConnection<K, V>> connectFuture = ((AsyncClusterConnectionProvider) clusterConnectionProvider)
                         .getConnectionAsync(intent, hash);
@@ -188,13 +194,13 @@ class ClusterDistributionChannelWriter<K, V> implements RedisChannelWriter<K, V>
         return writerToUse;
     }
 
-    private ClusterConnectionProvider.Intent getIntent(ProtocolKeyword type) {
+    private Intent getIntent(ProtocolKeyword type) {
 
         if (ReadOnlyCommands.isReadOnlyCommand(type)) {
-            return ClusterConnectionProvider.Intent.READ;
+            return Intent.READ;
         }
 
-        return ClusterConnectionProvider.Intent.WRITE;
+        return Intent.WRITE;
     }
 
     static HostAndPort getMoveTarget(String errorMessage) {

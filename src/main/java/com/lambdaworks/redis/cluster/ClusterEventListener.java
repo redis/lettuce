@@ -16,30 +16,36 @@
 package com.lambdaworks.redis.cluster;
 
 /**
+ * Event listener for cluster state/cluster node events.
+ *
  * @author Mark Paluch
  */
 interface ClusterEventListener {
 
-    void onAskRedirection();
+    /**
+     * Event callback if a command receives a {@literal ASK} redirection.
+     */
+    default void onAskRedirection() {
+    }
 
-    void onMovedRedirection();
+    /**
+     * Event callback if a command receives a {@literal MOVED} redirection.
+     */
+    default void onMovedRedirection() {
+    }
 
-    void onReconnection(int attempt);
+    /**
+     * Event callback if a connection tries to reconnect.
+     */
+    default void onReconnectAttempt(int attempt) {
+    }
 
-    static ClusterEventListener NO_OP = new ClusterEventListener() {
-        @Override
-        public void onAskRedirection() {
+    /**
+     * Event callback if a connection is attempted to an unknown node.
+     */
+    default void onUnknownNode() {
+    }
 
-        }
-
-        @Override
-        public void onMovedRedirection() {
-
-        }
-
-        @Override
-        public void onReconnection(int attempt) {
-
-        }
+    ClusterEventListener NO_OP = new ClusterEventListener() {
     };
 }

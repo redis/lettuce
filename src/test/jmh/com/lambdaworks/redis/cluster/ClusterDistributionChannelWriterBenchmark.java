@@ -72,7 +72,7 @@ public class ClusterDistributionChannelWriterBenchmark {
 
         writer.setPartitions(partitions);
         writer.setClusterConnectionProvider(new PooledClusterConnectionProvider(new EmptyRedisClusterClient(RedisURI.create(
-                "localhost", 7379)), EMPTY_WRITER, ByteArrayCodec.INSTANCE) {
+                "localhost", 7379)), EMPTY_WRITER, ByteArrayCodec.INSTANCE, ClusterEventListener.NO_OP) {
             @Override
             public CompletableFuture getConnectionAsync(Intent intent, int slot) {
                 return connectionFuture;

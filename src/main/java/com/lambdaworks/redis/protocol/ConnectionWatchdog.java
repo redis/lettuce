@@ -293,7 +293,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         InternalLogLevel warnLevelToUse = warnLevel;
 
         try {
-            reconnectionListener.onReconnect(new ConnectionEvents.Reconnect(attempts));
+            reconnectionListener.onReconnectAttempt(new ConnectionEvents.Reconnect(attempts));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
             ChannelFuture future = reconnectionHandler.reconnect();
