@@ -36,7 +36,7 @@ import io.lettuce.core.protocol.CommandArgs;
 public class KillArgs implements CompositeArgument {
 
     private enum Type {
-        NORMAL, SLAVE, PUBSUB
+        NORMAL, MASTER, SLAVE, PUBSUB
     }
 
     private Boolean skipme;
@@ -105,6 +105,17 @@ public class KillArgs implements CompositeArgument {
          */
         public static KillArgs typeNormal() {
             return new KillArgs().type(Type.NORMAL);
+        }
+
+        /**
+         * Creates new {@link KillArgs} setting {@literal TYPE MASTER}.
+         *
+         * @return new {@link KillArgs} with {@literal TYPE MASTER} set.
+         * @see KillArgs#type(Type)
+         * @since 5.0.4
+         */
+        public static KillArgs typeMaster() {
+            return new KillArgs().type(Type.MASTER);
         }
 
         /**
