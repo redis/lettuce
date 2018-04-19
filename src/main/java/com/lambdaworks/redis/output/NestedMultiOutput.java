@@ -22,14 +22,16 @@ import java.util.Deque;
 import java.util.List;
 
 import com.lambdaworks.redis.codec.RedisCodec;
+import com.lambdaworks.redis.codec.StringCodec;
 import com.lambdaworks.redis.internal.LettuceFactories;
 
 /**
- * {@link List} of command outputs, possibly deeply nested.
+ * {@link List} of command outputs, possibly deeply nested. Decodes simple strings through {@link StringCodec#UTF8}.
  *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
@@ -61,6 +63,16 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         }
 
         output.add(bytes == null ? null : codec.decodeValue(bytes));
+    }
+
+    @Override
+    public void setSingle(ByteBuffer bytes) {
+
+        if (!initialized) {
+            output = new ArrayList<>();
+        }
+
+        output.add(bytes == null ? null : StringCodec.UTF8.decodeValue(bytes));
     }
 
     @Override

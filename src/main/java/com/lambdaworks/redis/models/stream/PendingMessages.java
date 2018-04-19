@@ -13,18 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.models.stream;
+
+import java.util.Map;
+
+import com.lambdaworks.redis.Range;
 
 /**
  * @author Mark Paluch
  */
 public class PendingMessages {
 
-    private String consumer;
-    private long count;
+    private final long count;
+    private final Range<String> messageIds;
+    private final Map<String, Long> consumerMessageCount;
 
-    public PendingMessages(String consumer, long count) {
-        this.consumer = consumer;
+    public PendingMessages(long count, Range<String> messageIds, Map<String, Long> consumerMessageCount) {
         this.count = count;
+        this.messageIds = messageIds;
+        this.consumerMessageCount = consumerMessageCount;
+    }
+
+    public long getCount() {
+        return count;
+    }
+
+    public Range<String> getMessageIds() {
+        return messageIds;
+    }
+
+    public Map<String, Long> getConsumerMessageCount() {
+        return consumerMessageCount;
     }
 }

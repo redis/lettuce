@@ -1974,6 +1974,21 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(WATCH, new StatusOutput<>(codec), args);
     }
 
+    public Command<K, V, Long> xack(K key, K group, String[] messageIds) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        return createCommand(XACK, new IntegerOutput<>(codec), args);
+    }
+
     public Command<K, V, String> xadd(K key, XAddArgs xAddArgs, Map<K, V> map) {
         notNullKey(key);
         LettuceAssert.notNull(map, "Message body " + MUST_NOT_BE_NULL);
@@ -2015,12 +2030,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XADD, new StatusOutput<>(codec), args);
     }
 
-    public Command<K, V, String> xgroupCreate(K key, String group, String id) {
+    public Command<K, V, String> xgroupCreate(K key, K group, String id) {
         notNullKey(key);
-        LettuceAssert.notEmpty(group, "Group " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notEmpty(id, "Id " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CREATE).addKey(key).add(group).add(id);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CREATE).addKey(key).addKey(group).add(id);
 
         return createCommand(XGROUP, new StatusOutput<>(codec), args);
     }
@@ -2033,21 +2048,25 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XLEN, new IntegerOutput<>(codec), args);
     }
 
-    public Command<K, V, List<PendingEntry>> xpending(K key, String group, Range<String> range, Limit limit) {
+    public Command<K, V, List<Object>> xpending(K key, K group, Range<String> range, Limit limit) {
         notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(limit, "Limit " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(group);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group);
 
-        args.add(getLowerValue(range)).add(getUpperValue(range));
+        if (limit.isLimited() || !range.getLower().equals(Boundary.unbounded())
+                || !range.getUpper().equals(Boundary.unbounded())) {
+            args.add(getLowerValue(range)).add(getUpperValue(range));
 
-        if (limit.isLimited()) {
+            if (!limit.isLimited()) {
+                throw new IllegalArgumentException("Limit must be set using Range queries with XPENDING");
+            }
             args.add(limit.getCount());
         }
 
-        return createCommand(XPENDING, new PendingEntryListOutput<>(codec), args);
+        return createCommand(XPENDING, new NestedMultiOutput(codec), args);
     }
 
     public Command<K, V, List<StreamMessage<K, V>>> xrange(K key, Range<String> range, Limit limit) {
@@ -2123,7 +2142,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XREAD, new StreamReadOutput<>(codec), args);
     }
 
-    public Command<K, V, List<StreamMessage<K, V>>> xreadgroup(Consumer consumer, XReadArgs.StreamOffset<K>[] streams,
+    public Command<K, V, List<StreamMessage<K, V>>> xreadgroup(Consumer<K> consumer, XReadArgs.StreamOffset<K>[] streams,
             XReadArgs xReadArgs) {
         LettuceAssert.notNull(streams, "Streams " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(streams.length > 0, "Streams " + MUST_NOT_BE_EMPTY);
@@ -2131,7 +2150,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
 
-        args.add("GROUP").add(consumer.group).add(consumer.name);
+        args.add("GROUP").addKeys(consumer.group).addKeys(consumer.name);
 
         if (xReadArgs != null) {
             xReadArgs.build(args);

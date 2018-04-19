@@ -142,6 +142,7 @@ public class RedisStateMachine<K, V> {
      * @return true if a complete response was read.
      */
     public boolean decode(ByteBuf buffer, RedisCommand<K, V, ?> command, CommandOutput<K, V, ?> output) {
+
         int length, end;
         ByteBuffer bytes;
 
@@ -177,7 +178,7 @@ public class RedisStateMachine<K, V> {
                     }
 
                     if (!QUEUED.equals(bytes)) {
-                        safeSet(output, bytes, command);
+                        safeSetSingle(output, bytes, command);
                     }
                     break;
                 case ERROR:
@@ -424,6 +425,22 @@ public class RedisStateMachine<K, V> {
      * @param command
      */
     protected void safeSet(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+
+        try {
+            output.set(bytes);
+        } catch (Exception e) {
+            command.completeExceptionally(e);
+        }
+    }
+
+    /**
+     * Safely sets {@link CommandOutput#set(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
+     *
+     * @param output
+     * @param bytes
+     * @param command
+     */
+    protected void safeSetSingle(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
 
         try {
             output.set(bytes);

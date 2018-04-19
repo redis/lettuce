@@ -27,6 +27,8 @@ import org.junit.Test;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.XReadArgs.StreamOffset;
 import com.lambdaworks.redis.codec.StringCodec;
+import com.lambdaworks.redis.models.stream.PendingMessage;
+import com.lambdaworks.redis.models.stream.PendingParser;
 import com.lambdaworks.redis.output.NestedMultiOutput;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
@@ -132,14 +134,14 @@ public class StreamCommandTest extends AbstractRedisClientTest {
 
         StreamMessage<String, String> firstMessage = messages.get(0);
 
-        assertThat(firstMessage.getId().equals(message1));
-        assertThat(firstMessage.getStream().equals("stream-1"));
+        assertThat(firstMessage.getId()).isEqualTo(message1);
+        assertThat(firstMessage.getStream()).isEqualTo("stream-1");
         assertThat(firstMessage.getBody()).containsEntry("key3", "value3");
 
         StreamMessage<String, String> secondMessage = messages.get(1);
 
-        assertThat(secondMessage.getId().equals(message2));
-        assertThat(secondMessage.getStream().equals("stream-2"));
+        assertThat(secondMessage.getId()).isEqualTo(message2);
+        assertThat(secondMessage.getStream()).isEqualTo("stream-2");
         assertThat(secondMessage.getBody()).containsEntry("key4", "value4");
     }
 
@@ -162,14 +164,14 @@ public class StreamCommandTest extends AbstractRedisClientTest {
 
         StreamMessage<String, String> firstMessage = messages.get(0);
 
-        assertThat(firstMessage.getId().equals(message1));
-        assertThat(firstMessage.getStream().equals("stream-1"));
+        assertThat(firstMessage.getId()).isEqualTo(message1);
+        assertThat(firstMessage.getStream()).isEqualTo("stream-1");
         assertThat(firstMessage.getBody()).containsEntry("key3", "value3");
 
         StreamMessage<String, String> secondMessage = messages.get(1);
 
-        assertThat(secondMessage.getId().equals(message2));
-        assertThat(secondMessage.getStream().equals("stream-2"));
+        assertThat(secondMessage.getId()).isEqualTo(message2);
+        assertThat(secondMessage.getStream()).isEqualTo("stream-2");
         assertThat(secondMessage.getBody()).containsEntry("key4", "value4");
     }
 
@@ -200,24 +202,54 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void xpendingWithGroup() {
+
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(key, "group", "$");
+        String id = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.latestConsumer(key));
+
+        List<Object> pendingEntries = redis.xpending(key, "group");
+        assertThat(pendingEntries).hasSize(4).containsSequence(1L, id, id);
+    }
+
+    @Test
     public void xpending() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(key, "group", "$");
         String id = redis.xadd(key, Collections.singletonMap("key", "value"));
 
-        List<StreamMessage<String, String>> read = redis.xreadgroup(Consumer.from("group", "consumer1"),
+        redis.xreadgroup(Consumer.from("group", "consumer1"),
                 StreamOffset.latestConsumer(key));
 
-        List<PendingEntry> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
+        List<Object> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
 
-        assertThat(pendingEntries).hasSize(1);
+        List<PendingMessage> pendingMessages = PendingParser.parseRange(pendingEntries);
+        assertThat(pendingMessages).hasSize(1);
 
-        PendingEntry pendingEntry = pendingEntries.get(0);
-        assertThat(pendingEntry.getConsumer()).isEqualTo("consumer1");
-        assertThat(pendingEntry.getDeliveryCount()).isEqualTo(1);
-        assertThat(pendingEntry.getMessageId()).isEqualTo(id);
-        assertThat(pendingEntry.getMillisSinceDelivery()).isGreaterThan(0);
+        PendingMessage message = pendingMessages.get(0);
+        assertThat(message.getId()).isEqualTo(id);
+        assertThat(message.getConsumer()).isEqualTo("consumer1");
+        assertThat(message.getRedeliveryCount()).isEqualTo(1);
+    }
+
+    @Test
+    public void xack() {
+
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(key, "group", "$");
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
+                StreamOffset.latestConsumer(key));
+
+        Long ackd = redis.xack(key, "group", messages.get(0).getId());
+        assertThat(ackd).isEqualTo(1);
+
+        List<Object> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
+        assertThat(pendingEntries).isEmpty();
     }
 
     @Test
