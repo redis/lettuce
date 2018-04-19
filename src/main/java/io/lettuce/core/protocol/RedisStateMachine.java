@@ -121,7 +121,7 @@ public class RedisStateMachine {
                     }
 
                     if (!QUEUED.equals(bytes)) {
-                        safeSet(output, bytes, command);
+                        safeSetSingle(output, bytes, command);
                     }
                     break;
                 case ERROR:
@@ -368,6 +368,22 @@ public class RedisStateMachine {
      * @param command
      */
     protected void safeSet(CommandOutput<?, ?, ?> output, ByteBuffer bytes, RedisCommand<?, ?, ?> command) {
+
+        try {
+            output.set(bytes);
+        } catch (Exception e) {
+            command.completeExceptionally(e);
+        }
+    }
+
+    /**
+     * Safely sets {@link CommandOutput#set(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
+     *
+     * @param output
+     * @param bytes
+     * @param command
+     */
+    protected void safeSetSingle(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
 
         try {
             output.set(bytes);

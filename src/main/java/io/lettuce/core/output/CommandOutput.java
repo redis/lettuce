@@ -66,6 +66,16 @@ public abstract class CommandOutput<K, V, T> {
     }
 
     /**
+     * Set the command output to a sequence of bytes, or null representing a simple string. Concrete {@link CommandOutput}
+     * implementations can override this method unless they only receive an integer value which cannot be null.
+     *
+     * @param bytes The command output, or null.
+     */
+    public void setSingle(ByteBuffer bytes) {
+        set(bytes);
+    }
+
+    /**
      * Set the command output to a 64-bit signed integer. Concrete {@link CommandOutput} implementations must override this
      * method unless they only receive a byte array value.
      *

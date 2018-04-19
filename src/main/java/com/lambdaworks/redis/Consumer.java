@@ -15,17 +15,24 @@
  */
 package com.lambdaworks.redis;
 
+import java.util.Objects;
+
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
- * Value object representing a Stream consumer within a group.
+ * Value object representing a Stream consumer within a consumer group. Group name and consumer name are encoded as keys.
+ *
+ * @author Mark Paluch
+ * @since 4.5
+ * @see com.lambdaworks.redis.codec.RedisCodec
  */
-public class Consumer {
+public class Consumer<K> {
 
-    final String group;
-    final String name;
+    final K group;
+    final K name;
 
-    public Consumer(String group, String name) {
+    private Consumer(K group, K name) {
+
         this.group = group;
         this.name = name;
     }
@@ -37,11 +44,45 @@ public class Consumer {
      * @param name name of the consumer, must not be {@literal null} or empty.
      * @return the consumer {@link Consumer} object.
      */
-    public static Consumer from(String group, String name) {
+    public static <K> Consumer<K> from(K group, K name) {
 
-        LettuceAssert.notEmpty(group, "Group must not be empty");
-        LettuceAssert.notEmpty(name, "Name must not be empty");
+        LettuceAssert.notNull(group, "Group must not be null");
+        LettuceAssert.notNull(name, "Name must not be null");
 
-        return new Consumer(group, name);
+        return new Consumer<>(group, name);
+    }
+
+    /**
+     * @return name of the group.
+     */
+    public K getGroup() {
+        return group;
+    }
+
+    /**
+     * @return name of the consumer.
+     */
+    public K getName() {
+        return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Consumer))
+            return false;
+        Consumer<?> consumer = (Consumer<?>) o;
+        return Objects.equals(group, consumer.group) && Objects.equals(name, consumer.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(group, name);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s:%s", group, name);
     }
 }

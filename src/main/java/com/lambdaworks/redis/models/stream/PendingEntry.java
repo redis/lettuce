@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis;
+package com.lambdaworks.redis.models.stream;
 
 /**
+ * Value object representing an entry of the Pending Entry List retrieved via {@literal XPENDING}.
+ *
  * @author Mark Paluch
+ * @since 4.5
  */
 public class PendingEntry {
 

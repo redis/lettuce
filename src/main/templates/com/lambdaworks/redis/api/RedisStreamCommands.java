@@ -19,8 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.lambdaworks.redis.*;
-import com.lambdaworks.redis.XReadArgs.Consumer;
-import com.lambdaworks.redis.XReadArgs.Stream;
+import com.lambdaworks.redis.XReadArgs.StreamOffset;
 
 /**
  * ${intent} for Streams.
@@ -40,7 +39,7 @@ public interface RedisStreamCommands<K, V> {
      * @param messageIds message Ids to acknowledge.
      * @return simple-reply the lenght of acknowledged messages.
      */
-    Long xack(K key, String group, String... messageIds);
+    Long xack(K key, K group, String... messageIds);
 
     /**
      * Append a message to the stream {@code key}.
@@ -89,7 +88,7 @@ public interface RedisStreamCommands<K, V> {
      * @param args
      * @return simple-reply the {@link StreamMessage}
      */
-    StreamMessage<K, V> xclaim(K key, Consumer consumer, XClaimArgs args, String... messageIds);
+    List<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, XClaimArgs args, String... messageIds);
 
     /**
      * Create a consumer group.
@@ -99,7 +98,7 @@ public interface RedisStreamCommands<K, V> {
      * @param offset read offset or {@literal $}.
      * @return simple-reply {@literal true} if successful.
      */
-    Boolean xgroupCreate(K key, String group, String offset);
+    String xgroupCreate(K key, K group, String offset);
 
     /**
      * Delete a consumer from a consumer group.
@@ -108,7 +107,7 @@ public interface RedisStreamCommands<K, V> {
      * @param consumer consumer identified by group name and consumer key.
      * @return simple-reply the number of pending messages
      */
-    Boolean xgroupDelconsumer(K key, Consumer consumer);
+    Boolean xgroupDelconsumer(K key, Consumer<K> consumer);
 
     /**
      * Set the current {@code group} id.
@@ -118,7 +117,7 @@ public interface RedisStreamCommands<K, V> {
      * @param offset read offset or {@literal $}.
      * @return simple-reply the lenght of the stream.
      */
-    Boolean xgroupSetid(K key, String group, String offset);
+    Boolean xgroupSetid(K key, K group, String offset);
 
     /**
      * Get the length of a steam.
@@ -129,22 +128,13 @@ public interface RedisStreamCommands<K, V> {
     Long xlen(K key);
 
     /**
-     * Read pending messages from a stream within a specific {@link Range}.
+     * Read pending messages from a stream for a {@code group}.
      *
      * @param key the stream key.
      * @param group name of the consumer group.
-     * @return List&lt;PendingEntry&gt; array-reply list pending entries.
+     * @return List&lt;Object&gt; array-reply list pending entries.
      */
-    List<PendingEntry> xpending(K key, String group);
-
-    /**
-     * Read pending messages from a stream within a specific {@link Range}.
-     *
-     * @param key the stream key.
-     * @param consumer consumer identified by group name and consumer key.
-     * @return List&lt;PendingEntry&gt; array-reply list pending entries.
-     */
-    List<PendingEntry> xpending(K key, Consumer consumer);
+    List<Object> xpending(K key, K group);
 
     /**
      * Read pending messages from a stream within a specific {@link Range}.
@@ -153,20 +143,9 @@ public interface RedisStreamCommands<K, V> {
      * @param group name of the consumer group.
      * @param range must not be {@literal null}.
      * @param limit must not be {@literal null}.
-     * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
+     * @return List&lt;Object&gt; array-reply list with members of the resulting stream.
      */
-    List<StreamMessage<K, V>> xpending(K key, String group, Range<String> range, Limit limit);
-
-    /**
-     * Read pending messages from a stream within a specific {@link Range}.
-     *
-     * @param key the stream key.
-     * @param consumer consumer identified by group name and consumer key.
-     * @param range must not be {@literal null}.
-     * @param limit must not be {@literal null}.
-     * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
-     */
-    List<StreamMessage<K, V>> xpending(K key, Consumer consumer, Range<String> range, Limit limit);
+    List<Object> xpending(K key, K group, Range<String> range, Limit limit);
 
     /**
      * Read messages from a stream within a specific {@link Range}.
@@ -207,38 +186,38 @@ public interface RedisStreamCommands<K, V> {
     List<StreamMessage<K, V>> xrevrange(K key, Range<String> range, Limit limit);
 
     /**
-     * Read messages from one or more {@link Stream}s.
+     * Read messages from one or more {@link StreamOffset}s.
      *
      * @param streams the streams to read from.
      * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
      */
-    List<StreamMessage<K, V>> xread(Stream<K>... streams);
+    List<StreamMessage<K, V>> xread(StreamOffset<K>... streams);
 
     /**
-     * Read messages from one or more {@link Stream}s.
+     * Read messages from one or more {@link StreamOffset}s.
      *
      * @param args read arguments.
      * @param streams the streams to read from.
      * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
      */
-    List<StreamMessage<K, V>> xread(XReadArgs args, Stream<K>... streams);
+    List<StreamMessage<K, V>> xread(XReadArgs args, StreamOffset<K>... streams);
 
     /**
-     * Read messages from one or more {@link Stream}s using a consumer group.
+     * Read messages from one or more {@link StreamOffset}s using a consumer group.
      *
      * @param consumer consumer/group.
      * @param streams the streams to read from.
      * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
      */
-    List<StreamMessage<K, V>> xreadgroup(Consumer consumer, Stream<K>... streams);
+    List<StreamMessage<K, V>> xreadgroup(Consumer<K> consumer, StreamOffset<K>... streams);
 
     /**
-     * Read messages from one or more {@link Stream}s using a consumer group.
+     * Read messages from one or more {@link StreamOffset}s using a consumer group.
      *
      * @param consumer consumer/group.
      * @param args read arguments.
      * @param streams the streams to read from.
      * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
      */
-    List<StreamMessage<K, V>> xreadgroup(Consumer consumer, XReadArgs args, Stream<K>... streams);
+    List<StreamMessage<K, V>> xreadgroup(Consumer<K> consumer, XReadArgs args, StreamOffset<K>... streams);
 }

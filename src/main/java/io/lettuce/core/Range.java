@@ -15,6 +15,8 @@
  */
 package io.lettuce.core;
 
+import java.util.Objects;
+
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -139,6 +141,21 @@ public class Range<T> {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Range))
+            return false;
+        Range<?> range = (Range<?>) o;
+        return Objects.equals(lower, range.lower) && Objects.equals(upper, range.upper);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(lower, upper);
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName()).append(" [");
@@ -214,6 +231,21 @@ public class Range<T> {
          */
         public boolean isIncluding() {
             return including;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof Boundary))
+                return false;
+            Boundary<?> boundary = (Boundary<?>) o;
+            return including == boundary.including && Objects.equals(value, boundary.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value, including);
         }
 
         @Override
