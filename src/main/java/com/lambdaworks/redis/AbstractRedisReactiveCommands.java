@@ -1584,8 +1584,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, long minIdleTime, String... messageIds) {
+        return xclaim(key, consumer, XClaimArgs.Builder.minIdleTime(minIdleTime), messageIds);
+    }
+
+    @Override
     public Observable<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, XClaimArgs args, String... messageIds) {
-        return null;
+        return createDissolvingObservable(() -> commandBuilder.xclaim(key, consumer, messageIds, args));
+    }
+
+    @Override
+    public Observable<Long> xdel(K key, String... messageIds) {
+        return createObservable(() -> commandBuilder.xdel(key, messageIds));
     }
 
     @Override
@@ -1614,6 +1624,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Object> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
+        return createDissolvingObservable(() -> commandBuilder.xpending(key, consumer, range, limit));
+    }
+
+    @Override
     public Observable<StreamMessage<K, V>> xreadgroup(Consumer<K> consumer, XReadArgs.StreamOffset<K>... streams) {
         return createDissolvingObservable(() -> commandBuilder.xreadgroup(consumer, streams, null));
     }
@@ -1622,6 +1637,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<StreamMessage<K, V>> xreadgroup(Consumer<K> consumer, XReadArgs args,
             XReadArgs.StreamOffset<K>... streams) {
         return createDissolvingObservable(() -> commandBuilder.xreadgroup(consumer, streams, args));
+    }
+
+    @Override
+    public Observable<Long> xtrim(K key, long count) {
+        return createObservable(() -> commandBuilder.xtrim(key, count));
     }
 
     @Override

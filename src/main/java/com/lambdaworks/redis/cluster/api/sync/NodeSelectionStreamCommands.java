@@ -37,7 +37,7 @@ public interface NodeSelectionStreamCommands<K, V> {
      *
      * @param key the stream key.
      * @param group name of the consumer group.
-     * @param messageIds message Ids to acknowledge.
+     * @param messageIds message Id's to acknowledge.
      * @return simple-reply the lenght of acknowledged messages.
      */
     Executions<Long> xack(K key, K group, String... messageIds);
@@ -85,11 +85,32 @@ public interface NodeSelectionStreamCommands<K, V> {
      *
      * @param key the stream key.
      * @param consumer consumer identified by group name and consumer key.
-     * @param messageIds message Ids to claim.
+     * @param minIdleTime
+     * @param messageIds message Id's to claim.
+     * @return simple-reply the {@link StreamMessage}
+     */
+    Executions<List<StreamMessage<K, V>>> xclaim(K key, Consumer<K> consumer, long minIdleTime, String... messageIds);
+
+    /**
+     * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
+     *
+     * @param key the stream key.
+     * @param consumer consumer identified by group name and consumer key.
      * @param args
+     * @param messageIds message Id's to claim.
      * @return simple-reply the {@link StreamMessage}
      */
     Executions<List<StreamMessage<K, V>>> xclaim(K key, Consumer<K> consumer, XClaimArgs args, String... messageIds);
+
+    /**
+     * Removes the specified entries from the stream. Returns the number of items deleted, that may be different from the number
+     * of IDs passed in case certain IDs do not exist.
+     *
+     * @param key the stream key.
+     * @param messageIds stream message Id's.
+     * @return simple-reply number of removed entries.
+     */
+    Executions<Long> xdel(K key, String... messageIds);
 
     /**
      * Create a consumer group.
@@ -149,6 +170,17 @@ public interface NodeSelectionStreamCommands<K, V> {
     Executions<List<Object>> xpending(K key, K group, Range<String> range, Limit limit);
 
     /**
+     * Read pending messages from a stream within a specific {@link Range}.
+     *
+     * @param key the stream key.
+     * @param consumer consumer identified by group name and consumer key.
+     * @param range must not be {@literal null}.
+     * @param limit must not be {@literal null}.
+     * @return List&lt;Object&gt; array-reply list with members of the resulting stream.
+     */
+    Executions<List<Object>> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit);
+
+    /**
      * Read messages from a stream within a specific {@link Range}.
      *
      * @param key the stream key.
@@ -166,25 +198,6 @@ public interface NodeSelectionStreamCommands<K, V> {
      * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
      */
     Executions<List<StreamMessage<K, V>>> xrange(K key, Range<String> range, Limit limit);
-
-    /**
-     * Read messages from a stream within a specific {@link Range} in reverse order.
-     *
-     * @param key the stream key.
-     * @param range must not be {@literal null}.
-     * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
-     */
-    Executions<List<StreamMessage<K, V>>> xrevrange(K key, Range<String> range);
-
-    /**
-     * Read messages from a stream within a specific {@link Range} applying a {@link Limit} in reverse order.
-     *
-     * @param key the stream key.
-     * @param range must not be {@literal null}.
-     * @param limit must not be {@literal null}.
-     * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
-     */
-    Executions<List<StreamMessage<K, V>>> xrevrange(K key, Range<String> range, Limit limit);
 
     /**
      * Read messages from one or more {@link StreamOffset}s.
@@ -221,4 +234,32 @@ public interface NodeSelectionStreamCommands<K, V> {
      * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
      */
     Executions<List<StreamMessage<K, V>>> xreadgroup(Consumer<K> consumer, XReadArgs args, StreamOffset<K>... streams);
+
+    /**
+     * Read messages from a stream within a specific {@link Range} in reverse order.
+     *
+     * @param key the stream key.
+     * @param range must not be {@literal null}.
+     * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
+     */
+    Executions<List<StreamMessage<K, V>>> xrevrange(K key, Range<String> range);
+
+    /**
+     * Read messages from a stream within a specific {@link Range} applying a {@link Limit} in reverse order.
+     *
+     * @param key the stream key.
+     * @param range must not be {@literal null}.
+     * @param limit must not be {@literal null}.
+     * @return List&lt;StreamMessage&gt; array-reply list with members of the resulting stream.
+     */
+    Executions<List<StreamMessage<K, V>>> xrevrange(K key, Range<String> range, Limit limit);
+
+    /**
+     * Trims the stream to {@code count} elements.
+     *
+     * @param key the stream key.
+     * @param count length of the stream.
+     * @return simple-reply number of removed entries.
+     */
+    Executions<Long> xtrim(K key, long count);
 }

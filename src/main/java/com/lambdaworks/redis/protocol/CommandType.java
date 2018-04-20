@@ -85,7 +85,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // Stream
 
-    XACK, XADD, XGROUP, XINFO, XLEN, XPENDING, XRANGE, XREVRANGE, XREAD, XREADGROUP,
+    XACK, XADD, XCLAIM, XDEL, XGROUP, XINFO, XLEN, XPENDING, XRANGE, XREVRANGE, XREAD, XREADGROUP, XTRIM,
 
     // Others
 

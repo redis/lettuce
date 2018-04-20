@@ -26,10 +26,12 @@ import com.lambdaworks.redis.codec.RedisCodec;
 import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
+ * {@link List} of {@link StreamMessage}s.
+ *
  * @author Mark Paluch
  * @since 4.5
  */
-public class StreamRangeOutput<K, V> extends CommandOutput<K, V, List<StreamMessage<K, V>>> implements
+public class StreamMessageListOutput<K, V> extends CommandOutput<K, V, List<StreamMessage<K, V>>> implements
         StreamingOutput<StreamMessage<K, V>> {
 
     private final K stream;
@@ -41,7 +43,7 @@ public class StreamRangeOutput<K, V> extends CommandOutput<K, V, List<StreamMess
     private String id;
     private Map<K, V> body;
 
-    public StreamRangeOutput(RedisCodec<K, V> codec, K stream) {
+    public StreamMessageListOutput(RedisCodec<K, V> codec, K stream) {
         super(codec, Collections.emptyList());
         setSubscriber(ListSubscriber.instance());
         this.stream = stream;

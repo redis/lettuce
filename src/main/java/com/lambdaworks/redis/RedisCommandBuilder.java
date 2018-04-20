@@ -1989,6 +1989,27 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XACK, new IntegerOutput<>(codec), args);
     }
 
+    public Command<K, V, List<StreamMessage<K, V>>> xclaim(K key, Consumer<K> consumer, String[] messageIds,
+            XClaimArgs xClaimArgs) {
+
+        notNullKey(key);
+        LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+        LettuceAssert.notNull(xClaimArgs, "XClaimArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(consumer.group).addKey(consumer.name)
+                .add(xClaimArgs.minIdleTime);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        xClaimArgs.build(args);
+
+        return createCommand(XCLAIM, new StreamMessageListOutput<>(codec, key), args);
+    }
+
     public Command<K, V, String> xadd(K key, XAddArgs xAddArgs, Map<K, V> map) {
         notNullKey(key);
         LettuceAssert.notNull(map, "Message body " + MUST_NOT_BE_NULL);
@@ -2030,6 +2051,20 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XADD, new StatusOutput<>(codec), args);
     }
 
+    public Command<K, V, Long> xdel(K key, String[] messageIds) {
+        notNullKey(key);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        return createCommand(XDEL, new IntegerOutput<>(codec), args);
+    }
+
     public Command<K, V, String> xgroupCreate(K key, K group, String id) {
         notNullKey(key);
         LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_EMPTY);
@@ -2069,6 +2104,29 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XPENDING, new NestedMultiOutput(codec), args);
     }
 
+    public Command<K, V, List<Object>> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
+        notNullKey(key);
+        LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(limit, "Limit " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(consumer.group);
+
+        if (limit.isLimited() || !range.getLower().equals(Boundary.unbounded())
+                || !range.getUpper().equals(Boundary.unbounded())) {
+            args.add(getLowerValue(range)).add(getUpperValue(range));
+
+            if (!limit.isLimited()) {
+                throw new IllegalArgumentException("Limit must be set using Range queries with XPENDING");
+            }
+            args.add(limit.getCount());
+        }
+
+        args.addKey(consumer.name);
+
+        return createCommand(XPENDING, new NestedMultiOutput(codec), args);
+    }
+
     public Command<K, V, List<StreamMessage<K, V>>> xrange(K key, Range<String> range, Limit limit) {
         notNullKey(key);
         LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
@@ -2082,7 +2140,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(COUNT).add(limit.getCount());
         }
 
-        return createCommand(XRANGE, new StreamRangeOutput<>(codec, key), args);
+        return createCommand(XRANGE, new StreamMessageListOutput<>(codec, key), args);
     }
 
     public Command<K, V, List<StreamMessage<K, V>>> xrevrange(K key, Range<String> range, Limit limit) {
@@ -2098,7 +2156,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(COUNT).add(limit.getCount());
         }
 
-        return createCommand(XREVRANGE, new StreamRangeOutput<>(codec, key), args);
+        return createCommand(XREVRANGE, new StreamMessageListOutput<>(codec, key), args);
+    }
+
+    public Command<K, V, Long> xtrim(K key, long count) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(MAXLEN).add(count);
+
+        return createCommand(XTRIM, new IntegerOutput<>(codec), args);
     }
 
     private static String getLowerValue(Range<String> range) {
