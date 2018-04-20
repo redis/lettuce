@@ -19,6 +19,7 @@ import static com.lambdaworks.redis.protocol.CommandType.XINFO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+import java.time.Instant;
 import java.util.*;
 
 import org.junit.Ignore;
@@ -58,6 +59,39 @@ public class StreamCommandTest extends AbstractRedisClientTest {
                 Range.from(Range.Boundary.including(id), Range.Boundary.unbounded()));
 
         assertThat(messages).hasSize(5);
+    }
+
+    @Test
+    public void xdel() {
+
+        List<String> ids = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            ids.add(redis.xadd(key, Collections.singletonMap("key", "value")));
+        }
+
+        Long deleted = redis.xdel(key, ids.get(0), "123456-0");
+
+        assertThat(deleted).isEqualTo(1);
+
+        List<StreamMessage<String, String>> messages = redis.xrange(key, Range.unbounded());
+        assertThat(messages).hasSize(1);
+    }
+
+    @Test
+    public void xtrim() {
+
+        List<String> ids = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            ids.add(redis.xadd(key, Collections.singletonMap("key", "value")));
+        }
+        redis.xdel(key, ids.get(0), ids.get(2));
+        assertThat(redis.xlen(key)).isEqualTo(10);
+
+        Long xtrim = redis.xtrim(key, 8);
+
+        assertThat(xtrim).isEqualTo(2);
+
+        assertThat(redis.xlen(key)).isEqualTo(8);
     }
 
     @Test
@@ -220,8 +254,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
         redis.xgroupCreate(key, "group", "$");
         String id = redis.xadd(key, Collections.singletonMap("key", "value"));
 
-        redis.xreadgroup(Consumer.from("group", "consumer1"),
-                StreamOffset.latestConsumer(key));
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.latestConsumer(key));
 
         List<Object> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
 
@@ -249,6 +282,48 @@ public class StreamCommandTest extends AbstractRedisClientTest {
 
         List<Object> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
         assertThat(pendingEntries).isEmpty();
+    }
+
+    @Test
+    public void xclaim() {
+
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(key, "group", "$");
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
+                StreamOffset.latestConsumer(key));
+
+        List<StreamMessage<String, String>> claimedMessages = redis.xclaim(key, Consumer.from("group", "consumer2"), 0,
+                messages.get(0).getId());
+
+        assertThat(claimedMessages).hasSize(1).contains(messages.get(0));
+
+        assertThat(redis.xpending(key, Consumer.from("group", "consumer1"), Range.unbounded(), Limit.from(10))).isEmpty();
+        assertThat(redis.xpending(key, Consumer.from("group", "consumer2"), Range.unbounded(), Limit.from(10))).hasSize(1);
+    }
+
+    @Test
+    public void xclaimWithArgs() {
+
+        String id1 = redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(key, "group", "$");
+        String id2 = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
+                StreamOffset.latestConsumer(key));
+
+        List<StreamMessage<String, String>> claimedMessages = redis.xclaim(key, Consumer.from("group", "consumer2"),
+                XClaimArgs.Builder.minIdleTime(0).time(Instant.now().minusSeconds(60)), id1, id2);
+
+        assertThat(claimedMessages).hasSize(1).contains(messages.get(0));
+
+        List<Object> xpending = redis.xpending(key, Consumer.from("group", "consumer2"), Range.unbounded(), Limit.from(10));
+
+        List<PendingMessage> pendingMessages = PendingParser.parseRange(xpending);
+        PendingMessage message = pendingMessages.get(0);
+
+        assertThat(message.getMsSinceLastDelivery()).isGreaterThan(60000);
     }
 
     @Test

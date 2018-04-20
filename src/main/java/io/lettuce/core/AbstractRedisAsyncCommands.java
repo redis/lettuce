@@ -1525,8 +1525,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<List<StreamMessage<K, V>>> xclaim(K key, Consumer<K> consumer, long minIdleTime, String... messageIds) {
+        return dispatch(commandBuilder.xclaim(key, consumer, messageIds, XClaimArgs.Builder.minIdleTime(minIdleTime)));
+    }
+
+    @Override
     public RedisFuture<List<StreamMessage<K, V>>> xclaim(K key, Consumer<K> consumer, XClaimArgs args, String... messageIds) {
-        return null;
+        return dispatch(commandBuilder.xclaim(key, consumer, messageIds, args));
+    }
+
+    @Override
+    public RedisFuture<Long> xdel(K key, String... messageIds) {
+        return dispatch(commandBuilder.xdel(key, messageIds));
     }
 
     @Override
@@ -1555,6 +1565,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<List<Object>> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
+        return dispatch(commandBuilder.xpending(key, consumer, range, limit));
+    }
+
+    @Override
     public RedisFuture<List<StreamMessage<K, V>>> xreadgroup(Consumer<K> consumer, XReadArgs.StreamOffset<K>... streams) {
         return dispatch(commandBuilder.xreadgroup(consumer, streams, null));
     }
@@ -1563,6 +1578,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     public RedisFuture<List<StreamMessage<K, V>>> xreadgroup(Consumer<K> consumer, XReadArgs args,
             XReadArgs.StreamOffset<K>... streams) {
         return dispatch(commandBuilder.xreadgroup(consumer, streams, args));
+    }
+
+    @Override
+    public RedisFuture<Long> xtrim(K key, long count) {
+        return dispatch(commandBuilder.xtrim(key, count));
     }
 
     @Override

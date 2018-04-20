@@ -15,12 +15,20 @@
  */
 package com.lambdaworks.redis;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
+
+import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 import com.lambdaworks.redis.protocol.CommandType;
 
 /**
- * Args for the {@literal XCLAIM} command.
+ * Argument list builder for the Redis <a href="http://redis.io/commands/xclaim">XCLAIM</a> command. Static import the methods
+ * from {@link XClaimArgs.Builder} and call the methods: {@code minIdleTime(…)} .
+ * <p/>
+ * {@link XClaimArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
  * @since 4.5
@@ -33,17 +41,32 @@ public class XClaimArgs {
     private Long retrycount;
     private boolean force;
 
+    /**
+     * Builder entry points for {@link XAddArgs}.
+     */
     public static class Builder {
 
         /**
          * Utility constructor.
          */
         private Builder() {
-
         }
 
         public static XClaimArgs minIdleTime(long milliseconds) {
             return new XClaimArgs().minIdleTime(milliseconds);
+        }
+
+        /**
+         * Creates new {@link XClaimArgs} and set the minimum idle time.
+         *
+         * @return new {@link XClaimArgs} with min idle time set.
+         * @see XClaimArgs#minIdleTime(long)
+         */
+        public static XClaimArgs minIdleTime(Duration minIdleTime) {
+
+            LettuceAssert.notNull(minIdleTime, "Min idle time must not be null");
+
+            return minIdleTime(minIdleTime.toMillis());
         }
     }
 
@@ -54,8 +77,22 @@ public class XClaimArgs {
      * @return {@code this}.
      */
     public XClaimArgs minIdleTime(long milliseconds) {
+
         this.minIdleTime = milliseconds;
         return this;
+    }
+
+    /**
+     * Return only messages that are idle for at least {@code minIdleTime}.
+     *
+     * @param minIdleTime min idle time.
+     * @return {@code this}.
+     */
+    public XClaimArgs minIdleTime(Duration minIdleTime) {
+
+        LettuceAssert.notNull(minIdleTime, "Min idle time must not be null");
+
+        return minIdleTime(minIdleTime.toMillis());
     }
 
     /**
@@ -66,8 +103,23 @@ public class XClaimArgs {
      * @return {@code this}.
      */
     public XClaimArgs idle(long milliseconds) {
+
         this.idle = milliseconds;
         return this;
+    }
+
+    /**
+     * Set the idle time (last time it was delivered) of the message. If IDLE is not specified, an IDLE of 0 is assumed, that
+     * is, the time count is reset because the message has now a new owner trying to process it
+     *
+     * @param idleTime idle time.
+     * @return {@code this}.
+     */
+    public XClaimArgs idle(Duration idleTime) {
+
+        LettuceAssert.notNull(idleTime, "Idle time must not be null");
+
+        return idle(idleTime.toMillis());
     }
 
     /**
@@ -78,22 +130,49 @@ public class XClaimArgs {
      * @return {@code this}.
      */
     public XClaimArgs time(long millisecondsUnixTime) {
+
         this.time = millisecondsUnixTime;
         return this;
     }
 
     /**
+     * This is the same as IDLE but instead of a relative amount of milliseconds, it sets the idle time to a specific unix time
+     * (in milliseconds). This is useful in order to rewrite the AOF file generating XCLAIM commands.
+     *
+     * @param timestamp idle time.
+     * @return {@code this}.
+     */
+    public XClaimArgs time(TemporalAccessor timestamp) {
+
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+
+        return time(Instant.from(timestamp).toEpochMilli());
+    }
+
+    /**
      * Set the retry counter to the specified value. This counter is incremented every time a message is delivered again.
-     * Normally XCLAIM does not alter this counter, which is just served to clients when the XPENDING command is called: this
-     * way clients can detect anomalies, like messages that are never processed for some reason after a big number of delivery
-     * attempts.
+     * Normally {@code XCLAIM} does not alter this counter, which is just served to clients when the XPENDING command is called:
+     * this way clients can detect anomalies, like messages that are never processed for some reason after a big number of
+     * delivery attempts.
      *
      * @param retrycount number of retries.
      * @return {@code this}.
      */
     public XClaimArgs retryCount(long retrycount) {
+
         this.retrycount = retrycount;
         return this;
+    }
+
+    /**
+     * Creates the pending message entry in the PEL even if certain specified IDs are not already in the PEL assigned to a
+     * different client. However the message must be exist in the stream, otherwise the IDs of non existing messages are
+     * ignored.
+     *
+     * @return {@code this}.
+     */
+    public XClaimArgs force() {
+        return force(true);
     }
 
     /**
@@ -105,6 +184,7 @@ public class XClaimArgs {
      * @return {@code this}.
      */
     public XClaimArgs force(boolean force) {
+
         this.force = force;
         return this;
     }

@@ -16,6 +16,7 @@
 package io.lettuce.core;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A stream message and its id.
@@ -53,6 +54,21 @@ public class StreamMessage<K, V> {
 
     public Map<K, V> getBody() {
         return body;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof StreamMessage))
+            return false;
+        StreamMessage<?, ?> that = (StreamMessage<?, ?>) o;
+        return Objects.equals(stream, that.stream) && Objects.equals(id, that.id) && Objects.equals(body, that.body);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(stream, id, body);
     }
 
     @Override
