@@ -762,9 +762,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             RetryListener entry = RECYCLER.get();
 
-            if (command == null) {
-                System.out.println();
-            }
             entry.endpoint = endpoint;
             entry.sentCommand = command;
 
