@@ -240,7 +240,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
         redis.xadd(key, Collections.singletonMap("key", "value"));
 
         List<StreamMessage<String, String>> read1 = redis.xreadgroup(Consumer.from("group", "consumer1"),
-                StreamOffset.latestConsumer(key));
+                StreamOffset.lastConsumed(key));
 
         assertThat(read1).hasSize(1);
     }
@@ -252,7 +252,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
         redis.xgroupCreate(key, "group", "$");
         String id = redis.xadd(key, Collections.singletonMap("key", "value"));
 
-        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.latestConsumer(key));
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
         List<Object> pendingEntries = redis.xpending(key, "group");
         assertThat(pendingEntries).hasSize(4).containsSequence(1L, id, id);
@@ -265,7 +265,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
         redis.xgroupCreate(key, "group", "$");
         String id = redis.xadd(key, Collections.singletonMap("key", "value"));
 
-        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.latestConsumer(key));
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
         List<Object> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
 
@@ -286,7 +286,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
         redis.xadd(key, Collections.singletonMap("key", "value"));
 
         List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
-                StreamOffset.latestConsumer(key));
+                StreamOffset.lastConsumed(key));
 
         Long ackd = redis.xack(key, "group", messages.get(0).getId());
         assertThat(ackd).isEqualTo(1);
@@ -303,7 +303,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
         redis.xadd(key, Collections.singletonMap("key", "value"));
 
         List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
-                StreamOffset.latestConsumer(key));
+                StreamOffset.lastConsumed(key));
 
         List<StreamMessage<String, String>> claimedMessages = redis.xclaim(key, Consumer.from("group", "consumer2"), 0,
                 messages.get(0).getId());
@@ -322,7 +322,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
         String id2 = redis.xadd(key, Collections.singletonMap("key", "value"));
 
         List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
-                StreamOffset.latestConsumer(key));
+                StreamOffset.lastConsumed(key));
 
         List<StreamMessage<String, String>> claimedMessages = redis.xclaim(key, Consumer.from("group", "consumer2"),
                 XClaimArgs.Builder.minIdleTime(0).time(Instant.now().minusSeconds(60)), id1, id2);
@@ -334,7 +334,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
         List<PendingMessage> pendingMessages = PendingParser.parseRange(xpending);
         PendingMessage message = pendingMessages.get(0);
 
-        assertThat(message.getMsSinceLastDelivery()).isGreaterThan(60000);
+        assertThat(message.getMsSinceLastDelivery()).isBetween(50000L, 80000L);
     }
 
     @Test

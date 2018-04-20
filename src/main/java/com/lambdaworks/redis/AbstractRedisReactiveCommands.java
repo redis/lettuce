@@ -1524,6 +1524,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> xack(K key, K group, String... messageIds) {
+        return createObservable(() -> commandBuilder.xack(key, group, messageIds));
+    }
+
+    @Override
     public Observable<String> xadd(K key, Map<K, V> body) {
         return createObservable(() -> commandBuilder.xadd(key, null, body));
     }
@@ -1541,46 +1546,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<String> xadd(K key, XAddArgs args, Object... keysAndValues) {
         return createObservable(() -> commandBuilder.xadd(key, args, keysAndValues));
-    }
-
-    @Override
-    public Observable<Long> xlen(K key) {
-        return createObservable(() -> commandBuilder.xlen(key));
-    }
-
-    @Override
-    public Observable<StreamMessage<K, V>> xrange(K key, Range<String> range) {
-        return createDissolvingObservable(() -> commandBuilder.xrange(key, range, Limit.unlimited()));
-    }
-
-    @Override
-    public Observable<StreamMessage<K, V>> xrange(K key, Range<String> range, Limit limit) {
-        return createDissolvingObservable(() -> commandBuilder.xrange(key, range, limit));
-    }
-
-    @Override
-    public Observable<StreamMessage<K, V>> xrevrange(K key, Range<String> range) {
-        return createDissolvingObservable(() -> commandBuilder.xrevrange(key, range, Limit.unlimited()));
-    }
-
-    @Override
-    public Observable<StreamMessage<K, V>> xrevrange(K key, Range<String> range, Limit limit) {
-        return createDissolvingObservable(() -> commandBuilder.xrevrange(key, range, limit));
-    }
-
-    @Override
-    public Observable<StreamMessage<K, V>> xread(XReadArgs.StreamOffset<K>... streams) {
-        return createDissolvingObservable(() -> commandBuilder.xread(streams, null));
-    }
-
-    @Override
-    public Observable<StreamMessage<K, V>> xread(XReadArgs args, XReadArgs.StreamOffset<K>... streams) {
-        return createDissolvingObservable(() -> commandBuilder.xread(streams, args));
-    }
-
-    @Override
-    public Observable<Long> xack(K key, K group, String... messageIds) {
-        return createObservable(() -> commandBuilder.xack(key, group, messageIds));
     }
 
     @Override
@@ -1614,6 +1579,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> xlen(K key) {
+        return createObservable(() -> commandBuilder.xlen(key));
+    }
+
+    @Override
     public Observable<Object> xpending(K key, K group) {
         return createDissolvingObservable(() -> commandBuilder.xpending(key, group, Range.unbounded(), Limit.unlimited()));
     }
@@ -1629,6 +1599,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<StreamMessage<K, V>> xrange(K key, Range<String> range) {
+        return createDissolvingObservable(() -> commandBuilder.xrange(key, range, Limit.unlimited()));
+    }
+
+    @Override
+    public Observable<StreamMessage<K, V>> xrange(K key, Range<String> range, Limit limit) {
+        return createDissolvingObservable(() -> commandBuilder.xrange(key, range, limit));
+    }
+
+    @Override
+    public Observable<StreamMessage<K, V>> xread(XReadArgs.StreamOffset<K>... streams) {
+        return createDissolvingObservable(() -> commandBuilder.xread(streams, null));
+    }
+
+    @Override
+    public Observable<StreamMessage<K, V>> xread(XReadArgs args, XReadArgs.StreamOffset<K>... streams) {
+        return createDissolvingObservable(() -> commandBuilder.xread(streams, args));
+    }
+
+    @Override
     public Observable<StreamMessage<K, V>> xreadgroup(Consumer<K> consumer, XReadArgs.StreamOffset<K>... streams) {
         return createDissolvingObservable(() -> commandBuilder.xreadgroup(consumer, streams, null));
     }
@@ -1637,6 +1627,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Observable<StreamMessage<K, V>> xreadgroup(Consumer<K> consumer, XReadArgs args,
             XReadArgs.StreamOffset<K>... streams) {
         return createDissolvingObservable(() -> commandBuilder.xreadgroup(consumer, streams, args));
+    }
+
+    @Override
+    public Observable<StreamMessage<K, V>> xrevrange(K key, Range<String> range) {
+        return createDissolvingObservable(() -> commandBuilder.xrevrange(key, range, Limit.unlimited()));
+    }
+
+    @Override
+    public Observable<StreamMessage<K, V>> xrevrange(K key, Range<String> range, Limit limit) {
+        return createDissolvingObservable(() -> commandBuilder.xrevrange(key, range, limit));
     }
 
     @Override

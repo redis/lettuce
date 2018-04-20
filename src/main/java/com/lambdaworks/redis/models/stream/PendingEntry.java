@@ -23,12 +23,13 @@ package com.lambdaworks.redis.models.stream;
  */
 public class PendingEntry {
 
-    private String messageId;
-    private String consumer;
-    private long millisSinceDelivery;
-    private long deliveryCount;
+    private final String messageId;
+    private final String consumer;
+    private final long millisSinceDelivery;
+    private final long deliveryCount;
 
     public PendingEntry(String messageId, String consumer, long millisSinceDelivery, long deliveryCount) {
+
         this.messageId = messageId;
         this.consumer = consumer;
         this.millisSinceDelivery = millisSinceDelivery;

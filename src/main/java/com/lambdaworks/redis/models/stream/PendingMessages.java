@@ -20,7 +20,10 @@ import java.util.Map;
 import com.lambdaworks.redis.Range;
 
 /**
+ * Value object representing the output of the Redis {@literal XPENDING} reporting a summary on pending messages.
+ *
  * @author Mark Paluch
+ * @since 4.5
  */
 public class PendingMessages {
 
@@ -29,6 +32,7 @@ public class PendingMessages {
     private final Map<String, Long> consumerMessageCount;
 
     public PendingMessages(long count, Range<String> messageIds, Map<String, Long> consumerMessageCount) {
+
         this.count = count;
         this.messageIds = messageIds;
         this.consumerMessageCount = consumerMessageCount;

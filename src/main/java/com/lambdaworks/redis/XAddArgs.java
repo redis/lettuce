@@ -20,24 +20,36 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 
 /**
- * Args for the {@literal XADD} command.
+ * Argument list builder for the Redis <a href="http://redis.io/commands/xadd">XADD</a> command. Static import the methods from
+ * {@link Builder} and call the methods: {@code maxlen(…)} .
+ * <p/>
+ * {@link XAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @since 4.5
  */
 public class XAddArgs {
 
     private String id;
     private Long maxlen;
 
+    /**
+     * Builder entry points for {@link XAddArgs}.
+     */
     public static class Builder {
 
         /**
          * Utility constructor.
          */
         private Builder() {
-
         }
 
+        /**
+         * Creates new {@link XAddArgs} and setting {@literal MAXLEN}.
+         *
+         * @return new {@link XAddArgs} with {@literal MAXLEN} set.
+         * @see XAddArgs#maxlen(long)
+         */
         public static XAddArgs maxlen(long count) {
             return new XAddArgs().maxlen(count);
         }
@@ -50,7 +62,9 @@ public class XAddArgs {
      * @return {@code this}
      */
     public XAddArgs id(String id) {
+
         LettuceAssert.notNull(id, "Id must not be null");
+
         this.id = id;
         return this;
     }
@@ -62,12 +76,15 @@ public class XAddArgs {
      * @return {@code this}
      */
     public XAddArgs maxlen(long maxlen) {
+
         LettuceAssert.isTrue(maxlen > 0, "Maxlen must be greater 0");
+
         this.maxlen = maxlen;
         return this;
     }
 
     public <K, V> void build(CommandArgs<K, V> args) {
+
         if (maxlen != null) {
             args.add(CommandKeyword.MAXLEN).add(maxlen);
         }

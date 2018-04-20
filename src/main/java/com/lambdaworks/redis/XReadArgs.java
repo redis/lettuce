@@ -15,14 +15,20 @@
  */
 package com.lambdaworks.redis;
 
+import java.time.Duration;
+
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.CommandKeyword;
 
 /**
- * Args for the {@literal XREAD} command.
+ * Argument list builder for the Redis <a href="http://redis.io/commands/xread">XREAD</a> and {@literal XREADGROUP} commands.
+ * Static import the methods from {@link XReadArgs.Builder} and call the methods: {@code block(…)} .
+ * <p/>
+ * {@link XReadArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @since 4.5
  */
 public class XReadArgs {
 
@@ -30,37 +36,97 @@ public class XReadArgs {
     private Long count;
     private boolean noack;
 
+    /**
+     * Builder entry points for {@link XReadArgs}.
+     */
     public static class Builder {
 
         /**
          * Utility constructor.
          */
         private Builder() {
-
         }
 
+        /**
+         * Create a new {@link XReadArgs} and set {@literal BLOCK}.
+         *
+         * @param milliseconds time to block.
+         * @return new {@link XReadArgs} with {@literal BLOCK} set.
+         * @see XReadArgs#block(long)
+         */
         public static XReadArgs block(long milliseconds) {
             return new XReadArgs().block(milliseconds);
         }
 
+        /**
+         * Create a new {@link XReadArgs} and set {@literal BLOCK}.
+         *
+         * @param timeout time to block.
+         * @return new {@link XReadArgs} with {@literal BLOCK} set.
+         * @see XReadArgs#block(Duration)
+         */
+        public static XReadArgs block(Duration timeout) {
+
+            LettuceAssert.notNull(timeout, "Block timeout must not be null");
+
+            return block(timeout.toMillis());
+        }
+
+        /**
+         * Create a new {@link XReadArgs} and set {@literal COUNT}.
+         *
+         * @param count
+         * @return new {@link XReadArgs} with {@literal COUNT} set.
+         */
         public static XReadArgs count(long count) {
             return new XReadArgs().count(count);
         }
 
+        /**
+         * Create a new {@link XReadArgs} and set {@literal NOACK}.
+         *
+         * @return new {@link XReadArgs} with {@literal NOACK} set.
+         * @see XReadArgs#noack(boolean)
+         */
+        public static XReadArgs noack() {
+            return noack(true);
+        }
+
+        /**
+         * Create a new {@link XReadArgs} and set {@literal NOACK}.
+         *
+         * @param noack
+         * @return new {@link XReadArgs} with {@literal NOACK} set.
+         * @see XReadArgs#noack(boolean)
+         */
         public static XReadArgs noack(boolean noack) {
             return new XReadArgs().noack(noack);
         }
     }
 
     /**
-     * Wait up to {@code milliseconds} for a new stream message.
+     * Perform a blocking read and wait up to {@code milliseconds} for a new stream message.
      *
      * @param milliseconds max time to wait.
      * @return {@code this}.
      */
     public XReadArgs block(long milliseconds) {
+
         this.block = milliseconds;
         return this;
+    }
+
+    /**
+     * Perform a blocking read and wait up to a {@link Duration timeout} for a new stream message.
+     *
+     * @param timeout max time to wait.
+     * @return {@code this}.
+     */
+    public XReadArgs block(Duration timeout) {
+
+        LettuceAssert.notNull(timeout, "Block timeout must not be null");
+
+        return block(timeout.toMillis());
     }
 
     /**
@@ -70,17 +136,19 @@ public class XReadArgs {
      * @return {@code this}.
      */
     public XReadArgs count(long count) {
+
         this.count = count;
         return this;
     }
 
     /**
-     * Use NOACK option to disable auto-acknowledgement.
+     * Use NOACK option to disable auto-acknowledgement. Only valid for {@literal XREADGROUP}.
      *
      * @param noack {@literal true} to disable auto-ack.
      * @return {@code this}.
      */
     public XReadArgs noack(boolean noack) {
+
         this.noack = noack;
         return this;
     }
@@ -101,7 +169,7 @@ public class XReadArgs {
     }
 
     /**
-     * Value object representing a Stream consumer group.
+     * Value object representing a Stream with its offset.
      */
     public static class StreamOffset<K> {
 
@@ -127,12 +195,13 @@ public class XReadArgs {
         }
 
         /**
-         * Read all new arriving elements from the stream identified by {@code name}.
+         * Read all new arriving elements from the stream identified by {@code name} with ids greater than the last one consumed
+         * by the consumer group.
          *
          * @param name must not be {@literal null}.
          * @return the {@link StreamOffset} object without a specific offset.
          */
-        public static <K> StreamOffset<K> latestConsumer(K name) {
+        public static <K> StreamOffset<K> lastConsumed(K name) {
 
             LettuceAssert.notNull(name, "Stream must not be null");
 
@@ -153,6 +222,18 @@ public class XReadArgs {
 
             return new StreamOffset<>(name, offset);
         }
-    }
 
+        public K getName() {
+            return name;
+        }
+
+        public String getOffset() {
+            return offset;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s:%s", name, offset);
+        }
+    }
 }

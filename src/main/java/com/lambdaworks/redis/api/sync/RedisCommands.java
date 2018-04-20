@@ -30,10 +30,10 @@ import com.lambdaworks.redis.cluster.api.sync.RedisClusterCommands;
  * @author Mark Paluch
  * @since 3.0
  */
-public interface RedisCommands<K, V> extends RedisHashCommands<K, V>, RedisKeyCommands<K, V>, RedisStringCommands<K, V>,
-        RedisListCommands<K, V>, RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisScriptingCommands<K, V>,
-        RedisServerCommands<K, V>, RedisHLLCommands<K, V>, BaseRedisCommands<K, V>, RedisClusterCommands<K, V>,
-        RedisTransactionalCommands<K, V>, RedisGeoCommands<K, V>, RedisConnection<K, V> {
+public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisClusterCommands<K, V>, RedisConnection<K, V>,
+        RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>, RedisKeyCommands<K, V>,
+        RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>, RedisSetCommands<K, V>,
+        RedisSortedSetCommands<K, V>, RedisStringCommands<K, V>, RedisTransactionalCommands<K, V> {
 
     /**
      * Set the default timeout for operations.

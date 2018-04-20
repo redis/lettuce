@@ -30,11 +30,11 @@ import com.lambdaworks.redis.cluster.api.rx.RedisClusterReactiveCommands;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface RedisReactiveCommands<K, V> extends RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
-        RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
-        RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
-        RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>,
-        RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V> {
+public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>,
+        RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
+        RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>,
+        RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
+        RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V> {
 
     /**
      * Set the default timeout for operations.
