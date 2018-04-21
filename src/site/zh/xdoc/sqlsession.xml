@@ -30,24 +30,24 @@
   <body>
     <section name="使用 SqlSession">
       <p>
-在 MyBatis 中，你可以使用 <code>SqlSessionFactory</code> 来创建 <code>SqlSession</code>。一旦你获得一个 session 之后，你可以使用它来执行映射了的语句，提交或回滚连接，最后，当不再需要它的时候，你可以关闭 session。使用 MyBatis-Spring 之后，你不再需要直接使用 <code>SqlSessionFactory</code> 了，因为你的 bean 可以被注入一个线程安全的 <code>SqlSession</code>，它能基于 Spring 的事务配置来自动提交、回滚、关闭 session。
+        在 MyBatis 中，你可以使用 <code>SqlSessionFactory</code> 来创建 <code>SqlSession</code>。一旦你获得一个 session 之后，你可以使用它来执行映射了的语句，提交或回滚连接，最后，当不再需要它的时候，你可以关闭 session。使用 MyBatis-Spring 之后，你不再需要直接使用 <code>SqlSessionFactory</code> 了，因为你的 bean 可以被注入一个线程安全的 <code>SqlSession</code>，它能基于 Spring 的事务配置来自动提交、回滚、关闭 session。
       </p>  
     
     <subsection name="SqlSessionTemplate">
       <p>
-<code>SqlSessionTemplate</code> 是 MyBatis-Spring 的核心。作为 <code>SqlSession</code> 的一个实现，这意味着可以使用它无缝代替你代码中已经在使用的 <code>SqlSession</code>。<code>SqlSessionTemplate</code> 是线程安全的，可以被多个 DAO 或映射器所共享使用。
+        <code>SqlSessionTemplate</code> 是 MyBatis-Spring 的核心。作为 <code>SqlSession</code> 的一个实现，这意味着可以使用它无缝代替你代码中已经在使用的 <code>SqlSession</code>。<code>SqlSessionTemplate</code> 是线程安全的，可以被多个 DAO 或映射器所共享使用。
       </p>
 
       <p>
-当调用 SQL 方法时（包括由 <code>getMapper()</code> 方法返回的映射器中的方法），<code>SqlSessionTemplate</code> 将会保证使用的 <code>SqlSession</code> 与当前 Spring 的事务相关。此外，它管理 session 的生命周期，包含必要的关闭、提交或回滚操作。另外，它也负责将 MyBatis 的异常翻译成 Spring 中的 <code>DataAccessExceptions</code>。
+        当调用 SQL 方法时（包括由 <code>getMapper()</code> 方法返回的映射器中的方法），<code>SqlSessionTemplate</code> 将会保证使用的 <code>SqlSession</code> 与当前 Spring 的事务相关。此外，它管理 session 的生命周期，包含必要的关闭、提交或回滚操作。另外，它也负责将 MyBatis 的异常翻译成 Spring 中的 <code>DataAccessExceptions</code>。
       </p>
 
       <p>
-由于模板可以参与到 Spring 的事务管理中，并且由于其是线程安全的，可以供多个映射器类使用，你应该<b>总是</b>用 <code>SqlSessionTemplate</code> 来替换 MyBatis 默认的 <code>DefaultSqlSession</code> 实现。在同一应用程序中的不同类之间混杂使用可能会引起数据一致性的问题。
+        由于模板可以参与到 Spring 的事务管理中，并且由于其是线程安全的，可以供多个映射器类使用，你应该<b>总是</b>用 <code>SqlSessionTemplate</code> 来替换 MyBatis 默认的 <code>DefaultSqlSession</code> 实现。在同一应用程序中的不同类之间混杂使用可能会引起数据一致性的问题。
       </p>
 
       <p>
-可以使用 <code>SqlSessionFactory</code> 作为构造方法的参数来创建 <code>SqlSessionTemplate</code> 对象。
+        可以使用 <code>SqlSessionFactory</code> 作为构造方法的参数来创建 <code>SqlSessionTemplate</code> 对象。
       </p>
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
@@ -60,7 +60,7 @@ public SqlSessionTemplate sqlSession() throws Exception {
 }]]></source>
 
       <p>
-现在，这个 bean 就可以直接注入到你的 DAO bean 中了。你需要在你的 bean 中添加一个 SqlSession 属性，就像下面这样：
+        现在，这个 bean 就可以直接注入到你的 DAO bean 中了。你需要在你的 bean 中添加一个 SqlSession 属性，就像下面这样：
       </p>
         <source><![CDATA[public class UserDaoImpl implements UserDao {
 
@@ -75,14 +75,14 @@ public SqlSessionTemplate sqlSession() throws Exception {
   }
 }]]></source>
       <p>
-按下面这样，注入 <code>SqlSessionTemplate</code>：
+        按下面这样，注入 <code>SqlSessionTemplate</code>：
       </p>      
         <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSession" ref="sqlSession" />
 </bean>]]></source>
 
       <p>
-<code>SqlSessionTemplate</code> 还有一个接收 <code>ExecutorType</code> 参数的构造方法。这允许你使用如下 Spring 配置来批量创建对象，例如批量创建一些 SqlSession：
+        <code>SqlSessionTemplate</code> 还有一个接收 <code>ExecutorType</code> 参数的构造方法。这允许你使用如下 Spring 配置来批量创建对象，例如批量创建一些 SqlSession：
       </p>
       <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
@@ -96,7 +96,7 @@ public SqlSessionTemplate sqlSession() throws Exception {
 }]]></source>
 
       <p>
-现在所有的映射语句可以进行批量操作了，可以在 DAO 中编写如下的代码
+        现在所有的映射语句可以进行批量操作了，可以在 DAO 中编写如下的代码
       </p>
         <source><![CDATA[
 public void insertUsers(List<User> users) {
@@ -106,17 +106,17 @@ public void insertUsers(List<User> users) {
 }]]></source>
   
       <p>
-      注意，只需要在希望语句执行的方法与 <code>SqlSessionTemplate</code> 中的默认设置不同时使用这种配置。
+        注意，只需要在希望语句执行的方法与 <code>SqlSessionTemplate</code> 中的默认设置不同时使用这种配置。
       </p>
 
       <p>
-      这种配置的弊端在于，当调用这个方法时，不能存在使用不同 <code>ExecutorType</code> 的进行中的事务。要么确保对不同 <code>ExecutorType</code> 的 <code>SqlSessionTemplate</code> 的调用处在不同的事务中，要么完全不使用事务。
+        这种配置的弊端在于，当调用这个方法时，不能存在使用不同 <code>ExecutorType</code> 的进行中的事务。要么确保对不同 <code>ExecutorType</code> 的 <code>SqlSessionTemplate</code> 的调用处在不同的事务中，要么完全不使用事务。
       </p>
     </subsection>
 
     <subsection name="SqlSessionDaoSupport">
       <p>
-<code>SqlSessionDaoSupport</code> 是一个抽象的支持类，用来为你提供 <code>SqlSession</code>。调用 <code>getSqlSession()</code> 方法你会得到一个 <code>SqlSessionTemplate</code>，之后可以用于执行 SQL 方法，就像下面这样:
+        <code>SqlSessionDaoSupport</code> 是一个抽象的支持类，用来为你提供 <code>SqlSession</code>。调用 <code>getSqlSession()</code> 方法你会得到一个 <code>SqlSessionTemplate</code>，之后可以用于执行 SQL 方法，就像下面这样:
       </p>
         <source><![CDATA[public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
   public User getUser(String userId) {
@@ -124,15 +124,15 @@ public void insertUsers(List<User> users) {
   }
 }]]></source>
       <p>
-在这个类里面，通常更倾向于使用 <code>MapperFactoryBean</code>，因为它不需要额外的代码。但是，如果你需要在 DAO 中做其它非 MyBatis 的工作或需要一个非抽象的实现类，那么这个类就很有用了。
+        在这个类里面，通常更倾向于使用 <code>MapperFactoryBean</code>，因为它不需要额外的代码。但是，如果你需要在 DAO 中做其它非 MyBatis 的工作或需要一个非抽象的实现类，那么这个类就很有用了。
       </p>
 
       <p>
-<code>SqlSessionDaoSupport</code> 需要通过属性设置一个 <code>sqlSessionFactory</code> 或 <code>SqlSessionTemplate</code>。如果两个属性都被设置了，那么 <code>SqlSessionFactory</code> 将被忽略。
+        <code>SqlSessionDaoSupport</code> 需要通过属性设置一个 <code>sqlSessionFactory</code> 或 <code>SqlSessionTemplate</code>。如果两个属性都被设置了，那么 <code>SqlSessionFactory</code> 将被忽略。
       </p>
 
       <p>
-假设类 <code>UserMapperImpl</code> 是 <code>SqlSessionDaoSupport</code> 的子类，可以编写如下的 Spring 配置来执行设置：
+        假设类 <code>UserMapperImpl</code> 是 <code>SqlSessionDaoSupport</code> 的子类，可以编写如下的 Spring 配置来执行设置：
       </p>
       <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />

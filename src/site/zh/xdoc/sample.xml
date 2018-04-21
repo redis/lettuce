@@ -33,7 +33,7 @@
 			</p>
 
 			<p>
-				您可以在 MyBatis-Spring 的<a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">代码仓库中</a> 查看示例代码：
+				您可以在 MyBatis-Spring 的<a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">代码仓库</a> 中查看示例代码：
 			</p>
 			<p>
 				所有示例都能在 JUnit 5 下运行。
@@ -74,7 +74,7 @@ public interface UserMapper {
 }
 ]]></source>			
 			<p> 
-			    注意，为了简单起见，我们使用了接口 <code>UserMapper.java</code>。在使用 DAO 的场景中，一个 DAO 类应该分为一个接口和一个实现类。回到这个例子里，准确来说，这个接口应该叫 <code>UserDao.java</code> 。
+			  注意，为了简单起见，我们使用了接口 <code>UserMapper.java</code>。在使用 DAO 的场景中，一个 DAO 类应该分为一个接口和一个实现类。回到这个例子里，准确来说，这个接口应该叫 <code>UserDao.java</code> 。
 			</p>
 			<p>
 				我们将看到不同的方法来发现映射器接口，将其注册到 Spring 并将其注入到服务 bean 中：
