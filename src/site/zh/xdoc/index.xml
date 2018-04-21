@@ -31,7 +31,7 @@
  <section name="简介">
   <subsection name="MyBatis-Spring 是什么？">
       <p>
-        MyBatis-Spring 会帮助你将 MyBatis 代码无缝地整合到 Spring 中。它将允许 MyBatis 参与到 Spring 的事务管理之中，创建映射器 mapper 和 <code>SqlSession</code> 并注入到 bean 中，以及将 Mybatis 的异常转换为 Spring 的 <code>DataAccessException</code>。最终，可以做到应用代码不依赖于 Mybatis，Spring 或 Mybatis-Spring。
+        MyBatis-Spring 会帮助你将 MyBatis 代码无缝地整合到 Spring 中。它将允许 MyBatis 参与到 Spring 的事务管理之中，创建映射器 mapper 和 <code>SqlSession</code> 并注入到 bean 中，以及将 Mybatis 的异常转换为 Spring 的 <code>DataAccessException</code>。最终，可以做到应用代码不依赖于 MyBatis，Spring 或 MyBatis-Spring。
       </p>
   </subsection>
 
@@ -58,7 +58,7 @@
             MyBatis
           </th>
           <th>
-            Spring Framework
+            Spring 框架
           </th>
           <th>
             Spring Batch
@@ -109,7 +109,7 @@
 
   <subsection name="致谢">
     <p>
-      特别感谢那些使本项目变为现实的人们（按字母顺序排序）： Eduardo Macarron, Hunter Presnall 和 Putthiphong Boonphong 负责本项目的代码实现，测试和编写文档工作；Andrius Juozapaitis, Giovanni Cuccu, Raj Nagappan 和 Tomas Pinos 的贡献；而 Simone Tripodi 发现了这些人并邀请他们参与到这一个 Mybatis 子项目之中。没有他们的努力，这个项目只能沦为空谈。
+      特别感谢那些使本项目变为现实的人们（按字母顺序排序）： Eduardo Macarron, Hunter Presnall 和 Putthiphong Boonphong 负责本项目的代码实现，测试和编写文档工作；Andrius Juozapaitis, Giovanni Cuccu, Raj Nagappan 和 Tomas Pinos 的贡献；而 Simone Tripodi 发现了这些人并邀请他们参与到这一个 MyBatis 子项目之中。没有他们的努力，这个项目只能沦为空谈。
     </p>
   </subsection>
   
