@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2018 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -109,10 +109,10 @@
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
-    <spring.version>5.0.2.RELEASE</spring.version>
-    <spring-batch.version>4.0.0.RELEASE</spring-batch.version>
-    <junit-platform.version>1.0.2</junit-platform.version>
-    <junit.version>5.0.2</junit.version>
+    <spring.version>5.0.4.RELEASE</spring.version>
+    <spring-batch.version>4.0.1.RELEASE</spring-batch.version>
+    <junit-platform.version>1.1.0</junit-platform.version>
+    <junit.version>5.1.0</junit.version>
 
     <!-- Override: Animal Sniffer Signature -->
     <signature.group>org.codehaus.mojo.signature</signature.group>
@@ -129,7 +129,7 @@
     <dependency>
       <groupId>org.mybatis</groupId>
       <artifactId>mybatis</artifactId>
-      <version>3.4.5</version>
+      <version>3.4.6</version>
       <scope>provided</scope>
     </dependency>
 
@@ -242,7 +242,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>2.11.0</version>
+      <version>2.15.0</version>
       <scope>test</scope>
     </dependency>
 

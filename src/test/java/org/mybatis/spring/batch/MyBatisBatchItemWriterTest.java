@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package org.mybatis.spring.batch;
 
 import org.apache.ibatis.executor.BatchResult;
 import org.assertj.core.util.Lists;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.MockitoAnnotations;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.batch.domain.Employee;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -37,8 +37,7 @@ import static org.mockito.BDDMockito.*;
 /**
  * @author Putthiphong Boonphong
  */
-@RunWith(MockitoJUnitRunner.class)
-public class MyBatisBatchItemWriterTest {
+class MyBatisBatchItemWriterTest {
 
   @Mock
   private SqlSessionTemplate mockSqlSessionTemplate;
@@ -46,8 +45,13 @@ public class MyBatisBatchItemWriterTest {
   @InjectMocks
   private MyBatisBatchItemWriter<Employee> writer;
 
+  @BeforeEach
+  void setUp() {
+    MockitoAnnotations.initMocks(this);
+  }
+
   @Test
-  public void testZeroBatchResultShouldThrowException() {
+  void testZeroBatchResultShouldThrowException() {
     List<Employee> employees = Arrays.asList(new Employee(), new Employee());
     List<BatchResult> batchResults = Lists.emptyList();
 
@@ -59,7 +63,7 @@ public class MyBatisBatchItemWriterTest {
   }
 
   @Test
-  public void testZeroUpdateCountShouldThrowException() {
+  void testZeroUpdateCountShouldThrowException() {
     List<Employee> employees = Arrays.asList(new Employee(), new Employee());
 
     BatchResult batchResult = new BatchResult(null, null);
