@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2018 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -20,26 +20,26 @@
 	xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
 	<properties>
-		<title>MyBatis-Spring | Sample Code</title>
+		<title>MyBatis-Spring | 示例代码</title>
 		<author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
 	</properties>
 
 	<body>
-		<section name="Sample Code">
+		<section name="示例代码">
 
 			<p>
-				<span class="label important">NOTE</span>
-				查看 <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> 获取更多关于 Spring 在完整的应用服务上面的使用例子.
+				<span class="label important">提示</span>
+				查看 <a href="https://github.com/mybatis/jpetstore-6">JPetstore 6 demo</a> 了解如何在完整的 Web 应用服务器上使用 Spring。
 			</p>
 
 			<p>
-				您可以从此处查看 MyBatis-Spring 的示例代码 <a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">repo</a>:
+				您可以在 MyBatis-Spring 的<a href="https://github.com/mybatis/spring/tree/master/src/test/java/org/mybatis/spring/sample">代码仓库中</a> 查看示例代码：
 			</p>
 			<p>
-				任何一个示例都在 JUnit 5 中运行.
+				所有示例都能在 JUnit 5 下运行。
 			</p>
 			<p>
-				示例代码显示了事务服务从数据访问层获取域对象的典型设计.
+				示例代码演示了事务服务从数据访问层获取域对象的典型设计。
 			</p>
 			<p>
 				<code>FooService.java</code> 作为服务:
@@ -61,10 +61,10 @@ public class FooService {
 }
 ]]></source>
 			<p>
-				它是一个事务 bean，所以当调用它的任何方法时，事务被启动并且在方法结束时提交，且不会抛出未经检查的异常.请注意，事务行为配置为 <code>@Transactional</code> 属性. 这不是必需的 Spring 提供的任何其他方式都可用于划分你的事务.
+				它是一个事务 bean，所以当调用它的任何方法时，事务被启动，在方法结束且没有抛出任何未经检查的异常的时候事务将会被提交。注意，事务的行为可以通过 <code>@Transactional</code> 的属性进行配置. 这不是必需的；你可以使用 Spring 提供的任何其他方式来划分你的事务范围。
 			</p>
 			<p>
-				此服务调用使用 MyBatis 构建的数据访问层. 这层只是一个界面 <code>UserMapper.java</code> 这将与 MyBatis 建立的动态代理一起使用运行时并通过 Spring 注入服务.
+				此服务调用使用 MyBatis 构建的数据访问层.。该层只包含一个接口，<code>UserMapper.java</code>，这将被 MyBatis 构建的动态代理使用，在运行时通过 Spring 注入到服务之中。
 			</p>
 			<source><![CDATA[
 public interface UserMapper {
@@ -74,16 +74,16 @@ public interface UserMapper {
 }
 ]]></source>			
 			<p> 
-			    注意，为了简单起见，我们使用了接口 <code>UserMapper.java</code> 对于 DAO 场景其中一个 DAO 层是用接口和一个实现构建的，尽管在这种情况下它将会更多足够使用一个接口调用 <code>UserDao.java</code> 来取代.
+			    注意，为了简单起见，我们使用了接口 <code>UserMapper.java</code>。在使用 DAO 的场景中，一个 DAO 类应该分为一个接口和一个实现类。回到这个例子里，准确来说，这个接口应该叫 <code>UserDao.java</code> 。
 			</p>
 			<p>
-				我们将看到不同的方法来找到映射器接口，将其注册到 Spring 并将其注入到服务 bean 中:
+				我们将看到不同的方法来发现映射器接口，将其注册到 Spring 并将其注入到服务 bean 中：
 			</p>
 			<table>
-				<caption>使用场景</caption>
+				<caption>测试场景</caption>
 				<thead>
 					<tr>
-						<th>测试用样例</th>
+						<th>样例测试</th>
 						<th>描述</th>
 					</tr>
 				</thead>
@@ -93,7 +93,7 @@ public interface UserMapper {
 							<code>SampleMapperTest.java</code>
 						</td>
 						<td>
-							显示基于 <code>MapperFactoryBean</code> 的基本配置，这将动态构建一个实现 <code>UserMapper</code>
+							演示基于 <code>MapperFactoryBean</code> 的基本配置，这将动态构建 <code>UserMapper</code> 的一个实现。
 						</td>
 					</tr>
 					<tr>
@@ -101,7 +101,7 @@ public interface UserMapper {
 							<code>SampleScannerTest.java</code>
 						</td>
 						<td>
-							显示如何使用 <code>MapperScannerConfigurer</code> 来实现项目中所有 mappers 的自动发现.
+							演示如何使用 <code>MapperScannerConfigurer</code> 来自动发现项目中所有的映射器。
 						</td>
 					</tr>
 					<tr>
@@ -109,7 +109,7 @@ public interface UserMapper {
 							<code>SampleSqlSessionTest.java</code>
 						</td>
 						<td>
-							显示如何使用 Spring  <code>SqlSession</code> 手动编写 DAO 层并提供你自己的实现 <code>UserDaoImpl.java</code>.
+							演示如何基于 Spring 管理的 <code>SqlSession</code> 手动编写 DAO，并在 <code>UserDaoImpl.java</code> 中提供你自己的实现。
 						</td>
 					</tr>
 					<tr>
@@ -117,7 +117,7 @@ public interface UserMapper {
 							<code>SampleEnableTest</code>
 						</td>
 						<td>
-							现实如何使用 Spring 的 <code>@Configuration</code> 和 <code>@MapperScann</code> 注解来自动发现 mappers.
+							演示如何使用 Spring 的 <code>@Configuration</code> 和 <code>@MapperScann</code> 注解来自动发现 mappers.
 						</td>
 					</tr>
 					<tr>
@@ -125,7 +125,7 @@ public interface UserMapper {
 							<code>SampleNamespaceTest</code>
 						</td>
 						<td>
-							显示如何使用自定义 MyBatis XML 命名空间. 
+							演示如何使用自定义 MyBatis XML 命名空间. 
 						</td>
 					</tr>
           <tr>
@@ -133,7 +133,7 @@ public interface UserMapper {
               <code>SampleJavaConfigTest.java</code>
             </td>
             <td>
-              Shows how to use Spring's <code>@Configuration</code> to create MyBatis beans manually.
+              演示如何基于 Spring 的 <code>@Configuration</code> 来手工创建 MyBatis 的 bean。
             </td>
           </tr>
           <tr>
@@ -141,7 +141,7 @@ public interface UserMapper {
               <code>SampleJobJavaConfigTest.java</code>
             </td>
             <td>
-              Shows how to use <code>ItemReader</code> and <code>ItemWriter</code> on Spring Batch using Java Configuration.
+              演示如何在 Java 配置中使用 Spring Batch 中的 <code>ItemReader</code> 和 <code>ItemWriter</code>。
             </td>
           </tr>
           <tr>
@@ -149,13 +149,13 @@ public interface UserMapper {
               <code>SampleJobXmlConfigTest.java</code>
             </td>
             <td>
-              Shows how to use <code>ItemReader</code> and <code>ItemWriter</code> on Spring Batch using XML Configuration.
+              演示如何在 XML 配置中使用 Spring Batch 中的 <code>ItemReader</code> 和 <code>ItemWriter</code>。
             </td>
           </tr>
 				</tbody>
 			</table>
 			<p>
-				查看 <code>applicationContext.xml</code> 文件的区别以进行 MyBatis-Spring 实战.
+				查看不同的 <code>applicationContext.xml</code> 文件以了解 MyBatis-Spring 在实践中是如何运用的。
 			</p>
 
 		</section>
