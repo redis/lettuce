@@ -457,13 +457,26 @@ public class CommandHandlerTest {
     }
 
     @Test
-    public void shouldNotWriteCancelledCommands() throws Exception {
+    public void shouldNotWriteCancelledCommand() throws Exception {
 
         command.cancel();
-        sut.write(context, command, null);
+        sut.write(context, command, promise);
 
         verifyZeroInteractions(context);
         assertThat(disconnectedBuffer).isEmpty();
+        verify(promise).trySuccess();
+
+    }
+
+    @Test
+    public void shouldNotWriteCancelledCommands() throws Exception {
+
+        command.cancel();
+        sut.write(context, Collections.singleton(command), promise);
+
+        verifyZeroInteractions(context);
+        assertThat(disconnectedBuffer).isEmpty();
+        verify(promise).trySuccess();
     }
 
     @Test
