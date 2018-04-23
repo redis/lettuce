@@ -88,11 +88,14 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     public void authReconnect() throws Exception {
         new WithPasswordRequired() {
             @Override
-            public void run(RedisClient client) {
+            public void run(RedisClient client) throws InterruptedException {
+
                 RedisCommands<String, String> connection = client.connect().sync();
                 assertThat(connection.auth(passwd)).isEqualTo("OK");
                 assertThat(connection.set(key, value)).isEqualTo("OK");
                 connection.quit();
+
+                Thread.sleep(100);
                 assertThat(connection.get(key)).isEqualTo(value);
             }
         };
