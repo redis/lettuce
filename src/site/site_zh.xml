@@ -37,9 +37,9 @@
         <item href="mappers.html#register" name="注册映射器" />
         <item href="mappers.html#scan" name="发现映射器" />
       </item>
-      <item name="Spring Boot" href="boot.html"/>
+      <item name="使用 Spring Boot" href="boot.html"/>
       <item name="使用 MyBatis API" href="using-api.html"/>
-      <item name="Spring Batch" href="batch.html"/>
+      <item name="使用 Spring Batch" href="batch.html"/>
       <item name="示例代码" href="sample.html"/>
     </menu>
 
