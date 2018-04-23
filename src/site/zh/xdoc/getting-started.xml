@@ -29,7 +29,7 @@
   <body>
     <section name="入门">
       <p>
-      本章将会以简略的步骤告诉你如何安装和创建 MyBatis-Spring，并构建一个简单的数据访问事务性的应用程序。
+      本章将会以简略的步骤告诉你如何安装和配置 MyBatis-Spring，并构建一个简单的具备事务管理功能的数据访问应用程序。
       </p>
 
     <subsection name="安装">
