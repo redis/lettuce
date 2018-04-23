@@ -628,6 +628,19 @@ public class CommandHandlerTest {
     }
 
     @Test
+    public void retryListenerDoesNotRetryCompletedCommands() {
+
+        CommandHandler.RetryListener listener = sut.new RetryListener(command);
+
+        command.complete();
+        when(promise.cause()).thenReturn(new Exception());
+
+        listener.operationComplete(promise);
+
+        verify(channel, never()).writeAndFlush(command);
+    }
+
+    @Test
     public void testMTCConcurrentWriteThenReset() throws Throwable {
         TestFramework.runOnce(new MTCConcurrentWriteThenReset(clientResources, command));
     }
