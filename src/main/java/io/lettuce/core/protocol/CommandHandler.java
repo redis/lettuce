@@ -350,17 +350,15 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         if (msg instanceof Collection) {
-
-            Collection<RedisCommand<?, ?, ?>> batch = (Collection<RedisCommand<?, ?, ?>>) msg;
-
-            writeBatch(ctx, batch, promise);
+            writeBatch(ctx, (Collection<RedisCommand<?, ?, ?>>) msg, promise);
         }
     }
 
     private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command, ChannelPromise promise)
-            throws Exception {
+ {
 
         if (!isWriteable(command)) {
+            promise.trySuccess();
             return;
         }
 
@@ -368,8 +366,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         ctx.write(command, promise);
     }
 
-    private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<?, ?, ?>> batch, ChannelPromise promise)
-            throws Exception {
+    private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<?, ?, ?>> batch, ChannelPromise promise) {
 
         Collection<RedisCommand<?, ?, ?>> deduplicated = new LinkedHashSet<>(batch.size(), 1);
 
@@ -390,8 +387,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 redisCommand.completeExceptionally(e);
             }
 
-            promise.setFailure(e);
-            return;
+            throw e;
         }
 
         for (RedisCommand<?, ?, ?> command : deduplicated) {
@@ -400,6 +396,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         if (!deduplicated.isEmpty()) {
             ctx.write(deduplicated, promise);
+        } else {
+            promise.trySuccess();
         }
     }
 
@@ -423,7 +421,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             }
         } catch (Exception e) {
             command.completeExceptionally(e);
-            promise.setFailure(e);
             throw e;
         }
     }
