@@ -441,7 +441,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         return command.getOutput();
     }
 
-
     private boolean decode(ByteBuf buffer, RedisCommand<K, V, ?> command) {
 
         if (latencyMetricsEnabled && command instanceof WithLatency) {
@@ -1364,7 +1363,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
-    private class AtMostOnceWriteListener extends ListenerSupport implements ChannelFutureListener {
+    class AtMostOnceWriteListener extends ListenerSupport implements ChannelFutureListener {
 
         AtMostOnceWriteListener(RedisCommand<K, V, ?> sentCommand) {
             super(sentCommand);
@@ -1375,7 +1374,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
+        public void operationComplete(ChannelFuture future) {
 
             dequeue();
 
@@ -1388,7 +1387,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     /**
      * A generic future listener which retries unsuccessful writes.
      */
-    private class RetryListener extends ListenerSupport implements GenericFutureListener<Future<Void>> {
+    class RetryListener extends ListenerSupport implements GenericFutureListener<Future<Void>> {
 
         RetryListener(RedisCommand<K, V, ?> sentCommand) {
             super(sentCommand);
@@ -1400,7 +1399,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         @SuppressWarnings("unchecked")
         @Override
-        public void operationComplete(Future<Void> future) throws Exception {
+        public void operationComplete(Future<Void> future) {
 
             Throwable cause = future.cause();
 
@@ -1413,12 +1412,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
                     return;
                 }
 
-                Channel channel = CommandHandler.this.channel;
-                if (channel != null) {
-                    channel.eventLoop().submit(this::requeueCommands);
-                } else {
-                    CommandHandler.this.clientResources.eventExecutorGroup().submit(this::requeueCommands);
-                }
+                potentiallyRequeueCommands(channel, sentCommand, sentCommands);
             }
 
             if (!success && !(cause instanceof ClosedChannelException)) {
@@ -1434,7 +1428,45 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
         }
 
+        /**
+         * Requeue command/commands
+         *
+         * @param channel
+         * @param sentCommand
+         * @param sentCommands
+         */
+        private void potentiallyRequeueCommands(Channel channel, RedisCommand<?, ?, ?> sentCommand,
+                Collection<? extends RedisCommand<?, ?, ?>> sentCommands) {
+
+            if (sentCommand != null && sentCommand.isDone()) {
+                return;
+            }
+
+            if (sentCommands != null) {
+
+                boolean foundToSend = false;
+
+                for (RedisCommand<?, ?, ?> command : sentCommands) {
+                    if (!command.isDone()) {
+                        foundToSend = true;
+                        break;
+                    }
+                }
+
+                if (!foundToSend) {
+                    return;
+                }
+            }
+
+            if (channel != null) {
+                channel.eventLoop().submit(this::requeueCommands);
+            } else {
+                CommandHandler.this.clientResources.eventExecutorGroup().submit(this::requeueCommands);
+            }
+        }
+
         private void requeueCommands() {
+
             if (sentCommand != null) {
                 try {
                     write(sentCommand);
