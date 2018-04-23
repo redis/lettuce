@@ -20,7 +20,7 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | 使用 SqlSessionFactoryBean</title>
+    <title>MyBatis-Spring | SqlSessionFactoryBean</title>
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
     <author email="nanlei1987@gmail.com">Nan Lei</author>
@@ -46,7 +46,7 @@
   需要注意的是 <code>SqlSessionFactoryBean</code> 实现了 Spring 的 <code>FactoryBean</code> 接口（参见 Spring 官方文档 3.8 节 <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-extension-factorybean">通过工厂 bean 自定义实例化逻辑</a>）。这意味着由 Spring 最终创建的 bean <b>并不是</b> <code>SqlSessionFactoryBean</code> 本身，而是工厂类（<code>SqlSessionFactoryBean</code>）的 getObject() 方法的返回结果。这种情况下，Spring 将会在应用启动时为你创建 <code>SqlSessionFactory</code>，并使用 <code>sqlSessionFactory</code> 这个名字存储起来。
 </p>
 <p>
-  等效的 Java 代码如下:
+  等效的 Java 代码如下：
 </p>
 
       <source><![CDATA[

@@ -20,7 +20,7 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | Spring Batch</title>
+    <title>MyBatis-Spring | 使用 Spring Batch</title>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
     <author email="brice.dutheil@gmail.com">Brice Dutheil</author>
   </properties>
@@ -127,7 +127,7 @@ public Map<String, Object> datesParameters(
         
         <ul>
           <li><code>sqlSessionFactory</code>：可以为 reader 指定你自定义的 sessionFactory，当你想从多个数据库中读取数据时尤其有用</li>
-          <li><code>queryId</code>：指定在检索记录时要执行查询的 ID。如果你的应用需要从多个表或数据库中读取而需要多个查询，你可能会使用不同命名空间中的不同映射器。所以别忘了提供映射器文件的命名空间。</li>
+          <li><code>queryId</code>：指定在检索记录时要执行的查询的 ID，可以指定短的 ID 或是带命名空间的完整 ID。一般来说，你的应用可能从多个表或数据库中读取数据，因此会配置多个查询，可能会使用到在不同命名空间中的不同映射器。因此最好提供映射器文件的命名空间以便准确指定你想使用的查询 ID。</li>
           <li><code>parameterValues</code>：可以通过这个 map 传递多个附加的参数，上面的例子中就使用了一个由 Spring 构建的 map，并使用 SpEL 表达式从 <code>jobExecutionContext</code> 中获取信息。而 map 的键将在映射器文件中被 MyBatis 使用（例如：<em>yesterday</em> 可以通过 <code>#{yesterday,jdbcType=TIMESTAMP}</code> 来读取）。注意，map 和 reader 都构建于 <code>step</code> 作用域，这样才能够在 Spring 表达式语言中使用 <code>jobExecutionContext</code>。另外，如果正确配置了 MyBatis 的类型处理器，你可以将自定义的实例像参数那样传递到 map 中，比如将参数类型换成 JodaTime。</li>
           <li><code>pageSize</code>：如果批处理流配置了块大小（chunk size），需要通过此属性将块大小告知 reader。</li>
         </ul>

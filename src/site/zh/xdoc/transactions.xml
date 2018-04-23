@@ -41,7 +41,7 @@
   
     <subsection name="标准配置" id="configuration">
       <p>
-        要开启 Spring 的事务处理功能，在 Spring 的配置文件中创建一个 <code>DataSourceTransactionManager</code> 对象:
+        要开启 Spring 的事务处理功能，在 Spring 的配置文件中创建一个 <code>DataSourceTransactionManager</code> 对象：
       </p>
       <source><![CDATA[
 <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">

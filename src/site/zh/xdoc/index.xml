@@ -29,7 +29,7 @@
 
  <body>
  <section name="简介">
-  <subsection name="MyBatis-Spring 是什么？">
+  <subsection name="什么是 MyBatis-Spring？">
       <p>
         MyBatis-Spring 会帮助你将 MyBatis 代码无缝地整合到 Spring 中。它将允许 MyBatis 参与到 Spring 的事务管理之中，创建映射器 mapper 和 <code>SqlSession</code> 并注入到 bean 中，以及将 Mybatis 的异常转换为 Spring 的 <code>DataAccessException</code>。最终，可以做到应用代码不依赖于 MyBatis，Spring 或 MyBatis-Spring。
       </p>
@@ -46,7 +46,7 @@
       在开始使用 MyBatis-Spring 之前，你需要先熟悉 Spring 和 MyBatis 这两个框架和有关它们的术语。这很重要——因为本手册中不会提供二者的基本内容，安装和配置教程。
     </p>
     <p>
-      MyBatis-Spring 要求 Java 5 及以上版本还有下面列出的 MyBatis 和 Spring 版本：
+      MyBatis-Spring 需要以下版本：
     </p>
     <table>
       <thead>
@@ -113,7 +113,7 @@
     </p>
   </subsection>
   
-	<subsection name="帮助编写文档">
+	<subsection name="帮助改进文档...">
 		<p>
 			如果你发现文档有任何的缺失，或者缺少某一个功能点的说明，最好的解决办法是先自己学习，并且为缺失的部份补上相应的文档。
 		</p>
@@ -124,8 +124,8 @@
 			还有其它像你一样的人都需要阅读这份文档，而你，就是这份文档最好的作者。
 		</p>
 	</subsection>
-   <subsection name="不同的语言版本">
-     <p>可以在以下的翻译版本中阅读 MyBatis-Spring 文档:</p>
+   <subsection name="文档的翻译版本">
+     <p>可以阅读以下 MyBatis-Spring 文档的翻译版本：</p>
      <ul class="i18n">
        <li class="en"><a href="./../index.html">English</a></li>
        <li class="es"><a href="./../es/index.html">Español</a></li>
