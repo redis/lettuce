@@ -51,10 +51,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.output.StatusOutput;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.DefaultChannelPromise;
-import io.netty.channel.EventLoop;
+import io.netty.channel.*;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
@@ -77,6 +74,8 @@ public class DefaultEndpointTest {
     @Mock
     private ConnectionWatchdog connectionWatchdog;
 
+    private ChannelPromise promise;
+
     @BeforeClass
     public static void beforeClass() {
         LoggerContext ctx = (LoggerContext) LogManager.getContext();
@@ -96,6 +95,7 @@ public class DefaultEndpointTest {
     @Before
     public void before() {
 
+        promise = new DefaultChannelPromise(channel);
         when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
             if (invocation.getArguments()[0] instanceof RedisCommand) {
                 queue.add((RedisCommand) invocation.getArguments()[0]);
@@ -104,7 +104,7 @@ public class DefaultEndpointTest {
             if (invocation.getArguments()[0] instanceof Collection) {
                 queue.addAll((Collection) invocation.getArguments()[0]);
             }
-            return new DefaultChannelPromise(channel);
+            return promise;
         });
 
         when(channel.write(any())).thenAnswer(invocation -> {
@@ -115,7 +115,7 @@ public class DefaultEndpointTest {
             if (invocation.getArguments()[0] instanceof Collection) {
                 queue.addAll((Collection) invocation.getArguments()[0]);
             }
-            return new DefaultChannelPromise(channel);
+            return promise;
         });
 
         sut = new DefaultEndpoint(ClientOptions.create());
@@ -336,6 +336,21 @@ public class DefaultEndpointTest {
         runnableCaptor.getValue().run();
 
         assertThat(command.exception).isInstanceOf(RedisException.class);
+    }
+
+    @Test
+    public void retryListenerDoesNotRetryCompletedCommands() {
+
+        DefaultEndpoint.RetryListener listener = DefaultEndpoint.RetryListener.newInstance(sut, command);
+
+        when(channel.eventLoop()).thenReturn(mock(EventLoop.class));
+
+        command.complete();
+        promise.tryFailure(new Exception());
+
+        listener.operationComplete(promise);
+
+        verify(channel, never()).writeAndFlush(command);
     }
 
     @Test

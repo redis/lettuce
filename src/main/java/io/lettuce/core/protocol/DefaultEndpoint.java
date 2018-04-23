@@ -806,18 +806,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             }
 
             Channel channel = endpoint.channel;
-            if (channel != null) {
 
-                // Capture values before recycler clears these.
-                RedisCommand<?, ?, ?> sentCommand = this.sentCommand;
-                Collection<? extends RedisCommand<?, ?, ?>> sentCommands = this.sentCommands;
-                DefaultEndpoint endpoint = this.endpoint;
-                channel.eventLoop().submit(() -> {
-                    requeueCommands(sentCommand, sentCommands, endpoint);
-                });
-            } else {
-                requeueCommands(sentCommand, sentCommands, endpoint);
-            }
+            // Capture values before recycler clears these.
+            RedisCommand<?, ?, ?> sentCommand = this.sentCommand;
+            Collection<? extends RedisCommand<?, ?, ?>> sentCommands = this.sentCommands;
+            potentiallyRequeueCommands(channel, sentCommand, sentCommands);
 
             if (!(cause instanceof ClosedChannelException)) {
 
@@ -829,6 +822,46 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
                 }
 
                 logger.log(logLevel, message, cause.toString(), cause);
+            }
+        }
+
+        /**
+         * Requeue command/commands
+         *
+         * @param channel
+         * @param sentCommand
+         * @param sentCommands
+         */
+        private void potentiallyRequeueCommands(Channel channel, RedisCommand<?, ?, ?> sentCommand,
+                Collection<? extends RedisCommand<?, ?, ?>> sentCommands) {
+
+            if (sentCommand != null && sentCommand.isDone()) {
+                return;
+            }
+
+            if (sentCommands != null) {
+
+                boolean foundToSend = false;
+
+                for (RedisCommand<?, ?, ?> command : sentCommands) {
+                    if (!command.isDone()) {
+                        foundToSend = true;
+                        break;
+                    }
+                }
+
+                if (!foundToSend) {
+                    return;
+                }
+            }
+
+            if (channel != null) {
+                DefaultEndpoint endpoint = this.endpoint;
+                channel.eventLoop().submit(() -> {
+                    requeueCommands(sentCommand, sentCommands, endpoint);
+                });
+            } else {
+                requeueCommands(sentCommand, sentCommands, endpoint);
             }
         }
 
