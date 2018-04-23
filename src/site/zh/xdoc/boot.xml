@@ -28,7 +28,7 @@
   <body>
     <section name="搭配 Spring Boot">
       <p>
-        请查看 <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-stater</a> 
+        请查看 <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-starter</a> 
         子项目获取更多信息。
       </p>
     </section>
