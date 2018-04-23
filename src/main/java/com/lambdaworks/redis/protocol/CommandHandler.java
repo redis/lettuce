@@ -714,10 +714,10 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
     }
 
-    private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<K, V, ?> command, ChannelPromise promise)
-            throws Exception {
+    private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<K, V, ?> command, ChannelPromise promise) {
 
         if (!isWriteable(command)) {
+            promise.trySuccess();
             return;
         }
 
@@ -725,8 +725,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         ctx.write(command, promise);
     }
 
-    private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<K, V, ?>> batch, ChannelPromise promise)
-            throws Exception {
+    private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<K, V, ?>> batch, ChannelPromise promise) {
 
         Collection<RedisCommand<K, V, ?>> deduplicated = new LinkedHashSet<>(batch.size(), 1);
 
@@ -757,6 +756,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         if (!deduplicated.isEmpty()) {
             ctx.write(deduplicated, promise);
+        } else {
+            promise.trySuccess();
         }
     }
 
