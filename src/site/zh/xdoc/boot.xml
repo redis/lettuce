@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2018 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -21,15 +21,15 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | Spring Boot</title>
+    <title>MyBatis-Spring | 搭配 Spring Boot</title>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
   </properties>
                              
   <body>
-    <section name="Using Spring Boot">
+    <section name="搭配 Spring Boot">
       <p>
-        Please see the <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-stater</a> 
-        subproject docs for details.
+        请查看 <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-starter</a> 
+        子项目获取更多信息。
       </p>
     </section>
   </body>

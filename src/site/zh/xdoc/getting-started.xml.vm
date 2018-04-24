@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2018 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -20,26 +20,24 @@
   xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
 
   <properties>
-    <title>MyBatis-Spring | 第二章 入门</title>
+    <title>MyBatis-Spring | 入门</title>
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
     <author email="nanlei1987@gmail.com">Nan Lei</author>
   </properties>
 
   <body>
-    <section name="第二章 入门">
+    <section name="入门">
       <p>
-本章将会以简略的步骤告诉你如何安装和创建 MyBatis-Spring，并构建一个简单的数据访问事务性的应用程序。
+      本章将会以简略的步骤告诉你如何安装和配置 MyBatis-Spring，并构建一个简单的具备事务管理功能的数据访问应用程序。
       </p>
 
     <subsection name="安装">
       <p>
-要使用MyBatis-Spring模块，只需要在类路径下包含
-        <code>mybatis-spring-${project.version}.jar</code>
-文件和相关依赖。
+      要使用 MyBatis-Spring 模块，只需要在类路径下包含 <code>mybatis-spring-${project.version}.jar</code> 文件和相关依赖即可。
       </p>
       <p>
-如果使用Maven，仅需要在pom.xml中加入以下代码即可：
+      如果使用 Maven 作为构建工具，仅需要在 pom.xml 中加入以下代码即可：
       </p>
         <source><![CDATA[
 <dependency>
@@ -51,11 +49,12 @@
 
     <subsection name="快速上手">
       <p>
-要和Spring一起使用MyBatis，需要在Spring应用上下文中定义至少两样东西：一个SqlSessionFactory和至少一个数据映射器类。
+      要和 Spring 一起使用 MyBatis，需要在 Spring 应用上下文中定义至少两样东西：一个 <code>SqlSessionFactory</code> 和至少一个数据映射器类。
       </p>
 
       <p>
-在MyBatis-Spring中，可使用SqlSessionFactoryBean来创建SqlSessionFactory。要配置这个工厂bean，只需要把下面代码放在Spring的XML配置文件中：
+      在 MyBatis-Spring 中，可使用 <code>SqlSessionFactoryBean</code>来创建 <code>SqlSessionFactory</code>。
+      要配置这个工厂 bean，只需要把下面代码放在 Spring 的 XML 配置文件中：
       </p>
 
         <source><![CDATA[
@@ -72,11 +71,12 @@ public SqlSessionFactoryBean sqlSessionFactory() throws Exception {
 }]]></source>
 
       <p>
-需要注意的是：SqlSessionFactory需要一个DataSource（数据源，译者注）。这可以是任意的DataSource，配置它就和配置其它Spring数据库连接一样。
+      注意：<code>SqlSessionFactory</code> 需要一个 <code>DataSource</code>（数据源）。
+      这可以是任意的 <code>DataSource</code>，只需要和配置其它 Spring 数据库连接一样配置它就可以了。
       </p>
 
       <p>
-假设你定义了一个如下的mapper接口：
+      假设你定义了一个如下的 mapper 接口：
       </p>
         <source><![CDATA[public interface UserMapper {
   @Select("SELECT * FROM users WHERE id = #{userId}")
@@ -84,7 +84,7 @@ public SqlSessionFactoryBean sqlSessionFactory() throws Exception {
 } ]]></source>
 
       <p>
-那么可以通过MapperFactoryBean像下面那样把接口加入到Spring中:
+      那么可以通过 <code>MapperFactoryBean</code> 将接口加入到 Spring 中:
       </p>
 
         <source><![CDATA[
@@ -94,16 +94,15 @@ public SqlSessionFactoryBean sqlSessionFactory() throws Exception {
 </bean>]]></source>
 
       <p>
-需要注意的是：所指定的映射器类必须是一个接口，而不是具体的实现类。在这个示例中通过注解来指定SQL语句，但是通过MyBatis映射器的XML文件也行。
+      需要注意的是：所指定的映射器类<b>必须</b>是一个接口，而不是具体的实现类。在这个示例中，通过注解来指定 SQL 语句，但是也可以使用 MyBatis 映射器的 XML 配置文件。
       </p>
 
       <p>
-一旦完成配置，你可以像其它Spring中的bean注入方法将映射器到业务(bussiness)或服务(service)对象中。MapperFactoryBean用来处理SqlSession的创建和关闭动作。
-如果使用了Spring的事务，那么当事务完成时，session将会被提交或回滚。最终任何异常都会被翻译成Spring的DataAccessException异常。
+      配置好之后，你就可以像 Spring 中普通的 bean 注入方法那样，将映射器注入到你的业务或服务对象中。<code>MapperFactoryBean</code> 将会负责 <code>SqlSession</code> 的创建和关闭。如果使用了 Spring 的事务功能，那么当事务完成时，session 将会被提交或回滚。最终任何异常都会被转换成 Spring 的 <code>DataAccessException</code> 异常。
       </p>
 
       <p>
-      如果你使用Java代码来配置：
+      使用 Java 代码来配置的方式如下：
       </p>
        <source><![CDATA[
 @Bean
@@ -113,7 +112,7 @@ public UserMapper userMapper() throws Exception {
 }]]></source>
 
       <p>
-调用MyBatis数据方法现在只需一行代码：
+      要调用 MyBatis 的数据方法，只需一行代码：
       </p>
       <source><![CDATA[
 public class FooServiceImpl implements FooService {
