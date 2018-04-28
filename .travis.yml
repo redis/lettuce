@@ -5,15 +5,9 @@ matrix:
   include:
 # 10
     - env: JDK='Oracle JDK 10'
-      jdk: openjdk8
-      install:
-        - ./mvnw install -q -DskipTests=true
-        - . ./install-jdk.sh -F 10 -L BCL
+      install: . ./install-jdk.sh -F 10 -L BCL
     - env: JDK='OpenJDK 10'
-      jdk: openjdk8
-      install:
-        - ./mvnw install -q -DskipTests=true
-        - . ./install-jdk.sh -F 10 -L GPL
+      install: . ./install-jdk.sh -F 10 -L GPL
 # 9
     - env: JDK='Oracle JDK 9'
       jdk: oraclejdk9
@@ -26,8 +20,9 @@ matrix:
 before_install:
   - wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh
   - echo "MAVEN_OPTS='-Dlicense.skip=true'" > ~/.mavenrc
+  - ./mvnw install -q -DskipTests=true
 
-install: ./mvnw install -q -DskipTests=true
+install: true
 
 script: ./mvnw clean verify
 
