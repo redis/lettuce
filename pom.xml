@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
-    <version>30</version>
+    <version>31-SNAPSHOT</version>
     <relativePath/>
   </parent>
 
@@ -102,26 +102,12 @@
     <clirr.comparisonVersion>1.2.2</clirr.comparisonVersion>
     <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.mapper.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
     <gcu.product>Spring</gcu.product>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <maven.compiler.testSource>1.8</maven.compiler.testSource>
-    <maven.compiler.testTarget>1.8</maven.compiler.testTarget>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
     <spring.version>5.0.4.RELEASE</spring.version>
     <spring-batch.version>4.0.1.RELEASE</spring-batch.version>
-    <junit-platform.version>1.1.0</junit-platform.version>
-    <junit.version>5.1.0</junit.version>
 
-    <!-- Override: Animal Sniffer Signature -->
-    <signature.group>org.codehaus.mojo.signature</signature.group>
-    <signature.artifact>java18</signature.artifact>
-    <signature.version>1.0</signature.version>
-
-    <!-- Override: The JUnit 5 not supported maven-surefire-plugin 2.20.x yet. -->
-    <!-- See https://github.com/junit-team/junit5/issues/809 -->
-    <surefire.version>2.19.1</surefire.version>
   </properties>
 
   <dependencies>
@@ -172,14 +158,14 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit.version}</version>
+      <version>${junit-engine.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit.version}</version>
+      <version>${junit-engine.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -353,14 +339,9 @@
         </configuration>
         <dependencies>
           <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-surefire-provider</artifactId>
-            <version>${junit-platform.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>${junit-engine.version}</version>
           </dependency>
         </dependencies>
       </plugin>
