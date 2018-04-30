@@ -28,10 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.lambdaworks.redis.internal.LettuceSets;
 
@@ -44,7 +41,7 @@ import com.lambdaworks.redis.internal.LettuceSets;
 public class CreateAsyncNodeSelectionClusterApi {
 
     private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
-            "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite");
+            "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch");
 
     private CompilationUnitFactory factory;
 
@@ -74,6 +71,7 @@ public class CreateAsyncNodeSelectionClusterApi {
         // todo: remove AutoCloseable from BaseNodeSelectionAsyncCommands
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodFilter(), importSupplier(), null, null);
+        factory.keepMethodSignaturesFor(FILTER_METHODS);
     }
 
     /**
@@ -92,15 +90,7 @@ public class CreateAsyncNodeSelectionClusterApi {
      * @return
      */
     protected Predicate<MethodDeclaration> methodFilter() {
-        return method -> {
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (FILTER_METHODS.contains(method.getName())
-                    || FILTER_METHODS.contains(classOfMethod.getName() + "." + method.getName())) {
-                return false;
-            }
-
-            return true;
-        };
+        return method -> !CompilationUnitFactory.contains(FILTER_METHODS, method);
     }
 
     /**
@@ -110,18 +100,7 @@ public class CreateAsyncNodeSelectionClusterApi {
      */
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
         return method -> {
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (FILTER_METHODS.contains(method.getName())
-                    || FILTER_METHODS.contains(classOfMethod.getName() + "." + method.getName())) {
-                return method.getType();
-            }
-
-            String typeAsString = method.getType().toStringWithoutComments().trim();
-            if (typeAsString.equals("void")) {
-                typeAsString = "Void";
-            }
-
-            return new ReferenceType(new ClassOrInterfaceType("AsyncExecutions<" + typeAsString + ">"));
+            return CompilationUnitFactory.createParametrizedType("AsyncExecutions", method.getType().toString());
         };
     }
 

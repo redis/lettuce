@@ -27,11 +27,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.comments.Comment;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.lambdaworks.redis.internal.LettuceSets;
 
@@ -78,6 +75,7 @@ public class CreateReactiveApi {
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodDeclaration -> true, importSupplier(), null, methodCommentMutator());
+        factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
     }
 
     /**
@@ -107,13 +105,7 @@ public class CreateReactiveApi {
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
         return method -> {
 
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (KEEP_METHOD_RESULT_TYPE.contains(method.getName())
-                    || KEEP_METHOD_RESULT_TYPE.contains(classOfMethod.getName() + "." + method.getName())) {
-                return method.getType();
-            }
-
-            String typeAsString = method.getType().toStringWithoutComments().trim();
+            String typeAsString = method.getType().toString().trim();
             if (typeAsString.equals("void")) {
                 typeAsString = "Success";
             }
@@ -124,7 +116,7 @@ public class CreateReactiveApi {
                 typeAsString = typeAsString.substring(4, typeAsString.length() - 1);
             }
 
-            return new ReferenceType(new ClassOrInterfaceType("Observable<" + typeAsString + ">"));
+            return CompilationUnitFactory.createParametrizedType("Observable", typeAsString);
         };
     }
 

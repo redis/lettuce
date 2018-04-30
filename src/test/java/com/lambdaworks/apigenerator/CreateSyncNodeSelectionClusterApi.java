@@ -30,8 +30,6 @@ import org.junit.runners.Parameterized;
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.lambdaworks.redis.internal.LettuceSets;
 
@@ -43,8 +41,8 @@ import com.lambdaworks.redis.internal.LettuceSets;
 @RunWith(Parameterized.class)
 public class CreateSyncNodeSelectionClusterApi {
 
-    private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch");
+    private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
+            "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch");
 
     private CompilationUnitFactory factory;
 
@@ -74,6 +72,7 @@ public class CreateSyncNodeSelectionClusterApi {
         // todo: remove AutoCloseable from BaseNodeSelectionAsyncCommands
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodFilter(), importSupplier(), null, null);
+        factory.keepMethodSignaturesFor(FILTER_METHODS);
     }
 
     /**
@@ -92,10 +91,12 @@ public class CreateSyncNodeSelectionClusterApi {
      * @return
      */
     protected Predicate<MethodDeclaration> methodFilter() {
+
         return method -> {
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (FILTER_METHODS.contains(method.getName())
-                    || FILTER_METHODS.contains(classOfMethod.getName() + "." + method.getName())) {
+
+            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode().orElse(null);
+            if (FILTER_METHODS.contains(method.getName().getIdentifier())
+                    || FILTER_METHODS.contains(classOfMethod.getName().getIdentifier() + "." + method.getName())) {
                 return false;
             }
 
@@ -109,19 +110,9 @@ public class CreateSyncNodeSelectionClusterApi {
      * @return
      */
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
+
         return method -> {
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (FILTER_METHODS.contains(method.getName())
-                    || FILTER_METHODS.contains(classOfMethod.getName() + "." + method.getName())) {
-                return method.getType();
-            }
-
-            String typeAsString = method.getType().toStringWithoutComments().trim();
-            if (typeAsString.equals("void")) {
-                typeAsString = "Void";
-            }
-
-            return new ReferenceType(new ClassOrInterfaceType("Executions<" + typeAsString + ">"));
+            return CompilationUnitFactory.createParametrizedType("Executions", method.getType().toString());
         };
     }
 
@@ -131,7 +122,7 @@ public class CreateSyncNodeSelectionClusterApi {
      * @return
      */
     protected Supplier<List<String>> importSupplier() {
-        return () -> Collections.emptyList();
+        return Collections::emptyList;
     }
 
     @Test

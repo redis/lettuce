@@ -86,7 +86,7 @@ public class CreateSyncApi {
      * @return
      */
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
-        return methodDeclaration -> methodDeclaration.getType();
+        return MethodDeclaration::getType;
     }
 
     /**
@@ -95,7 +95,7 @@ public class CreateSyncApi {
      * @return
      */
     protected Supplier<List<String>> importSupplier() {
-        return () -> Collections.emptyList();
+        return Collections::emptyList;
     }
 
     @Test

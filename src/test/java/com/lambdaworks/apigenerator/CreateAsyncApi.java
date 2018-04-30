@@ -30,11 +30,10 @@ import org.junit.runners.Parameterized;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
+import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.lambdaworks.redis.internal.LettuceSets;
 
@@ -80,19 +79,20 @@ public class CreateAsyncApi {
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodDeclaration -> true, importSupplier(), typeMutator(), null);
+
+        factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
     }
 
     private Consumer<ClassOrInterfaceDeclaration> typeMutator() {
         return type -> {
 
-            if (type.getName().contains("SentinelAsyncCommands")) {
-                type.getExtends().add(new ClassOrInterfaceType("RedisSentinelAsyncConnection<K, V>"));
-                CompilationUnit compilationUnit = (CompilationUnit) type.getParentNode();
+            if (type.getName().getIdentifier().contains("SentinelAsyncCommands")) {
+                type.addExtendedType(new ClassOrInterfaceType("RedisSentinelAsyncConnection<K, V>"));
+                CompilationUnit compilationUnit = (CompilationUnit) type.getParentNode().orElse(null);
                 if (compilationUnit.getImports() == null) {
-                    compilationUnit.setImports(new ArrayList<>());
+                    compilationUnit.setImports(new NodeList<>());
                 }
-                compilationUnit.getImports()
-                        .add(new ImportDeclaration(new NameExpr("com.lambdaworks.redis.RedisSentinelAsyncConnection"), false,
+                compilationUnit.addImport(new ImportDeclaration("com.lambdaworks.redis.RedisSentinelAsyncConnection", false,
                                 false));
             }
 
@@ -115,20 +115,7 @@ public class CreateAsyncApi {
      * @return
      */
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
-        return method -> {
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (KEEP_METHOD_RESULT_TYPE.contains(method.getName())
-                    || KEEP_METHOD_RESULT_TYPE.contains(classOfMethod.getName() + "." + method.getName())) {
-                return method.getType();
-            }
-
-            String typeAsString = method.getType().toStringWithoutComments().trim();
-            if (typeAsString.equals("void")) {
-                typeAsString = "Void";
-            }
-
-            return new ReferenceType(new ClassOrInterfaceType("RedisFuture<" + typeAsString + ">"));
-        };
+        return method -> CompilationUnitFactory.createParametrizedType("RedisFuture", method.getType().toString());
     }
 
     /**
