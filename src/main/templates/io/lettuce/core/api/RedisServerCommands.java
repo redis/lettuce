@@ -17,6 +17,7 @@ package io.lettuce.core.api;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.protocol.CommandType;

@@ -27,10 +27,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 
 import io.lettuce.core.internal.LettuceSets;
@@ -43,8 +40,9 @@ import io.lettuce.core.internal.LettuceSets;
 @RunWith(Parameterized.class)
 public class CreateAsyncApi {
 
-    private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
-            "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+    private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault",
+            "digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands",
+            "flushCommands");
 
     private CompilationUnitFactory factory;
 
@@ -77,6 +75,8 @@ public class CreateAsyncApi {
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodDeclaration -> true, importSupplier(), null, null);
+
+        factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
     }
 
     /**
@@ -95,20 +95,7 @@ public class CreateAsyncApi {
      * @return
      */
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
-        return method -> {
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (KEEP_METHOD_RESULT_TYPE.contains(method.getName())
-                    || KEEP_METHOD_RESULT_TYPE.contains(classOfMethod.getName() + "." + method.getName())) {
-                return method.getType();
-            }
-
-            String typeAsString = method.getType().toStringWithoutComments().trim();
-            if (typeAsString.equals("void")) {
-                typeAsString = "Void";
-            }
-
-            return new ReferenceType(new ClassOrInterfaceType("RedisFuture<" + typeAsString + ">"));
-        };
+        return method -> CompilationUnitFactory.createParametrizedType("RedisFuture", method.getType().toString());
     }
 
     /**

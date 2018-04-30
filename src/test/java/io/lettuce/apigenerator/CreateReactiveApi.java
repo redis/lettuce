@@ -27,8 +27,6 @@ import org.junit.runners.Parameterized;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.comments.Comment;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 
 import io.lettuce.core.internal.LettuceSets;
@@ -45,6 +43,9 @@ public class CreateReactiveApi {
             "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
 
     private static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "dispatch");
+
+    private static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield");
+
     private static final Map<String, String> RESULT_SPEC;
 
     static {
@@ -87,6 +88,7 @@ public class CreateReactiveApi {
 
         factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
                 methodTypeMutator(), methodDeclaration -> true, importSupplier(), null, methodCommentMutator());
+        factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
     }
 
     /**
@@ -117,38 +119,33 @@ public class CreateReactiveApi {
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
         return method -> {
 
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (methodMatch(KEEP_METHOD_RESULT_TYPE, method, classOfMethod)) {
-                return method.getType();
-            }
+            ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) method.getParentNode().get();
 
-            if (method.getName().equals("sort")) {
-                System.out.println();
-            }
+            String baseType = "Mono";
+            String typeArgument = method.getType().toString().trim();
 
-            String typeAsString = method.getType().toStringWithoutComments().trim();
-            if(getResultType(method, classOfMethod) != null){
-                typeAsString = getResultType(method, classOfMethod);
-            }else if (methodMatch(FORCE_FLUX_RESULT, method, classOfMethod)) {
-                typeAsString = "Flux<" + typeAsString + ">";
-            } else if (typeAsString.equals("void")) {
-                typeAsString = "Mono<Void>";
-            } else if (typeAsString.startsWith("List<")) {
-                typeAsString = "Flux<" + typeAsString.substring(5, typeAsString.length() - 1) + ">";
-            } else if (typeAsString.startsWith("Set<")) {
-                typeAsString = "Flux<" + typeAsString.substring(4, typeAsString.length() - 1) + ">";
+            if (getResultType(method, declaringClass) != null) {
+                typeArgument = getResultType(method, declaringClass);
+            } else if (CompilationUnitFactory.contains(FORCE_FLUX_RESULT, method)) {
+                baseType = "Flux";
+            } else if (typeArgument.startsWith("List<")) {
+                baseType = "Flux";
+                typeArgument = typeArgument.substring(5, typeArgument.length() - 1);
+            } else if (typeArgument.startsWith("Set<")) {
+                baseType = "Flux";
+                typeArgument = typeArgument.substring(4, typeArgument.length() - 1);
             } else {
-                typeAsString = "Mono<" + typeAsString + ">";
+                baseType = "Mono";
             }
 
-            return new ReferenceType(new ClassOrInterfaceType(typeAsString));
+            if (CompilationUnitFactory.contains(VALUE_WRAP, method)) {
+                typeArgument = String.format("Value<%s>", typeArgument);
+            }
+
+            return CompilationUnitFactory.createParametrizedType(baseType, typeArgument);
         };
     }
 
-    private boolean methodMatch(Collection<String> methodNames, MethodDeclaration method,
-            ClassOrInterfaceDeclaration classOfMethod) {
-        return methodNames.contains(method.getName()) || methodNames.contains(classOfMethod.getName() + "." + method.getName());
-    }
 
 
     private String getResultType(MethodDeclaration method,

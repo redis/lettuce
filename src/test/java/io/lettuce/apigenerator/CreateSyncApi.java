@@ -28,7 +28,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.Type;
 
@@ -93,15 +92,7 @@ public class CreateSyncApi {
      * @return
      */
     protected Predicate<MethodDeclaration> methodFilter() {
-        return method -> {
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode();
-            if (FILTER_METHODS.contains(method.getName())
-                    || FILTER_METHODS.contains(classOfMethod.getName() + "." + method.getName())) {
-                return false;
-            }
-
-            return true;
-        };
+        return method -> !CompilationUnitFactory.contains(FILTER_METHODS, method);
     }
 
     /**
@@ -110,7 +101,7 @@ public class CreateSyncApi {
      * @return
      */
     protected Function<MethodDeclaration, Type> methodTypeMutator() {
-        return methodDeclaration -> methodDeclaration.getType();
+        return MethodDeclaration::getType;
     }
 
     /**
@@ -119,7 +110,7 @@ public class CreateSyncApi {
      * @return
      */
     protected Supplier<List<String>> importSupplier() {
-        return () -> Collections.emptyList();
+        return Collections::emptyList;
     }
 
     @Test

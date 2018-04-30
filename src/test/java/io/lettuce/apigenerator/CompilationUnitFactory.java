@@ -18,27 +18,25 @@ package io.lettuce.apigenerator;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import com.github.javaparser.ASTHelper;
+import org.springframework.util.StringUtils;
+
 import com.github.javaparser.JavaParser;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.ImportDeclaration;
-import com.github.javaparser.ast.PackageDeclaration;
-import com.github.javaparser.ast.TypeParameter;
+import com.github.javaparser.ast.*;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.ModifierSet;
-import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
-import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.expr.Name;
+import com.github.javaparser.ast.expr.SimpleName;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 /**
@@ -53,7 +51,7 @@ public class CompilationUnitFactory {
     private String targetName;
 
     private Function<String, String> typeDocFunction;
-    private Function<MethodDeclaration, Type> methodReturnTypeFunction;
+    private Map<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>> methodReturnTypeMutation;
     private Predicate<MethodDeclaration> methodFilter;
     private Supplier<List<String>> importSupplier;
     private Consumer<ClassOrInterfaceDeclaration> typeMutator;
@@ -73,39 +71,44 @@ public class CompilationUnitFactory {
         this.targetPackage = targetPackage;
         this.targetName = targetName;
         this.typeDocFunction = typeDocFunction;
-        this.methodReturnTypeFunction = methodReturnTypeFunction;
         this.methodFilter = methodFilter;
         this.importSupplier = importSupplier;
         this.typeMutator = typeMutator;
         this.methodCommentMutator = methodCommentMutator;
+        this.methodReturnTypeMutation = new LinkedHashMap<>();
+
+        this.methodReturnTypeMutation.put(it -> true, methodReturnTypeFunction);
 
         this.target = new File(sources, targetPackage.replace('.', '/') + "/" + targetName + ".java");
     }
 
     public void createInterface() throws Exception {
 
-        result.setPackage(new PackageDeclaration(ASTHelper.createNameExpr(targetPackage)));
+        result.setPackageDeclaration(new PackageDeclaration(new Name(targetPackage)));
 
         template = JavaParser.parse(templateFile);
 
         ClassOrInterfaceDeclaration templateTypeDeclaration = (ClassOrInterfaceDeclaration) template.getTypes().get(0);
-        resultType = new ClassOrInterfaceDeclaration(ModifierSet.PUBLIC, true, targetName);
-        if (templateTypeDeclaration.getExtends() != null) {
-            resultType.setExtends(templateTypeDeclaration.getExtends());
+        resultType = new ClassOrInterfaceDeclaration(EnumSet.of(Modifier.PUBLIC), true, targetName);
+        if (templateTypeDeclaration.getExtendedTypes() != null) {
+            resultType.setExtendedTypes(templateTypeDeclaration.getExtendedTypes());
         }
 
         if (!templateTypeDeclaration.getTypeParameters().isEmpty()) {
-            resultType.setTypeParameters(new ArrayList<>());
+            resultType.setTypeParameters(new NodeList<>());
             for (TypeParameter typeParameter : templateTypeDeclaration.getTypeParameters()) {
-                resultType.getTypeParameters().add(new TypeParameter(typeParameter.getName(), typeParameter.getTypeBound()));
+                resultType.getTypeParameters().add(
+                        new TypeParameter(typeParameter.getName().getIdentifier(), typeParameter.getTypeBound()));
             }
         }
 
-        resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().getContent())));
-        result.setComment(template.getComment());
+        resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().orElse(null)
+                .getContent())));
+        result.setComment(template.getComment().orElse(null));
 
-        result.setImports(new ArrayList<>());
-        ASTHelper.addTypeDeclaration(result, resultType);
+        result.setImports(new NodeList<>());
+
+        result.addType(resultType);
         resultType.setParentNode(result);
 
         if (template.getImports() != null) {
@@ -113,7 +116,7 @@ public class CompilationUnitFactory {
         }
         List<String> importLines = importSupplier.get();
         for (String importLine : importLines) {
-            result.getImports().add(new ImportDeclaration(new NameExpr(importLine), false, false));
+            result.getImports().add(new ImportDeclaration(importLine, false, false));
         }
 
         new MethodVisitor().visit(template, null);
@@ -126,10 +129,41 @@ public class CompilationUnitFactory {
 
     }
 
+    public void keepMethodSignaturesFor(Set<String> methodSignaturesToKeep) {
+
+        this.methodReturnTypeMutation.put(methodDeclaration -> contains(methodSignaturesToKeep, methodDeclaration),
+                MethodDeclaration::getType);
+    }
+
     protected void writeResult() throws IOException {
+
         FileOutputStream fos = new FileOutputStream(target);
         fos.write(result.toString().getBytes());
         fos.close();
+    }
+
+    public static Type createParametrizedType(String baseType, String... typeArguments) {
+
+        NodeList<Type> args = new NodeList<>();
+
+        Arrays.stream(typeArguments).map(it -> {
+
+            if (it.contains("[]")) {
+                return it;
+            }
+
+            return StringUtils.capitalize(it);
+        }).map(it -> new ClassOrInterfaceType(null, it)).forEach(args::add);
+
+        return new ClassOrInterfaceType(null, new SimpleName(baseType), args);
+    }
+
+    public static boolean contains(Collection<String> haystack, MethodDeclaration needle) {
+
+        ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) needle.getParentNode().get();
+
+        return haystack.contains(needle.getNameAsString())
+                || haystack.contains(declaringClass.getNameAsString() + "." + needle.getNameAsString());
     }
 
     /**
@@ -138,37 +172,46 @@ public class CompilationUnitFactory {
     private class MethodVisitor extends VoidVisitorAdapter<Object> {
 
         @Override
-        public void visit(MethodDeclaration n, Object arg) {
+        public void visit(MethodDeclaration parsedDeclaration, Object arg) {
 
-            if (!methodFilter.test(n)) {
+            if (!methodFilter.test(parsedDeclaration)) {
                 return;
             }
 
-            MethodDeclaration method = new MethodDeclaration(n.getModifiers(), methodReturnTypeFunction.apply(n), n.getName());
+            if (parsedDeclaration.getNameAsString().equals("close")) {
+                System.out.println();
+            }
+            Type returnType = getMethodReturnType(parsedDeclaration);
+
+            MethodDeclaration method = new MethodDeclaration(parsedDeclaration.getModifiers(),
+                    parsedDeclaration.getAnnotations(), parsedDeclaration.getTypeParameters(), returnType,
+                    parsedDeclaration.getName(), parsedDeclaration.getParameters(), parsedDeclaration.getThrownExceptions(),
+                    null);
 
             if (methodCommentMutator != null) {
-                method.setComment(methodCommentMutator.apply(n.getComment()));
+                method.setComment(methodCommentMutator.apply(parsedDeclaration.getComment().orElse(null)));
             } else {
-                method.setComment(n.getComment());
+                method.setComment(parsedDeclaration.getComment().orElse(null));
             }
 
-            for (Parameter parameter : n.getParameters()) {
-                Parameter param = ASTHelper.createParameter(parameter.getType(), parameter.getId().getName());
-                param.setVarArgs(parameter.isVarArgs());
+            resultType.addMember(method);
+        }
 
-                ASTHelper.addParameter(method, param);
+        private Type getMethodReturnType(MethodDeclaration parsedDeclaration) {
+
+            List<Map.Entry<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>>> entries = new ArrayList<>(
+                    methodReturnTypeMutation.entrySet());
+
+            Collections.reverse(entries);
+
+            for (Map.Entry<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>> entry : entries) {
+
+                if (entry.getKey().test(parsedDeclaration)) {
+                    return entry.getValue().apply(parsedDeclaration);
+                }
             }
 
-            if (n.getTypeParameters() != null) {
-                method.setTypeParameters(new ArrayList<>());
-                method.getTypeParameters().addAll(n.getTypeParameters());
-            }
-
-            if (n.getAnnotations() != null) {
-                method.setAnnotations(n.getAnnotations());
-            }
-
-            ASTHelper.addMember(resultType, method);
+            return null;
         }
     }
 }
