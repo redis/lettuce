@@ -19,6 +19,9 @@ import java.util.Date;
 import java.util.List;
 
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.output.KeyStreamingChannel;
+import com.lambdaworks.redis.output.ValueStreamingChannel;
+
 
 /**
  * ${intent} for Keys (Key manipulation/querying).

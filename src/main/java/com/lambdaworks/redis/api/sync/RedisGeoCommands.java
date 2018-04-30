@@ -113,7 +113,6 @@ public interface RedisGeoCommands<K, V> {
     Set<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit);
 
     /**
-     *
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
      * results.
      *
@@ -151,7 +150,6 @@ public interface RedisGeoCommands<K, V> {
     List<GeoCoordinates> geopos(K key, V... members);
 
     /**
-     *
      * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@literal null} is
      * returned. Default in meters by, otherwise according to {@code unit}
      *

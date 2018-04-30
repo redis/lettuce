@@ -189,13 +189,11 @@ public interface RedisSentinelAsyncCommands<K, V> extends Closeable, RedisSentin
     void close();
 
     /**
-     *
      * @return true if the connection is open (connected and not closed).
      */
     boolean isOpen();
 
     /**
-     *
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();

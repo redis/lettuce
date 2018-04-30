@@ -24,7 +24,6 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
 /**
- *
  * Asynchronous executed commands for basic commands.
  *
  * @param <K> Key type.
@@ -154,7 +153,6 @@ public interface BaseRedisAsyncCommands<K, V> extends AutoCloseable {
     void close();
 
     /**
-     *
      * @return true if the connection is open (connected and not closed).
      */
     boolean isOpen();
