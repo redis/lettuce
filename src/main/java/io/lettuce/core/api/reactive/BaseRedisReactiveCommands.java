@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
- *
  * Reactive executed commands for basic commands.
  *
  * @param <K> Key type.
@@ -149,7 +148,6 @@ public interface BaseRedisReactiveCommands<K, V> {
     <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args);
 
     /**
-     *
      * @return true if the connection is open (connected and not closed).
      */
     boolean isOpen();

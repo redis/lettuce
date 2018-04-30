@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,6 @@ public interface RedisGeoAsyncCommands<K, V> {
     RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit);
 
     /**
-     *
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
      * results.
      *
@@ -148,7 +147,6 @@ public interface RedisGeoAsyncCommands<K, V> {
     RedisFuture<List<GeoCoordinates>> geopos(K key, V... members);
 
     /**
-     *
      * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@literal null} is
      * returned. Default in meters by, otherwise according to {@code unit}
      *
