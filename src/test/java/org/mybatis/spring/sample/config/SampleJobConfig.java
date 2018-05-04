@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
@@ -40,6 +41,9 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableBatchProcessing
@@ -100,9 +104,20 @@ public class SampleJobConfig {
     return new MyBatisBatchItemWriterBuilder<Person>()
         .sqlSessionFactory(sqlSessionFactory())
         .statementId("org.mybatis.spring.sample.mapper.PersonMapper.createPerson")
+        .itemToParameterConverter(createItemToParameterMapConverter("batch_java_config_user", LocalDateTime.now()))
         .build();
     // @formatter:on
   }
+
+public static <T> Converter<T, Map<String, Object>> createItemToParameterMapConverter(String operationBy, LocalDateTime operationAt) {
+  return item -> {
+    Map<String, Object> parameter = new HashMap<>();
+    parameter.put("item", item);
+    parameter.put("operationBy", operationBy);
+    parameter.put("operationAt", operationAt);
+    return parameter;
+  };
+}
 
   @Bean
   public Job importUserJob() throws Exception {

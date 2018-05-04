@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @SpringJUnitConfig({AbstractSampleJobTest.LocalContext.class,
     SampleJobXmlConfigTest.LocalContext.class})
 class SampleJobXmlConfigTest extends AbstractSampleJobTest {
+
+  @Override
+  protected String getExpectedOperationBy() {
+    return "batch_xml_config_user";
+  }
 
   @ImportResource("classpath:org/mybatis/spring/sample/config/applicationContext-job.xml")
   @Configuration

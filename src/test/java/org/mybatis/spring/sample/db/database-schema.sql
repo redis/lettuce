@@ -1,5 +1,5 @@
 --
---    Copyright 2010-2017 the original author or authors.
+--    Copyright 2010-2018 the original author or authors.
 --
 --    Licensed under the Apache License, Version 2.0 (the "License");
 --    you may not use this file except in compliance with the License.
@@ -25,5 +25,7 @@ drop table persons if exists;
 create table persons  (
     person_id integer identity not null primary key,
     first_name varchar(20),
-    last_name varchar(20)
+    last_name varchar(20),
+    operation_by varchar(64),
+    operation_at timestamp
 );

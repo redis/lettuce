@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2018 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -203,6 +203,72 @@ public MyBatisBatchItemWriter<User> writer() {
       .statementId("com.my.name.space.batch.EmployeeMapper.updateEmployee")
       .build();
 }]]></source>
+
+
+        <p><strong>Converting a item that read using ItemReader to an any parameter object:</strong></p>
+
+        <p>
+          By default behavior, the <code>MyBatisBatchItemWriter</code> passes a item that read using <code>ItemReader</code>
+          (or convert by <code>ItemProcessor</code>) to the MyBatis(<code>SqlSession#update()</code>) as the parameter object.
+          If you want to customize a parameter object that passes to the MyBatis, you can realize to use the <code>itemToParameterConverter</code> option.
+          For example using <code>itemToParameterConverter</code> option, you can passes any objects other than the item object to the MyBatis.
+          Follows below a sample:
+        </p>
+
+        <p>
+          At first, you create a custom converter class (or factory method). The following sample uses a factory method.
+        </p>
+
+        <source><![CDATA[
+public static <T> Converter<T, Map<String, Object>> createItemToParameterMapConverter(String operationBy, LocalDateTime operationAt) {
+  return item -> {
+    Map<String, Object> parameter = new HashMap<>();
+    parameter.put("item", item);
+    parameter.put("operationBy", operationBy);
+    parameter.put("operationAt", operationAt);
+    return parameter;
+  };
+}]]></source>
+
+        <p>
+          At next, you write a sql mapping.
+        </p>
+
+        <source><![CDATA[
+<select id="createPerson" resultType="org.mybatis.spring.sample.domain.Person">
+    insert into persons (first_name, last_name, operation_by, operation_at)
+           values(#{item.firstName}, #{item.lastName}, #{operationBy}, #{operationAt})
+</select>]]></source>
+
+        <p>
+          At last, you configure the <code>MyBatisBatchItemWriter</code>.
+        </p>
+
+        <source><![CDATA[
+// Sample for Java Config
+@Bean
+public MyBatisBatchItemWriter<Person> writer() throws Exception {
+  return new MyBatisBatchItemWriterBuilder<Person>()
+      .sqlSessionFactory(sqlSessionFactory())
+      .statementId("org.mybatis.spring.sample.mapper.PersonMapper.createPerson")
+      .itemToParameterConverter(createItemToParameterMapConverter("batch_java_config_user", LocalDateTime.now()))
+      .build();
+}]]></source>
+
+        <source><![CDATA[
+<!-- Sample for XML Config -->
+<bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
+  <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+  <property name="statementId" value="org.mybatis.spring.sample.mapper.PersonMapper.createPerson"/>
+  <property name="itemToParameterConverter">
+    <bean class="org.mybatis.spring.sample.config.SampleJobConfig" factory-method="createItemToParameterMapConverter">
+      <constructor-arg type="java.lang.String" value="batch_xml_config_user"/>
+      <constructor-arg type="java.time.LocalDateTime" value="#{T(java.time.LocalDateTime).now()}"/>
+    </bean>
+  </property>
+</bean>
+]]></source>
+
 
         <p><strong>여러개의 테이블에 데이터를 쓰려면 한꺼번에 처리할 수 있도록 만든 writer(몇가지 규칙을 가지고)를 사용하자. </strong></p>
 

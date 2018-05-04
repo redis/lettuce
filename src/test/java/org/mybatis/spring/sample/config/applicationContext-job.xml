@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2018 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -68,6 +68,12 @@
   <bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
     <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
     <property name="statementId" value="org.mybatis.spring.sample.mapper.PersonMapper.createPerson"/>
+    <property name="itemToParameterConverter">
+      <bean class="org.mybatis.spring.sample.config.SampleJobConfig" factory-method="createItemToParameterMapConverter">
+        <constructor-arg type="java.lang.String" value="batch_xml_config_user"/>
+        <constructor-arg type="java.time.LocalDateTime" value="#{T(java.time.LocalDateTime).now()}"/>
+      </bean>
+    </property>
   </bean>
 
   <batch:job id="importUserJob">
