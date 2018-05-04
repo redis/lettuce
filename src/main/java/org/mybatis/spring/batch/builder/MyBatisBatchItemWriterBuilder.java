@@ -18,6 +18,7 @@ package org.mybatis.spring.batch.builder;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.batch.MyBatisBatchItemWriter;
+import org.springframework.core.convert.converter.Converter;
 
 /**
  * A builder for the {@link MyBatisBatchItemWriter}.
@@ -32,6 +33,7 @@ public class MyBatisBatchItemWriterBuilder<T> {
   private SqlSessionFactory sqlSessionFactory;
   private String statementId;
   private Boolean assertUpdates;
+  private Converter<T, ?> itemToParameterConverter;
 
   /**
    * Set the {@link SqlSessionTemplate} to be used by writer for database access.
@@ -84,6 +86,18 @@ public class MyBatisBatchItemWriterBuilder<T> {
   }
 
   /**
+   * Set a converter that converting item to parameter object.
+   *
+   * @param itemToParameterConverter a converter that converting item to parameter object
+   * @return this instance for method chaining
+   * @see MyBatisBatchItemWriter#setItemToParameterConverter(Converter)
+   */
+  public MyBatisBatchItemWriterBuilder<T> itemToParameterConverter(Converter<T, ?> itemToParameterConverter) {
+    this.itemToParameterConverter = itemToParameterConverter;
+    return this;
+  }
+
+  /**
    * Returns a fully built {@link MyBatisBatchItemWriter}.
    *
    * @return the writer
@@ -95,6 +109,9 @@ public class MyBatisBatchItemWriterBuilder<T> {
     writer.setStatementId(this.statementId);
     if (this.assertUpdates != null) {
       writer.setAssertUpdates(this.assertUpdates);
+    }
+    if (this.itemToParameterConverter != null) {
+      writer.setItemToParameterConverter(this.itemToParameterConverter);
     }
     return writer;
   }
