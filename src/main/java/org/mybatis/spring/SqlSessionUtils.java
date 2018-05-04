@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ public final class SqlSessionUtils {
    * @param sessionFactory a MyBatis {@code SqlSessionFactory} to create new sessions
    * @param executorType The executor type of the SqlSession to create
    * @param exceptionTranslator Optional. Translates SqlSession.commit() exceptions to Spring exceptions.
+   * @return an SqlSession managed by Spring Transaction Manager
    * @throws TransientDataAccessResourceException if a transaction is active and the
    *             {@code SqlSessionFactory} is not using a {@code SpringManagedTransactionFactory}
    * @see SpringManagedTransactionFactory
@@ -162,8 +163,8 @@ public final class SqlSessionUtils {
    * If it is not, it closes it, otherwise it just updates the reference counter and
    * lets Spring call the close callback when the managed transaction ends
    *
-   * @param session
-   * @param sessionFactory
+   * @param session a target SqlSession
+   * @param sessionFactory a factory of SqlSession
    */
   public static void closeSqlSession(SqlSession session, SqlSessionFactory sessionFactory) {
     notNull(session, NO_SQL_SESSION_SPECIFIED);

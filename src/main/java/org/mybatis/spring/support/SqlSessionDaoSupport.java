@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
   /**
    * Set MyBatis SqlSessionFactory to be used by this DAO.
    * Will automatically create SqlSessionTemplate for the given SqlSessionFactory.
+   *
+   * @param sqlSessionFactory a factory of SqlSession
    */
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     if (this.sqlSessionTemplate == null || sqlSessionFactory != this.sqlSessionTemplate.getSqlSessionFactory()) {
@@ -67,6 +69,8 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
 
   /**
    * Return the MyBatis SqlSessionFactory used by this DAO.
+   *
+   * @return a factory of SqlSession
    */
   public final SqlSessionFactory getSqlSessionFactory() {
     return (this.sqlSessionTemplate != null ? this.sqlSessionTemplate.getSqlSessionFactory() : null);
@@ -76,6 +80,8 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
   /**
    * Set the SqlSessionTemplate for this DAO explicitly,
    * as an alternative to specifying a SqlSessionFactory.
+   *
+   * @param sqlSessionTemplate a template of SqlSession
    * @see #setSqlSessionFactory
    */
   public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
@@ -102,6 +108,8 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
    * Consider creating a custom SqlSessionTemplate instance via
    * {@code new SqlSessionTemplate(getSqlSessionFactory())}, in which case
    * you're allowed to customize the settings on the resulting instance.
+   *
+   * @return a template of SqlSession
    */
   public SqlSessionTemplate getSqlSessionTemplate() {
     return this.sqlSessionTemplate;

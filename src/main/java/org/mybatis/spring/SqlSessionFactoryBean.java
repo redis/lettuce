@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * Sets the ObjectFactory.
    *
    * @since 1.1.2
-   * @param objectFactory
+   * @param objectFactory a custom ObjectFactory
    */
   public void setObjectFactory(ObjectFactory objectFactory) {
     this.objectFactory = objectFactory;
@@ -135,7 +135,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * Sets the ObjectWrapperFactory.
    *
    * @since 1.1.2
-   * @param objectWrapperFactory
+   * @param objectWrapperFactory a specified ObjectWrapperFactory
    */
   public void setObjectWrapperFactory(ObjectWrapperFactory objectWrapperFactory) {
     this.objectWrapperFactory = objectWrapperFactory;
@@ -145,7 +145,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * Gets the DatabaseIdProvider
    *
    * @since 1.1.0
-   * @return
+   * @return a specified DatabaseIdProvider
    */
   public DatabaseIdProvider getDatabaseIdProvider() {
     return databaseIdProvider;
@@ -156,24 +156,40 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * As of version 1.2.2 this variable is not initialized by default.
    *
    * @since 1.1.0
-   * @param databaseIdProvider
+   * @param databaseIdProvider a DatabaseIdProvider
    */
   public void setDatabaseIdProvider(DatabaseIdProvider databaseIdProvider) {
     this.databaseIdProvider = databaseIdProvider;
   }
 
+  /**
+   * Gets the VFS.
+   * @return a specified VFS
+   */
   public Class<? extends VFS> getVfs() {
     return this.vfs;
   }
 
+  /**
+   * Sets the VFS.
+   * @param vfs a VFS
+   */
   public void setVfs(Class<? extends VFS> vfs) {
     this.vfs = vfs;
   }
 
+  /**
+   * Gets the Cache.
+   * @return a specified Cache
+   */
   public Cache getCache() {
     return this.cache;
   }
 
+  /**
+   * Sets the Cache.
+   * @param cache a Cache
+   */
   public void setCache(Cache cache) {
     this.cache = cache;
   }
@@ -265,6 +281,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   /**
    * Set the location of the MyBatis {@code SqlSessionFactory} config file. A typical value is
    * "WEB-INF/mybatis-configuration.xml".
+   *
+   * @param configLocation a location the MyBatis config file
    */
   public void setConfigLocation(Resource configLocation) {
     this.configLocation = configLocation;
@@ -286,6 +304,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * This is an alternative to specifying "&lt;sqlmapper&gt;" entries in an MyBatis config file.
    * This property being based on Spring's resource abstraction also allows for specifying
    * resource patterns here: e.g. "classpath*:sqlmap/*-mapper.xml".
+   *
+   * @param mapperLocations location of MyBatis mapper files
    */
   public void setMapperLocations(Resource[] mapperLocations) {
     this.mapperLocations = mapperLocations;
@@ -295,6 +315,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * Set optional properties to be passed into the SqlSession configuration, as alternative to a
    * {@code &lt;properties&gt;} tag in the configuration xml file. This will be used to
    * resolve placeholders in the config file.
+   *
+   * @param  sqlSessionFactoryProperties optional properties for the SqlSessionFactory
    */
   public void setConfigurationProperties(Properties sqlSessionFactoryProperties) {
     this.configurationProperties = sqlSessionFactoryProperties;
@@ -314,6 +336,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * underlying target {@code DataSource}. If there's nevertheless a {@code TransactionAwareDataSourceProxy}
    * passed in, it will be unwrapped to extract its target {@code DataSource}.
    *
+   * @param dataSource a JDBC {@code DataSource}
+   *
    */
   public void setDataSource(DataSource dataSource) {
     if (dataSource instanceof TransactionAwareDataSourceProxy) {
@@ -332,6 +356,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    *
    * This is mainly meant for testing so that mock SqlSessionFactory classes can be injected. By
    * default, {@code SqlSessionFactoryBuilder} creates {@code DefaultSqlSessionFactory} instances.
+   *
+   * @param sqlSessionFactoryBuilder a SqlSessionFactoryBuilder
    *
    */
   public void setSqlSessionFactoryBuilder(SqlSessionFactoryBuilder sqlSessionFactoryBuilder) {

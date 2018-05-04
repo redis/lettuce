@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
    * Constructs a Spring managed SqlSession with the {@code SqlSessionFactory}
    * provided as an argument.
    *
-   * @param sqlSessionFactory
+   * @param sqlSessionFactory a factory of SqlSession
    */
   public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
     this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType());
@@ -100,8 +100,8 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
    * {@code ExecutorType} cannot be changed once the {@code SqlSessionTemplate}
    * is constructed.
    *
-   * @param sqlSessionFactory
-   * @param executorType
+   * @param sqlSessionFactory a factory of SqlSession
+   * @param executorType an executor type on session
    */
   public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
     this(sqlSessionFactory, executorType,
@@ -119,9 +119,9 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
    * exception translation will be done and MyBatis exceptions will be
    * thrown
    *
-   * @param sqlSessionFactory
-   * @param executorType
-   * @param exceptionTranslator
+   * @param sqlSessionFactory a factory of SqlSession
+   * @param executorType an executor type on session
+   * @param exceptionTranslator a translator of exception
    */
   public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
       PersistenceExceptionTranslator exceptionTranslator) {
@@ -408,8 +408,8 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
   * The implementation of {@link DisposableBean} forces spring context to use {@link DisposableBean#destroy()} method instead of {@link SqlSessionTemplate#close()} to shutdown gently.
   *
   * @see SqlSessionTemplate#close()
-  * @see org.springframework.beans.factory.support.DisposableBeanAdapter#inferDestroyMethodIfNecessary
-  * @see org.springframework.beans.factory.support.DisposableBeanAdapter#CLOSE_METHOD_NAME
+  * @see "org.springframework.beans.factory.support.DisposableBeanAdapter#inferDestroyMethodIfNecessary(Object, RootBeanDefinition)"
+  * @see "org.springframework.beans.factory.support.DisposableBeanAdapter#CLOSE_METHOD_NAME"
   */
   @Override
   public void destroy() throws Exception {

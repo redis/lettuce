@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -73,7 +73,6 @@ import org.springframework.util.StringUtils;
  * and bean name properties all support <code>${property}</code> style substitution.
  * <p>
  * Configuration sample:
- * <p>
  *
  * <pre class="code">
  * {@code
@@ -133,7 +132,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   /**
    * Same as {@code MapperFactoryBean#setAddToConfig(boolean)}.
    *
-   * @param addToConfig
+   * @param addToConfig a flag that whether add mapper to MyBatis or not
    * @see MapperFactoryBean#setAddToConfig(boolean)
    */
   public void setAddToConfig(boolean addToConfig) {
@@ -175,7 +174,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * <p>
    * @deprecated Use {@link #setSqlSessionTemplateBeanName(String)} instead
    *
-   * @param sqlSessionTemplate
+   * @param sqlSessionTemplate a template of SqlSession
    */
   @Deprecated
   public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
@@ -206,7 +205,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
    * <p>
    * @deprecated Use {@link #setSqlSessionFactoryBeanName(String)} instead.
    *
-   * @param sqlSessionFactory
+   * @param sqlSessionFactory a factory of SqlSession
    */
   @Deprecated
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
@@ -231,10 +230,12 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
-   *
+   * Specifies a flag that whether execute a property placeholder processing or not.
+   * <p>
+   * The default is {@literal false}. This means that a property placeholder processing does not execute.
    * @since 1.1.1
    *
-   * @param processPropertyPlaceHolders
+   * @param processPropertyPlaceHolders a flag that whether execute a property placeholder processing or not
    */
   public void setProcessPropertyPlaceHolders(boolean processPropertyPlaceHolders) {
     this.processPropertyPlaceHolders = processPropertyPlaceHolders;

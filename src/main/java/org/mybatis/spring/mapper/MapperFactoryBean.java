@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -134,13 +134,13 @@ public class MapperFactoryBean<T> extends SqlSessionDaoSupport implements Factor
   /**
    * If addToConfig is false the mapper will not be added to MyBatis. This means
    * it must have been included in mybatis-config.xml.
-   * <p/>
+   * <p>
    * If it is true, the mapper will be added to MyBatis in the case it is not already
    * registered.
-   * <p/>
+   * <p>
    * By default addToConfig is true.
    *
-   * @param addToConfig
+   * @param addToConfig a flag that whether add mapper to MyBatis or not
    */
   public void setAddToConfig(boolean addToConfig) {
     this.addToConfig = addToConfig;

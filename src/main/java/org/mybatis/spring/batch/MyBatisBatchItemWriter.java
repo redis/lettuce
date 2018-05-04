@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2018 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -36,16 +36,16 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
 /**
  * {@code ItemWriter} that uses the batching features from
  * {@code SqlSessionTemplate} to execute a batch of statements for all items
- * provided.<br/>
- *
- * Provided to facilitate the migration from Spring-Batch iBATIS 2 writers to MyBatis 3<br/>
- *
+ * provided.
+ * <p>
+ * Provided to facilitate the migration from Spring-Batch iBATIS 2 writers to MyBatis 3.
+ * <p>
  * The user must provide a MyBatis statement id that points to the SQL statement defined
- * in the MyBatis.<br/>
- *
+ * in the MyBatis.
+ * <p>
  * It is expected that {@link #write(List)} is called inside a transaction. If it is not
- * each statement call will be autocommitted and flushStatements will return no results.<br/>
- *
+ * each statement call will be autocommitted and flushStatements will return no results.
+ * <p>
  * The writer is thread safe after its properties are set (normal singleton
  * behavior), so it can be used to write in multiple concurrent transactions.
  *
