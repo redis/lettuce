@@ -1,13 +1,12 @@
-lettuce 4.4.4 RELEASE NOTES
+lettuce 4.4.5 RELEASE NOTES
 ===========================
 
-This is the fourth bugfix release for Lettuce 4.4 shipping with 12 tickets fixed along with a few dependency upgrades.
-This release contains fixes for improved resilience behavior.
+This is the fifth bugfix release for Lettuce 4.4 shipping with 8 tickets fixed along with a few dependency upgrades.
  
-Upgrading is recommended.  
+Upgrading is recommended for all users.  
 
 You can find the full change log at the end of this document. 
-Thanks to all contributors that made Lettuce 4.4.4.Final possible.
+Thanks to all contributors that made Lettuce 4.4.5.Final possible.
 
 If you need any support, meet Lettuce at:
 
@@ -17,26 +16,22 @@ If you need any support, meet Lettuce at:
 * Documentation: https://lettuce.io/docs/
 
 
-Enhancements
+Commands
 ------------
-* CommandHandler.write() is O(N^2) #709 (Thanks to @gszpak)
+* Add AUTH option to MIGRATE command #733
+* Add MASTER type to KillArgs #760
 
 Fixes
 -----
-* RuntimeExceptions thrown by implementations of RedisCodec do not fail TransactionCommands #719 (Thanks to @blahblahasdf)
-* RedisPubSubAdapter.message() being called with wrong channel #724 (Thanks to @adimarco)
-* firstResponseLatency is always negative #740 (Thanks to @nickvollmar)
-* EXEC does not fail on EXECABORT #743 (Thanks to @dmandalidis)
+* DefaultEndpoint.QUEUE_SIZE becomes out of sync, preventing command queueing #764 (Thanks to @nivekastoreth)
+* Do not retry completed commands through RetryListener #767
 
-Dependency upgrades
--------------------
-* Upgrade to netty 4.1.22.Final #744
-* Upgrade to RxJava 1.3.7 #745
-* Upgrade to Spring Framework 4.3.14 #746
-* Upgrade to Mockito 2.17 #747
-* Upgrade to AssertJ 3.9.1 #748
-* Upgrade to Log4j 2.11.0 #749
-* Upgrade to commons-lang3 3.7 #750
+Other
+-----
+* Upgrade to netty 4.1.23.Final #755
+* Upgrade to RxJava 1.3.8 #759
+* Extend documentation for argument objects #761
+* Upgrade to netty 4.1.24.Final #770
 
 Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
 against the latest Redis source-build.
