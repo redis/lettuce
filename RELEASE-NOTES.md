@@ -65,7 +65,7 @@ List<StreamMessage<String, String>> messages = redis.xread(XReadArgs.Builder.blo
 
 Redis Streams support the notion of consumer groups. A consumer group is a group of 
 one or more consumers that tracks the last consumed Stream message and allows 
-explicit acknowledgement of consumed messages. 
+explicit acknowledgment of consumed messages. 
 
 ```java
 // Setup stream, see https://github.com/antirez/redis/issues/4824
@@ -96,7 +96,6 @@ Commands
 --------
 * Add AUTH option to MIGRATE command #733
 * Add MASTER type to KillArgs #760
-
 
 Enhancements
 ------------
@@ -150,7 +149,6 @@ Fixes
 
 Other
 -----
-* Release 4.4.0 #543
 * Upgrade to netty 4.0.51/4.1.15 #600
 * Cleanups #604
 * Update LICENSE text and add NOTICE file #612
