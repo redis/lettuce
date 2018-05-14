@@ -7,7 +7,7 @@ and initial support for Redis Streams.
 Find the full change log at the end of this document that lists all 73 tickets.
 
 Thanks to all contributors who made Lettuce 4.5.0.Beta1 possible.
-Lettuce 4.5.0.Beta1 requires Java 8 or Java 9.
+Lettuce 4.5.0.Beta1 requires Java 8, Java 9 or Java 10.
 
 If you need any support, meet Lettuce at:
 
