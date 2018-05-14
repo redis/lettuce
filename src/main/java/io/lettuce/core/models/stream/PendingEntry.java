@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.models.stream;
+package io.lettuce.core.models.stream;
 
 /**
  * Value object representing an entry of the Pending Entry List retrieved via {@literal XPENDING}.
  *
  * @author Mark Paluch
- * @since 4.5
+ * @since 5.1
  */
 public class PendingEntry {
 
-    private String messageId;
-    private String consumer;
-    private long millisSinceDelivery;
-    private long deliveryCount;
+    private final String messageId;
+    private final String consumer;
+    private final long millisSinceDelivery;
+    private final long deliveryCount;
 
     public PendingEntry(String messageId, String consumer, long millisSinceDelivery, long deliveryCount) {
+
         this.messageId = messageId;
         this.consumer = consumer;
         this.millisSinceDelivery = millisSinceDelivery;

@@ -22,8 +22,7 @@ import static io.lettuce.core.protocol.CommandType.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.lambdaworks.redis.Range.Boundary;
-
+import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
@@ -2052,8 +2051,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XACK, new IntegerOutput<>(codec), args);
     }
 
-    public Command<K, V, List<StreamMessage<K, V>>> xclaim(K key, Consumer<K> consumer, String[] messageIds,
-            XClaimArgs xClaimArgs) {
+    public Command<K, V, List<StreamMessage<K, V>>> xclaim(K key, Consumer<K> consumer, XClaimArgs xClaimArgs,
+            String[] messageIds) {
 
         notNullKey(key);
         LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);
@@ -2248,7 +2247,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return range.getUpper().getValue();
     }
 
-    public Command<K, V, List<StreamMessage<K, V>>> xread(StreamOffset<K>[] streams, XReadArgs xReadArgs) {
+    public Command<K, V, List<StreamMessage<K, V>>> xread(XReadArgs xReadArgs, StreamOffset<K>[] streams) {
         LettuceAssert.notNull(streams, "Streams " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(streams.length > 0, "Streams " + MUST_NOT_BE_EMPTY);
 
@@ -2271,8 +2270,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XREAD, new StreamReadOutput<>(codec), args);
     }
 
-    public Command<K, V, List<StreamMessage<K, V>>> xreadgroup(Consumer<K> consumer, XReadArgs.StreamOffset<K>[] streams,
-            XReadArgs xReadArgs) {
+    public Command<K, V, List<StreamMessage<K, V>>> xreadgroup(Consumer<K> consumer, XReadArgs xReadArgs,
+            StreamOffset<K>[] streams) {
         LettuceAssert.notNull(streams, "Streams " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(streams.length > 0, "Streams " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);

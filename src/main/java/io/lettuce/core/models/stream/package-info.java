@@ -13,18 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.commands.rx;
-
-import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.lambdaworks.redis.commands.StreamCommandTest;
 
 /**
- * @author Mark Paluch
+ * Model and parser for the Stream-related command output such as {@literal XPENDING}.
  */
-public class StreamRxCommandTest extends StreamCommandTest {
+package io.lettuce.core.models.stream;
 
-    @Override
-    protected RedisCommands<String, String> connect() {
-        return RxSyncInvocationHandler.sync(client.connectAsync().getStatefulConnection());
-    }
-}

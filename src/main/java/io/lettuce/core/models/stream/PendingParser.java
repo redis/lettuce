@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.models.stream;
+package io.lettuce.core.models.stream;
 
 import java.util.*;
 
-import com.lambdaworks.redis.Range;
-import com.lambdaworks.redis.internal.LettuceAssert;
+import io.lettuce.core.Range;
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Parser for redis <a href="http://redis.io/commands/xpending">XPENDING</a> command output.
  *
  * @author Mark Paluch
- * @since 4.5
+ * @since 5.1
  */
 public class PendingParser {
 
@@ -35,7 +35,7 @@ public class PendingParser {
     }
 
     /**
-     * Parse the output of the Redis {@literal XPENDING} command with {@link com.lambdaworks.redis.Range}.
+     * Parse the output of the Redis {@literal XPENDING} command with {@link Range}.
      *
      * @param xpendingOutput output of the Redis {@literal XPENDING}.
      * @return list of {@link PendingMessage}s.

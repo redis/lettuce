@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis;
+package io.lettuce.core;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 
-import com.lambdaworks.redis.internal.LettuceAssert;
-import com.lambdaworks.redis.protocol.CommandArgs;
-import com.lambdaworks.redis.protocol.CommandKeyword;
-import com.lambdaworks.redis.protocol.CommandType;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.protocol.CommandType;
 
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/xclaim">XCLAIM</a> command. Static import the methods
@@ -31,7 +31,7 @@ import com.lambdaworks.redis.protocol.CommandType;
  * {@link XClaimArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
- * @since 4.5
+ * @since 5.1
  */
 public class XClaimArgs {
 

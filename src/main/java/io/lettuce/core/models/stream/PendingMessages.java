@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.models.stream;
+package io.lettuce.core.models.stream;
 
 import java.util.Map;
 
-import com.lambdaworks.redis.Range;
+import io.lettuce.core.Range;
 
 /**
+ * Value object representing the output of the Redis {@literal XPENDING} reporting a summary on pending messages.
+ *
  * @author Mark Paluch
+ * @since 5.1
  */
 public class PendingMessages {
 
@@ -29,6 +32,7 @@ public class PendingMessages {
     private final Map<String, Long> consumerMessageCount;
 
     public PendingMessages(long count, Range<String> messageIds, Map<String, Long> consumerMessageCount) {
+
         this.count = count;
         this.messageIds = messageIds;
         this.consumerMessageCount = consumerMessageCount;

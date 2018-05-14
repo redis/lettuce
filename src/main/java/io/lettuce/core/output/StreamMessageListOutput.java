@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.output;
+package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -21,15 +21,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.lambdaworks.redis.StreamMessage;
-import com.lambdaworks.redis.codec.RedisCodec;
-import com.lambdaworks.redis.internal.LettuceAssert;
+import io.lettuce.core.StreamMessage;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * {@link List} of {@link StreamMessage}s.
  *
  * @author Mark Paluch
- * @since 4.5
+ * @since 5.1
  */
 public class StreamMessageListOutput<K, V> extends CommandOutput<K, V, List<StreamMessage<K, V>>> implements
         StreamingOutput<StreamMessage<K, V>> {

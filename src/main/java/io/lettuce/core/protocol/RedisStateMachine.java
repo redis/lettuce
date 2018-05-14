@@ -383,7 +383,7 @@ public class RedisStateMachine {
      * @param bytes
      * @param command
      */
-    protected void safeSetSingle(CommandOutput<K, V, ?> output, ByteBuffer bytes, RedisCommand<K, V, ?> command) {
+    protected void safeSetSingle(CommandOutput<?, ?, ?> output, ByteBuffer bytes, RedisCommand<?, ?, ?> command) {
 
         try {
             output.set(bytes);

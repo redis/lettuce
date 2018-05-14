@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis;
+package io.lettuce.core;
 
 import java.util.Objects;
 
-import com.lambdaworks.redis.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Value object representing a Stream consumer within a consumer group. Group name and consumer name are encoded as keys.
  *
  * @author Mark Paluch
- * @since 4.5
- * @see com.lambdaworks.redis.codec.RedisCodec
+ * @since 5.1
+ * @see io.lettuce.core.codec.RedisCodec
  */
 public class Consumer<K> {
 

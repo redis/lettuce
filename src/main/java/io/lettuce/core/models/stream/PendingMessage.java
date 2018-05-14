@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.models.stream;
+package io.lettuce.core.models.stream;
 
 import java.time.Duration;
 
@@ -21,7 +21,7 @@ import java.time.Duration;
  * Value object representing a pending message reported through XPENDING with range/limit.
  *
  * @author Mark Paluch
- * @since 4.5
+ * @since 5.1
  */
 public class PendingMessage {
 

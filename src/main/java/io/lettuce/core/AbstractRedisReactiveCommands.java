@@ -1483,6 +1483,127 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> xack(K key, K group, String... messageIds) {
+        return createMono(() -> commandBuilder.xack(key, group, messageIds));
+    }
+
+    @Override
+    public Mono<String> xadd(K key, Map<K, V> body) {
+        return createMono(() -> commandBuilder.xadd(key, null, body));
+    }
+
+    @Override
+    public Mono<String> xadd(K key, XAddArgs args, Map<K, V> body) {
+        return createMono(() -> commandBuilder.xadd(key, args, body));
+    }
+
+    @Override
+    public Mono<String> xadd(K key, Object... keysAndValues) {
+        return createMono(() -> commandBuilder.xadd(key, null, keysAndValues));
+    }
+
+    @Override
+    public Mono<String> xadd(K key, XAddArgs args, Object... keysAndValues) {
+        return createMono(() -> commandBuilder.xadd(key, args, keysAndValues));
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, long minIdleTime, String... messageIds) {
+        return createDissolvingFlux(() -> commandBuilder.xclaim(key, consumer, XClaimArgs.Builder.minIdleTime(minIdleTime),
+                messageIds));
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, XClaimArgs args, String... messageIds) {
+        return createDissolvingFlux(() -> commandBuilder.xclaim(key, consumer, args, messageIds));
+    }
+
+    @Override
+    public Mono<Long> xdel(K key, String... messageIds) {
+        return createMono(() -> commandBuilder.xdel(key, messageIds));
+    }
+
+    @Override
+    public Mono<String> xgroupCreate(K key, K group, String offset) {
+        return createMono(() -> commandBuilder.xgroupCreate(key, group, offset));
+    }
+
+    @Override
+    public Mono<Boolean> xgroupDelconsumer(K key, Consumer<K> consumer) {
+        throw new UnsupportedOperationException("Not supported yet");
+    }
+
+    @Override
+    public Mono<Boolean> xgroupSetid(K key, K group, String offset) {
+        throw new UnsupportedOperationException("Not supported yet");
+    }
+
+    @Override
+    public Mono<Long> xlen(K key) {
+        return createMono(() -> commandBuilder.xlen(key));
+    }
+
+    @Override
+    public Flux<Object> xpending(K key, K group) {
+        return xpending(key, group, Range.unbounded(), Limit.unlimited());
+    }
+
+    @Override
+    public Flux<Object> xpending(K key, K group, Range<String> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.xpending(key, group, range, limit));
+    }
+
+    @Override
+    public Flux<Object> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.xpending(key, consumer, range, limit));
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xrange(K key, Range<String> range) {
+        return createDissolvingFlux(() -> commandBuilder.xrange(key, range, Limit.unlimited()));
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xrange(K key, Range<String> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.xrange(key, range, limit));
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xread(XReadArgs.StreamOffset<K>... streams) {
+        return createDissolvingFlux(() -> commandBuilder.xread(null, streams));
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xread(XReadArgs args, XReadArgs.StreamOffset<K>... streams) {
+        return createDissolvingFlux(() -> commandBuilder.xread(args, streams));
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xreadgroup(Consumer<K> consumer, XReadArgs.StreamOffset<K>... streams) {
+        return createDissolvingFlux(() -> commandBuilder.xreadgroup(consumer, null, streams));
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xreadgroup(Consumer<K> consumer, XReadArgs args, XReadArgs.StreamOffset<K>... streams) {
+        return createDissolvingFlux(() -> commandBuilder.xreadgroup(consumer, args, streams));
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xrevrange(K key, Range<String> range) {
+        return xrevrange(key, range, Limit.unlimited());
+    }
+
+    @Override
+    public Flux<StreamMessage<K, V>> xrevrange(K key, Range<String> range, Limit limit) {
+        return createDissolvingFlux(() -> commandBuilder.xrevrange(key, range, limit));
+    }
+
+    @Override
+    public Mono<Long> xtrim(K key, long count) {
+        return createMono(() -> commandBuilder.xtrim(key, count));
+    }
+
+    @Override
     public Mono<Long> zadd(K key, double score, V member) {
         return createMono(() -> commandBuilder.zadd(key, null, score, member));
     }

@@ -22,7 +22,7 @@ import java.util.Objects;
  * A stream message and its id.
  *
  * @author Mark Paluch
- * @since 4.5
+ * @since 5.1
  */
 public class StreamMessage<K, V> {
 

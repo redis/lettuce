@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.lambdaworks.redis.models.stream;
+package io.lettuce.core.models.stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.lambdaworks.redis.Range;
+import io.lettuce.core.Range;
 
 /**
  * @author Mark Paluch
@@ -34,7 +34,8 @@ public class PendingParserTest {
     @Test
     public void shouldParseXpendingWithRangeOutput() {
 
-        List<PendingMessage> result = PendingParser.parseRange(Collections.singletonList(Arrays.asList("foo", "consumer", 1L,
+        List<PendingMessage> result = PendingParser
+                .parseRange(Collections.singletonList(Arrays.asList("foo", "consumer", 1L,
                 2L)));
 
         assertThat(result).hasSize(1);
