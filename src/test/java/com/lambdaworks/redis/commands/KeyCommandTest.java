@@ -16,9 +16,11 @@
 package com.lambdaworks.redis.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assume.assumeTrue;
 
+import java.time.Duration;
 import java.util.*;
 
 import org.junit.Rule;
@@ -247,7 +249,20 @@ public class KeyCommandTest extends AbstractRedisClientTest {
         redis.del(key);
         assertThat(redis.restore(key, 1000, bytes)).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(1000);
 
+        assertThatThrownBy(() -> redis.restore(key, 0, bytes)).isInstanceOf(RedisException.class);
+    }
+
+    @Test
+    public void restoreReplace() {
+
+        redis.set(key, value);
+        byte[] bytes = redis.dump(key);
+        redis.set(key, "foo");
+
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(Duration.ofSeconds(1)).replace())).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(1000);
     }
 

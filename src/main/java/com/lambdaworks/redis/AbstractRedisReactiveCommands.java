@@ -1119,7 +1119,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<String> restore(K key, long ttl, byte[] value) {
-        return createObservable(() -> commandBuilder.restore(key, ttl, value));
+        return createObservable(() -> commandBuilder.restore(key, value, RestoreArgs.Builder.ttl(ttl)));
+    }
+
+    @Override
+    public Observable<String> restore(K key, byte[] value, RestoreArgs args) {
+        return createObservable(() -> commandBuilder.restore(key, value, args));
     }
 
     @Override

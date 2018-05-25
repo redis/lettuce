@@ -1414,11 +1414,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(RENAMENX, new BooleanOutput<>(codec), args);
     }
 
-    Command<K, V, String> restore(K key, long ttl, byte[] value) {
+    Command<K, V, String> restore(K key, byte[] value, RestoreArgs restoreArgs) {
         notNullKey(key);
         LettuceAssert.notNull(value, "Value " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(restoreArgs, "RestoreArgs " + MUST_NOT_BE_NULL);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(ttl).add(value);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(restoreArgs.ttl).add(value);
+
+        if (restoreArgs.replace) {
+            args.add(REPLACE);
+        }
+
         return createCommand(RESTORE, new StatusOutput<>(codec), args);
     }
 

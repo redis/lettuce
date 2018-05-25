@@ -270,6 +270,17 @@ public interface RedisKeyCommands<K, V> {
     String restore(K key, long ttl, byte[] value);
 
     /**
+     * Create a key using the provided serialized value, previously obtained using DUMP.
+     *
+     * @param key the key
+     * @param value the serialized-value type: string
+     * @param args the {@link RestoreArgs}, must not be {@literal null}.
+     * @return String simple-string-reply The command returns OK on success.
+     * @since 4.5
+     */
+    String restore(K key, byte[] value, RestoreArgs args);
+
+    /**
      * Sort the elements in a list, set or sorted set.
      *
      * @param key the key
