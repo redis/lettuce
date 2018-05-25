@@ -1062,7 +1062,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
     @Override
     public RedisFuture<String> restore(K key, long ttl, byte[] value) {
-        return dispatch(commandBuilder.restore(key, ttl, value));
+        return dispatch(commandBuilder.restore(key, value, RestoreArgs.Builder.ttl(ttl)));
+    }
+
+    @Override
+    public RedisFuture<String> restore(K key, byte[] value, RestoreArgs args) {
+        return dispatch(commandBuilder.restore(key, value, args));
     }
 
     @Override

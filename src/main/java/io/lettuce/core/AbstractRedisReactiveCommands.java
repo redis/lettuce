@@ -1080,7 +1080,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Mono<String> restore(K key, long ttl, byte[] value) {
-        return createMono(() -> commandBuilder.restore(key, ttl, value));
+        return createMono(() -> commandBuilder.restore(key, value, RestoreArgs.Builder.ttl(ttl)));
+    }
+
+    @Override
+    public Mono<String> restore(K key, byte[] value, RestoreArgs args) {
+        return createMono(() -> commandBuilder.restore(key, value, args));
     }
 
     @Override
