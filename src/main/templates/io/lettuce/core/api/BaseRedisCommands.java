@@ -110,7 +110,8 @@ public interface BaseRedisCommands<K, V>  {
     String readWrite();
 
     /**
-     * Close the connection.
+     * Instructs Redis to disconnect the connection. Note that if auto-reconnect is enabled then Lettuce will auto-reconnect if
+     * the connection was disconnected. Use {@link io.lettuce.core.api.StatefulConnection#close} to close connections and release resources.
      *
      * @return String simple-string-reply always OK.
      */
