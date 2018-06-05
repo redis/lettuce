@@ -70,6 +70,7 @@ public class ClusterNodeCommandHandlerTest {
     public void before() {
 
         when(clientOptions.getRequestQueueSize()).thenReturn(Integer.MAX_VALUE);
+        when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.DEFAULT);
         when(clientResources.commandLatencyCollector()).thenReturn(DefaultCommandLatencyCollector.disabled());
         sut = new ClusterNodeCommandHandler(clientOptions, clientResources, clusterChannelWriter);
 

@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.async.RedisAsyncCommands;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.lambdaworks.redis.codec.Utf8StringCodec;
 import com.lambdaworks.redis.output.IntegerOutput;
@@ -266,6 +267,29 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         }
 
         connection2.close();
+    }
+
+    @Test
+    public void commandsCancelledOnDisconnect() {
+
+        RedisAsyncCommands<String, String> connection = client.connect().async();
+
+        try {
+
+            connection.setAutoFlushCommands(false);
+            connection.quit();
+
+            RedisFuture<Long> incr = connection.incr(key);
+
+            connection.flushCommands();
+
+            incr.get(5, TimeUnit.SECONDS);
+
+        } catch (Exception e) {
+            assertThat(e).hasRootCauseInstanceOf(RedisException.class).hasMessageContaining("Connection disconnected");
+        }
+
+        connection.close();
     }
 
     private Throwable getException(RedisFuture<?> command) {

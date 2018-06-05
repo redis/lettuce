@@ -22,6 +22,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.ConnectionEvents.PingBeforeActivate;
@@ -96,6 +97,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
     private final boolean debugEnabled;
 
     private final Reliability reliability;
+    private final boolean rejectCommandsWhileDisconnected;
 
     private volatile LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
 
@@ -144,7 +146,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
-        boundedQueue = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
+        this.boundedQueue = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
+        this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
     }
 
     protected Deque<RedisCommand<K, V, ?>> getStack() {
@@ -222,7 +225,8 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         }
 
         if (isClosed()) {
-            cancelCommands("Connection closed");
+            RedisException closed = new RedisException("Connection closed");
+            cancelCommands(closed.getMessage(), getBufferedCommands(), it -> it.completeExceptionally(closed));
         }
 
         synchronized (stateLock) {
@@ -544,7 +548,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
         }
 
-        if (!isConnected() && isRejectCommand()) {
+        if (!isConnected() && rejectCommandsWhileDisconnected) {
             throw new RedisException("Currently not connected. Commands are rejected.");
         }
     }
@@ -689,29 +693,6 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             if (writers.incrementAndGet() == 0) {
                 exclusiveLockOwner = null;
             }
-        }
-    }
-
-    private boolean isRejectCommand() {
-
-        if (clientOptions == null) {
-            return false;
-        }
-
-        switch (clientOptions.getDisconnectedBehavior()) {
-            case REJECT_COMMANDS:
-                return true;
-
-            case ACCEPT_COMMANDS:
-                return false;
-
-            default:
-            case DEFAULT:
-                if (!clientOptions.isAutoReconnect()) {
-                    return true;
-                }
-
-                return false;
         }
     }
 
@@ -943,7 +924,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             }
 
             resetInternals();
-            cancelCommands(((Reset) evt).message, toCancel);
+            cancelCommands(((Reset) evt).message, toCancel, RedisCommand::cancel);
         }
 
         if (evt instanceof PingBeforeActivate) {
@@ -1062,8 +1043,14 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
                 rebuildQueue();
                 setState(LifecycleState.DEACTIVATED);
-
                 channel = null;
+
+                if (rejectCommandsWhileDisconnected && reliability == Reliability.AT_MOST_ONCE) {
+
+                    RedisException disconnected = new RedisException("Connection disconnected");
+                    cancelCommands(disconnected.getMessage(), getBufferedCommands(),
+                            it -> it.completeExceptionally(disconnected));
+                }
             } finally {
                 unlockWritersExclusive();
             }
@@ -1144,7 +1131,7 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
             resetInternals();
         }
 
-        cancelCommands(message, toCancel);
+        cancelCommands(message, toCancel, RedisCommand::cancel);
     }
 
     private List<RedisCommand<K, V, ?>> getBufferedCommands() {
@@ -1160,12 +1147,12 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
         return toCancel;
     }
 
-    private void cancelCommands(String message, List<RedisCommand<K, V, ?>> toCancel) {
+    private void cancelCommands(String message, List<RedisCommand<K, V, ?>> toCancel, Consumer<RedisCommand<K, V, ?>> consumer) {
         for (RedisCommand<K, V, ?> cmd : toCancel) {
             if (cmd.getOutput() != null) {
                 cmd.getOutput().setError(message);
             }
-            cmd.cancel();
+            consumer.accept(cmd);
         }
     }
 
@@ -1321,6 +1308,25 @@ public class CommandHandler<K, V> extends ChannelDuplexHandler implements RedisC
 
     private static long nanoTime() {
         return System.nanoTime();
+    }
+
+    private static boolean isRejectCommand(ClientOptions clientOptions) {
+
+        switch (clientOptions.getDisconnectedBehavior()) {
+            case REJECT_COMMANDS:
+                return true;
+
+            case ACCEPT_COMMANDS:
+                return false;
+
+            default:
+            case DEFAULT:
+                if (!clientOptions.isAutoReconnect()) {
+                    return true;
+                }
+
+                return false;
+        }
     }
 
     private class ListenerSupport {
