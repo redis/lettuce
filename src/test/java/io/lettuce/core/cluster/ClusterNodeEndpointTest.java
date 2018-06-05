@@ -11,7 +11,6 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package io.lettuce.core.cluster;
 
@@ -69,9 +68,9 @@ public class ClusterNodeEndpointTest {
     public void before() {
 
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
+        when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.DEFAULT);
 
-        sut = new ClusterNodeEndpoint(clientOptions, clientResources, clusterChannelWriter);
-        disconnectedBuffer = (Queue) ReflectionTestUtils.getField(sut, "disconnectedBuffer");
+        prepareNewEndpoint();
     }
 
     @Test
@@ -125,6 +124,7 @@ public class ClusterNodeEndpointTest {
     public void closeWithBufferedCommands() {
 
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+        prepareNewEndpoint();
 
         sut.write(command);
 
@@ -137,6 +137,8 @@ public class ClusterNodeEndpointTest {
     public void closeWithCancelledBufferedCommands() {
 
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+        prepareNewEndpoint();
+
         sut.write(command);
         command.cancel();
 
@@ -149,6 +151,8 @@ public class ClusterNodeEndpointTest {
     public void closeWithBufferedCommandsFails() throws Exception {
 
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+        prepareNewEndpoint();
+
         sut.write(command);
         when(clusterChannelWriter.write(any(RedisCommand.class))).thenThrow(new RedisException(""));
 
@@ -161,5 +165,10 @@ public class ClusterNodeEndpointTest {
         } catch (ExecutionException e) {
             assertThat(e).hasCauseExactlyInstanceOf(RedisException.class);
         }
+    }
+
+    private void prepareNewEndpoint() {
+        sut = new ClusterNodeEndpoint(clientOptions, clientResources, clusterChannelWriter);
+        disconnectedBuffer = (Queue) ReflectionTestUtils.getField(sut, "disconnectedBuffer");
     }
 }

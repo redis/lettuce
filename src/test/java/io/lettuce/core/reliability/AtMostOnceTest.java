@@ -25,6 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -279,6 +280,30 @@ public class AtMostOnceTest extends AbstractRedisClientTest {
         }
 
         connection2.close();
+    }
+
+    @Test
+    public void commandsCancelledOnDisconnect() {
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+
+        try {
+
+            RedisAsyncCommands<String, String> async = connection.async();
+            async.setAutoFlushCommands(false);
+            async.quit();
+
+            RedisFuture<Long> incr = async.incr(key);
+
+            connection.flushCommands();
+
+            incr.get(5, TimeUnit.SECONDS);
+
+        } catch (Exception e) {
+            assertThat(e).hasRootCauseInstanceOf(RedisException.class).hasMessageContaining("Connection disconnected");
+        }
+
+        connection.close();
     }
 
     private Throwable getException(RedisFuture<?> command) {

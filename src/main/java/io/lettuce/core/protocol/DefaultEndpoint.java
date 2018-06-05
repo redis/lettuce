@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import io.lettuce.core.*;
@@ -65,6 +66,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     private final Queue<RedisCommand<?, ?, ?>> disconnectedBuffer;
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
     private final boolean boundedQueues;
+    private final boolean rejectCommandsWhileDisconnected;
 
     private final long endpointId = ENDPOINT_COUNTER.incrementAndGet();
     private final SharedLock sharedLock = new SharedLock();
@@ -101,6 +103,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
+        this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
     }
 
     @Override
@@ -202,7 +205,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             }
         }
 
-        if (!isConnected() && isRejectCommand()) {
+        if (!isConnected() && rejectCommandsWhileDisconnected) {
             throw new RedisException("Currently not connected. Commands are rejected.");
         }
     }
@@ -329,29 +332,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         return channel.writeAndFlush(command);
     }
 
-    private boolean isRejectCommand() {
-
-        if (clientOptions == null) {
-            return false;
-        }
-
-        switch (clientOptions.getDisconnectedBehavior()) {
-            case REJECT_COMMANDS:
-                return true;
-
-            case ACCEPT_COMMANDS:
-                return false;
-
-            default:
-            case DEFAULT:
-                if (!clientOptions.isAutoReconnect()) {
-                    return true;
-                }
-
-                return false;
-        }
-    }
-
     @Override
     public void notifyChannelActive(Channel channel) {
 
@@ -408,7 +388,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     public void notifyChannelInactive(Channel channel) {
 
         if (isClosed()) {
-            cancelBufferedCommands("Connection closed");
+            RedisException closed = new RedisException("Connection closed");
+            cancelCommands("Connection closed", drainCommands(), it -> it.completeExceptionally(closed));
         }
 
         sharedLock.doExclusive(() -> {
@@ -577,8 +558,16 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     public void notifyDrainQueuedCommands(HasQueuedCommands queuedCommands) {
 
         if (isClosed()) {
-            cancelCommands("Connection closed", queuedCommands.drainQueue());
-            cancelCommands("Connection closed", drainCommands());
+
+            RedisException closed = new RedisException("Connection closed");
+            cancelCommands(closed.getMessage(), queuedCommands.drainQueue(), it -> it.completeExceptionally(closed));
+            cancelCommands(closed.getMessage(), drainCommands(), it -> it.completeExceptionally(closed));
+            return;
+        } else if (reliability == Reliability.AT_MOST_ONCE && rejectCommandsWhileDisconnected) {
+
+            RedisException disconnected = new RedisException("Connection disconnected");
+            cancelCommands(disconnected.getMessage(), queuedCommands.drainQueue(), it -> it.completeExceptionally(disconnected));
+            cancelCommands(disconnected.getMessage(), drainCommands(), it -> it.completeExceptionally(disconnected));
             return;
         }
 
@@ -667,16 +656,17 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     }
 
     private void cancelBufferedCommands(String message) {
-        cancelCommands(message, doExclusive(this::drainCommands));
+        cancelCommands(message, doExclusive(this::drainCommands), RedisCommand::cancel);
     }
 
-    private void cancelCommands(String message, Iterable<? extends RedisCommand<?, ?, ?>> toCancel) {
+    private void cancelCommands(String message, Iterable<? extends RedisCommand<?, ?, ?>> toCancel,
+            Consumer<RedisCommand<?, ?, ?>> commandConsumer) {
 
         for (RedisCommand<?, ?, ?> cmd : toCancel) {
             if (cmd.getOutput() != null) {
                 cmd.getOutput().setError(message);
             }
-            cmd.cancel();
+            commandConsumer.accept(cmd);
         }
     }
 
@@ -695,6 +685,25 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "epid=0x" + Long.toHexString(endpointId)
                 + ']';
         return logPrefix = buffer;
+    }
+
+    private static boolean isRejectCommand(ClientOptions clientOptions) {
+
+        switch (clientOptions.getDisconnectedBehavior()) {
+            case REJECT_COMMANDS:
+                return true;
+
+            case ACCEPT_COMMANDS:
+                return false;
+
+            default:
+            case DEFAULT:
+                if (!clientOptions.isAutoReconnect()) {
+                    return true;
+                }
+
+                return false;
+        }
     }
 
     static class ListenerSupport {
