@@ -32,6 +32,26 @@ import io.lettuce.core.output.ValueStreamingChannel;
 public interface RedisSortedSetCommands<K, V> {
 
     /**
+     * Removes and returns a member with the lowest scores in the sorted set stored at one of the keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped member.
+     * @since 5.1
+     */
+    KeyValue<K, ScoredValue<V>> bzpopmin(long timeout, K... keys);
+
+    /**
+     * Removes and returns a member with the highest scores in the sorted set stored at one of the keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped member.
+     * @since 5.1
+     */
+    KeyValue<K, ScoredValue<V>> bzpopmax(long timeout, K... keys);
+
+    /**
      * Add one or more members to a sorted set, or update its score if it already exists.
      *
      * @param key the key
@@ -228,6 +248,44 @@ public interface RedisSortedSetCommands<K, V> {
      * @since 4.3
      */
     Long zlexcount(K key, Range<? extends V> range);
+
+    /**
+     * Removes and returns up to count members with the lowest scores in the sorted set stored at key.
+     *
+     * @param key the key
+     * @return ScoredValue&lt;V&gt; the removed element.
+     * @since 5.1
+     */
+    ScoredValue<V> zpopmin(K key);
+
+    /**
+     * Removes and returns up to count members with the lowest scores in the sorted set stored at key.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of popped scores and elements.
+     * @since 5.1
+     */
+    List<ScoredValue<V>> zpopmin(K key, long count);
+
+    /**
+     * Removes and returns up to count members with the highest scores in the sorted set stored at key.
+     *
+     * @param key the key
+     * @return ScoredValue&lt;V&gt; the removed element.
+     * @since 5.1
+     */
+    ScoredValue<V> zpopmax(K key);
+
+    /**
+     * Removes and returns up to count members with the highest scores in the sorted set stored at key.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of popped scores and elements.
+     * @since 5.1
+     */
+    List<ScoredValue<V>> zpopmax(K key, long count);
 
     /**
      * Return a range of members in a sorted set, by index.
@@ -593,8 +651,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset,
-            long count);
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -609,8 +666,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset,
-            long count);
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.

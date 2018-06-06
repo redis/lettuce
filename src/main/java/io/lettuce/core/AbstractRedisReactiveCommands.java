@@ -1609,6 +1609,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
+        return createMono(() -> commandBuilder.bzpopmin(timeout, keys));
+    }
+
+    @Override
+    public Mono<KeyValue<K, ScoredValue<V>>> bzpopmax(long timeout, K... keys) {
+        return createMono(() -> commandBuilder.bzpopmax(timeout, keys));
+    }
+
+    @Override
     public Mono<Long> zadd(K key, double score, V member) {
         return createMono(() -> commandBuilder.zadd(key, null, score, member));
     }
@@ -1690,6 +1700,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<Long> zlexcount(K key, Range<? extends V> range) {
         return createMono(() -> commandBuilder.zlexcount(key, range));
+    }
+
+    @Override
+    public Mono<ScoredValue<V>> zpopmin(K key) {
+        return createMono(() -> commandBuilder.zpopmin(key));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zpopmin(K key, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zpopmin(key, count));
+    }
+
+    @Override
+    public Mono<ScoredValue<V>> zpopmax(K key) {
+        return createMono(() -> commandBuilder.zpopmax(key));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zpopmax(K key, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zpopmax(key, count));
     }
 
     @Override
