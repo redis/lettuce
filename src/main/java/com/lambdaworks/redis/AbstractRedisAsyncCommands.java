@@ -1643,6 +1643,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
+    public RedisFuture<KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
+        return dispatch(commandBuilder.bzpopmin(timeout, keys));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, ScoredValue<V>>> bzpopmax(long timeout, K... keys) {
+        return dispatch(commandBuilder.bzpopmax(timeout, keys));
+    }
+
+    @Override
     public RedisFuture<Long> zadd(K key, double score, V member) {
         return dispatch(commandBuilder.zadd(key, null, score, member));
     }
@@ -1725,6 +1735,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     @Override
     public RedisFuture<Long> zlexcount(K key, Range<? extends V> range) {
         return dispatch(commandBuilder.zlexcount(key, range));
+    }
+
+    @Override
+    public RedisFuture<ScoredValue<V>> zpopmin(K key) {
+        return dispatch(commandBuilder.zpopmin(key));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zpopmin(K key, long count) {
+        return dispatch(commandBuilder.zpopmin(key, count));
+    }
+
+    @Override
+    public RedisFuture<ScoredValue<V>> zpopmax(K key) {
+        return dispatch(commandBuilder.zpopmax(key));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zpopmax(K key, long count) {
+        return dispatch(commandBuilder.zpopmax(key, count));
     }
 
     @Override

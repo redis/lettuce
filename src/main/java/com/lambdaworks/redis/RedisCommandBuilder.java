@@ -2241,6 +2241,22 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XREADGROUP, new StreamReadOutput<>(codec), args);
     }
 
+    Command<K, V, KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys).add(timeout);
+
+        return createCommand(BZPOPMIN, new KeyValueScoredValueOutput<>(codec), args);
+    }
+
+    Command<K, V, KeyValue<K, ScoredValue<V>>> bzpopmax(long timeout, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys).add(timeout);
+
+        return createCommand(BZPOPMAX, new KeyValueScoredValueOutput<>(codec), args);
+    }
+
     Command<K, V, Long> zadd(K key, ZAddArgs zAddArgs, double score, V member) {
         notNullKey(key);
 
@@ -2370,6 +2386,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.addKey(key).add(minValue(range)).add(maxValue(range));
         return createCommand(ZLEXCOUNT, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, ScoredValue<V>> zpopmin(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key);
+
+        return createCommand(ZPOPMIN, new ScoredValueOutput<>(codec), args);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zpopmin(K key, long count) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key).add(count);
+
+        return createCommand(ZPOPMIN, new ScoredValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, ScoredValue<V>> zpopmax(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key);
+
+        return createCommand(ZPOPMAX, new ScoredValueOutput<>(codec), args);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zpopmax(K key, long count) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key).add(count);
+
+        return createCommand(ZPOPMAX, new ScoredValueListOutput<>(codec), args);
     }
 
     Command<K, V, List<V>> zrange(K key, long start, long stop) {

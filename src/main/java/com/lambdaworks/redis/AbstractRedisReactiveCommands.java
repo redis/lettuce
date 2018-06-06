@@ -1650,6 +1650,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
+        return createObservable(() -> commandBuilder.bzpopmin(timeout, keys));
+    }
+
+    @Override
+    public Observable<KeyValue<K, ScoredValue<V>>> bzpopmax(long timeout, K... keys) {
+        return createObservable(() -> commandBuilder.bzpopmax(timeout, keys));
+    }
+
+    @Override
     public Observable<Long> zadd(K key, double score, V member) {
         return createObservable(() -> commandBuilder.zadd(key, null, score, member));
     }
@@ -1732,6 +1742,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Observable<Long> zlexcount(K key, Range<? extends V> range) {
         return createObservable(() -> commandBuilder.zlexcount(key, range));
+    }
+
+    @Override
+    public Observable<ScoredValue<V>> zpopmin(K key) {
+        return createObservable(() -> commandBuilder.zpopmin(key));
+    }
+
+    @Override
+    public Observable<ScoredValue<V>> zpopmin(K key, long count) {
+        return createDissolvingObservable(() -> commandBuilder.zpopmin(key, count));
+    }
+
+    @Override
+    public Observable<ScoredValue<V>> zpopmax(K key) {
+        return createObservable(() -> commandBuilder.zpopmax(key));
+    }
+
+    @Override
+    public Observable<ScoredValue<V>> zpopmax(K key, long count) {
+        return createDissolvingObservable(() -> commandBuilder.zpopmax(key, count));
     }
 
     @Override

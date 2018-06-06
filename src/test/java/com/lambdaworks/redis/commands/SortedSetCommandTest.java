@@ -170,6 +170,40 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void bzpopmin() {
+        redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
+
+        assertThat(redis.bzpopmin(1, "zset")).isEqualTo(new KeyValue<>("zset", new ScoredValue<>(2.0, "a")));
+        assertThat(redis.bzpopmin(1, "zset2")).isNull();
+    }
+
+    @Test
+    public void bzpopmax() {
+        redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
+
+        assertThat(redis.bzpopmax(1, "zset")).isEqualTo(new KeyValue<>("zset", new ScoredValue<>(4.0, "c")));
+        assertThat(redis.bzpopmax(1, "zset2")).isNull();
+    }
+
+    @Test
+    public void zpopmin() {
+        redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
+
+        assertThat(redis.zpopmin("zset")).isEqualTo(new ScoredValue<>(2.0, "a"));
+        assertThat(redis.zpopmin("zset", 2)).contains(new ScoredValue<>(3.0, "b"), new ScoredValue<>(4.0, "c"));
+        assertThat(redis.zpopmin("foo")).isNull();
+    }
+
+    @Test
+    public void zpopmax() {
+        redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
+
+        assertThat(redis.zpopmax("zset")).isEqualTo(new ScoredValue<>(4.0, "c"));
+        assertThat(redis.zpopmax("zset", 2)).contains(new ScoredValue<>(2.0, "a"), new ScoredValue<>(3.0, "b"));
+        assertThat(redis.zpopmax("foo")).isNull();
+    }
+
+    @Test
     public void zrange() {
         setup();
         assertThat(redis.zrange(key, 0, -1)).isEqualTo(list("a", "b", "c"));
