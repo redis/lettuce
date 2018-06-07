@@ -24,12 +24,14 @@ import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Test;
 
+import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.Range.Boundary;
 
@@ -171,6 +173,9 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void bzpopmin() {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("BZPOPMIN"));
+
         redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
 
         assertThat(redis.bzpopmin(1, "zset")).isEqualTo(new KeyValue<>("zset", new ScoredValue<>(2.0, "a")));
@@ -179,6 +184,9 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void bzpopmax() {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("BZPOPMAX"));
+
         redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
 
         assertThat(redis.bzpopmax(1, "zset")).isEqualTo(new KeyValue<>("zset", new ScoredValue<>(4.0, "c")));
@@ -187,6 +195,9 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void zpopmin() {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("ZPOPMIN"));
+
         redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
 
         assertThat(redis.zpopmin("zset")).isEqualTo(new ScoredValue<>(2.0, "a"));
@@ -196,6 +207,9 @@ public class SortedSetCommandTest extends AbstractRedisClientTest {
 
     @Test
     public void zpopmax() {
+
+        assumeTrue(RedisConditions.of(redis).hasCommand("ZPOPMAX"));
+
         redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
 
         assertThat(redis.zpopmax("zset")).isEqualTo(new ScoredValue<>(4.0, "c"));
