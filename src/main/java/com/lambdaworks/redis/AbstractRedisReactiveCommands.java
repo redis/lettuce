@@ -1569,8 +1569,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<String> xgroupCreate(K key, K group, String offset) {
-        return createObservable(() -> commandBuilder.xgroupCreate(key, group, offset));
+    public Observable<String> xgroupCreate(XReadArgs.StreamOffset<K> streamOffset, K group) {
+        return createObservable(() -> commandBuilder.xgroupCreate(streamOffset, group));
     }
 
     @Override
