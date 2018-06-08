@@ -1529,8 +1529,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<String> xgroupCreate(K key, K group, String offset) {
-        return createMono(() -> commandBuilder.xgroupCreate(key, group, offset));
+    public Mono<String> xgroupCreate(XReadArgs.StreamOffset<K> streamOffset, K group) {
+        return createMono(() -> commandBuilder.xgroupCreate(streamOffset, group));
     }
 
     @Override

@@ -17,7 +17,6 @@ package io.lettuce.core.api.sync;
 
 import java.util.List;
 import java.util.Map;
-
 import io.lettuce.core.*;
 import io.lettuce.core.XReadArgs.StreamOffset;
 
@@ -115,12 +114,11 @@ public interface RedisStreamCommands<K, V> {
     /**
      * Create a consumer group.
      *
-     * @param key the stream key.
+     * @param streamOffset name of the stream containing the offset to set.
      * @param group name of the consumer group.
-     * @param offset read offset or {@literal $}.
      * @return simple-reply {@literal true} if successful.
      */
-    String xgroupCreate(K key, K group, String offset);
+    String xgroupCreate(StreamOffset<K> streamOffset, K group);
 
     /**
      * Delete a consumer from a consumer group.
