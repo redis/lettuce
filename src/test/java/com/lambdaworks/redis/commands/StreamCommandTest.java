@@ -17,14 +17,12 @@ package com.lambdaworks.redis.commands;
 
 import static com.lambdaworks.redis.protocol.CommandType.XINFO;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import java.time.Instant;
 import java.util.*;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.lambdaworks.RedisConditions;
@@ -338,20 +336,33 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    @Ignore("Not yet implemented in Redis")
-    public void xgroupDelgroup() {
+    public void xgroupDestroy() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(key, "group", "$");
 
-        fail("Not yet implemented in Redis");
+        assertThat(redis.xgroupDestroy(key, "group")).isTrue();
+        assertThat(redis.xgroupDestroy(key, "group")).isFalse();
     }
 
     @Test
-    @Ignore("Not yet implemented in Redis")
+    public void xgroupDelconsumer() {
+
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(key, "group", "$");
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        assertThat(redis.xgroupDelconsumer(key, Consumer.from("group", "consumer1"))).isTrue();
+        assertThat(redis.xgroupDelconsumer(key, Consumer.from("group", "consumer1"))).isFalse();
+    }
+
+    @Test
     public void xgroupSetid() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(key, "group", "$");
 
-        fail("Not yet implemented in Redis");
+        assertThat(redis.xgroupSetid(StreamOffset.latest(key), "group")).isEqualTo("OK");
     }
 }

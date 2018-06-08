@@ -15,12 +15,11 @@
  */
 package com.lambdaworks.redis.api.rx;
 
+import java.util.List;
 import java.util.Map;
-
-import rx.Observable;
-
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.XReadArgs.StreamOffset;
+import rx.Observable;
 
 /**
  * Observable commands for Streams.
@@ -133,14 +132,22 @@ public interface RedisStreamReactiveCommands<K, V> {
     Observable<Boolean> xgroupDelconsumer(K key, Consumer<K> consumer);
 
     /**
-     * Set the current {@code group} id.
+     * Destroy a consumer group.
      *
      * @param key the stream key.
      * @param group name of the consumer group.
-     * @param offset read offset or {@literal $}.
-     * @return simple-reply the lenght of the stream.
+     * @return simple-reply the number of pending messages
      */
-    Observable<Boolean> xgroupSetid(K key, K group, String offset);
+    Observable<Boolean> xgroupDestroy(K key, K group);
+
+    /**
+     * Set the current {@code group} id.
+     *
+     * @param streamOffset name of the stream containing the offset to set.
+     * @param group name of the consumer group.
+     * @return simple-reply OK
+     */
+    Observable<String> xgroupSetid(StreamOffset<K> streamOffset, K group);
 
     /**
      * Get the length of a steam.

@@ -1575,12 +1575,17 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<Boolean> xgroupDelconsumer(K key, Consumer<K> consumer) {
-        return null;
+        return createObservable(() -> commandBuilder.xgroupDelconsumer(key, consumer));
     }
 
     @Override
-    public Observable<Boolean> xgroupSetid(K key, K group, String offset) {
-        return null;
+    public Observable<Boolean> xgroupDestroy(K key, K group) {
+        return createObservable(() -> commandBuilder.xgroupDestroy(key, group));
+    }
+
+    @Override
+    public Observable<String> xgroupSetid(XReadArgs.StreamOffset<K> streamOffset, K group) {
+        return createObservable(() -> commandBuilder.xgroupSetid(streamOffset, group));
     }
 
     @Override

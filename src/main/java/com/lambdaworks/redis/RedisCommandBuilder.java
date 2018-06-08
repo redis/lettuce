@@ -2073,10 +2073,39 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, String> xgroupCreate(K key, K group, String id) {
         notNullKey(key);
-        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(id, "Id " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(CREATE).addKey(key).addKey(group).add(id);
+
+        return createCommand(XGROUP, new StatusOutput<>(codec), args);
+    }
+
+    public Command<K, V, Boolean> xgroupDelconsumer(K key, Consumer<K> consumer) {
+        notNullKey(key);
+        LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("DELCONSUMER").addKey(key).addKey(consumer.getGroup())
+                .addKey(consumer.getName());
+
+        return createCommand(XGROUP, new BooleanOutput<>(codec), args);
+    }
+
+    public Command<K, V, Boolean> xgroupDestroy(K key, K group) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("DESTROY").addKey(key).addKey(group);
+
+        return createCommand(XGROUP, new BooleanOutput<>(codec), args);
+    }
+
+    public Command<K, V, String> xgroupSetid(StreamOffset<K> offset, K group) {
+        LettuceAssert.notNull(offset, "StreamOffset " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("SETID").addKey(offset.getName()).addKey(group)
+                .add(offset.getOffset());
 
         return createCommand(XGROUP, new StatusOutput<>(codec), args);
     }
