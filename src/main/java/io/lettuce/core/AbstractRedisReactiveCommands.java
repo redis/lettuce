@@ -1535,12 +1535,17 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Mono<Boolean> xgroupDelconsumer(K key, Consumer<K> consumer) {
-        throw new UnsupportedOperationException("Not supported yet");
+        return createMono(() -> commandBuilder.xgroupDelconsumer(key, consumer));
     }
 
     @Override
-    public Mono<Boolean> xgroupSetid(K key, K group, String offset) {
-        throw new UnsupportedOperationException("Not supported yet");
+    public Mono<Boolean> xgroupDestroy(K key, K group) {
+        return createMono(() -> commandBuilder.xgroupDestroy(key, group));
+    }
+
+    @Override
+    public Mono<String> xgroupSetid(XReadArgs.StreamOffset<K> streamOffset, K group) {
+        return createMono(() -> commandBuilder.xgroupSetid(streamOffset, group));
     }
 
     @Override
