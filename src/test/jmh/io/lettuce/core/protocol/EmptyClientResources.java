@@ -26,6 +26,7 @@ import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.CommandLatencyId;
 import io.lettuce.core.metrics.CommandMetrics;
 import io.lettuce.core.resource.*;
+import io.lettuce.core.tracing.Tracing;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -104,6 +105,11 @@ public class EmptyClientResources implements ClientResources {
     @Override
     public NettyCustomizer nettyCustomizer() {
         return null;
+    }
+
+    @Override
+    public Tracing tracing() {
+        return Tracing.disabled();
     }
 
     public static class EmptyCommandLatencyCollector implements CommandLatencyCollector {

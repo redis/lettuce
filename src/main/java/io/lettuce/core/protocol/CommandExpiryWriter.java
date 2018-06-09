@@ -96,6 +96,11 @@ public class CommandExpiryWriter implements RedisChannelWriter {
     }
 
     @Override
+    public ClientResources getClientResources() {
+        return writer.getClientResources();
+    }
+
+    @Override
     public void setAutoFlushCommands(boolean autoFlush) {
         writer.setAutoFlushCommands(autoFlush);
     }

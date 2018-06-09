@@ -24,6 +24,7 @@ import io.lettuce.core.cluster.pubsub.RedisClusterPubSubAdapter;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.PubSubOutput;
+import io.lettuce.core.resource.ClientResources;
 
 /**
  * @author Mark Paluch
@@ -41,9 +42,10 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
      * Initialize a new instance that handles commands from the supplied queue.
      *
      * @param clientOptions client options for this connection, must not be {@literal null}
+     * @param clientResources client resources for this connection, must not be {@literal null}.
      */
-    public PubSubClusterEndpoint(ClientOptions clientOptions) {
-        super(clientOptions);
+    public PubSubClusterEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
+        super(clientOptions, clientResources);
     }
 
     /**

@@ -51,6 +51,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.*;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.ImmediateEventExecutor;
@@ -73,6 +74,9 @@ public class DefaultEndpointTest {
 
     @Mock
     private ConnectionWatchdog connectionWatchdog;
+
+    @Mock
+    private ClientResources clientResources;
 
     private ChannelPromise promise;
 
@@ -118,7 +122,7 @@ public class DefaultEndpointTest {
             return promise;
         });
 
-        sut = new DefaultEndpoint(ClientOptions.create());
+        sut = new DefaultEndpoint(ClientOptions.create(), clientResources);
         sut.setConnectionFacade(connectionFacade);
     }
 
@@ -248,7 +252,7 @@ public class DefaultEndpointTest {
 
         sut = new DefaultEndpoint(ClientOptions.builder() //
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS) //
-                .build());
+                .build(), clientResources);
 
         try {
             sut.write(command);
@@ -277,7 +281,7 @@ public class DefaultEndpointTest {
         sut = new DefaultEndpoint(ClientOptions.builder() //
                 .autoReconnect(false) //
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.DEFAULT) //
-                .build());
+                .build(), clientResources);
 
         try {
             sut.write(command);
@@ -363,7 +367,7 @@ public class DefaultEndpointTest {
 
     @Test
     public void testMTCConcurrentConcurrentWrite() throws Throwable {
-        TestFramework.runOnce(new MTCConcurrentConcurrentWrite(command));
+        TestFramework.runOnce(new MTCConcurrentConcurrentWrite(command, clientResources));
     }
 
     /**
@@ -374,11 +378,11 @@ public class DefaultEndpointTest {
         private final Command<String, String, String> command;
         private TestableEndpoint handler;
 
-        public MTCConcurrentConcurrentWrite(Command<String, String, String> command) {
+        public MTCConcurrentConcurrentWrite(Command<String, String, String> command, ClientResources clientResources) {
 
             this.command = command;
 
-            handler = new TestableEndpoint(ClientOptions.create()) {
+            handler = new TestableEndpoint(ClientOptions.create(), clientResources) {
 
                 @Override
                 protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
@@ -412,10 +416,11 @@ public class DefaultEndpointTest {
         /**
          * Create a new {@link DefaultEndpoint}.
          *
-         * @param clientOptions client options for this connection, must not be {@literal null}
+         * @param clientOptions client options for this connection, must not be {@literal null}.
+         * @param clientResources client resources for this connection, must not be {@literal null}.
          */
-        public TestableEndpoint(ClientOptions clientOptions) {
-            super(clientOptions);
+        public TestableEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
+            super(clientOptions, clientResources);
         }
     }
 }

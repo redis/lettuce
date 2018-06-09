@@ -29,6 +29,7 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.*;
+import io.lettuce.core.resource.ClientResources;
 
 /**
  * Channel writer for cluster operation. This writer looks up the right partition by hash/slot for the operation.
@@ -357,6 +358,11 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     @Override
     public void setConnectionFacade(ConnectionFacade redisChannelHandler) {
         defaultWriter.setConnectionFacade(redisChannelHandler);
+    }
+
+    @Override
+    public ClientResources getClientResources() {
+        return defaultWriter.getClientResources();
     }
 
     @Override

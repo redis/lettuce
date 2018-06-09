@@ -68,9 +68,9 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     /**
      * Creates a new {@link RedisPublisher} for a static command.
      *
-     * @param staticCommand static command, must not be {@literal null}
-     * @param connection the connection, must not be {@literal null}
-     * @param dissolve dissolve collections into particular elements
+     * @param staticCommand static command, must not be {@literal null}.
+     * @param connection the connection, must not be {@literal null}.
+     * @param dissolve dissolve collections into particular elements.
      */
     public RedisPublisher(RedisCommand<K, V, T> staticCommand, StatefulConnection<K, V> connection, boolean dissolve) {
         this(() -> staticCommand, connection, dissolve);
@@ -79,9 +79,9 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     /**
      * Creates a new {@link RedisPublisher} for a command supplier.
      *
-     * @param commandSupplier command supplier, must not be {@literal null}
-     * @param connection the connection, must not be {@literal null}
-     * @param dissolve dissolve collections into particular elements
+     * @param commandSupplier command supplier, must not be {@literal null}.
+     * @param connection the connection, must not be {@literal null}.
+     * @param dissolve dissolve collections into particular elements.
      */
     public RedisPublisher(Supplier<RedisCommand<K, V, T>> commandSupplier, StatefulConnection<K, V> connection, boolean dissolve) {
 

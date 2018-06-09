@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import io.lettuce.core.tracing.Tracing;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,6 +67,7 @@ public class ReactiveBackpressurePropagationTest {
     public void before() throws Exception {
 
         when(clientResources.commandLatencyCollector()).thenReturn(latencyCollector);
+        when(clientResources.tracing()).thenReturn(Tracing.disabled());
         when(statefulConnection.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 
             RedisCommand command = (RedisCommand) invocation.getArguments()[0];

@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import io.lettuce.core.tracing.TraceContext;
+import io.lettuce.core.tracing.TraceContextProvider;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.GeoArgs.Unit;
@@ -33,6 +35,8 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.*;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.tracing.Tracing;
 
 /**
  * A reactive and thread-safe API for a Redis connection.
@@ -51,17 +55,21 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     private final StatefulConnection<K, V> connection;
     private final RedisCodec<K, V> codec;
     private final RedisCommandBuilder<K, V> commandBuilder;
+    private final ClientResources clientResources;
+    private final boolean tracingEnabled;
 
     /**
      * Initialize a new instance.
      *
-     * @param connection the connection to operate on
-     * @param codec the codec for command encoding
+     * @param connection the connection to operate on.
+     * @param codec the codec for command encoding.
      */
     public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
         this.codec = codec;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
+        this.clientResources = connection.getResources();
+        this.tracingEnabled = clientResources.tracing().isEnabled();
     }
 
     @Override
@@ -355,11 +363,29 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @SuppressWarnings("unchecked")
     public <T, R> Flux<R> createDissolvingFlux(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return (Flux<R>) Flux.from(new RedisPublisher<>(commandSupplier, connection, true));
+        return (Flux<R>) createFlux(commandSupplier, true);
     }
 
     public <T> Flux<T> createFlux(Supplier<RedisCommand<K, V, T>> commandSupplier) {
-        return Flux.from(new RedisPublisher<>(commandSupplier, connection, false));
+        return createFlux(commandSupplier, false);
+    }
+
+    private <T> Flux<T> createFlux(Supplier<RedisCommand<K, V, T>> commandSupplier, boolean dissolve) {
+
+        if (tracingEnabled) {
+
+            return withTraceContext().flatMapMany(
+                    it -> Flux.from(new RedisPublisher<>(decorate(commandSupplier, it), connection, dissolve)));
+        }
+
+        return Flux.from(new RedisPublisher<>(commandSupplier, connection, dissolve));
+    }
+
+    private Mono<TraceContext> withTraceContext() {
+
+        return Tracing.getContext()
+                .switchIfEmpty(Mono.fromSupplier(() -> clientResources.tracing().initialTraceContextProvider()))
+                .flatMap(TraceContextProvider::getTraceContextLater).defaultIfEmpty(TraceContext.EMPTY);
     }
 
     protected <T> Mono<T> createMono(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
@@ -367,7 +393,19 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     public <T> Mono<T> createMono(Supplier<RedisCommand<K, V, T>> commandSupplier) {
+
+        if (tracingEnabled) {
+
+            return withTraceContext().flatMap(
+                    it -> Mono.from(new RedisPublisher<>(decorate(commandSupplier, it), connection, false)));
+        }
+
         return Mono.from(new RedisPublisher<>(commandSupplier, connection, false));
+    }
+
+    private <T> Supplier<RedisCommand<K, V, T>> decorate(Supplier<RedisCommand<K, V, T>> commandSupplier,
+            TraceContext traceContext) {
+        return () -> new TracedCommand<>(commandSupplier.get(), traceContext);
     }
 
     @Override

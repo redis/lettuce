@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.resource.ClientResources;
 
 /**
  * A stateful connection providing command dispatching, timeouts and open/close methods.
@@ -101,10 +102,14 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
     boolean isOpen();
 
     /**
-     *
      * @return the client options valid for this connection.
      */
     ClientOptions getOptions();
+
+    /**
+     * @return the client resources used for this connection.
+     */
+    ClientResources getResources();
 
     /**
      * Reset the command state. Queued commands will be canceled and the internal state will be reset. This is useful when the

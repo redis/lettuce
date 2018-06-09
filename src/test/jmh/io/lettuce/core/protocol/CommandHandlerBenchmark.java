@@ -64,7 +64,8 @@ public class CommandHandlerBenchmark {
     @Setup
     public void setup() throws Exception {
 
-        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new DefaultEndpoint(CLIENT_OPTIONS));
+        commandHandler = new CommandHandler(CLIENT_OPTIONS, EmptyClientResources.INSTANCE, new DefaultEndpoint(CLIENT_OPTIONS,
+                EmptyClientResources.INSTANCE));
         commandHandler.channelRegistered(CHANNEL_HANDLER_CONTEXT);
         commandHandler.setState(CommandHandler.LifecycleState.CONNECTED);
 

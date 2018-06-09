@@ -79,7 +79,7 @@ class SentinelConnector<K, V> implements MasterSlaveConnector<K, V> {
 
         connectionProvider.setKnownNodes(nodes);
 
-        MasterSlaveChannelWriter channelWriter = new MasterSlaveChannelWriter(connectionProvider) {
+        MasterSlaveChannelWriter channelWriter = new MasterSlaveChannelWriter(connectionProvider, redisClient.getResources()) {
 
             @Override
             public CompletableFuture<Void> closeAsync() {

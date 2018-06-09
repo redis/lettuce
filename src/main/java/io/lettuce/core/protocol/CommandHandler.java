@@ -32,6 +32,10 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.tracing.Tracer;
+import io.lettuce.core.tracing.Tracing;
+import io.lettuce.core.tracing.TraceContext;
+import io.lettuce.core.tracing.TraceContextProvider;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
@@ -74,6 +78,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final boolean traceEnabled = logger.isTraceEnabled();
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final boolean latencyMetricsEnabled;
+    private final boolean tracingEnabled;
     private final boolean boundedQueues;
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
@@ -83,6 +88,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private String logPrefix;
     private PristineFallbackCommand fallbackCommand;
     private boolean pristine;
+    private Tracing.Endpoint tracedEndpoint;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -102,6 +108,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.endpoint = endpoint;
         this.latencyMetricsEnabled = clientResources.commandLatencyCollector().isEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
+
+        Tracing tracing = clientResources.tracing();
+
+        this.tracingEnabled = tracing.isEnabled();
     }
 
     public Queue<RedisCommand<?, ?, ?>> getStack() {
@@ -245,6 +255,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
+        tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
         logPrefix = null;
         pristine = true;
         fallbackCommand = null;
@@ -296,6 +307,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             return;
         }
 
+        tracedEndpoint = null;
         setState(LifecycleState.DISCONNECTED);
         setState(LifecycleState.DEACTIVATING);
 
@@ -363,6 +375,43 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         addToStack(command, promise);
+
+        if (tracingEnabled && command instanceof CompleteableCommand) {
+
+            TracedCommand provider = CommandWrapper.unwrap(command, TracedCommand.class);
+            Tracer tracer = clientResources.tracing().getTracerProvider().getTracer();
+            TraceContext context = (provider == null ? clientResources.tracing().initialTraceContextProvider() : provider)
+                    .getTraceContext();
+
+            Tracer.Span span = tracer.nextSpan(context);
+            span.name(command.getType().name());
+
+            if (command.getArgs() != null) {
+                span.tag("redis.args", command.getArgs().toCommandString());
+            }
+
+            span.remoteEndpoint(tracedEndpoint);
+            span.start();
+            provider.setSpan(span);
+
+            CompleteableCommand<?> completeableCommand = (CompleteableCommand<?>) command;
+            completeableCommand.onComplete((o, throwable) -> {
+
+                if (command.getOutput() != null) {
+
+                    String error = command.getOutput().getError();
+                    if (error != null) {
+                        span.tag("error", error);
+                    } else if (throwable != null) {
+                        span.tag("exception", throwable.toString());
+                        span.error(throwable);
+                    }
+                }
+
+                span.finish();
+            });
+        }
+
         ctx.write(command, promise);
     }
 

@@ -26,6 +26,7 @@ import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.util.*;
 
+import io.lettuce.core.tracing.Tracing;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -125,6 +126,7 @@ public class CommandHandlerTest {
 
         when(latencyCollector.isEnabled()).thenReturn(true);
         when(clientResources.commandLatencyCollector()).thenReturn(latencyCollector);
+        when(clientResources.tracing()).thenReturn(Tracing.disabled());
 
         sut = new CommandHandler(ClientOptions.create(), clientResources, endpoint);
         stack = (Queue) ReflectionTestUtils.getField(sut, "stack");

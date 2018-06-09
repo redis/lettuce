@@ -25,6 +25,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.ConcurrentSet;
 
 /**
@@ -52,9 +53,11 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
      * Initialize a new instance that handles commands from the supplied queue.
      *
      * @param clientOptions client options for this connection, must not be {@literal null}
+     * @param clientResources client resources for this connection, must not be {@literal null}.
      */
-    public PubSubEndpoint(ClientOptions clientOptions) {
-        super(clientOptions);
+    public PubSubEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
+
+        super(clientOptions, clientResources);
 
         this.channels = new ConcurrentSet<>();
         this.patterns = new ConcurrentSet<>();

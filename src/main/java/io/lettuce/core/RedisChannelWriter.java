@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.resource.ClientResources;
 
 /**
  * Writer for a channel. Writers push commands on to the communication channel and maintain a state for the commands.
@@ -91,4 +92,10 @@ public interface RedisChannelWriter extends Closeable, AsyncCloseable {
      * achieve batching. No-op if channel is not connected.
      */
     void flushCommands();
+
+    /**
+     * @return the {@link ClientResources}.
+     * @since 5.1
+     */
+    ClientResources getClientResources();
 }

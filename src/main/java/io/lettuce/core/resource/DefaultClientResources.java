@@ -20,6 +20,8 @@ import static io.lettuce.core.resource.Futures.toBooleanPromise;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import io.lettuce.core.tracing.TracerProvider;
+import io.lettuce.core.tracing.Tracing;
 import reactor.core.scheduler.Schedulers;
 import io.lettuce.core.event.DefaultEventBus;
 import io.lettuce.core.event.DefaultEventPublisherOptions;
@@ -60,6 +62,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
  * <li>a {@code timer} that is a provided instance of {@link io.netty.util.HashedWheelTimer}.</li>
  * <li>a {@code nettyCustomizer} that is a provided instance of {@link NettyCustomizer}.</li>
+ * <li>a {@code tracerProvider} that is a provided instance of {@link TracerProvider}.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -120,6 +123,7 @@ public class DefaultClientResources implements ClientResources {
     private final DnsResolver dnsResolver;
     private final Supplier<Delay> reconnectDelay;
     private final NettyCustomizer nettyCustomizer;
+    private final Tracing tracing;
 
     private volatile boolean shutdownCalled = false;
 
@@ -209,6 +213,7 @@ public class DefaultClientResources implements ClientResources {
 
         reconnectDelay = builder.reconnectDelay;
         nettyCustomizer = builder.nettyCustomizer;
+        tracing = builder.tracing;
     }
 
     /**
@@ -246,6 +251,7 @@ public class DefaultClientResources implements ClientResources {
         private DnsResolver dnsResolver = DnsResolvers.UNRESOLVED;
         private Supplier<Delay> reconnectDelay = DEFAULT_RECONNECT_DELAY;
         private NettyCustomizer nettyCustomizer = DEFAULT_NETTY_CUSTOMIZER;
+        private Tracing tracing = Tracing.disabled();
 
         private Builder() {
         }
@@ -454,6 +460,21 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
+         * Sets the {@link Tracing} instance to trace Redis calls.
+         *
+         * @param tracing the tracer infrastructure instance, must not be {@literal null}.
+         * @return this
+         * @since 5.1
+         */
+        public Builder tracing(Tracing tracing) {
+
+            LettuceAssert.notNull(tracing, "Tracing must not be null");
+
+            this.tracing = tracing;
+            return this;
+        }
+
+        /**
          *
          * @return a new instance of {@link DefaultClientResources}.
          */
@@ -596,5 +617,10 @@ public class DefaultClientResources implements ClientResources {
     @Override
     public NettyCustomizer nettyCustomizer() {
         return nettyCustomizer;
+    }
+
+    @Override
+    public Tracing tracing() {
+        return tracing;
     }
 }

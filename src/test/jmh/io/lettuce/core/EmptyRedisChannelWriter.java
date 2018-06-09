@@ -19,7 +19,9 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.protocol.ConnectionFacade;
+import io.lettuce.core.protocol.EmptyClientResources;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.resource.ClientResources;
 
 /**
  * @author Mark Paluch
@@ -56,16 +58,18 @@ public class EmptyRedisChannelWriter implements RedisChannelWriter {
 
     @Override
     public void setConnectionFacade(ConnectionFacade connection) {
+    }
 
+    @Override
+    public ClientResources getClientResources() {
+        return EmptyClientResources.INSTANCE;
     }
 
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
-
     }
 
     @Override
     public void flushCommands() {
-
     }
 }

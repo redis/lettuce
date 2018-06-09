@@ -218,6 +218,41 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
         return result;
     }
 
+    /**
+     * Returns an object that implements the given interface to allow access to non-standard methods, or standard methods not
+     * exposed by the proxy.
+     *
+     * If the receiver implements the interface then the result is the receiver or a proxy for the receiver. If the receiver is
+     * a wrapper and the wrapped object implements the interface then the result is the wrapped object or a proxy for the
+     * wrapped object. Otherwise return the the result of calling <code>unwrap</code> recursively on the wrapped object or a
+     * proxy for that result. If the receiver is not a wrapper and does not implement the interface, then an {@literal null} is
+     * returned.
+     *
+     * @param wrapped
+     * @param iface A Class defining an interface that the result must implement.
+     * @return the unwrapped instance or {@literal null}.
+     * @since 5.1
+     */
+    @SuppressWarnings("unchecked")
+    public static <R, K, V, T> R unwrap(RedisCommand<K, V, T> wrapped, Class<R> iface) {
+
+        RedisCommand<K, V, T> result = wrapped;
+
+        if (iface.isInstance(wrapped)) {
+            return iface.cast(wrapped);
+        }
+
+        while (result instanceof DecoratedCommand<?, ?, ?>) {
+            result = ((DecoratedCommand<K, V, T>) result).getDelegate();
+
+            if (iface.isInstance(result)) {
+                return iface.cast(result);
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public boolean equals(Object o) {
 

@@ -30,6 +30,7 @@ import io.lettuce.core.*;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
+import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -63,6 +64,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
     private final Reliability reliability;
     private final ClientOptions clientOptions;
+    private final ClientResources clientResources;
     private final Queue<RedisCommand<?, ?, ?>> disconnectedBuffer;
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
     private final boolean boundedQueues;
@@ -92,13 +94,16 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     /**
      * Create a new {@link DefaultEndpoint}.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}
+     * @param clientOptions client options for this connection, must not be {@literal null}.
+     * @param clientResources client resources for this connection, must not be {@literal null}.
      */
-    public DefaultEndpoint(ClientOptions clientOptions) {
+    public DefaultEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
 
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        LettuceAssert.notNull(clientOptions, "ClientResources must not be null");
 
         this.clientOptions = clientOptions;
+        this.clientResources = clientResources;
         this.reliability = clientOptions.isAutoReconnect() ? Reliability.AT_LEAST_ONCE : Reliability.AT_MOST_ONCE;
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
@@ -109,6 +114,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     @Override
     public void setConnectionFacade(ConnectionFacade connectionFacade) {
         this.connectionFacade = connectionFacade;
+    }
+
+    @Override
+    public ClientResources getClientResources() {
+        return clientResources;
     }
 
     @Override

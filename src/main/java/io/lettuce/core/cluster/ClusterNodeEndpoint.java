@@ -48,7 +48,9 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
      */
     public ClusterNodeEndpoint(ClientOptions clientOptions, ClientResources clientResources,
             RedisChannelWriter clusterChannelWriter) {
-        super(clientOptions);
+
+        super(clientOptions, clientResources);
+
         this.clusterChannelWriter = clusterChannelWriter;
     }
 

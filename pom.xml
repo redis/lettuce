@@ -62,6 +62,7 @@
         <netty-version>4.1.24.Final</netty-version>
         <spring-version>4.3.14.RELEASE</spring-version>
         <reactor-version>Bismuth-SR8</reactor-version>
+        <brave-version>5.0.0</brave-version>
     </properties>
 
     <scm>
@@ -98,6 +99,14 @@
                 <scope>import</scope>
             </dependency>
 
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave-bom</artifactId>
+                <version>${brave-version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -126,6 +135,8 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
         </dependency>
+
+        <!-- End of Core Dependencies -->
 
         <!-- OS-native transports -->
 
@@ -158,6 +169,8 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Metrics/Tracing -->
+
         <dependency>
             <groupId>org.latencyutils</groupId>
             <artifactId>LatencyUtils</artifactId>
@@ -172,7 +185,11 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- End of Core Dependencies -->
+        <dependency>
+            <groupId>io.zipkin.brave</groupId>
+            <artifactId>brave</artifactId>
+            <optional>true</optional>
+        </dependency>
 
         <!-- Reactive Dependencies -->
 

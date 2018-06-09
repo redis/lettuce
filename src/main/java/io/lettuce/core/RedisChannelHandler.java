@@ -19,6 +19,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -28,9 +29,9 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.CommandExpiryWriter;
-import io.lettuce.core.protocol.ConnectionFacade;
-import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.protocol.*;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.tracing.TraceContextProvider;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -55,6 +56,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     private CloseEvents closeEvents = new CloseEvents();
 
     private final RedisChannelWriter channelWriter;
+    private final ClientResources clientResources;
+    private final boolean tracingEnabled;
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
@@ -71,6 +74,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     public RedisChannelHandler(RedisChannelWriter writer, Duration timeout) {
 
         this.channelWriter = writer;
+        this.clientResources = writer.getClientResources();
+        this.tracingEnabled = clientResources.tracing().isEnabled();
 
         writer.setConnectionFacade(this);
         setTimeout(timeout);
@@ -164,6 +169,19 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
             logger.debug("dispatching command {}", cmd);
         }
 
+        if (tracingEnabled) {
+
+            RedisCommand<K, V, T> commandToSend = cmd;
+            TraceContextProvider provider = CommandWrapper.unwrap(cmd, TraceContextProvider.class);
+
+            if (provider == null) {
+                commandToSend = new TracedCommand<>(cmd, clientResources.tracing()
+                        .initialTraceContextProvider().getTraceContext());
+            }
+
+            return channelWriter.write(commandToSend);
+        }
+
         return channelWriter.write(cmd);
     }
 
@@ -171,6 +189,26 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
         if (debugEnabled) {
             logger.debug("dispatching commands {}", commands);
+        }
+
+        if (tracingEnabled) {
+
+            Collection<RedisCommand<K, V, ?>> withTracer = new ArrayList<>(commands.size());
+
+            for (RedisCommand<K, V, ?> command : commands) {
+
+                RedisCommand<K, V, ?> commandToUse = command;
+                TraceContextProvider provider = CommandWrapper.unwrap(command, TraceContextProvider.class);
+                if (provider == null) {
+                    commandToUse = new TracedCommand<>(command, clientResources.tracing()
+                            .initialTraceContextProvider().getTraceContext());
+                }
+
+                withTracer.add(commandToUse);
+            }
+
+            return channelWriter.write(withTracer);
+
         }
 
         return channelWriter.write(commands);
@@ -255,6 +293,10 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     public ClientOptions getOptions() {
         return clientOptions;
+    }
+
+    public ClientResources getResources() {
+        return clientResources;
     }
 
     public void setOptions(ClientOptions clientOptions) {

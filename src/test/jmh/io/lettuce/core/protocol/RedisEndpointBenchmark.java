@@ -49,7 +49,7 @@ public class RedisEndpointBenchmark {
     @Setup
     public void setup() {
 
-        defaultEndpoint = new DefaultEndpoint(CLIENT_OPTIONS);
+        defaultEndpoint = new DefaultEndpoint(CLIENT_OPTIONS, EmptyClientResources.INSTANCE);
         command = new Command(CommandType.GET, new ValueOutput<>(CODEC), new CommandArgs(CODEC).addKey(KEY));
 
         defaultEndpoint.setConnectionFacade(EmptyStatefulRedisConnection.INSTANCE);

@@ -27,6 +27,7 @@ import io.lettuce.core.masterslave.MasterSlaveConnectionProvider.Intent;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.resource.ClientResources;
 
 /**
  * Channel writer/dispatcher that dispatches commands based on the intent to different connections.
@@ -36,10 +37,13 @@ import io.lettuce.core.protocol.RedisCommand;
 class MasterSlaveChannelWriter implements RedisChannelWriter {
 
     private MasterSlaveConnectionProvider<?, ?> masterSlaveConnectionProvider;
+    private final ClientResources clientResources;
+
     private boolean closed = false;
 
-    MasterSlaveChannelWriter(MasterSlaveConnectionProvider<?, ?> masterSlaveConnectionProvider) {
+    MasterSlaveChannelWriter(MasterSlaveConnectionProvider<?, ?> masterSlaveConnectionProvider, ClientResources clientResources) {
         this.masterSlaveConnectionProvider = masterSlaveConnectionProvider;
+        this.clientResources = clientResources;
     }
 
     @Override
@@ -195,6 +199,11 @@ class MasterSlaveChannelWriter implements RedisChannelWriter {
 
     @Override
     public void setConnectionFacade(ConnectionFacade connection) {
+    }
+
+    @Override
+    public ClientResources getClientResources() {
+        return clientResources;
     }
 
     @Override

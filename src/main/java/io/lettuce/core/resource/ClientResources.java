@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.metrics.CommandLatencyCollector;
+import io.lettuce.core.tracing.Tracing;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -40,6 +41,7 @@ import io.netty.util.concurrent.Future;
  * <li>{@link CommandLatencyCollector} to collect latency details. Requires the {@literal HdrHistogram} library.</li>
  * <li>{@link DnsResolver} to collect latency details. Requires the {@literal LatencyUtils} library.</li>
  * <li>Reconnect {@link Delay}.</li>
+ * <li>{@link Tracing} to trace Redis commands.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -156,4 +158,12 @@ public interface ClientResources {
      * @since 4.4
      */
     NettyCustomizer nettyCustomizer();
+
+    /**
+     * Returns the {@link Tracing} instance to support tracing of Redis commands.
+     *
+     * @return the configured {@link Tracing}.
+     * @since 5.1
+     */
+    Tracing tracing();
 }

@@ -40,6 +40,7 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.tracing.Tracing;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -95,6 +96,7 @@ public class PubSubCommandHandlerTest {
 
         when(clientResources.commandLatencyCollector()).thenReturn(
                 new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
+        when(clientResources.tracing()).thenReturn(Tracing.disabled());
 
         sut = new PubSubCommandHandler<>(ClientOptions.create(), clientResources, StringCodec.UTF8, endpoint);
         stack = (Queue) ReflectionTestUtils.getField(sut, "stack");

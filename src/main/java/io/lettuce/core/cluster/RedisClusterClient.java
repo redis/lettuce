@@ -527,7 +527,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         logger.debug("connectPubSubToNode(" + nodeId + ")");
 
-        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions);
+        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions, clientResources);
 
         RedisChannelWriter writer = endpoint;
 
@@ -570,7 +570,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
+        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions, clientResources);
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(clientOptions)) {
@@ -644,7 +644,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<K, V>(clientOptions);
+        PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<K, V>(clientOptions, clientResources);
 
         ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, endpoint,
                 clusterTopologyRefreshScheduler);

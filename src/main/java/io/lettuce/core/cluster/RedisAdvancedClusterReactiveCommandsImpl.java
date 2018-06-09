@@ -64,7 +64,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     /**
      * Initialize a new connection.
      *
-     * @param connection the stateful connection
+     * @param connection the stateful connection.
      * @param codec Codec used to encode/decode keys and values.
      */
     public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {

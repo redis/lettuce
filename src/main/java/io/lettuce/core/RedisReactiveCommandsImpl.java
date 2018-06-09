@@ -33,8 +33,8 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
     /**
      * Initialize a new instance.
      *
-     * @param connection the connection to operate on
-     * @param codec the codec for command encoding
+     * @param connection the connection to operate on.
+     * @param codec the codec for command encoding.
      *
      */
     public RedisReactiveCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {

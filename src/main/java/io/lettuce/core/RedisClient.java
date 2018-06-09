@@ -261,7 +261,7 @@ public class RedisClient extends AbstractRedisClient {
 
         logger.debug("Trying to get a Redis connection for: " + redisURI);
 
-        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
+        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions, clientResources);
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(clientOptions)) {
@@ -423,7 +423,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions);
+        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions, clientResources);
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(clientOptions)) {
@@ -528,7 +528,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
         connectionBuilder.clientResources(clientResources);
 
-        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions);
+        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions, clientResources);
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(clientOptions)) {
