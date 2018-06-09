@@ -46,17 +46,19 @@ public class ClientOptions implements Serializable {
     private final SocketOptions socketOptions;
     private final SslOptions sslOptions;
     private final TimeoutOptions timeoutOptions;
+    private final Builder builder;
 
     protected ClientOptions(Builder builder) {
-        pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
-        cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
-        autoReconnect = builder.autoReconnect;
-        suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
-        requestQueueSize = builder.requestQueueSize;
-        disconnectedBehavior = builder.disconnectedBehavior;
-        socketOptions = builder.socketOptions;
-        sslOptions = builder.sslOptions;
-        timeoutOptions = builder.timeoutOptions;
+        this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
+        this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
+        this.autoReconnect = builder.autoReconnect;
+        this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
+        this.requestQueueSize = builder.requestQueueSize;
+        this.disconnectedBehavior = builder.disconnectedBehavior;
+        this.socketOptions = builder.socketOptions;
+        this.sslOptions = builder.sslOptions;
+        this.timeoutOptions = builder.timeoutOptions;
+        this.builder = builder;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -69,6 +71,7 @@ public class ClientOptions implements Serializable {
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
         this.timeoutOptions = original.getTimeoutOptions();
+        this.builder = original.builder;
     }
 
     /**
@@ -243,6 +246,19 @@ public class ClientOptions implements Serializable {
         public ClientOptions build() {
             return new ClientOptions(this);
         }
+    }
+
+    /**
+     * Returns a builder to create new {@link ClientOptions} whose settings are replicated from the current
+     * {@link ClientOptions}.
+     *
+     * @return a {@link ClientOptions.Builder} to create new {@link ClientOptions} whose settings are replicated from the
+     *         current {@link ClientOptions}.
+     *
+     * @since 5.1
+     */
+    public ClientOptions.Builder mutate() {
+        return this.builder;
     }
 
     /**

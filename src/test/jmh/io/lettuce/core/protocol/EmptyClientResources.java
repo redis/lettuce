@@ -53,6 +53,11 @@ public class EmptyClientResources implements ClientResources {
     }
 
     @Override
+    public Builder mutate() {
+        return null;
+    }
+
+    @Override
     public EventLoopGroupProvider eventLoopGroupProvider() {
         return null;
     }

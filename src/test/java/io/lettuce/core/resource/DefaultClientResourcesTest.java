@@ -85,7 +85,7 @@ public class DefaultClientResourcesTest {
     }
 
     @Test
-    public void testDnsResolver() throws Exception {
+    public void testDnsResolver() {
 
         DirContextDnsResolver dirContextDnsResolver = new DirContextDnsResolver("8.8.8.8");
 
@@ -106,9 +106,7 @@ public class DefaultClientResourcesTest {
 
         DefaultClientResources sut = DefaultClientResources.builder().eventExecutorGroup(executorMock)
                 .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
-                .commandLatencyCollector(latencyCollectorMock)
-                .nettyCustomizer(nettyCustomizer)
-                .build();
+                .commandLatencyCollector(latencyCollectorMock).nettyCustomizer(nettyCustomizer).build();
 
         assertThat(sut.eventExecutorGroup()).isSameAs(executorMock);
         assertThat(sut.eventLoopGroupProvider()).isSameAs(groupProviderMock);
@@ -123,6 +121,35 @@ public class DefaultClientResourcesTest {
         verifyZeroInteractions(timerMock);
         verify(latencyCollectorMock).isEnabled();
         verifyNoMoreInteractions(latencyCollectorMock);
+    }
+
+    @Test
+    public void mutateResources() throws Exception {
+
+        EventExecutorGroup executorMock = mock(EventExecutorGroup.class);
+        EventLoopGroupProvider groupProviderMock = mock(EventLoopGroupProvider.class);
+        Timer timerMock = mock(Timer.class);
+        Timer timerMock2 = mock(Timer.class);
+        EventBus eventBusMock = mock(EventBus.class);
+        CommandLatencyCollector latencyCollectorMock = mock(CommandLatencyCollector.class);
+
+        ClientResources sut = ClientResources.builder().eventExecutorGroup(executorMock)
+                .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
+                .commandLatencyCollector(latencyCollectorMock).build();
+
+        ClientResources copy = sut.mutate().timer(timerMock2).build();
+
+        assertThat(sut.eventExecutorGroup()).isSameAs(executorMock);
+        assertThat(sut.eventLoopGroupProvider()).isSameAs(groupProviderMock);
+        assertThat(sut.timer()).isSameAs(timerMock);
+        assertThat(copy.timer()).isSameAs(timerMock2).isNotSameAs(timerMock);
+        assertThat(sut.eventBus()).isSameAs(eventBusMock);
+
+        assertThat(sut.shutdown().get()).isTrue();
+
+        verifyZeroInteractions(executorMock);
+        verifyZeroInteractions(groupProviderMock);
+        verifyZeroInteractions(timerMock);
     }
 
     @Test

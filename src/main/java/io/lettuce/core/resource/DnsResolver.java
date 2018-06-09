@@ -27,6 +27,25 @@ import java.net.UnknownHostException;
 public interface DnsResolver {
 
     /**
+     * Java VM default resolver.
+     *
+     * @since 5.1
+     */
+    static DnsResolver jvmDefault() {
+        return DnsResolvers.JVM_DEFAULT;
+    }
+
+    /**
+     * Non-resolving {@link DnsResolver}. Returns an empty {@link InetAddress} to indicate an unresolved address.
+     *
+     * @since 5.1
+     * @see java.net.InetSocketAddress#createUnresolved(String, int)
+     */
+    static DnsResolver unresolved() {
+        return DnsResolvers.UNRESOLVED;
+    }
+
+    /**
      * Returns the IP address for the specified host name.
      *
      * @param host the hostname, must not be empty or {@literal null}.

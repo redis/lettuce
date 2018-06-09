@@ -20,8 +20,6 @@ import static io.lettuce.core.resource.Futures.toBooleanPromise;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import io.lettuce.core.tracing.TracerProvider;
-import io.lettuce.core.tracing.Tracing;
 import reactor.core.scheduler.Schedulers;
 import io.lettuce.core.event.DefaultEventBus;
 import io.lettuce.core.event.DefaultEventPublisherOptions;
@@ -36,6 +34,8 @@ import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.resource.Delay.StatefulDelay;
+import io.lettuce.core.tracing.TracerProvider;
+import io.lettuce.core.tracing.Tracing;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.*;
@@ -125,9 +125,13 @@ public class DefaultClientResources implements ClientResources {
     private final NettyCustomizer nettyCustomizer;
     private final Tracing tracing;
 
+    private final Builder builder;
+
     private volatile boolean shutdownCalled = false;
 
     protected DefaultClientResources(Builder builder) {
+
+        this.builder = builder;
 
         if (builder.eventLoopGroupProvider == null) {
             int ioThreadPoolSize = builder.ioThreadPoolSize;
@@ -180,14 +184,14 @@ public class DefaultClientResources implements ClientResources {
         if (builder.commandLatencyCollector == null) {
             if (DefaultCommandLatencyCollector.isAvailable()) {
                 if (builder.commandLatencyCollectorOptions != null) {
-                    commandLatencyCollector = new DefaultCommandLatencyCollector(builder.commandLatencyCollectorOptions);
+                    commandLatencyCollector = CommandLatencyCollector.create(builder.commandLatencyCollectorOptions);
                 } else {
-                    commandLatencyCollector = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
+                    commandLatencyCollector = CommandLatencyCollector.create(CommandLatencyCollectorOptions.create());
                 }
             } else {
                 logger.debug("LatencyUtils/HdrUtils are not available, metrics are disabled");
-                builder.commandLatencyCollectorOptions = DefaultCommandLatencyCollectorOptions.disabled();
-                commandLatencyCollector = DefaultCommandLatencyCollector.disabled();
+                builder.commandLatencyCollectorOptions = CommandLatencyCollectorOptions.disabled();
+                commandLatencyCollector = CommandLatencyCollector.disabled();
             }
 
             sharedCommandLatencyCollector = false;
@@ -217,15 +221,6 @@ public class DefaultClientResources implements ClientResources {
     }
 
     /**
-     * Returns a new {@link DefaultClientResources.Builder} to construct {@link DefaultClientResources}.
-     *
-     * @return a new {@link DefaultClientResources.Builder} to construct {@link DefaultClientResources}.
-     */
-    public static DefaultClientResources.Builder builder() {
-        return new DefaultClientResources.Builder();
-    }
-
-    /**
      * Create a new {@link DefaultClientResources} using default settings.
      *
      * @return a new instance of a default client resources.
@@ -235,9 +230,18 @@ public class DefaultClientResources implements ClientResources {
     }
 
     /**
+     * Returns a new {@link DefaultClientResources.Builder} to construct {@link DefaultClientResources}.
+     *
+     * @return a new {@link DefaultClientResources.Builder} to construct {@link DefaultClientResources}.
+     */
+    public static DefaultClientResources.Builder builder() {
+        return new DefaultClientResources.Builder();
+    }
+
+    /**
      * Builder for {@link DefaultClientResources}.
      */
-    public static class Builder {
+    public static class Builder implements ClientResources.Builder {
 
         private int ioThreadPoolSize = DEFAULT_IO_THREADS;
         private int computationThreadPoolSize = DEFAULT_COMPUTATION_THREADS;
@@ -263,6 +267,7 @@ public class DefaultClientResources implements ClientResources {
          * @param ioThreadPoolSize the thread pool size, must be greater {@code 0}.
          * @return {@code this} {@link Builder}.
          */
+        @Override
         public Builder ioThreadPoolSize(int ioThreadPoolSize) {
 
             LettuceAssert.isTrue(ioThreadPoolSize > 0, "I/O thread pool size must be greater zero");
@@ -280,6 +285,7 @@ public class DefaultClientResources implements ClientResources {
          * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@literal null}.
          * @return {@code this} {@link Builder}.
          */
+        @Override
         public Builder eventLoopGroupProvider(EventLoopGroupProvider eventLoopGroupProvider) {
 
             LettuceAssert.notNull(eventLoopGroupProvider, "EventLoopGroupProvider must not be null");
@@ -295,6 +301,7 @@ public class DefaultClientResources implements ClientResources {
          * @param computationThreadPoolSize the thread pool size, must be greater {@code 0}.
          * @return {@code this} {@link Builder}.
          */
+        @Override
         public Builder computationThreadPoolSize(int computationThreadPoolSize) {
 
             LettuceAssert.isTrue(computationThreadPoolSize > 0, "Computation thread pool size must be greater zero");
@@ -312,6 +319,7 @@ public class DefaultClientResources implements ClientResources {
          * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@literal null}.
          * @return {@code this} {@link Builder}.
          */
+        @Override
         public Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup) {
 
             LettuceAssert.notNull(eventExecutorGroup, "EventExecutorGroup must not be null");
@@ -330,6 +338,7 @@ public class DefaultClientResources implements ClientResources {
          * @return {@code this} {@link Builder}.
          * @since 4.3
          */
+        @Override
         public Builder timer(Timer timer) {
 
             LettuceAssert.notNull(timer, "Timer must not be null");
@@ -344,6 +353,7 @@ public class DefaultClientResources implements ClientResources {
          * @param eventBus the event bus, must not be {@literal null}.
          * @return {@code this} {@link Builder}.
          */
+        @Override
         public Builder eventBus(EventBus eventBus) {
 
             LettuceAssert.notNull(eventBus, "EventBus must not be null");
@@ -359,6 +369,7 @@ public class DefaultClientResources implements ClientResources {
          *        {@link EventBus}, must not be {@literal null}.
          * @return {@code this} {@link Builder}.
          */
+        @Override
         public Builder commandLatencyPublisherOptions(EventPublisherOptions commandLatencyPublisherOptions) {
 
             LettuceAssert.notNull(commandLatencyPublisherOptions, "EventPublisherOptions must not be null");
@@ -374,6 +385,7 @@ public class DefaultClientResources implements ClientResources {
          * @param commandLatencyCollectorOptions the command latency collector options, must not be {@link null}.
          * @return {@code this} {@link Builder}.
          */
+        @Override
         public Builder commandLatencyCollectorOptions(CommandLatencyCollectorOptions commandLatencyCollectorOptions) {
 
             LettuceAssert.notNull(commandLatencyCollectorOptions, "CommandLatencyCollectorOptions must not be null");
@@ -388,6 +400,7 @@ public class DefaultClientResources implements ClientResources {
          * @param commandLatencyCollector the command latency collector, must not be {@literal null}.
          * @return {@code this} {@link Builder}.
          */
+        @Override
         public Builder commandLatencyCollector(CommandLatencyCollector commandLatencyCollector) {
 
             LettuceAssert.notNull(commandLatencyCollector, "CommandLatencyCollector must not be null");
@@ -404,6 +417,7 @@ public class DefaultClientResources implements ClientResources {
          * @return {@code this} {@link Builder}.
          * @since 4.3
          */
+        @Override
         public Builder dnsResolver(DnsResolver dnsResolver) {
 
             LettuceAssert.notNull(dnsResolver, "DnsResolver must not be null");
@@ -420,6 +434,7 @@ public class DefaultClientResources implements ClientResources {
          * @return this
          * @since 4.3
          */
+        @Override
         public Builder reconnectDelay(Delay reconnectDelay) {
 
             LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
@@ -436,6 +451,7 @@ public class DefaultClientResources implements ClientResources {
          * @return this
          * @since 4.3
          */
+        @Override
         public Builder reconnectDelay(Supplier<Delay> reconnectDelay) {
 
             LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
@@ -451,6 +467,7 @@ public class DefaultClientResources implements ClientResources {
          * @return this
          * @since 4.4
          */
+        @Override
         public Builder nettyCustomizer(NettyCustomizer nettyCustomizer) {
 
             LettuceAssert.notNull(nettyCustomizer, "NettyCustomizer must not be null");
@@ -466,6 +483,7 @@ public class DefaultClientResources implements ClientResources {
          * @return this
          * @since 5.1
          */
+        @Override
         public Builder tracing(Tracing tracing) {
 
             LettuceAssert.notNull(tracing, "Tracing must not be null");
@@ -478,9 +496,24 @@ public class DefaultClientResources implements ClientResources {
          *
          * @return a new instance of {@link DefaultClientResources}.
          */
+        @Override
         public DefaultClientResources build() {
             return new DefaultClientResources(this);
         }
+    }
+
+    /**
+     * Returns a builder to create new {@link DefaultClientResources} whose settings are replicated from the current
+     * {@link DefaultClientResources}.
+     *
+     * @return a {@link DefaultClientResources.Builder} to create new {@link DefaultClientResources} whose settings are
+     *         replicated from the current {@link DefaultClientResources}.
+     *
+     * @since 5.1
+     */
+    @Override
+    public DefaultClientResources.Builder mutate() {
+        return this.builder;
     }
 
     @Override

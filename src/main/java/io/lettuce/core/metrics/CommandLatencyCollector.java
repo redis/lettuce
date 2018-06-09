@@ -16,6 +16,7 @@
 package io.lettuce.core.metrics;
 
 import java.net.SocketAddress;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +34,46 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * @since 3.4
  */
 public interface CommandLatencyCollector extends MetricCollector<Map<CommandLatencyId, CommandMetrics>> {
+
+    /**
+     * Creates a new {@link CommandLatencyCollector} using {@link CommandLatencyCollectorOptions}.
+     *
+     * @param options must not be {@literal null}.
+     * @return the {@link CommandLatencyCollector} using {@link CommandLatencyCollectorOptions}.
+     */
+    static CommandLatencyCollector create(CommandLatencyCollectorOptions options) {
+        return new DefaultCommandLatencyCollector(options);
+    }
+
+    /**
+     * Returns a disabled no-op {@link CommandLatencyCollector}.
+     *
+     * @return
+     * @since 5.1
+     */
+    static CommandLatencyCollector disabled() {
+
+        return new CommandLatencyCollector() {
+            @Override
+            public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
+                    long firstResponseLatency, long completionLatency) {
+            }
+
+            @Override
+            public void shutdown() {
+            }
+
+            @Override
+            public Map<CommandLatencyId, CommandMetrics> retrieveMetrics() {
+                return Collections.emptyMap();
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return false;
+            }
+        };
+    }
 
     /**
      * Record the command latency per {@code connectionPoint} and {@code commandType}.

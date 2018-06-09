@@ -76,5 +76,4 @@ public class DefaultCommandLatencyEventPublisher implements MetricEventPublisher
 
         eventBus.publish(new CommandLatencyEvent(commandLatencyCollector.retrieveMetrics()));
     }
-
 }

@@ -396,7 +396,6 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                 instanceCounter.decrementAndGet();
                 pauseDetector.shutdown();
                 pauseDetector = null;
-
             }
         }
     }

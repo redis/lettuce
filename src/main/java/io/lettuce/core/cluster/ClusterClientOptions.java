@@ -40,6 +40,7 @@ public class ClusterClientOptions extends ClientOptions {
     private final boolean validateClusterNodeMembership;
     private final int maxRedirects;
     private final ClusterTopologyRefreshOptions topologyRefreshOptions;
+    private final ClusterClientOptions.Builder builder;
 
     protected ClusterClientOptions(Builder builder) {
 
@@ -59,6 +60,7 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         this.topologyRefreshOptions = refreshOptions;
+        this.builder = builder;
     }
 
     protected ClusterClientOptions(ClusterClientOptions original) {
@@ -68,6 +70,7 @@ public class ClusterClientOptions extends ClientOptions {
         this.validateClusterNodeMembership = original.validateClusterNodeMembership;
         this.maxRedirects = original.maxRedirects;
         this.topologyRefreshOptions = original.topologyRefreshOptions;
+        this.builder = original.builder;
     }
 
     /**
@@ -208,6 +211,19 @@ public class ClusterClientOptions extends ClientOptions {
         public ClusterClientOptions build() {
             return new ClusterClientOptions(this);
         }
+    }
+
+    /**
+     * Returns a builder to create new {@link ClusterClientOptions} whose settings are replicated from the current
+     * {@link ClusterClientOptions}.
+     *
+     * @return a {@link ClusterClientOptions.Builder} to create new {@link ClusterClientOptions} whose settings are replicated
+     *         from the current {@link ClusterClientOptions}.
+     *
+     * @since 5.1
+     */
+    public ClusterClientOptions.Builder mutate() {
+        return this.builder;
     }
 
     /**

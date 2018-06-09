@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  * @author Mark Paluch
  */
 public class CommandMetrics {
+
     private final long count;
     private final TimeUnit timeUnit;
 

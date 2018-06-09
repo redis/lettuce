@@ -39,7 +39,8 @@ public interface NettyCustomizer {
      *
      * @param bootstrap must not be {@literal null}.
      */
-    void afterBootstrapInitialized(Bootstrap bootstrap);
+    default void afterBootstrapInitialized(Bootstrap bootstrap) {
+    }
 
     /**
      * Hook invoked each time the driver initializes the channel. This hook is called after the driver has registered all its
@@ -47,5 +48,6 @@ public interface NettyCustomizer {
      *
      * @param channel must not be {@literal null}.
      */
-    void afterChannelInitialized(Channel channel);
+    default void afterChannelInitialized(Channel channel) {
+    }
 }

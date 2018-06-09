@@ -16,10 +16,12 @@
 package io.lettuce.core.resource;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.metrics.CommandLatencyCollector;
+import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -49,6 +51,182 @@ import io.netty.util.concurrent.Future;
  * @see DefaultClientResources
  */
 public interface ClientResources {
+
+    /**
+     * Create a new {@link ClientResources} using default settings.
+     *
+     * @return a new instance of a default client resources.
+     */
+    static ClientResources create() {
+        return DefaultClientResources.create();
+    }
+
+    /**
+     * Create a new {@link ClientResources} using default settings.
+     *
+     * @return a new instance of a default client resources.
+     */
+    static Builder builder() {
+        return DefaultClientResources.builder();
+    }
+
+    /**
+     * Builder for {@link ClientResources}.
+     *
+     * @since 5.1
+     */
+    interface Builder {
+
+        /**
+         * Sets the {@link CommandLatencyCollector} that can that can be used across different instances of the RedisClient.
+         *
+         * @param commandLatencyCollector the command latency collector, must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         */
+        Builder commandLatencyCollector(CommandLatencyCollector commandLatencyCollector);
+
+        /**
+         * Sets the {@link CommandLatencyCollectorOptions} that can that can be used across different instances of the
+         * RedisClient. The options are only effective if no {@code commandLatencyCollector} is provided.
+         *
+         * @param commandLatencyCollectorOptions the command latency collector options, must not be {@link null}.
+         * @return {@code this} {@link Builder}.
+         */
+        Builder commandLatencyCollectorOptions(CommandLatencyCollectorOptions commandLatencyCollectorOptions);
+
+        /**
+         * Sets the {@link EventPublisherOptions} to publish command latency metrics using the {@link EventBus}.
+         *
+         * @param commandLatencyPublisherOptions the {@link EventPublisherOptions} to publish command latency metrics using the
+         *        {@link EventBus}, must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         */
+        Builder commandLatencyPublisherOptions(EventPublisherOptions commandLatencyPublisherOptions);
+
+        /**
+         * Sets the thread pool size (number of threads to use) for computation operations (default value is the number of
+         * CPUs). The thread pool size is only effective if no {@code eventExecutorGroup} is provided.
+         *
+         * @param computationThreadPoolSize the thread pool size, must be greater {@code 0}.
+         * @return {@code this} {@link Builder}.
+         */
+        Builder computationThreadPoolSize(int computationThreadPoolSize);
+
+        /**
+         * Sets the {@link DnsResolver} that can that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
+         * {@link DnsResolvers#JVM_DEFAULT}
+         *
+         * @param dnsResolver the DNS resolver, must not be {@link null}.
+         * @return {@code this} {@link Builder}.
+         * @since 4.3
+         */
+        Builder dnsResolver(DnsResolver dnsResolver);
+
+        /**
+         * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
+         *
+         * @param eventBus the event bus, must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         */
+        Builder eventBus(EventBus eventBus);
+
+        /**
+         * Sets a shared {@link EventExecutorGroup event executor group} that can be used across different instances of
+         * {@link io.lettuce.core.RedisClient} and {@link io.lettuce.core.cluster.RedisClusterClient}. The provided
+         * {@link EventExecutorGroup} instance will not be shut down when shutting down the client resources. You have to take
+         * care of that. This is an advanced configuration that should only be used if you know what you are doing.
+         *
+         * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         */
+        Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup);
+
+        /**
+         * Sets a shared {@link EventLoopGroupProvider event executor provider} that can be used across different instances of
+         * {@link io.lettuce.core.RedisClient} and {@link io.lettuce.core.cluster.RedisClusterClient}. The provided
+         * {@link EventLoopGroupProvider} instance will not be shut down when shutting down the client resources. You have to
+         * take care of that. This is an advanced configuration that should only be used if you know what you are doing.
+         *
+         * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         */
+        Builder eventLoopGroupProvider(EventLoopGroupProvider eventLoopGroupProvider);
+
+        /**
+         * Sets the thread pool size (number of threads to use) for I/O operations (default value is the number of CPUs). The
+         * thread pool size is only effective if no {@code eventLoopGroupProvider} is provided.
+         *
+         * @param ioThreadPoolSize the thread pool size, must be greater {@code 0}.
+         * @return {@code this} {@link Builder}.
+         */
+        Builder ioThreadPoolSize(int ioThreadPoolSize);
+
+        /**
+         * Sets the {@link NettyCustomizer} instance to customize netty components during connection.
+         *
+         * @param nettyCustomizer the netty customizer instance, must not be {@literal null}.
+         * @return this
+         * @since 4.4
+         */
+        Builder nettyCustomizer(NettyCustomizer nettyCustomizer);
+
+        /**
+         * Sets the stateless reconnect {@link Delay} to delay reconnect attempts. Defaults to binary exponential delay capped
+         * at {@literal 30 SECONDS}. {@code reconnectDelay} must be a stateless {@link Delay}.
+         *
+         * @param reconnectDelay the reconnect delay, must not be {@literal null}.
+         * @return this
+         * @since 4.3
+         */
+        Builder reconnectDelay(Delay reconnectDelay);
+
+        /**
+         * Sets the stateful reconnect {@link Supplier} to delay reconnect attempts. Defaults to binary exponential delay capped
+         * at {@literal 30 SECONDS}.
+         *
+         * @param reconnectDelay the reconnect delay, must not be {@literal null}.
+         * @return this
+         * @since 4.3
+         */
+        Builder reconnectDelay(Supplier<Delay> reconnectDelay);
+
+        /**
+         * Sets a shared {@link Timer} that can be used across different instances of {@link io.lettuce.core.RedisClient} and
+         * {@link io.lettuce.core.cluster.RedisClusterClient} The provided {@link Timer} instance will not be shut down when
+         * shutting down the client resources. You have to take care of that. This is an advanced configuration that should only
+         * be used if you know what you are doing.
+         *
+         * @param timer the shared {@link Timer}, must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         * @since 4.3
+         */
+        Builder timer(Timer timer);
+
+        /**
+         * Sets the {@link Tracing} instance to trace Redis calls.
+         *
+         * @param tracing the tracer infrastructure instance, must not be {@literal null}.
+         * @return this
+         * @since 5.1
+         */
+        Builder tracing(Tracing tracing);
+
+        /**
+         * @return a new instance of {@link DefaultClientResources}.
+         */
+        ClientResources build();
+    }
+
+    /**
+     * Returns a builder to create new {@link ClientResources} whose settings are replicated from the current
+     * {@link ClientResources}.
+     *
+     * @return a a {@link ClientResources.Builder} to create new {@link ClientResources} whose settings are replicated from the
+     *         current {@link ClientResources}
+     *
+     * @since 5.1
+     */
+    Builder mutate();
 
     /**
      * Shutdown the {@link ClientResources}.
