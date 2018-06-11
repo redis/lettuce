@@ -36,6 +36,7 @@ import brave.Tracer;
 import brave.Tracing;
 import brave.propagation.CurrentTraceContext;
 import brave.propagation.TraceContext;
+import io.lettuce.Wait;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
@@ -86,6 +87,7 @@ public class BraveTracingTest extends AbstractTest {
 
         StatefulRedisConnection<String, String> connect = client.connect();
         connect.sync().ping();
+        Wait.untilNotEquals(true, spans::isEmpty).waitOrTimeout();
 
         foo.finish();
 
@@ -107,6 +109,8 @@ public class BraveTracingTest extends AbstractTest {
         } catch (Exception e) {
         }
 
+        Wait.untilEquals(2, spans::size).waitOrTimeout();
+
         foo.finish();
 
         List<Span> spans = new ArrayList<>(BraveTracingTest.spans);
@@ -124,6 +128,7 @@ public class BraveTracingTest extends AbstractTest {
         StatefulRedisConnection<String, String> connect = client.connect();
         connect.reactive().ping().as(StepVerifier::create).expectNext("PONG").verifyComplete();
 
+        Wait.untilNotEquals(true, spans::isEmpty).waitOrTimeout();
         assertThat(spans).isNotEmpty();
     }
 
@@ -137,6 +142,8 @@ public class BraveTracingTest extends AbstractTest {
                 .subscriberContext(it -> it.put(TraceContext.class, trace.context())) //
                 .as(StepVerifier::create) //
                 .expectNext("PONG").verifyComplete();
+
+        Wait.untilNotEquals(true, spans::isEmpty).waitOrTimeout();
 
         trace.finish();
 
@@ -157,6 +164,8 @@ public class BraveTracingTest extends AbstractTest {
                 .subscriberContext(it -> it.put(TraceContext.class, trace.context())) //
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();
+
+        Wait.untilEquals(2, spans::size).waitOrTimeout();
 
         trace.finish();
 
@@ -181,6 +190,8 @@ public class BraveTracingTest extends AbstractTest {
                                 .create(trace.context()))) //
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();
+
+        Wait.untilEquals(2, spans::size).waitOrTimeout();
 
         trace.finish();
 
