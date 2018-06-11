@@ -189,6 +189,9 @@ public class ClientTest extends AbstractRedisClientTest {
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
         connection.sync().quit();
+        Thread.sleep(100);
+        Wait.untilTrue(connection::isOpen).waitOrTimeout();
+
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
         connection.close();
@@ -205,6 +208,9 @@ public class ClientTest extends AbstractRedisClientTest {
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
         connection.sync().quit();
+        Thread.sleep(100);
+        Wait.untilTrue(connection::isOpen).waitOrTimeout();
+
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
         connection.close();
