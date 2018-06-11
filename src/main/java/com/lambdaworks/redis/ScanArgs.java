@@ -18,6 +18,8 @@ package com.lambdaworks.redis;
 import static com.lambdaworks.redis.protocol.CommandKeyword.COUNT;
 import static com.lambdaworks.redis.protocol.CommandKeyword.MATCH;
 
+import java.nio.charset.StandardCharsets;
+
 import com.lambdaworks.redis.internal.LettuceAssert;
 import com.lambdaworks.redis.protocol.CommandArgs;
 
@@ -98,7 +100,7 @@ public class ScanArgs {
     <K, V> void build(CommandArgs<K, V> args) {
 
         if (match != null) {
-            args.add(MATCH).add(match);
+            args.add(MATCH).add(match.getBytes(StandardCharsets.UTF_8));
         }
 
         if (count != null) {
