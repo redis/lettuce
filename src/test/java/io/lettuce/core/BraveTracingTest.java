@@ -18,7 +18,7 @@ package io.lettuce.core;
 import static io.lettuce.core.AbstractRedisClientTest.client;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -31,7 +31,6 @@ import org.junit.Test;
 
 import reactor.test.StepVerifier;
 import zipkin2.Span;
-import zipkin2.storage.InMemoryStorage;
 import brave.ScopedSpan;
 import brave.Tracer;
 import brave.Tracing;
@@ -49,17 +48,13 @@ public class BraveTracingTest extends AbstractTest {
 
     private static ClientResources clientResources;
     private static Tracing clientTracing;
-    private static InMemoryStorage storage = InMemoryStorage.newBuilder().build();
     private static Queue<Span> spans = new LinkedBlockingQueue<>();
 
     @BeforeClass
     public static void beforeClass() {
 
         clientTracing = Tracing.newBuilder().localServiceName("client")
-                .currentTraceContext(CurrentTraceContext.Default.create()).spanReporter(s -> {
-                    storage.spanConsumer().accept(Collections.singletonList(s));
-                    spans.add(s);
-                }).build();
+                .currentTraceContext(CurrentTraceContext.Default.create()).spanReporter(spans::add).build();
 
         clientResources = DefaultClientResources.builder().tracing(BraveTracing.create(clientTracing.tracer())).build();
 
@@ -75,7 +70,6 @@ public class BraveTracingTest extends AbstractTest {
         }
 
         spans.clear();
-        storage.clear();
     }
 
     @AfterClass
@@ -95,9 +89,7 @@ public class BraveTracingTest extends AbstractTest {
 
         foo.finish();
 
-        assertThat(storage.getTraces()).isNotEmpty();
-
-        List<Span> spans = storage.getTraces().get(0);
+        List<Span> spans = new ArrayList<>(BraveTracingTest.spans);
 
         assertThat(spans.get(0).name()).isEqualTo("ping");
         assertThat(spans.get(1).name()).isEqualTo("foo");
@@ -117,9 +109,7 @@ public class BraveTracingTest extends AbstractTest {
 
         foo.finish();
 
-        assertThat(storage.getTraces()).isNotEmpty();
-
-        List<Span> spans = storage.getTraces().get(0);
+        List<Span> spans = new ArrayList<>(BraveTracingTest.spans);
 
         assertThat(spans.get(0).name()).isEqualTo("set");
         assertThat(spans.get(1).name()).isEqualTo("hgetall");
@@ -150,9 +140,7 @@ public class BraveTracingTest extends AbstractTest {
 
         trace.finish();
 
-        assertThat(storage.getTraces()).isNotEmpty();
-
-        List<Span> spans = storage.getTraces().get(0);
+        List<Span> spans = new ArrayList<>(BraveTracingTest.spans);
 
         assertThat(spans.get(0).name()).isEqualTo("ping");
         assertThat(spans.get(1).name()).isEqualTo("foo");
@@ -172,9 +160,7 @@ public class BraveTracingTest extends AbstractTest {
 
         trace.finish();
 
-        assertThat(storage.getTraces()).isNotEmpty();
-
-        List<Span> spans = storage.getTraces().get(0);
+        List<Span> spans = new ArrayList<>(BraveTracingTest.spans);
 
         assertThat(spans.get(0).name()).isEqualTo("set");
         assertThat(spans.get(1).name()).isEqualTo("get");
@@ -198,9 +184,7 @@ public class BraveTracingTest extends AbstractTest {
 
         trace.finish();
 
-        assertThat(storage.getTraces()).isNotEmpty();
-
-        List<Span> spans = storage.getTraces().get(0);
+        List<Span> spans = new ArrayList<>(BraveTracingTest.spans);
 
         assertThat(spans.get(0).name()).isEqualTo("set");
         assertThat(spans.get(1).name()).isEqualTo("get");
