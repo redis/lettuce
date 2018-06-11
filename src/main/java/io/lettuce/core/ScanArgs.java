@@ -18,6 +18,10 @@ package io.lettuce.core;
 import static io.lettuce.core.protocol.CommandKeyword.COUNT;
 import static io.lettuce.core.protocol.CommandKeyword.MATCH;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
@@ -99,7 +103,7 @@ public class ScanArgs implements CompositeArgument {
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (match != null) {
-            args.add(MATCH).add(match);
+            args.add(MATCH).add(match.getBytes(StandardCharsets.UTF_8));
         }
 
         if (count != null) {
