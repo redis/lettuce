@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  * Delays are usually stateless instances that can be shared amongst multiple users (such as connections). Stateful
  * {@link Delay} implementations must implement {@link StatefulDelay} to reset their internal state after the delay is not
  * required anymore.
- * 
+ *
  * @author Mark Paluch
  * @author Jongyeol Choi
  * @since 4.2
@@ -45,7 +45,7 @@ public abstract class Delay {
      * Interface to be implemented by stateful {@link Delay}s. Stateful delays can get reset once a condition (such as
      * successful reconnect) is met. Stateful delays should not be shared by multiple connections but each connection should use
      * its own instance.
-     * 
+     *
      * @see Supplier
      * @see com.lambdaworks.redis.resource.DefaultClientResources.Builder#reconnectDelay(Supplier)
      */
@@ -76,7 +76,7 @@ public abstract class Delay {
 
     /**
      * Returns the {@link TimeUnit} associated with this {@link Delay}.
-     * 
+     *
      * @return the {@link TimeUnit} associated with this {@link Delay}.
      */
     public TimeUnit getTimeUnit() {
@@ -110,7 +110,7 @@ public abstract class Delay {
 
     /**
      * Creates a new {@link ExponentialDelay} with default boundaries and factor (1, 2, 4, 8, 16, 32...). The delay begins with
-     * 1 and is capped at 30 milliseconds after reaching the 16th attempt.
+     * 1 and is capped at 30 {@link TimeUnit#SECONDS} after reaching the 16th attempt.
      *
      * @return a created {@link ExponentialDelay}.
      */
@@ -222,7 +222,7 @@ public abstract class Delay {
 
     /**
      * Generates a random long value within {@code min} and {@code max} boundaries.
-     * 
+     *
      * @param min
      * @param max
      * @return a random value
