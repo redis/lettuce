@@ -66,7 +66,7 @@ public abstract class Delay {
 
     /**
      * Creates a new {@link ExponentialDelay} with default boundaries and factor (1, 2, 4, 8, 16, 32...). The delay begins with
-     * 1 and is capped at 30 milliseconds after reaching the 16th attempt.
+     * 1 and is capped at 30 seconds after reaching the 16th attempt.
      *
      * @return a created {@link ExponentialDelay}.
      */
