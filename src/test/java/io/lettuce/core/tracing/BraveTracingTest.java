@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core;
+package io.lettuce.core.tracing;
 
-import static io.lettuce.core.AbstractRedisClientTest.client;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
@@ -37,10 +36,13 @@ import brave.Tracing;
 import brave.propagation.CurrentTraceContext;
 import brave.propagation.TraceContext;
 import io.lettuce.Wait;
+import io.lettuce.core.AbstractTest;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
-import io.lettuce.core.tracing.BraveTracing;
+import io.netty.channel.unix.DomainSocketAddress;
 
 /**
  * @author Mark Paluch
@@ -48,6 +50,7 @@ import io.lettuce.core.tracing.BraveTracing;
 public class BraveTracingTest extends AbstractTest {
 
     private static ClientResources clientResources;
+    private static RedisClient client;
     private static Tracing clientTracing;
     private static Queue<Span> spans = new LinkedBlockingQueue<>();
 
@@ -58,7 +61,6 @@ public class BraveTracingTest extends AbstractTest {
                 .currentTraceContext(CurrentTraceContext.Default.create()).spanReporter(spans::add).build();
 
         clientResources = DefaultClientResources.builder().tracing(BraveTracing.create(clientTracing)).build();
-
         client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
     }
 
@@ -199,5 +201,17 @@ public class BraveTracingTest extends AbstractTest {
 
         assertThat(spans.get(0).name()).isEqualTo("set");
         assertThat(spans.get(1).name()).isEqualTo("get");
+    }
+
+    @Test
+    public void shouldReportSimpleServiceName() {
+
+        BraveTracing.BraveEndpoint endpoint = (BraveTracing.BraveEndpoint) clientResources.tracing().createEndpoint(
+                new DomainSocketAddress("foo"));
+
+        assertThat(endpoint.endpoint.serviceName()).isEqualTo("redis");
+        assertThat(endpoint.endpoint.port()).isNull();
+        assertThat(endpoint.endpoint.ipv4()).isNull();
+        assertThat(endpoint.endpoint.ipv6()).isNull();
     }
 }

@@ -98,11 +98,11 @@ public class BraveTracing implements Tracing {
         if (socketAddress instanceof InetSocketAddress) {
 
             InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
-            return new BraveEndpoint(builder.serviceName("Redis").ip(inetSocketAddress.getAddress())
+            return new BraveEndpoint(builder.serviceName("redis").ip(inetSocketAddress.getAddress())
                     .port(inetSocketAddress.getPort()).build());
         }
 
-        return new BraveEndpoint(builder.serviceName("Redis at " + socketAddress.toString()).build());
+        return new BraveEndpoint(builder.serviceName("redis").build());
     }
 
     /**
@@ -222,7 +222,7 @@ public class BraveTracing implements Tracing {
      */
     public static class BraveEndpoint implements Endpoint {
 
-        private final zipkin2.Endpoint endpoint;
+        final zipkin2.Endpoint endpoint;
 
         public BraveEndpoint(zipkin2.Endpoint endpoint) {
             this.endpoint = endpoint;
@@ -234,7 +234,7 @@ public class BraveTracing implements Tracing {
      */
     public static class BraveTraceContext implements TraceContext {
 
-        brave.propagation.TraceContext traceContext;
+        final brave.propagation.TraceContext traceContext;
 
         private BraveTraceContext(brave.propagation.TraceContext traceContext) {
             this.traceContext = traceContext;
