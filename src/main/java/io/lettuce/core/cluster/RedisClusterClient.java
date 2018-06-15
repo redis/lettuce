@@ -57,7 +57,6 @@ import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.SocketAddressResolver;
 import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -988,7 +987,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
             if (partitions.isEmpty()) {
                 return Mono.fromCallable(() -> {
-                    SocketAddress socketAddress = SocketAddressResolver.resolve(getFirstUri(), clientResources.dnsResolver());
+                    SocketAddress socketAddress = clientResources.socketAddressResolver().resolve(getFirstUri());
                     logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
                     return socketAddress;
                 });

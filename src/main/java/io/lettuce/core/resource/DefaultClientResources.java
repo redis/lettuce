@@ -60,6 +60,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>a {@code commandLatencyCollector} which is a provided instance of {@link io.lettuce.core.metrics.CommandLatencyCollector}
  * .</li>
  * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
+ * <li>a {@code socketAddressResolver} which is a provided instance of {@link SocketAddressResolver}.</li>
  * <li>a {@code timer} that is a provided instance of {@link io.netty.util.HashedWheelTimer}.</li>
  * <li>a {@code nettyCustomizer} that is a provided instance of {@link NettyCustomizer}.</li>
  * <li>a {@code tracerProvider} that is a provided instance of {@link TracerProvider}.</li>
@@ -121,6 +122,7 @@ public class DefaultClientResources implements ClientResources {
     private final EventPublisherOptions commandLatencyPublisherOptions;
     private final MetricEventPublisher metricEventPublisher;
     private final DnsResolver dnsResolver;
+    private final SocketAddressResolver socketAddressResolver;
     private final Supplier<Delay> reconnectDelay;
     private final NettyCustomizer nettyCustomizer;
     private final Tracing tracing;
@@ -215,6 +217,12 @@ public class DefaultClientResources implements ClientResources {
             dnsResolver = builder.dnsResolver;
         }
 
+        if (builder.socketAddressResolver == null) {
+            socketAddressResolver = SocketAddressResolver.create(dnsResolver);
+        } else {
+            socketAddressResolver = builder.socketAddressResolver;
+        }
+
         reconnectDelay = builder.reconnectDelay;
         nettyCustomizer = builder.nettyCustomizer;
         tracing = builder.tracing;
@@ -253,6 +261,7 @@ public class DefaultClientResources implements ClientResources {
         private CommandLatencyCollector commandLatencyCollector;
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
         private DnsResolver dnsResolver = DnsResolvers.UNRESOLVED;
+        private SocketAddressResolver socketAddressResolver;
         private Supplier<Delay> reconnectDelay = DEFAULT_RECONNECT_DELAY;
         private NettyCustomizer nettyCustomizer = DEFAULT_NETTY_CUSTOMIZER;
         private Tracing tracing = Tracing.disabled();
@@ -410,7 +419,24 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the {@link DnsResolver} that can that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
+         * Sets the {@link SocketAddressResolver} that is used to resolve {@link io.lettuce.core.RedisURI} to
+         * {@link java.net.SocketAddress}. Defaults to {@link SocketAddressResolver} using the configured {@link DnsResolver}.
+         *
+         * @param socketAddressResolver the socket address resolver, must not be {@link null}.
+         * @return {@code this} {@link ClientResources.Builder}.
+         * @since 5.1
+         */
+        @Override
+        public ClientResources.Builder socketAddressResolver(SocketAddressResolver socketAddressResolver) {
+
+            LettuceAssert.notNull(socketAddressResolver, "SocketAddressResolver must not be null");
+
+            this.socketAddressResolver = socketAddressResolver;
+            return this;
+        }
+
+        /**
+         * Sets the {@link DnsResolver} that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
          * {@link DnsResolvers#JVM_DEFAULT}
          *
          * @param dnsResolver the DNS resolver, must not be {@link null}.
@@ -640,6 +666,11 @@ public class DefaultClientResources implements ClientResources {
     @Override
     public DnsResolver dnsResolver() {
         return dnsResolver;
+    }
+
+    @Override
+    public SocketAddressResolver socketAddressResolver() {
+        return socketAddressResolver;
     }
 
     @Override

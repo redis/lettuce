@@ -39,7 +39,6 @@ import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.SocketAddressResolver;
 import io.lettuce.core.sentinel.StatefulRedisSentinelConnectionImpl;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 
@@ -587,7 +586,7 @@ public class RedisClient extends AbstractRedisClient {
     private <K, V> Mono<StatefulRedisSentinelConnection<K, V>> connectSentinel(ConnectionBuilder connectionBuilder, RedisURI uri) {
 
         connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
-        SocketAddress socketAddress = SocketAddressResolver.resolve(uri, clientResources.dnsResolver());
+        SocketAddress socketAddress = clientResources.socketAddressResolver().resolve(uri);
         logger.debug("Connecting to Redis Sentinel, address: " + socketAddress);
 
         Mono<StatefulRedisSentinelConnection<K, V>> connectionMono = Mono
@@ -698,7 +697,7 @@ public class RedisClient extends AbstractRedisClient {
                                 + redisURI.getSentinelMasterId())));
 
             } else {
-                return Mono.fromCallable(() -> SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver()));
+                return Mono.fromCallable(() -> clientResources.socketAddressResolver().resolve((redisURI)));
             }
         });
     }

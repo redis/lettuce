@@ -34,6 +34,7 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DnsResolvers;
+import io.lettuce.core.resource.SocketAddressResolver;
 
 /**
  * @author Mark Paluch
@@ -61,7 +62,7 @@ public class RoundRobinSocketAddressSupplierTest {
     @Before
     public void before() throws Exception {
 
-        when(clientResourcesMock.dnsResolver()).thenReturn(DnsResolvers.JVM_DEFAULT);
+        when(clientResourcesMock.socketAddressResolver()).thenReturn(SocketAddressResolver.create(DnsResolvers.JVM_DEFAULT));
 
         partitions = new Partitions();
         partitions.addPartition(new RedisClusterNode(hap1, "1", true, "", 0, 0, 0, new ArrayList<>(), new HashSet<>()));

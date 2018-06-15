@@ -103,6 +103,11 @@ public class EmptyClientResources implements ClientResources {
     }
 
     @Override
+    public SocketAddressResolver socketAddressResolver() {
+        return null;
+    }
+
+    @Override
     public Delay reconnectDelay() {
         return null;
     }

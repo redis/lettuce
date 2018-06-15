@@ -50,6 +50,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DnsResolvers;
+import io.lettuce.core.resource.SocketAddressResolver;
 
 /**
  * @author Mark Paluch
@@ -95,7 +96,7 @@ public class ClusterTopologyRefreshTest {
     @Before
     public void before() {
 
-        when(clientResources.dnsResolver()).thenReturn(DnsResolvers.JVM_DEFAULT);
+        when(clientResources.socketAddressResolver()).thenReturn(SocketAddressResolver.create(DnsResolvers.JVM_DEFAULT));
         when(connection1.async()).thenReturn(asyncCommands1);
         when(connection2.async()).thenReturn(asyncCommands2);
         when(connection1.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));

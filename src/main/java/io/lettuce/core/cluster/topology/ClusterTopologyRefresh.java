@@ -30,7 +30,6 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.topology.TopologyComparators.SortAction;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.SocketAddressResolver;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -207,7 +206,7 @@ public class ClusterTopologyRefresh {
             }
 
             try {
-                SocketAddress socketAddress = SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
+                SocketAddress socketAddress = clientResources.socketAddressResolver().resolve(redisURI);
 
                 ConnectionFuture<StatefulRedisConnection<String, String>> connectionFuture = nodeConnectionFactory
                         .connectToNodeAsync(CODEC, socketAddress);

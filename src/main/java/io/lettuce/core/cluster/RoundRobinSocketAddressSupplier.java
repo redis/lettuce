@@ -23,7 +23,6 @@ import java.util.function.Supplier;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.SocketAddressResolver;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -73,7 +72,7 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
     protected SocketAddress getSocketAddress(RedisClusterNode redisClusterNode) {
 
-        SocketAddress resolvedAddress = SocketAddressResolver.resolve(redisClusterNode.getUri(), clientResources.dnsResolver());
+        SocketAddress resolvedAddress = clientResources.socketAddressResolver().resolve(redisClusterNode.getUri());
         logger.debug("Resolved SocketAddress {} using for Cluster node {}", resolvedAddress, redisClusterNode.getNodeId());
         return resolvedAddress;
     }

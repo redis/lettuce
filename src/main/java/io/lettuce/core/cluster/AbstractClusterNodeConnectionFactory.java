@@ -23,7 +23,6 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.SocketAddressResolver;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -107,6 +106,6 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
     }
 
     private SocketAddress resolve(RedisURI redisURI) {
-        return SocketAddressResolver.resolve(redisURI, clientResources.dnsResolver());
+        return clientResources.socketAddressResolver().resolve(redisURI);
     }
 }

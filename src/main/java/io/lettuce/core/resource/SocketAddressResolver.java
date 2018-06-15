@@ -21,20 +21,62 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Resolves a {@link io.lettuce.core.RedisURI} to a {@link java.net.SocketAddress}.
  *
  * @author Mark Paluch
+ * @see MappingSocketAddressResolver
  */
 public class SocketAddressResolver {
+
+    private final DnsResolver dnsResolver;
+
+    /**
+     * Create a new {@link SocketAddressResolver} given {@link DnsResolver}.
+     *
+     * @param dnsResolver must not be {@literal null}.
+     * @since 5.1
+     */
+    protected SocketAddressResolver(DnsResolver dnsResolver) {
+
+        LettuceAssert.notNull(dnsResolver, "DnsResolver must not be null");
+
+        this.dnsResolver = dnsResolver;
+    }
+
+    /**
+     * Create a new {@link SocketAddressResolver} given {@link DnsResolver}.
+     *
+     * @param dnsResolver must not be {@literal null}.
+     * @return the {@link SocketAddressResolver}.
+     * @since 5.1
+     */
+    public static SocketAddressResolver create(DnsResolver dnsResolver) {
+        return new SocketAddressResolver(dnsResolver);
+    }
+
+    /**
+     * Resolve a {@link RedisURI} to a {@link SocketAddress}.
+     *
+     * @param redisURI must not be {@literal null}.
+     * @return the resolved {@link SocketAddress}.
+     * @since 5.1
+     */
+    public SocketAddress resolve(RedisURI redisURI) {
+
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+
+        return resolve(redisURI, dnsResolver);
+    }
 
     /**
      * Resolves a {@link io.lettuce.core.RedisURI} to a {@link java.net.SocketAddress}.
      *
-     * @param redisURI must not be {@literal null}
-     * @param dnsResolver must not be {@literal null}
-     * @return the resolved {@link SocketAddress}
+     * @param redisURI must not be {@literal null}.
+     * @param dnsResolver must not be {@literal null}.
+     * @return the resolved {@link SocketAddress}.
      */
     public static SocketAddress resolve(RedisURI redisURI, DnsResolver dnsResolver) {
 

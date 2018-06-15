@@ -113,7 +113,17 @@ public interface ClientResources {
         Builder computationThreadPoolSize(int computationThreadPoolSize);
 
         /**
-         * Sets the {@link DnsResolver} that can that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
+         * Sets the {@link SocketAddressResolver} that is used to resolve {@link io.lettuce.core.RedisURI} to
+         * {@link java.net.SocketAddress}. Defaults to {@link SocketAddressResolver} using the configured {@link DnsResolver}.
+         *
+         * @param socketAddressResolver the socket address resolver, must not be {@link null}.
+         * @return {@code this} {@link Builder}.
+         * @since 5.1
+         */
+        Builder socketAddressResolver(SocketAddressResolver socketAddressResolver);
+
+        /**
+         * Sets the {@link DnsResolver} that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
          * {@link DnsResolvers#JVM_DEFAULT}
          *
          * @param dnsResolver the DNS resolver, must not be {@link null}.
@@ -302,7 +312,7 @@ public interface ClientResources {
     /**
      * Returns the {@link EventPublisherOptions} for latency event publishing.
      *
-     * @return the {@link EventPublisherOptions} for latency event publishing
+     * @return the {@link EventPublisherOptions} for latency event publishing.
      */
     EventPublisherOptions commandLatencyPublisherOptions();
 
@@ -316,10 +326,18 @@ public interface ClientResources {
     /**
      * Returns the {@link DnsResolver}.
      *
-     * @return the DNS resolver
+     * @return the DNS resolver.
      * @since 4.3
      */
     DnsResolver dnsResolver();
+
+    /**
+     * Returns the {@link SocketAddressResolver}.
+     *
+     * @return the socket address resolver.
+     * @since 5.1
+     */
+    SocketAddressResolver socketAddressResolver();
 
     /**
      * Returns the {@link Delay} for reconnect attempts. May return a different instance on each call.
