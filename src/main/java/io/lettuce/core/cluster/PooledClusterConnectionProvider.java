@@ -291,7 +291,12 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     private boolean isReadCandidate(RedisClusterNode master, RedisClusterNode partition) {
-        return master.getNodeId().equals(partition.getNodeId()) || master.getNodeId().equals(partition.getSlaveOf());
+        return master.getNodeId().equals(partition.getNodeId())
+                || master.getNodeId().equals(partition.getSlaveOf())
+                && (!partition.getFlags().contains(RedisClusterNode.NodeFlag.FAIL))
+                && (!partition.getFlags().contains(RedisClusterNode.NodeFlag.EVENTUAL_FAIL))
+                && (!partition.getFlags().contains(RedisClusterNode.NodeFlag.HANDSHAKE))
+                && (!partition.getFlags().contains(RedisClusterNode.NodeFlag.NOADDR));
     }
 
     @Override
