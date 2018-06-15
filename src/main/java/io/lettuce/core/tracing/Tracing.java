@@ -97,8 +97,10 @@ public interface Tracing {
     }
 
     /**
-     * Value object to represent an endpoint. Used by {@link Tracer.Span}.
+     * Value object interface to represent an endpoint. Used by {@link Tracer.Span}.
+     *
+     * @since 5.1
      */
-    abstract class Endpoint {
+    interface Endpoint {
     }
 }

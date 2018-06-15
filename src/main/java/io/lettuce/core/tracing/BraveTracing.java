@@ -219,7 +219,7 @@ public class BraveTracing implements Tracing {
     /**
      * {@link Endpoint} implementation for Zipkin's {@link zipkin2.Endpoint}.
      */
-    public static class BraveEndpoint extends Endpoint {
+    public static class BraveEndpoint implements Endpoint {
 
         private final zipkin2.Endpoint endpoint;
 
@@ -231,7 +231,7 @@ public class BraveTracing implements Tracing {
     /**
      * {@link TraceContext} implementation for Brave's {@link brave.propagation.TraceContext}.
      */
-    public static class BraveTraceContext extends TraceContext {
+    public static class BraveTraceContext implements TraceContext {
 
         brave.propagation.TraceContext traceContext;
 

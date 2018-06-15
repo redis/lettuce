@@ -16,10 +16,14 @@
 package io.lettuce.core.tracing;
 
 /**
- * Context for propagation of parent and child spans. Subclasses may add their propagation metadata.
+ * Marker interface for a context propagation of parent and child spans. Subclasses may add their propagation metadata.
+ *
+ * @author Mark Paluch
+ * @since 5.1
+ *
  */
-public abstract class TraceContext {
+public interface TraceContext {
 
-    public final static TraceContext EMPTY = new TraceContext() {
+    TraceContext EMPTY = new TraceContext() {
     };
 }
