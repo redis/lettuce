@@ -18,13 +18,12 @@ package io.lettuce.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.google.code.tempusfugit.temporal.WaitFor;
-import io.lettuce.Wait;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import io.lettuce.Wait;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -108,6 +107,8 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
         redis.select(1);
         redis.set(key, value);
         redis.quit();
+
+        Wait.untilTrue(redis::isOpen).waitOrTimeout();
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
