@@ -68,11 +68,11 @@ public class BraveTracing implements Tracing {
     /**
      * Create a new {@link BraveTracing} instance.
      *
-     * @param tracer must not be {@literal null}.
-     * @return the {@link BraveTracer}.
+     * @param tracing must not be {@literal null}.
+     * @return the {@link BraveTracing}.
      */
-    public static BraveTracing create(brave.Tracer tracer) {
-        return new BraveTracing(new BraveTracer(tracer));
+    public static BraveTracing create(brave.Tracing tracing) {
+        return new BraveTracing(new BraveTracer(tracing));
     }
 
     @Override
@@ -110,15 +110,15 @@ public class BraveTracing implements Tracing {
      */
     static class BraveTracer extends Tracer {
 
-        private final brave.Tracer tracer;
+        private final brave.Tracing tracing;
 
-        public BraveTracer(brave.Tracer tracer) {
-            this.tracer = tracer;
+        public BraveTracer(brave.Tracing tracing) {
+            this.tracing = tracing;
         }
 
         @Override
         public Span nextSpan() {
-            return postProcessSpan(tracer.nextSpan());
+            return postProcessSpan(tracing.tracer().nextSpan());
         }
 
         @Override
@@ -134,7 +134,8 @@ public class BraveTracing implements Tracing {
                 return nextSpan();
             }
 
-            return postProcessSpan(tracer.nextSpan(TraceContextOrSamplingFlags.create(braveTraceContext.traceContext)));
+            return postProcessSpan(tracing.tracer()
+                    .nextSpan(TraceContextOrSamplingFlags.create(braveTraceContext.traceContext)));
         }
 
         private Span postProcessSpan(brave.Span span) {

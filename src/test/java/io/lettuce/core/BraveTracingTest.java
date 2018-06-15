@@ -57,7 +57,7 @@ public class BraveTracingTest extends AbstractTest {
         clientTracing = Tracing.newBuilder().localServiceName("client")
                 .currentTraceContext(CurrentTraceContext.Default.create()).spanReporter(spans::add).build();
 
-        clientResources = DefaultClientResources.builder().tracing(BraveTracing.create(clientTracing.tracer())).build();
+        clientResources = DefaultClientResources.builder().tracing(BraveTracing.create(clientTracing)).build();
 
         client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
     }
