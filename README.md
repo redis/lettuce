@@ -30,7 +30,8 @@ Communication
 
 * Google Group: [lettuce-redis-client-users](https://groups.google.com/d/forum/lettuce-redis-client-users) or lettuce-redis-client-users@googlegroups.com
 * [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-* [Github Issues](https://github.com/lettuce-io/lettuce-core/issues)
+* Twitter: [@LettuceDriver](https://twitter.com/LettuceDriver)
+* [GitHub Issues](https://github.com/lettuce-io/lettuce-core/issues)
 
 
 Documentation
@@ -192,7 +193,7 @@ $ make test
 Bugs and Feedback
 -----------
 
-For bugs, questions and discussions please use the [Github Issues](https://github.com/lettuce-io/lettuce-core/issues).
+For bugs, questions and discussions please use the [GitHub Issues](https://github.com/lettuce-io/lettuce-core/issues).
 
 License
 -------
@@ -205,4 +206,3 @@ Contributing
 
 Github is for social coding: if you want to write code, I encourage contributions through pull requests from forks of this repository. 
 Create Github tickets for bugs and new features and comment on the ones that you are interested in and take a look into [CONTRIBUTING.md](https://github.com/lettuce-io/lettuce-core/blob/master/.github/CONTRIBUTING.md)
-                  
