@@ -15,10 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -164,6 +161,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             }
 
             List<RedisNodeDescription> candidates = getReadCandidates(master);
+            //put candidates in random sequence to make the server loading balance
+            Collections.shuffle(candidates);
             List<RedisNodeDescription> selection = readFrom.select(new ReadFrom.Nodes() {
                 @Override
                 public List<RedisNodeDescription> getNodes() {
@@ -292,7 +291,12 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
     }
 
     private boolean isReadCandidate(RedisClusterNode master, RedisClusterNode partition) {
-        return master.getNodeId().equals(partition.getNodeId()) || master.getNodeId().equals(partition.getSlaveOf());
+        return master.getNodeId().equals(partition.getNodeId())
+                || master.getNodeId().equals(partition.getSlaveOf())
+                && (!partition.getFlags().contains(RedisClusterNode.NodeFlag.FAIL))
+                && (!partition.getFlags().contains(RedisClusterNode.NodeFlag.EVENTUAL_FAIL))
+                && (!partition.getFlags().contains(RedisClusterNode.NodeFlag.HANDSHAKE))
+                && (!partition.getFlags().contains(RedisClusterNode.NodeFlag.NOADDR));
     }
 
     @Override
