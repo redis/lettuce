@@ -28,12 +28,13 @@ import com.lambdaworks.redis.protocol.ProtocolKeyword;
 public class ReadOnlyCommandsTest {
 
     @Test
-    public void testCount() throws Exception {
-        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(71);
+    public void testCount() {
+        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(70);
     }
 
     @Test
-    public void testResolvableCommandNames() throws Exception {
+    public void testResolvableCommandNames() {
+
         for (ProtocolKeyword readOnlyCommand : ReadOnlyCommands.getReadOnlyCommands()) {
             assertThat(readOnlyCommand.name()).isEqualTo(CommandType.valueOf(readOnlyCommand.name()).name());
         }
