@@ -16,20 +16,43 @@
 package io.lettuce.core.masterslave;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.resource.ClientResources;
 
 /**
  * @author Mark Paluch
  */
+@RunWith(MockitoJUnitRunner.class)
 public class MasterSlaveChannelWriterTest {
+
+    @Mock
+    private MasterSlaveConnectionProvider<String, String> connectionProvider;
+
+    @Mock
+    private ClientResources clientResources;
+
+    @Mock
+    private StatefulRedisConnection<String, String> connection;
 
     @Test
     public void shouldReturnIntentForWriteCommand() {
@@ -77,4 +100,88 @@ public class MasterSlaveChannelWriterTest {
                 MasterSlaveConnectionProvider.Intent.WRITE);
     }
 
+    @Test
+    public void shouldBindTransactionsToMaster() {
+
+        MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
+
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
+                CompletableFuture.completedFuture(connection));
+
+        writer.write(mockCommand(CommandType.MULTI));
+        writer.write(mockCommand(CommandType.GET));
+        writer.write(mockCommand(CommandType.EXEC));
+
+        verify(connectionProvider, times(3)).getConnectionAsync(MasterSlaveConnectionProvider.Intent.WRITE);
+    }
+
+    @Test
+    public void shouldBindTransactionsToMasterInBatch() {
+
+        MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
+
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
+                CompletableFuture.completedFuture(connection));
+
+        List<Command<String, String, String>> commands = Arrays.asList(mockCommand(CommandType.MULTI),
+                mockCommand(CommandType.GET), mockCommand(CommandType.EXEC));
+
+        writer.write(commands);
+
+        verify(connectionProvider).getConnectionAsync(MasterSlaveConnectionProvider.Intent.WRITE);
+    }
+
+    @Test
+    public void shouldDeriveIntentFromCommandTypeAfterTransaction() {
+
+        MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
+
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
+                CompletableFuture.completedFuture(connection));
+
+        writer.write(mockCommand(CommandType.MULTI));
+        writer.write(mockCommand(CommandType.EXEC));
+        writer.write(mockCommand(CommandType.GET));
+
+        verify(connectionProvider, times(2)).getConnectionAsync(MasterSlaveConnectionProvider.Intent.WRITE);
+        verify(connectionProvider).getConnectionAsync(MasterSlaveConnectionProvider.Intent.READ);
+    }
+
+    @Test
+    public void shouldDeriveIntentFromCommandTypeAfterDiscardedTransaction() {
+
+        MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
+
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
+                CompletableFuture.completedFuture(connection));
+
+        writer.write(mockCommand(CommandType.MULTI));
+        writer.write(mockCommand(CommandType.DISCARD));
+        writer.write(mockCommand(CommandType.GET));
+
+        verify(connectionProvider, times(2)).getConnectionAsync(MasterSlaveConnectionProvider.Intent.WRITE);
+        verify(connectionProvider).getConnectionAsync(MasterSlaveConnectionProvider.Intent.READ);
+    }
+
+    @Test
+    public void shouldDeriveIntentFromCommandBatchTypeAfterDiscardedTransaction() {
+
+        MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
+
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
+                CompletableFuture.completedFuture(connection));
+
+        List<Command<String, String, String>> commands = Arrays.asList(mockCommand(CommandType.MULTI),
+                mockCommand(CommandType.EXEC));
+
+        writer.write(commands);
+        writer.write(Collections.singletonList(mockCommand(CommandType.GET)));
+
+        verify(connectionProvider).getConnectionAsync(MasterSlaveConnectionProvider.Intent.WRITE);
+        verify(connectionProvider).getConnectionAsync(MasterSlaveConnectionProvider.Intent.READ);
+    }
+
+    private static Command<String, String, String> mockCommand(CommandType multi) {
+        return new Command<>(multi, new StatusOutput<>(StringCodec.UTF8));
+    }
 }

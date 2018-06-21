@@ -40,6 +40,7 @@ class MasterSlaveChannelWriter implements RedisChannelWriter {
     private final ClientResources clientResources;
 
     private boolean closed = false;
+    private boolean inTransaction;
 
     MasterSlaveChannelWriter(MasterSlaveConnectionProvider<?, ?> masterSlaveConnectionProvider, ClientResources clientResources) {
         this.masterSlaveConnectionProvider = masterSlaveConnectionProvider;
@@ -56,9 +57,17 @@ class MasterSlaveChannelWriter implements RedisChannelWriter {
             throw new RedisException("Connection is closed");
         }
 
-        Intent intent = getIntent(command.getType());
+        if (isStartTransaction(command.getType())) {
+            inTransaction = true;
+        }
+
+        Intent intent = inTransaction ? Intent.WRITE : getIntent(command.getType());
         CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterSlaveConnectionProvider
                 .getConnectionAsync(intent);
+
+        if (isEndTransaction(command.getType())) {
+            inTransaction = false;
+        }
 
         if (isSuccessfullyCompleted(future)) {
             writeCommand(command, future.join(), null);
@@ -95,12 +104,26 @@ class MasterSlaveChannelWriter implements RedisChannelWriter {
             throw new RedisException("Connection is closed");
         }
 
+        for (RedisCommand<K, V, ?> command : commands) {
+            if (isStartTransaction(command.getType())) {
+                inTransaction = true;
+                break;
+            }
+        }
+
         // TODO: Retain order or retain Intent preference?
         // Currently: Retain order
-        Intent intent = getIntent(commands);
+        Intent intent = inTransaction ? Intent.WRITE : getIntent(commands);
 
         CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterSlaveConnectionProvider
                 .getConnectionAsync(intent);
+
+        for (RedisCommand<K, V, ?> command : commands) {
+            if (isEndTransaction(command.getType())) {
+                inTransaction = false;
+                break;
+            }
+        }
 
         if (isSuccessfullyCompleted(future)) {
             writeCommands(commands, future.join(), null);
@@ -242,5 +265,13 @@ class MasterSlaveChannelWriter implements RedisChannelWriter {
 
     private static boolean isSuccessfullyCompleted(CompletableFuture<?> connectFuture) {
         return connectFuture.isDone() && !connectFuture.isCompletedExceptionally();
+    }
+
+    private static boolean isStartTransaction(ProtocolKeyword command) {
+        return command.name().equals("MULTI");
+    }
+
+    private boolean isEndTransaction(ProtocolKeyword command) {
+        return command.name().equals("EXEC") || command.name().equals("DISCARD");
     }
 }
