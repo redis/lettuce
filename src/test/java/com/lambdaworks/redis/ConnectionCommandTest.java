@@ -29,6 +29,7 @@ import org.junit.runners.MethodSorters;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.lambdaworks.TestClientResources;
+import com.lambdaworks.Wait;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import com.lambdaworks.redis.protocol.CommandHandler;
 
@@ -39,7 +40,7 @@ import com.lambdaworks.redis.protocol.CommandHandler;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ConnectionCommandTest extends AbstractRedisClientTest {
     @Test
-    public void auth() throws Exception {
+    public void auth() {
         new WithPasswordRequired() {
             @Override
             public void run(RedisClient client) {
@@ -64,34 +65,34 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void echo() throws Exception {
+    public void echo() {
         assertThat(redis.echo("hello")).isEqualTo("hello");
     }
 
     @Test
-    public void ping() throws Exception {
+    public void ping() {
         assertThat(redis.ping()).isEqualTo("PONG");
     }
 
     @Test
-    public void select() throws Exception {
+    public void select() {
         redis.set(key, value);
         assertThat(redis.select(1)).isEqualTo("OK");
         assertThat(redis.get(key)).isNull();
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void authNull() throws Exception {
+    public void authNull() {
         redis.auth(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void authEmpty() throws Exception {
+    public void authEmpty() {
         redis.auth("");
     }
 
     @Test
-    public void authReconnect() throws Exception {
+    public void authReconnect() {
         new WithPasswordRequired() {
             @Override
             public void run(RedisClient client) throws InterruptedException {
@@ -101,22 +102,26 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
                 assertThat(connection.set(key, value)).isEqualTo("OK");
                 connection.quit();
 
-                Thread.sleep(100);
+                Wait.untilTrue(redis::isOpen).waitOrTimeout();
+
                 assertThat(connection.get(key)).isEqualTo(value);
             }
         };
     }
 
     @Test
-    public void selectReconnect() throws Exception {
+    public void selectReconnect() {
         redis.select(1);
         redis.set(key, value);
         redis.quit();
+
+        Wait.untilTrue(redis::isOpen).waitOrTimeout();
+
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
-    public void isValid() throws Exception {
+    public void isValid() {
 
         assertThat(Connections.isValid(redis)).isTrue();
         RedisAsyncCommandsImpl<String, String> asyncConnection = (RedisAsyncCommandsImpl<String, String>) client.connectAsync();
@@ -156,7 +161,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void isValidSyncExceptions() throws Exception {
+    public void isValidSyncExceptions() {
 
         RedisConnection<?, ?> connection = mock(RedisConnection.class);
 
@@ -165,7 +170,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void closeExceptions() throws Exception {
+    public void closeExceptions() {
 
         RedisConnection<?, ?> connection = mock(RedisConnection.class);
         doThrow(new RuntimeException()).when(connection).close();
@@ -173,22 +178,22 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void isValidWrongObject() throws Exception {
+    public void isValidWrongObject() {
         Connections.isValid(new Object());
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void isOpenWrongObject() throws Exception {
+    public void isOpenWrongObject() {
         Connections.isOpen(new Object());
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void closeWrongObject() throws Exception {
+    public void closeWrongObject() {
         Connections.close(new Object());
     }
 
     @Test
-    public void getSetReconnect() throws Exception {
+    public void getSetReconnect() {
         redis.set(key, value);
         redis.quit();
         assertThat(redis.get(key)).isEqualTo(value);
@@ -196,7 +201,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void authInvalidPassword() throws Exception {
+    public void authInvalidPassword() {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         try {
             async.auth("invalid");
@@ -213,7 +218,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void selectInvalid() throws Exception {
+    public void selectInvalid() {
         RedisAsyncConnection<String, String> async = client.connectAsync();
         try {
             async.select(1024);
@@ -229,7 +234,7 @@ public class ConnectionCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void testDoubleToString() throws Exception {
+    public void testDoubleToString() {
 
         assertThat(LettuceStrings.string(1.1)).isEqualTo("1.1");
         assertThat(LettuceStrings.string(Double.POSITIVE_INFINITY)).isEqualTo("+inf");
