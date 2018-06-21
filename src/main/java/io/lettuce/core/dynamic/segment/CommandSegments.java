@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
@@ -30,7 +31,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  */
 public class CommandSegments implements Iterable<CommandSegment> {
 
-    private final StringCommandType commandType;
+    private final ProtocolKeyword commandType;
     private final List<CommandSegment> segments;
 
     /**
@@ -44,7 +45,24 @@ public class CommandSegments implements Iterable<CommandSegment> {
 
         this.segments = segments.size() > 1 ? Collections.unmodifiableList(segments.subList(1, segments.size())) : Collections
                 .emptyList();
-        this.commandType = new StringCommandType(segments.get(0).asString());
+        this.commandType = potentiallyResolveCommand(segments.get(0).asString());
+    }
+
+    /**
+     * Attempt to resolve the {@code commandType} against {@link CommandType}. This allows reuse of settings associated with the
+     * actual command type such as read-write routing. Subclasses may override this method.
+     *
+     * @param commandType must not be {@literal null}.
+     * @return the resolved {@link ProtocolKeyword}.
+     * @since 5.0.5
+     */
+    protected ProtocolKeyword potentiallyResolveCommand(String commandType) {
+
+        try {
+            return CommandType.valueOf(commandType);
+        } catch (IllegalArgumentException e) {
+            return new StringCommandType(commandType);
+        }
     }
 
     @Override

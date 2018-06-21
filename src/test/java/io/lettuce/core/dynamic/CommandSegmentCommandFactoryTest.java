@@ -37,6 +37,7 @@ import io.lettuce.core.dynamic.output.OutputRegistryCommandOutputFactoryResolver
 import io.lettuce.core.dynamic.segment.AnnotationCommandSegmentFactory;
 import io.lettuce.core.dynamic.segment.CommandSegmentFactory;
 import io.lettuce.core.dynamic.support.ReflectionUtils;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
@@ -51,6 +52,7 @@ public class CommandSegmentCommandFactoryTest {
                 new StringCodec(), "key", "value");
 
         assertThat(toString(command)).isEqualTo("SET key<key> key<value>");
+        assertThat(command.getType()).isSameAs(CommandType.SET);
     }
 
     @Test
@@ -69,6 +71,17 @@ public class CommandSegmentCommandFactoryTest {
                 new StringCodec(), "key", "value");
 
         assertThat(toString(command)).isEqualTo("SET key<key> value<value>");
+        assertThat(command.getType()).isSameAs(CommandType.SET);
+    }
+
+    @Test
+    public void lowercaseCommandResolvesToStringCommand() {
+
+        RedisCommand<?, ?, ?> command = createCommand(methodOf(Commands.class, "set3", String.class, String.class),
+                new StringCodec(), "key", "value");
+
+        assertThat(toString(command)).isEqualTo("set key<key> value<value>");
+        assertThat(command.getType()).isNotInstanceOf(CommandType.class);
     }
 
     @Test
@@ -127,6 +140,15 @@ public class CommandSegmentCommandFactoryTest {
                 null);
     }
 
+    @Test
+    public void resolvesUnknownCommandToStringBackedCommandType() {
+
+        RedisCommand<?, ?, ?> command = createCommand(methodOf(Commands.class, "unknownCommand"), new StringCodec());
+
+        assertThat(toString(command)).isEqualTo("XYZ");
+        assertThat(command.getType()).isNotInstanceOf(CommandType.class);
+    }
+
     private CommandMethod methodOf(Class<?> commandInterface, String methodName, Class... args) {
         return DeclaredCommandMethod.create(ReflectionUtils.findMethod(commandInterface, methodName, args));
     }
@@ -149,7 +171,12 @@ public class CommandSegmentCommandFactoryTest {
         StringBuilder builder = new StringBuilder();
 
         builder.append(command.getType().name());
-        builder.append(' ').append(command.getArgs().toCommandString());
+
+        String commandString = command.getArgs().toCommandString();
+
+        if (!commandString.isEmpty()) {
+            builder.append(' ').append(commandString);
+        }
 
         return builder.toString();
     }
@@ -161,6 +188,9 @@ public class CommandSegmentCommandFactoryTest {
         @Command("SET")
         boolean set2(String key, @Value String value);
 
+        @Command("set")
+        boolean set3(String key, @Value String value);
+
         boolean set(String key, String value, SetArgs setArgs);
 
         boolean clientSetname(String connectionName);
@@ -170,6 +200,9 @@ public class CommandSegmentCommandFactoryTest {
 
         @Command("MGET ?1 ?0")
         String varargsWithParamIndexes(ScanArgs scanArgs, String... keys);
+
+        @Command("XYZ")
+        boolean unknownCommand();
     }
 
     static interface MethodsWithTimeout {
