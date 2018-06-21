@@ -32,22 +32,22 @@ public class GeoTxCommandTest extends GeoCommandTest {
 
     @Ignore
     @Override
-    public void georadiusbymemberWithArgsAndTransaction() {
+    public void georadiusbymemberWithArgsInTransaction() {
     }
 
     @Ignore
     @Override
-    public void geoaddWithTransaction() {
+    public void geoaddInTransaction() {
     }
 
     @Ignore
     @Override
-    public void geoaddMultiWithTransaction() {
+    public void geoaddMultiInTransaction() {
     }
 
     @Ignore
     @Override
-    public void geoposWithTransaction() {
+    public void geoposInTransaction() {
     }
 
     @Ignore
@@ -57,16 +57,16 @@ public class GeoTxCommandTest extends GeoCommandTest {
 
     @Ignore
     @Override
-    public void georadiusWithTransaction() {
+    public void georadiusInTransaction() {
     }
 
     @Ignore
     @Override
-    public void geodistWithTransaction() {
+    public void geodistInTransaction() {
     }
 
     @Ignore
     @Override
-    public void geohashWithTransaction() {
+    public void geohashInTransaction() {
     }
 }

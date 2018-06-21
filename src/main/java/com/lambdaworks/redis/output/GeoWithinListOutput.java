@@ -101,6 +101,7 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
             distance = null;
             geohash = null;
             coordinates = null;
+            x = null;
         }
     }
 

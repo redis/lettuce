@@ -31,6 +31,9 @@ import com.lambdaworks.RedisConditions;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 
+/**
+ * @author Mark Paluch
+ */
 public class GeoCommandTest extends AbstractRedisClientTest {
 
     @Rule
@@ -57,7 +60,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void geoaddWithTransaction() {
+    public void geoaddInTransaction() {
 
         redis.multi();
         redis.geoadd(key, -73.9454966, 40.747533, "lic market");
@@ -75,7 +78,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void geoaddMultiWithTransaction() {
+    public void geoaddMultiInTransaction() {
 
         redis.multi();
         redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
@@ -86,11 +89,6 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     @Test(expected = IllegalArgumentException.class)
     public void geoaddMultiWrongArgument() {
         redis.geoadd(key, 49.528253);
-    }
-
-    protected void prepareGeo() {
-        redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim");
-        redis.geoadd(key, 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
     }
 
     @Test
@@ -106,7 +104,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void georadiusWithTransaction() {
+    public void georadiusInTransaction() {
 
         prepareGeo();
 
@@ -120,6 +118,22 @@ public class GeoCommandTest extends AbstractRedisClientTest {
 
         assertThat(georadius).hasSize(1).contains("Weinheim");
         assertThat(largerGeoradius).hasSize(2).contains("Weinheim").contains("Bahn");
+    }
+
+    @Test
+    public void georadiusWithCoords() {
+
+        prepareGeo();
+
+        List<GeoWithin<String>> georadius = redis.georadius(key, 8.6582861, 49.5285695, 100, GeoArgs.Unit.km,
+                GeoArgs.Builder.coordinates());
+
+        assertThat(georadius).hasSize(3);
+        assertThat(getX(georadius, 0)).isBetween(8.66, 8.67);
+        assertThat(getY(georadius, 0)).isBetween(49.52, 49.53);
+
+        assertThat(getX(georadius, 2)).isBetween(8.37, 8.38);
+        assertThat(getY(georadius, 2)).isBetween(48.99, 49.00);
     }
 
     @Test
@@ -144,7 +158,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void geodistWithTransaction() {
+    public void geodistInTransaction() {
 
         prepareGeo();
 
@@ -175,7 +189,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void geoposWithTransaction() {
+    public void geoposInTransaction() {
 
         prepareGeo();
 
@@ -282,7 +296,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void geohashWithTransaction() {
+    public void geohashInTransaction() {
 
         prepareGeo();
 
@@ -434,7 +448,7 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void georadiusbymemberWithArgsAndTransaction() {
+    public void georadiusbymemberWithArgsInTransaction() {
 
         prepareGeo();
 
@@ -486,6 +500,19 @@ public class GeoCommandTest extends AbstractRedisClientTest {
     @Test(expected = IllegalArgumentException.class)
     public void georadiusStorebymemberWithNullArgs() {
         redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, (GeoRadiusStoreArgs<String>) null);
+    }
+
+    protected void prepareGeo() {
+        redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim");
+        redis.geoadd(key, 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
+    }
+
+    private static double getY(List<GeoWithin<String>> georadius, int i) {
+        return georadius.get(i).getCoordinates().getY().doubleValue();
+    }
+
+    private static double getX(List<GeoWithin<String>> georadius, int i) {
+        return georadius.get(i).getCoordinates().getX().doubleValue();
     }
 
 }
