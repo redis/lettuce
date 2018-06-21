@@ -71,22 +71,22 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geoaddWithTransaction() {
+    public void geoaddInTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geoaddMultiWithTransaction() {
+    public void geoaddMultiInTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void georadiusWithTransaction() {
+    public void georadiusInTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geodistWithTransaction() {
+    public void geodistInTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
@@ -96,16 +96,16 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void georadiusbymemberWithArgsAndTransaction() {
+    public void georadiusbymemberWithArgsInTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geoposWithTransaction() {
+    public void geoposInTransaction() {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geohashWithTransaction() {
+    public void geohashInTransaction() {
     }
 }

@@ -58,6 +58,6 @@ public class GeoReactiveCommandTest extends GeoCommandTest {
     @Test
     @Ignore("API differences")
     @Override
-    public void geoposWithTransaction() {
+    public void geoposInTransaction() {
     }
 }
