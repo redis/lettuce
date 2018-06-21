@@ -34,7 +34,7 @@ Lettuce is a scalable thread-safe Redis client based on http://netty.io[netty] a
 [[overview.requirements]]
 === Requirements
 
-Lettuce 4.x and 5.x binaries requires JDK level 8.0 and above.
+Lettuce 4.x and 5.x binaries require JDK level 8.0 and above.
 
 In terms of http://redis.io/[Redis], at least 2.6.
 

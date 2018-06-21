@@ -1,6 +1,21 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.5-1-0]]
+== What's new in Lettuce 5.1
+* Add support for `ZPOPMIN`, `ZPOPMAX`, `BZPOPMIN`, `BZPOPMAX` commands.
+* Add support for Redis Command Tracing through Brave, see <<client-resources>>.
+* Add support for https://redis.io/topics/streams-intro[Redis Streams].
+* Asynchronous `connect()` for Master/Slave connections.
+* <<connection-pooling.asynchronous.usage>> through `AsyncConnectionPoolSupport` and `AsyncPool`.
+* Dedicated exceptions for Redis `LOADING`, `BUSY`, and `NOSCRIPT` responses.
+* Commands in at-most-once mode (auto-reconnect disabled) are now canceled already on disconnect.
+* Global command timeouts (also for reactive and asynchronous API usage) configurable through <<client-options>>.
+* Host and port mappers for Lettuce usage behind connection tunnels/proxies through `SocketAddressResolver`, see <<client-resources>>.
+* `SCRIPT LOAD` dispatch to all cluster nodes when issued through `RedisAdvancedClusterCommands`.
+* Reactive `ScanStream` to iterate over the keyspace using `SCAN` commands.
+* Transactions using Master/Slave connections are bound to the master node.
+
 [[new-features.5-0-0]]
 == What's new in Lettuce 5.0
 * New artifact coordinates: `io.lettuce:lettuce-core` and packages moved from `com.lambdaworks.redis` to `io.lettuce.core`.
