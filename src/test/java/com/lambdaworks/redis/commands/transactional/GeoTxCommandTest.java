@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,22 +32,22 @@ public class GeoTxCommandTest extends GeoCommandTest {
 
     @Ignore
     @Override
-    public void georadiusbymemberWithArgsAndTransaction() throws Exception {
+    public void georadiusbymemberWithArgsInTransaction() throws Exception {
     }
 
     @Ignore
     @Override
-    public void geoaddWithTransaction() throws Exception {
+    public void geoaddInTransaction() throws Exception {
     }
 
     @Ignore
     @Override
-    public void geoaddMultiWithTransaction() throws Exception {
+    public void geoaddMultiInTransaction() throws Exception {
     }
 
     @Ignore
     @Override
-    public void geoposWithTransaction() throws Exception {
+    public void geoposInTransaction() throws Exception {
     }
 
     @Ignore
@@ -57,16 +57,16 @@ public class GeoTxCommandTest extends GeoCommandTest {
 
     @Ignore
     @Override
-    public void georadiusWithTransaction() throws Exception {
+    public void georadiusInTransaction() throws Exception {
     }
 
     @Ignore
     @Override
-    public void geodistWithTransaction() throws Exception {
+    public void geodistInTransaction() throws Exception {
     }
 
     @Ignore
     @Override
-    public void geohashWithTransaction() throws Exception {
+    public void geohashInTransaction() throws Exception {
     }
 }

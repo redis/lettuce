@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,22 +71,22 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geoaddWithTransaction() throws Exception {
+    public void geoaddInTransaction() throws Exception {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geoaddMultiWithTransaction() throws Exception {
+    public void geoaddMultiInTransaction() throws Exception {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void georadiusWithTransaction() throws Exception {
+    public void georadiusInTransaction() throws Exception {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geodistWithTransaction() throws Exception {
+    public void geodistInTransaction() throws Exception {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
@@ -96,16 +96,16 @@ public class GeoClusterCommandTest extends GeoCommandTest {
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void georadiusbymemberWithArgsAndTransaction() throws Exception {
+    public void georadiusbymemberWithArgsInTransaction() throws Exception {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geoposWithTransaction() throws Exception {
+    public void geoposInTransaction() throws Exception {
     }
 
     @Ignore("MULTI not available on Redis Cluster")
     @Override
-    public void geohashWithTransaction() throws Exception {
+    public void geohashInTransaction() throws Exception {
     }
 }
