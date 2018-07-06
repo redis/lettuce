@@ -96,8 +96,6 @@ public class StreamCommandTest extends AbstractRedisClientTest {
 
         Long xtrim = redis.xtrim(key, 8);
 
-        assertThat(xtrim).isNotZero();
-
         assertThat(redis.xlen(key)).isLessThanOrEqualTo(10);
     }
 
