@@ -17,6 +17,7 @@ package com.lambdaworks.redis.api.rx;
 
 import java.util.Date;
 
+import com.lambdaworks.redis.UnblockType;
 import rx.Observable;
 
 import com.lambdaworks.redis.KillArgs;
@@ -77,6 +78,16 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return Long integer-reply number of killed connections
      */
     Observable<Long> clientKill(KillArgs killArgs);
+
+    /**
+     * Unblock the specified blocked client.
+     *
+     * @param id the client id.
+     * @param type unblock type.
+     * @return Long integer-reply number of unblocked connections.
+     * @since 4.5
+     */
+    Observable<Long> clientUnblock(long id, UnblockType type);
 
     /**
      * Stop processing commands from clients for some time.
@@ -283,7 +294,6 @@ public interface RedisServerReactiveCommands<K, V> {
      * Synchronously save the dataset to disk and then shut down the server.
      *
      * @param save {@literal true} force save operation
-     * @return String simple-string-reply The commands returns OK on success.
      */
     Observable<Success> shutdown(boolean save);
 

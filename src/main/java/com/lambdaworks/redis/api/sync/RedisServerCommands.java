@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.lambdaworks.redis.KillArgs;
+import com.lambdaworks.redis.UnblockType;
 import com.lambdaworks.redis.protocol.CommandType;
 
 /**
@@ -76,6 +77,16 @@ public interface RedisServerCommands<K, V> {
      * @return Long integer-reply number of killed connections
      */
     Long clientKill(KillArgs killArgs);
+
+    /**
+     * Unblock the specified blocked client.
+     *
+     * @param id the client id.
+     * @param type unblock type.
+     * @return Long integer-reply number of unblocked connections.
+     * @since 4.5
+     */
+    Long clientUnblock(long id, UnblockType type);
 
     /**
      * Stop processing commands from clients for some time.

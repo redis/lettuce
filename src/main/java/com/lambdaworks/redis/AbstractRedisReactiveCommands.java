@@ -186,6 +186,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Observable<Long> clientUnblock(long id, UnblockType type) {
+        return createObservable(() -> commandBuilder.clientUnblock(id, type));
+    }
+
+    @Override
     public void close() {
         connection.close();
     }

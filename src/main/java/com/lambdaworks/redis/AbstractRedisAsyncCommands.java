@@ -196,6 +196,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
+    public RedisFuture<Long> clientUnblock(long id, UnblockType type) {
+        return dispatch(commandBuilder.clientUnblock(id, type));
+    }
+
+    @Override
     public void close() {
         connection.close();
     }

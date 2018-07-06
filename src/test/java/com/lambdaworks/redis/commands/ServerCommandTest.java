@@ -18,13 +18,17 @@ package com.lambdaworks.redis.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.lambdaworks.redis.*;
+import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -32,10 +36,6 @@ import org.junit.runners.MethodSorters;
 
 import com.lambdaworks.RedisConditions;
 import com.lambdaworks.Wait;
-import com.lambdaworks.redis.AbstractRedisClientTest;
-import com.lambdaworks.redis.KillArgs;
-import com.lambdaworks.redis.RedisConnection;
-import com.lambdaworks.redis.TestSettings;
 import com.lambdaworks.redis.models.command.CommandDetail;
 import com.lambdaworks.redis.models.command.CommandDetailParser;
 import com.lambdaworks.redis.models.role.RedisInstance;
@@ -112,6 +112,34 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     @Test
     public void clientList() {
         assertThat(redis.clientList().contains("addr=")).isTrue();
+    }
+
+    @Test
+    public void clientUnblock() throws InterruptedException {
+
+        try {
+            redis.clientUnblock(0, UnblockType.ERROR);
+        } catch (Exception e) {
+            assumeFalse(e.getMessage(), true);
+        }
+
+        StatefulRedisConnection<String, String> connection2 = client.connect();
+        connection2.sync().clientSetname("blocked");
+
+        RedisFuture<KeyValue<String, String>> blocked = connection2.async().brpop(100000, "foo");
+
+        Pattern p = Pattern.compile("^.*id=([^ ]+).*name=blocked.*$", Pattern.MULTILINE | Pattern.DOTALL);
+        String clients = redis.clientList();
+        Matcher m = p.matcher(clients);
+
+        assertThat(m.matches()).isTrue();
+        String id = m.group(1);
+
+        Long unblocked = redis.clientUnblock(Long.parseLong(id), UnblockType.ERROR);
+        assertThat(unblocked).isEqualTo(1);
+
+        blocked.await(1, TimeUnit.SECONDS);
+        assertThat(blocked.getError()).contains("UNBLOCKED client unblocked");
     }
 
     @Test

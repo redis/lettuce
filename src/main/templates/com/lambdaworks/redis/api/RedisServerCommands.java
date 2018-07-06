@@ -77,6 +77,16 @@ public interface RedisServerCommands<K, V> {
     Long clientKill(KillArgs killArgs);
 
     /**
+     * Unblock the specified blocked client.
+     *
+     * @param id the client id.
+     * @param type unblock type.
+     * @return Long integer-reply number of unblocked connections.
+     * @since 4.5
+     */
+    Long clientUnblock(long id, UnblockType type);
+
+    /**
      * Stop processing commands from clients for some time.
      *
      * @param timeout the timeout value in milliseconds
