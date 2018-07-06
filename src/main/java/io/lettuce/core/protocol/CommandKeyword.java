@@ -19,6 +19,7 @@ package io.lettuce.core.protocol;
  * Keyword modifiers for redis commands.
  *
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public enum CommandKeyword implements ProtocolKeyword {
 
@@ -36,7 +37,7 @@ public enum CommandKeyword implements ProtocolKeyword {
 
     RESETSTAT, RESTART, RETRYCOUNT, REWRITE, SAVECONFIG, SDSLEN, SETNAME, SETSLOT, SLOTS, STABLE,
 
-    MIGRATING, IMPORTING, SKIPME, SLAVES, STORE, SUM, SEGFAULT, WEIGHTS,
+    MIGRATING, IMPORTING, SKIPME, SLAVES, STORE, SUM, SEGFAULT, UNBLOCK, WEIGHTS,
 
     WITHSCORES, XOR;
 

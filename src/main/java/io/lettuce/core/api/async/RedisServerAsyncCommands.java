@@ -21,6 +21,7 @@ import java.util.Map;
 
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
 
 /**
@@ -78,6 +79,16 @@ public interface RedisServerAsyncCommands<K, V> {
      * @return Long integer-reply number of killed connections
      */
     RedisFuture<Long> clientKill(KillArgs killArgs);
+
+    /**
+     * Unblock the specified blocked client.
+     *
+     * @param id the client id.
+     * @param type unblock type.
+     * @return Long integer-reply number of unblocked connections.
+     * @since 5.1
+     */
+    RedisFuture<Long> clientUnblock(long id, UnblockType type);
 
     /**
      * Stop processing commands from clients for some time.
@@ -189,11 +200,15 @@ public interface RedisServerAsyncCommands<K, V> {
 
     /**
      * Make the server crash: Out of memory.
+     *
+     * @return nothing, because the server crashes before returning.
      */
     void debugOom();
 
     /**
      * Make the server crash: Invalid pointer access.
+     *
+     * @return nothing, because the server crashes before returning.
      */
     void debugSegfault();
 

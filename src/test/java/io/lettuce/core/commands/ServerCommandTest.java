@@ -18,10 +18,12 @@ package io.lettuce.core.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,9 +34,8 @@ import org.junit.runners.MethodSorters;
 
 import io.lettuce.RedisConditions;
 import io.lettuce.Wait;
-import io.lettuce.core.AbstractRedisClientTest;
-import io.lettuce.core.KillArgs;
-import io.lettuce.core.TestSettings;
+import io.lettuce.core.*;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.models.command.CommandDetail;
 import io.lettuce.core.models.command.CommandDetailParser;
@@ -113,6 +114,34 @@ public class ServerCommandTest extends AbstractRedisClientTest {
     @Test
     public void clientList() {
         assertThat(redis.clientList().contains("addr=")).isTrue();
+    }
+
+    @Test
+    public void clientUnblock() throws InterruptedException {
+
+        try {
+            redis.clientUnblock(0, UnblockType.ERROR);
+        } catch (Exception e) {
+            assumeFalse(e.getMessage(), true);
+        }
+
+        StatefulRedisConnection<String, String> connection2 = client.connect();
+        connection2.sync().clientSetname("blocked");
+
+        RedisFuture<KeyValue<String, String>> blocked = connection2.async().brpop(100000, "foo");
+
+        Pattern p = Pattern.compile("^.*id=([^ ]+).*name=blocked.*$", Pattern.MULTILINE | Pattern.DOTALL);
+        String clients = redis.clientList();
+        Matcher m = p.matcher(clients);
+
+        assertThat(m.matches()).isTrue();
+        String id = m.group(1);
+
+        Long unblocked = redis.clientUnblock(Long.parseLong(id), UnblockType.ERROR);
+        assertThat(unblocked).isEqualTo(1);
+
+        blocked.await(1, TimeUnit.SECONDS);
+        assertThat(blocked.getError()).contains("UNBLOCKED client unblocked");
     }
 
     @Test

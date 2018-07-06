@@ -21,6 +21,7 @@ import java.util.Map;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KillArgs;
+import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
 
 /**
@@ -78,6 +79,16 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return Long integer-reply number of killed connections
      */
     Mono<Long> clientKill(KillArgs killArgs);
+
+    /**
+     * Unblock the specified blocked client.
+     *
+     * @param id the client id.
+     * @param type unblock type.
+     * @return Long integer-reply number of unblocked connections.
+     * @since 5.1
+     */
+    Mono<Long> clientUnblock(long id, UnblockType type);
 
     /**
      * Stop processing commands from clients for some time.
@@ -284,7 +295,6 @@ public interface RedisServerReactiveCommands<K, V> {
      * Synchronously save the dataset to disk and then shut down the server.
      *
      * @param save {@literal true} force save operation
-     * @return String simple-string-reply The commands returns OK on success.
      */
     Mono<Void> shutdown(boolean save);
 

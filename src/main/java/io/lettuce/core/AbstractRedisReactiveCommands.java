@@ -23,8 +23,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import io.lettuce.core.tracing.TraceContext;
-import io.lettuce.core.tracing.TraceContextProvider;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.GeoArgs.Unit;
@@ -36,6 +34,8 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.tracing.TraceContext;
+import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
 
 /**
@@ -190,6 +190,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<String> clientSetname(K name) {
         return createMono(() -> commandBuilder.clientSetname(name));
+    }
+
+    @Override
+    public Mono<Long> clientUnblock(long id, UnblockType type) {
+        return createMono(() -> commandBuilder.clientUnblock(id, type));
     }
 
     public void close() {

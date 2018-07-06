@@ -191,6 +191,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<Long> clientUnblock(long id, UnblockType type) {
+        return dispatch(commandBuilder.clientUnblock(id, type));
+    }
+
+    @Override
     public RedisFuture<String> clusterAddSlots(int... slots) {
         return dispatch(commandBuilder.clusterAddslots(slots));
     }

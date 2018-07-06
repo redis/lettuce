@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.KillArgs;
+import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
 
 /**
@@ -77,6 +78,16 @@ public interface RedisServerCommands<K, V> {
      * @return Long integer-reply number of killed connections
      */
     Long clientKill(KillArgs killArgs);
+
+    /**
+     * Unblock the specified blocked client.
+     *
+     * @param id the client id.
+     * @param type unblock type.
+     * @return Long integer-reply number of unblocked connections.
+     * @since 5.1
+     */
+    Long clientUnblock(long id, UnblockType type);
 
     /**
      * Stop processing commands from clients for some time.
