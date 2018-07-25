@@ -126,7 +126,7 @@ public interface NodeSelectionStreamCommands<K, V> {
      *
      * @param key the stream key.
      * @param consumer consumer identified by group name and consumer key.
-     * @return simple-reply the number of pending messages
+     * @return simple-reply {@literal true} if successful.
      */
     Executions<Boolean> xgroupDelconsumer(K key, Consumer<K> consumer);
 
@@ -135,7 +135,7 @@ public interface NodeSelectionStreamCommands<K, V> {
      *
      * @param key the stream key.
      * @param group name of the consumer group.
-     * @return simple-reply the number of pending messages
+     * @return simple-reply {@literal true} if successful.
      */
     Executions<Boolean> xgroupDestroy(K key, K group);
 
