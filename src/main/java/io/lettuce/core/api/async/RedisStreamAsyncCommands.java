@@ -17,9 +17,9 @@ package io.lettuce.core.api.async;
 
 import java.util.List;
 import java.util.Map;
+
 import io.lettuce.core.*;
 import io.lettuce.core.XReadArgs.StreamOffset;
-import io.lettuce.core.RedisFuture;
 
 /**
  * Asynchronous executed commands for Streams.
@@ -126,7 +126,7 @@ public interface RedisStreamAsyncCommands<K, V> {
      *
      * @param key the stream key.
      * @param consumer consumer identified by group name and consumer key.
-     * @return simple-reply the number of pending messages
+     * @return simple-reply {@literal true} if successful.
      */
     RedisFuture<Boolean> xgroupDelconsumer(K key, Consumer<K> consumer);
 
@@ -135,7 +135,7 @@ public interface RedisStreamAsyncCommands<K, V> {
      *
      * @param key the stream key.
      * @param group name of the consumer group.
-     * @return simple-reply the number of pending messages
+     * @return simple-reply {@literal true} if successful.
      */
     RedisFuture<Boolean> xgroupDestroy(K key, K group);
 
