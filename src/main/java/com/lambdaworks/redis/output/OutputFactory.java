@@ -37,6 +37,6 @@ class OutputFactory {
             return Collections.emptySet();
         }
 
-        return new HashSet<>(capacity, 1);
+        return new LinkedHashSet<>(capacity, 1);
     }
 }
