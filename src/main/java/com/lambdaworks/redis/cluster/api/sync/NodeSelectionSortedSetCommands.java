@@ -203,11 +203,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      *
      * @param key the key
      * @param amount the increment type: long
-     * @param member the member type: key
+     * @param member the member type: value
      * @return Double bulk-string-reply the new score of {@code member} (a double precision floating point number), represented
      *         as string.
      */
-    Executions<Double> zincrby(K key, double amount, K member);
+    Executions<Double> zincrby(K key, double amount, V member);
 
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.

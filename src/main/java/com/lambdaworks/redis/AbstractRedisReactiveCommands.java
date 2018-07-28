@@ -1730,7 +1730,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Observable<Double> zincrby(K key, double amount, K member) {
+    public Observable<Double> zincrby(K key, double amount, V member) {
         return createObservable(() -> commandBuilder.zincrby(key, amount, member));
     }
 

@@ -1723,7 +1723,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashesAsy
     }
 
     @Override
-    public RedisFuture<Double> zincrby(K key, double amount, K member) {
+    public RedisFuture<Double> zincrby(K key, double amount, V member) {
         return dispatch(commandBuilder.zincrby(key, amount, member));
     }
 
