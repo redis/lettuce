@@ -1726,7 +1726,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<Double> zincrby(K key, double amount, K member) {
+    public Mono<Double> zincrby(K key, double amount, V member) {
         return createMono(() -> commandBuilder.zincrby(key, amount, member));
     }
 

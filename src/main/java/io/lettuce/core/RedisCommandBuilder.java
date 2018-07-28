@@ -2445,10 +2445,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZCOUNT, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, Double> zincrby(K key, double amount, K member) {
+    Command<K, V, Double> zincrby(K key, double amount, V member) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(amount).addKey(member);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(amount).addValue(member);
         return createCommand(ZINCRBY, new DoubleOutput<>(codec), args);
     }
 
