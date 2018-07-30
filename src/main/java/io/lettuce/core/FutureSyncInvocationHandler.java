@@ -66,8 +66,7 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
                 long timeout = getTimeoutNs(command);
 
-                LettuceFutures.awaitOrCancel(command, timeout, TimeUnit.NANOSECONDS);
-                return command.get();
+                return LettuceFutures.awaitOrCancel(command, timeout, TimeUnit.NANOSECONDS);
             }
 
             return result;
