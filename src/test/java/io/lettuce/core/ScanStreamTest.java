@@ -16,6 +16,7 @@
 package io.lettuce.core;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
@@ -67,9 +68,11 @@ public class ScanStreamTest extends AbstractRedisClientTest {
 
         RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
 
-        StepVerifier.create(ScanStream.sscan(reactive, key, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
-                .verifyComplete();
-        StepVerifier.create(ScanStream.sscan(reactive, key)).expectNextCount(1000).verifyComplete();
+        AtomicInteger ai = new AtomicInteger();
+        StepVerifier.create(ScanStream.sscan(reactive, key, ScanArgs.Builder.limit(200)).doOnNext(n -> {
+            System.out.println(ai.incrementAndGet());
+        }), 0).thenRequest(250).expectNextCount(250).thenCancel().verify();
+        StepVerifier.create(ScanStream.sscan(reactive, key).count()).expectNext(1000L).verifyComplete();
     }
 
     @Test
