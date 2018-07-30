@@ -58,8 +58,7 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
                     return null;
                 }
 
-                LettuceFutures.awaitOrCancel(command, connection.getTimeout(), connection.getTimeoutUnit());
-                return command.get();
+                return LettuceFutures.awaitOrCancel(command, connection.getTimeout(), connection.getTimeoutUnit());
             }
 
             return result;
