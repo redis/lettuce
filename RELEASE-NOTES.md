@@ -1,7 +1,7 @@
-Lettuce 5.0.4 RELEASE NOTES
+Lettuce 5.0.5 RELEASE NOTES
 ===========================
 
-This is the fourth bugfix release for Lettuce 5 shipping with 12 tickets resolved.
+This is the fifth bugfix release for Lettuce 5 shipping with 10 tickets resolved.
  
 Upgrading is recommended for all users.  
 
@@ -12,13 +12,13 @@ JavaDoc documentation: https://lettuce.io/core/release/api/.
 <dependency>
   <groupId>io.lettuce</groupId>
   <artifactId>lettuce-core</artifactId>
-  <version>5.0.4.RELEASE</version>
+  <version>5.0.5.RELEASE</version>
 </dependency>
 ```
 
-You can find the full change log at the end of this document. Thanks to all contributors that made Lettuce 5.0.4.RELEASE possible.
+You can find the full change log at the end of this document. Thanks to all contributors that made Lettuce 5.0.5.RELEASE possible.
 
-Lettuce 5.0.4.RELEASE requires Java 8 and cannot be used with Java 6 or 7.
+Lettuce 5.0.5.RELEASE requires Java 8 and cannot be used with Java 6 or 7.
 
 If you need any support, meet Lettuce at:
 
@@ -27,26 +27,24 @@ If you need any support, meet Lettuce at:
 * GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
 * Documentation: https://lettuce.io/docs/
 
-Commands
+Enhancements
 ------------
-* Add AUTH option to MIGRATE command #733
-* Add MASTER type to KillArgs #760
+* ZSCAN match pattern encoding issue #792 (Thanks to @silvertype)
+* FutureSyncInvocationHandler the statement "command.get ()" in the handlerInvocation method is unnecessary #809 (Thanks to @zhangweidavid)
 
 Fixes
 -----
-* Warning when refreshing topology #756 (Thanks to @theliro)
-* DefaultEndpoint.QUEUE_SIZE becomes out of sync, preventing command queueing #764 (Thanks to @nivekastoreth)
-* DefaultEndpoint contains System.out.println(…) #765
-* Do not retry completed commands through RetryListener #767
+* MULTI is dispatched to slave nodes using SLAVE readFrom #779 (Thanks to @Yipei)
+* Javadoc mentions Delay.exponential() is capped at 30 milliseconds #799 (Thanks to @phxql)
+* Read From Slaves is not working #804 (Thanks to @EXPEbdodla)
+* GEORADIUS WITHCOORD returns wrong coordinate on multiple results #805 (Thanks to @dittos)
+* smembers returns elements in non-deterministic order #823 (Thanks to @alezandr)
+* StackOverflowError on ScanStream.scan(…).subscribe() #824
+* Improve Javadoc of QUIT method #781
 
 Other
 -----
-* Upgrade to netty 4.1.23.Final #755
-* Upgrade to Reactor Bismuth SR8 #758
-* Upgrade to RxJava 1.3.8 #759
-* Extend documentation for argument objects #761
-* Upgrade to RxJava 2.1.13 #771
-* Upgrade to netty 4.1.24.Final #770
+* Upgrade to AssertJ 3.10.0 #794
 
 Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
 against the latest Redis source-build.
