@@ -37,6 +37,8 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
+ * Reactive Streams TCK for {@link RedisPublisher}.
+ *
  * @author Mark Paluch
  */
 public class RedisPublisherVerification extends PublisherVerification<String> {
@@ -83,9 +85,7 @@ public class RedisPublisherVerification extends PublisherVerification<String> {
             return new Command<>(LRANGE, new ValueListOutput<>(CODEC), args);
         };
 
-        TestRedisPublisher<String, String, String> publisher = new TestRedisPublisher(supplier, connection, true);
-
-        return publisher;
+        return new TestRedisPublisher(supplier, connection, true);
     }
 
     @Override
