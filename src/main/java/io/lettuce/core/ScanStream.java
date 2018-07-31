@@ -18,6 +18,7 @@ package io.lettuce.core;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Function;
 
@@ -255,14 +256,23 @@ public abstract class ScanStream {
      */
     static class SubscriptionAdapter<T, C extends ScanCursor> implements Completable {
 
-        private static final AtomicReferenceFieldUpdater<SubscriptionAdapter, ScanSubscriber> SUBSCRIBER_ACCESSOR = AtomicReferenceFieldUpdater
+        private static final AtomicReferenceFieldUpdater<SubscriptionAdapter, ScanSubscriber> SUBSCRIBER = AtomicReferenceFieldUpdater
                 .newUpdater(SubscriptionAdapter.class, ScanSubscriber.class, "currentSubscription");
 
-        // Access via SUBSCRIBER_UPDATER.
+        private static final AtomicIntegerFieldUpdater<SubscriptionAdapter> STATUS = AtomicIntegerFieldUpdater.newUpdater(
+                SubscriptionAdapter.class, "status");
+
+        private static final int STATUS_ACTIVE = 0;
+        private static final int STATUS_TERMINATED = 0;
+
+        // Access via SUBSCRIBER.
         @SuppressWarnings("unused")
         private volatile ScanSubscriber<T, C> currentSubscription;
         private volatile boolean canceled;
-        private volatile boolean terminated = false;
+
+        // Access via STATUS.
+        @SuppressWarnings("unused")
+        private volatile int status = STATUS_ACTIVE;
 
         private final FluxSink<T> sink;
         private final Context context;
@@ -301,7 +311,7 @@ public abstract class ScanStream {
 
             if (current == null) {
                 current = new ScanSubscriber<>(this, sink, context, manyMapper);
-                if (SUBSCRIBER_ACCESSOR.compareAndSet(this, null, current)) {
+                if (SUBSCRIBER.compareAndSet(this, null, current)) {
                     initial.subscribe(current);
                 }
 
@@ -328,7 +338,7 @@ public abstract class ScanStream {
             Mono<C> next = scanFunction.apply(cursor);
 
             ScanSubscriber<T, C> nextSubscriber = new ScanSubscriber<>(this, sink, context, manyMapper);
-            if (SUBSCRIBER_ACCESSOR.compareAndSet(this, current, nextSubscriber)) {
+            if (SUBSCRIBER.compareAndSet(this, current, nextSubscriber)) {
                 next.subscribe(nextSubscriber);
             }
         }
@@ -361,28 +371,26 @@ public abstract class ScanStream {
                     }
                 }
 
-                if (!this.terminated) {
-                    this.terminated = true;
+                if (terminate()) {
                     sink.complete();
-                } else {
-                    this.terminated = true;
                 }
             }
         }
 
         ScanSubscriber<T, C> getCurrentSubscriber() {
-            return SUBSCRIBER_ACCESSOR.get(this);
+            return SUBSCRIBER.get(this);
         }
 
         @Override
         public void onError(Throwable throwable) {
 
-            if (!this.canceled && !this.terminated) {
-                this.terminated = true;
+            if (!this.canceled && terminate()) {
                 sink.error(throwable);
-            } else {
-                this.terminated = true;
             }
+        }
+
+        protected boolean terminate() {
+            return STATUS.compareAndSet(this, STATUS_ACTIVE, STATUS_TERMINATED);
         }
     }
 
@@ -394,7 +402,7 @@ public abstract class ScanStream {
      */
     static class ScanSubscriber<T, C extends ScanCursor> extends BaseSubscriber<C> {
 
-        private static final AtomicReferenceFieldUpdater<ScanSubscriber, ScanCursor> CURSOR_ACCESSOR = AtomicReferenceFieldUpdater
+        private static final AtomicReferenceFieldUpdater<ScanSubscriber, ScanCursor> CURSOR = AtomicReferenceFieldUpdater
                 .newUpdater(ScanSubscriber.class, ScanCursor.class, "cursor");
 
         private final Completable completable;
@@ -406,7 +414,7 @@ public abstract class ScanStream {
         volatile boolean exhausted = false;
         volatile boolean canceled;
 
-        // see CURSOR_UPDATER
+        // see CURSOR
         @SuppressWarnings("unused")
         private volatile C cursor;
 
@@ -425,7 +433,7 @@ public abstract class ScanStream {
         @Override
         protected void hookOnNext(C cursor) {
 
-            if (!CURSOR_ACCESSOR.compareAndSet(this, null, cursor)) {
+            if (!CURSOR.compareAndSet(this, null, cursor)) {
                 Operators.onOperatorError(this, new IllegalStateException("Cannot propagate Cursor"), cursor, context);
                 return;
             }
@@ -517,7 +525,7 @@ public abstract class ScanStream {
         }
 
         public ScanCursor getCursor() {
-            return CURSOR_ACCESSOR.get(this);
+            return CURSOR.get(this);
         }
     }
 
