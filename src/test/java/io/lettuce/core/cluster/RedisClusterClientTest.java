@@ -216,19 +216,25 @@ public class RedisClusterClientTest extends AbstractClusterTest {
 
     @Test
     public void reloadPartitions() {
-        assertThat(clusterClient.getPartitions()).hasSize(4);
-
-        assertThat(clusterClient.getPartitions().getPartition(0).getUri());
-        assertThat(clusterClient.getPartitions().getPartition(1).getUri());
-        assertThat(clusterClient.getPartitions().getPartition(2).getUri());
-        assertThat(clusterClient.getPartitions().getPartition(3).getUri());
 
         clusterClient.reloadPartitions();
+        assertThat(clusterClient.getPartitions()).hasSize(4);
+    }
 
-        assertThat(clusterClient.getPartitions().getPartition(0).getUri());
-        assertThat(clusterClient.getPartitions().getPartition(1).getUri());
-        assertThat(clusterClient.getPartitions().getPartition(2).getUri());
-        assertThat(clusterClient.getPartitions().getPartition(3).getUri());
+    @Test
+    public void reloadPartitionsWithDynamicSourcesFallsBackToInitialSeedNodes() {
+
+        client.setOptions(ClusterClientOptions.builder()
+                .topologyRefreshOptions(ClusterTopologyRefreshOptions.builder().dynamicRefreshSources(true).build()).build());
+
+        Partitions partitions = clusterClient.getPartitions();
+        partitions.clear();
+        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 1), "foo", false, null, 0, 0, 0, Collections
+                .emptyList(), Collections.emptySet()));
+
+        Partitions reloaded = clusterClient.loadPartitions();
+
+        assertThat(reloaded).hasSize(4);
     }
 
     @Test
