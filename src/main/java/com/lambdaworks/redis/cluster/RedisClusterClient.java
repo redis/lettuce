@@ -845,31 +845,57 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Iterable<RedisURI> topologyRefreshSource = getTopologyRefreshSource();
 
-        String message = "Cannot retrieve initial cluster partitions from initial URIs " + topologyRefreshSource;
         try {
-            Map<RedisURI, Partitions> partitions = refresh.loadViews(topologyRefreshSource, useDynamicRefreshSources());
+            return doLoadPartitions(topologyRefreshSource);
+        } catch (RedisException e) {
 
-            if (partitions.isEmpty()) {
-                throw new RedisException(message);
-            }
+            // Attempt recovery using initial seed nodes
+            if (useDynamicRefreshSources() && topologyRefreshSource != initialUris) {
 
-            Partitions loadedPartitions = determinePartitions(this.partitions, partitions);
-            RedisURI viewedBy = refresh.getViewedBy(partitions, loadedPartitions);
+                try {
+                    return doLoadPartitions(initialUris);
+                } catch (RedisConnectionException e2) {
 
-            for (RedisClusterNode partition : loadedPartitions) {
-                if (viewedBy != null) {
-                    RedisURI uri = partition.getUri();
-                    RedisClusterURIUtil.applyUriConnectionSettings(viewedBy, uri);
+                    RedisException exception = new RedisException(getTopologyRefreshErrorMessage(initialUris), e2);
+                    exception.addSuppressed(e);
+
+                    throw exception;
                 }
             }
 
-            activateTopologyRefreshIfNeeded();
+            if (e.getClass().equals(RedisException.class)) {
+                throw e;
+            }
 
-            return loadedPartitions;
-
-        } catch (RedisConnectionException e) {
-            throw new RedisException(message, e);
+            throw new RedisException(getTopologyRefreshErrorMessage(topologyRefreshSource), e);
         }
+    }
+
+    private Partitions doLoadPartitions(Iterable<RedisURI> topologyRefreshSource) {
+
+        Map<RedisURI, Partitions> partitions = refresh.loadViews(topologyRefreshSource, useDynamicRefreshSources());
+
+        if (partitions.isEmpty()) {
+            throw new RedisException(getTopologyRefreshErrorMessage(topologyRefreshSource));
+        }
+
+        Partitions loadedPartitions = determinePartitions(this.partitions, partitions);
+        RedisURI viewedBy = refresh.getViewedBy(partitions, loadedPartitions);
+
+        for (RedisClusterNode partition : loadedPartitions) {
+            if (viewedBy != null) {
+                RedisURI uri = partition.getUri();
+                RedisClusterURIUtil.applyUriConnectionSettings(viewedBy, uri);
+            }
+        }
+
+        activateTopologyRefreshIfNeeded();
+
+        return loadedPartitions;
+    }
+
+    private static String getTopologyRefreshErrorMessage(Iterable<RedisURI> topologyRefreshSource) {
+        return "Cannot retrieve initial cluster partitions from initial URIs " + topologyRefreshSource;
     }
 
     /**
@@ -1054,7 +1080,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Iterable<RedisURI> seed;
         if (initialSeedNodes || partitions == null || partitions.isEmpty()) {
-            seed = RedisClusterClient.this.initialUris;
+            seed = this.initialUris;
         } else {
             List<RedisURI> uris = new ArrayList<>();
             for (RedisClusterNode partition : TopologyComparators.sortByUri(partitions)) {
