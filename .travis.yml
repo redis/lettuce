@@ -10,7 +10,8 @@ env:
     - PROFILE=netty-40 REDIS=unstable
     - PROFILE=netty-41 REDIS=unstable
     - PROFILE=jmh
-    - REDIS=4.0.6
+    - REDIS=5.0-rc4
+    - REDIS=4.0.11
     - REDIS=3.2.11
 
 sudo: false
