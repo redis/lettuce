@@ -61,7 +61,7 @@
         <skipTests>true</skipTests>
         <netty-version>4.1.29.Final</netty-version>
         <spring-version>4.3.18.RELEASE</spring-version>
-        <reactor-version>Bismuth-SR8</reactor-version>
+        <reactor-version>Bismuth-SR11</reactor-version>
         <brave-version>5.0.0</brave-version>
     </properties>
 
