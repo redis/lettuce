@@ -9,7 +9,7 @@ env:
   matrix:
     - REDIS=unstable
     - PROFILE=jmh
-    - REDIS=5.0-rc4
+    - REDIS=5.0-rc5
     - REDIS=4.0.11
     - REDIS=3.2.11
 
