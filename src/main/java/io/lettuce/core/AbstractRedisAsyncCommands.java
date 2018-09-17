@@ -1602,7 +1602,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
     @Override
     public RedisFuture<Long> xtrim(K key, long count) {
-        return dispatch(commandBuilder.xtrim(key, count));
+        return xtrim(key, false, count);
+    }
+
+    @Override
+    public RedisFuture<Long> xtrim(K key, boolean approximateTrimming, long count) {
+        return dispatch(commandBuilder.xtrim(key, approximateTrimming, count));
     }
 
     @Override

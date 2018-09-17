@@ -2263,10 +2263,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XREVRANGE, new StreamMessageListOutput<>(codec, key), args);
     }
 
-    public Command<K, V, Long> xtrim(K key, long count) {
+    public Command<K, V, Long> xtrim(K key, boolean approximateTrimming, long count) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(MAXLEN).add(count);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(MAXLEN);
+
+        if (approximateTrimming) {
+            args.add("~");
+        }
+
+        args.add(count);
 
         return createCommand(XTRIM, new IntegerOutput<>(codec), args);
     }

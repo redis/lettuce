@@ -1653,7 +1653,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Mono<Long> xtrim(K key, long count) {
-        return createMono(() -> commandBuilder.xtrim(key, count));
+        return xtrim(key, false, count);
+    }
+
+    @Override
+    public Mono<Long> xtrim(K key, boolean approximateTrimming, long count) {
+        return createMono(() -> commandBuilder.xtrim(key, approximateTrimming, count));
     }
 
     @Override
