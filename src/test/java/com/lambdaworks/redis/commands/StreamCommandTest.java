@@ -69,6 +69,14 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void xaddMaxLenEfficientTrimming() {
+
+        String id = redis.xadd(key, XAddArgs.Builder.maxlen(5).approximateTrimming(), "foo", "bar");
+
+        assertThat(id).isNotNull();
+    }
+
+    @Test
     public void xdel() {
 
         List<String> ids = new ArrayList<>();
@@ -94,7 +102,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
         redis.xdel(key, ids.get(0), ids.get(2));
         assertThat(redis.xlen(key)).isBetween(8L, 10L);
 
-        Long xtrim = redis.xtrim(key, 8);
+        Long xtrim = redis.xtrim(key, true, 8);
 
         assertThat(redis.xlen(key)).isLessThanOrEqualTo(10);
     }

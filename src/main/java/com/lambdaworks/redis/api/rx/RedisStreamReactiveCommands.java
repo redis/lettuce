@@ -104,8 +104,8 @@ public interface RedisStreamReactiveCommands<K, V> {
     Observable<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, XClaimArgs args, String... messageIds);
 
     /**
-     * Removes the specified entries from the stream. Returns the number of items deleted, that may be different from the number
-     * of IDs passed in case certain IDs do not exist.
+     * Removes the specified entries from the stream. Returns the number of items deleted, that may be different from
+     * the number of IDs passed in case certain IDs do not exist.
      *
      * @param key the stream key.
      * @param messageIds stream message Id's.
@@ -270,4 +270,15 @@ public interface RedisStreamReactiveCommands<K, V> {
      * @return simple-reply number of removed entries.
      */
     Observable<Long> xtrim(K key, long count);
+
+    /**
+     * Trims the stream to {@code count} elements.
+     *
+     * @param key the stream key.
+     * @param approximateTrimming {@literal true} to trim approximately using the {@code ~} flag.
+     * @param count length of the stream.
+     * @return simple-reply number of removed entries.
+     */
+    Observable<Long> xtrim(K key, boolean approximateTrimming, long count);
+
 }

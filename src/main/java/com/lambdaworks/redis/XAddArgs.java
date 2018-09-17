@@ -32,6 +32,7 @@ public class XAddArgs {
 
     private String id;
     private Long maxlen;
+    private boolean approximateTrimming;
 
     /**
      * Builder entry points for {@link XAddArgs}.
@@ -83,10 +84,38 @@ public class XAddArgs {
         return this;
     }
 
+    /**
+     * Apply efficient trimming for capped streams using the {@code ~} flag.
+     *
+     * @return {@code this}
+     */
+    public XAddArgs approximateTrimming() {
+        return approximateTrimming(true);
+    }
+
+    /**
+     * Apply efficient trimming for capped streams using the {@code ~} flag.
+     *
+     * @param approximateTrimming {@literal true} to apply efficient radix node trimming.
+     * @return {@code this}
+     */
+    public XAddArgs approximateTrimming(boolean approximateTrimming) {
+
+        this.approximateTrimming = approximateTrimming;
+        return this;
+    }
+
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (maxlen != null) {
-            args.add(CommandKeyword.MAXLEN).add(maxlen);
+
+            args.add(CommandKeyword.MAXLEN);
+
+            if (approximateTrimming) {
+                args.add("~");
+            }
+
+            args.add(maxlen);
         }
 
         if (id != null) {

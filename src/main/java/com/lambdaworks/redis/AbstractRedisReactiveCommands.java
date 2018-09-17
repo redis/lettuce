@@ -1656,7 +1656,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Observable<Long> xtrim(K key, long count) {
-        return createObservable(() -> commandBuilder.xtrim(key, count));
+        return xtrim(key, false, count);
+    }
+
+    @Override
+    public Observable<Long> xtrim(K key, boolean approximateTrimming, long count) {
+        return createObservable(() -> commandBuilder.xtrim(key, approximateTrimming, count));
     }
 
     @Override
