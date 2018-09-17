@@ -1,13 +1,16 @@
-Lettuce 4.5.0.Beta1 RELEASE NOTES
+Lettuce 4.5.0 RELEASE NOTES
 ===========================
 
-This is the first preview release of Lettuce 4.5 shipping with improvements 
-and initial support for Redis Streams. 
+The Lettuce team is pleased to announce the Lettuce 4.5.0 release! 
+This release contains new features, bugfixes, and enhancements.
 
-Find the full change log at the end of this document that lists all 73 tickets.
+* Exception types for Redis Error Responses
+* Support for Redis Streams
 
-Thanks to all contributors who made Lettuce 4.5.0.Beta1 possible.
-Lettuce 4.5.0.Beta1 requires Java 8, Java 9 or Java 10.
+Find the full change log at the end of this document that lists all 78 tickets.
+
+Thanks to all contributors who made Lettuce 4.5.0.Final possible.
+Lettuce 4.5.0.Final requires Java 8 up to Java 11.
 
 If you need any support, meet Lettuce at:
 
@@ -29,8 +32,7 @@ This release introduces new Exception types for the following Redis responses:
 All exception types derive from `RedisCommandExecutionException` and do not 
 require changes in application code.
 
-
-Redis Streams (Preview)
+Redis Streams
 -----------------------
 
 Redis 5.0 is going to ship with support for a Stream data structure. 
@@ -88,19 +90,23 @@ List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("m
 redis.xack(key, "group", messages.get(0).getId());
 ```
 
-Please note that the Redis Stream implementation is not final yet and the API is subject to change if
-the Redis API changes.
-  
 
 Commands
 --------
 * Add AUTH option to MIGRATE command #733
 * Add MASTER type to KillArgs #760
+* Add support for ZPOPMIN, ZPOPMAX, BZPOPMIN, BZPOPMAX commands #778
+* Add REPLACE option to RESTORE. #783 (Thanks to @christophstrobl)
+* Add XGROUP DESTROY #789
+* Add support for CLIENT UNBLOCK #812
+* Support for approximate trimming in XAddArgs #846
 
 Enhancements
 ------------
+* Cancel commands after disconnect in at-most-once mode #547
 * Execute scriptLoad(…) on all nodes via cluster connection #590
 * Add support for Redis streams #606
+* Reduce default shutdown timeout #613
 * Introduce dedicated exceptions for NOSCRIPT and BUSY responses #620 (Thanks to @DaichiUeura)
 * Add SocketAddressOutput to directly parse SENTINEL get-master-addr-by-name output #644
 * Read from random slave preferred #676 (Thanks to @petetanton)
@@ -111,6 +117,8 @@ Enhancements
 * Optimize Partitions/RedisClusterNode representation #715
 * Unnecessary copying of byteBuf in CommandHandler.decode() #725 (Thanks to @gszpak)
 * Add unknown node as trigger for adaptive refresh #732
+* Remove MULTI from read-only commands #779
+* Improve Javadoc of QUIT method #781
 
 Fixes
 -----
@@ -146,34 +154,32 @@ Fixes
 * EXEC does not fail on EXECABORT #743 (Thanks to @dmandalidis)
 * DefaultEndpoint.QUEUE_SIZE becomes out of sync, preventing command queueing #764 (Thanks to @nivekastoreth)
 * Do not retry completed commands through RetryListener #767
+* Encode ScanArgs.matches using UTF-8 #792
+* Fix Delay.exponential() Javadoc #799
+* Reset coordinate state of GeoWithinListOutput after completing an item #805
+* Remove superfluous call to command.get() in FutureSyncInvocationHandler #809
+* Fall back to initial seed nodes on topology refresh when dynamicRefreshSources is enabled #822
+* Retain response order for Set responses #823
+* Change ZINCRBY member to value type #826
+* Lua script execution containing non-ascii characters fails #844 (Thanks to @wenzuowei110)
 
 Other
 -----
-* Upgrade to netty 4.0.51/4.1.15 #600
 * Cleanups #604
 * Update LICENSE text and add NOTICE file #612
-* Reduce default shutdown timeout #613
-* Upgrade to netty 4.0.53.Final/4.1.17.Final #646
-* Upgrade to Spring Framework 4.3.12 #648
 * Upgrade to Commons Pool 2.4.3 #650
-* Upgrade to RxJava 1.3.3 #651
 * Upgrade to HdrHistogram 2.1.10 #653
 * Upgrade Redis versions on TravisCI #655
 * Readme 5.x maven details #681 (Thanks to @flurdy)
-* Upgrade to netty 4.1.21.Final #699
-* Upgrade to RxJava 1.3.6 #700
-* Upgrade to Netty 4.1.22 #744
-* Upgrade to RxJava 1.3.7 #745
-* Upgrade to Spring Framework 4.3.14 #746
 * Upgrade to Mockito 2.17 #747
 * Upgrade to AssertJ 3.9.1 #748
 * Upgrade to Log4j 2.11.0 #749
 * Upgrade to commons-lang3 3.7 #750
-* Upgrade to netty 4.1.23.Final #755
 * Upgrade to RxJava 1.3.8 #759
 * Extend documentation for argument objects #761
 * Upgrade to JavaParser 3.6.3 #769
-* Upgrade to netty 4.1.24.Final #770
+* Upgrade to netty 4.1.29.Final #836
+* Upgrade to Spring Framework 4.3.18 #837
 
 Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
 against the latest Redis source-build.
