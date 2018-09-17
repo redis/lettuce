@@ -563,7 +563,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(script).add(keys.length).addKeys(keys);
+        args.add(script.getBytes()).add(keys.length).addKeys(keys);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
         return createCommand(EVAL, output, args);
     }
@@ -576,7 +576,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(script).add(keys.length).addKeys(keys).addValues(values);
+        args.add(script.getBytes()).add(keys.length).addKeys(keys).addValues(values);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
         return createCommand(EVAL, output, args);
     }

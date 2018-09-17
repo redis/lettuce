@@ -75,6 +75,11 @@ public class ScriptingCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
+    public void evalWithNonAsciiChar() {
+        assertThat((Object) redis.eval("return 'füö'", VALUE, "one")).isEqualTo("füö");
+    }
+
+    @Test
     public void evalReturningNullInMulti() {
         assertThat((List<?>) redis.eval("return nil", MULTI, "one")).isEqualTo(Collections.singletonList(null));
     }
