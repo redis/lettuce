@@ -319,6 +319,7 @@ Fixes
 * StackOverflowError on ScanStream.scan(…).subscribe() #824
 * ZINCRBY member should be value-typed #826 (Thanks to @fuyuanpai)
 * Lua script execution containing non-ascii characters fails #844 (Thanks to @wenzuowei110)
+* RedisState fails to resolve CommandType for known commands #851
 
 Other
 -----
