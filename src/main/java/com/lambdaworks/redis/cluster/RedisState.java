@@ -15,10 +15,7 @@
  */
 package com.lambdaworks.redis.cluster;
 
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.lambdaworks.redis.models.command.CommandDetail;
 import com.lambdaworks.redis.protocol.CommandType;
@@ -57,7 +54,7 @@ class RedisState {
     private static CommandType getCommandType(CommandDetail command) {
 
         try {
-            return CommandType.valueOf(command.getName().toLowerCase());
+            return CommandType.valueOf(command.getName().toUpperCase(Locale.US));
         } catch (IllegalArgumentException e) {
             return null;
         }
