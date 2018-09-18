@@ -162,6 +162,7 @@ Fixes
 * Retain response order for Set responses #823
 * Change ZINCRBY member to value type #826
 * Lua script execution containing non-ascii characters fails #844 (Thanks to @wenzuowei110)
+* RedisState fails to resolve CommandType for known commands #851
 
 Other
 -----
