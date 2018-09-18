@@ -15,10 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import io.lettuce.core.models.command.CommandDetail;
 import io.lettuce.core.protocol.CommandType;
@@ -57,7 +54,7 @@ class RedisState {
     private static CommandType getCommandType(CommandDetail command) {
 
         try {
-            return CommandType.valueOf(command.getName().toLowerCase());
+            return CommandType.valueOf(command.getName().toUpperCase(Locale.US));
         } catch (IllegalArgumentException e) {
             return null;
         }
