@@ -22,13 +22,22 @@ We will introduce with the upcoming releases support for the new API methods
 (`REPLICAOF`) without breaking the public API. Expect breaking changes in a much 
 later release which gives plenty of time to upgrade. 
 
-Find the full change log at the end of this document that lists all 105 tickets.
+Find the full change log at the end of this document that lists all 108 tickets.
 
 Thanks to all contributors who made Lettuce 5.1.0.RELEASE possible.
-Lettuce 5.1.0.RELEASE requires Java 8 to 11.
 
-Reference documentation: https://lettuce.io/core/5.1.0.RELEASE/reference/.
-JavaDoc documentation: https://lettuce.io/core/5.1.0.RELEASE/api/.
+Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
+against the latest Redis source-build.
+
+If you need any support, meet Lettuce at
+
+* Google Group: https://groups.google.com/d/forum/lettuce-redis-client-users
+or lettuce-redis-client-users@googlegroups.com
+* Join the chat at https://gitter.im/lettuce-io/Lobby
+* GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
+* Documentation: https://lettuce.io/core/5.1.0.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/5.1.0.RELEASE/api/
+
 
 New Exceptions for Redis Responses
 ----------------------------------
@@ -325,28 +334,17 @@ Other
 -----
 * Upgrade to HdrHistogram 2.1.10 #653
 * Upgrade Redis versions on TravisCI #655
-* Upgrade to Mockito 2.17 #747
-* Upgrade to AssertJ 3.9.1 #748
 * Upgrade to Log4j 2.11.0 #749
-* Upgrade to commons-lang3 3.7 #750
 * Extend documentation for argument objects #761
 * Upgrade to JavaParser 3.6.3 #769
 * Update What's new for Lettuce 5.1 in reference docs #777
 * Improve Javadoc of QUIT method #781
-* Upgrade to AssertJ 3.10.0 #794
 * Upgrade to netty 4.1.29.Final #836
-* Upgrade to Spring Framework 4.3.18 #837
 * Upgrade to Reactor Bismuth-SR11 #838
 * Upgrade to Brave 5.2.0 #839
 * Upgrade to RxJava 2.2.2 #840
-
-Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
-against the latest Redis source-build.
-
-If you need any support, meet Lettuce at
-
-* Google Group: https://groups.google.com/d/forum/lettuce-redis-client-users
-or lettuce-redis-client-users@googlegroups.com
-* Join the chat at https://gitter.im/lettuce-io/Lobby
-* GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/docs/
+* Upgrade to Commons Pool 2.6 #854
+* Upgrade to Mockito 2.22 #855
+* Upgrade to commons-lang3 3.8 #857
+* Upgrade to Spring Framework 4.3.19 #858
+* Upgrade to Reactor Californium #859
