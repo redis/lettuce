@@ -2,7 +2,9 @@ Lettuce 4.5.0 RELEASE NOTES
 ===========================
 
 The Lettuce team is pleased to announce the Lettuce 4.5.0 release! 
-This release contains new features, bugfixes, and enhancements.
+This release contains new features, bugfixes, and enhancements. 
+
+The most notable change in this release are:
 
 * Exception types for Redis Error Responses
 * Support for Redis Streams
@@ -18,7 +20,6 @@ If you need any support, meet Lettuce at:
 * Gitter: https://gitter.im/lettuce-io/Lobby
 * GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
 * Documentation: https://lettuce.io/docs/
-
 
 New Exceptions for Redis Responses
 ----------------------------------
@@ -172,23 +173,12 @@ Other
 * Upgrade to HdrHistogram 2.1.10 #653
 * Upgrade Redis versions on TravisCI #655
 * Readme 5.x maven details #681 (Thanks to @flurdy)
-* Upgrade to Mockito 2.17 #747
-* Upgrade to AssertJ 3.9.1 #748
 * Upgrade to Log4j 2.11.0 #749
-* Upgrade to commons-lang3 3.7 #750
 * Upgrade to RxJava 1.3.8 #759
 * Extend documentation for argument objects #761
 * Upgrade to JavaParser 3.6.3 #769
 * Upgrade to netty 4.1.29.Final #836
-* Upgrade to Spring Framework 4.3.18 #837
-
-Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
-against the latest Redis source-build.
-
-If you need any support, meet Lettuce at
-
-* Google Group: https://groups.google.com/d/forum/lettuce-redis-client-users
-or lettuce-redis-client-users@googlegroups.com
-* Join the chat at https://gitter.im/lettuce-io/Lobby
-* GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/docs/
+* Upgrade to Commons Pool 2.6 #854
+* Upgrade to Mockito 2.22 #855
+* Upgrade to commons-lang3 3.8 #857
+* Upgrade to Spring Framework 4.3.19 #858
