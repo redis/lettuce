@@ -61,7 +61,7 @@
         <skipTests>true</skipTests>
         <netty-version>4.1.29.Final</netty-version>
         <spring-version>4.3.19.RELEASE</spring-version>
-        <reactor-version>Bismuth-SR11</reactor-version>
+        <reactor-version>3.2.0.RELEASE</reactor-version>
         <brave-version>5.2.0</brave-version>
     </properties>
 
@@ -79,14 +79,6 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-bom</artifactId>
                 <version>${netty-version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>io.projectreactor</groupId>
-                <artifactId>reactor-bom</artifactId>
-                <version>${reactor-version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -117,6 +109,7 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
+            <version>${reactor-version}</version>
         </dependency>
 
         <!-- Netty -->
@@ -281,6 +274,7 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
+            <version>${reactor-version}</version>
             <scope>test</scope>
         </dependency>
 
