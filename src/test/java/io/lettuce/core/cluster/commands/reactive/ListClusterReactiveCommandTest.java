@@ -17,21 +17,21 @@ package io.lettuce.core.cluster.commands.reactive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.lettuce.TestClientResources;
-import io.lettuce.core.FastShutdown;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.TestSettings;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.commands.ListCommandTest;
-import io.lettuce.util.ReactiveSyncInvocationHandler;
+import io.lettuce.test.ReactiveSyncInvocationHandler;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.resource.TestClientResources;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Mark Paluch
@@ -40,18 +40,18 @@ public class ListClusterReactiveCommandTest extends ListCommandTest {
     private static RedisClusterClient redisClusterClient;
     private StatefulRedisClusterConnection<String, String> clusterConnection;
 
-    @BeforeClass
+    @BeforeAll
     public static void setupClient() {
         redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(900)).build());
     }
 
-    @AfterClass
-    public static void closeClient() {
+    @AfterAll
+    static void closeClient() {
         FastShutdown.shutdown(redisClusterClient);
     }
 
-    @Before
+    @BeforeEach
     public void openConnection() {
         redis = connect();
         ClusterTestUtil.flushDatabaseOfAllNodes(clusterConnection);
@@ -65,7 +65,7 @@ public class ListClusterReactiveCommandTest extends ListCommandTest {
 
     // re-implementation because keys have to be on the same slot
     @Test
-    public void brpoplpush() {
+    void brpoplpush() {
 
         redis.rpush("UKPDHs8Zlp", "1", "2");
         redis.rpush("br7EPz9bbj", "3", "4");
@@ -75,24 +75,24 @@ public class ListClusterReactiveCommandTest extends ListCommandTest {
     }
 
     @Test
-    public void brpoplpushTimeout() {
+    void brpoplpushTimeout() {
         assertThat(redis.brpoplpush(1, "UKPDHs8Zlp", "br7EPz9bbj")).isNull();
     }
 
     @Test
-    public void blpop() {
+    void blpop() {
         redis.rpush("br7EPz9bbj", "2", "3");
         assertThat(redis.blpop(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo(kv("br7EPz9bbj", "2"));
     }
 
     @Test
-    public void brpop() {
+    void brpop() {
         redis.rpush("br7EPz9bbj", "2", "3");
         assertThat(redis.brpop(1, "UKPDHs8Zlp", "br7EPz9bbj")).isEqualTo(kv("br7EPz9bbj", "3"));
     }
 
     @Test
-    public void rpoplpush() {
+    void rpoplpush() {
         assertThat(redis.rpoplpush("UKPDHs8Zlp", "br7EPz9bbj")).isNull();
         redis.rpush("UKPDHs8Zlp", "1", "2");
         redis.rpush("br7EPz9bbj", "3", "4");

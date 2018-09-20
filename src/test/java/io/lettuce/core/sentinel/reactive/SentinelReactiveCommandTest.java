@@ -15,14 +15,14 @@
  */
 package io.lettuce.core.sentinel.reactive;
 
-import static io.lettuce.core.TestSettings.hostAddr;
+import static io.lettuce.test.settings.TestSettings.hostAddr;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lettuce.core.TestSettings;
 import io.lettuce.core.sentinel.SentinelCommandTest;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
-import io.lettuce.util.ReactiveSyncInvocationHandler;
+import io.lettuce.test.ReactiveSyncInvocationHandler;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Mark Paluch
@@ -30,7 +30,7 @@ import io.lettuce.util.ReactiveSyncInvocationHandler;
 public class SentinelReactiveCommandTest extends SentinelCommandTest {
 
     @Override
-    public void openConnection() throws Exception {
+    public void openConnection() {
 
         RedisSentinelAsyncCommands<String, String> async = sentinelClient.connectSentinel().async();
         RedisSentinelReactiveCommands<String, String> reactive = async.getStatefulConnection().reactive();

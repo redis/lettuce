@@ -16,38 +16,35 @@
 package io.lettuce.core.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Fail.fail;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.api.sync.RedisHLLCommands;
 
 public class HLLCommandTest extends AbstractRedisClientTest {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
 
     private RedisHLLCommands<String, String> commands() {
         return redis;
     }
 
     @Test
-    public void pfadd() {
+    void pfadd() {
 
         assertThat(commands().pfadd(key, value, value)).isEqualTo(1);
         assertThat(commands().pfadd(key, value, value)).isEqualTo(0);
         assertThat(commands().pfadd(key, value)).isEqualTo(0);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void pfaddNoValues() {
-        commands().pfadd(key);
+    @Test
+    void pfaddNoValues() {
+        assertThatThrownBy(() -> commands().pfadd(key)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    public void pfaddNullValues() {
+    void pfaddNullValues() {
         try {
             commands().pfadd(key, null);
             fail("Missing IllegalArgumentException");
@@ -61,7 +58,7 @@ public class HLLCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void pfmerge() {
+    void pfmerge() {
         commands().pfadd(key, value);
         commands().pfadd("key2", "value2");
         commands().pfadd("key3", "value3");
@@ -77,26 +74,26 @@ public class HLLCommandTest extends AbstractRedisClientTest {
         assertThat(commands().pfcount("key8885")).isEqualTo(3);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void pfmergeNoKeys() {
-        commands().pfmerge(key);
+    @Test
+    void pfmergeNoKeys() {
+        assertThatThrownBy(() -> commands().pfmerge(key)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    public void pfcount() {
+    void pfcount() {
         commands().pfadd(key, value);
         commands().pfadd("key2", "value2");
         assertThat(commands().pfcount(key)).isEqualTo(1);
         assertThat(commands().pfcount(key, "key2")).isEqualTo(2);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void pfcountNoKeys() {
-        commands().pfcount();
+    @Test
+    void pfcountNoKeys() {
+        assertThatThrownBy(() -> commands().pfcount()).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    public void pfaddPfmergePfCount() {
+    void pfaddPfmergePfCount() {
 
         commands().pfadd("key2660", "rand", "mat");
         commands().pfadd("key7112", "mat", "perrin");

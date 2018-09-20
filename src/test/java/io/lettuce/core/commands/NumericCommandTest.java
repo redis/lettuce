@@ -18,7 +18,7 @@ package io.lettuce.core.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.AbstractRedisClientTest;
 
@@ -28,31 +28,31 @@ import io.lettuce.core.AbstractRedisClientTest;
  */
 public class NumericCommandTest extends AbstractRedisClientTest {
     @Test
-    public void decr() {
+    void decr() {
         assertThat((long) redis.decr(key)).isEqualTo(-1);
         assertThat((long) redis.decr(key)).isEqualTo(-2);
     }
 
     @Test
-    public void decrby() {
+    void decrby() {
         assertThat(redis.decrby(key, 3)).isEqualTo(-3);
         assertThat(redis.decrby(key, 3)).isEqualTo(-6);
     }
 
     @Test
-    public void incr() {
+    void incr() {
         assertThat((long) redis.incr(key)).isEqualTo(1);
         assertThat((long) redis.incr(key)).isEqualTo(2);
     }
 
     @Test
-    public void incrby() {
+    void incrby() {
         assertThat(redis.incrby(key, 3)).isEqualTo(3);
         assertThat(redis.incrby(key, 3)).isEqualTo(6);
     }
 
     @Test
-    public void incrbyfloat() {
+    void incrbyfloat() {
 
         assertThat(redis.incrbyfloat(key, 3.0)).isEqualTo(3.0, offset(0.1));
         assertThat(redis.incrbyfloat(key, 0.2)).isEqualTo(3.2, offset(0.1));

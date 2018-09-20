@@ -340,11 +340,11 @@ stop:
 	pkill redis-sentinel && sleep 1 || true
 
 test-coverage: start
-	mvn -B -DskipTests=false clean compile test jacoco:report -P$(PROFILE)
+	mvn -B -DskipITs=false clean compile verify jacoco:report -P$(PROFILE)
 	$(MAKE) stop
 
 test: start
-	mvn -B -DskipTests=false clean compile test -P$(PROFILE)
+	mvn -B -DskipITs=false clean compile verify -P$(PROFILE)
 	$(MAKE) stop
 
 prepare: stop

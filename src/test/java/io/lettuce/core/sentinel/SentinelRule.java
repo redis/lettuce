@@ -28,15 +28,15 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import io.lettuce.Wait;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.TestSettings;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
+import io.lettuce.test.Wait;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * Rule to simplify Redis Sentinel handling.
@@ -57,7 +57,7 @@ public class SentinelRule implements TestRule {
     private RedisClient redisClient;
     private final boolean flushBeforeTest;
     private Map<Integer, RedisSentinelCommands<String, String>> sentinelConnections = new HashMap<>();
-    protected Logger log = LogManager.getLogger(getClass());
+    private Logger log = LogManager.getLogger(getClass());
 
     /**
      *
@@ -82,7 +82,7 @@ public class SentinelRule implements TestRule {
 
         final Statement before = new Statement() {
             @Override
-            public void evaluate() throws Exception {
+            public void evaluate() {
                 if (flushBeforeTest) {
                     flush();
                 }
@@ -105,7 +105,7 @@ public class SentinelRule implements TestRule {
     /**
      * Flush Sentinel masters.
      */
-    public void flush() {
+    private void flush() {
         log.info("[Sentinel] Flushing masters of sentinels");
         for (RedisSentinelCommands<String, String> connection : sentinelConnections.values()) {
             List<Map<String, String>> masters = connection.masters();
@@ -145,7 +145,7 @@ public class SentinelRule implements TestRule {
      *
      * @param masterId
      */
-    public void waitForConnectedSlaves(String masterId) {
+    private void waitForConnectedSlaves(String masterId) {
         log.info("[Sentinel] Waiting until master " + masterId + " has at least one connected slave");
         Wait.untilTrue(() -> hasConnectedSlaves(masterId)).during(seconds(20)).message("No slave found").waitOrTimeout();
         log.info("[Sentinel] Found a connected slave for master " + masterId);
@@ -208,7 +208,7 @@ public class SentinelRule implements TestRule {
      * @param masterId
      * @return
      */
-    public boolean hasSlaves(String masterId) {
+    private boolean hasSlaves(String masterId) {
         try {
             for (RedisSentinelCommands<String, String> connection : sentinelConnections.values()) {
 
@@ -229,7 +229,7 @@ public class SentinelRule implements TestRule {
      * @param redisPorts
      * @return
      */
-    public boolean hasMaster(int... redisPorts) {
+    private boolean hasMaster(int... redisPorts) {
 
         Map<Integer, RedisCommands<String, String>> connections = new HashMap<>();
         for (int redisPort : redisPorts) {
@@ -257,7 +257,7 @@ public class SentinelRule implements TestRule {
      * @param masterId
      * @return
      */
-    public boolean hasConnectedSlaves(String masterId) {
+    private boolean hasConnectedSlaves(String masterId) {
         for (RedisSentinelCommands<String, String> connection : sentinelConnections.values()) {
             List<Map<String, String>> slaves = connection.slaves(masterId);
             for (Map<String, String> slave : slaves) {
@@ -297,7 +297,7 @@ public class SentinelRule implements TestRule {
      * @param redisPorts
      * @return
      */
-    public int setupMasterSlave(int... redisPorts) {
+    private int setupMasterSlave(int... redisPorts) {
 
         log.info("[Sentinel] Create a master with slaves on ports " + Arrays.toString(redisPorts));
         Map<Integer, RedisCommands<String, String>> connections = new HashMap<>();
@@ -339,7 +339,7 @@ public class SentinelRule implements TestRule {
      * @param connections
      * @return
      */
-    public Integer getMasterPort(Map<Integer, RedisCommands<String, String>> connections) {
+    private Integer getMasterPort(Map<Integer, RedisCommands<String, String>> connections) {
 
         for (Map.Entry<Integer, RedisCommands<String, String>> entry : connections.entrySet()) {
 

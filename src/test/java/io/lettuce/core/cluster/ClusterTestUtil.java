@@ -24,7 +24,7 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.util.RoutingInvocationHandler;
+import io.lettuce.test.RoutingInvocationHandler;
 
 /**
  * @author Mark Paluch

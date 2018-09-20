@@ -22,10 +22,10 @@ import org.openjdk.jmh.annotations.*;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.TestSettings;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.dynamic.batch.BatchSize;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * Benchmark for commands executed through {@link StatefulRedisConnection}.

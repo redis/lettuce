@@ -24,7 +24,7 @@ import io.lettuce.core.commands.ListCommandTest;
 public class ListTxCommandTest extends ListCommandTest {
 
     @Override
-    protected RedisCommands<String, String> connect() {
+    public RedisCommands<String, String> connect() {
         return TxSyncInvocationHandler.sync(client.connect());
     }
 }

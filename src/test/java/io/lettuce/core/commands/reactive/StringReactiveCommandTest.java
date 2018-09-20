@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.commands.reactive;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -23,7 +23,7 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.commands.StringCommandTest;
-import io.lettuce.util.ReactiveSyncInvocationHandler;
+import io.lettuce.test.ReactiveSyncInvocationHandler;
 
 /**
  * @author Mark Paluch
@@ -31,12 +31,12 @@ import io.lettuce.util.ReactiveSyncInvocationHandler;
 public class StringReactiveCommandTest extends StringCommandTest {
 
     @Override
-    protected RedisCommands<String, String> connect() {
+    public RedisCommands<String, String> connect() {
         return ReactiveSyncInvocationHandler.sync(client.connect());
     }
 
     @Test
-    public void mget() {
+    void mget() {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
@@ -51,7 +51,7 @@ public class StringReactiveCommandTest extends StringCommandTest {
     }
 
     @Test
-    public void mgetEmpty() {
+    void mgetEmpty() {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 

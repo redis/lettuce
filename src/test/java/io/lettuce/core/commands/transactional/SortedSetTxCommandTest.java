@@ -24,7 +24,7 @@ import io.lettuce.core.commands.SortedSetCommandTest;
 public class SortedSetTxCommandTest extends SortedSetCommandTest {
 
     @Override
-    protected RedisCommands<String, String> connect() {
+    public RedisCommands<String, String> connect() {
         return TxSyncInvocationHandler.sync(client.connect());
     }
 }

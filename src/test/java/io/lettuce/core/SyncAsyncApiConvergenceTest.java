@@ -18,53 +18,50 @@ package io.lettuce.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 
 /**
  * @author Mark Paluch
  * @since 3.0
  */
-@RunWith(Parameterized.class)
-public class SyncAsyncApiConvergenceTest {
-
-    private Method method;
+class SyncAsyncApiConvergenceTest {
 
     @SuppressWarnings("rawtypes")
     private Class<RedisAsyncCommands> asyncClass = RedisAsyncCommands.class;
 
-    @Parameterized.Parameters(name = "Method {0}/{1}")
-    public static List<Object[]> parameters() {
-
-        List<Object[]> result = new ArrayList<>();
-        Method[] methods = RedisCommands.class.getMethods();
-        for (Method method : methods) {
-            result.add(new Object[] { method.getName(), method });
-        }
-
-        return result;
+    static Stream<Method> parameters() {
+        return Arrays.stream(RedisCommands.class.getMethods());
     }
 
-    public SyncAsyncApiConvergenceTest(String methodName, Method method) {
-        this.method = method;
-    }
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testMethodPresentOnAsyncApi(Method syncMethod) throws Exception {
 
-    @Test
-    public void testMethodPresentOnAsyncApi() throws Exception {
-        Method method = asyncClass.getMethod(this.method.getName(), this.method.getParameterTypes());
+        Method method = RedisAsyncCommands.class.getMethod(syncMethod.getName(), syncMethod.getParameterTypes());
         assertThat(method).isNotNull();
     }
 
-    @Test
-    public void testSameResultType() throws Exception {
-        Method method = asyncClass.getMethod(this.method.getName(), this.method.getParameterTypes());
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testMethodPresentOnReactiveApi(Method syncMethod) throws Exception {
+
+        Method method = RedisReactiveCommands.class.getMethod(syncMethod.getName(), syncMethod.getParameterTypes());
+        assertThat(method).isNotNull();
+    }
+
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testSameResultType(Method syncMethod) throws Exception {
+
+        Method method = asyncClass.getMethod(syncMethod.getName(), syncMethod.getParameterTypes());
         Type returnType = method.getGenericReturnType();
 
         if (method.getReturnType().equals(RedisFuture.class)) {
@@ -79,7 +76,7 @@ public class SyncAsyncApiConvergenceTest {
             }
         }
 
-        assertThat(returnType.toString()).describedAs(this.method.toString()).isEqualTo(
-                this.method.getGenericReturnType().toString());
+        assertThat(returnType.toString()).describedAs(syncMethod.toString()).isEqualTo(
+                syncMethod.getGenericReturnType().toString());
     }
 }

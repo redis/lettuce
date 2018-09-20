@@ -16,24 +16,30 @@
 package io.lettuce.core.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import io.lettuce.ConnectionTestUtil;
-import io.lettuce.Wait;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.server.RandomResponseServer;
+import io.lettuce.test.ConnectionTestUtil;
+import io.lettuce.test.Futures;
+import io.lettuce.test.Wait;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Mark Paluch
  */
-public class ConnectionFailureTest extends AbstractRedisClientTest {
+class ConnectionFailureTest extends AbstractRedisClientTest {
 
     private RedisURI defaultRedisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build();
 
@@ -42,8 +48,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
      *
      * @throws Exception
      */
-    @Test(timeout = 10000)
-    public void pingBeforeConnectFails() throws Exception {
+    @Test
+    void pingBeforeConnectFails() throws Exception {
 
         client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
@@ -70,8 +76,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
      *
      * @throws Exception
      */
-    @Test(timeout = 12000)
-    public void pingBeforeConnectFailOnReconnect() throws Exception {
+    @Test
+    void pingBeforeConnectFailOnReconnect() throws Exception {
 
         ClientOptions clientOptions = ClientOptions.builder().pingBeforeActivateConnection(true)
                 .suspendReconnectOnProtocolFailure(true).build();
@@ -99,14 +105,9 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
 
-            try {
-                connection.info().get(5, TimeUnit.SECONDS);
-            } catch (ExecutionException e) {
-                assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
-                assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
-            } catch (TimeoutException e) {
-                // happens once in a while...
-            }
+            assertThatThrownBy(() -> Futures.await(connection.info())).hasRootCauseInstanceOf(RedisException.class)
+                    .hasMessageContaining("Invalid first byte");
+
             connection.getStatefulConnection().close();
         } finally {
             ts.shutdown();
@@ -120,8 +121,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
      *
      * @throws Exception
      */
-    @Test(timeout = 120000)
-    public void pingBeforeConnectFailOnReconnectShouldSendEvents() throws Exception {
+    @Test
+    void pingBeforeConnectFailOnReconnectShouldSendEvents() throws Exception {
 
         client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).suspendReconnectOnProtocolFailure(false)
                 .build());
@@ -167,8 +168,8 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
      *
      * @throws Exception
      */
-    @Test(timeout = 10000)
-    public void cancelCommandsOnReconnectFailure() throws Exception {
+    @Test
+    void cancelCommandsOnReconnectFailure() throws Exception {
 
         client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true)
                 .build());
@@ -203,24 +204,11 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
             Thread.sleep(500);
             assertThat(connection.getStatefulConnection().isOpen()).isFalse();
 
-            try {
-                set1.get();
-            } catch (CancellationException e) {
-                assertThat(e).hasNoCause();
-            }
+            assertThatThrownBy(set1::get).isInstanceOf(CancellationException.class).hasNoCause();
+            assertThatThrownBy(set2::get).isInstanceOf(CancellationException.class).hasNoCause();
 
-            try {
-                set2.get();
-            } catch (CancellationException e) {
-                assertThat(e).hasNoCause();
-            }
-
-            try {
-                connection.info().get();
-            } catch (ExecutionException e) {
-                assertThat(e).hasRootCauseExactlyInstanceOf(RedisException.class);
-                assertThat(e.getCause()).hasMessageStartingWith("Invalid first byte");
-            }
+            assertThatThrownBy(() -> Futures.await(connection.info())).isInstanceOf(RedisException.class).hasMessageContaining(
+                    "Invalid first byte");
 
             connection.getStatefulConnection().close();
         } finally {
@@ -234,7 +222,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
      * @throws Exception
      */
     @Test
-    public void closingDisconnectedConnectionShouldDisableConnectionWatchdog() throws Exception {
+    void closingDisconnectedConnectionShouldDisableConnectionWatchdog() throws Exception {
 
         client.setOptions(ClientOptions.create());
 
@@ -262,7 +250,7 @@ public class ConnectionFailureTest extends AbstractRedisClientTest {
         assertThat(connectionWatchdog.isListenOnChannelInactive()).isFalse();
     }
 
-    protected RandomResponseServer getRandomResponseServer() throws InterruptedException {
+    RandomResponseServer getRandomResponseServer() throws InterruptedException {
         RandomResponseServer ts = new RandomResponseServer();
         ts.initialize(TestSettings.nonexistentPort());
         return ts;

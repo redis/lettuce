@@ -15,29 +15,31 @@
  */
 package io.lettuce.core;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
-import io.lettuce.TestClientResources;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.test.resource.DefaultRedisClient;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.resource.TestClientResources;
 
 /**
  * @author Will Glozer
  * @author Mark Paluch
  */
-public abstract class AbstractRedisClientTest extends AbstractTest {
+public abstract class AbstractRedisClientTest extends TestSupport {
 
     protected static RedisClient client;
     protected RedisCommands<String, String> redis;
 
-    @BeforeClass
+    @BeforeAll
     public static void setupClient() {
         client = DefaultRedisClient.get();
         client.setOptions(ClientOptions.create());
     }
 
-    protected static RedisClient newRedisClient() {
+    private static RedisClient newRedisClient() {
         return RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
     }
 
@@ -46,7 +48,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
         return connect;
     }
 
-    @Before
+    @BeforeEach
     public void openConnection() throws Exception {
         client.setOptions(ClientOptions.builder().build());
         redis = connect();
@@ -70,7 +72,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
         } while (scriptRunning);
     }
 
-    @After
+    @AfterEach
     public void closeConnection() throws Exception {
         if (redis != null) {
             redis.getStatefulConnection().close();
@@ -80,7 +82,7 @@ public abstract class AbstractRedisClientTest extends AbstractTest {
     public abstract class WithPasswordRequired {
         protected abstract void run(RedisClient client) throws Exception;
 
-        public WithPasswordRequired() {
+        protected WithPasswordRequired() {
             try {
                 redis.configSet("requirepass", passwd);
                 redis.auth(passwd);

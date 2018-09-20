@@ -31,7 +31,7 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
  * @author Mark Paluch
  */
 @SuppressWarnings("unchecked")
-public class MyPubSubConnection<K, V> extends StatefulRedisPubSubConnectionImpl<K, V> {
+class MyPubSubConnection<K, V> extends StatefulRedisPubSubConnectionImpl<K, V> {
 
     private AtomicInteger subscriptions = new AtomicInteger();
 

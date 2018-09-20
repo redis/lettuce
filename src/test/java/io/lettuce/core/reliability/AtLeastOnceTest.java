@@ -16,17 +16,15 @@
 package io.lettuce.core.reliability;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import io.lettuce.ConnectionTestUtil;
-import io.lettuce.Wait;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -34,6 +32,8 @@ import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import io.lettuce.test.ConnectionTestUtil;
+import io.lettuce.test.Wait;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.EncoderException;
@@ -42,13 +42,13 @@ import io.netty.util.Version;
 /**
  * @author Mark Paluch
  */
-public class AtLeastOnceTest extends AbstractRedisClientTest {
+class AtLeastOnceTest extends AbstractRedisClientTest {
 
-    protected final Utf8StringCodec CODEC = new Utf8StringCodec();
-    protected String key = "key";
+    private final Utf8StringCodec CODEC = new Utf8StringCodec();
+    private String key = "key";
 
-    @Before
-    public void before() throws Exception {
+    @BeforeEach
+    void before() {
         client.setOptions(ClientOptions.builder().autoReconnect(true).build());
 
         // needs to be increased on slow systems...perhaps...
@@ -61,7 +61,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void connectionIsConnectedAfterConnect() throws Exception {
+    void connectionIsConnectedAfterConnect() {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
@@ -71,7 +71,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void reconnectIsActiveHandler() throws Exception {
+    void reconnectIsActiveHandler() {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
@@ -84,7 +84,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void basicOperations() throws Exception {
+    void basicOperations() {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
@@ -95,7 +95,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void noBufferedCommandsAfterExecute() throws Exception {
+    void noBufferedCommandsAfterExecute() {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
@@ -108,7 +108,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandIsExecutedOnce() throws Exception {
+    void commandIsExecutedOnce() {
 
         RedisCommands<String, String> connection = client.connect().sync();
 
@@ -126,7 +126,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandFailsWhenFailOnEncode() throws Exception {
+    void commandFailsWhenFailOnEncode() {
 
         RedisCommands<String, String> connection = client.connect().sync();
         RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection.getStatefulConnection());
@@ -162,7 +162,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandNotFailedChannelClosesWhileFlush() throws Exception {
+    void commandNotFailedChannelClosesWhileFlush() {
 
         assumeTrue(Version.identify().get("netty-transport").artifactVersion().startsWith("4.0.2"));
 
@@ -204,7 +204,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandRetriedChannelClosesWhileFlush() throws Exception {
+    void commandRetriedChannelClosesWhileFlush() {
 
         assumeTrue(Version.identify().get("netty-transport").artifactVersion().startsWith("4.0.2"));
 
@@ -251,7 +251,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
         verificationConnection.getStatefulConnection().close();
     }
 
-    protected AsyncCommand<String, String, Object> getBlockOnEncodeCommand(final CountDownLatch block) {
+    AsyncCommand<String, String, Object> getBlockOnEncodeCommand(final CountDownLatch block) {
         return new AsyncCommand<String, String, Object>(new Command<>(CommandType.INCR, new IntegerOutput(CODEC),
                 new CommandArgs<>(CODEC).addKey(key))) {
 
@@ -267,7 +267,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandFailsDuringDecode() throws Exception {
+    void commandFailsDuringDecode() {
 
         RedisCommands<String, String> connection = client.connect().sync();
         RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection.getStatefulConnection());
@@ -293,7 +293,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void commandCancelledOverSyncAPIAfterConnectionIsDisconnected() throws Exception {
+    void commandCancelledOverSyncAPIAfterConnectionIsDisconnected() throws Exception {
 
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> sync = connection.sync();
@@ -333,7 +333,7 @@ public class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void retryAfterConnectionIsDisconnected() throws Exception {
+    void retryAfterConnectionIsDisconnected() throws Exception {
 
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> verificationConnection = client.connect().sync();
