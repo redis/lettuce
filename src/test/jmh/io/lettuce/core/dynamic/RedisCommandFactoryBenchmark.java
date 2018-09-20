@@ -74,6 +74,7 @@ public class RedisCommandFactoryBenchmark {
     }
 
     @BatchSize(10)
+    private
     interface BatchCommands extends Commands {
 
         void set(String key, String value);
@@ -84,7 +85,7 @@ public class RedisCommandFactoryBenchmark {
         RedisCommands sync;
         RedisReactiveCommands reactive;
 
-        public MockStatefulConnection(RedisChannelWriter writer) {
+        MockStatefulConnection(RedisChannelWriter writer) {
             super(writer);
 
             sync = Mockito.mock(RedisCommands.class);

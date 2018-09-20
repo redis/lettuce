@@ -16,16 +16,16 @@
 package io.lettuce.core.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import io.lettuce.RedisConditions;
 import io.lettuce.core.AbstractRedisClientTest;
-import io.lettuce.core.ListStreamingAdapter;
+import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.condition.RedisConditions;
 
 /**
  * @author Will Glozer
@@ -34,25 +34,25 @@ import io.lettuce.core.ListStreamingAdapter;
 public class ListCommandTest extends AbstractRedisClientTest {
 
     @Test
-    public void blpop() {
+    void blpop() {
         redis.rpush("two", "2", "3");
         assertThat(redis.blpop(1, "one", "two")).isEqualTo(kv("two", "2"));
     }
 
     @Test
-    public void blpopTimeout() {
+    void blpopTimeout() {
         redis.setTimeout(10, TimeUnit.SECONDS);
         assertThat(redis.blpop(1, key)).isNull();
     }
 
     @Test
-    public void brpop() {
+    void brpop() {
         redis.rpush("two", "2", "3");
         assertThat(redis.brpop(1, "one", "two")).isEqualTo(kv("two", "3"));
     }
 
     @Test
-    public void brpoplpush() {
+    void brpoplpush() {
         redis.rpush("one", "1", "2");
         redis.rpush("two", "3", "4");
         assertThat(redis.brpoplpush(1, "one", "two")).isEqualTo("2");
@@ -61,19 +61,19 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void brpoplpushTimeout() {
+    void brpoplpushTimeout() {
         assertThat(redis.brpoplpush(1, "one", "two")).isNull();
     }
 
     @Test
-    public void lindex() {
+    void lindex() {
         assertThat(redis.lindex(key, 0)).isNull();
         redis.rpush(key, "one");
         assertThat(redis.lindex(key, 0)).isEqualTo("one");
     }
 
     @Test
-    public void linsert() {
+    void linsert() {
         assertThat(redis.linsert(key, false, "one", "two")).isEqualTo(0);
         redis.rpush(key, "one");
         redis.rpush(key, "three");
@@ -82,14 +82,14 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void llen() {
+    void llen() {
         assertThat((long) redis.llen(key)).isEqualTo(0);
         redis.lpush(key, "one");
         assertThat((long) redis.llen(key)).isEqualTo(1);
     }
 
     @Test
-    public void lpop() {
+    void lpop() {
         assertThat(redis.lpop(key)).isNull();
         redis.rpush(key, "one", "two");
         assertThat(redis.lpop(key)).isEqualTo("one");
@@ -97,7 +97,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void lpush() {
+    void lpush() {
         assertThat((long) redis.lpush(key, "two")).isEqualTo(1);
         assertThat((long) redis.lpush(key, "one")).isEqualTo(2);
         assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("one", "two"));
@@ -106,7 +106,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void lpushx() {
+    void lpushx() {
         assertThat((long) redis.lpushx(key, "two")).isEqualTo(0);
         redis.lpush(key, "two");
         assertThat((long) redis.lpushx(key, "one")).isEqualTo(2);
@@ -114,7 +114,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void lpushxVariadic() {
+    void lpushxVariadic() {
 
         assumeTrue(RedisConditions.of(redis).hasCommandArity("LPUSHX", -3));
 
@@ -125,7 +125,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void lrange() {
+    void lrange() {
         assertThat(redis.lrange(key, 0, 10).isEmpty()).isTrue();
         redis.rpush(key, "one", "two", "three");
         List<String> range = redis.lrange(key, 0, 1);
@@ -136,11 +136,11 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void lrangeStreaming() {
+    void lrangeStreaming() {
         assertThat(redis.lrange(key, 0, 10).isEmpty()).isTrue();
         redis.rpush(key, "one", "two", "three");
 
-        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
         Long count = redis.lrange(adapter, key, 0, 1);
         assertThat(count.longValue()).isEqualTo(2);
@@ -154,7 +154,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void lrem() {
+    void lrem() {
         assertThat(redis.lrem(key, 0, value)).isEqualTo(0);
 
         redis.rpush(key, "1", "2", "1", "2", "1");
@@ -171,14 +171,14 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void lset() {
+    void lset() {
         redis.rpush(key, "one", "two", "three");
         assertThat(redis.lset(key, 2, "san")).isEqualTo("OK");
         assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("one", "two", "san"));
     }
 
     @Test
-    public void ltrim() {
+    void ltrim() {
         redis.rpush(key, "1", "2", "3", "4", "5", "6");
         assertThat(redis.ltrim(key, 0, 3)).isEqualTo("OK");
         assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("1", "2", "3", "4"));
@@ -187,7 +187,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void rpop() {
+    void rpop() {
         assertThat(redis.rpop(key)).isNull();
         redis.rpush(key, "one", "two");
         assertThat(redis.rpop(key)).isEqualTo("two");
@@ -195,7 +195,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void rpoplpush() {
+    void rpoplpush() {
         assertThat(redis.rpoplpush("one", "two")).isNull();
         redis.rpush("one", "1", "2");
         redis.rpush("two", "3", "4");
@@ -205,7 +205,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void rpush() {
+    void rpush() {
         assertThat((long) redis.rpush(key, "one")).isEqualTo(1);
         assertThat((long) redis.rpush(key, "two")).isEqualTo(2);
         assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("one", "two"));
@@ -214,7 +214,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void rpushx() {
+    void rpushx() {
         assertThat((long) redis.rpushx(key, "one")).isEqualTo(0);
         redis.rpush(key, "one");
         assertThat((long) redis.rpushx(key, "two")).isEqualTo(2);
@@ -222,7 +222,7 @@ public class ListCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void rpushxVariadic() {
+    void rpushxVariadic() {
 
         assumeTrue(RedisConditions.of(redis).hasCommandArity("RPUSHX", -3));
 

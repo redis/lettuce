@@ -10,7 +10,7 @@ import io.netty.util.AttributeKey;
 /**
  * @author Grzegorz Szpak
  */
-public class EmptyChannel implements Channel {
+class EmptyChannel implements Channel {
 
     private final static ChannelConfig CONFIG = new EmptyConfig();
 

@@ -25,7 +25,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 /**
  * Handler to generate random base64 data.
  */
-public class RandomServerHandler extends ChannelInboundHandlerAdapter {
+class RandomServerHandler extends ChannelInboundHandlerAdapter {
 
     private final int count;
 

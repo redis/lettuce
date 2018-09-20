@@ -17,15 +17,12 @@ package io.lettuce.core.commands;
 
 import static io.lettuce.core.protocol.CommandType.XINFO;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 import java.time.Instant;
 import java.util.*;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import io.lettuce.RedisConditions;
 import io.lettuce.core.*;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.StringCodec;
@@ -33,28 +30,23 @@ import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingParser;
 import io.lettuce.core.output.NestedMultiOutput;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Mark Paluch
  */
+@EnabledOnCommand("XADD")
 public class StreamCommandTest extends AbstractRedisClientTest {
 
-    @Before
-    public void openConnection() throws Exception {
-
-        super.openConnection();
-        assumeTrue(RedisConditions.of(redis).hasCommand("XADD"));
-    }
-
     @Test
-    public void xadd() {
+    void xadd() {
 
         assertThat(redis.xadd(key, Collections.singletonMap("key", "value"))).endsWith("-0");
         assertThat(redis.xadd(key, "foo", "bar")).isNotEmpty();
     }
 
     @Test
-    public void xaddMaxLen() {
+    void xaddMaxLen() {
 
         String id = redis.xadd(key, XAddArgs.Builder.maxlen(5), "foo", "bar");
 
@@ -69,7 +61,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xaddMaxLenEfficientTrimming() {
+    void xaddMaxLenEfficientTrimming() {
 
         String id = redis.xadd(key, XAddArgs.Builder.maxlen(5).approximateTrimming(), "foo", "bar");
 
@@ -77,7 +69,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xdel() {
+    void xdel() {
 
         List<String> ids = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
@@ -93,7 +85,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xtrim() {
+    void xtrim() {
 
         List<String> ids = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -108,7 +100,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xrange() {
+    void xrange() {
 
         List<String> ids = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -142,7 +134,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xrevrange() {
+    void xrevrange() {
 
         for (int i = 0; i < 5; i++) {
 
@@ -168,7 +160,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xread() {
+    void xread() {
 
         String initial1 = redis.xadd("stream-1", Collections.singletonMap("key1", "value1"));
         String initial2 = redis.xadd("stream-2", Collections.singletonMap("key2", "value2"));
@@ -192,7 +184,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xreadTransactional() {
+    void xreadTransactional() {
 
         String initial1 = redis.xadd("stream-1", Collections.singletonMap("key1", "value1"));
         String initial2 = redis.xadd("stream-2", Collections.singletonMap("key2", "value2"));
@@ -222,7 +214,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xgroupCreate() {
+    void xgroupCreate() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
 
@@ -235,7 +227,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xgroupread() {
+    void xgroupread() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group");
@@ -248,7 +240,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xpendingWithGroup() {
+    void xpendingWithGroup() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group");
@@ -261,7 +253,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xpending() {
+    void xpending() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group");
@@ -281,7 +273,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xack() {
+    void xack() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group");
@@ -298,7 +290,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xclaim() {
+    void xclaim() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group");
@@ -317,7 +309,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xclaimWithArgs() {
+    void xclaimWithArgs() {
 
         String id1 = redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group");
@@ -340,7 +332,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xgroupDestroy() {
+    void xgroupDestroy() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group");
@@ -350,7 +342,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xgroupDelconsumer() {
+    void xgroupDelconsumer() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group");
@@ -362,7 +354,7 @@ public class StreamCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void xgroupSetid() {
+    void xgroupSetid() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group");

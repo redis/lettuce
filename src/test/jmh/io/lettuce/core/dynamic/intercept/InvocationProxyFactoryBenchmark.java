@@ -55,7 +55,7 @@ public class InvocationProxyFactoryBenchmark {
 
         private final Object value;
 
-        public ReturnValue(Object value) {
+        ReturnValue(Object value) {
             this.value = value;
         }
 
@@ -70,7 +70,7 @@ public class InvocationProxyFactoryBenchmark {
 
         private final String toAppend;
 
-        public StringAppendingMethodInterceptor(String toAppend) {
+        StringAppendingMethodInterceptor(String toAppend) {
             this.toAppend = toAppend;
         }
 

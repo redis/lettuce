@@ -24,7 +24,7 @@ import io.lettuce.core.commands.HashCommandTest;
 public class HashTxCommandTest extends HashCommandTest {
 
     @Override
-    protected RedisCommands<String, String> connect() {
+    public RedisCommands<String, String> connect() {
         return TxSyncInvocationHandler.sync(client.connect());
     }
 }

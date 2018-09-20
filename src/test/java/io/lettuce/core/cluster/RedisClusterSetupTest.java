@@ -15,26 +15,21 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.AbstractClusterTest.createSlots;
+import static io.lettuce.core.cluster.ClusterTestSettings.createSlots;
 import static io.lettuce.core.cluster.ClusterTestUtil.getNodeId;
 import static io.lettuce.core.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.junit.*;
 
-import io.lettuce.ConnectionTestUtil;
-import io.lettuce.Futures;
-import io.lettuce.TestClientResources;
-import io.lettuce.Wait;
 import io.lettuce.category.SlowTests;
 import io.lettuce.core.*;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -47,6 +42,13 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.test.ConnectionTestUtil;
+import io.lettuce.test.Futures;
+import io.lettuce.test.Wait;
+import io.lettuce.test.resource.DefaultRedisClient;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.resource.TestClientResources;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * Test for mutable cluster setup scenarios.
@@ -56,7 +58,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
  */
 @SuppressWarnings({ "unchecked" })
 @SlowTests
-public class RedisClusterSetupTest extends AbstractTest {
+public class RedisClusterSetupTest extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();
 
@@ -70,12 +72,12 @@ public class RedisClusterSetupTest extends AbstractTest {
     private RedisCommands<String, String> redis2;
 
     @Rule
-    public ClusterRule clusterRule = new ClusterRule(clusterClient, AbstractClusterTest.port5, AbstractClusterTest.port6);
+    public ClusterRule clusterRule = new ClusterRule(clusterClient, ClusterTestSettings.port5, ClusterTestSettings.port6);
 
     @BeforeClass
     public static void setupClient() {
         clusterClient = RedisClusterClient.create(TestClientResources.get(),
-                RedisURI.Builder.redis(host, AbstractClusterTest.port5).build());
+                RedisURI.Builder.redis(host, ClusterTestSettings.port5).build());
     }
 
     @AfterClass
@@ -84,27 +86,27 @@ public class RedisClusterSetupTest extends AbstractTest {
     }
 
     @Before
-    public void openConnection() throws Exception {
-        redis1 = client.connect(RedisURI.Builder.redis(AbstractClusterTest.host, AbstractClusterTest.port5).build()).sync();
-        redis2 = client.connect(RedisURI.Builder.redis(AbstractClusterTest.host, AbstractClusterTest.port6).build()).sync();
+    public void openConnection() {
+        redis1 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port5).build()).sync();
+        redis2 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port6).build()).sync();
         clusterRule.clusterReset();
     }
 
     @After
-    public void closeConnection() throws Exception {
+    public void closeConnection() {
         redis1.getStatefulConnection().close();
         redis2.getStatefulConnection().close();
     }
 
     @Test
-    public void clusterMeet() throws Exception {
+    public void clusterMeet() {
 
         clusterRule.clusterReset();
 
         Partitions partitionsBeforeMeet = ClusterPartitionParser.parse(redis1.clusterNodes());
         assertThat(partitionsBeforeMeet.getPartitions()).hasSize(1);
 
-        String result = redis1.clusterMeet(host, AbstractClusterTest.port6);
+        String result = redis1.clusterMeet(host, ClusterTestSettings.port6);
         assertThat(result).isEqualTo("OK");
 
         Wait.untilEquals(2, () -> ClusterPartitionParser.parse(redis1.clusterNodes()).size()).waitOrTimeout();
@@ -114,11 +116,11 @@ public class RedisClusterSetupTest extends AbstractTest {
     }
 
     @Test
-    public void clusterForget() throws Exception {
+    public void clusterForget() {
 
         clusterRule.clusterReset();
 
-        String result = redis1.clusterMeet(host, AbstractClusterTest.port6);
+        String result = redis1.clusterMeet(host, ClusterTestSettings.port6);
         assertThat(result).isEqualTo("OK");
         Wait.untilTrue(() -> redis1.clusterNodes().contains(redis2.clusterMyId())).waitOrTimeout();
         Wait.untilTrue(() -> redis2.clusterNodes().contains(redis1.clusterMyId())).waitOrTimeout();
@@ -289,14 +291,9 @@ public class RedisClusterSetupTest extends AbstractTest {
         RedisFuture<String> set = clusterConnection.set("t", "value"); // 15891
 
         set.await(5, TimeUnit.SECONDS);
-        try {
-            set.get();
-            fail("Missing RedisException");
-        } catch (ExecutionException e) {
-            assertThat(e).hasRootCauseInstanceOf(RedisException.class).hasMessageContaining("not connected");
-        } finally {
+
+        assertThatThrownBy(() -> Futures.await(set)).hasRootCauseInstanceOf(RedisException.class);
             clusterConnection.getStatefulConnection().close();
-        }
     }
 
     @Test
@@ -481,7 +478,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
         clusterConnection.getStatefulConnection().setReadFrom(ReadFrom.SLAVE);
 
-        clusterConnection.set(key, value).get();
+        Futures.await(clusterConnection.set(key, value));
 
         try {
             clusterConnection.get(key);
@@ -506,7 +503,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         clusterConnection.getStatefulConnection().close();
     }
 
-    protected PooledClusterConnectionProvider<String, String> getPooledClusterConnectionProvider(
+    private PooledClusterConnectionProvider<String, String> getPooledClusterConnectionProvider(
             RedisAdvancedClusterAsyncCommands<String, String> clusterAsyncConnection) {
 
         RedisChannelHandler<String, String> channelHandler = getChannelHandler(clusterAsyncConnection);
@@ -519,10 +516,10 @@ public class RedisClusterSetupTest extends AbstractTest {
         return (RedisChannelHandler<String, String>) clusterAsyncConnection.getStatefulConnection();
     }
 
-    private void assertExecuted(RedisFuture<String> set) throws Exception {
-        set.get(5, TimeUnit.SECONDS);
+    private void assertExecuted(RedisFuture<String> set) {
+        Futures.await(set);
         assertThat(set.getError()).isNull();
-        assertThat(set.get()).isEqualTo("OK");
+        assertThat(Futures.get(set)).isEqualTo("OK");
     }
 
     private void suspendConnection(RedisClusterAsyncCommands<String, String> asyncCommands) {
@@ -534,7 +531,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         Wait.untilTrue(() -> !asyncCommands.isOpen()).waitOrTimeout();
     }
 
-    protected void shiftAllSlotsToNode1() throws InterruptedException, TimeoutException {
+    private void shiftAllSlotsToNode1() throws InterruptedException, TimeoutException {
 
         redis1.clusterDelSlots(createSlots(12000, 16384));
         redis2.clusterDelSlots(createSlots(12000, 16384));
@@ -575,8 +572,7 @@ public class RedisClusterSetupTest extends AbstractTest {
         return list.parallelStream().mapToInt(Integer::intValue).toArray();
     }
 
-    private void waitForSlots(RedisClusterCommands<String, String> connection, int slotCount) throws InterruptedException,
-            TimeoutException {
+    private void waitForSlots(RedisClusterCommands<String, String> connection, int slotCount) {
         Wait.untilEquals(slotCount, () -> getOwnPartition(connection).getSlots().size()).waitOrTimeout();
     }
 }

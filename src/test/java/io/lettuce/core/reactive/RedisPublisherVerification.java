@@ -21,13 +21,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.tck.PublisherVerification;
 import org.reactivestreams.tck.TestEnvironment;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 
-import io.lettuce.TestClientResources;
+import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -35,6 +35,9 @@ import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.core.TestRedisPublisher;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * Reactive Streams TCK for {@link RedisPublisher}.
@@ -51,14 +54,14 @@ public class RedisPublisherVerification extends PublisherVerification<String> {
         super(new TestEnvironment(1000));
     }
 
-    @BeforeClass
+    @BeforeAll
     private static void beforeClass() {
         client = RedisClient.create(TestClientResources.get(), RedisURI.create(TestSettings.host(), TestSettings.port()));
         connection = client.connect();
         connection.sync().flushall();
     }
 
-    @AfterClass
+    @AfterAll
     private static void afterClass() {
         connection.close();
         FastShutdown.shutdown(client);

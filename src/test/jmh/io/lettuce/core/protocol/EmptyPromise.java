@@ -15,9 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPromise;
@@ -113,7 +111,7 @@ for (GenericFutureListener<? extends Future<? super Void>> listener : listeners)
     }
 
     @Override
-    public ChannelPromise sync() throws InterruptedException {
+    public ChannelPromise sync() {
         return null;
     }
 
@@ -123,7 +121,7 @@ for (GenericFutureListener<? extends Future<? super Void>> listener : listeners)
     }
 
     @Override
-    public ChannelPromise await() throws InterruptedException {
+    public ChannelPromise await() {
         return null;
     }
 
@@ -143,12 +141,12 @@ for (GenericFutureListener<? extends Future<? super Void>> listener : listeners)
     }
 
     @Override
-    public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean await(long timeout, TimeUnit unit) {
         return false;
     }
 
     @Override
-    public boolean await(long timeoutMillis) throws InterruptedException {
+    public boolean await(long timeoutMillis) {
         return false;
     }
 
@@ -183,12 +181,12 @@ for (GenericFutureListener<? extends Future<? super Void>> listener : listeners)
     }
 
     @Override
-    public Void get() throws InterruptedException, ExecutionException {
+    public Void get() {
         return null;
     }
 
     @Override
-    public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public Void get(long timeout, TimeUnit unit) {
         return null;
     }
 }

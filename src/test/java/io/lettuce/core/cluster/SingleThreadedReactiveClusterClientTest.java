@@ -19,9 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -33,12 +33,12 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 /**
  * @author Mark Paluch
  */
-public class SingleThreadedReactiveClusterClientTest {
+class SingleThreadedReactiveClusterClientTest {
 
-    RedisClusterClient client;
+    private RedisClusterClient client;
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
 
         DefaultClientResources clientResources = DefaultClientResources.builder()
                 .eventExecutorGroup(ImmediateEventExecutor.INSTANCE)
@@ -48,15 +48,15 @@ public class SingleThreadedReactiveClusterClientTest {
         client = RedisClusterClient.create(clientResources, RedisURI.create("localhost", 7379));
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
 
         client.shutdown();
         client.getResources().shutdown();
     }
 
     @Test
-    public void shouldPropagateAsynchronousConnections() {
+    void shouldPropagateAsynchronousConnections() {
 
         StatefulRedisClusterConnection<String, String> connect = client.connect();
         connect.sync().flushall();

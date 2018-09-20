@@ -30,7 +30,7 @@ import io.lettuce.core.internal.AbstractInvocationHandler;
  * @param <K>
  * @param <V>
  */
-public class TxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
+class TxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final Object api;
     private final Method multi;
@@ -38,7 +38,7 @@ public class TxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
     private final Method exec;
     private final Method ping;
 
-    public TxSyncInvocationHandler(Object api) throws Exception {
+    private TxSyncInvocationHandler(Object api) throws Exception {
 
         this.api = api;
         this.multi = api.getClass().getMethod("multi");

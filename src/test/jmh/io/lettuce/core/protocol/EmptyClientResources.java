@@ -38,8 +38,8 @@ import io.netty.util.concurrent.SucceededFuture;
  */
 public class EmptyClientResources implements ClientResources {
 
-    public static final DefaultEventPublisherOptions PUBLISHER_OPTIONS = DefaultEventPublisherOptions.disabled();
-    public static final EmptyCommandLatencyCollector LATENCY_COLLECTOR = new EmptyCommandLatencyCollector();
+    private static final DefaultEventPublisherOptions PUBLISHER_OPTIONS = DefaultEventPublisherOptions.disabled();
+    private static final EmptyCommandLatencyCollector LATENCY_COLLECTOR = new EmptyCommandLatencyCollector();
     public static final EmptyClientResources INSTANCE = new EmptyClientResources();
 
     @Override

@@ -23,10 +23,10 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import reactor.test.StepVerifier;
 import zipkin2.Span;
@@ -35,27 +35,27 @@ import brave.Tracer;
 import brave.Tracing;
 import brave.propagation.CurrentTraceContext;
 import brave.propagation.TraceContext;
-import io.lettuce.Wait;
-import io.lettuce.core.AbstractTest;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
+import io.lettuce.test.Wait;
 import io.netty.channel.unix.DomainSocketAddress;
 
 /**
  * @author Mark Paluch
  */
-public class BraveTracingTest extends AbstractTest {
+class BraveTracingTest extends TestSupport {
 
     private static ClientResources clientResources;
     private static RedisClient client;
     private static Tracing clientTracing;
     private static Queue<Span> spans = new LinkedBlockingQueue<>();
 
-    @BeforeClass
-    public static void beforeClass() {
+    @BeforeAll
+    static void beforeClass() {
 
         clientTracing = Tracing.newBuilder().localServiceName("client")
                 .currentTraceContext(CurrentTraceContext.Default.create()).spanReporter(spans::add).build();
@@ -64,8 +64,8 @@ public class BraveTracingTest extends AbstractTest {
         client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
     }
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
 
         Tracer tracer = clientTracing.tracer();
         if (tracer.currentSpan() != null) {
@@ -75,15 +75,15 @@ public class BraveTracingTest extends AbstractTest {
         spans.clear();
     }
 
-    @AfterClass
-    public static void afterClass() {
+    @AfterAll
+    static void afterClass() {
 
         clientTracing.close();
         clientResources.shutdown(0, 0, TimeUnit.MILLISECONDS);
     }
 
     @Test
-    public void pingWithTrace() {
+    void pingWithTrace() {
 
         ScopedSpan foo = clientTracing.tracer().startScopedSpan("foo");
 
@@ -100,7 +100,7 @@ public class BraveTracingTest extends AbstractTest {
     }
 
     @Test
-    public void pingWithTraceShouldCatchErrors() {
+    void pingWithTraceShouldCatchErrors() {
 
         ScopedSpan foo = clientTracing.tracer().startScopedSpan("foo");
 
@@ -125,7 +125,7 @@ public class BraveTracingTest extends AbstractTest {
     }
 
     @Test
-    public void reactivePing() {
+    void reactivePing() {
 
         StatefulRedisConnection<String, String> connect = client.connect();
         connect.reactive().ping().as(StepVerifier::create).expectNext("PONG").verifyComplete();
@@ -135,7 +135,7 @@ public class BraveTracingTest extends AbstractTest {
     }
 
     @Test
-    public void reactivePingWithTrace() {
+    void reactivePingWithTrace() {
 
         ScopedSpan trace = clientTracing.tracer().startScopedSpan("foo");
 
@@ -156,7 +156,7 @@ public class BraveTracingTest extends AbstractTest {
     }
 
     @Test
-    public void reactiveGetAndSetWithTrace() {
+    void reactiveGetAndSetWithTrace() {
 
         ScopedSpan trace = clientTracing.tracer().startScopedSpan("foo");
 
@@ -179,7 +179,7 @@ public class BraveTracingTest extends AbstractTest {
     }
 
     @Test
-    public void reactiveGetAndSetWithTraceProvider() {
+    void reactiveGetAndSetWithTraceProvider() {
 
         brave.Span trace = clientTracing.tracer().newTrace();
 
@@ -204,7 +204,7 @@ public class BraveTracingTest extends AbstractTest {
     }
 
     @Test
-    public void shouldReportSimpleServiceName() {
+    void shouldReportSimpleServiceName() {
 
         BraveTracing.BraveEndpoint endpoint = (BraveTracing.BraveEndpoint) clientResources.tracing().createEndpoint(
                 new DomainSocketAddress("foo"));

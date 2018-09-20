@@ -42,7 +42,7 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 /**
  * @author Mark Paluch
  */
-public class CompilationUnitFactory {
+class CompilationUnitFactory {
 
     private File templateFile;
     private File sources;
@@ -57,9 +57,9 @@ public class CompilationUnitFactory {
     private Consumer<ClassOrInterfaceDeclaration> typeMutator;
     private Function<Comment, Comment> methodCommentMutator;
 
-    CompilationUnit template;
-    CompilationUnit result = new CompilationUnit();
-    ClassOrInterfaceDeclaration resultType;
+    private CompilationUnit template;
+    private CompilationUnit result = new CompilationUnit();
+    private ClassOrInterfaceDeclaration resultType;
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
             Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
@@ -135,7 +135,7 @@ public class CompilationUnitFactory {
                 MethodDeclaration::getType);
     }
 
-    protected void writeResult() throws IOException {
+    private void writeResult() throws IOException {
 
         FileOutputStream fos = new FileOutputStream(target);
         fos.write(result.toString().getBytes());

@@ -28,7 +28,7 @@ import io.lettuce.core.codec.RedisCodec;
 /**
  * @author Mark Paluch
  */
-public class EmptyRedisClusterClient extends RedisClusterClient {
+class EmptyRedisClusterClient extends RedisClusterClient {
 
     public EmptyRedisClusterClient(RedisURI initialUri) {
         super(null, Collections.singleton(initialUri));

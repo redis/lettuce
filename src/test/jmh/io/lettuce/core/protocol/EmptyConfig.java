@@ -8,7 +8,7 @@ import io.netty.channel.*;
 /**
  * @author Grzegorz Szpak
  */
-public class EmptyConfig implements ChannelConfig {
+class EmptyConfig implements ChannelConfig {
 
     @Override
     public Map<ChannelOption<?>, Object> getOptions() {

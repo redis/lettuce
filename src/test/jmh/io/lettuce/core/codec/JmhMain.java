@@ -15,7 +15,6 @@
  */
 package io.lettuce.core.codec;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Mode;
@@ -32,7 +31,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
  */
 public class JmhMain {
 
-    public static void main(String... args) throws IOException, RunnerException {
+    public static void main(String... args) throws RunnerException {
 
         runCommandBenchmark();
     }

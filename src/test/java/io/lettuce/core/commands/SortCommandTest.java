@@ -18,10 +18,10 @@ package io.lettuce.core.commands;
 import static io.lettuce.core.SortArgs.Builder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.AbstractRedisClientTest;
-import io.lettuce.core.ListStreamingAdapter;
+import io.lettuce.test.ListStreamingAdapter;
 
 /**
  * @author Will Glozer
@@ -29,17 +29,17 @@ import io.lettuce.core.ListStreamingAdapter;
  */
 public class SortCommandTest extends AbstractRedisClientTest {
     @Test
-    public void sort() {
+    void sort() {
         redis.rpush(key, "3", "2", "1");
         assertThat(redis.sort(key)).isEqualTo(list("1", "2", "3"));
         assertThat(redis.sort(key, asc())).isEqualTo(list("1", "2", "3"));
     }
 
     @Test
-    public void sortStreaming() {
+    void sortStreaming() {
         redis.rpush(key, "3", "2", "1");
 
-        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<String>();
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
         Long count = redis.sort(streamingAdapter, key);
 
         assertThat(count.longValue()).isEqualTo(3);
@@ -52,13 +52,13 @@ public class SortCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void sortAlpha() {
+    void sortAlpha() {
         redis.rpush(key, "A", "B", "C");
         assertThat(redis.sort(key, alpha().desc())).isEqualTo(list("C", "B", "A"));
     }
 
     @Test
-    public void sortBy() {
+    void sortBy() {
         redis.rpush(key, "foo", "bar", "baz");
         redis.set("weight_foo", "8");
         redis.set("weight_bar", "4");
@@ -67,13 +67,13 @@ public class SortCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void sortDesc() {
+    void sortDesc() {
         redis.rpush(key, "1", "2", "3");
         assertThat(redis.sort(key, desc())).isEqualTo(list("3", "2", "1"));
     }
 
     @Test
-    public void sortGet() {
+    void sortGet() {
         redis.rpush(key, "1", "2");
         redis.set("obj_1", "foo");
         redis.set("obj_2", "bar");
@@ -81,13 +81,13 @@ public class SortCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void sortLimit() {
+    void sortLimit() {
         redis.rpush(key, "3", "2", "1");
         assertThat(redis.sort(key, limit(1, 2))).isEqualTo(list("2", "3"));
     }
 
     @Test
-    public void sortStore() {
+    void sortStore() {
         redis.rpush("one", "1", "2", "3");
         assertThat(redis.sortStore("one", desc(), "two")).isEqualTo(3);
         assertThat(redis.lrange("two", 0, -1)).isEqualTo(list("3", "2", "1"));

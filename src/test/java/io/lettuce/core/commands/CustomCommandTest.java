@@ -16,57 +16,72 @@
 package io.lettuce.core.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.Arrays;
 
-import org.junit.Test;
+import javax.inject.Inject;
 
-import io.lettuce.core.AbstractRedisClientTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import io.lettuce.test.Futures;
+import io.lettuce.test.LettuceExtension;
 
 /**
  * @author Mark Paluch
  */
-public class CustomCommandTest extends AbstractRedisClientTest {
+@ExtendWith(LettuceExtension.class)
+public class CustomCommandTest extends TestSupport {
 
-    protected final Utf8StringCodec utf8StringCodec = new Utf8StringCodec();
+    private final RedisCommands<String, String> redis;
+
+    @Inject
+    CustomCommandTest(StatefulRedisConnection<String, String> connection) {
+        this.redis = connection.sync();
+    }
 
     @Test
-    public void dispatchSet() {
+    void dispatchSet() {
 
-        String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey(key).addValue(value));
+        String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(
+                StringCodec.UTF8).addKey(key).addValue(value));
 
         assertThat(response).isEqualTo("OK");
     }
 
     @Test
-    public void dispatchWithoutArgs() {
+    void dispatchWithoutArgs() {
 
-        String response = redis.dispatch(MyCommands.INFO, new StatusOutput<>(utf8StringCodec));
+        String response = redis.dispatch(MyCommands.INFO, new StatusOutput<>(StringCodec.UTF8));
 
         assertThat(response).contains("connected_clients");
     }
 
-    @Test(expected = RedisCommandExecutionException.class)
-    public void dispatchShouldFailForWrongDataType() {
+    @Test
+    void dispatchShouldFailForWrongDataType() {
 
         redis.hset(key, key, value);
-        redis.dispatch(CommandType.GET, new StatusOutput<>(utf8StringCodec), new CommandArgs<>(utf8StringCodec).addKey(key));
+        assertThatThrownBy(
+                () -> redis.dispatch(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
+                        new CommandArgs<>(StringCodec.UTF8).addKey(key))).isInstanceOf(RedisCommandExecutionException.class);
     }
 
     @Test
-    public void dispatchTransactions() {
+    void dispatchTransactions() {
 
         redis.multi();
-        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(utf8StringCodec), new CommandArgs<>(
-                utf8StringCodec).addKey(key).addValue(value));
+        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(
+                StringCodec.UTF8).addKey(key).addValue(value));
 
         TransactionResult exec = redis.exec();
 
@@ -75,40 +90,41 @@ public class CustomCommandTest extends AbstractRedisClientTest {
     }
 
     @Test
-    public void standaloneAsyncPing() {
+    void standaloneAsyncPing() {
 
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec), null);
+        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(StringCodec.UTF8),
+                null);
 
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         getStandaloneConnection().dispatch(async);
 
-        assertThat(async.join()).isEqualTo("PONG");
+        assertThat(Futures.get(async.toCompletableFuture())).isEqualTo("PONG");
     }
 
     @Test
-    public void standaloneAsyncBatchPing() {
+    void standaloneAsyncBatchPing() {
 
-        RedisCommand<String, String, String> command1 = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec),
+        RedisCommand<String, String, String> command1 = new Command<>(MyCommands.PING, new StatusOutput<>(StringCodec.UTF8),
                 null);
 
-        RedisCommand<String, String, String> command2 = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec),
+        RedisCommand<String, String, String> command2 = new Command<>(MyCommands.PING, new StatusOutput<>(StringCodec.UTF8),
                 null);
 
         AsyncCommand<String, String, String> async1 = new AsyncCommand<>(command1);
         AsyncCommand<String, String, String> async2 = new AsyncCommand<>(command2);
         getStandaloneConnection().dispatch(Arrays.asList(async1, async2));
 
-        assertThat(async1.join()).isEqualTo("PONG");
-        assertThat(async2.join()).isEqualTo("PONG");
+        assertThat(Futures.get(async1.toCompletableFuture())).isEqualTo("PONG");
+        assertThat(Futures.get(async2.toCompletableFuture())).isEqualTo("PONG");
     }
 
     @Test
-    public void standaloneAsyncBatchTransaction() {
+    void standaloneAsyncBatchTransaction() {
 
-        RedisCommand<String, String, String> multi = new Command<>(CommandType.MULTI, new StatusOutput<>(utf8StringCodec));
+        RedisCommand<String, String, String> multi = new Command<>(CommandType.MULTI, new StatusOutput<>(StringCodec.UTF8));
 
-        RedisCommand<String, String, String> set = new Command<>(CommandType.SET, new StatusOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey("key").add("value"));
+        RedisCommand<String, String, String> set = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey("key").add("value"));
 
         RedisCommand<String, String, TransactionResult> exec = new Command<>(CommandType.EXEC, null);
 
@@ -117,18 +133,19 @@ public class CustomCommandTest extends AbstractRedisClientTest {
         AsyncCommand<String, String, TransactionResult> async3 = new AsyncCommand<>(exec);
         getStandaloneConnection().dispatch(Arrays.asList(async1, async2, async3));
 
-        assertThat(async1.join()).isEqualTo("OK");
-        assertThat(async2.join()).isEqualTo("OK");
+        assertThat(Futures.get(async1.toCompletableFuture())).isEqualTo("OK");
+        assertThat(Futures.get(async2.toCompletableFuture())).isEqualTo("OK");
 
-        TransactionResult transactionResult = async3.join();
+        TransactionResult transactionResult = Futures.get(async3.toCompletableFuture());
         assertThat(transactionResult.wasDiscarded()).isFalse();
         assertThat(transactionResult.<String> get(0)).isEqualTo("OK");
     }
 
     @Test
-    public void standaloneFireAndForget() {
+    void standaloneFireAndForget() {
 
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(utf8StringCodec), null);
+        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(StringCodec.UTF8),
+                null);
         getStandaloneConnection().dispatch(command);
         assertThat(command.isCancelled()).isFalse();
 

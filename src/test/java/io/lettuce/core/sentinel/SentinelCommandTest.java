@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.sentinel;
 
-import static io.lettuce.core.TestSettings.hostAddr;
+import static io.lettuce.test.settings.TestSettings.hostAddr;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -29,12 +29,16 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import io.lettuce.TestClientResources;
-import io.lettuce.Wait;
-import io.lettuce.core.*;
-import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
+import io.lettuce.test.Wait;
+import io.lettuce.test.resource.DefaultRedisClient;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.resource.TestClientResources;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Mark Paluch
@@ -150,14 +154,12 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void role() throws Exception {
+    public void role() {
 
-        RedisAsyncCommands<String, String> connection = sentinelClient.connect(RedisURI.Builder.redis(host, 26380).build())
-                .async();
+        RedisCommands<String, String> connection = sentinelClient.connect(RedisURI.Builder.redis(host, 26380).build()).sync();
         try {
 
-            RedisFuture<List<Object>> role = connection.role();
-            List<Object> objects = role.get();
+            List<Object> objects = connection.role();
 
             assertThat(objects).hasSize(2);
 
@@ -227,10 +229,15 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void connectToRedisUsingSentinelWithReconnect() {
+    public void connectToRedisUsingSentinelWithReconnect() throws InterruptedException {
+
         RedisCommands<String, String> connect = sentinelClient.connect().sync();
+
         connect.ping();
         connect.quit();
+
+        Thread.sleep(50);
+        Wait.untilTrue(connect::isOpen).waitOrTimeout();
         connect.ping();
         connect.getStatefulConnection().close();
     }

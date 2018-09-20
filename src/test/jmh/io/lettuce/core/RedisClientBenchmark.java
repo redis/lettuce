@@ -24,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * Benchmark for {@link RedisClient}.
@@ -127,7 +128,7 @@ public class RedisClientBenchmark {
 
     @Benchmark
     @OperationsPerInvocation(BATCH_SIZE)
-    public void reactiveSetBatch() throws Exception {
+    public void reactiveSetBatch() {
 
         for (int i = 0; i < BATCH_SIZE; i++) {
             monos[i] = connection.reactive().set(KEY, KEY);
@@ -138,7 +139,7 @@ public class RedisClientBenchmark {
 
     @Benchmark
     @OperationsPerInvocation(BATCH_SIZE)
-    public void reactiveSetBatchFlush() throws Exception {
+    public void reactiveSetBatchFlush() {
 
         connection.setAutoFlushCommands(false);
 

@@ -63,7 +63,7 @@ public class ClusterRule implements TestRule {
 
         final Statement beforeCluster = new Statement() {
             @Override
-            public void evaluate() throws Throwable {
+            public void evaluate() {
                 flushdb();
             }
         };
@@ -116,7 +116,7 @@ public class ClusterRule implements TestRule {
     /**
      * Flush data on all nodes, ignore failures.
      */
-    public void flushdb() {
+    private void flushdb() {
         onAllConnections(c -> c.flushdb(), true);
     }
 

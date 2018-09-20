@@ -15,7 +15,6 @@
  */
 package io.lettuce.core.protocol;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -323,17 +322,17 @@ class EmptyByteBuf extends ByteBuf {
     }
 
     @Override
-    public ByteBuf getBytes(int i, OutputStream outputStream, int i1) throws IOException {
+    public ByteBuf getBytes(int i, OutputStream outputStream, int i1) {
         return null;
     }
 
     @Override
-    public int getBytes(int i, GatheringByteChannel gatheringByteChannel, int i1) throws IOException {
+    public int getBytes(int i, GatheringByteChannel gatheringByteChannel, int i1) {
         return 0;
     }
 
     @Override
-    public int getBytes(int i, FileChannel fileChannel, long l, int i1) throws IOException {
+    public int getBytes(int i, FileChannel fileChannel, long l, int i1) {
         return 0;
     }
 
@@ -438,17 +437,17 @@ class EmptyByteBuf extends ByteBuf {
     }
 
     @Override
-    public int setBytes(int i, InputStream inputStream, int i1) throws IOException {
+    public int setBytes(int i, InputStream inputStream, int i1) {
         return 0;
     }
 
     @Override
-    public int setBytes(int i, ScatteringByteChannel scatteringByteChannel, int i1) throws IOException {
+    public int setBytes(int i, ScatteringByteChannel scatteringByteChannel, int i1) {
         return 0;
     }
 
     @Override
-    public int setBytes(int i, FileChannel fileChannel, long l, int i1) throws IOException {
+    public int setBytes(int i, FileChannel fileChannel, long l, int i1) {
         return 0;
     }
 
@@ -608,12 +607,12 @@ class EmptyByteBuf extends ByteBuf {
     }
 
     @Override
-    public ByteBuf readBytes(OutputStream outputStream, int i) throws IOException {
+    public ByteBuf readBytes(OutputStream outputStream, int i) {
         return null;
     }
 
     @Override
-    public int readBytes(GatheringByteChannel gatheringByteChannel, int i) throws IOException {
+    public int readBytes(GatheringByteChannel gatheringByteChannel, int i) {
         return 0;
     }
 
@@ -623,7 +622,7 @@ class EmptyByteBuf extends ByteBuf {
     }
 
     @Override
-    public int readBytes(FileChannel fileChannel, long l, int i) throws IOException {
+    public int readBytes(FileChannel fileChannel, long l, int i) {
         return 0;
     }
 
@@ -728,17 +727,17 @@ class EmptyByteBuf extends ByteBuf {
     }
 
     @Override
-    public int writeBytes(InputStream inputStream, int i) throws IOException {
+    public int writeBytes(InputStream inputStream, int i) {
         return 0;
     }
 
     @Override
-    public int writeBytes(ScatteringByteChannel scatteringByteChannel, int i) throws IOException {
+    public int writeBytes(ScatteringByteChannel scatteringByteChannel, int i) {
         return 0;
     }
 
     @Override
-    public int writeBytes(FileChannel fileChannel, long l, int i) throws IOException {
+    public int writeBytes(FileChannel fileChannel, long l, int i) {
         return 0;
     }
 

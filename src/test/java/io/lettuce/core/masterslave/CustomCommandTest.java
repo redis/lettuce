@@ -16,85 +16,90 @@
 package io.lettuce.core.masterslave;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.Arrays;
 
-import org.junit.*;
+import javax.inject.Inject;
 
-import io.lettuce.TestClientResources;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import io.lettuce.test.Futures;
+import io.lettuce.test.LettuceExtension;
 
 /**
  * @author Mark Paluch
  */
-public class CustomCommandTest extends AbstractTest {
+@ExtendWith(LettuceExtension.class)
+public class CustomCommandTest extends TestSupport {
 
-    private static final Utf8StringCodec utf8StringCodec = new Utf8StringCodec();
-    private static RedisClient redisClient;
+    private final RedisClient redisClient;
 
-    private RedisCommands<String, String> redis;
     private StatefulRedisConnection<String, String> connection;
+    private RedisCommands<String, String> redis;
 
-    @BeforeClass
-    public static void beforeClass() {
-        redisClient = RedisClient.create(TestClientResources.get());
+    @Inject
+    CustomCommandTest(RedisClient redisClient) {
+        this.redisClient = redisClient;
     }
 
-    @AfterClass
-    public static void afterClass() {
-        FastShutdown.shutdown(redisClient);
-    }
-
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
 
         RedisURI uri = RedisURI.create("redis-sentinel://127.0.0.1:26379?sentinelMasterId=mymaster&timeout=5s");
-        connection = MasterSlave.connect(redisClient, utf8StringCodec, uri);
-
+        connection = MasterSlave.connect(redisClient, StringCodec.UTF8, uri);
         redis = connection.sync();
+        redis.flushall();
     }
 
-    @After
-    public void after() {
+    @AfterEach
+    void after() {
         connection.close();
     }
 
     @Test
-    public void dispatchSet() throws Exception {
+    void dispatchSet() {
 
-        String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey(key).addValue(value));
+        String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(
+                StringCodec.UTF8).addKey(key).addValue(value));
 
         assertThat(response).isEqualTo("OK");
     }
 
     @Test
-    public void dispatchWithoutArgs() throws Exception {
+    void dispatchWithoutArgs() {
 
-        String response = redis.dispatch(MyCommands.INFO, new StatusOutput<>(utf8StringCodec));
+        String response = redis.dispatch(MyCommands.INFO, new StatusOutput<>(StringCodec.UTF8));
 
         assertThat(response).contains("connected_clients");
     }
 
-    @Test(expected = RedisCommandExecutionException.class)
-    public void dispatchShouldFailForWrongDataType() throws Exception {
+    @Test
+    void dispatchShouldFailForWrongDataType() {
 
         redis.hset(key, key, value);
-        redis.dispatch(CommandType.GET, new StatusOutput<>(utf8StringCodec), new CommandArgs<>(utf8StringCodec).addKey(key));
+        assertThatThrownBy(
+                () -> redis.dispatch(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
+                        new CommandArgs<>(StringCodec.UTF8).addKey(key))).isInstanceOf(RedisCommandExecutionException.class);
     }
 
     @Test
-    public void dispatchTransactions() throws Exception {
+    void dispatchTransactions() {
 
         redis.multi();
-        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(utf8StringCodec), new CommandArgs<>(
-                utf8StringCodec).addKey(key).addValue(value));
+        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(
+                StringCodec.UTF8).addKey(key).addValue(value));
 
         TransactionResult exec = redis.exec();
 
@@ -103,7 +108,7 @@ public class CustomCommandTest extends AbstractTest {
     }
 
     @Test
-    public void masterSlaveAsyncPing() throws Exception {
+    void masterSlaveAsyncPing() {
 
         RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
                 new StatusOutput<>(new Utf8StringCodec()), null);
@@ -111,33 +116,33 @@ public class CustomCommandTest extends AbstractTest {
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         getStandaloneConnection().dispatch(async);
 
-        assertThat(async.get()).isEqualTo("PONG");
+        assertThat(Futures.get(async.toCompletableFuture())).isEqualTo("PONG");
     }
 
     @Test
-    public void masterSlaveAsyncBatchPing() throws Exception {
+    void masterSlaveAsyncBatchPing() {
 
-        RedisCommand<String, String, String> command1 = new Command<>(CommandType.SET, new StatusOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey("key1").addValue("value"));
+        RedisCommand<String, String, String> command1 = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey("key1").addValue("value"));
 
-        RedisCommand<String, String, String> command2 = new Command<>(CommandType.GET, new StatusOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey("key1"));
+        RedisCommand<String, String, String> command2 = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey("key1"));
 
-        RedisCommand<String, String, String> command3 = new Command<>(CommandType.SET, new StatusOutput<>(utf8StringCodec),
-                new CommandArgs<>(utf8StringCodec).addKey("other-key1").addValue("value"));
+        RedisCommand<String, String, String> command3 = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey("other-key1").addValue("value"));
 
         AsyncCommand<String, String, String> async1 = new AsyncCommand<>(command1);
         AsyncCommand<String, String, String> async2 = new AsyncCommand<>(command2);
         AsyncCommand<String, String, String> async3 = new AsyncCommand<>(command3);
         getStandaloneConnection().dispatch(Arrays.asList(async1, async2, async3));
 
-        assertThat(async1.get()).isEqualTo("OK");
-        assertThat(async2.get()).isEqualTo("value");
-        assertThat(async3.get()).isEqualTo("OK");
+        assertThat(Futures.get(async1.toCompletableFuture())).isEqualTo("OK");
+        assertThat(Futures.get(async2.toCompletableFuture())).isEqualTo("value");
+        assertThat(Futures.get(async3.toCompletableFuture())).isEqualTo("OK");
     }
 
     @Test
-    public void masterSlaveFireAndForget() throws Exception {
+    void masterSlaveFireAndForget() {
 
         RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
                 new StatusOutput<>(new Utf8StringCodec()), null);

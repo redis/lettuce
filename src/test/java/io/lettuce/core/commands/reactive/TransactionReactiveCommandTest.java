@@ -17,9 +17,9 @@ package io.lettuce.core.commands.reactive;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import reactor.test.StepVerifier;
 import io.lettuce.core.ClientOptions;
@@ -29,7 +29,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.commands.TransactionCommandTest;
-import io.lettuce.util.ReactiveSyncInvocationHandler;
+import io.lettuce.test.ReactiveSyncInvocationHandler;
 
 /**
  * @author Mark Paluch
@@ -43,7 +43,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
         return ReactiveSyncInvocationHandler.sync(client.connect());
     }
 
-    @Before
+    @BeforeEach
     public void openConnection() {
         client.setOptions(ClientOptions.builder().build());
         redis = connect();
@@ -53,13 +53,13 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
         commands = redis.getStatefulConnection().reactive();
     }
 
-    @After
+    @AfterEach
     public void closeConnection() {
         redis.getStatefulConnection().close();
     }
 
     @Test
-    public void discard() {
+    void discard() {
 
         StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
@@ -70,7 +70,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
     }
 
     @Test
-    public void watchRollback() {
+    void watchRollback() {
 
         StatefulRedisConnection<String, String> otherConnection = client.connect();
 
@@ -90,7 +90,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
     }
 
     @Test
-    public void execSingular() {
+    void execSingular() {
 
         StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
@@ -101,7 +101,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
     }
 
     @Test
-    public void errorInMulti() {
+    void errorInMulti() {
 
         commands.multi().toProcessor();
         commands.set(key, value).toProcessor();
@@ -117,7 +117,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
     }
 
     @Test
-    public void resultOfMultiIsContainedInCommandFlux() {
+    void resultOfMultiIsContainedInCommandFlux() {
 
         commands.multi().toProcessor();
 
@@ -138,7 +138,7 @@ public class TransactionReactiveCommandTest extends TransactionCommandTest {
     }
 
     @Test
-    public void resultOfMultiIsContainedInExecObservable() {
+    void resultOfMultiIsContainedInExecObservable() {
 
         commands.multi().toProcessor();
         commands.set("key1", "value1").toProcessor();
