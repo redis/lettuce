@@ -15,16 +15,14 @@
  */
 package io.lettuce.test;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import com.google.code.tempusfugit.temporal.Duration;
-import com.google.code.tempusfugit.temporal.Sleeper;
-import com.google.code.tempusfugit.temporal.ThreadSleep;
-import com.google.code.tempusfugit.temporal.Timeout;
 
 /**
  * Wait-Until helper.
@@ -40,6 +38,7 @@ public class Wait {
      * @return
      */
     public static WaitBuilder<Boolean> untilTrue(Supplier<Boolean> supplier) {
+
         WaitBuilder<Boolean> wb = new WaitBuilder<>();
 
         wb.supplier = supplier;
@@ -55,6 +54,7 @@ public class Wait {
      * @return
      */
     public static WaitBuilder<?> untilNoException(VoidWaitCondition condition) {
+
         WaitBuilder<?> wb = new WaitBuilder<>();
         wb.waitCondition = () -> {
             try {
@@ -83,6 +83,7 @@ public class Wait {
      * @return
      */
     public static <T> WaitBuilder<T> untilNotEquals(T expectation, Supplier<T> actualSupplier) {
+
         WaitBuilder<T> wb = new WaitBuilder<>();
 
         wb.supplier = actualSupplier;
@@ -125,6 +126,7 @@ public class Wait {
      * @return
      */
     public static <T> WaitBuilder<T> untilEquals(T expectation, Supplier<T> actualSupplier) {
+
         WaitBuilder<T> wb = new WaitBuilder<>();
 
         wb.supplier = actualSupplier;
@@ -152,6 +154,7 @@ public class Wait {
 
             return o.equals(expectation);
         };
+
         wb.messageFunction = o -> "Objects are not equal: " + expectation + " and " + o;
 
         return wb;
@@ -159,20 +162,42 @@ public class Wait {
 
     @FunctionalInterface
     interface WaitCondition {
-
         boolean isSatisfied() throws Exception;
     }
 
     @FunctionalInterface
     public interface VoidWaitCondition {
-
         void test();
     }
 
+    @FunctionalInterface
+    public interface Sleeper {
+        void sleep() throws InterruptedException;
+    }
+
+    static class ThreadSleep implements Sleeper {
+
+        private final Duration period;
+
+        ThreadSleep(Duration period) {
+            this.period = period;
+        }
+
+        public void sleep() throws InterruptedException {
+            Thread.sleep(period.toMillis());
+        }
+    }
+
+    /**
+     * Builder to build a waiter/sleeper with a timeout. Make sure to call {@link #waitOrTimeout()} to block execution until the
+     * {@link WaitCondition} is met.
+     *
+     * @param <T>
+     */
     public static class WaitBuilder<T> {
 
-        private Duration duration = Duration.seconds(10);
-        private Sleeper sleeper = new ThreadSleep(Duration.millis(100));
+        private Duration duration = Duration.ofSeconds(10);
+        private Sleeper sleeper = new ThreadSleep(Duration.ofMillis(10));
         private Function<T, String> messageFunction;
         private Supplier<T> supplier;
         private Predicate<T> check;
@@ -188,6 +213,7 @@ public class Wait {
             return this;
         }
 
+        @SuppressWarnings("unchecked")
         public void waitOrTimeout() {
 
             Waiter waiter = new Waiter();
@@ -201,10 +227,13 @@ public class Wait {
                 waiter.waitOrTimeout(supplier, check);
             }
         }
-
     }
 
+    /**
+     * Utility to await until a {@link WaitCondition} yields {@literal true}.
+     */
     private static class Waiter {
+
         private Duration duration;
         private Sleeper sleeper;
         private Function<Object, String> messageFunction;
@@ -212,7 +241,7 @@ public class Wait {
         private <T> void waitOrTimeout(Supplier<T> supplier, Predicate<T> check) {
 
             try {
-                if (!success(() -> check.test(supplier.get()), Timeout.timeout(duration))) {
+                if (!success(() -> check.test(supplier.get()), Timeout.create(duration))) {
                     if (messageFunction != null) {
                         throw new TimeoutException(messageFunction.apply(supplier.get()));
                     }
@@ -226,7 +255,7 @@ public class Wait {
         private <T> void waitOrTimeout(WaitCondition waitCondition, Supplier<T> supplier) {
 
             try {
-                if (!success(waitCondition, Timeout.timeout(duration))) {
+                if (!success(waitCondition, Timeout.create(duration))) {
                     try {
                         if (messageFunction != null) {
                             throw new TimeoutException(messageFunction.apply(supplier.get()));
@@ -247,13 +276,39 @@ public class Wait {
         }
 
         private boolean success(WaitCondition condition, Timeout timeout) throws Exception {
+
             while (!timeout.hasExpired()) {
                 if (condition.isSatisfied()) {
                     return true;
                 }
                 sleeper.sleep();
             }
+
             return false;
+        }
+    }
+
+    static class Timeout {
+
+        private final static Clock clock = Clock.systemDefaultZone();
+        private final Instant timeout;
+
+        private Timeout(Instant timeout) {
+            this.timeout = timeout;
+        }
+
+        public static Timeout create(Duration duration) {
+
+            if (duration.isZero() || duration.isNegative()) {
+                throw new IllegalArgumentException("Duration must be positive");
+            }
+
+            Instant now = clock.instant();
+            return new Timeout(now.plus(duration));
+        }
+
+        boolean hasExpired() {
+            return clock.instant().isAfter(timeout);
         }
     }
 }
