@@ -25,7 +25,9 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.*;
@@ -38,6 +40,7 @@ import io.lettuce.test.LettuceExtension;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ScanIteratorIntegrationTests extends TestSupport {
 
     private final StatefulRedisClusterConnection<String, String> connection;
@@ -47,6 +50,10 @@ class ScanIteratorIntegrationTests extends TestSupport {
     ScanIteratorIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         this.connection = connection;
         this.redis = connection.sync();
+    }
+
+    @BeforeEach
+    void setUp() {
         this.redis.flushall();
     }
 

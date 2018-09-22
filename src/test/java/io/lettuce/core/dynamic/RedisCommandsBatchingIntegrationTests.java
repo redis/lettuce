@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -50,6 +51,11 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
     @Inject
     RedisCommandsBatchingIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
+    }
+
+    @BeforeEach
+    void setUp() {
+        this.redis.flushall();
     }
 
     @Test

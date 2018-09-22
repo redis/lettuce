@@ -168,7 +168,7 @@ public class Range<T> {
      */
     public static class Boundary<T> {
 
-        private final static Boundary<?> UNBOUNDED = new Boundary<>(null, true);
+        private static final Boundary<?> UNBOUNDED = new Boundary<>(null, true);
 
         private final T value;
         private final boolean including;

@@ -24,6 +24,7 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.time.Duration;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.enterprise.inject.New;
@@ -35,6 +36,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.dynamic.support.ResolvableType;
@@ -94,22 +96,24 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @see AfterEachCallback
  * @see AfterAllCallback
  */
-public class LettuceExtension implements ParameterResolver, BeforeEachCallback, AfterAllCallback, AfterEachCallback {
+public class LettuceExtension implements ParameterResolver, AfterAllCallback, AfterEachCallback {
 
-    private final static InternalLogger LOGGER = InternalLoggerFactory.getInstance(LettuceExtension.class);
+    private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(LettuceExtension.class);
 
     private final ExtensionContext.Namespace LETTUCE = ExtensionContext.Namespace.create("lettuce.parameters");
 
-    private final static Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
-            StatefulRedisPubSubConnection.class, RedisClient.class, ClientResources.class,
+    private static final Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
+            StatefulRedisPubSubConnection.class, RedisCommands.class, RedisClient.class, ClientResources.class,
             StatefulRedisClusterConnection.class, RedisClusterClient.class));
 
-    private final static Set<Class<?>> CLOSE_AFTER_EACH = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
+    private static final Set<Class<?>> CLOSE_AFTER_EACH = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
             StatefulRedisPubSubConnection.class, StatefulRedisClusterConnection.class));
 
-    private final static List<Supplier<?>> SUPPLIERS = Arrays.asList(ClientResourcesSupplier.INSTANCE,
+    private static final List<Supplier<?>> SUPPLIERS = Arrays.asList(ClientResourcesSupplier.INSTANCE,
             RedisClusterClientSupplier.INSTANCE, RedisClientSupplier.INSTANCE, StatefulRedisConnectionSupplier.INSTANCE,
             StatefulRedisPubSubConnectionSupplier.INSTANCE, StatefulRedisClusterConnectionSupplier.INSTANCE);
+
+    private static final List<Function<?, ?>> RESOURCE_FUNCTIONS = Arrays.asList(RedisCommandsFunction.INSTANCE);
 
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
@@ -137,9 +141,10 @@ public class LettuceExtension implements ParameterResolver, BeforeEachCallback, 
 
         Parameter parameter = parameterContext.getParameter();
 
+        Type parameterizedType = parameter.getParameterizedType();
         if (parameterContext.isAnnotated(New.class)) {
 
-            Object instance = findSupplier(parameter.getParameterizedType()).get();
+            Object instance = doGetInstance(parameterizedType);
 
             if (instance instanceof Closeable || instance instanceof AutoCloseable) {
 
@@ -152,7 +157,14 @@ public class LettuceExtension implements ParameterResolver, BeforeEachCallback, 
             return instance;
         }
 
-        return store.getOrComputeIfAbsent(parameter.getType(), it -> findSupplier(parameter.getParameterizedType()).get());
+        return store.getOrComputeIfAbsent(parameter.getType(), it -> doGetInstance(parameterizedType));
+    }
+
+    private Object doGetInstance(Type parameterizedType) {
+
+        Optional<ResourceFunction> resourceFunction = findFunction(parameterizedType);
+        return resourceFunction.map(it -> it.function.apply(findSupplier(it.dependsOn.getType()).get())).orElseGet(
+                () -> findSupplier(parameterizedType).get());
     }
 
     /**
@@ -188,23 +200,6 @@ public class LettuceExtension implements ParameterResolver, BeforeEachCallback, 
                 store.remove(StatefulRedisConnection.class);
             }
         });
-    }
-
-    @Override
-    public void beforeEach(ExtensionContext context) {
-
-        ExtensionContext.Store store = getStore(context);
-        StatefulRedisConnection connection = store.get(StatefulRedisConnection.class, StatefulRedisConnection.class);
-        StatefulRedisPubSubConnection pubsub = store.get(StatefulRedisPubSubConnection.class,
-                StatefulRedisPubSubConnection.class);
-
-        if (connection != null || pubsub != null) {
-            if (connection != null) {
-                connection.sync().flushall();
-            } else if (pubsub != null) {
-                pubsub.sync().flushall();
-            }
-        }
     }
 
     @Override
@@ -254,6 +249,19 @@ public class LettuceExtension implements ParameterResolver, BeforeEachCallback, 
         return (Supplier) supplier;
     }
 
+    private static Optional<ResourceFunction> findFunction(Type type) {
+
+        ResolvableType requested = ResolvableType.forType(type);
+
+        return RESOURCE_FUNCTIONS.stream().map(it -> {
+
+            ResolvableType dependsOn = ResolvableType.forType(it.getClass()).as(Function.class).getGeneric(0);
+            ResolvableType providedType = ResolvableType.forType(it.getClass()).as(Function.class).getGeneric(1);
+
+            return new ResourceFunction(dependsOn, providedType, it);
+        }).filter(it -> requested.isAssignableFrom(it.provides)).findFirst();
+    }
+
     @Target(ElementType.PARAMETER)
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Connection {
@@ -261,6 +269,19 @@ public class LettuceExtension implements ParameterResolver, BeforeEachCallback, 
     }
 
     static class CloseAfterTest extends ArrayList<Object> {
+    }
+
+    static class ResourceFunction {
+
+        final ResolvableType dependsOn;
+        final ResolvableType provides;
+        final Function<Object, Object> function;
+
+        public ResourceFunction(ResolvableType dependsOn, ResolvableType provides, Function<?, ?> function) {
+            this.dependsOn = dependsOn;
+            this.provides = provides;
+            this.function = (Function) function;
+        }
     }
 
     enum ClientResourcesSupplier implements Supplier<ClientResources> {
@@ -320,6 +341,15 @@ public class LettuceExtension implements ParameterResolver, BeforeEachCallback, 
         @Override
         public StatefulRedisClusterConnection<String, String> get() {
             return RedisClusterClientSupplier.INSTANCE.get().connect();
+        }
+    }
+
+    enum RedisCommandsFunction implements Function<StatefulRedisConnection<String, String>, RedisCommands<String, String>> {
+        INSTANCE;
+
+        @Override
+        public RedisCommands<String, String> apply(StatefulRedisConnection<String, String> connection) {
+            return connection.sync();
         }
     }
 }

@@ -38,7 +38,7 @@ import io.lettuce.core.output.*;
 @SuppressWarnings("rawtypes")
 public class OutputRegistry {
 
-    private final static Map<OutputType, CommandOutputFactory> BUILTIN = new LinkedHashMap<>();
+    private static final Map<OutputType, CommandOutputFactory> BUILTIN = new LinkedHashMap<>();
     private final Map<OutputType, CommandOutputFactory> registry = new LinkedHashMap<>();
 
     static {

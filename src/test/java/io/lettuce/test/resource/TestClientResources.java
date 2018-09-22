@@ -29,7 +29,7 @@ import io.lettuce.core.resource.DefaultClientResources;
  */
 public class TestClientResources {
 
-    private final static TestClientResources instance = new TestClientResources();
+    private static final TestClientResources instance = new TestClientResources();
     private ClientResources clientResources = create();
 
     /**

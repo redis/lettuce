@@ -33,7 +33,7 @@ import java.util.Optional;
  */
 public class DefaultMethods {
 
-    private final static MethodHandleLookup methodHandleLookup = MethodHandleLookup.getMethodHandleLookup();
+    private static final MethodHandleLookup methodHandleLookup = MethodHandleLookup.getMethodHandleLookup();
 
     /**
      * Lookup a {@link MethodHandle} for a default {@link Method}.

@@ -31,11 +31,11 @@ import io.netty.buffer.ByteBuf;
 public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private final static AtomicReferenceFieldUpdater<CommandWrapper, Object[]> ONCOMPLETE = AtomicReferenceFieldUpdater
+    private static final AtomicReferenceFieldUpdater<CommandWrapper, Object[]> ONCOMPLETE = AtomicReferenceFieldUpdater
             .newUpdater(CommandWrapper.class, Object[].class, "onComplete");
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private final static Object[] EMPTY = new Object[0];
+    private static final Object[] EMPTY = new Object[0];
 
     protected final RedisCommand<K, V, T> command;
 

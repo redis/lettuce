@@ -290,7 +290,7 @@ public class Wait {
 
     static class Timeout {
 
-        private final static Clock clock = Clock.systemDefaultZone();
+        private static final Clock clock = Clock.systemDefaultZone();
         private final Instant timeout;
 
         private Timeout(Instant timeout) {

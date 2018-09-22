@@ -33,8 +33,8 @@ import io.lettuce.test.settings.TestSettings;
  */
 class RedisClusterClientFactoryTests {
 
-    private final static String URI = "redis://" + TestSettings.host() + ":" + TestSettings.port();
-    private final static RedisURI REDIS_URI = RedisURI.create(URI);
+    private static final String URI = "redis://" + TestSettings.host() + ":" + TestSettings.port();
+    private static final RedisURI REDIS_URI = RedisURI.create(URI);
     private static final List<RedisURI> REDIS_URIS = LettuceLists.newList(REDIS_URI);
 
     @Test

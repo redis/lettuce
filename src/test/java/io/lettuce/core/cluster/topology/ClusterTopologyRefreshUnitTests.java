@@ -62,7 +62,7 @@ import io.lettuce.test.settings.TestSettings;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class ClusterTopologyRefreshUnitTests {
 
-    private final static long COMMAND_TIMEOUT_NS = TimeUnit.MILLISECONDS.toNanos(10);
+    private static final long COMMAND_TIMEOUT_NS = TimeUnit.MILLISECONDS.toNanos(10);
 
     private static final String NODE_1_VIEW = "1 127.0.0.1:7380 master,myself - 0 1401258245007 2 disconnected 8000-11999\n"
             + "2 127.0.0.1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";

@@ -32,9 +32,9 @@ import io.netty.buffer.ByteBuf;
  */
 public class Command<K, V, T> implements RedisCommand<K, V, T> {
 
-    protected final static byte ST_INITIAL = 0;
-    protected final static byte ST_COMPLETED = 1;
-    protected final static byte ST_CANCELLED = 2;
+    protected static final byte ST_INITIAL = 0;
+    protected static final byte ST_COMPLETED = 1;
+    protected static final byte ST_CANCELLED = 2;
 
     private final ProtocolKeyword type;
 

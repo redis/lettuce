@@ -428,8 +428,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
         final int slotHash;
         final Intent intent;
-        private final static SlotIntent[] READ;
-        private final static SlotIntent[] WRITE;
+        private static final SlotIntent[] READ;
+        private static final SlotIntent[] WRITE;
 
         static {
             READ = new SlotIntent[SlotHash.SLOT_COUNT];
