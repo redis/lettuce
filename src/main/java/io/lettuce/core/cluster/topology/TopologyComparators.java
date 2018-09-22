@@ -25,7 +25,6 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
-import io.lettuce.core.internal.LettuceSets;
 
 /**
  * Comparators for {@link RedisClusterNode} and {@link RedisURI}.
@@ -80,7 +79,7 @@ public class TopologyComparators {
         LettuceAssert.notNull(clusterNodes, "Cluster nodes must not be null");
 
         List<RedisClusterNode> ordered = LettuceLists.newList(clusterNodes);
-        Collections.sort(ordered, (o1, o2) -> RedisURIComparator.INSTANCE.compare(o1.getUri(), o2.getUri()));
+        ordered.sort((o1, o2) -> RedisURIComparator.INSTANCE.compare(o1.getUri(), o2.getUri()));
         return ordered;
     }
 
@@ -95,7 +94,7 @@ public class TopologyComparators {
         LettuceAssert.notNull(clusterNodes, "Cluster nodes must not be null");
 
         List<RedisClusterNode> ordered = LettuceLists.newList(clusterNodes);
-        Collections.sort(ordered, ClientCountComparator.INSTANCE);
+        ordered.sort(ClientCountComparator.INSTANCE);
         return ordered;
     }
 
@@ -108,7 +107,7 @@ public class TopologyComparators {
     public static List<RedisClusterNode> sortByLatency(Iterable<RedisClusterNode> clusterNodes) {
 
         List<RedisClusterNode> ordered = LettuceLists.newList(clusterNodes);
-        Collections.sort(ordered, LatencyComparator.INSTANCE);
+        ordered.sort(LatencyComparator.INSTANCE);
         return ordered;
     }
 
@@ -155,7 +154,7 @@ public class TopologyComparators {
             return false;
         }
 
-        if (!LettuceSets.newHashSet(o1.getSlots()).equals(LettuceSets.newHashSet(o2.getSlots()))) {
+        if (o1.getSlots().size() != o2.getSlots().size() || !o1.getSlots().containsAll(o2.getSlots())) {
             return false;
         }
 
@@ -163,16 +162,12 @@ public class TopologyComparators {
     }
 
     private static boolean sameFlags(RedisClusterNode base, RedisClusterNode other, RedisClusterNode.NodeFlag flag) {
+
         if (base.getFlags().contains(flag)) {
-            if (!other.getFlags().contains(flag)) {
-                return false;
-            }
-        } else {
-            if (other.getFlags().contains(flag)) {
-                return false;
-            }
+            return other.getFlags().contains(flag);
         }
-        return true;
+
+        return !other.getFlags().contains(flag);
     }
 
     static class PredefinedRedisClusterNodeComparator implements Comparator<RedisClusterNode> {
