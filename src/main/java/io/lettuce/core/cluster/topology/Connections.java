@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -141,7 +142,7 @@ class Connections {
             }
         }
 
-        CompletableFuture.allOf(closeFutures.toArray(new CompletableFuture[0])).join();
+        Futures.allOf(closeFutures).join();
     }
 
     private boolean hasConnections() {

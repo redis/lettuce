@@ -37,6 +37,7 @@ public interface TransactionResult extends Iterable<Object> {
      * @return {@literal true} if the transaction batch was discarded.
      * @deprecated use renamed method {@link #wasDiscarded()} as Redis has no notion of rollback.
      */
+    @Deprecated
     default boolean wasRolledBack() {
         return wasDiscarded();
     }

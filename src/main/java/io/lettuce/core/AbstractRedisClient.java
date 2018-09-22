@@ -15,7 +15,6 @@
  */
 package io.lettuce.core;
 
-import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import java.io.Closeable;
@@ -31,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.Transports.NativeTransports;
 import io.lettuce.core.internal.AsyncCloseable;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.resource.ClientResources;
@@ -478,7 +478,7 @@ public abstract class AbstractRedisClient {
                 }
             }
 
-            return allOf(closeFutures.toArray(new CompletableFuture[0]));
+            return Futures.allOf(closeFutures);
         }
 
         return completedFuture(null);

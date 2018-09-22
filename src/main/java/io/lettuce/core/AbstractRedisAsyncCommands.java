@@ -41,6 +41,7 @@ import io.lettuce.core.protocol.*;
  * @author Will Glozer
  * @author Mark Paluch
  */
+@SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
         RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
@@ -1040,14 +1041,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
     @Override
     public RedisFuture<String> readOnly() {
-        AsyncCommand<K, V, String> cmd = dispatch(commandBuilder.readOnly());
-        return cmd;
+        return dispatch(commandBuilder.readOnly());
     }
 
     @Override
     public RedisFuture<String> readWrite() {
-        AsyncCommand<K, V, String> cmd = dispatch(commandBuilder.readWrite());
-        return cmd;
+        return dispatch(commandBuilder.readWrite());
     }
 
     @Override
@@ -1218,6 +1217,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
         connection.setTimeout(timeout);
     }
 
+    @Deprecated
     public void setTimeout(long timeout, TimeUnit unit) {
         connection.setTimeout(timeout, unit);
     }
@@ -1632,7 +1632,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
     @Override
     public RedisFuture<Long> zadd(K key, ScoredValue<V>... scoredValues) {
-        return dispatch(commandBuilder.zadd(key, null, scoredValues));
+        return dispatch(commandBuilder.zadd(key, null, (Object[]) scoredValues));
     }
 
     @Override
@@ -1647,7 +1647,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
     @Override
     public RedisFuture<Long> zadd(K key, ZAddArgs zAddArgs, ScoredValue<V>... scoredValues) {
-        return dispatch(commandBuilder.zadd(key, zAddArgs, scoredValues));
+        return dispatch(commandBuilder.zadd(key, zAddArgs, (Object[]) scoredValues));
     }
 
     @Override

@@ -46,6 +46,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public abstract class RedisChannelHandler<K, V> implements Closeable, ConnectionFacade {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
+
+    @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<RedisChannelHandler> CLOSED = AtomicIntegerFieldUpdater.newUpdater(
             RedisChannelHandler.class, "closed");
 

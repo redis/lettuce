@@ -929,8 +929,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             }
         }
 
-        @SuppressWarnings("unchecked")
-        private void requeueCommands(RedisCommand<?, ?, ?> sentCommand, Collection sentCommands, DefaultEndpoint endpoint) {
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        private void requeueCommands(RedisCommand<?, ?, ?> sentCommand,
+                Collection<? extends RedisCommand<?, ?, ?>> sentCommands, DefaultEndpoint endpoint) {
 
             if (sentCommand != null) {
                 try {
@@ -940,9 +941,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
                 }
             } else {
                 try {
-                    endpoint.write(sentCommands);
+                    endpoint.write((Collection) sentCommands);
                 } catch (Exception e) {
-                    for (RedisCommand<?, ?, ?> command : (Collection<RedisCommand>) sentCommands) {
+                    for (RedisCommand<?, ?, ?> command : sentCommands) {
                         command.completeExceptionally(e);
                     }
                 }

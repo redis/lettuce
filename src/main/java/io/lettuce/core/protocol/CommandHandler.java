@@ -32,10 +32,9 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.Tracer;
 import io.lettuce.core.tracing.Tracing;
-import io.lettuce.core.tracing.TraceContext;
-import io.lettuce.core.tracing.TraceContextProvider;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
@@ -378,7 +377,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         if (tracingEnabled && command instanceof CompleteableCommand) {
 
-            TracedCommand provider = CommandWrapper.unwrap(command, TracedCommand.class);
+            TracedCommand<?, ?, ?> provider = CommandWrapper.unwrap(command, TracedCommand.class);
             Tracer tracer = clientResources.tracing().getTracerProvider().getTracer();
             TraceContext context = (provider == null ? clientResources.tracing().initialTraceContextProvider() : provider)
                     .getTraceContext();
@@ -875,7 +874,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         };
 
         private final Recycler.Handle<AddToStack> handle;
-        private ArrayDeque stack;
+        private ArrayDeque<Object> stack;
         private RedisCommand<?, ?, ?> command;
 
         AddToStack(Recycler.Handle<AddToStack> handle) {
@@ -889,11 +888,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
          * @param command
          * @return
          */
-        static AddToStack newInstance(ArrayDeque stack, RedisCommand<?, ?, ?> command) {
+        @SuppressWarnings("unchecked")
+        static AddToStack newInstance(ArrayDeque<?> stack, RedisCommand<?, ?, ?> command) {
 
             AddToStack entry = RECYCLER.get();
 
-            entry.stack = stack;
+            entry.stack = (ArrayDeque<Object>) stack;
             entry.command = command;
 
             return entry;

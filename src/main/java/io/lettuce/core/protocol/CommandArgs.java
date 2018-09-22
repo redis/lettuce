@@ -104,7 +104,8 @@ public class CommandArgs<K, V> {
      * @param keys must not be {@literal null}.
      * @return the command args.
      */
-    public CommandArgs<K, V> addKeys(K... keys) {
+    @SafeVarargs
+    public final CommandArgs<K, V> addKeys(K... keys) {
 
         LettuceAssert.notNull(keys, "Keys must not be null");
 
@@ -148,7 +149,8 @@ public class CommandArgs<K, V> {
      * @param values must not be {@literal null}.
      * @return the command args.
      */
-    public CommandArgs<K, V> addValues(V... values) {
+    @SafeVarargs
+    public final CommandArgs<K, V> addValues(V... values) {
 
         LettuceAssert.notNull(values, "Values must not be null");
 
@@ -644,6 +646,7 @@ public class CommandArgs<K, V> {
             return new KeyArgument<>(key, codec);
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         void encode(ByteBuf target) {
 
@@ -682,6 +685,7 @@ public class CommandArgs<K, V> {
             return new ValueArgument<>(val, codec);
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         void encode(ByteBuf target) {
 

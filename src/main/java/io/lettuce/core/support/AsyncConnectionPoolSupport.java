@@ -135,7 +135,7 @@ public abstract class AsyncConnectionPoolSupport {
             }
         };
 
-        poolRef.set(new AsyncPoolWrapper(pool));
+        poolRef.set(new AsyncPoolWrapper<>(pool));
 
         return pool;
     }

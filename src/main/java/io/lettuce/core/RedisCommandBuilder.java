@@ -2205,7 +2205,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(limit.getCount());
         }
 
-        return createCommand(XPENDING, new NestedMultiOutput(codec), args);
+        return createCommand(XPENDING, new NestedMultiOutput<>(codec), args);
     }
 
     public Command<K, V, List<Object>> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
@@ -2228,7 +2228,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.addKey(consumer.name);
 
-        return createCommand(XPENDING, new NestedMultiOutput(codec), args);
+        return createCommand(XPENDING, new NestedMultiOutput<>(codec), args);
     }
 
     public Command<K, V, List<StreamMessage<K, V>>> xrange(K key, Range<String> range, Limit limit) {

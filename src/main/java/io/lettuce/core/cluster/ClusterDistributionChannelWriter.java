@@ -26,6 +26,7 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.*;
@@ -333,6 +334,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
     public CompletableFuture<Void> closeAsync() {
 
         if (closed) {
@@ -352,7 +354,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             clusterConnectionProvider = null;
         }
 
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        return Futures.allOf(futures);
     }
 
     @Override

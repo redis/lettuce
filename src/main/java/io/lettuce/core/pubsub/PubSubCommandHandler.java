@@ -149,7 +149,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
      * @param replay
      * @return
      */
-    private static boolean isPubSubMessage(ResponseHeaderReplayOutput replay) {
+    private static boolean isPubSubMessage(ResponseHeaderReplayOutput<?, ?> replay) {
 
         if (replay == null) {
             return false;

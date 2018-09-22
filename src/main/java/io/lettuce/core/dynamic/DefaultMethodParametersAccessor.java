@@ -38,7 +38,7 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
     private final Parameters<? extends Parameter> parameters;
     private final List<Object> values;
 
-    public DefaultMethodParametersAccessor(Parameters<? extends Parameter> parameters, Object... values) {
+    DefaultMethodParametersAccessor(Parameters<? extends Parameter> parameters, Object... values) {
 
         LettuceAssert.notNull(parameters, "Parameters must not be null");
         LettuceAssert.notNull(values, "Values must not be null");
@@ -86,7 +86,7 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
         throw new IllegalArgumentException(String.format("Cannot resolve named parameter %s", name));
     }
 
-    public Parameters getParameters() {
+    public Parameters<? extends Parameter> getParameters() {
         return parameters;
     }
 
@@ -107,7 +107,7 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
     /**
      * Iterator class to allow traversing all bindable parameters inside the accessor.
      */
-    private static class BindableParameterIterator implements Iterator<Object> {
+    static class BindableParameterIterator implements Iterator<Object> {
 
         private final int bindableParameterCount;
         private final DefaultMethodParametersAccessor accessor;
@@ -119,7 +119,7 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
          *
          * @param accessor must not be {@literal null}.
          */
-        public BindableParameterIterator(DefaultMethodParametersAccessor accessor) {
+        BindableParameterIterator(DefaultMethodParametersAccessor accessor) {
 
             LettuceAssert.notNull(accessor, "ParametersParameterAccessor must not be null!");
 

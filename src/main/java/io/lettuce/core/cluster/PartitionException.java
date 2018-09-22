@@ -23,6 +23,7 @@ import io.lettuce.core.RedisException;
  * @author Mark Paluch
  * @since 5.1
  */
+@SuppressWarnings("serial")
 public class PartitionException extends RedisException {
 
     /**

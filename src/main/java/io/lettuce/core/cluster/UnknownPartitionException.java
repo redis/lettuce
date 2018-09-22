@@ -21,6 +21,7 @@ package io.lettuce.core.cluster;
  * @author Mark Paluch
  * @since 5.1
  */
+@SuppressWarnings("serial")
 public class UnknownPartitionException extends PartitionException {
 
     /**

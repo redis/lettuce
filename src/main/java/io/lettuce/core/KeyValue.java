@@ -28,6 +28,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Will Glozer
  * @author Mark Paluch
  */
+@SuppressWarnings("serial")
 public class KeyValue<K, V> extends Value<V> {
 
     private final K key;

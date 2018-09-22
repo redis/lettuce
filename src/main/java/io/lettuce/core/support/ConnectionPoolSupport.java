@@ -90,7 +90,7 @@ public abstract class ConnectionPoolSupport {
      * @return the connection pool.
      */
     public static <T extends StatefulConnection<?, ?>> GenericObjectPool<T> createGenericObjectPool(
-            Supplier<T> connectionSupplier, GenericObjectPoolConfig config) {
+            Supplier<T> connectionSupplier, GenericObjectPoolConfig<T> config) {
         return createGenericObjectPool(connectionSupplier, config, true);
     }
 
@@ -107,7 +107,7 @@ public abstract class ConnectionPoolSupport {
      */
     @SuppressWarnings("unchecked")
     public static <T extends StatefulConnection<?, ?>> GenericObjectPool<T> createGenericObjectPool(
-            Supplier<T> connectionSupplier, GenericObjectPoolConfig config, boolean wrapConnections) {
+            Supplier<T> connectionSupplier, GenericObjectPoolConfig<T> config, boolean wrapConnections) {
 
         LettuceAssert.notNull(connectionSupplier, "Connection supplier must not be null");
         LettuceAssert.notNull(config, "GenericObjectPoolConfig must not be null");

@@ -162,7 +162,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
             connections.remove(connectionKey);
         });
 
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        return Futures.allOf(futures);
     }
 
     /**

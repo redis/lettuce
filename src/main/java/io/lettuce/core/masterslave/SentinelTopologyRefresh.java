@@ -29,6 +29,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.AsyncCloseable;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.protocol.LettuceCharsets;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
@@ -110,7 +111,7 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
             pubSubConnections.remove(k);
         });
 
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).whenComplete((aVoid, throwable) -> {
+        Futures.allOf(futures).whenComplete((aVoid, throwable) -> {
 
             if (throwable != null) {
                 closeFuture.completeExceptionally(throwable);

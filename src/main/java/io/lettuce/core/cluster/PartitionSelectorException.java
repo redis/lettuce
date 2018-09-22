@@ -23,6 +23,7 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
  * @author Mark Paluch
  * @since 5.1
  */
+@SuppressWarnings("serial")
 public class PartitionSelectorException extends PartitionException {
 
     private final Partitions partitions;

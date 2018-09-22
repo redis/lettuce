@@ -354,7 +354,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
             futures.add(factory.destroy(cached));
         }
 
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        return Futures.allOf(futures);
     }
 
     @Override

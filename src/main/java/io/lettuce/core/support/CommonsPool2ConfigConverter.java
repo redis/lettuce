@@ -23,6 +23,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * Utility class to adapt Commons Pool 2 configuration to {@link BoundedPoolConfig}.
  *
  * @author Mark Paluch
+ * @since 5.1
  */
 public class CommonsPool2ConfigConverter {
 
@@ -36,7 +37,7 @@ public class CommonsPool2ConfigConverter {
      * @param config must not be {@literal null}.
      * @return the converted {@link BoundedPoolConfig}.
      */
-    public static BoundedPoolConfig bounded(GenericObjectPoolConfig config) {
+    public static BoundedPoolConfig bounded(GenericObjectPoolConfig<?> config) {
 
         LettuceAssert.notNull(config, "GenericObjectPoolConfig must not be null");
 

@@ -256,9 +256,11 @@ public abstract class ScanStream {
      */
     static class SubscriptionAdapter<T, C extends ScanCursor> implements Completable {
 
+        @SuppressWarnings("rawtypes")
         private static final AtomicReferenceFieldUpdater<SubscriptionAdapter, ScanSubscriber> SUBSCRIBER = AtomicReferenceFieldUpdater
                 .newUpdater(SubscriptionAdapter.class, ScanSubscriber.class, "currentSubscription");
 
+        @SuppressWarnings("rawtypes")
         private static final AtomicIntegerFieldUpdater<SubscriptionAdapter> STATUS = AtomicIntegerFieldUpdater.newUpdater(
                 SubscriptionAdapter.class, "status");
 
@@ -402,6 +404,7 @@ public abstract class ScanStream {
      */
     static class ScanSubscriber<T, C extends ScanCursor> extends BaseSubscriber<C> {
 
+        @SuppressWarnings("rawtypes")
         private static final AtomicReferenceFieldUpdater<ScanSubscriber, ScanCursor> CURSOR = AtomicReferenceFieldUpdater
                 .newUpdater(ScanSubscriber.class, ScanCursor.class, "cursor");
 
