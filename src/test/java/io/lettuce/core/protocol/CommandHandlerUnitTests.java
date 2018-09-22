@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.*;
 
 import org.apache.logging.log4j.Level;
@@ -51,6 +52,7 @@ import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
+import io.lettuce.test.Delay;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -407,7 +409,7 @@ class CommandHandlerUnitTests {
         LatencyMeteredCommand<String, String, String> wrapped = new LatencyMeteredCommand<>(command);
 
         sut.write(context, wrapped, channelPromise);
-        Thread.sleep(10);
+        Delay.delay(Duration.ofMillis(10));
 
         sut.channelRead(context, Unpooled.wrappedBuffer("*1\r\n+OK\r\n".getBytes()));
 

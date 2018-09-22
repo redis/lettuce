@@ -25,6 +25,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.cert.CertificateException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -96,7 +97,7 @@ class SslIntegrationTests extends TestSupport {
     @BeforeAll
     static void beforeClass() {
 
-        assumeTrue(Sockets.isOpen(host(), sslPort()), "Assume that stunnel runs on port 6443");
+        assumeTrue(CanConnect.to(host(), sslPort()), "Assume that stunnel runs on port 6443");
         assertThat(TRUSTSTORE_FILE).exists();
     }
 
@@ -217,11 +218,11 @@ class SslIntegrationTests extends TestSupport {
     }
 
     @Test
-    void regularSslWithReconnect() throws Exception {
+    void regularSslWithReconnect() {
 
         RedisCommands<String, String> connection = redisClient.connect(URI_NO_VERIFY).sync();
         connection.quit();
-        Thread.sleep(200);
+        Delay.delay(Duration.ofMillis(200));
         assertThat(connection.ping()).isEqualTo("PONG");
         connection.getStatefulConnection().close();
     }
@@ -302,11 +303,11 @@ class SslIntegrationTests extends TestSupport {
     }
 
     @Test
-    void masterSlaveSslWithReconnect() throws Exception {
+    void masterSlaveSslWithReconnect() {
         RedisCommands<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
                 MASTER_SLAVE_URIS_NO_VERIFY).sync();
         connection.quit();
-        Thread.sleep(200);
+        Delay.delay(Duration.ofMillis(200));
         assertThat(connection.ping()).isEqualTo("PONG");
         connection.getStatefulConnection().close();
     }
@@ -343,18 +344,18 @@ class SslIntegrationTests extends TestSupport {
     }
 
     @Test
-    void pubSubSsl() throws Exception {
+    void pubSubSsl() {
 
         RedisPubSubCommands<String, String> connection = redisClient.connectPubSub(URI_NO_VERIFY).sync();
         connection.subscribe("c1");
         connection.subscribe("c2");
-        Thread.sleep(200);
+        Delay.delay(Duration.ofMillis(200));
 
         RedisPubSubCommands<String, String> connection2 = redisClient.connectPubSub(URI_NO_VERIFY).sync();
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
         connection.quit();
-        Thread.sleep(200);
+        Delay.delay(Duration.ofMillis(200));
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
         Wait.untilEquals(2, () -> connection2.pubsubChannels().size()).waitOrTimeout();
 

@@ -17,6 +17,7 @@ package io.lettuce.core.cluster.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -49,6 +50,7 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.test.Delay;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
@@ -207,7 +209,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
     }
 
     @Test
-    void adaptiveTopologyUpdateIsRateLimited() throws Exception {
+    void adaptiveTopologyUpdateIsRateLimited() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .adaptiveRefreshTriggersTimeout(1, TimeUnit.HOURS)//
@@ -227,7 +229,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         clusterClient.getPartitions().clear();
         clusterConnection.quit();
 
-        Thread.sleep(1000);
+        Delay.delay(Duration.ofMillis(1000));
 
         assertThat(clusterClient.getPartitions()).isEmpty();
 
@@ -235,7 +237,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
     }
 
     @Test
-    void adaptiveTopologyUpdatetUsesTimeout() throws Exception {
+    void adaptiveTopologyUpdatetUsesTimeout() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .adaptiveRefreshTriggersTimeout(500, TimeUnit.MILLISECONDS)//
@@ -246,7 +248,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         clusterConnection.quit();
-        Thread.sleep(1000);
+        Delay.delay(Duration.ofMillis(1000));
 
         Wait.untilTrue(() -> {
             return !clusterClient.getPartitions().isEmpty();
@@ -263,7 +265,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
     }
 
     @Test
-    void adaptiveTriggerDoesNotFireOnSingleReconnect() throws Exception {
+    void adaptiveTriggerDoesNotFireOnSingleReconnect() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .enableAllAdaptiveRefreshTriggers()//
@@ -274,7 +276,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         clusterClient.getPartitions().clear();
 
         clusterConnection.quit();
-        Thread.sleep(500);
+        Delay.delay(Duration.ofMillis(500));
 
         assertThat(clusterClient.getPartitions()).isEmpty();
         clusterConnection.getStatefulConnection().close();

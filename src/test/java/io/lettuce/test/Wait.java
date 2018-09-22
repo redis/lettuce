@@ -171,7 +171,7 @@ public class Wait {
     @FunctionalInterface
     public interface Supplier<T> {
 
-        T get() throws Exception;
+        T get();
     }
 
     public static class WaitBuilder<T> {

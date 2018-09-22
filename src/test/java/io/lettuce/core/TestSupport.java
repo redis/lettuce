@@ -19,9 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.test.settings.TestSettings;
 
@@ -32,11 +29,10 @@ public abstract class TestSupport {
 
     public static final String host = TestSettings.hostAddr();
     public static final int port = TestSettings.port();
-    protected static final String passwd = TestSettings.password();
+    public static final String passwd = TestSettings.password();
 
-    protected Logger log = LogManager.getLogger(getClass());
     public static final String key = "key";
-    protected static final String value = "value";
+    public static final String value = "value";
 
     protected static List<String> list(String... args) {
         return Arrays.asList(args);

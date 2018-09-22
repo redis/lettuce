@@ -35,7 +35,7 @@ class CompressionCodecUnitTests {
     private String value = "value";
 
     @Test
-    void keyPassthroughTest() throws Exception {
+    void keyPassthroughTest() {
         RedisCodec<String, String> sut = CompressionCodec.valueCompressor(new Utf8StringCodec(),
                 CompressionCodec.CompressionType.GZIP);
         ByteBuffer byteBuffer = sut.encodeKey(value);

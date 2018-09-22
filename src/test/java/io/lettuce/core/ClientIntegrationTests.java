@@ -31,6 +31,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.test.Delay;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
@@ -90,18 +91,18 @@ class ClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void reconnect() throws InterruptedException {
+    void reconnect() {
 
         redis.set(key, value);
 
         redis.quit();
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
         assertThat(redis.get(key)).isEqualTo(value);
         redis.quit();
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
         assertThat(redis.get(key)).isEqualTo(value);
         redis.quit();
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
@@ -168,7 +169,7 @@ class ClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void reset() throws Exception {
+    void reset() {
 
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisAsyncCommands<String, String> async = connection.async();
@@ -180,7 +181,7 @@ class ClientIntegrationTests extends TestSupport {
 
         RedisFuture<KeyValue<String, String>> eval = async.blpop(5, key);
 
-        Thread.sleep(500);
+        Delay.delay(Duration.ofMillis(500));
 
         assertThat(eval.isDone()).isFalse();
         assertThat(eval.isCancelled()).isFalse();
@@ -196,7 +197,7 @@ class ClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void standaloneConnectionShouldSetClientName() throws Exception {
+    void standaloneConnectionShouldSetClientName() {
 
         RedisURI redisURI = RedisURI.create(host, port);
         redisURI.setClientName("my-client");
@@ -206,7 +207,7 @@ class ClientIntegrationTests extends TestSupport {
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
         connection.sync().quit();
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
@@ -215,7 +216,7 @@ class ClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void pubSubConnectionShouldSetClientName() throws Exception {
+    void pubSubConnectionShouldSetClientName() {
 
         RedisURI redisURI = RedisURI.create(host, port);
         redisURI.setClientName("my-client");
@@ -225,7 +226,7 @@ class ClientIntegrationTests extends TestSupport {
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
         connection.sync().quit();
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());

@@ -31,7 +31,7 @@ import io.lettuce.test.LettuceExtension;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-class ByteCodecClusterTest extends TestSupport {
+class ByteCodecClusterIntegrationTests extends TestSupport {
 
     @Test
     @Inject

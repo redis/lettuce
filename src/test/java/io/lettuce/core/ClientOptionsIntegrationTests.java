@@ -296,7 +296,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
 
         try (ServerSocket serverSocket = new ServerSocket(0)) {
 
-            RedisURI redisURI = RedisURI.builder().redis(TestSettings.host(), serverSocket.getLocalPort())
+            RedisURI redisURI = RedisURI.Builder.redis(TestSettings.host(), serverSocket.getLocalPort())
                     .withTimeout(500, TimeUnit.MILLISECONDS).build();
 
             try {
@@ -338,7 +338,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
 
                     try (ServerSocket serverSocket = new ServerSocket(0)) {
 
-                        RedisURI redisURI = RedisURI.builder().redis(TestSettings.host(), serverSocket.getLocalPort())
+                        RedisURI redisURI = RedisURI.Builder.redis(TestSettings.host(), serverSocket.getLocalPort())
                                 .withPassword(passwd).withTimeout(Duration.ofMillis(500)).build();
 
                         try {
@@ -379,7 +379,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
         WithPassword.run(client, () -> {
 
             client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
-            RedisURI redisURI = RedisURI.builder().redis(host, port).build();
+            RedisURI redisURI = RedisURI.Builder.redis(host, port).build();
 
             try {
                 client.connect(redisURI);
@@ -398,7 +398,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
                 () -> {
 
                     client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
-                    RedisURI redisURI = RedisURI.builder().redis(host, 6443).withVerifyPeer(false).withSsl(true).build();
+                    RedisURI redisURI = RedisURI.Builder.redis(host, 6443).withVerifyPeer(false).withSsl(true).build();
 
                     try {
                         client.connect(redisURI);

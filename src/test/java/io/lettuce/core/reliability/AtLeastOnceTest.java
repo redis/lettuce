@@ -18,6 +18,7 @@ package io.lettuce.core.reliability;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +34,7 @@ import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.lettuce.test.ConnectionTestUtil;
+import io.lettuce.test.Delay;
 import io.lettuce.test.Wait;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -293,7 +295,7 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     @Test
-    void commandCancelledOverSyncAPIAfterConnectionIsDisconnected() throws Exception {
+    void commandCancelledOverSyncAPIAfterConnectionIsDisconnected() {
 
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> sync = connection.sync();
@@ -323,7 +325,7 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
 
         while (!ConnectionTestUtil.getCommandBuffer(connection).isEmpty()
                 || !ConnectionTestUtil.getDisconnectedBuffer(connection).isEmpty()) {
-            Thread.sleep(10);
+            Delay.delay(Duration.ofMillis(10));
         }
 
         assertThat(sync.get(key)).isEqualTo("1");
@@ -345,7 +347,7 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connection.async().quit();
         while (connection.isOpen()) {
-            Thread.sleep(100);
+            Delay.delay(Duration.ofMillis(100));
         }
 
         assertThat(connection.async().incr(key).await(1, TimeUnit.SECONDS)).isFalse();
@@ -360,7 +362,7 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
 
         while (!ConnectionTestUtil.getCommandBuffer(connection).isEmpty()
                 || !ConnectionTestUtil.getDisconnectedBuffer(connection).isEmpty()) {
-            Thread.sleep(10);
+            Delay.delay(Duration.ofMillis(10));
         }
 
         assertThat(connection.sync().get(key)).isEqualTo("2");

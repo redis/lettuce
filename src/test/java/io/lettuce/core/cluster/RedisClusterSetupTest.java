@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.junit.*;
@@ -146,7 +145,7 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
-    public void clusterDelSlots() throws Exception {
+    public void clusterDelSlots() {
 
         ClusterSetup.setup2Masters(clusterRule);
 
@@ -156,7 +155,7 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
-    public void clusterSetSlots() throws Exception {
+    public void clusterSetSlots() {
 
         ClusterSetup.setup2Masters(clusterRule);
 
@@ -174,7 +173,7 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
-    public void clusterSlotMigrationImport() throws Exception {
+    public void clusterSlotMigrationImport() {
 
         ClusterSetup.setup2Masters(clusterRule);
 
@@ -186,7 +185,7 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
-    public void clusterTopologyRefresh() throws Exception {
+    public void clusterTopologyRefresh() {
 
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
         clusterClient.reloadPartitions();
@@ -247,7 +246,7 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
-    public void slotMigrationShouldUseAsking() throws Exception {
+    public void slotMigrationShouldUseAsking() {
 
         ClusterSetup.setup2Masters(clusterRule);
 
@@ -382,7 +381,7 @@ public class RedisClusterSetupTest extends TestSupport {
 
     }
 
-    private void assertRoutedExecution(RedisClusterAsyncCommands<String, String> clusterConnection) throws Exception {
+    private void assertRoutedExecution(RedisClusterAsyncCommands<String, String> clusterConnection) {
         assertExecuted(clusterConnection.set("A", "value")); // 6373
         assertExecuted(clusterConnection.set("t", "value")); // 15891
         assertExecuted(clusterConnection.set("p", "value")); // 16023
@@ -472,7 +471,7 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
-    public void readFromSlaveTest() throws Exception {
+    public void readFromSlaveTest() {
 
         ClusterSetup.setup2Masters(clusterRule);
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
@@ -490,7 +489,7 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
-    public void readFromNearestTest() throws Exception {
+    public void readFromNearestTest() {
 
         ClusterSetup.setup2Masters(clusterRule);
         RedisAdvancedClusterCommands<String, String> clusterConnection = clusterClient.connect().sync();
@@ -531,7 +530,7 @@ public class RedisClusterSetupTest extends TestSupport {
         Wait.untilTrue(() -> !asyncCommands.isOpen()).waitOrTimeout();
     }
 
-    private void shiftAllSlotsToNode1() throws InterruptedException, TimeoutException {
+    private void shiftAllSlotsToNode1() {
 
         redis1.clusterDelSlots(createSlots(12000, 16384));
         redis2.clusterDelSlots(createSlots(12000, 16384));
