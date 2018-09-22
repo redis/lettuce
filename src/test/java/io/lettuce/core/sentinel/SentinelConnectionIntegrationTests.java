@@ -22,43 +22,55 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.jupiter.api.BeforeAll;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.ClientOptions;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisFuture;
-import io.lettuce.core.RedisURI;
+import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 import io.lettuce.test.Futures;
+import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
-import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Mark Paluch
  */
-public class SentinelConnectionTest extends AbstractSentinelTest {
+@ExtendWith(LettuceExtension.class)
+public class SentinelConnectionIntegrationTests extends TestSupport {
 
+    private final RedisClient redisClient;
     private StatefulRedisSentinelConnection<String, String> connection;
+    private RedisSentinelCommands<String, String> sentinel;
     private RedisSentinelAsyncCommands<String, String> sentinelAsync;
 
-    @BeforeAll
-    static void setupClient() {
-        sentinelClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder
-                .sentinel(TestSettings.host(), MASTER_ID).build());
+    @Inject
+    public SentinelConnectionIntegrationTests(RedisClient redisClient) {
+        this.redisClient = redisClient;
     }
 
     @BeforeEach
-    public void openConnection() {
-        connection = sentinelClient.connectSentinel();
-        sentinel = connection.sync();
-        sentinelAsync = connection.async();
+    void before() {
+
+        this.connection = this.redisClient.connectSentinel(SentinelTestSettings.SENTINEL_URI);
+        this.sentinel = getSyncConnection(this.connection);
+        this.sentinelAsync = this.connection.async();
+    }
+
+    protected RedisSentinelCommands<String, String> getSyncConnection(StatefulRedisSentinelConnection<String, String> connection) {
+        return connection.sync();
+    }
+
+    @AfterEach
+    void after() {
+        this.connection.close();
     }
 
     @Test
@@ -135,40 +147,43 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
 
     @Test
     void connectToOneNode() {
-        RedisSentinelCommands<String, String> connection = sentinelClient.connectSentinel(
-                RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).build()).sync();
+        RedisSentinelCommands<String, String> connection = redisClient.connectSentinel(SentinelTestSettings.SENTINEL_URI)
+                .sync();
         assertThat(connection.ping()).isEqualTo("PONG");
         connection.getStatefulConnection().close();
     }
 
     @Test
     void connectWithByteCodec() {
-        RedisSentinelCommands<byte[], byte[]> connection = sentinelClient.connectSentinel(new ByteArrayCodec()).sync();
-        assertThat(connection.master(MASTER_ID.getBytes())).isNotNull();
+        RedisSentinelCommands<byte[], byte[]> connection = redisClient.connectSentinel(new ByteArrayCodec(),
+                SentinelTestSettings.SENTINEL_URI).sync();
+        assertThat(connection.master(SentinelTestSettings.MASTER_ID.getBytes())).isNotNull();
         connection.getStatefulConnection().close();
     }
 
     @Test
     void sentinelConnectionPingBeforeConnectShouldDiscardPassword() {
 
-        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withPassword("hello-world").build();
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), SentinelTestSettings.MASTER_ID)
+                .withPassword("hello-world").build();
 
-        sentinelClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
-        StatefulRedisSentinelConnection<String, String> connection = sentinelClient.connectSentinel(redisURI);
+        redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+        StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel(redisURI);
 
         assertThat(connection.sync().ping()).isEqualTo("PONG");
 
         connection.close();
 
-        sentinelClient.setOptions(ClientOptions.create());
+        redisClient.setOptions(ClientOptions.create());
     }
 
     @Test
     void sentinelConnectionShouldSetClientName() {
 
-        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withClientName("my-client").build();
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), SentinelTestSettings.MASTER_ID)
+                .withClientName("my-client").build();
 
-        StatefulRedisSentinelConnection<String, String> connection = sentinelClient.connectSentinel(redisURI);
+        StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel(redisURI);
 
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
@@ -178,9 +193,10 @@ public class SentinelConnectionTest extends AbstractSentinelTest {
     @Test
     void sentinelManagedConnectionShouldSetClientName() {
 
-        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), MASTER_ID).withClientName("my-client").build();
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), SentinelTestSettings.MASTER_ID)
+                .withClientName("my-client").build();
 
-        StatefulRedisConnection<String, String> connection = sentinelClient.connect(redisURI);
+        StatefulRedisConnection<String, String> connection = redisClient.connect(redisURI);
 
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 

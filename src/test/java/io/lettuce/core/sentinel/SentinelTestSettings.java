@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.server;
+package io.lettuce.core.sentinel;
+
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
+import io.lettuce.test.settings.TestSettings;
 
 /**
- * Tiny netty server to generate random base64 data on message reception.
- *
  * @author Mark Paluch
  */
-public class RandomResponseServer extends MockTcpServer {
+public abstract class SentinelTestSettings extends TestSupport {
 
-    public RandomResponseServer() {
-        addHandler(RandomServerHandler::new);
+    public static final RedisURI SENTINEL_URI = RedisURI.Builder.sentinel(TestSettings.host(), SentinelTestSettings.MASTER_ID)
+            .build();
+    public static final String MASTER_ID = "mymaster";
+
+    private SentinelTestSettings() {
     }
 }

@@ -20,56 +20,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 import java.util.List;
 
-import org.junit.*;
+import javax.inject.Inject;
 
-import io.lettuce.core.RedisURI;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.Value;
-import io.lettuce.core.cluster.ClusterRule;
-import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.dynamic.annotation.Command;
 import io.lettuce.core.dynamic.domain.Timeout;
-import io.lettuce.core.internal.LettuceLists;
-import io.lettuce.test.resource.FastShutdown;
-import io.lettuce.test.resource.TestClientResources;
+import io.lettuce.test.LettuceExtension;
 
 /**
  * @author Mark Paluch
  */
-public class RedisCommandsClusterSyncTest extends TestSupport {
+@ExtendWith(LettuceExtension.class)
+public class RedisCommandsClusterIntegrationTests extends TestSupport {
 
-    private static final int port1 = 7379;
-    private static final int port2 = port1 + 1;
-    private static final int port3 = port1 + 2;
-    private static final int port4 = port1 + 3;
+    private final StatefulRedisClusterConnection<String, String> connection;
 
-    private static RedisClusterClient clusterClient;
-
-    @Rule
-    public ClusterRule clusterRule = new ClusterRule(clusterClient, port1, port2, port3, port4);
-
-    private StatefulRedisClusterConnection<String, String> connection;
-
-    @BeforeClass
-    public static void setupClusterClient() {
-        clusterClient = RedisClusterClient.create(TestClientResources.get(),
-                LettuceLists.unmodifiableList(RedisURI.Builder.redis(host, port1).build()));
-    }
-
-    @AfterClass
-    public static void shutdownClusterClient() {
-        FastShutdown.shutdown(clusterClient);
-    }
-
-    @Before
-    public void before() {
-        connection = clusterClient.connect();
-    }
-
-    @After
-    public void tearDown() {
-        connection.close();
+    @Inject
+    public RedisCommandsClusterIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
+        this.connection = connection;
+        this.connection.sync().flushall();
     }
 
     @Test

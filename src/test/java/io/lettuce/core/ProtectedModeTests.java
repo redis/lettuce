@@ -27,10 +27,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.server.MockTcpServer;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
+import io.lettuce.test.server.MockTcpServer;
 import io.lettuce.test.settings.TestSettings;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

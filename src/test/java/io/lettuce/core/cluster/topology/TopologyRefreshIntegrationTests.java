@@ -248,7 +248,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         clusterConnection.quit();
-        Delay.delay(Duration.ofMillis(200));
+        Delay.delay(Duration.ofMillis(700));
 
         Wait.untilTrue(() -> {
             return !clusterClient.getPartitions().isEmpty();
