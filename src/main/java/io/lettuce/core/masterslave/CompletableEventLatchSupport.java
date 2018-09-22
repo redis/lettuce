@@ -30,10 +30,13 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  */
 abstract class CompletableEventLatchSupport<T, V> {
 
-    private final AtomicIntegerFieldUpdater<CompletableEventLatchSupport> NOTIFICATIONS_UPDATER = AtomicIntegerFieldUpdater
+    @SuppressWarnings("rawtypes")
+    private static final AtomicIntegerFieldUpdater<CompletableEventLatchSupport> NOTIFICATIONS_UPDATER = AtomicIntegerFieldUpdater
             .newUpdater(CompletableEventLatchSupport.class, "notifications");
 
-    private final AtomicIntegerFieldUpdater<CompletableEventLatchSupport> GATE_UPDATER = AtomicIntegerFieldUpdater.newUpdater(
+    @SuppressWarnings("rawtypes")
+    private static final AtomicIntegerFieldUpdater<CompletableEventLatchSupport> GATE_UPDATER = AtomicIntegerFieldUpdater
+            .newUpdater(
             CompletableEventLatchSupport.class, "gate");
 
     private static final int GATE_OPEN = 0;

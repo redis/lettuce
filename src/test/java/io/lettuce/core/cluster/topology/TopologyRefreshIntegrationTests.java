@@ -229,7 +229,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         clusterClient.getPartitions().clear();
         clusterConnection.quit();
 
-        Delay.delay(Duration.ofMillis(1000));
+        Delay.delay(Duration.ofMillis(200));
 
         assertThat(clusterClient.getPartitions()).isEmpty();
 
@@ -248,7 +248,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
 
         clusterConnection.quit();
-        Delay.delay(Duration.ofMillis(1000));
+        Delay.delay(Duration.ofMillis(200));
 
         Wait.untilTrue(() -> {
             return !clusterClient.getPartitions().isEmpty();
@@ -308,12 +308,8 @@ class TopologyRefreshIntegrationTests extends TestSupport {
 
         clusterConnection.set("b", value); // slot 3300
 
-        Wait.untilEquals(12000, new Wait.Supplier<Integer>() {
-            @Override
-            public Integer get() {
-                return clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots().size();
-            }
-        }).waitOrTimeout();
+        Wait.untilEquals(12000, () -> clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots().size())
+                .waitOrTimeout();
 
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots()).hasSize(12000);
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node2.getNodeId()).getSlots()).hasSize(4384);

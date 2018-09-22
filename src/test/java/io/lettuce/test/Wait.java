@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import com.google.code.tempusfugit.temporal.Duration;
 import com.google.code.tempusfugit.temporal.Sleeper;
@@ -166,12 +167,6 @@ public class Wait {
     public interface VoidWaitCondition {
 
         void test();
-    }
-
-    @FunctionalInterface
-    public interface Supplier<T> {
-
-        T get();
     }
 
     public static class WaitBuilder<T> {

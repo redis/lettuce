@@ -127,7 +127,7 @@ class ConnectionWrapping {
             }
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({ "unchecked", "rawtypes" })
         private Object getInnerProxy(Method method, Object[] args) {
 
             try {
@@ -156,6 +156,7 @@ class ConnectionWrapping {
      * @param <T> Connection type.
      * @since 4.3
      */
+    @SuppressWarnings("try")
     static class DelegateCloseToConnectionInvocationHandler<T extends AsyncCloseable & AutoCloseable> extends
             AbstractInvocationHandler {
 
@@ -183,7 +184,7 @@ class ConnectionWrapping {
                     return null;
                 }
 
-                if (method.getName().equals("close")) {
+                if (method.getName().equals("closeAsync")) {
                     return proxiedConnection.closeAsync();
                 }
 

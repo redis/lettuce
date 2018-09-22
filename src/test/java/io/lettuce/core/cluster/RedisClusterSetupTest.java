@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.junit.*;
@@ -539,7 +540,7 @@ public class RedisClusterSetupTest extends TestSupport {
 
         RedisClusterNode redis2Partition = getOwnPartition(redis2);
 
-        Wait.untilTrue(new Wait.Supplier<Boolean>() {
+        Wait.untilTrue(new Supplier<Boolean>() {
             @Override
             public Boolean get() {
                 Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());

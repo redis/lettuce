@@ -55,7 +55,7 @@ class Operators {
      */
     private static final String KEY_ON_OPERATOR_ERROR = "reactor.onOperatorError.local";
     private static final Field onOperatorErrorHook = findOnOperatorErrorHookField();
-    private static final Supplier queueSupplier = getQueueSupplier();
+    private static final Supplier<Queue<Object>> queueSupplier = getQueueSupplier();
 
     private static Field findOnOperatorErrorHookField() {
 
@@ -80,7 +80,7 @@ class Operators {
     private static Supplier<Queue<Object>> getQueueSupplier() {
 
         try {
-            return AccessController.doPrivileged((PrivilegedExceptionAction<Supplier>) () -> {
+            return AccessController.doPrivileged((PrivilegedExceptionAction<Supplier<Queue<Object>>>) () -> {
                 Method unbounded = Queues.class.getMethod("unbounded");
                 return (Supplier) unbounded.invoke(Queues.class);
             });

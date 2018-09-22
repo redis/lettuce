@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.internal;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import io.netty.channel.ChannelFuture;
@@ -30,6 +31,21 @@ public abstract class Futures {
 
     private Futures() {
         // no instances allowed
+    }
+
+    /**
+     * Create a composite {@link CompletableFuture} is composed from the given {@code futures}.
+     *
+     * @param futures must not be {@literal null}.
+     * @return the composed {@link CompletableFuture}.
+     * @since 5.1.1
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static CompletableFuture<Void> allOf(Collection<? extends CompletableFuture<?>> futures) {
+
+        LettuceAssert.notNull(futures, "Futures must not be null");
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     /**

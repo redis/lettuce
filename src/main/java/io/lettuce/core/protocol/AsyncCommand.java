@@ -43,6 +43,7 @@ import io.netty.buffer.ByteBuf;
 public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T>, RedisFuture<T>,
         CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
+    @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<AsyncCommand> COUNT_UPDATER = AtomicIntegerFieldUpdater.newUpdater(
             AsyncCommand.class, "count");
 

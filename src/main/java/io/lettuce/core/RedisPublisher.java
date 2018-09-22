@@ -134,12 +134,15 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         static final AtomicLongFieldUpdater<RedisSubscription> DEMAND = AtomicLongFieldUpdater.newUpdater(
                 RedisSubscription.class, "demand");
 
+        @SuppressWarnings({ "rawtypes", "unchecked" })
         static final AtomicReferenceFieldUpdater<RedisSubscription, State> STATE = AtomicReferenceFieldUpdater.newUpdater(
                 RedisSubscription.class, State.class, "state");
 
+        @SuppressWarnings({ "rawtypes", "unchecked" })
         static final AtomicReferenceFieldUpdater<RedisSubscription, CommandDispatch> COMMAND_DISPATCH = AtomicReferenceFieldUpdater
                 .newUpdater(RedisSubscription.class, CommandDispatch.class, "commandDispatch");
 
+        @SuppressWarnings({ "rawtypes", "unchecked" })
         static final AtomicIntegerFieldUpdater<RedisSubscription> COMPLETION = AtomicIntegerFieldUpdater.newUpdater(
                 RedisSubscription.class, "completion");
 

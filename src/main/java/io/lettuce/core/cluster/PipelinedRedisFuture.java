@@ -47,7 +47,7 @@ class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFutur
 
     public PipelinedRedisFuture(Map<?, ? extends CompletionStage<?>> executions, Function<PipelinedRedisFuture<V>, V> converter) {
 
-        CompletableFuture.allOf(executions.values().toArray(new CompletableFuture<?>[executions.size()]))
+        CompletableFuture.allOf(executions.values().toArray(new CompletableFuture<?>[0]))
                 .thenRun(() -> complete(converter.apply(this))).exceptionally(throwable -> {
                     completeExceptionally(throwable);
                     return null;

@@ -36,6 +36,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * @param <V> Value type.
  * @author Mark Paluch
  */
+@SuppressWarnings("serial")
 public class Value<V> implements Serializable {
 
     private static final Value<Object> EMPTY = new Value<>(null);
