@@ -650,6 +650,10 @@
                                         <argument>1</argument>
                                         <argument>-wi</argument>
                                         <argument>10</argument>
+                                        <argument>-w</argument>
+                                        <argument>1</argument>
+                                        <argument>-r</argument>
+                                        <argument>1</argument>
                                         <argument>-i</argument>
                                         <argument>10</argument>
                                         <argument>-bm</argument>
