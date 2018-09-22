@@ -30,7 +30,7 @@ import io.netty.util.concurrent.EventExecutor;
  */
 class EmptyContext implements ChannelHandlerContext {
 
-    private final static Channel CHANNEL = new EmptyChannel();
+    private static final Channel CHANNEL = new EmptyChannel();
 
     @Override
     public Channel channel() {

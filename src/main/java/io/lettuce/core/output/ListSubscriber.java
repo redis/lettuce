@@ -27,7 +27,7 @@ import io.lettuce.core.output.StreamingOutput.Subscriber;
  */
 class ListSubscriber<T> extends Subscriber<T> {
 
-    private final static ListSubscriber<Object> INSTANCE = new ListSubscriber<>();
+    private static final ListSubscriber<Object> INSTANCE = new ListSubscriber<>();
 
     private ListSubscriber() {
     }

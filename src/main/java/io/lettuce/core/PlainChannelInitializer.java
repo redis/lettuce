@@ -40,7 +40,7 @@ import io.netty.util.Timeout;
  */
 class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
-    final static Supplier<AsyncCommand<?, ?, ?>> NO_PING = () -> null;
+    static final Supplier<AsyncCommand<?, ?, ?>> NO_PING = () -> null;
 
     private final Supplier<List<ChannelHandler>> handlers;
     private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;

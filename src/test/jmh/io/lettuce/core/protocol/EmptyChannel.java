@@ -12,7 +12,7 @@ import io.netty.util.AttributeKey;
  */
 class EmptyChannel implements Channel {
 
-    private final static ChannelConfig CONFIG = new EmptyConfig();
+    private static final ChannelConfig CONFIG = new EmptyConfig();
 
     @Override
     public ChannelId id() {

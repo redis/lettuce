@@ -135,8 +135,6 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     @Test
     void shouldApplyTimeoutOnRegularConnection() {
 
-        clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
-
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
 
         assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
@@ -148,12 +146,12 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     @Test
     void shouldApplyTimeoutOnRegularConnectionUsingCodec() {
 
-        clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
+        clusterClient.setDefaultTimeout(2, TimeUnit.MINUTES);
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect(Utf8StringCodec.UTF8);
 
-        assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
-        assertThat(connection.getConnection(host, ClusterTestSettings.port1).getTimeout()).isEqualTo(Duration.ofMinutes(1));
+        assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(2));
+        assertThat(connection.getConnection(host, ClusterTestSettings.port1).getTimeout()).isEqualTo(Duration.ofMinutes(2));
 
         connection.close();
     }
@@ -161,7 +159,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     @Test
     void shouldApplyTimeoutOnPubSubConnection() {
 
-        clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
+        clusterClient.setDefaultTimeout(Duration.ofMinutes(1));
 
         StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub();
 
@@ -172,8 +170,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     @Test
     void shouldApplyTimeoutOnPubSubConnectionUsingCodec() {
 
-        clusterClient.setDefaultTimeout(1, TimeUnit.MINUTES);
-
+        clusterClient.setDefaultTimeout(Duration.ofMinutes(1));
         StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub(Utf8StringCodec.UTF8);
 
         assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
@@ -262,7 +259,6 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         assertThat(connection.set(ClusterTestSettings.KEY_D, "myValue2")).isEqualTo("OK");
 
         connection.getStatefulConnection().close();
-
     }
 
     @Test

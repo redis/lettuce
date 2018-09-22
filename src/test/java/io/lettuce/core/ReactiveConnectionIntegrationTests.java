@@ -27,7 +27,9 @@ import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.New;
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -43,6 +45,7 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 
 @ExtendWith(LettuceExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ReactiveConnectionIntegrationTests extends TestSupport {
 
     private final StatefulRedisConnection<String, String> connection;
@@ -54,7 +57,11 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         this.connection = connection;
         this.redis = connection.sync();
         this.reactive = connection.reactive();
-        this.redis.flushall();
+    }
+
+    @BeforeEach
+    void setUp() {
+        this.connection.async().flushall();
     }
 
     @Test

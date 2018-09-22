@@ -22,7 +22,9 @@ import java.util.Arrays;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import reactor.test.StepVerifier;
@@ -38,6 +40,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ReactiveStreamingOutputIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
@@ -47,6 +50,11 @@ class ReactiveStreamingOutputIntegrationTests extends TestSupport {
     ReactiveStreamingOutputIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
         this.reactive = connection.reactive();
+    }
+
+    @BeforeEach
+    void setUp() {
+        this.redis.flushall();
     }
 
     @Test

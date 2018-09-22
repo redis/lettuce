@@ -23,7 +23,9 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -35,6 +37,7 @@ import io.lettuce.test.LettuceExtension;
  */
 @SuppressWarnings("rawtypes")
 @ExtendWith(LettuceExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PipeliningIntegrationTests extends TestSupport {
 
     private final RedisClient client;
@@ -44,6 +47,11 @@ class PipeliningIntegrationTests extends TestSupport {
     PipeliningIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         this.client = client;
         this.connection = connection;
+    }
+
+    @BeforeEach
+    void setUp() {
+        this.connection.async().flushall();
     }
 
     @Test

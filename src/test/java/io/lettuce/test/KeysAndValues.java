@@ -42,7 +42,7 @@ public class KeysAndValues {
     /**
      * Number of entries.
      */
-    public final static int COUNT = 500;
+    public static final int COUNT = 500;
 
     static {
 

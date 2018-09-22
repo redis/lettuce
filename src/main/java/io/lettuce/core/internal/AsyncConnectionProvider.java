@@ -207,7 +207,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
         private static final int PHASE_CANCELED = 3;
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        private final static AtomicIntegerFieldUpdater<Sync> PHASE = AtomicIntegerFieldUpdater.newUpdater(Sync.class, "phase");
+        private static final AtomicIntegerFieldUpdater<Sync> PHASE = AtomicIntegerFieldUpdater.newUpdater(Sync.class, "phase");
 
         // Updated with AtomicIntegerFieldUpdater
         @SuppressWarnings("unused")

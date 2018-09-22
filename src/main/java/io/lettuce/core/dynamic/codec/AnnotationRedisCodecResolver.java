@@ -226,9 +226,9 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
      */
     protected static class ParameterWrappers {
 
-        private final static Set<Class<?>> WRAPPERS = new HashSet<>();
-        private final static Set<Class<?>> WITH_KEY_TYPE = new HashSet<>();
-        private final static Set<Class<?>> WITH_VALUE_TYPE = new HashSet<>();
+        private static final Set<Class<?>> WRAPPERS = new HashSet<>();
+        private static final Set<Class<?>> WITH_KEY_TYPE = new HashSet<>();
+        private static final Set<Class<?>> WITH_VALUE_TYPE = new HashSet<>();
 
         static {
 

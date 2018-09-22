@@ -28,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
  */
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
+@Inherited
 @Documented
 @ExtendWith(EnabledOnCommandCondition.class)
 public @interface EnabledOnCommand {

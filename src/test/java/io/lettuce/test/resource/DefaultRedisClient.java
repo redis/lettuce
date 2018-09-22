@@ -26,7 +26,7 @@ import io.lettuce.test.settings.TestSettings;
  */
 public class DefaultRedisClient {
 
-    private final static DefaultRedisClient instance = new DefaultRedisClient();
+    private static final DefaultRedisClient instance = new DefaultRedisClient();
 
     private RedisClient redisClient;
 

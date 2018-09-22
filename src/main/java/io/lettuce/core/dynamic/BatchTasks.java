@@ -29,7 +29,7 @@ import io.lettuce.core.protocol.RedisCommand;
  */
 class BatchTasks implements Iterable<RedisCommand<?, ?, ?>> {
 
-    public final static BatchTasks EMPTY = new BatchTasks(Collections.emptyList());
+    public static final BatchTasks EMPTY = new BatchTasks(Collections.emptyList());
 
     private final List<RedisCommand<?, ?, ?>> futures;
 
