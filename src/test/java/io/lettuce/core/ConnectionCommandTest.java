@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.time.Duration;
+
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.test.Delay;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 import io.lettuce.test.WithPassword;
@@ -108,7 +111,7 @@ class ConnectionCommandTest extends TestSupport {
                 assertThat(connection.set(key, value)).isEqualTo("OK");
                 connection.quit();
 
-                Thread.sleep(100);
+            Delay.delay(Duration.ofMillis(100));
                 assertThat(connection.get(key)).isEqualTo(value);
 
             connection.getStatefulConnection().close();

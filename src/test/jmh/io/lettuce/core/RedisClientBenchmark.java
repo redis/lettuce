@@ -24,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.test.Delay;
 import io.lettuce.test.settings.TestSettings;
 
 /**
@@ -155,12 +156,12 @@ public class RedisClientBenchmark {
         }).blockLast();
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 
         RedisClientBenchmark b = new RedisClientBenchmark();
         b.setup();
 
-        Thread.sleep(10000);
+        Delay.delay(Duration.ofMillis(10000));
         while (true) {
             b.syncList();
         }

@@ -38,7 +38,8 @@ class RedisURIBuilderUnitTests {
 
     @Test
     void sentinelWithHostShouldFail() {
-        assertThatThrownBy(() -> RedisURI.builder().sentinel("localhost").withHost("localhost")).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> RedisURI.Builder.sentinel("localhost").withHost("localhost")).isInstanceOf(
+                IllegalStateException.class);
     }
 
     @Test

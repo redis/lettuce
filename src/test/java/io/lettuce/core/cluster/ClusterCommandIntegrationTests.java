@@ -18,6 +18,7 @@ package io.lettuce.core.cluster;
 import static io.lettuce.core.cluster.ClusterTestUtil.getNodeId;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -37,6 +38,7 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.slots.ClusterSlotRange;
 import io.lettuce.core.cluster.models.slots.ClusterSlotsParser;
+import io.lettuce.test.Delay;
 import io.lettuce.test.Futures;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
@@ -242,13 +244,13 @@ class ClusterCommandIntegrationTests extends TestSupport {
         assertThat(result.size()).isGreaterThan(0);
     }
 
-    private void prepareReadonlyTest(String key) throws InterruptedException {
+    private void prepareReadonlyTest(String key) {
 
         async.set(key, value);
 
         String resultB = Futures.get(async.get(key));
         assertThat(resultB).isEqualTo(value);
-        Thread.sleep(500); // give some time to replicate
+        Delay.delay(Duration.ofMillis(500)); // give some time to replicate
     }
 
     private static void waitUntilValueIsVisible(String key, RedisCommands<String, String> commands) {

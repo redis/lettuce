@@ -21,6 +21,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.test.Delay;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
@@ -202,7 +204,7 @@ class ClusterTopologyRefreshSchedulerUnitTests {
     }
 
     @Test
-    void shouldRateLimitAdaptiveRequests() throws Exception {
+    void shouldRateLimitAdaptiveRequests() {
 
         ClusterTopologyRefreshOptions adaptiveTimeout = ClusterTopologyRefreshOptions.builder().enablePeriodicRefresh(false)
                 .enableAllAdaptiveRefreshTriggers().adaptiveRefreshTriggersTimeout(50, TimeUnit.MILLISECONDS).build();
@@ -216,7 +218,7 @@ class ClusterTopologyRefreshSchedulerUnitTests {
             sut.onAskRedirection();
         }
 
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
         sut.onAskRedirection();
 
         verify(eventExecutors, times(2)).submit(any(Runnable.class));

@@ -32,6 +32,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.server.RandomResponseServer;
 import io.lettuce.test.ConnectionTestUtil;
+import io.lettuce.test.Delay;
 import io.lettuce.test.Futures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.settings.TestSettings;
@@ -201,7 +202,7 @@ class ConnectionFailureTest extends AbstractRedisClientTest {
             assertThat(connection.getStatefulConnection().isOpen()).isFalse();
             connectionWatchdog.setReconnectSuspended(false);
             connectionWatchdog.run(0);
-            Thread.sleep(500);
+            Delay.delay(Duration.ofMillis(500));
             assertThat(connection.getStatefulConnection().isOpen()).isFalse();
 
             assertThatThrownBy(set1::get).isInstanceOf(CancellationException.class).hasNoCause();
@@ -219,10 +220,9 @@ class ConnectionFailureTest extends AbstractRedisClientTest {
     /**
      * Expect to disable {@link ConnectionWatchdog} when closing a broken connection.
      *
-     * @throws Exception
      */
     @Test
-    void closingDisconnectedConnectionShouldDisableConnectionWatchdog() throws Exception {
+    void closingDisconnectedConnectionShouldDisableConnectionWatchdog() {
 
         client.setOptions(ClientOptions.create());
 
@@ -244,7 +244,7 @@ class ConnectionFailureTest extends AbstractRedisClientTest {
         Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
         connection.close();
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
 
         assertThat(connectionWatchdog.isReconnectSuspended()).isTrue();
         assertThat(connectionWatchdog.isListenOnChannelInactive()).isFalse();

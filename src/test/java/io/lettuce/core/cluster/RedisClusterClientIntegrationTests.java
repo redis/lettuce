@@ -50,6 +50,7 @@ import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
+import io.lettuce.test.Delay;
 import io.lettuce.test.Futures;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
@@ -180,12 +181,12 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void clusterConnectionShouldSetClientName() throws Exception {
+    void clusterConnectionShouldSetClientName() {
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
 
         assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
-        Thread.sleep(10);
+        Delay.delay(Duration.ofMillis(10));
         connection.sync().quit();
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
         assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
@@ -198,12 +199,12 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void pubSubclusterConnectionShouldSetClientName() throws InterruptedException {
+    void pubSubclusterConnectionShouldSetClientName() {
 
         StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub();
 
         assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
-        Thread.sleep(10);
+        Delay.delay(Duration.ofMillis(10));
         connection.sync().quit();
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
 

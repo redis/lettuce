@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
+import io.lettuce.test.Delay;
 import io.lettuce.test.Futures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
@@ -97,7 +99,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
                 connection.auth(passwd);
                 connection.quit();
 
-                Thread.sleep(100);
+                Delay.delay(Duration.ofMillis(100));
                 Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
                 connection.subscribe(channel);
@@ -124,7 +126,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
 
         connection.setAutoFlushCommands(false);
         connection.publish(channel, message);
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
 
         assertThat(channels).isEmpty();
         connection.flushCommands();
@@ -156,7 +158,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
 
         pubsub.setAutoFlushCommands(false);
         pubsub.subscribe(channel);
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
         assertThat(channels).isEmpty();
         pubsub.flushCommands();
 

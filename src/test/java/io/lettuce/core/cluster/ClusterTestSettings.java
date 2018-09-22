@@ -44,6 +44,12 @@ public abstract class ClusterTestSettings extends TestSupport {
     public static final String KEY_B = "b";
     public static final String KEY_D = "d";
 
+    /**
+     * Don't allow instances.
+     */
+    private ClusterTestSettings() {
+    }
+
     public static int[] createSlots(int from, int to) {
         int[] result = new int[to - from];
         int counter = 0;

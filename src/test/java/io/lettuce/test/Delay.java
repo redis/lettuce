@@ -22,6 +22,14 @@ import java.time.Duration;
  */
 public class Delay {
 
+    private Delay() {
+    }
+
+    /**
+     * Sleep for the given {@link Duration}.
+     *
+     * @param duration
+     */
     public static void delay(Duration duration) {
 
         try {

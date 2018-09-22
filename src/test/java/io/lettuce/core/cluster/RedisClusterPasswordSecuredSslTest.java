@@ -35,7 +35,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.Executions;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
-import io.lettuce.test.Sockets;
+import io.lettuce.test.CanConnect;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
@@ -51,18 +51,18 @@ class RedisClusterPasswordSecuredSslTest extends TestSupport {
     private static final String SLOT_1_KEY = "8HMdi";
     private static final String SLOT_16352_KEY = "UyAa4KqoWgPGKa";
 
-    private static RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared")
+    private static RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared")
             .withSsl(true).withVerifyPeer(false).build();
     private static RedisClusterClient redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
     @BeforeEach
     void before() {
-        assumeTrue(Sockets.isOpen(host(), CLUSTER_PORT_SSL_1), "Assume that stunnel runs on port 7443");
-        assumeTrue(Sockets.isOpen(host(), CLUSTER_PORT_SSL_2), "Assume that stunnel runs on port 7444");
-        assumeTrue(Sockets.isOpen(host(), CLUSTER_PORT_SSL_3), "Assume that stunnel runs on port 7445");
-        assumeTrue(Sockets.isOpen(host(), 7479), "Assume that Redis runs on port 7479");
-        assumeTrue(Sockets.isOpen(host(), 7480), "Assume that Redis runs on port 7480");
-        assumeTrue(Sockets.isOpen(host(), 7481), "Assume that Redis runs on port 7481");
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_1), "Assume that stunnel runs on port 7443");
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_2), "Assume that stunnel runs on port 7444");
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_3), "Assume that stunnel runs on port 7445");
+        assumeTrue(CanConnect.to(host(), 7479), "Assume that Redis runs on port 7479");
+        assumeTrue(CanConnect.to(host(), 7480), "Assume that Redis runs on port 7480");
+        assumeTrue(CanConnect.to(host(), 7481), "Assume that Redis runs on port 7481");
     }
 
     @AfterAll
@@ -136,7 +136,7 @@ class RedisClusterPasswordSecuredSslTest extends TestSupport {
     @Test
     void connectionWithoutPasswordShouldFail() {
 
-        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
+        RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
         try {
@@ -151,7 +151,7 @@ class RedisClusterPasswordSecuredSslTest extends TestSupport {
     @Test
     void connectionWithoutPasswordShouldFail2() {
 
-        RedisURI redisURI = RedisURI.builder().redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
+        RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
         try {

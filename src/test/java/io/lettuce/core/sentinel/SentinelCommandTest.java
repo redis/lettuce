@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +35,7 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
+import io.lettuce.test.Delay;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.DefaultRedisClient;
 import io.lettuce.test.resource.FastShutdown;
@@ -229,14 +231,14 @@ public class SentinelCommandTest extends AbstractSentinelTest {
     }
 
     @Test
-    public void connectToRedisUsingSentinelWithReconnect() throws InterruptedException {
+    public void connectToRedisUsingSentinelWithReconnect() {
 
         RedisCommands<String, String> connect = sentinelClient.connect().sync();
 
         connect.ping();
         connect.quit();
 
-        Thread.sleep(50);
+        Delay.delay(Duration.ofMillis(50));
         Wait.untilTrue(connect::isOpen).waitOrTimeout();
         connect.ping();
         connect.getStatefulConnection().close();

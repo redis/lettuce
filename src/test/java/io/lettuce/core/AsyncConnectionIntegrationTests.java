@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.test.Delay;
 import io.lettuce.test.Futures;
 import io.lettuce.test.LettuceExtension;
 
@@ -81,7 +83,7 @@ class AsyncConnectionIntegrationTests extends TestSupport {
     }
 
     @Test
-    void futureListener() throws Exception {
+    void futureListener() {
 
         final List<Object> run = new ArrayList<>();
 
@@ -106,7 +108,7 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         sort.thenRun(listener);
 
         Futures.await(sort);
-        Thread.sleep(100);
+        Delay.delay(Duration.ofMillis(100));
 
         assertThat(run).hasSize(1);
 

@@ -18,6 +18,7 @@ package io.lettuce.core.cluster;
 import static io.lettuce.core.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -38,6 +39,7 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceSets;
+import io.lettuce.test.Delay;
 import io.lettuce.test.Futures;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
@@ -164,7 +166,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testAsynchronicityOfMultiNodeExecution() throws InterruptedException {
+    void testAsynchronicityOfMultiNodeExecution() {
 
         StatefulRedisClusterConnection<String, String> connection2 = clusterClient.connect();
         RedisAdvancedClusterAsyncCommands<String, String> async2 = connection2.async();
@@ -178,7 +180,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
             assertThat(future.isDone()).isFalse();
             assertThat(future.isCancelled()).isFalse();
         }
-        Thread.sleep(200);
+        Delay.delay(Duration.ofMillis(200));
 
         AsyncExecutions<String> kill = commands.masters().commands().scriptKill();
         Futures.await(kill);
