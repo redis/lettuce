@@ -15,34 +15,26 @@
  */
 package io.lettuce.core.sentinel.reactive;
 
-import static io.lettuce.test.settings.TestSettings.hostAddr;
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.inject.Inject;
 
-import io.lettuce.core.sentinel.SentinelCommandTest;
-import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
-import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.sentinel.SentinelCommandIntegrationTests;
+import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
+import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
-import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Mark Paluch
  */
-public class SentinelReactiveCommandTest extends SentinelCommandTest {
+public class SentinelReactiveCommandTest extends SentinelCommandIntegrationTests {
+
+    @Inject
+    public SentinelReactiveCommandTest(RedisClient redisClient) {
+        super(redisClient);
+    }
 
     @Override
-    public void openConnection() {
-
-        RedisSentinelAsyncCommands<String, String> async = sentinelClient.connectSentinel().async();
-        RedisSentinelReactiveCommands<String, String> reactive = async.getStatefulConnection().reactive();
-        sentinel = ReactiveSyncInvocationHandler.sync(async.getStatefulConnection());
-
-        try {
-            sentinel.master(MASTER_ID);
-        } catch (Exception e) {
-            sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(3), 1, true);
-        }
-
-        assertThat(reactive.isOpen()).isTrue();
-        assertThat(reactive.getStatefulConnection()).isSameAs(async.getStatefulConnection());
+    protected RedisSentinelCommands<String, String> getSyncConnection(StatefulRedisSentinelConnection<String, String> connection) {
+        return ReactiveSyncInvocationHandler.sync(connection);
     }
 }

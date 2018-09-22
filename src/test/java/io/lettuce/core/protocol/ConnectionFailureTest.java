@@ -30,11 +30,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
-import io.lettuce.core.server.RandomResponseServer;
 import io.lettuce.test.ConnectionTestUtil;
 import io.lettuce.test.Delay;
 import io.lettuce.test.Futures;
 import io.lettuce.test.Wait;
+import io.lettuce.test.server.RandomResponseServer;
 import io.lettuce.test.settings.TestSettings;
 
 /**

@@ -15,47 +15,56 @@
  */
 package io.lettuce.core.sentinel;
 
-import static io.lettuce.test.settings.TestSettings.hostAddr;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
+import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
-import io.lettuce.test.resource.TestClientResources;
+import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Mark Paluch
  */
-public class SentinelServerCommandTest extends AbstractSentinelTest {
+@ExtendWith(LettuceExtension.class)
+public class SentinelServerCommandIntegrationTests extends TestSupport {
 
-    @Rule
-    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
+    private final RedisClient redisClient;
+    private StatefulRedisSentinelConnection<String, String> connection;
+    private RedisSentinelCommands<String, String> sentinel;
 
-    @BeforeClass
-    public static void setupClient() {
-        sentinelClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder
-                .sentinel(TestSettings.host(), MASTER_ID).build());
+    @Inject
+    public SentinelServerCommandIntegrationTests(RedisClient redisClient) {
+        this.redisClient = redisClient;
     }
 
-    @Before
-    public void openConnection() throws Exception {
-        super.openConnection();
+    @BeforeEach
+    void before() {
 
-        try {
-            sentinel.master(MASTER_ID);
-        } catch (Exception e) {
-            sentinelRule.monitor(MASTER_ID, hostAddr(), TestSettings.port(3), 1, true);
-        }
+        this.connection = this.redisClient.connectSentinel(SentinelTestSettings.SENTINEL_URI);
+        this.sentinel = getSyncConnection(this.connection);
+    }
+
+    protected RedisSentinelCommands<String, String> getSyncConnection(StatefulRedisSentinelConnection<String, String> connection) {
+        return connection.sync();
+    }
+
+    @AfterEach
+    void after() {
+        this.connection.close();
     }
 
     @Test
@@ -85,7 +94,8 @@ public class SentinelServerCommandTest extends AbstractSentinelTest {
     @Test
     public void clientKillExtended() {
 
-        RedisSentinelCommands<String, String> connection2 = sentinelClient.connectSentinel().sync();
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), SentinelTestSettings.MASTER_ID).build();
+        RedisSentinelCommands<String, String> connection2 = redisClient.connectSentinel(redisURI).sync();
         connection2.clientSetname("killme");
 
         Pattern p = Pattern.compile("^.*addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);

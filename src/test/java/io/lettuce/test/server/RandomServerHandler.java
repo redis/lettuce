@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.server;
+package io.lettuce.test.server;
 
 import java.util.Arrays;
 import java.util.Random;

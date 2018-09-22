@@ -25,14 +25,12 @@ import java.util.Locale;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.sentinel.SentinelRule;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
@@ -42,31 +40,28 @@ import io.netty.util.internal.SystemPropertyUtil;
 /**
  * @author Mark Paluch
  */
-public class UnixDomainSocketTest {
+class UnixDomainSocketIntegrationTests {
 
     private static final String MASTER_ID = "mymaster";
 
     private static RedisClient sentinelClient;
 
-    @Rule
-    public SentinelRule sentinelRule = new SentinelRule(sentinelClient, false, 26379, 26380);
-
     private Logger log = LogManager.getLogger(getClass());
     private String key = "key";
     private String value = "value";
 
-    @BeforeClass
-    public static void setupClient() {
+    @BeforeAll
+    static void setupClient() {
         sentinelClient = getRedisSentinelClient();
     }
 
-    @AfterClass
-    public static void shutdownClient() {
+    @AfterAll
+    static void shutdownClient() {
         FastShutdown.shutdown(sentinelClient);
     }
 
     @Test
-    public void standalone_RedisClientWithSocket() throws Exception {
+    void standalone_RedisClientWithSocket() throws Exception {
 
         assumeTestSupported();
 
@@ -82,7 +77,7 @@ public class UnixDomainSocketTest {
     }
 
     @Test
-    public void standalone_ConnectToSocket() throws Exception {
+    void standalone_ConnectToSocket() throws Exception {
 
         assumeTestSupported();
 
@@ -99,7 +94,7 @@ public class UnixDomainSocketTest {
     }
 
     @Test
-    public void sentinel_RedisClientWithSocket() throws Exception {
+    void sentinel_RedisClientWithSocket() throws Exception {
 
         assumeTestSupported();
 
@@ -124,7 +119,7 @@ public class UnixDomainSocketTest {
     }
 
     @Test
-    public void sentinel_ConnectToSocket() throws Exception {
+    void sentinel_ConnectToSocket() throws Exception {
 
         assumeTestSupported();
 
@@ -149,9 +144,8 @@ public class UnixDomainSocketTest {
     }
 
     @Test
-    public void sentinel_socket_and_inet() throws Exception {
+    void sentinel_socket_and_inet() throws Exception {
 
-        sentinelRule.waitForMaster(MASTER_ID);
         assumeTestSupported();
 
         RedisURI uri = new RedisURI();
