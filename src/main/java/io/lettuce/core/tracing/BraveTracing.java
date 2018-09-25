@@ -57,16 +57,8 @@ public class BraveTracing implements Tracing {
     /**
      * Create a new {@link BraveTracing} instance.
      *
-     * @param tracer
+     * @param builder the {@link BraveTracing.Builder}.
      */
-    private BraveTracing(BraveTracer tracer) {
-
-        LettuceAssert.notNull(tracer, "Tracer must not be null");
-
-        this.serviceName = "redis";
-        this.tracer = tracer;
-    }
-
     public BraveTracing(Builder builder) {
 
         LettuceAssert.notNull(builder.tracing, "Tracing must not be null");
@@ -83,7 +75,7 @@ public class BraveTracing implements Tracing {
      * @return the {@link BraveTracing}.
      */
     public static BraveTracing create(brave.Tracing tracing) {
-        return new BraveTracing(new BraveTracer(tracing));
+        return (BraveTracing) builder(tracing).build();
     }
 
     public static BraveTracing.Builder builder(brave.Tracing tracing) {
@@ -92,7 +84,7 @@ public class BraveTracing implements Tracing {
 
     public static class Builder implements Tracing.Builder {
 
-        private String serviceName;
+        private String serviceName = "redis";
         private brave.Tracing tracing;
 
         private Builder() {
