@@ -103,4 +103,46 @@ public interface Tracing {
      */
     interface Endpoint {
     }
+
+    /**
+     * Create a new {@link Tracing} using default settings.
+     *
+     * @return a new instance of a tracing.
+     * @since 5.2
+     */
+    static Tracing create(brave.Tracing tracing) {
+        return BraveTracing.builder(tracing).build();
+    }
+
+    /**
+     * Create a new {@link BraveTracing.Builder} using default settings.
+     *
+     * @return a new instance of a tracing builder.
+     * @since 5.2
+     */
+    static BraveTracing.Builder builder(brave.Tracing tracing) {
+        return BraveTracing.builder(tracing);
+    }
+
+    /**
+     * Builder for {@link Tracing}.
+     *
+     * @since 5.2
+     */
+    interface Builder {
+
+        /**
+         * Sets the name used in the {@link zipkin2.Endpoint}.
+         *
+         * @param serviceName the name for the {@link zipkin2.Endpoint}, must not be  {@literal null}.
+         * @return this
+         * @since 5.2
+         */
+        Builder serviceName(String serviceName);
+
+        /**
+         * @return a new instance of {@link BraveTracing}
+         */
+        Tracing build();
+    }
 }

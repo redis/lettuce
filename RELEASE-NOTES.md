@@ -215,7 +215,7 @@ Usage example:
 ```java
 Tracing tracing = …;
 
-ClientResources clientResources = ClientResources.builder().tracing(BraveTracing.create(tracing)).build();
+ClientResources clientResources = ClientResources.builder().tracing(BraveTracing.builder(tracing).build()).build();
 
 RedisClient client = RedisClient.create(clientResources, redisUri);
 

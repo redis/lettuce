@@ -52,6 +52,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class BraveTracing implements Tracing {
 
     private final BraveTracer tracer;
+    private final String serviceName;
 
     /**
      * Create a new {@link BraveTracing} instance.
@@ -62,7 +63,17 @@ public class BraveTracing implements Tracing {
 
         LettuceAssert.notNull(tracer, "Tracer must not be null");
 
+        this.serviceName = "redis";
         this.tracer = tracer;
+    }
+
+    public BraveTracing(Builder builder) {
+
+        LettuceAssert.notNull(builder.tracing, "Tracing must not be null");
+        LettuceAssert.notNull(builder.serviceName, "Service name must not be null");
+
+        this.serviceName = builder.serviceName;
+        this.tracer = new BraveTracer(builder.tracing);
     }
 
     /**
@@ -73,6 +84,44 @@ public class BraveTracing implements Tracing {
      */
     public static BraveTracing create(brave.Tracing tracing) {
         return new BraveTracing(new BraveTracer(tracing));
+    }
+
+    public static BraveTracing.Builder builder(brave.Tracing tracing) {
+        return new BraveTracing.Builder(tracing);
+    }
+
+    public static class Builder implements Tracing.Builder {
+
+        private String serviceName;
+        private brave.Tracing tracing;
+
+        private Builder() {
+        }
+
+        private Builder(brave.Tracing tracing) {
+            this.tracing = tracing;
+        }
+
+        /**
+         * Sets the name used in the {@link zipkin2.Endpoint}.
+         *
+         * @param serviceName the name for the {@link zipkin2.Endpoint}, must not be  {@literal null}.
+         * @return this
+         * @since 5.2
+         */
+        @Override
+        public Tracing.Builder serviceName(String serviceName) {
+            this.serviceName = serviceName;
+            return this;
+        }
+
+        /**
+         * @return a new instance of {@link BraveTracing}
+         */
+        @Override
+        public Tracing build() {
+            return new BraveTracing(this);
+        }
     }
 
     @Override
@@ -98,11 +147,11 @@ public class BraveTracing implements Tracing {
         if (socketAddress instanceof InetSocketAddress) {
 
             InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
-            return new BraveEndpoint(builder.serviceName("redis").ip(inetSocketAddress.getAddress())
+            return new BraveEndpoint(builder.serviceName(serviceName).ip(inetSocketAddress.getAddress())
                     .port(inetSocketAddress.getPort()).build());
         }
 
-        return new BraveEndpoint(builder.serviceName("redis").build());
+        return new BraveEndpoint(builder.serviceName(serviceName).build());
     }
 
     /**
