@@ -214,4 +214,21 @@ class BraveTracingIntegrationTests extends TestSupport {
         assertThat(endpoint.endpoint.ipv4()).isNull();
         assertThat(endpoint.endpoint.ipv6()).isNull();
     }
+
+    @Test
+    public void shouldReportCustomServiceName() {
+
+        DefaultClientResources clientResourcesWithOverridenServiceName = DefaultClientResources.builder()
+                .tracing(BraveTracing.builder(clientTracing)
+                        .serviceName("custom-name-goes-here")
+                        .build())
+                .build();
+        BraveTracing.BraveEndpoint endpoint = (BraveTracing.BraveEndpoint) clientResourcesWithOverridenServiceName.tracing().createEndpoint(
+                new DomainSocketAddress("foo"));
+
+        assertThat(endpoint.endpoint.serviceName()).isEqualTo("custom-name-goes-here");
+        assertThat(endpoint.endpoint.port()).isNull();
+        assertThat(endpoint.endpoint.ipv4()).isNull();
+        assertThat(endpoint.endpoint.ipv6()).isNull();
+    }
 }
