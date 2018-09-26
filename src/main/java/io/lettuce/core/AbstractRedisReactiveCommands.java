@@ -2218,4 +2218,9 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Mono<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return createMono(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
     }
+
+    @Override
+    public Mono<Long> memoryUsage(K key){
+        return createMono(() -> commandBuilder.memoryUsage(key));
+    }
 }

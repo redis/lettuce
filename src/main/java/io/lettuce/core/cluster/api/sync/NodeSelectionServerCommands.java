@@ -331,4 +331,10 @@ public interface NodeSelectionServerCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     Executions<List<V>> time();
+
+    /**
+     * get info about memory usage
+     * @return memory usage
+     */
+    Executions<Long> memoryUsage(K key);
 }

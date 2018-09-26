@@ -331,4 +331,10 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     AsyncExecutions<List<V>> time();
+
+    /**
+     * get info about memory usage
+     * @return memory usage
+     */
+    AsyncExecutions<Long> memoryUsage(K key);
 }

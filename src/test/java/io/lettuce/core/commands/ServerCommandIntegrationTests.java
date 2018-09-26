@@ -409,6 +409,21 @@ public class ServerCommandIntegrationTests extends TestSupport {
         assertThat(redis.get(key)).isEqualTo("value1");
     }
 
+    @Test
+    void memoryUsage() {
+
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("4.0.0"));
+
+        redis.select(0);
+        redis.set("", "");
+        redis.set("foo", "bar");
+        Long dispatch1 = redis.memoryUsage("");
+        Long dispatch2 = redis.memoryUsage("foo");
+
+        assertThat(dispatch1).isNotNull().isPositive();
+        assertThat(dispatch2 - dispatch1).isNotNull().isPositive();
+    }
+
     private boolean noSaveInProgress() {
 
         String info = redis.info();

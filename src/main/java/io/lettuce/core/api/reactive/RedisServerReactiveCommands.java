@@ -353,4 +353,10 @@ public interface RedisServerReactiveCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     Flux<V> time();
+
+    /**
+     * get info about memory usage
+     * @return memory usage
+     */
+    Mono<Long> memoryUsage(K key);
 }
