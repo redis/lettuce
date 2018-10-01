@@ -47,10 +47,12 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         StatefulRedisPubSubConnection<K, V> {
 
     private static final Set<String> ALLOWED_COMMANDS_SUBSCRIBED;
+    private static final Set<String> SUBSCRIBE_COMMANDS;
 
     protected final List<RedisPubSubListener<K, V>> listeners;
     protected final Set<K> channels;
     protected final Set<K> patterns;
+    private volatile boolean subscribeWritten = false;
 
     static {
 
@@ -61,6 +63,11 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.UNSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PUNSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.QUIT.name());
+
+        SUBSCRIBE_COMMANDS = new HashSet<>(2, 1);
+
+        SUBSCRIBE_COMMANDS.add(CommandType.SUBSCRIBE.name());
+        SUBSCRIBE_COMMANDS.add(CommandType.PSUBSCRIBE.name());
     }
 
     /**
@@ -146,6 +153,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
     @Override
     public void activated() {
+        subscribeWritten = false;
         super.activated();
         resubscribe();
     }
@@ -153,16 +161,29 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     @Override
     public <T, C extends RedisCommand<K, V, T>> C dispatch(C command) {
 
-        if (!channels.isEmpty() || !patterns.isEmpty()) {
-
-            if (!ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name())) {
-
-                throw new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
-                        command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED));
-            }
+        if (isSubscribed()) {
+            validateCommandAllowed(command);
         }
 
+        if (!subscribeWritten && SUBSCRIBE_COMMANDS.contains(command.getType().name())) {
+            subscribeWritten = true;
+        }
+
+
         return super.dispatch(command);
+    }
+
+    private static void validateCommandAllowed(RedisCommand<?, ?, ?> command) {
+
+        if (!ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name())) {
+
+            throw new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s", command
+                    .getType().name(), ALLOWED_COMMANDS_SUBSCRIBED));
+        }
+    }
+
+    private boolean isSubscribed() {
+        return subscribeWritten && (!channels.isEmpty() || !patterns.isEmpty());
     }
 
     /**

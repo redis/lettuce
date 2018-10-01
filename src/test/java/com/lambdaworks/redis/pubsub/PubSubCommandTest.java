@@ -21,16 +21,20 @@ import static org.assertj.core.api.Fail.fail;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.lambdaworks.Delay;
 import com.lambdaworks.TestClientResources;
 import com.lambdaworks.Wait;
 import com.lambdaworks.redis.*;
@@ -91,18 +95,37 @@ public class PubSubCommandTest extends AbstractRedisClientTest implements RedisP
             @Override
             protected void run(RedisClient client) throws Exception {
 
-                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-                connection.addListener(PubSubCommandTest.this);
-                connection.auth(passwd);
-                connection.quit();
 
-                Thread.sleep(100);
+                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
+                connection.getStatefulConnection().addListener(PubSubCommandTest.this);
+                connection.auth(passwd);
+                connection.clientSetname("authWithReconnect");
+                connection.subscribe(channel);
+
+                assertThat(channels.take()).isEqualTo(channel);
+
+                long id = findNamedClient("authWithReconnect");
+                redis.clientKill(KillArgs.Builder.id(id));
+
+                Delay.delay(Duration.ofMillis(100));
                 Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
-                connection.subscribe(channel);
                 assertThat(channels.take()).isEqualTo(channel);
             }
         };
+    }
+
+    private long findNamedClient(String name) {
+
+        Pattern pattern = Pattern.compile(".*id=(\\d+).*name=" + name + ".*", Pattern.MULTILINE);
+        String clients = redis.clientList();
+        Matcher matcher = pattern.matcher(clients);
+
+        if (!matcher.find()) {
+            throw new IllegalStateException("Cannot find PubSub client in: " + clients);
+        }
+
+        return Long.parseLong(matcher.group(1));
     }
 
     @Test(timeout = 2000)
