@@ -406,9 +406,7 @@ class CommandHandlerUnitTests {
         sut.channelRegistered(context);
         sut.channelActive(context);
 
-        LatencyMeteredCommand<String, String, String> wrapped = new LatencyMeteredCommand<>(command);
-
-        sut.write(context, wrapped, channelPromise);
+        sut.write(context, command, channelPromise);
         Delay.delay(Duration.ofMillis(10));
 
         sut.channelRead(context, Unpooled.wrappedBuffer("*1\r\n+OK\r\n".getBytes()));
