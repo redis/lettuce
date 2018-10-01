@@ -465,7 +465,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             if (promise.isVoid()) {
                 stack.add(redisCommand);
             } else {
-                promise.addListener(AddToStack.newInstance(stack, command));
+                promise.addListener(AddToStack.newInstance(stack, redisCommand));
             }
         } catch (Exception e) {
             command.completeExceptionally(e);
