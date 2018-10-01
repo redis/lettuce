@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +48,7 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Mark Paluch
  */
 class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
+
     private RedisPubSubAsyncCommands<String, String> pubsub;
 
     private BlockingQueue<String> channels;
@@ -59,17 +62,22 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
 
     @BeforeEach
     void openPubSubConnection() {
-        pubsub = client.connectPubSub().async();
-        pubsub.getStatefulConnection().addListener(this);
-        channels = LettuceFactories.newBlockingQueue();
-        patterns = LettuceFactories.newBlockingQueue();
-        messages = LettuceFactories.newBlockingQueue();
-        counts = LettuceFactories.newBlockingQueue();
+        try {
+            pubsub = client.connectPubSub().async();
+            pubsub.getStatefulConnection().addListener(this);
+        } finally {
+            channels = LettuceFactories.newBlockingQueue();
+            patterns = LettuceFactories.newBlockingQueue();
+            messages = LettuceFactories.newBlockingQueue();
+            counts = LettuceFactories.newBlockingQueue();
+        }
     }
 
     @AfterEach
     void closePubSubConnection() {
-        pubsub.getStatefulConnection().close();
+        if (pubsub != null) {
+            pubsub.getStatefulConnection().close();
+        }
     }
 
     @Test
@@ -94,18 +102,37 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
             @Override
             protected void run(RedisClient client) throws Exception {
 
+
                 RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
                 connection.getStatefulConnection().addListener(PubSubCommandTest.this);
                 connection.auth(passwd);
-                connection.quit();
+                connection.clientSetname("authWithReconnect");
+                connection.subscribe(channel);
+
+                assertThat(channels.take()).isEqualTo(channel);
+
+                long id = findNamedClient("authWithReconnect");
+                redis.clientKill(KillArgs.Builder.id(id));
 
                 Delay.delay(Duration.ofMillis(100));
                 Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
-                connection.subscribe(channel);
                 assertThat(channels.take()).isEqualTo(channel);
             }
         };
+    }
+
+    private long findNamedClient(String name) {
+
+        Pattern pattern = Pattern.compile(".*id=(\\d+).*name=" + name + ".*", Pattern.MULTILINE);
+        String clients = redis.clientList();
+        Matcher matcher = pattern.matcher(clients);
+
+        if (!matcher.find()) {
+            throw new IllegalStateException("Cannot find PubSub client in: " + clients);
+        }
+
+        return Long.parseLong(matcher.group(1));
     }
 
     @Test
