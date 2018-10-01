@@ -42,7 +42,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.test.Wait;
-import io.netty.channel.unix.DomainSocketAddress;
 
 /**
  * @author Mark Paluch
@@ -201,34 +200,5 @@ class BraveTracingIntegrationTests extends TestSupport {
 
         assertThat(spans.get(0).name()).isEqualTo("set");
         assertThat(spans.get(1).name()).isEqualTo("get");
-    }
-
-    @Test
-    void shouldReportSimpleServiceName() {
-
-        BraveTracing.BraveEndpoint endpoint = (BraveTracing.BraveEndpoint) clientResources.tracing().createEndpoint(
-                new DomainSocketAddress("foo"));
-
-        assertThat(endpoint.endpoint.serviceName()).isEqualTo("redis");
-        assertThat(endpoint.endpoint.port()).isNull();
-        assertThat(endpoint.endpoint.ipv4()).isNull();
-        assertThat(endpoint.endpoint.ipv6()).isNull();
-    }
-
-    @Test
-    public void shouldReportCustomServiceName() {
-
-        DefaultClientResources clientResourcesWithOverridenServiceName = DefaultClientResources.builder()
-                .tracing(BraveTracing.builder(clientTracing)
-                        .serviceName("custom-name-goes-here")
-                        .build())
-                .build();
-        BraveTracing.BraveEndpoint endpoint = (BraveTracing.BraveEndpoint) clientResourcesWithOverridenServiceName.tracing().createEndpoint(
-                new DomainSocketAddress("foo"));
-
-        assertThat(endpoint.endpoint.serviceName()).isEqualTo("custom-name-goes-here");
-        assertThat(endpoint.endpoint.port()).isNull();
-        assertThat(endpoint.endpoint.ipv4()).isNull();
-        assertThat(endpoint.endpoint.ipv6()).isNull();
     }
 }

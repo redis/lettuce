@@ -17,6 +17,7 @@ package io.lettuce.core.tracing;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.function.Consumer;
 
 import reactor.core.publisher.Mono;
 import brave.Span;
@@ -47,25 +48,26 @@ import io.lettuce.core.internal.LettuceAssert;
  * @see brave.Tracer
  * @see brave.Tracing#currentTracer()
  * @see BraveTraceContextProvider
+ * @see #builder()
  * @since 5.1
  */
 public class BraveTracing implements Tracing {
 
     private final BraveTracer tracer;
-    private final String serviceName;
+    private final BraveTracingOptions tracingOptions;
 
     /**
      * Create a new {@link BraveTracing} instance.
      *
      * @param builder the {@link BraveTracing.Builder}.
      */
-    public BraveTracing(Builder builder) {
+    private BraveTracing(Builder builder) {
 
         LettuceAssert.notNull(builder.tracing, "Tracing must not be null");
         LettuceAssert.notNull(builder.serviceName, "Service name must not be null");
 
-        this.serviceName = builder.serviceName;
-        this.tracer = new BraveTracer(builder.tracing);
+        this.tracingOptions = new BraveTracingOptions(builder.serviceName, builder.endpointCustomizer, builder.spanCustomizer);
+        this.tracer = new BraveTracer(builder.tracing, this.tracingOptions);
     }
 
     /**
@@ -75,43 +77,102 @@ public class BraveTracing implements Tracing {
      * @return the {@link BraveTracing}.
      */
     public static BraveTracing create(brave.Tracing tracing) {
-        return (BraveTracing) builder(tracing).build();
+        return builder().tracing(tracing).build();
     }
 
-    public static BraveTracing.Builder builder(brave.Tracing tracing) {
-        return new BraveTracing.Builder(tracing);
+    /**
+     * Create a new {@link Builder} to build {@link BraveTracing}.
+     *
+     * @return a new instance of {@link Builder}.
+     * @since 5.2
+     */
+    public static BraveTracing.Builder builder() {
+        return new BraveTracing.Builder();
     }
 
-    public static class Builder implements Tracing.Builder {
+    /**
+     * Builder for {@link BraveTracing}.
+     *
+     * @since 5.2
+     */
+    public static class Builder {
 
-        private String serviceName = "redis";
         private brave.Tracing tracing;
+        private String serviceName = "redis";
+        private Consumer<zipkin2.Endpoint.Builder> endpointCustomizer = it -> {
+        };
+        private Consumer<brave.Span> spanCustomizer = it -> {
+        };
 
         private Builder() {
         }
 
-        private Builder(brave.Tracing tracing) {
+        /**
+         * Sets the {@link Tracing}.
+         *
+         * @param tracing the Brave {@link brave.Tracing} object, must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         */
+        public Builder tracing(brave.Tracing tracing) {
+
+            LettuceAssert.notNull(tracing, "Tracing must not be null!");
+
             this.tracing = tracing;
+            return this;
         }
 
         /**
          * Sets the name used in the {@link zipkin2.Endpoint}.
          *
-         * @param serviceName the name for the {@link zipkin2.Endpoint}, must not be  {@literal null}.
-         * @return this
-         * @since 5.2
+         * @param serviceName the name for the {@link zipkin2.Endpoint}, must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
          */
-        @Override
-        public Tracing.Builder serviceName(String serviceName) {
+        public Builder serviceName(String serviceName) {
+
+            LettuceAssert.notEmpty(serviceName, "Service name must not be null!");
+
             this.serviceName = serviceName;
+            return this;
+        }
+
+        /**
+         * Sets an {@link zipkin2.Endpoint} customizer to customize the {@link zipkin2.Endpoint} through its
+         * {@link zipkin2.Endpoint.Builder}. The customizer is invoked before {@link zipkin2.Endpoint.Builder#build() building}
+         * the endpoint.
+         *
+         * @param endpointCustomizer must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         */
+        public Builder endpointCustomizer(Consumer<zipkin2.Endpoint.Builder> endpointCustomizer) {
+
+            LettuceAssert.notNull(endpointCustomizer, "Endpoint customizer must not be null!");
+
+            this.endpointCustomizer = endpointCustomizer;
+            return this;
+        }
+
+        /**
+         * Sets an {@link brave.Span} customizer to customize the {@link brave.Span}. The customizer is invoked before
+         * {@link Span#finish()} finishing} the span.
+         *
+         * @param spanCustomizer must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         */
+        public Builder spanCustomizer(Consumer<brave.Span> spanCustomizer) {
+
+            LettuceAssert.notNull(spanCustomizer, "Span customizer must not be null!");
+
+            this.spanCustomizer = spanCustomizer;
             return this;
         }
 
         /**
          * @return a new instance of {@link BraveTracing}
          */
-        @Override
-        public Tracing build() {
+        public BraveTracing build() {
+
+            LettuceAssert.notNull(this.tracing, "Brave Tracing must not be null!");
+
             return new BraveTracing(this);
         }
     }
@@ -134,16 +195,20 @@ public class BraveTracing implements Tracing {
     @Override
     public Endpoint createEndpoint(SocketAddress socketAddress) {
 
-        zipkin2.Endpoint.Builder builder = zipkin2.Endpoint.newBuilder();
+        zipkin2.Endpoint.Builder builder = zipkin2.Endpoint.newBuilder().serviceName(tracingOptions.serviceName);
 
         if (socketAddress instanceof InetSocketAddress) {
 
             InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
-            return new BraveEndpoint(builder.serviceName(serviceName).ip(inetSocketAddress.getAddress())
-                    .port(inetSocketAddress.getPort()).build());
+            builder.ip(inetSocketAddress.getAddress()).port(inetSocketAddress.getPort());
+
+            tracingOptions.customizeEndpoint(builder);
+
+            return new BraveEndpoint(builder.build());
         }
 
-        return new BraveEndpoint(builder.serviceName(serviceName).build());
+        tracingOptions.customizeEndpoint(builder);
+        return new BraveEndpoint(builder.build());
     }
 
     /**
@@ -152,9 +217,11 @@ public class BraveTracing implements Tracing {
     static class BraveTracer extends Tracer {
 
         private final brave.Tracing tracing;
+        private final BraveTracingOptions tracingOptions;
 
-        public BraveTracer(brave.Tracing tracing) {
+        BraveTracer(brave.Tracing tracing, BraveTracingOptions tracingOptions) {
             this.tracing = tracing;
+            this.tracingOptions = tracingOptions;
         }
 
         @Override
@@ -185,7 +252,7 @@ public class BraveTracing implements Tracing {
                 return NoOpTracing.NoOpSpan.INSTANCE;
             }
 
-            return new BraveSpan(span.kind(brave.Span.Kind.CLIENT));
+            return new BraveSpan(span.kind(brave.Span.Kind.CLIENT), this.tracingOptions);
         }
     }
 
@@ -195,9 +262,11 @@ public class BraveTracing implements Tracing {
     static class BraveSpan extends Tracer.Span {
 
         private final brave.Span span;
+        private final BraveTracingOptions tracingOptions;
 
-        BraveSpan(brave.Span span) {
+        BraveSpan(Span span, BraveTracingOptions tracingOptions) {
             this.span = span;
+            this.tracingOptions = tracingOptions;
         }
 
         @Override
@@ -250,6 +319,8 @@ public class BraveTracing implements Tracing {
 
         @Override
         public void finish() {
+
+            this.tracingOptions.customizeSpan(span);
             span.finish();
         }
 
@@ -317,6 +388,34 @@ public class BraveTracing implements Tracing {
 
                         return new BraveTraceContext(it.get(brave.propagation.TraceContext.class));
                     });
+        }
+    }
+
+    /**
+     * Value object encapsulating tracing options.
+     *
+     * @author Mark Paluch
+     * @since 5.2
+     */
+    static class BraveTracingOptions {
+
+        private final String serviceName;
+        private final Consumer<zipkin2.Endpoint.Builder> endpointCustomizer;
+        private final Consumer<brave.Span> spanCustomizer;
+
+        BraveTracingOptions(String serviceName, Consumer<zipkin2.Endpoint.Builder> endpointCustomizer,
+                Consumer<Span> spanCustomizer) {
+            this.serviceName = serviceName;
+            this.endpointCustomizer = endpointCustomizer;
+            this.spanCustomizer = spanCustomizer;
+        }
+
+        void customizeEndpoint(zipkin2.Endpoint.Builder builder) {
+            this.endpointCustomizer.accept(builder);
+        }
+
+        void customizeSpan(brave.Span span) {
+            this.spanCustomizer.accept(span);
         }
     }
 }
