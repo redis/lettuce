@@ -59,6 +59,10 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
+/**
+ * @author Mark Paluch
+ * @author Jongyeol Choi
+ */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class CommandHandlerUnitTests {
