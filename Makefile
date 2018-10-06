@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 PATH := ./work/redis-git/src:${PATH}
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 STUNNEL_BIN := $(shell which stunnel)
@@ -380,10 +381,13 @@ endif
 endif
 
 work/redis-git/src/redis-cli work/redis-git/src/redis-server:
-	[ -d work/redis-git ] && ( cd work/redis-git && git reset --hard && git checkout $(REDIS) && git pull ) || \
-	git clone https://github.com/antirez/redis.git --depth 1 -b unstable work/redis-git
+	[ -d "work/redis-git" ] && cd work/redis-git && git reset --hard || \
+	git clone https://github.com/antirez/redis.git work/redis-git
+	cd work/redis-git && git checkout -q $(REDIS) && git pull origin $(REDIS)
 	$(MAKE) -C work/redis-git clean
 	$(MAKE) -C work/redis-git -j4
+
+.PHONY: work/redis-git/src/redis-cli work/redis-git/src/redis-server
 
 clean:
 	rm -Rf work/
