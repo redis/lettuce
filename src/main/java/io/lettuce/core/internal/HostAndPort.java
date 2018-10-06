@@ -192,7 +192,7 @@ public class HostAndPort {
         int closeBracketIndex = hostPortString.lastIndexOf(']');
 
         LettuceAssert.isTrue(colonIndex > -1 && closeBracketIndex > colonIndex,
-                String.format("Invalid bracketed host/port: ", hostPortString));
+                String.format("Invalid bracketed host/port: %s", hostPortString));
 
         String host = hostPortString.substring(1, closeBracketIndex);
         if (closeBracketIndex + 1 == hostPortString.length()) {
