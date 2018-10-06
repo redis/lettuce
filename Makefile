@@ -380,11 +380,8 @@ endif
 endif
 
 work/redis-git/src/redis-cli work/redis-git/src/redis-server:
-	[ ! -e work/redis-git ] && git clone https://github.com/antirez/redis.git work/redis-git && cd work/redis-git && git checkout $(REDIS) || true
-	$(eval REDIS_BRANCH = -v $(shell git -C work/redis-git branch --no-color | sed 's/\* //g'))
-	cd work/redis-git && git reset --hard || true
-	[ "$(REDIS)" != "$(REDIS_BRANCH)" ] && cd work/redis-git && git checkout $(REDIS) || true
-	[ "$(REDIS)" == "unstable" ] && cd work/redis-git && git fetch && git merge origin/unstable || true
+	[ -d work/redis-git ] && ( cd work/redis-git && git reset --hard && git checkout $(REDIS) && git pull ) || \
+	git clone https://github.com/antirez/redis.git --depth 1 -b unstable work/redis-git
 	$(MAKE) -C work/redis-git clean
 	$(MAKE) -C work/redis-git -j4
 
