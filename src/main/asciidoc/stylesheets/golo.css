@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 @import url('https://fonts.googleapis.com/css?family=Raleway:300:400:700');
-@import url(http://cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.6.2/semantic.min.css);
+@import url(https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.6.2/semantic.min.css);
 
 
 #header .details br+span.author:before {
@@ -33,7 +33,7 @@
 /*! normalize.css v2.1.2 | MIT License | git.io/normalize */
 /* ========================================================================== HTML5 display definitions ========================================================================== */
 /** Correct `block` display not defined in IE 8/9. */
-@import url(http://cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.1/css/font-awesome.css);
+@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.1/css/font-awesome.css);
 
 article, aside, details, figcaption, figure, footer, header, hgroup, main, nav, section, summary {
     display: block;
