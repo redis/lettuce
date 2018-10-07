@@ -387,8 +387,6 @@ work/redis-git/src/redis-cli work/redis-git/src/redis-server:
 	$(MAKE) -C work/redis-git clean
 	$(MAKE) -C work/redis-git -j4
 
-.PHONY: work/redis-git/src/redis-cli work/redis-git/src/redis-server
-
 clean:
 	rm -Rf work/
 	rm -Rf target/
