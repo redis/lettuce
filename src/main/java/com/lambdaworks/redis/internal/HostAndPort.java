@@ -21,6 +21,7 @@ import com.lambdaworks.redis.LettuceStrings;
  * An immutable representation of a host and port.
  *
  * @author Mark Paluch
+ * @author Larry Battle
  * @since 4.2
  */
 public class HostAndPort {
@@ -91,11 +92,11 @@ public class HostAndPort {
         if (!LettuceStrings.isEmpty(portString)) {
             // Try to parse the whole port string as a number.
             // JDK7 accepts leading plus signs. We don't want to.
-            LettuceAssert.isTrue(!portString.startsWith("+"), String.format("Unparseable port number: %s", hostPortString));
+            LettuceAssert.isTrue(!portString.startsWith("+"), String.format("Cannot port number: %s", hostPortString));
             try {
                 port = Integer.parseInt(portString);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(String.format("Unparseable port number: %s" + hostPortString));
+                throw new IllegalArgumentException(String.format("Cannot parse port number: %s", hostPortString));
             }
             LettuceAssert.isTrue(isValidPort(port), String.format("Port number out of range: %s", hostPortString));
         }
