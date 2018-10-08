@@ -22,7 +22,10 @@ import java.util.Collection;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.GeoCoordinates;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.Value;
@@ -47,10 +50,20 @@ class OutputRegistryCommandOutputFactoryResolverUnitTests {
     }
 
     @Test
+    void shouldResolveStreamingStringListOutput() {
+        assertThat(getStreamingCommandOutput("stringFlux")).isInstanceOf(KeyListOutput.class);
+    }
+
+    @Test
     void shouldResolveVoidOutput() {
 
         assertThat(getCommandOutput("voidMethod")).isInstanceOf(VoidOutput.class);
         assertThat(getCommandOutput("voidWrapper")).isInstanceOf(VoidOutput.class);
+    }
+
+    @Test
+    void shouldResolveKeyOutput() {
+        assertThat(getCommandOutput("stringMono")).isInstanceOf(KeyOutput.class);
     }
 
     @Test
@@ -143,9 +156,22 @@ class OutputRegistryCommandOutputFactoryResolverUnitTests {
     CommandOutput<?, ?, ?> getCommandOutput(String methodName) {
 
         OutputSelector outputSelector = getOutputSelector(methodName);
-        CommandOutputFactory factory = resolver.resolveCommandOutput(outputSelector);
+        CommandOutputFactory factory = resolver.resolveCommandOutput(Publisher.class.isAssignableFrom(outputSelector
+                .getOutputType().getRawClass()) ? unwrapReactiveType(outputSelector) : outputSelector);
 
         return factory.create(new StringCodec());
+    }
+
+    CommandOutput<?, ?, ?> getStreamingCommandOutput(String methodName) {
+
+        OutputSelector outputSelector = getOutputSelector(methodName);
+        CommandOutputFactory factory = resolver.resolveStreamingCommandOutput(unwrapReactiveType(outputSelector));
+
+        return factory.create(new StringCodec());
+    }
+
+    private OutputSelector unwrapReactiveType(OutputSelector outputSelector) {
+        return new OutputSelector(outputSelector.getOutputType().getGeneric(0), outputSelector.getRedisCodec());
     }
 
     private OutputSelector getOutputSelector(String methodName) {
@@ -154,11 +180,15 @@ class OutputRegistryCommandOutputFactoryResolverUnitTests {
         return new OutputSelector(DeclaredCommandMethod.create(method).getActualReturnType(), StringCodec.UTF8);
     }
 
-    private static interface CommandMethods {
+    private interface CommandMethods {
 
         List<String> stringList();
 
         Iterable<String> stringIterable();
+
+        Mono<String> stringMono();
+
+        Flux<String> stringFlux();
 
         Collection<Value<String>> stringValueCollection();
 
