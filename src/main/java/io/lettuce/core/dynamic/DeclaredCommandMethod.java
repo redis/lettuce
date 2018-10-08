@@ -79,8 +79,7 @@ public class DeclaredCommandMethod implements CommandMethod {
 
         ResolvableType actualReturnType = this.returnType;
 
-        while (Future.class.isAssignableFrom(actualReturnType.getRawClass())
-                || ReactiveTypes.supports(actualReturnType.getRawClass())) {
+        while (Future.class.isAssignableFrom(actualReturnType.getRawClass())) {
             ResolvableType[] generics = actualReturnType.getGenerics();
 
             if (generics.length != 1) {

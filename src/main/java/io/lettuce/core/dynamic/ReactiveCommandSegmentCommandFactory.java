@@ -31,7 +31,7 @@ class ReactiveCommandSegmentCommandFactory extends CommandSegmentCommandFactory 
 
     private boolean streamingExecution;
 
-    public ReactiveCommandSegmentCommandFactory(CommandSegments commandSegments, CommandMethod commandMethod,
+    ReactiveCommandSegmentCommandFactory(CommandSegments commandSegments, CommandMethod commandMethod,
             RedisCodec<?, ?> redisCodec, CommandOutputFactoryResolver outputResolver) {
 
         super(commandSegments, commandMethod, redisCodec, outputResolver);
@@ -49,20 +49,27 @@ class ReactiveCommandSegmentCommandFactory extends CommandSegmentCommandFactory 
     @Override
     protected CommandOutputFactory resolveCommandOutputFactory(OutputSelector outputSelector) {
 
-        CommandOutputFactory factory = getOutputResolver().resolveStreamingCommandOutput(outputSelector);
+        streamingExecution = ReactiveTypes.isMultiValueType(outputSelector.getOutputType().getRawClass());
 
-        if (factory != null) {
-            streamingExecution = true;
-            return factory;
+        OutputSelector componentType = new OutputSelector(outputSelector.getOutputType().getGeneric(0),
+                outputSelector.getRedisCodec());
+
+        if (streamingExecution) {
+
+            CommandOutputFactory streamingFactory = getOutputResolver().resolveStreamingCommandOutput(componentType);
+
+            if (streamingExecution && streamingFactory != null) {
+                return streamingFactory;
+            }
         }
 
-        return super.resolveCommandOutputFactory(outputSelector);
+        return super.resolveCommandOutputFactory(componentType);
     }
 
     /**
      * @return {@literal true} if the resolved {@link io.lettuce.core.output.CommandOutput} should use streaming.
      */
-    public boolean isStreamingExecution() {
+    boolean isStreamingExecution() {
         return streamingExecution;
     }
 }

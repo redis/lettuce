@@ -52,7 +52,7 @@ class DeclaredCommandMethodUnitTests {
 
         CommandMethod commandMethod = DeclaredCommandMethod.create(getMethod("getFlux"));
 
-        assertThat(commandMethod.getActualReturnType().getRawClass()).isEqualTo(String.class);
+        assertThat(commandMethod.getActualReturnType().getRawClass()).isEqualTo(Flux.class);
         assertThat(commandMethod.getReturnType().getRawClass()).isEqualTo(Flux.class);
     }
 
@@ -60,7 +60,7 @@ class DeclaredCommandMethodUnitTests {
         return MyInterface.class.getDeclaredMethod(name);
     }
 
-    private static interface MyInterface {
+    private interface MyInterface {
 
         String getString();
 

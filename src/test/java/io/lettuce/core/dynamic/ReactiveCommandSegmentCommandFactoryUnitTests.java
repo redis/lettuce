@@ -17,25 +17,25 @@ package io.lettuce.core.dynamic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.reactivestreams.Publisher;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.dynamic.domain.Timeout;
-import io.lettuce.core.dynamic.output.CommandOutputFactory;
-import io.lettuce.core.dynamic.output.CommandOutputFactoryResolver;
+import io.lettuce.core.dynamic.output.CodecAwareOutputFactoryResolver;
+import io.lettuce.core.dynamic.output.OutputRegistry;
+import io.lettuce.core.dynamic.output.OutputRegistryCommandOutputFactoryResolver;
 import io.lettuce.core.dynamic.segment.AnnotationCommandSegmentFactory;
 import io.lettuce.core.dynamic.segment.CommandSegments;
 import io.lettuce.core.dynamic.support.ReflectionUtils;
+import io.lettuce.core.output.StreamingOutput;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
@@ -44,16 +44,8 @@ import io.lettuce.core.protocol.RedisCommand;
 @ExtendWith(MockitoExtension.class)
 class ReactiveCommandSegmentCommandFactoryUnitTests {
 
-    @Mock
-    private CommandOutputFactoryResolver outputFactoryResolver;
-
-    @Mock
-    private CommandOutputFactory commandOutputFactory;
-
-    @BeforeEach
-    void before() {
-        when(outputFactoryResolver.resolveCommandOutput(any())).thenReturn(commandOutputFactory);
-    }
+    private CodecAwareOutputFactoryResolver outputFactoryResolver = new CodecAwareOutputFactoryResolver(
+            new OutputRegistryCommandOutputFactoryResolver(new OutputRegistry()), StringCodec.UTF8);
 
     @Test
     void commandCreationWithTimeoutShouldFail() {
@@ -64,6 +56,22 @@ class ReactiveCommandSegmentCommandFactoryUnitTests {
         } catch (CommandCreationException e) {
             assertThat(e).hasMessageContaining("Reactive command methods do not support Timeout parameters");
         }
+    }
+
+    @Test
+    void shouldResolveNonStreamingOutput() {
+
+        RedisCommand<?, ?, ?> command = createCommand("getOne", ReactiveWithTimeout.class, String.class);
+
+        assertThat(command.getOutput()).isNotInstanceOf(StreamingOutput.class);
+    }
+
+    @Test
+    void shouldResolveStreamingOutput() {
+
+        RedisCommand<?, ?, ?> command = createCommand("getMany", ReactiveWithTimeout.class, String.class);
+
+        assertThat(command.getOutput()).isInstanceOf(StreamingOutput.class);
     }
 
     RedisCommand<?, ?, ?> createCommand(String methodName, Class<?> interfaceClass, Class<?>... parameterTypes) {
@@ -78,11 +86,15 @@ class ReactiveCommandSegmentCommandFactoryUnitTests {
         ReactiveCommandSegmentCommandFactory factory = new ReactiveCommandSegmentCommandFactory(commandSegments, commandMethod,
                 new StringCodec(), outputFactoryResolver);
 
-        return factory.createCommand(null);
+        return factory.createCommand(new Object[] { "foo" });
     }
 
     private static interface ReactiveWithTimeout {
 
         Publisher<String> get(String key, Timeout timeout);
+
+        Mono<String> getOne(String key);
+
+        Flux<String> getMany(String key);
     }
 }
