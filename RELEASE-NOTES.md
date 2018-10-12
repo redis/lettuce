@@ -6,8 +6,7 @@ This release fixes 9 bugs in total.
 
 Thanks to all contributors who made Lettuce 5.1.1.RELEASE possible.
 
-Lettuce requires a minimum of Java 8 to build and run. It is tested continuously
-against the latest Redis source-build.
+Lettuce requires a minimum of Java 8 to build and run and is compatible with Java 11. It is tested continuously against the latest Redis source-build.
 
 If you need any support, meet Lettuce at
 
