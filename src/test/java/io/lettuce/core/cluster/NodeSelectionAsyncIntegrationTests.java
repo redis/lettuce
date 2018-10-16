@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
+import java.util.stream.Collector;
 
 import javax.inject.Inject;
 
@@ -82,6 +83,44 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         Collections.sort(result);
 
         assertThat(result).isEqualTo(expectation);
+    }
+
+    @Test
+    void testThenCollect() {
+
+        List<String> expectation = new ArrayList<>();
+        for (char c = 'a'; c < 'z'; c++) {
+            String key = new String(new char[] { c, c, c });
+            expectation.add(key);
+            Futures.await(commands.set(key, value));
+        }
+
+        Collector<List<String>, List<String>, List<String>> collector = Collector.of(ArrayList::new, List::addAll, (a, b) -> a,
+                it -> it);
+
+        CompletableFuture<List<String>> future = commands.masters().commands().keys("*").thenCollect(collector)
+                .toCompletableFuture();
+
+        Futures.await(future);
+        List<String> result = future.join();
+
+        assertThat(result).hasSize(expectation.size());
+
+        Collections.sort(expectation);
+        Collections.sort(result);
+
+        assertThat(result).isEqualTo(expectation);
+    }
+
+    @Test
+    void testCompletionStageTransformation() {
+
+        CompletableFuture<String> transformed = commands.masters().commands().ping()
+                .thenApply(it -> String.join(" ", it.toArray(new String[0]))).toCompletableFuture();
+
+        Futures.await(transformed);
+
+        assertThat(transformed.join()).isEqualTo("PONG PONG");
     }
 
     @Test

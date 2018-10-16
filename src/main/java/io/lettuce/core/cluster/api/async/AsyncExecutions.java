@@ -16,9 +16,11 @@
 package io.lettuce.core.cluster.api.async;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -30,7 +32,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface AsyncExecutions<T> extends Iterable<CompletableFuture<T>> {
+public interface AsyncExecutions<T> extends Iterable<CompletableFuture<T>>, CompletionStage<List<T>> {
 
     /**
      *
@@ -52,10 +54,21 @@ public interface AsyncExecutions<T> extends Iterable<CompletableFuture<T>> {
     CompletionStage<T> get(RedisClusterNode redisClusterNode);
 
     /**
-     *
      * @return array of futures.
      */
     CompletableFuture<T>[] futures();
+
+    /**
+     * Returns a new {@link CompletionStage} that, when this stage completes normally, is executed with this stage's results as
+     * the argument to the {@link Collector}.
+     *
+     * See the {@link CompletionStage} documentation for rules covering exceptional completion.
+     *
+     * @param collector the {@link Collector} to collect this stages results.
+     * @return the new {@link CompletionStage}.
+     * @see 5.2
+     */
+    <R, A> CompletionStage<R> thenCollect(Collector<? super T, A, R> collector);
 
     /**
      * @return a sequential {@code Stream} over the {@link CompletionStage CompletionStages} in this collection
