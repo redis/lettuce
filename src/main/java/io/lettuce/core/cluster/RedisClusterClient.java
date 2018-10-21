@@ -644,17 +644,17 @@ public class RedisClusterClient extends AbstractRedisClient {
         Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
         PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<K, V>(clientOptions, clientResources);
-
-        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, endpoint,
-                clusterTopologyRefreshScheduler);
-        RedisChannelWriter writer = clusterWriter;
+        RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(clientOptions)) {
-            writer = new CommandExpiryWriter(clusterWriter, clientOptions, clientResources);
+            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
         }
 
+        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, writer,
+                clusterTopologyRefreshScheduler);
+
         StatefulRedisClusterPubSubConnectionImpl<K, V> connection = new StatefulRedisClusterPubSubConnectionImpl<>(endpoint,
-                writer, codec, timeout);
+                clusterWriter, codec, timeout);
 
         ClusterPubSubConnectionProvider<K, V> pooledClusterConnectionProvider = new ClusterPubSubConnectionProvider<>(this,
                 clusterWriter, codec, connection.getUpstreamListener(), clusterTopologyRefreshScheduler);
