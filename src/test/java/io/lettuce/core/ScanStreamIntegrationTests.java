@@ -15,8 +15,10 @@
  */
 package io.lettuce.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import javax.inject.Inject;
 
@@ -92,7 +94,6 @@ class ScanStreamIntegrationTests extends TestSupport {
 
         RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
 
-        AtomicInteger ai = new AtomicInteger();
         StepVerifier.create(ScanStream.sscan(reactive, key, ScanArgs.Builder.limit(200)), 0).thenRequest(250)
                 .expectNextCount(250).thenCancel().verify();
         StepVerifier.create(ScanStream.sscan(reactive, key).count()).expectNext(1000L).verifyComplete();
@@ -110,5 +111,28 @@ class ScanStreamIntegrationTests extends TestSupport {
         StepVerifier.create(ScanStream.zscan(reactive, key, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
         StepVerifier.create(ScanStream.zscan(reactive, key)).expectNextCount(1000).verifyComplete();
+    }
+
+    @Test
+    void shouldCorrectlyEmitItemsWithConcurrentPoll() {
+
+        RedisReactiveCommands<String, String> commands = connection.reactive();
+
+        String sourceKey = "source";
+        String targetKey = "target";
+
+        IntStream.range(0, 10_000).forEach(num -> connection.async().hset(sourceKey, String.valueOf(num), String.valueOf(num)));
+
+        redis.del(targetKey);
+
+        ScanStream.hscan(commands, sourceKey).map(KeyValue::getValue) //
+                .map(Integer::parseInt) //
+                .filter(num -> num % 2 == 0) //
+                .concatMap(item -> commands.sadd(targetKey, String.valueOf(item))) //
+                .as(StepVerifier::create) //
+                .expectNextCount(5000) //
+                .verifyComplete();
+
+        assertThat(redis.scard(targetKey)).isEqualTo(5_000);
     }
 }
