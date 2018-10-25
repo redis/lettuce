@@ -51,7 +51,7 @@ public interface CommandLatencyCollectorOptions {
      * @since 5.1
      */
     static CommandLatencyCollectorOptions.Builder builder() {
-        return CommandLatencyCollectorOptions.builder();
+        return DefaultCommandLatencyCollectorOptions.builder();
     }
 
     /**
