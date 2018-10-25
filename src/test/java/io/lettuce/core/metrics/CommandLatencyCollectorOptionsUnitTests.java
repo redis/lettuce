@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package io.lettuce.core.metrics;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
+/**
+ * @author Larry Battle
+ */
 class CommandLatencyCollectorOptionsUnitTests {
 
-    @Test()
+    @Test
     void testBuilder() {
 
         CommandLatencyCollectorOptions sut = CommandLatencyCollectorOptions.builder()

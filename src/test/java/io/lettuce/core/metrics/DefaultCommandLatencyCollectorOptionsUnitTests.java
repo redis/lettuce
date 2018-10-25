@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 /**
  * @author Mark Paluch
  */
-class DefaultDefaultCommandLatencyCollectorOptionsUnitTests {
+class DefaultCommandLatencyCollectorOptionsUnitTests {
 
     @Test
     void testDefault() {
