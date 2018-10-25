@@ -15,10 +15,9 @@
  */
 package io.lettuce.core;
 
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Function;
 
@@ -136,13 +135,15 @@ public abstract class ScanStream {
 
             Mono<MapScanCursor<K, V>> res = scanArgs.map(it -> commands.hscan(key, it)).orElseGet(() -> commands.hscan(key));
 
-            scan(sink,
-                    res,
-                    c -> scanArgs.map(it -> commands.hscan(key, c, it)).orElseGet(() -> commands.hscan(key, c)), //
+            scan(sink, res, c -> scanArgs.map(it -> commands.hscan(key, c, it)).orElseGet(() -> commands.hscan(key, c)), //
                     c -> {
-                        Iterator<KeyValue<K, V>> iterator = c.getMap().entrySet().stream()
-                                .map(me -> KeyValue.fromNullable(me.getKey(), me.getValue())).iterator();
-                        return () -> iterator;
+
+                        List<KeyValue<K, V>> list = new ArrayList<>(c.getMap().size());
+
+                        for (Map.Entry<K, V> kvEntry : c.getMap().entrySet()) {
+                            list.add(KeyValue.fromNullable(kvEntry.getKey(), kvEntry.getValue()));
+                        }
+                        return list;
                     });
         });
 
@@ -243,7 +244,7 @@ public abstract class ScanStream {
     }
 
     private static <V, C extends ScanCursor> void scan(FluxSink<V> sink, Mono<C> initialCursor,
-            Function<ScanCursor, Mono<C>> scanFunction, Function<C, Iterable<V>> manyMapper) {
+            Function<ScanCursor, Mono<C>> scanFunction, Function<C, Collection<V>> manyMapper) {
 
         new SubscriptionAdapter<>(sink, initialCursor, scanFunction, manyMapper).register();
     }
@@ -280,17 +281,16 @@ public abstract class ScanStream {
         private final Context context;
         private final Mono<C> initial;
         private final Function<ScanCursor, Mono<C>> scanFunction;
-        private final Function<C, Iterable<T>> manyMapper;
+        private final Function<C, Collection<T>> manyMapper;
 
         SubscriptionAdapter(FluxSink<T> sink, Mono<C> initial, Function<ScanCursor, Mono<C>> scanFunction,
-                Function<C, Iterable<T>> manyMapper) {
+                Function<C, Collection<T>> manyMapper) {
 
             this.sink = sink;
             this.context = sink.currentContext();
             this.initial = initial;
             this.scanFunction = scanFunction;
             this.manyMapper = manyMapper;
-
         }
 
         /**
@@ -306,8 +306,6 @@ public abstract class ScanStream {
             if (this.canceled) {
                 return;
             }
-
-            long demand = sink.requestedFromDownstream();
 
             ScanSubscriber<T, C> current = getCurrentSubscriber();
 
@@ -327,8 +325,7 @@ public abstract class ScanStream {
             }
 
             current.emitFromBuffer();
-
-            if (!current.exhausted || current.canceled || demand == 0) {
+            if (!current.isExhausted() || current.canceled || sink.requestedFromDownstream() == 0) {
                 return;
             }
 
@@ -358,24 +355,27 @@ public abstract class ScanStream {
         @Override
         public void chunkCompleted() {
 
-            if (!canceled) {
+            if (canceled) {
+                return;
+            }
 
-                ScanSubscriber<T, C> current = getCurrentSubscriber();
-                if (current != null) {
+            ScanSubscriber<T, C> current = getCurrentSubscriber();
+            if (current == null) {
+                return;
+            }
 
-                    ScanCursor cursor = current.getCursor();
+            ScanCursor cursor = current.getCursor();
 
-                    if (cursor != null) {
-                        if (!cursor.isFinished() || !current.exhausted) {
-                            onDemand(0);
-                            return;
-                        }
-                    }
-                }
+            if (cursor == null) {
+                return;
+            }
 
+            if (cursor.isFinished() && current.isExhausted()) {
                 if (terminate()) {
                     sink.complete();
                 }
+            } else {
+                onDemand(0);
             }
         }
 
@@ -408,20 +408,25 @@ public abstract class ScanStream {
         private static final AtomicReferenceFieldUpdater<ScanSubscriber, ScanCursor> CURSOR = AtomicReferenceFieldUpdater
                 .newUpdater(ScanSubscriber.class, ScanCursor.class, "cursor");
 
+        private static final AtomicLongFieldUpdater<ScanSubscriber> EMITTED = AtomicLongFieldUpdater.newUpdater(
+                ScanSubscriber.class, "emitted");
+
         private final Completable completable;
         private final FluxSink<T> sink;
         private final Queue<T> buffer = Operators.newQueue();
         private final Context context;
-        private final Function<C, Iterable<T>> manyMapper;
+        private final Function<C, Collection<T>> manyMapper;
 
-        volatile boolean exhausted = false;
         volatile boolean canceled;
-
         // see CURSOR
         @SuppressWarnings("unused")
         private volatile C cursor;
+        // see EMITTED
+        @SuppressWarnings("unused")
+        private volatile long emitted;
+        private volatile long cursorSize;
 
-        ScanSubscriber(Completable completable, FluxSink<T> sink, Context context, Function<C, Iterable<T>> manyMapper) {
+        ScanSubscriber(Completable completable, FluxSink<T> sink, Context context, Function<C, Collection<T>> manyMapper) {
             this.completable = completable;
             this.sink = sink;
             this.context = context;
@@ -441,9 +446,10 @@ public abstract class ScanStream {
                 return;
             }
 
-            Iterable<T> iterable = manyMapper.apply(cursor);
+            Collection<T> items = manyMapper.apply(cursor);
+            cursorSize = items.size();
 
-            emitDirect(iterable);
+            emitDirect(items);
         }
 
         /**
@@ -457,29 +463,25 @@ public abstract class ScanStream {
             long demand = sink.requestedFromDownstream();
             long sent = 0;
 
-            if (demand > 0) {
-                for (T value : iterable) {
+            for (T value : iterable) {
 
-                    if (canceled) {
-                        break;
-                    }
-
-                    if (demand <= sent) {
-                        buffer.add(value);
-                        continue;
-                    }
-
-                    sent++;
-
-                    next(value);
+                if (canceled) {
+                    break;
                 }
-            }
 
-            exhausted = buffer.isEmpty();
+                if (demand <= sent) {
+                    buffer.add(value);
+                    continue;
+                }
+
+                sent++;
+
+                next(value);
+            }
         }
 
         /**
-         * Buffer-based emission polling items from the buffer and emitting until the demand is satisified or the buffer is
+         * Buffer-based emission polling items from the buffer and emitting until the demand is satisfied or the buffer is
          * exhausted.
          */
         void emitFromBuffer() {
@@ -504,11 +506,10 @@ public abstract class ScanStream {
                     }
                 }
             }
-
-            exhausted = buffer.isEmpty();
         }
 
         private void next(T value) {
+            EMITTED.incrementAndGet(this);
             sink.next(value);
         }
 
@@ -529,6 +530,10 @@ public abstract class ScanStream {
 
         public ScanCursor getCursor() {
             return CURSOR.get(this);
+        }
+
+        public boolean isExhausted() {
+            return EMITTED.get(this) == cursorSize && getCursor() != null;
         }
     }
 
