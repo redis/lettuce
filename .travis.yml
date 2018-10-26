@@ -9,8 +9,6 @@ matrix:
     - env: JDK='OpenJDK 11'
       install: . ./install-jdk.sh -F 11 -L GPL
 # 10
-    - env: JDK='Oracle JDK 10'
-      install: . ./install-jdk.sh -F 10 -L BCL
     - env: JDK='OpenJDK 10'
       install: . ./install-jdk.sh -F 10 -L GPL
 # 9
