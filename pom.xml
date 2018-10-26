@@ -110,7 +110,7 @@
     <spring-batch.version>4.0.1.RELEASE</spring-batch.version>
 
     <!-- Reverting back to prior unit temporarily until code fixed -->
-    <junit-engine.version>5.2.0</junit-engine.version>
+    <junit-engine.version>5.3.1</junit-engine.version>
     <junit-platform.version>1.2.0</junit-platform.version>
   </properties>
 
