@@ -165,6 +165,18 @@
       <version>${junit-engine.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit-engine.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <version>${junit-engine.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.jboss.byteman</groupId>
@@ -327,13 +339,6 @@
             </property>
           </systemProperties>
         </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>${junit-engine.version}</version>
-          </dependency>
-        </dependencies>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
