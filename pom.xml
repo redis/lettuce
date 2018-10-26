@@ -60,7 +60,7 @@
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <netty-version>4.1.30.Final</netty-version>
         <spring-version>4.3.20.RELEASE</spring-version>
-        <reactor-version>3.2.1.RELEASE</reactor-version>
+        <reactor-version>3.2.2.RELEASE</reactor-version>
         <brave-version>5.2.0</brave-version>
         <skipITs>true</skipITs>
     </properties>
