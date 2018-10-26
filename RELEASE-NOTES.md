@@ -1,12 +1,14 @@
-Lettuce 5.1.1 RELEASE NOTES
+Lettuce 5.1.2 RELEASE NOTES
 ===========================
 
-The Lettuce team is pleased to announce the Lettuce 5.1.1 service release! 
-This release fixes 9 bugs in total.
+The Lettuce team is pleased to announce the Lettuce 5.1.2 service release! 
+This release ships with 9 tickets fixed. Upgrading is strongly recommended 
+for users of the  reactive API.
 
-Thanks to all contributors who made Lettuce 5.1.1.RELEASE possible.
+Thanks to all contributors who made Lettuce 5.1.2.RELEASE possible.
 
-Lettuce requires a minimum of Java 8 to build and run and is compatible with Java 11. It is tested continuously against the latest Redis source-build.
+Lettuce requires a minimum of Java 8 to build and run and #RunsLikeHeaven on Java 11. 
+It is tested continuously against the latest Redis source-build.
 
 If you need any support, meet Lettuce at
 
@@ -14,21 +16,20 @@ If you need any support, meet Lettuce at
 or lettuce-redis-client-users@googlegroups.com
 * Join the chat at https://gitter.im/lettuce-io/Lobby
 * GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/5.1.1.RELEASE/reference/
-* Javadoc: https://lettuce.io/core/5.1.1.RELEASE/api/
+* Documentation: https://lettuce.io/core/5.1.2.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/5.1.2.RELEASE/api/
 
 Fixes
 -----
-* Unable to reconnect Pub/Sub connection with authorization #868 (Thanks to @maestroua)
-* Reduce allocations in topology comparator #870
-* Fix recordCommandLatency to work properly #874 (Thanks to @jongyeol)
-* Bug: Include hostPortString in the error message #876 (Thanks to @LarryBattle)
-* Reference docs CSS prevents HTTPS usage #878
-* ReactiveCommandSegmentCommandFactory resolves StreamingOutput for all reactive types #879 (Thanks to @yozhag)
+* Revert generics signature change in ConnectionPoolSupport #886
+* ClassCastException occurs when executing RedisClusterClient::connectPubSub with global timeout feature #895 (Thanks to @be-hase)
+* Flux that reads from a hash, processes elements and writes to a set, completes prematurely #897 (Thanks to @vkurland)
+* Fixed stackoverflow exception inside CommandLatencyCollectorOptions #899 (Thanks to @LarryBattle)
 
 Other
 -----
-* Migrate tests to JUnit 5 #430
-* Remove tempusfugit dependency #871
-* Makefile refactor download redis #877 (Thanks to @LarryBattle)
-* Upgrade to Reactor Californium SR1 #883
+* Upgrade to Redis 5 GA #893
+* Upgrade to RxJava 2.2.3 #901
+* Upgrade to Spring Framework 4.3.20.RELEASE #902
+* Upgrade to netty 4.1.30.Final #903
+* Upgrade to Reactor Core 3.2.2.RELEASE #904
