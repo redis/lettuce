@@ -5,9 +5,9 @@ matrix:
   include:
 # 11
     - env: JDK='Oracle JDK 11'
-      install: . ./install-jdk.sh -F 11 -L BCL
+      jdk: oraclejdk11
     - env: JDK='OpenJDK 11'
-      install: . ./install-jdk.sh -F 11 -L GPL
+      jdk: openjdk11
 # 10
     - env: JDK='OpenJDK 10'
       install: . ./install-jdk.sh -F 10 -L GPL
