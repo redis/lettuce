@@ -15,18 +15,17 @@
  */
 package org.mybatis.spring.batch;
 
-import static org.springframework.util.Assert.notNull;
-import static org.springframework.util.ClassUtils.getShortName;
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.batch.item.database.AbstractPagingItemReader;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.batch.item.database.AbstractPagingItemReader;
+import static org.springframework.util.Assert.notNull;
+import static org.springframework.util.ClassUtils.getShortName;
 
 /**
  * {@code org.springframework.batch.item.ItemReader} for reading database
@@ -44,7 +43,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 
   private SqlSessionFactory sqlSessionFactory;
 
-  private SqlSessionTemplate sqlSessionTemplate;
+  private SqlSession sqlSession;
 
   private Map<String, Object> parameterValues;
 
@@ -89,8 +88,21 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   public void afterPropertiesSet() throws Exception {
     super.afterPropertiesSet();
     notNull(sqlSessionFactory, "A SqlSessionFactory is required.");
-    sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
     notNull(queryId, "A queryId is required.");
+  }
+
+  @Override
+  protected void doOpen() throws Exception {
+    super.doOpen();
+    sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
+  }
+
+  @Override
+  protected void doClose() throws Exception {
+    if (sqlSession != null) {
+      sqlSession.close();
+    }
+    super.doClose();
   }
 
   @Override
@@ -107,7 +119,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
     } else {
       results.clear();
     }
-    results.addAll(sqlSessionTemplate.selectList(queryId, parameters));
+    results.addAll(sqlSession.selectList(queryId, parameters));
   }
 
   @Override
