@@ -18,6 +18,7 @@ package org.mybatis.spring.batch;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.batch.item.database.AbstractPagingItemReader;
 
 import java.util.HashMap;
@@ -43,7 +44,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 
   private SqlSessionFactory sqlSessionFactory;
 
-  private SqlSession sqlSession;
+  private SqlSessionTemplate sqlSessionTemplate;
 
   private Map<String, Object> parameterValues;
 
@@ -94,13 +95,13 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   @Override
   protected void doOpen() throws Exception {
     super.doOpen();
-    sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
+    sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
   }
 
   @Override
   protected void doClose() throws Exception {
-    if (sqlSession != null) {
-      sqlSession.close();
+    if (sqlSessionTemplate != null) {
+      sqlSessionTemplate.close();
     }
     super.doClose();
   }
@@ -119,7 +120,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
     } else {
       results.clear();
     }
-    results.addAll(sqlSession.selectList(queryId, parameters));
+    results.addAll(sqlSessionTemplate.selectList(queryId, parameters));
   }
 
   @Override
