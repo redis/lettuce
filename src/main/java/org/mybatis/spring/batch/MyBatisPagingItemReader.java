@@ -93,21 +93,10 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   }
 
   @Override
-  protected void doOpen() throws Exception {
-    super.doOpen();
-    sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
-  }
-
-  @Override
-  protected void doClose() throws Exception {
-    if (sqlSessionTemplate != null) {
-      sqlSessionTemplate.close();
-    }
-    super.doClose();
-  }
-
-  @Override
   protected void doReadPage() {
+    if (sqlSessionTemplate == null) {
+      sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
+    }
     Map<String, Object> parameters = new HashMap<>();
     if (parameterValues != null) {
       parameters.putAll(parameterValues);
