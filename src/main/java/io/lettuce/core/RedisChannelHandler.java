@@ -36,7 +36,7 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * Abstract base for every redis connection. Provides basic connection functionality and tracks open resources.
+ * Abstract base for every Redis connection. Provides basic connection functionality and tracks open resources.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -289,6 +289,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
         return active;
     }
 
+    @Deprecated
+    @Override
     public void reset() {
         channelWriter.reset();
     }
