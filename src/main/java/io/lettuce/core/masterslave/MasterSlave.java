@@ -45,14 +45,14 @@ import io.lettuce.core.internal.LettuceLists;
  * StatefulRedisMasterSlaveConnection&lt;String, String&gt; connection = MasterSlave.connect(client,
  *         RedisURI.create(&quot;redis://localhost&quot;), StringCodec.UTF8);
  * // ...
- *
+ * 
  * connection.close();
  * client.shutdown();
  * </pre>
  *
  * </p>
  * <h3>Topology Discovery</h3>
- * <p>
+ * <p />
  * Master-Slave topologies are either static or semi-static. Redis Standalone instances with attached slaves provide no
  * failover/HA mechanism. Redis Sentinel managed instances are controlled by Redis Sentinel and allow failover (which include
  * master promotion). The {@link MasterSlave} API supports both mechanisms. The topology is provided by a
@@ -70,14 +70,22 @@ import io.lettuce.core.internal.LettuceLists;
  * {@code SENTINEL MASTER} and {@code SENTINEL SLAVES} output. Master/Slave failover is handled by lettuce.</li>
  * </ul>
  *
- * <p>
- * Topology Updates
- * </p>
+ * <h3>Topology Updates</h4>
  * <ul>
  * <li>Standalone Master/Slave: Performs a one-time topology lookup which remains static afterward</li>
  * <li>Redis Sentinel: Subscribes to all Sentinels and listens for Pub/Sub messages to trigger topology refreshing</li>
  * </ul>
- * </p>
+ * 
+ * <h3>Connection Fault-Tolerance</h3>
+ * Connecting to Master/Slave bears the possibility that individual nodes are not reachable. {@link MasterSlave} can still
+ * connect to a partially-available set of nodes.
+ * 
+ * <ul>
+ * <li>Redis Sentinel: At least one Sentinel must be reachable, the masterId must be registered and at least one host must be
+ * available (master or slave). Allows for runtime-recovery based on Sentinel Events.</li>
+ * <li>Static Setup (auto-discovery): The initial endpoint must be reachable. No recovery/reconfiguration during runtime.</li>
+ * <li>Static Setup (provided hosts): All endpoints must be reachable. No recovery/reconfiguration during runtime.</li>
+ * </ul>
  *
  * @author Mark Paluch
  * @since 4.1
