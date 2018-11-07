@@ -97,7 +97,7 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
         if (getExpectedCount() != 0 && this.connections.isEmpty() && !this.exceptions.isEmpty()) {
 
             RedisConnectionException collector = new RedisConnectionException(
-                    "Unable to establish a connection to Redis Cluster");
+                    "Unable to establish a connection to Redis Master/Slave");
             this.exceptions.forEach(collector::addSuppressed);
 
             emission.error(collector);
