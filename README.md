@@ -59,56 +59,26 @@ Example for Maven:
 </dependency>
 ```
 
-Shaded JAR-File (packaged dependencies  and relocated to the `io.lettuce.core` package to prevent version conflicts)
+If you'd rather like the latest snapshots of the upcoming major version, use our Maven snapshot repository and declare the appropriate dependency version.
 
 ```xml
 <dependency>
   <groupId>io.lettuce</groupId>
   <artifactId>lettuce-core</artifactId>
-  <version>x.y.z</version>
-  <classifier>shaded</classifier>
-  <exclusions>
-    <exclusion>
-      <groupId>io.projectreactor</groupId>
-      <artifactId>reactor-core</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.latencyutils</groupId>
-      <artifactId>LatencyUtils</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-common</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-transport</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-handler</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-transport-native-epoll</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-transport-native-kqueue</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-pool2</artifactId>
-    </exclusion>
-  </exclusions>
+  <version>x.y.z.BUILD-SNAPSHOT</version>
 </dependency>
-```    
 
-or snapshots at https://oss.sonatype.org/content/repositories/snapshots/
+<repositories>
+  <repository>
+    <id>sonatype-snapshots</id>
+    <name>Sonatype Snapshot Repository</name>
+    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    <snapshots>
+      <enabled>true</enabled>
+    </snapshots>
+  </repository>
+</repositories>
+```
 
 Basic Usage
 -----------
@@ -198,7 +168,7 @@ For bugs, questions and discussions please use the [GitHub Issues](https://githu
 License
 -------
 
-* [Apache License 2.0] (http://www.apache.org/licenses/LICENSE-2.0)
+* [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 * Fork of https://github.com/wg/lettuce
 
 Contributing
