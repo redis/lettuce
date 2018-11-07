@@ -120,11 +120,11 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
         List<RedisFuture<Void>> result = new ArrayList<>();
 
-        if (!endpoint.getChannels().isEmpty()) {
+        if (endpoint.hasChannelSubscriptions()) {
             result.add(async().subscribe(toArray(endpoint.getChannels())));
         }
 
-        if (!endpoint.getPatterns().isEmpty()) {
+        if (endpoint.hasPatternSubscriptions()) {
             result.add(async().psubscribe(toArray(endpoint.getPatterns())));
         }
 

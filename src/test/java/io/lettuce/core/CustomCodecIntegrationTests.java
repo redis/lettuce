@@ -170,32 +170,4 @@ class CustomCodecIntegrationTests extends TestSupport {
         }
     }
 
-    class ByteBufferCodec implements RedisCodec<ByteBuffer, ByteBuffer> {
-
-        @Override
-        public ByteBuffer decodeKey(ByteBuffer bytes) {
-
-            ByteBuffer decoupled = ByteBuffer.allocate(bytes.remaining());
-            decoupled.put(bytes);
-            return (ByteBuffer) decoupled.flip();
-        }
-
-        @Override
-        public ByteBuffer decodeValue(ByteBuffer bytes) {
-
-            ByteBuffer decoupled = ByteBuffer.allocate(bytes.remaining());
-            decoupled.put(bytes);
-            return (ByteBuffer) decoupled.flip();
-        }
-
-        @Override
-        public ByteBuffer encodeKey(ByteBuffer key) {
-            return key.asReadOnlyBuffer();
-        }
-
-        @Override
-        public ByteBuffer encodeValue(ByteBuffer value) {
-            return value.asReadOnlyBuffer();
-        }
-    }
 }
