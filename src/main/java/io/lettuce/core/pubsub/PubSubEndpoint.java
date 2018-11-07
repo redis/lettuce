@@ -15,10 +15,7 @@
  */
 package io.lettuce.core.pubsub;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.lettuce.core.ClientOptions;
@@ -38,8 +35,8 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     private static final Set<String> ALLOWED_COMMANDS_SUBSCRIBED;
     private static final Set<String> SUBSCRIBE_COMMANDS;
     private final List<RedisPubSubListener<K, V>> listeners = new CopyOnWriteArrayList<>();
-    private final Set<K> channels;
-    private final Set<K> patterns;
+    private final Set<Wrapper<K>> channels;
+    private final Set<Wrapper<K>> patterns;
     private volatile boolean subscribeWritten = false;
 
     static {
@@ -94,12 +91,20 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         return listeners;
     }
 
+    public boolean hasChannelSubscriptions() {
+        return !channels.isEmpty();
+    }
+
     public Set<K> getChannels() {
-        return channels;
+        return unwrap(this.channels);
+    }
+
+    public boolean hasPatternSubscriptions() {
+        return !patterns.isEmpty();
     }
 
     public Set<K> getPatterns() {
-        return patterns;
+        return unwrap(this.patterns);
     }
 
     @Override
@@ -151,7 +156,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     }
 
     private boolean isSubscribed() {
-        return subscribeWritten && (!channels.isEmpty() || !patterns.isEmpty());
+        return subscribeWritten && (hasChannelSubscriptions() || hasPatternSubscriptions());
     }
 
     public void notifyMessage(PubSubOutput<K, V, V> output) {
@@ -197,19 +202,78 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         // update internal state
         switch (output.type()) {
             case psubscribe:
-                patterns.add(output.pattern());
+                patterns.add(new Wrapper<>(output.pattern()));
                 break;
             case punsubscribe:
-                patterns.remove(output.pattern());
+                patterns.remove(new Wrapper<>(output.pattern()));
                 break;
             case subscribe:
-                channels.add(output.channel());
+                channels.add(new Wrapper<>(output.channel()));
                 break;
             case unsubscribe:
-                channels.remove(output.channel());
+                channels.remove(new Wrapper<>(output.channel()));
                 break;
             default:
                 break;
+        }
+    }
+
+    private Set<K> unwrap(Set<Wrapper<K>> wrapped) {
+
+        Set<K> result = new LinkedHashSet<>(wrapped.size());
+
+        for (Wrapper<K> channel : wrapped) {
+            result.add(channel.name);
+        }
+
+        return result;
+    }
+
+    /**
+     * Comparison/equality wrapper with specific {@code byte[]} equals and hashCode implementations.
+     * 
+     * @param <K>
+     */
+    static class Wrapper<K> {
+
+        protected final K name;
+
+        public Wrapper(K name) {
+            this.name = name;
+        }
+
+        @Override
+        public int hashCode() {
+
+            if (name instanceof byte[]) {
+                return Arrays.hashCode((byte[]) name);
+            }
+            return name.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+
+            if (!(obj instanceof Wrapper)) {
+                return false;
+            }
+
+            Wrapper<K> that = (Wrapper<K>) obj;
+
+            if (name instanceof byte[] && that.name instanceof byte[]) {
+                return Arrays.equals((byte[]) name, (byte[]) that.name);
+            }
+
+            return name.equals(that.name);
+        }
+
+        @Override
+        public String toString() {
+            final StringBuffer sb = new StringBuffer();
+            sb.append(getClass().getSimpleName());
+            sb.append(" [name=").append(name);
+            sb.append(']');
+            return sb.toString();
         }
     }
 }
