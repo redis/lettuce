@@ -143,7 +143,7 @@ Building
 -----------
 
 Lettuce is built with Apache Maven. The tests require multiple running Redis instances for different test cases which
-are configured using a ```Makefile```. All tests run against Redis branch 3.0
+are configured using a ```Makefile```. Tests run by default against Redis `unstable`.
 
 To build:
 
