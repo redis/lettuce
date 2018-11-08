@@ -15,9 +15,9 @@
  */
 package io.lettuce.core;
 
-import java.io.Serializable;
-
 import io.lettuce.core.internal.LettuceAssert;
+
+import java.io.Serializable;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -36,6 +36,7 @@ public class ClientOptions implements Serializable {
     public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
     public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
+    public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
 
     private final boolean pingBeforeActivateConnection;
     private final boolean autoReconnect;
@@ -46,6 +47,7 @@ public class ClientOptions implements Serializable {
     private final SocketOptions socketOptions;
     private final SslOptions sslOptions;
     private final TimeoutOptions timeoutOptions;
+    private final int bufferUsageRatio;
     private final Builder builder;
 
     protected ClientOptions(Builder builder) {
@@ -58,6 +60,7 @@ public class ClientOptions implements Serializable {
         this.socketOptions = builder.socketOptions;
         this.sslOptions = builder.sslOptions;
         this.timeoutOptions = builder.timeoutOptions;
+        this.bufferUsageRatio = builder.bufferUsageRatio;
         this.builder = builder;
     }
 
@@ -71,6 +74,7 @@ public class ClientOptions implements Serializable {
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
         this.timeoutOptions = original.getTimeoutOptions();
+        this.bufferUsageRatio = original.getBufferUsageRatio();
         this.builder = original.builder;
     }
 
@@ -116,6 +120,7 @@ public class ClientOptions implements Serializable {
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
         private SslOptions sslOptions = DEFAULT_SSL_OPTIONS;
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
+        private int bufferUsageRatio = DEFAULT_BUFFER_USAGE_RATIO;
 
         protected Builder() {
         }
@@ -239,6 +244,23 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Sets the buffer usage ratio to {@link io.lettuce.core.protocol.CommandHandler} for determine when to discard
+         * read bytes.See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
+         *
+         * @param bufferUsageRatio must greater between 0 and 2^31-1
+         * @return {@code this}
+         * @since 5.2
+         */
+        public Builder bufferUsageRatio(int bufferUsageRatio) {
+            LettuceAssert.isTrue(bufferUsageRatio > 0 && bufferUsageRatio < Integer.MAX_VALUE,
+                    "BufferUsageRatio must grater than 0");
+            LettuceAssert.isTrue(bufferUsageRatio < Integer.MAX_VALUE,
+                    "BufferUsageRatio must less than " + Integer.MAX_VALUE);
+            this.bufferUsageRatio = bufferUsageRatio;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link ClientOptions}.
          *
          * @return new instance of {@link ClientOptions}
@@ -352,6 +374,18 @@ public class ClientOptions implements Serializable {
      */
     public TimeoutOptions getTimeoutOptions() {
         return timeoutOptions;
+    }
+
+    /**
+     * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. Discard operation for read bytes occur
+     * When buffer usage reach {@code bufferUsageRatio / bufferUsageRatio + 1}. For example, sets 3 to bufferUsageRatio,
+     * means buffer usage reach 75 percentage, discard operation occur.
+     *
+     * @return the buffer usage ratio.
+     * @since 5.2
+     */
+    public int getBufferUsageRatio() {
+        return bufferUsageRatio;
     }
 
     /**

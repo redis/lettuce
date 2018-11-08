@@ -588,6 +588,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             try {
                 if (!decode(ctx, buffer, command)) {
+                    discardReadBytesIfNecessary(buffer);
                     return;
                 }
             } catch (Exception e) {
@@ -614,9 +615,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             afterDecode(ctx, command);
         }
 
-        if (buffer.refCnt() != 0) {
-            buffer.discardReadBytes();
-        }
+        discardReadBytesIfNecessary(buffer);
     }
 
     /**
@@ -838,6 +837,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private static long nanoTime() {
         return System.nanoTime();
+    }
+
+    /**
+     * try discard read bytes when buffer usage reach {@code bufferUsageRatio / bufferUsageRatio + 1}
+     * @param buffer
+     */
+    private void discardReadBytesIfNecessary(ByteBuf buffer) {
+        int bufferUsageRatio = clientOptions.getBufferUsageRatio();
+        if ((float)buffer.writerIndex() / buffer.capacity() >= (float)bufferUsageRatio / (bufferUsageRatio + 1)) {
+            if (buffer.refCnt() != 0) {
+                buffer.discardReadBytes();
+            }
+        }
     }
 
     public enum LifecycleState {
