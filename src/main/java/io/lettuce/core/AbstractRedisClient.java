@@ -433,6 +433,8 @@ public abstract class AbstractRedisClient {
 
         if (shutdown.compareAndSet(false, true)) {
 
+            logger.debug("Initiate shutdown ({}, {}, {})", quietPeriod, timeout, timeUnit);
+
             List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
 
             while (!closeableResources.isEmpty()) {
