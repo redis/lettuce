@@ -60,7 +60,9 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     @Override
     public <T extends EventLoopGroup> T allocate(Class<T> type) {
+
         synchronized (this) {
+            logger.debug("Allocating executor {}", type.getName());
             return addReference(getOrCreate(type));
         }
     }
@@ -134,6 +136,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      */
     public static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads) {
 
+        logger.debug("Creating executor {}", type.getName());
+
         if (DefaultEventExecutorGroup.class.equals(type)) {
             return new DefaultEventExecutorGroup(numberOfThreads, new DefaultThreadFactory("lettuce-eventExecutorLoop", true));
         }
@@ -155,6 +159,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     @Override
     public Promise<Boolean> release(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit) {
+
+        logger.debug("Release executor {}", eventLoopGroup);
 
         Class<?> key = getKey(release(eventLoopGroup));
 
@@ -193,6 +199,9 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     @Override
     @SuppressWarnings("unchecked")
     public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
+
+        logger.debug("Initiate shutdown ({}, {}, {})", quietPeriod, timeout, timeUnit);
+
         shutdownCalled = true;
 
         Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = new HashMap<>(eventLoopGroups);
