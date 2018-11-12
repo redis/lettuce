@@ -573,6 +573,8 @@ public class DefaultClientResources implements ClientResources {
     @SuppressWarnings("unchecked")
     public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
+        logger.debug("Initiate shutdown ({}, {}, {})", quietPeriod, timeout, timeUnit);
+
         shutdownCalled = true;
         DefaultPromise<Boolean> overall = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
         DefaultPromise<Boolean> lastRelease = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
