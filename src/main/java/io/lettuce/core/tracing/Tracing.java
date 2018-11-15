@@ -50,6 +50,11 @@ public interface Tracing {
     boolean isEnabled();
 
     /**
+     * @return {@literal true} if tags for {@link Tracer.Span}s should include the command arguments.
+     */
+    boolean includeCommandArgsInSpanTags();
+
+    /**
      * Create an {@link Endpoint} given {@link SocketAddress}.
      *
      * @param socketAddress the remote address.

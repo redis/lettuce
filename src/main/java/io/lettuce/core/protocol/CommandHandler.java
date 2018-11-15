@@ -78,6 +78,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final boolean latencyMetricsEnabled;
     private final boolean tracingEnabled;
+    private final boolean includeCommandArgsInSpanTags;
     private final boolean boundedQueues;
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
@@ -111,6 +112,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         Tracing tracing = clientResources.tracing();
 
         this.tracingEnabled = tracing.isEnabled();
+        this.includeCommandArgsInSpanTags = tracing.includeCommandArgsInSpanTags();
     }
 
     public Queue<RedisCommand<?, ?, ?>> getStack() {
@@ -385,7 +387,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             Tracer.Span span = tracer.nextSpan(context);
             span.name(command.getType().name());
 
-            if (command.getArgs() != null) {
+            if (includeCommandArgsInSpanTags && command.getArgs() != null) {
                 span.tag("redis.args", command.getArgs().toCommandString());
             }
 

@@ -56,6 +56,11 @@ enum NoOpTracing implements Tracing, TraceContextProvider, TracerProvider {
     }
 
     @Override
+    public boolean includeCommandArgsInSpanTags() {
+        return false;
+    }
+
+    @Override
     public Endpoint createEndpoint(SocketAddress socketAddress) {
         return NOOP_ENDPOINT;
     }

@@ -55,6 +55,7 @@ public class BraveTracing implements Tracing {
 
     private final BraveTracer tracer;
     private final BraveTracingOptions tracingOptions;
+    private final boolean includeCommandArgsInSpanTags;
 
     /**
      * Create a new {@link BraveTracing} instance.
@@ -68,6 +69,7 @@ public class BraveTracing implements Tracing {
 
         this.tracingOptions = new BraveTracingOptions(builder.serviceName, builder.endpointCustomizer, builder.spanCustomizer);
         this.tracer = new BraveTracer(builder.tracing, this.tracingOptions);
+        this.includeCommandArgsInSpanTags = builder.includeCommandArgsInSpanTags;
     }
 
     /**
@@ -103,6 +105,7 @@ public class BraveTracing implements Tracing {
         };
         private Consumer<brave.Span> spanCustomizer = it -> {
         };
+        private boolean includeCommandArgsInSpanTags = true;
 
         private Builder() {
         }
@@ -132,6 +135,19 @@ public class BraveTracing implements Tracing {
             LettuceAssert.notEmpty(serviceName, "Service name must not be null!");
 
             this.serviceName = serviceName;
+            return this;
+        }
+
+        /**
+         * Controls the inclusion of command arguments in {@link Span} tags.
+         * This is enabled by default.
+         *
+         * @param includeCommandArgsInSpanTags the flag to enable or disable the inclusion of command args in {@link Span} tags.
+         * @return {@code this} {@link Builder}.
+         */
+        public Builder includeCommandArgsInSpanTags(boolean includeCommandArgsInSpanTags) {
+
+            this.includeCommandArgsInSpanTags = includeCommandArgsInSpanTags;
             return this;
         }
 
@@ -180,6 +196,11 @@ public class BraveTracing implements Tracing {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public boolean includeCommandArgsInSpanTags() {
+        return includeCommandArgsInSpanTags;
     }
 
     @Override
