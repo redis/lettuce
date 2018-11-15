@@ -35,6 +35,7 @@ import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.Tracer;
 import io.lettuce.core.tracing.Tracing;
+import io.lettuce.core.tracing.TracingTagsCustomizer;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
@@ -78,6 +79,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final boolean latencyMetricsEnabled;
     private final boolean tracingEnabled;
+    private final TracingTagsCustomizer tracingTagsCustomizer;
     private final boolean boundedQueues;
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
@@ -111,6 +113,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         Tracing tracing = clientResources.tracing();
 
         this.tracingEnabled = tracing.isEnabled();
+        this.tracingTagsCustomizer = tracing.getTracingTagsCustomizer();
     }
 
     public Queue<RedisCommand<?, ?, ?>> getStack() {
@@ -386,7 +389,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             span.name(command.getType().name());
 
             if (command.getArgs() != null) {
-                span.tag("redis.args", command.getArgs().toCommandString());
+                tracingTagsCustomizer.handleCommandArgs(span, command.getType(), command.getArgs());
             }
 
             span.remoteEndpoint(tracedEndpoint);
@@ -400,10 +403,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
                     String error = command.getOutput().getError();
                     if (error != null) {
-                        span.tag("error", error);
+                        tracingTagsCustomizer.handleError(span, error);
                     } else if (throwable != null) {
-                        span.tag("exception", throwable.toString());
-                        span.error(throwable);
+                        tracingTagsCustomizer.handleException(span, throwable);
                     }
                 }
 

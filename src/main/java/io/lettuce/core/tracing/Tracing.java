@@ -50,6 +50,13 @@ public interface Tracing {
     boolean isEnabled();
 
     /**
+     * Returns {@literal true} if tracing is enabled.
+     *
+     * @return {@literal true} if tracing DefaultClientResourcesTestis enabled.
+     */
+    TracingTagsCustomizer getTracingTagsCustomizer();
+
+    /**
      * Create an {@link Endpoint} given {@link SocketAddress}.
      *
      * @param socketAddress the remote address.

@@ -55,6 +55,7 @@ public class BraveTracing implements Tracing {
 
     private final BraveTracer tracer;
     private final BraveTracingOptions tracingOptions;
+    private final TracingTagsCustomizer tracingTagsCustomizer;
 
     /**
      * Create a new {@link BraveTracing} instance.
@@ -68,6 +69,7 @@ public class BraveTracing implements Tracing {
 
         this.tracingOptions = new BraveTracingOptions(builder.serviceName, builder.endpointCustomizer, builder.spanCustomizer);
         this.tracer = new BraveTracer(builder.tracing, this.tracingOptions);
+        this.tracingTagsCustomizer = builder.tracingTagsCustomizer;
     }
 
     /**
@@ -103,6 +105,7 @@ public class BraveTracing implements Tracing {
         };
         private Consumer<brave.Span> spanCustomizer = it -> {
         };
+        private TracingTagsCustomizer tracingTagsCustomizer = new DefaultTracingTagsCustomizer();
 
         private Builder() {
         }
@@ -132,6 +135,21 @@ public class BraveTracing implements Tracing {
             LettuceAssert.notEmpty(serviceName, "Service name must not be null!");
 
             this.serviceName = serviceName;
+            return this;
+        }
+
+        /**
+         * Sets a {@link TracingTagsCustomizer} to customize how tracing tags are reported.
+         * When not set it uses the {@link DefaultTracingTagsCustomizer}.
+         *
+         * @param tracingTagsCustomizer must not be {@literal null}.
+         * @return {@code this} {@link Builder}.
+         */
+        public Builder tracingTagsCustomizer(TracingTagsCustomizer tracingTagsCustomizer) {
+
+            LettuceAssert.notNull(tracingTagsCustomizer, "Tracing tags customizer must not be null!");
+
+            this.tracingTagsCustomizer = tracingTagsCustomizer;
             return this;
         }
 
@@ -180,6 +198,11 @@ public class BraveTracing implements Tracing {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public TracingTagsCustomizer getTracingTagsCustomizer() {
+        return tracingTagsCustomizer;
     }
 
     @Override
