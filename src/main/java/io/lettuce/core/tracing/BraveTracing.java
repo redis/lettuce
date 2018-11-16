@@ -140,6 +140,8 @@ public class BraveTracing implements Tracing {
 
         /**
          * Controls the reporting of {@link Span} tags.
+         * This is enabled by default.
+         * When disabled, {@link Span}s will not be decorated with tags with information about the command arguments or errors that occurred.
          *
          * @param spanTagsReportingEnabled the flag to enable or disable the reporting of tags.
          * @return {@code this} {@link Builder}.
