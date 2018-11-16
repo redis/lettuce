@@ -17,9 +17,6 @@ package io.lettuce.core.tracing;
 
 import java.net.SocketAddress;
 
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.ProtocolKeyword;
-
 /**
  * No-Op {@link Tracing} support that does not trace at all.
  *
@@ -32,8 +29,6 @@ enum NoOpTracing implements Tracing, TraceContextProvider, TracerProvider {
 
     private final Endpoint NOOP_ENDPOINT = new Endpoint() {
     };
-
-    private final TracingTagsCustomizer NOOP_TRACING_TAGS_CUSTOMIZER = new NoOpTracingTagsCustomizer();
 
     @Override
     public TraceContext getTraceContext() {
@@ -61,27 +56,13 @@ enum NoOpTracing implements Tracing, TraceContextProvider, TracerProvider {
     }
 
     @Override
-    public TracingTagsCustomizer getTracingTagsCustomizer() {
-        return NOOP_TRACING_TAGS_CUSTOMIZER;
+    public boolean isSpanTagsReportingEnabled() {
+        return false;
     }
 
     @Override
     public Endpoint createEndpoint(SocketAddress socketAddress) {
         return NOOP_ENDPOINT;
-    }
-
-    static class NoOpTracingTagsCustomizer implements TracingTagsCustomizer {
-        @Override
-        public void handleCommandArgs(Tracer.Span span, ProtocolKeyword type, CommandArgs<?, ?> args) {
-        }
-
-        @Override
-        public void handleError(Tracer.Span span, String error) {
-        }
-
-        @Override
-        public void handleException(Tracer.Span span, Throwable throwable) {
-        }
     }
 
     static class NoOpTracer extends Tracer {

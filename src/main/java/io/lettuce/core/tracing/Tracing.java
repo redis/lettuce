@@ -50,11 +50,9 @@ public interface Tracing {
     boolean isEnabled();
 
     /**
-     * Returns {@literal true} if tracing is enabled.
-     *
-     * @return {@literal true} if tracing DefaultClientResourcesTestis enabled.
+     * @return {@literal true} if the reporting of tags for {@link Tracer.Span}s is enabled.
      */
-    TracingTagsCustomizer getTracingTagsCustomizer();
+    boolean isSpanTagsReportingEnabled();
 
     /**
      * Create an {@link Endpoint} given {@link SocketAddress}.
