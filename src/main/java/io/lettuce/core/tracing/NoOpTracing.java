@@ -56,7 +56,7 @@ enum NoOpTracing implements Tracing, TraceContextProvider, TracerProvider {
     }
 
     @Override
-    public boolean isSpanTagsReportingEnabled() {
+    public boolean includeCommandArgsInSpanTags() {
         return false;
     }
 

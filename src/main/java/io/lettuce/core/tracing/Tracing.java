@@ -50,9 +50,9 @@ public interface Tracing {
     boolean isEnabled();
 
     /**
-     * @return {@literal true} if the reporting of tags for {@link Tracer.Span}s is enabled.
+     * @return {@literal true} if tags for {@link Tracer.Span}s should include the command arguments.
      */
-    boolean isSpanTagsReportingEnabled();
+    boolean includeCommandArgsInSpanTags();
 
     /**
      * Create an {@link Endpoint} given {@link SocketAddress}.

@@ -55,7 +55,7 @@ public class BraveTracing implements Tracing {
 
     private final BraveTracer tracer;
     private final BraveTracingOptions tracingOptions;
-    private final boolean spanTagsReportingEnabled;
+    private final boolean includeCommandArgsInSpanTags;
 
     /**
      * Create a new {@link BraveTracing} instance.
@@ -69,7 +69,7 @@ public class BraveTracing implements Tracing {
 
         this.tracingOptions = new BraveTracingOptions(builder.serviceName, builder.endpointCustomizer, builder.spanCustomizer);
         this.tracer = new BraveTracer(builder.tracing, this.tracingOptions);
-        this.spanTagsReportingEnabled = builder.spanTagsReportingEnabled;
+        this.includeCommandArgsInSpanTags = builder.includeCommandArgsInSpanTags;
     }
 
     /**
@@ -105,7 +105,7 @@ public class BraveTracing implements Tracing {
         };
         private Consumer<brave.Span> spanCustomizer = it -> {
         };
-        private boolean spanTagsReportingEnabled = true;
+        private boolean includeCommandArgsInSpanTags = true;
 
         private Builder() {
         }
@@ -139,16 +139,15 @@ public class BraveTracing implements Tracing {
         }
 
         /**
-         * Controls the reporting of {@link Span} tags.
+         * Controls the inclusion of command arguments in {@link Span} tags.
          * This is enabled by default.
-         * When disabled, {@link Span}s will not be decorated with tags with information about the command arguments or errors that occurred.
          *
-         * @param spanTagsReportingEnabled the flag to enable or disable the reporting of tags.
+         * @param includeCommandArgsInSpanTags the flag to enable or disable the inclusion of command args in {@link Span} tags.
          * @return {@code this} {@link Builder}.
          */
-        public Builder enableReportingOfSpanTags(boolean spanTagsReportingEnabled) {
+        public Builder includeCommandArgsInSpanTags(boolean includeCommandArgsInSpanTags) {
 
-            this.spanTagsReportingEnabled = spanTagsReportingEnabled;
+            this.includeCommandArgsInSpanTags = includeCommandArgsInSpanTags;
             return this;
         }
 
@@ -200,8 +199,8 @@ public class BraveTracing implements Tracing {
     }
 
     @Override
-    public boolean isSpanTagsReportingEnabled() {
-        return spanTagsReportingEnabled;
+    public boolean includeCommandArgsInSpanTags() {
+        return includeCommandArgsInSpanTags;
     }
 
     @Override

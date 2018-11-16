@@ -78,7 +78,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final boolean latencyMetricsEnabled;
     private final boolean tracingEnabled;
-    private final boolean spanTagsReportingEnabled;
+    private final boolean includeCommandArgsInSpanTags;
     private final boolean boundedQueues;
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
@@ -112,7 +112,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         Tracing tracing = clientResources.tracing();
 
         this.tracingEnabled = tracing.isEnabled();
-        this.spanTagsReportingEnabled = tracing.isSpanTagsReportingEnabled();
+        this.includeCommandArgsInSpanTags = tracing.includeCommandArgsInSpanTags();
     }
 
     public Queue<RedisCommand<?, ?, ?>> getStack() {
@@ -387,7 +387,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             Tracer.Span span = tracer.nextSpan(context);
             span.name(command.getType().name());
 
-            if (spanTagsReportingEnabled && command.getArgs() != null) {
+            if (includeCommandArgsInSpanTags && command.getArgs() != null) {
                 span.tag("redis.arg", command.getArgs().toCommandString());
             }
 
@@ -401,11 +401,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 if (command.getOutput() != null) {
 
                     String error = command.getOutput().getError();
-                    if (spanTagsReportingEnabled && error != null) {
+                    if (error != null) {
                         span.tag("error", error);
-                    } else if (spanTagsReportingEnabled && throwable != null) {
-                        span.tag("exception", throwable.toString());
                     } else if (throwable != null) {
+                        span.tag("exception", throwable.toString());
                         span.error(throwable);
                     }
                 }
