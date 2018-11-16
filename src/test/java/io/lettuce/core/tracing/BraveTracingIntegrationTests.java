@@ -124,6 +124,42 @@ class BraveTracingIntegrationTests extends TestSupport {
     }
 
     @Test
+    void pingWithTraceShouldCatchErrorsAndUseTagCustomizer() {
+        DefaultClientResources clientResources = DefaultClientResources.builder()
+                .tracing(BraveTracing.builder()
+                        .tracing(clientTracing)
+                        .tracingTagsCustomizer(new DefaultTracingTagsCustomizer() {
+                            @Override
+                            public void handleError(io.lettuce.core.tracing.Tracer.Span span, String error) {
+                                span.tag("myError", "myErrorMessage");
+                            }
+                        })
+                        .build())
+                .build();
+        RedisClient client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
+
+        ScopedSpan foo = clientTracing.tracer().startScopedSpan("foo");
+
+        StatefulRedisConnection<String, String> connect = client.connect();
+        connect.sync().set("foo", "bar");
+        try {
+            connect.sync().hgetall("foo");
+        } catch (Exception e) {
+        }
+
+        Wait.untilEquals(2, spans::size).waitOrTimeout();
+
+        foo.finish();
+
+        List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
+
+        assertThat(spans.get(0).name()).isEqualTo("set");
+        assertThat(spans.get(1).name()).isEqualTo("hgetall");
+        assertThat(spans.get(1).tags()).containsEntry("myError", "myErrorMessage");
+        assertThat(spans.get(2).name()).isEqualTo("foo");
+    }
+
+    @Test
     void reactivePing() {
 
         StatefulRedisConnection<String, String> connect = client.connect();
