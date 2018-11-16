@@ -173,9 +173,9 @@ class BraveTracingIntegrationTests extends TestSupport {
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
         assertThat(spans.get(0).name()).isEqualTo("set");
-        assertThat(spans.get(0).tags()).containsEntry("redis.arg", "key<foo> value<bar>");
+        assertThat(spans.get(0).tags()).containsEntry("redis.args", "key<foo> value<bar>");
         assertThat(spans.get(1).name()).isEqualTo("get");
-        assertThat(spans.get(1).tags()).containsEntry("redis.arg", "key<foo>");
+        assertThat(spans.get(1).tags()).containsEntry("redis.args", "key<foo>");
         assertThat(spans.get(2).name()).isEqualTo("foo");
     }
 
@@ -207,9 +207,9 @@ class BraveTracingIntegrationTests extends TestSupport {
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
         assertThat(spans.get(0).name()).isEqualTo("set");
-        assertThat(spans.get(0).tags()).doesNotContainKey("redis.arg");
+        assertThat(spans.get(0).tags()).doesNotContainKey("redis.args");
         assertThat(spans.get(1).name()).isEqualTo("get");
-        assertThat(spans.get(1).tags()).doesNotContainKey("redis.arg");
+        assertThat(spans.get(1).tags()).doesNotContainKey("redis.args");
         assertThat(spans.get(2).name()).isEqualTo("foo");
     }
 

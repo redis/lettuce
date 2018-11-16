@@ -388,7 +388,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             span.name(command.getType().name());
 
             if (includeCommandArgsInSpanTags && command.getArgs() != null) {
-                span.tag("redis.arg", command.getArgs().toCommandString());
+                span.tag("redis.args", command.getArgs().toCommandString());
             }
 
             span.remoteEndpoint(tracedEndpoint);
