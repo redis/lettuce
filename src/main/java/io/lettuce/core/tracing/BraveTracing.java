@@ -45,6 +45,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * If one of the context objects above is found, it's used to determine the parent context for the command {@link Span}.
  *
  * @author Mark Paluch
+ * @author Daniel Albuquerque
  * @see brave.Tracer
  * @see brave.Tracing#currentTracer()
  * @see BraveTraceContextProvider
@@ -139,8 +140,16 @@ public class BraveTracing implements Tracing {
         }
 
         /**
-         * Controls the inclusion of command arguments in {@link Span} tags.
-         * This is enabled by default.
+         * Excludes command arguments from {@link Span} tags. Enabled by default.
+         *
+         * @return {@code this} {@link Builder}.
+         */
+        public Builder excludeCommandArgsFromSpanTags() {
+            return includeCommandArgsInSpanTags(false);
+        }
+
+        /**
+         * Controls the inclusion of command arguments in {@link Span} tags. Enabled by default.
          *
          * @param includeCommandArgsInSpanTags the flag to enable or disable the inclusion of command args in {@link Span} tags.
          * @return {@code this} {@link Builder}.

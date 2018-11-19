@@ -21,6 +21,7 @@ import java.net.SocketAddress;
  * No-Op {@link Tracing} support that does not trace at all.
  *
  * @author Mark Paluch
+ * @author Daniel Albuquerque
  * @since 5.1
  */
 enum NoOpTracing implements Tracing, TraceContextProvider, TracerProvider {

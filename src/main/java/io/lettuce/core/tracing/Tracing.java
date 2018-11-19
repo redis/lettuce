@@ -26,6 +26,7 @@ import reactor.util.context.Context;
  * value objects to represent traces, spans and metadata in an dependency-agnostic manner.
  *
  * @author Mark Paluch
+ * @author Daniel Albuquerque
  * @since 5.1
  * @see TracerProvider
  * @see TraceContextProvider
@@ -45,12 +46,15 @@ public interface Tracing {
     /**
      * Returns {@literal true} if tracing is enabled.
      *
-     * @return {@literal true} if tracing DefaultClientResourcesTestis enabled.
+     * @return {@literal true} if tracing is enabled.
      */
     boolean isEnabled();
 
     /**
+     * Returns {@literal true} if tags for {@link Tracer.Span}s should include the command arguments.
+     *
      * @return {@literal true} if tags for {@link Tracer.Span}s should include the command arguments.
+     * @since 5.2
      */
     boolean includeCommandArgsInSpanTags();
 

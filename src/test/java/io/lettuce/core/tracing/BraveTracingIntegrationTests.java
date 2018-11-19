@@ -42,9 +42,13 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.test.Wait;
+import io.lettuce.test.resource.FastShutdown;
 
 /**
+ * Integration tests for {@link BraveTracing}.
+ *
  * @author Mark Paluch
+ * @author Daniel Albuquerque
  */
 class BraveTracingIntegrationTests extends TestSupport {
 
@@ -124,6 +128,35 @@ class BraveTracingIntegrationTests extends TestSupport {
     }
 
     @Test
+    void getAndSetWithTraceWithCommandArgsExcludedFromTags() {
+
+        ClientResources clientResources = ClientResources.builder()
+                .tracing(BraveTracing.builder().tracing(clientTracing).excludeCommandArgsFromSpanTags().build()).build();
+        RedisClient client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
+
+        ScopedSpan trace = clientTracing.tracer().startScopedSpan("foo");
+
+        StatefulRedisConnection<String, String> connect = client.connect();
+        connect.sync().set("foo", "bar");
+        connect.sync().get("foo");
+
+        Wait.untilEquals(2, spans::size).waitOrTimeout();
+
+        trace.finish();
+
+        List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
+
+        assertThat(spans.get(0).name()).isEqualTo("set");
+        assertThat(spans.get(0).tags()).doesNotContainKey("redis.args");
+        assertThat(spans.get(1).name()).isEqualTo("get");
+        assertThat(spans.get(1).tags()).doesNotContainKey("redis.args");
+        assertThat(spans.get(2).name()).isEqualTo("foo");
+
+        FastShutdown.shutdown(client);
+        FastShutdown.shutdown(clientResources);
+    }
+
+    @Test
     void reactivePing() {
 
         StatefulRedisConnection<String, String> connect = client.connect();
@@ -176,40 +209,6 @@ class BraveTracingIntegrationTests extends TestSupport {
         assertThat(spans.get(0).tags()).containsEntry("redis.args", "key<foo> value<bar>");
         assertThat(spans.get(1).name()).isEqualTo("get");
         assertThat(spans.get(1).tags()).containsEntry("redis.args", "key<foo>");
-        assertThat(spans.get(2).name()).isEqualTo("foo");
-    }
-
-    @Test
-    void reactiveGetAndSetWithTraceWithCommandArgsExcludedFromTags() {
-
-        DefaultClientResources clientResources = DefaultClientResources.builder()
-                .tracing(BraveTracing.builder()
-                        .tracing(clientTracing)
-                        .includeCommandArgsInSpanTags(false)
-                        .build()
-                )
-                .build();
-        RedisClient client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
-
-        ScopedSpan trace = clientTracing.tracer().startScopedSpan("foo");
-
-        StatefulRedisConnection<String, String> connect = client.connect();
-        connect.reactive().set("foo", "bar") //
-                .then(connect.reactive().get("foo")) //
-                .subscriberContext(it -> it.put(TraceContext.class, trace.context())) //
-                .as(StepVerifier::create) //
-                .expectNext("bar").verifyComplete();
-
-        Wait.untilEquals(2, spans::size).waitOrTimeout();
-
-        trace.finish();
-
-        List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
-
-        assertThat(spans.get(0).name()).isEqualTo("set");
-        assertThat(spans.get(0).tags()).doesNotContainKey("redis.args");
-        assertThat(spans.get(1).name()).isEqualTo("get");
-        assertThat(spans.get(1).tags()).doesNotContainKey("redis.args");
         assertThat(spans.get(2).name()).isEqualTo("foo");
     }
 
