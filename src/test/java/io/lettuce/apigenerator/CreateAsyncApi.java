@@ -38,7 +38,7 @@ import io.lettuce.core.internal.LettuceSets;
  * @author Mark Paluch
  */
 @RunWith(Parameterized.class)
-class CreateAsyncApi {
+public class CreateAsyncApi {
 
     private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault",
             "digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands",
@@ -47,7 +47,7 @@ class CreateAsyncApi {
     private CompilationUnitFactory factory;
 
     @Parameterized.Parameters(name = "Create {0}")
-    static List<Object[]> arguments() {
+    public static List<Object[]> arguments() {
         List<Object[]> result = new ArrayList<>();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
@@ -108,7 +108,7 @@ class CreateAsyncApi {
     }
 
     @Test
-    void createInterface() throws Exception {
+    public void createInterface() throws Exception {
         factory.createInterface();
     }
 }

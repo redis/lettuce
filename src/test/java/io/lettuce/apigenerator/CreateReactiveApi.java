@@ -37,7 +37,7 @@ import io.lettuce.core.internal.LettuceSets;
  * @author Mark Paluch
  */
 @RunWith(Parameterized.class)
-class CreateReactiveApi {
+public class CreateReactiveApi {
 
     private static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
             "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
@@ -60,7 +60,7 @@ class CreateReactiveApi {
     private CompilationUnitFactory factory;
 
     @Parameterized.Parameters(name = "Create {0}")
-    static List<Object[]> arguments() {
+    public static List<Object[]> arguments() {
         List<Object[]> result = new ArrayList<>();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
@@ -175,7 +175,7 @@ class CreateReactiveApi {
     }
 
     @Test
-    void createInterface() throws Exception {
+    public void createInterface() throws Exception {
         factory.createInterface();
     }
 }

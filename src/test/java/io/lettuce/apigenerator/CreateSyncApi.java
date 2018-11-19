@@ -39,14 +39,14 @@ import io.lettuce.core.internal.LettuceSets;
  * @author Mark Paluch
  */
 @RunWith(Parameterized.class)
-class CreateSyncApi {
+public class CreateSyncApi {
 
     private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("setAutoFlushCommands", "flushCommands");
 
     private CompilationUnitFactory factory;
 
     @Parameterized.Parameters(name = "Create {0}")
-    static List<Object[]> arguments() {
+    public static List<Object[]> arguments() {
         List<Object[]> result = new ArrayList<>();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
@@ -114,7 +114,7 @@ class CreateSyncApi {
     }
 
     @Test
-    void createInterface() throws Exception {
+    public void createInterface() throws Exception {
         factory.createInterface();
     }
 }
