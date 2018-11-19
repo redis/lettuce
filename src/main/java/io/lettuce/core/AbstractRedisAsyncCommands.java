@@ -1521,7 +1521,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
     @Override
     public RedisFuture<String> xgroupCreate(XReadArgs.StreamOffset<K> offset, K group) {
-        return dispatch(commandBuilder.xgroupCreate(offset, group));
+        return dispatch(commandBuilder.xgroupCreate(offset, group, null));
+    }
+
+    @Override
+    public RedisFuture<String> xgroupCreate(XReadArgs.StreamOffset<K> offset, K group, XGroupCreateArgs args) {
+        return dispatch(commandBuilder.xgroupCreate(offset, group, args));
     }
 
     @Override

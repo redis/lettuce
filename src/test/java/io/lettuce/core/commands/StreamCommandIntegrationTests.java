@@ -237,14 +237,13 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     void xgroupCreate() {
 
-        redis.xadd(key, Collections.singletonMap("key", "value"));
-
-        assertThat(redis.xgroupCreate(StreamOffset.latest(key), "group")).isEqualTo("OK");
+        assertThat(redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream())).isEqualTo("OK");
 
         List<Object> groups = redis.dispatch(XINFO, new NestedMultiOutput<>(StringCodec.UTF8), new CommandArgs<>(
                 StringCodec.UTF8).add("GROUPS").add(key));
 
         assertThat(groups).isNotEmpty();
+        assertThat(redis.type(key)).isEqualTo("stream");
     }
 
     @Test
@@ -263,8 +262,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     void xpendingWithGroup() {
 
-        redis.xadd(key, Collections.singletonMap("key", "value"));
-        redis.xgroupCreate(StreamOffset.latest(key), "group");
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
         String id = redis.xadd(key, Collections.singletonMap("key", "value"));
 
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
@@ -276,8 +274,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     void xpending() {
 
-        redis.xadd(key, Collections.singletonMap("key", "value"));
-        redis.xgroupCreate(StreamOffset.latest(key), "group");
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
         String id = redis.xadd(key, Collections.singletonMap("key", "value"));
 
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
@@ -296,8 +293,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     void xack() {
 
-        redis.xadd(key, Collections.singletonMap("key", "value"));
-        redis.xgroupCreate(StreamOffset.latest(key), "group");
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
         redis.xadd(key, Collections.singletonMap("key", "value"));
 
         List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
@@ -313,8 +309,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     void xclaim() {
 
-        redis.xadd(key, Collections.singletonMap("key", "value"));
-        redis.xgroupCreate(StreamOffset.latest(key), "group");
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
         redis.xadd(key, Collections.singletonMap("key", "value"));
 
         List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
@@ -355,8 +350,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     void xgroupDestroy() {
 
-        redis.xadd(key, Collections.singletonMap("key", "value"));
-        redis.xgroupCreate(StreamOffset.latest(key), "group");
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
 
         assertThat(redis.xgroupDestroy(key, "group")).isTrue();
         assertThat(redis.xgroupDestroy(key, "group")).isFalse();
@@ -365,8 +359,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     void xgroupDelconsumer() {
 
-        redis.xadd(key, Collections.singletonMap("key", "value"));
-        redis.xgroupCreate(StreamOffset.latest(key), "group");
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
@@ -377,8 +370,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     void xgroupSetid() {
 
-        redis.xadd(key, Collections.singletonMap("key", "value"));
-        redis.xgroupCreate(StreamOffset.latest(key), "group");
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
 
         assertThat(redis.xgroupSetid(StreamOffset.latest(key), "group")).isEqualTo("OK");
     }

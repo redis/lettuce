@@ -2140,12 +2140,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XDEL, new IntegerOutput<>(codec), args);
     }
 
-    public Command<K, V, String> xgroupCreate(StreamOffset<K> offset, K group) {
+    public Command<K, V, String> xgroupCreate(StreamOffset<K> offset, K group, XGroupCreateArgs commandArgs) {
         LettuceAssert.notNull(offset, "StreamOffset " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(CREATE).addKey(offset.getName()).addKey(group)
                 .add(offset.getOffset());
+
+        if (commandArgs != null) {
+            commandArgs.build(args);
+        }
 
         return createCommand(XGROUP, new StatusOutput<>(codec), args);
     }

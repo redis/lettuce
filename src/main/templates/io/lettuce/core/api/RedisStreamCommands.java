@@ -121,6 +121,17 @@ public interface RedisStreamCommands<K, V> {
     String xgroupCreate(StreamOffset<K> streamOffset, K group);
 
     /**
+     * Create a consumer group.
+     *
+     * @param streamOffset name of the stream containing the offset to set.
+     * @param group name of the consumer group.
+     * @param args
+     * @return simple-reply {@literal true} if successful.
+     * @since 5.2
+     */
+    String xgroupCreate(StreamOffset<K> streamOffset, K group, XGroupCreateArgs args);
+
+    /**
      * Delete a consumer from a consumer group.
      *
      * @param key the stream key.
