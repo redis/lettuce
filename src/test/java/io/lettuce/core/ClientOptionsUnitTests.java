@@ -45,5 +45,6 @@ class ClientOptionsUnitTests {
         assertThat(sut.isPingBeforeActivateConnection()).isEqualTo(false);
         assertThat(sut.isSuspendReconnectOnProtocolFailure()).isEqualTo(false);
         assertThat(sut.getDisconnectedBehavior()).isEqualTo(ClientOptions.DisconnectedBehavior.DEFAULT);
+        assertThat(sut.getBufferUsageRatio()).isEqualTo(ClientOptions.DEFAULT_BUFFER_USAGE_RATIO);
     }
 }
