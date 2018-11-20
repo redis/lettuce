@@ -15,9 +15,9 @@
  */
 package io.lettuce.core;
 
-import java.io.Serializable;
-
 import io.lettuce.core.internal.LettuceAssert;
+
+import java.io.Serializable;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -247,12 +247,15 @@ public class ClientOptions implements Serializable {
          * Sets the buffer usage ratio to {@link io.lettuce.core.protocol.CommandHandler} for determine when to discard
          * read bytes.See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
          *
-         * @param bufferUsageRatio must greater than 0
+         * @param bufferUsageRatio must greater between 0 and 2^31-1
          * @return {@code this}
          * @since 5.2
          */
         public Builder bufferUsageRatio(int bufferUsageRatio) {
-            LettuceAssert.isTrue(bufferUsageRatio > 0, "BufferUsageRatio must grater than 0");
+            LettuceAssert.isTrue(bufferUsageRatio > 0 && bufferUsageRatio < Integer.MAX_VALUE,
+                    "BufferUsageRatio must grater than 0");
+            LettuceAssert.isTrue(bufferUsageRatio < Integer.MAX_VALUE,
+                    "BufferUsageRatio must less than " + Integer.MAX_VALUE);
             this.bufferUsageRatio = bufferUsageRatio;
             return this;
         }

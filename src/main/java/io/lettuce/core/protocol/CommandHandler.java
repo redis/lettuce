@@ -839,9 +839,13 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         return System.nanoTime();
     }
 
+    /**
+     * try discard read bytes when buffer usage reach {@code bufferUsageRatio / bufferUsageRatio + 1}
+     * @param buffer
+     */
     private void discardReadBytesIfNecessary(ByteBuf buffer) {
         int bufferUsageRatio = clientOptions.getBufferUsageRatio();
-        if (buffer.writerIndex() * (bufferUsageRatio + 1) >= buffer.capacity() * bufferUsageRatio) {
+        if ((float)buffer.writerIndex() / buffer.capacity() >= (float)bufferUsageRatio / (bufferUsageRatio + 1)) {
             if (buffer.refCnt() != 0) {
                 buffer.discardReadBytes();
             }
