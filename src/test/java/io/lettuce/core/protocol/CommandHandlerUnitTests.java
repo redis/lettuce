@@ -430,4 +430,30 @@ class CommandHandlerUnitTests {
 
         verify(byteBufMock, never()).release();
     }
+
+    @Test
+    void shouldDiscardReadBytes() throws Exception {
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        channelPromise.setSuccess();
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        //set the command handler buffer capacity to 1024, make it easy to test
+        ReflectionTestUtils.setField(sut, "buffer", context.alloc().buffer(1024));
+        ByteBuf buffer = (ByteBuf) ReflectionTestUtils.getField(sut, "buffer");
+
+        //mock a multi reply, which will reach the buffer usage ratio
+        ByteBuf msg = context.alloc().buffer(1024);
+        while ((float)msg.writerIndex() / msg.capacity() <= (float)ClientOptions.DEFAULT_BUFFER_USAGE_RATIO / (
+                ClientOptions.DEFAULT_BUFFER_USAGE_RATIO + 1)) {
+            sut.write(context, command, channelPromise);
+            msg.writeBytes("*1\r\n+OK\r\n".getBytes());
+        }
+
+        sut.channelRead(context, msg);
+
+        assertThat(buffer.readerIndex() == 0);
+        assertThat(buffer.writerIndex() == 0);
+        sut.channelUnregistered(context);
+    }
 }
