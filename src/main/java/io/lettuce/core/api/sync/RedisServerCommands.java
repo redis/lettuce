@@ -352,4 +352,10 @@ public interface RedisServerCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     List<V> time();
+
+    /**
+     * get info about memory usage
+     * @return memory usage
+     */
+    Long memoryUsage(K key);
 }

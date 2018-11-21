@@ -3090,6 +3090,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZUNIONSTORE, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, Long> memoryUsage(K key) {
+        return createCommand(MEMORY, new IntegerOutput<>(codec), new CommandArgs<>(codec).add(USAGE).add(key.toString()));
+    }
+
     private boolean allElementsInstanceOf(Object[] objects, Class<?> expectedAssignableType) {
 
         for (Object object : objects) {

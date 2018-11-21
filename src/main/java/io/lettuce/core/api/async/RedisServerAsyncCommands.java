@@ -353,4 +353,10 @@ public interface RedisServerAsyncCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     RedisFuture<List<V>> time();
+
+    /**
+     * get info about memory usage
+     * @return memory usage
+     */
+    RedisFuture<Long> memoryUsage(K key);
 }

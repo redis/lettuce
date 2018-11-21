@@ -2153,4 +2153,9 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     public RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return dispatch(commandBuilder.zunionstore(destination, storeArgs, keys));
     }
+
+    @Override
+    public RedisFuture<Long> memoryUsage(K key){
+        return dispatch(commandBuilder.memoryUsage(key));
+    }
 }
