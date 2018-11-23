@@ -119,7 +119,7 @@ class RedisCommandsSyncIntegrationTests extends TestSupport {
             return getAsBytes("key");
         }
 
-        @Command("GET")
+        @Command("GET ?0")
         byte[] getAsBytes(String key);
 
         @Command("SET")

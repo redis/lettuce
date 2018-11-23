@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import io.lettuce.core.*;
 import io.lettuce.core.dynamic.parameter.Parameter;
+import io.lettuce.core.dynamic.segment.CommandSegment;
 import io.lettuce.core.dynamic.segment.CommandSegments;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
@@ -113,7 +114,15 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
 
         int count = commandSegments.size();
 
-        for (Parameter bindableParameter : bindableParameters) {
+        for (int i = 0; i < bindableParameters.size(); i++) {
+
+            Parameter bindableParameter = bindableParameters.get(i);
+
+            boolean consumed = isConsumed(commandSegments, bindableParameter);
+
+            if (consumed) {
+                continue;
+            }
 
             if (bindableParameter.isAssignableTo(KeyValue.class) || bindableParameter.isAssignableTo(ScoredValue.class)) {
                 count++;
@@ -131,6 +140,17 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
         }
 
         return count;
+    }
+
+    private boolean isConsumed(CommandSegments commandSegments, Parameter bindableParameter) {
+
+        for (CommandSegment commandSegment : commandSegments) {
+            if (commandSegment.canConsume(bindableParameter)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private CommandMethodSyntaxException syntaxException(String commandName, CommandMethod commandMethod) {

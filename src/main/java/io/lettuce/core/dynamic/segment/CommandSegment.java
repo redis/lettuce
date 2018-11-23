@@ -16,6 +16,7 @@
 package io.lettuce.core.dynamic.segment;
 
 import io.lettuce.core.dynamic.parameter.MethodParametersAccessor;
+import io.lettuce.core.dynamic.parameter.Parameter;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -59,7 +60,15 @@ public abstract class CommandSegment {
     public abstract String asString();
 
     /**
+     * Check whether this segment can consume the {@link Parameter} by applying parameter substitution.
      *
+     * @param parameter
+     * @return
+     * @since 5.1.3
+     */
+    public abstract boolean canConsume(Parameter parameter);
+
+    /**
      * @param parametersAccessor
      * @return
      */
@@ -91,6 +100,11 @@ public abstract class CommandSegment {
         }
 
         @Override
+        public boolean canConsume(Parameter parameter) {
+            return false;
+        }
+
+        @Override
         public ArgumentContribution contribute(MethodParametersAccessor parametersAccessor) {
             return new ArgumentContribution(-1, asString());
         }
@@ -110,6 +124,11 @@ public abstract class CommandSegment {
         @Override
         public String asString() {
             return name;
+        }
+
+        @Override
+        public boolean canConsume(Parameter parameter) {
+            return parameter.getName() != null && parameter.getName().equals(name);
         }
 
         @Override
@@ -133,6 +152,11 @@ public abstract class CommandSegment {
         @Override
         public String asString() {
             return Integer.toString(index);
+        }
+
+        @Override
+        public boolean canConsume(Parameter parameter) {
+            return parameter.getParameterIndex() == index;
         }
 
         @Override
