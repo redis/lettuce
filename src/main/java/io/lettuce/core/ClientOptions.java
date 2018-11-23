@@ -15,14 +15,15 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.internal.LettuceAssert;
-
 import java.io.Serializable;
+
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
  *
  * @author Mark Paluch
+ * @author Gavin Cook
  */
 @SuppressWarnings("serial")
 public class ClientOptions implements Serializable {
@@ -244,18 +245,21 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Sets the buffer usage ratio to {@link io.lettuce.core.protocol.CommandHandler} for determine when to discard
-         * read bytes.See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
+         * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are
+         * discarded during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}.
+         * E.g. setting {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75
+         * percent. See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
          *
-         * @param bufferUsageRatio must greater between 0 and 2^31-1
+         * @param bufferUsageRatio must greater between 0 and 2^31-1, typically a value between 1 and 10 representing 50% to
+         *        90%.
          * @return {@code this}
          * @since 5.2
          */
         public Builder bufferUsageRatio(int bufferUsageRatio) {
+
             LettuceAssert.isTrue(bufferUsageRatio > 0 && bufferUsageRatio < Integer.MAX_VALUE,
                     "BufferUsageRatio must grater than 0");
-            LettuceAssert.isTrue(bufferUsageRatio < Integer.MAX_VALUE,
-                    "BufferUsageRatio must less than " + Integer.MAX_VALUE);
+
             this.bufferUsageRatio = bufferUsageRatio;
             return this;
         }
@@ -377,9 +381,9 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. Discard operation for read bytes occur
-     * When buffer usage reach {@code bufferUsageRatio / bufferUsageRatio + 1}. For example, sets 3 to bufferUsageRatio,
-     * means buffer usage reach 75 percentage, discard operation occur.
+     * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are discarded
+     * during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}. E.g. setting
+     * {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75 percent.
      *
      * @return the buffer usage ratio.
      * @since 5.2

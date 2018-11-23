@@ -53,6 +53,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Jongyeol Choi
  * @author Grzegorz Szpak
  * @author Daniel Albuquerque
+ * @author Gavin Cook
  */
 public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCommands {
 
@@ -80,6 +81,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private final boolean latencyMetricsEnabled;
     private final boolean tracingEnabled;
     private final boolean includeCommandArgsInSpanTags;
+    private final float discardReadBytesRatio;
     private final boolean boundedQueues;
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
@@ -114,6 +116,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         this.tracingEnabled = tracing.isEnabled();
         this.includeCommandArgsInSpanTags = tracing.includeCommandArgsInSpanTags();
+
+        float bufferUsageRatio = clientOptions.getBufferUsageRatio();
+        this.discardReadBytesRatio = bufferUsageRatio / (bufferUsageRatio + 1);
     }
 
     public Queue<RedisCommand<?, ?, ?>> getStack() {
@@ -368,8 +373,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
-    private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command, ChannelPromise promise)
- {
+    private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command, ChannelPromise promise) {
 
         if (!isWriteable(command)) {
             promise.trySuccess();
@@ -840,15 +844,16 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
-     * try discard read bytes when buffer usage reach {@code bufferUsageRatio / bufferUsageRatio + 1}
+     * Try to discard read bytes when buffer usage reach a higher usage ratio.
+     *
      * @param buffer
      */
     private void discardReadBytesIfNecessary(ByteBuf buffer) {
-        int bufferUsageRatio = clientOptions.getBufferUsageRatio();
-        if ((float)buffer.writerIndex() / buffer.capacity() >= (float)bufferUsageRatio / (bufferUsageRatio + 1)) {
-            if (buffer.refCnt() != 0) {
-                buffer.discardReadBytes();
-            }
+
+        float usedRatio = (float) buffer.readerIndex() / buffer.capacity();
+
+        if (usedRatio >= discardReadBytesRatio && buffer.refCnt() != 0) {
+            buffer.discardReadBytes();
         }
     }
 
