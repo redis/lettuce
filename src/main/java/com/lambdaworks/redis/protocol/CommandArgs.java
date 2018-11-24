@@ -616,10 +616,14 @@ public class CommandArgs<K, V> {
 
                 ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
                 ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(key));
-                toByteBufEncoder.encodeKey(key, temporaryBuffer);
 
-                ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
-                temporaryBuffer.release();
+                try {
+
+                    toByteBufEncoder.encodeKey(key, temporaryBuffer);
+                    ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
+                } finally {
+                    temporaryBuffer.release();
+                }
 
                 return;
             }
@@ -654,10 +658,13 @@ public class CommandArgs<K, V> {
 
                 ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
                 ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(val));
-                toByteBufEncoder.encodeValue(val, temporaryBuffer);
 
-                ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
-                temporaryBuffer.release();
+                try {
+                    toByteBufEncoder.encodeValue(val, temporaryBuffer);
+                    ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
+                } finally {
+                    temporaryBuffer.release();
+                }
 
                 return;
             }
