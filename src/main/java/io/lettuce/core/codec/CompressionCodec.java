@@ -33,7 +33,10 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class CompressionCodec {
+public abstract class CompressionCodec {
+
+    private CompressionCodec() {
+    }
 
     /**
      * A {@link RedisCodec} that compresses values from a delegating {@link RedisCodec}.
