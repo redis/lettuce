@@ -21,14 +21,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionEvents;
+import io.lettuce.core.event.EventBus;
+import io.lettuce.core.event.connection.ReconnectFailedEvent;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.Delay;
 import io.lettuce.core.resource.Delay.StatefulDelay;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.local.LocalAddress;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -55,6 +59,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     private final ReconnectionHandler reconnectionHandler;
     private final ReconnectionListener reconnectionListener;
     private final Timer timer;
+    private final EventBus eventBus;
 
     private Channel channel;
     private SocketAddress remoteAddress;
@@ -79,10 +84,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@literal null}
      * @param reconnectionListener the reconnection listener, must not be {@literal null}
      * @param connectionFacade the connection facade, must not be {@literal null}
+     * @param eventBus Event bus to emit reconnect events.
      */
     public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
             EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
-            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade) {
+            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus) {
 
         LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
@@ -92,6 +98,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
         LettuceAssert.notNull(reconnectionListener, "ReconnectionListener must not be null");
         LettuceAssert.notNull(connectionFacade, "ConnectionFacade must not be null");
+        LettuceAssert.notNull(eventBus, "EventBus must not be null");
 
         this.reconnectDelay = reconnectDelay;
         this.bootstrap = bootstrap;
@@ -99,6 +106,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.reconnectWorkers = reconnectWorkers;
         this.reconnectionListener = reconnectionListener;
         this.reconnectSchedulerSync = new AtomicBoolean(false);
+        this.eventBus = eventBus;
 
         Mono<SocketAddress> wrappedSocketAddressSupplier = socketAddressSupplier.doOnNext(addr -> remoteAddress = addr)
                 .onErrorResume(
@@ -283,7 +291,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             reconnectionListener.onReconnectAttempt(new ConnectionEvents.Reconnect(attempt));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
-            CompletableFuture<Channel> future = reconnectionHandler.reconnect();
+            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnect();
+            CompletableFuture<Channel> future = tuple.getT1();
 
             future.whenComplete((c, t) -> {
 
@@ -297,12 +306,22 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
                     logger.log(warnLevelToUse, "Cannot reconnect: {}", t.toString(), t);
                 }
 
+                CompletableFuture<SocketAddress> remoteAddressFuture = tuple.getT2();
+                SocketAddress remote = remoteAddress;
+                if (remoteAddressFuture.isDone() && !remoteAddressFuture.isCompletedExceptionally()
+                        && !remoteAddressFuture.isCancelled()) {
+                    remote = remoteAddressFuture.join();
+                }
+
+                eventBus.publish(new ReconnectFailedEvent(LocalAddress.ANY, remote, t, attempt));
+
                 if (!isReconnectSuspended()) {
                     scheduleReconnect();
                 }
             });
         } catch (Exception e) {
             logger.log(warnLevel, "Cannot reconnect: {}", e.toString());
+            eventBus.publish(new ReconnectFailedEvent(LocalAddress.ANY, remoteAddress, e, attempt));
         }
     }
 
@@ -367,8 +386,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             return logPrefix;
         }
 
-        String
-        buffer= "[" +ChannelLogDescriptor.logDescriptor(channel)+", last known addr="+remoteAddress+']';
+        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", last known addr=" + remoteAddress + ']';
         return logPrefix = buffer;
     }
 }

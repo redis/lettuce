@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.concurrent.*;
 
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelInitializer;
 import io.lettuce.core.RedisCommandTimeoutException;
@@ -83,11 +85,14 @@ class ReconnectionHandler {
      *
      * @return reconnect {@link ChannelFuture}.
      */
-    protected CompletableFuture<Channel> reconnect() {
+    protected Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnect() {
 
         CompletableFuture<Channel> future = new CompletableFuture<>();
+        CompletableFuture<SocketAddress> address = new CompletableFuture<>();
 
         socketAddressSupplier.subscribe(remoteAddress -> {
+
+            address.complete(remoteAddress);
 
             if (future.isCancelled()) {
                 return;
@@ -95,9 +100,15 @@ class ReconnectionHandler {
 
             reconnect0(future, remoteAddress);
 
-        }, future::completeExceptionally);
+        }, ex -> {
+            if (!address.isDone()) {
+                address.completeExceptionally(ex);
+            }
+            future.completeExceptionally(ex);
+        });
 
-        return this.currentFuture = future;
+        this.currentFuture = future;
+        return Tuples.of(future, address);
     }
 
     private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {

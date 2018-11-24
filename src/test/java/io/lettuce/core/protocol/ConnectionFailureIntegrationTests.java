@@ -18,11 +18,13 @@ package io.lettuce.core.protocol;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -34,9 +36,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.event.Event;
+import io.lettuce.core.event.connection.ReconnectFailedEvent;
+import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.*;
+import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.server.RandomResponseServer;
 import io.lettuce.test.settings.TestSettings;
+import io.netty.channel.local.LocalAddress;
 
 /**
  * @author Mark Paluch
@@ -223,6 +230,63 @@ class ConnectionFailureIntegrationTests extends TestSupport {
             connection.getStatefulConnection().close();
         } finally {
             ts.shutdown();
+        }
+    }
+
+    @Test
+    void emitEventOnReconnectFailure() throws Exception {
+
+        RandomResponseServer ts = getRandomResponseServer();
+        Queue<Event> queue = new ConcurrentLinkedQueue<>();
+        ClientResources clientResources = ClientResources.create();
+
+        RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
+        RedisClient client = RedisClient.create(clientResources);
+
+        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+
+        try {
+            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client.connect(
+                    redisUri).async();
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
+                    .getConnectionWatchdog(connection.getStatefulConnection());
+
+            redisUri.setPort(TestSettings.nonexistentPort());
+
+            client.getResources().eventBus().get().subscribe(queue::add);
+
+            connection.quit();
+            Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
+
+            connectionWatchdog.run(0);
+            Delay.delay(Duration.ofMillis(500));
+
+            connection.getStatefulConnection().close();
+
+            assertThat(queue).isNotEmpty();
+
+            List<ReconnectFailedEvent> failures = queue.stream().filter(ReconnectFailedEvent.class::isInstance)
+                    .map(ReconnectFailedEvent.class::cast).sorted(Comparator.comparingInt(ReconnectFailedEvent::getAttempt))
+                    .collect(Collectors.toList());
+
+            assertThat(failures.size()).isGreaterThanOrEqualTo(2);
+
+            ReconnectFailedEvent failure1 = failures.get(0);
+            assertThat(failure1.localAddress()).isEqualTo(LocalAddress.ANY);
+            assertThat(failure1.remoteAddress()).isInstanceOf(InetSocketAddress.class);
+            assertThat(failure1.getCause()).hasMessageContaining("Invalid first byte");
+            assertThat(failure1.getAttempt()).isZero();
+
+            ReconnectFailedEvent failure2 = failures.get(1);
+            assertThat(failure2.localAddress()).isEqualTo(LocalAddress.ANY);
+            assertThat(failure2.remoteAddress()).isInstanceOf(InetSocketAddress.class);
+            assertThat(failure2.getCause()).hasMessageContaining("Invalid first byte");
+            assertThat(failure2.getAttempt()).isOne();
+
+        } finally {
+            ts.shutdown();
+            FastShutdown.shutdown(client);
+            FastShutdown.shutdown(clientResources);
         }
     }
 
