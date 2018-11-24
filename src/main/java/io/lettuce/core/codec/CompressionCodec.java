@@ -141,7 +141,6 @@ public abstract class CompressionCodec {
 
             return ByteBuffer.wrap(outputStream.toByteArray());
         }
-
     }
 
     /**

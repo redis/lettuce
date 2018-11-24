@@ -22,6 +22,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
@@ -30,9 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import reactor.test.StepVerifier;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.codec.ByteArrayCodec;
-import io.lettuce.core.codec.CompressionCodec;
-import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.*;
 import io.lettuce.test.LettuceExtension;
 
 /**
@@ -41,6 +42,25 @@ import io.lettuce.test.LettuceExtension;
  */
 @ExtendWith(LettuceExtension.class)
 class CustomCodecIntegrationTests extends TestSupport {
+
+    private final SecretKeySpec secretKey = new SecretKeySpec("1234567890123456".getBytes(), "AES");
+    private final IvParameterSpec iv = new IvParameterSpec("1234567890123456".getBytes());
+    // Creates a CryptoCipher instance with the transformation and properties.
+    private final String transform = "AES/CBC/PKCS5Padding";
+
+    CipherCodec.CipherSupplier encrypt = (CipherCodec.KeyDescriptor keyDescriptor) -> {
+
+        Cipher cipher = Cipher.getInstance(transform);
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv);
+        return cipher;
+    };
+
+    CipherCodec.CipherSupplier decrypt = (CipherCodec.KeyDescriptor keyDescriptor) -> {
+
+        Cipher cipher = Cipher.getInstance(transform);
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
+        return cipher;
+    };
 
     private final RedisClient client;
 
@@ -91,6 +111,18 @@ class CustomCodecIntegrationTests extends TestSupport {
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
+
+        connection.getStatefulConnection().close();
+    }
+
+    @Test
+    void testEncryptedCodec() {
+
+        RedisCommands<String, String> connection = client.connect(
+                CipherCodec.forValues(StringCodec.UTF8, encrypt, decrypt)).sync();
+
+        connection.set(key, "foobar");
+        assertThat(connection.get(key)).isEqualTo("foobar");
 
         connection.getStatefulConnection().close();
     }
@@ -169,5 +201,4 @@ class CustomCodecIntegrationTests extends TestSupport {
             }
         }
     }
-
 }
