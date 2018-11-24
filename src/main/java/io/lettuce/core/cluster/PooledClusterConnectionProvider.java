@@ -104,9 +104,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             logger.debug("getConnection(" + intent + ", " + slot + ")");
         }
 
-        if (intent == Intent.READ && readFrom != null) {
+        if (intent == Intent.READ && readFrom != null && readFrom != ReadFrom.MASTER) {
             return getReadConnection(slot);
         }
+
         return getWriteConnection(slot).toCompletableFuture();
     }
 
