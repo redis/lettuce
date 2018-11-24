@@ -126,6 +126,21 @@ class PooledClusterConnectionProviderUnitTests {
     }
 
     @Test
+    void shouldReuseMasterConnectionForReadFromMaster() {
+
+        when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:1"), any(), any())).thenReturn(
+                ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+
+        sut.setReadFrom(ReadFrom.MASTER);
+
+        StatefulRedisConnection<String, String> connection = sut.getConnection(Intent.READ, 1);
+
+        assertThat(connection).isSameAs(nodeConnectionMock);
+        verify(connection).setAutoFlushCommands(true);
+        verifyNoMoreInteractions(connection);
+    }
+
+    @Test
     void shouldObtainConnectionReadFromSlave() {
 
         when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:2"), any(), any())).thenReturn(
