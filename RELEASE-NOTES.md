@@ -1,11 +1,11 @@
-Lettuce 5.1.2 RELEASE NOTES
+Lettuce 5.1.3 RELEASE NOTES
 ===========================
 
-The Lettuce team is pleased to announce the Lettuce 5.1.2 service release! 
+The Lettuce team is pleased to announce the Lettuce 5.1.3 service release! 
 This release ships with 9 tickets fixed. Upgrading is strongly recommended 
-for users of the  reactive API.
+for users of Pub/Sub with the byte-array codec.
 
-Thanks to all contributors who made Lettuce 5.1.2.RELEASE possible.
+Thanks to all contributors who made Lettuce 5.1.3.RELEASE possible.
 
 Lettuce requires a minimum of Java 8 to build and run and #RunsLikeHeaven on Java 11. 
 It is tested continuously against the latest Redis source-build.
@@ -16,20 +16,23 @@ If you need any support, meet Lettuce at
 or lettuce-redis-client-users@googlegroups.com
 * Join the chat at https://gitter.im/lettuce-io/Lobby
 * GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/5.1.2.RELEASE/reference/
-* Javadoc: https://lettuce.io/core/5.1.2.RELEASE/api/
+* Documentation: https://lettuce.io/core/5.1.3.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/5.1.3.RELEASE/api/
+
+Enhancements
+------------
+* Add shutdown logging to client, ClientResources, and EventLoopGroupProvider #918
+* Optimization: Use Cluster write connections for read commands when using ReadFrom.MASTER #923
+* ByteBuf.release() was not called before it's garbage-collected #930 (Thanks to @zhouzq)
 
 Fixes
 -----
-* Revert generics signature change in ConnectionPoolSupport #886
-* ClassCastException occurs when executing RedisClusterClient::connectPubSub with global timeout feature #895 (Thanks to @be-hase)
-* Flux that reads from a hash, processes elements and writes to a set, completes prematurely #897 (Thanks to @vkurland)
-* Fixed stackoverflow exception inside CommandLatencyCollectorOptions #899 (Thanks to @LarryBattle)
+* PubSubEndpoint.channels and patterns contain duplicate binary channel/pattern names #911 (Thanks to @lwiddershoven)
+* DefaultCommandMethodVerifier reports invalid parameter count #925 (Thanks to @GhaziTriki)
 
 Other
 -----
-* Upgrade to Redis 5 GA #893
-* Upgrade to RxJava 2.2.3 #901
-* Upgrade to Spring Framework 4.3.20.RELEASE #902
-* Upgrade to netty 4.1.30.Final #903
-* Upgrade to Reactor Core 3.2.2.RELEASE #904
+* Document MasterSlave connection behavior on partial node failures #894 (Thanks to @jocull)
+* Upgrade to Reactor Core 3.2.3.RELEASE #931
+* Upgrade to netty 4.1.31.Final #932
+* Upgrade to RxJava 2.2.4 #933
