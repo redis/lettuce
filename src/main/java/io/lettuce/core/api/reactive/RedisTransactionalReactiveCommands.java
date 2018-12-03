@@ -41,7 +41,9 @@ public interface RedisTransactionalReactiveCommands<K, V> {
      *
      * @return Object array-reply each element being the reply to each of the commands in the atomic transaction.
      *
-     *         When using {@code WATCH}, {@code EXEC} can return a
+     *         When using {@code WATCH}, {@code EXEC} can return a {@link TransactionResult#wasDiscarded discarded
+     *         TransactionResult}.
+     * @see TransactionResult#wasDiscarded
      */
     Mono<TransactionResult> exec();
 
