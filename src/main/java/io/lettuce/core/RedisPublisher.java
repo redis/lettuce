@@ -18,6 +18,7 @@ package io.lettuce.core;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
@@ -38,6 +39,8 @@ import io.lettuce.core.output.StreamingOutput;
 import io.lettuce.core.protocol.CommandWrapper;
 import io.lettuce.core.protocol.DemandAware;
 import io.lettuce.core.protocol.RedisCommand;
+import io.netty.util.Recycler;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -64,6 +67,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     private final AtomicReference<RedisCommand<K, V, T>> ref;
     private final StatefulConnection<K, V> connection;
     private final boolean dissolve;
+    private final Executor executor;
 
     /**
      * Creates a new {@link RedisPublisher} for a static command.
@@ -71,9 +75,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      * @param staticCommand static command, must not be {@literal null}.
      * @param connection the connection, must not be {@literal null}.
      * @param dissolve dissolve collections into particular elements.
+     * @param publishOn executor to use for publishOn signals.
      */
-    public RedisPublisher(RedisCommand<K, V, T> staticCommand, StatefulConnection<K, V> connection, boolean dissolve) {
-        this(() -> staticCommand, connection, dissolve);
+    public RedisPublisher(RedisCommand<K, V, T> staticCommand, StatefulConnection<K, V> connection, boolean dissolve,
+            Executor publishOn) {
+        this(() -> staticCommand, connection, dissolve, publishOn);
     }
 
     /**
@@ -82,15 +88,19 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      * @param commandSupplier command supplier, must not be {@literal null}.
      * @param connection the connection, must not be {@literal null}.
      * @param dissolve dissolve collections into particular elements.
+     * @param publishOn executor to use for publishOn signals.
      */
-    public RedisPublisher(Supplier<RedisCommand<K, V, T>> commandSupplier, StatefulConnection<K, V> connection, boolean dissolve) {
+    public RedisPublisher(Supplier<RedisCommand<K, V, T>> commandSupplier, StatefulConnection<K, V> connection,
+            boolean dissolve, Executor publishOn) {
 
         LettuceAssert.notNull(commandSupplier, "CommandSupplier must not be null");
         LettuceAssert.notNull(connection, "StatefulConnection must not be null");
+        LettuceAssert.notNull(publishOn, "Executor must not be null");
 
         this.commandSupplier = commandSupplier;
         this.connection = connection;
         this.dissolve = dissolve;
+        this.executor = publishOn;
         this.ref = new AtomicReference<>(commandSupplier.get());
     }
 
@@ -112,7 +122,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             command = commandSupplier.get();
         }
 
-        RedisSubscription<T> redisSubscription = new RedisSubscription<>(connection, command, dissolve);
+        RedisSubscription<T> redisSubscription = new RedisSubscription<>(connection, command, dissolve, executor);
         redisSubscription.subscribe(subscriber);
     }
 
@@ -153,6 +163,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         final StatefulConnection<?, ?> connection;
         final RedisCommand<?, ?, T> command;
         final boolean dissolve;
+        private final Executor executor;
 
         // accessed via AtomicLongFieldUpdater
         @SuppressWarnings("unused")
@@ -166,17 +177,20 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         volatile boolean allDataRead = false;
 
-        volatile Subscriber<? super T> subscriber;
+        volatile RedisSubscriber<? super T> subscriber;
 
         @SuppressWarnings("unchecked")
-        RedisSubscription(StatefulConnection<?, ?> connection, RedisCommand<?, ?, T> command, boolean dissolve) {
+        RedisSubscription(StatefulConnection<?, ?> connection, RedisCommand<?, ?, T> command, boolean dissolve,
+                Executor executor) {
 
             LettuceAssert.notNull(connection, "Connection must not be null");
             LettuceAssert.notNull(command, "RedisCommand must not be null");
+            LettuceAssert.notNull(executor, "Executor must not be null");
 
             this.connection = connection;
             this.command = command;
             this.dissolve = dissolve;
+            this.executor = executor;
 
             if (command.getOutput() instanceof StreamingOutput<?>) {
                 StreamingOutput<T> streamingOutput = (StreamingOutput<T>) command.getOutput();
@@ -504,7 +518,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 if (subscription.changeState(this, NO_DEMAND)) {
 
-                    subscription.subscriber = (Subscriber) subscriber;
+                    subscription.subscriber = RedisSubscriber.create(subscriber, subscription.executor);
                     subscriber.onSubscribe(subscription);
                 } else {
                     throw new IllegalStateException(toString());
@@ -827,6 +841,242 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             first.onNext(outputTarget, t);
             second.onNext(outputTarget, t);
+        }
+    }
+
+    /**
+     * Lettuce-specific interface.
+     *
+     * @param <T>
+     */
+    interface RedisSubscriber<T> extends CoreSubscriber<T> {
+
+        /**
+         * Create a new {@link RedisSubscriber}. Optimizes for immediate executor usage.
+         *
+         * @param delegate
+         * @param executor
+         * @param <T>
+         * @return
+         * @see ImmediateSubscriber
+         * @see PublishOnSubscriber
+         */
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        static <T> RedisSubscriber<T> create(Subscriber<?> delegate, Executor executor) {
+
+            if (executor == ImmediateEventExecutor.INSTANCE) {
+                return new ImmediateSubscriber(delegate);
+            }
+
+            return new PublishOnSubscriber(delegate, executor);
+        }
+    }
+
+    /**
+     * {@link RedisSubscriber} using immediate signal dispatch by calling directly {@link Subscriber} method.
+     *
+     * @param <T>
+     */
+    static class ImmediateSubscriber<T> implements RedisSubscriber<T> {
+
+        private final CoreSubscriber<T> delegate;
+
+        public ImmediateSubscriber(Subscriber<T> delegate) {
+            this.delegate = (CoreSubscriber) reactor.core.publisher.Operators.toCoreSubscriber(delegate);
+        }
+
+        @Override
+        public Context currentContext() {
+            return delegate.currentContext();
+        }
+
+        @Override
+        public void onSubscribe(Subscription s) {
+            delegate.onSubscribe(s);
+        }
+
+        @Override
+        public void onNext(T t) {
+            delegate.onNext(t);
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            delegate.onError(t);
+        }
+
+        @Override
+        public void onComplete() {
+            delegate.onComplete();
+        }
+    }
+
+    /**
+     * {@link RedisSubscriber} dispatching subscriber signals on a {@link Executor}.
+     *
+     * @param <T>
+     */
+    static class PublishOnSubscriber<T> implements RedisSubscriber<T> {
+
+        private final CoreSubscriber<T> delegate;
+        private final Executor executor;
+
+        public PublishOnSubscriber(Subscriber<T> delegate, Executor executor) {
+            this.delegate = (CoreSubscriber) reactor.core.publisher.Operators.toCoreSubscriber(delegate);
+            this.executor = executor;
+        }
+
+        @Override
+        public Context currentContext() {
+            return delegate.currentContext();
+        }
+
+        @Override
+        public void onSubscribe(Subscription s) {
+            delegate.onSubscribe(s);
+        }
+
+        @Override
+        public void onNext(T t) {
+            executor.execute(OnNext.newInstance(t, delegate));
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            executor.execute(OnComplete.newInstance(t, delegate));
+        }
+
+        @Override
+        public void onComplete() {
+            executor.execute(OnComplete.newInstance(delegate));
+        }
+    }
+
+    /**
+     * OnNext {@link Runnable}. This listener is pooled and must be {@link #recycle() recycled after usage}.
+     */
+    static class OnNext implements Runnable {
+
+        private static final Recycler<OnNext> RECYCLER = new Recycler<OnNext>() {
+            @Override
+            protected OnNext newObject(Handle<OnNext> handle) {
+                return new OnNext(handle);
+            }
+        };
+
+        private final Recycler.Handle<OnNext> handle;
+        private Object signal;
+        private Subscriber<Object> subscriber;
+
+        OnNext(Recycler.Handle<OnNext> handle) {
+            this.handle = handle;
+        }
+
+        /**
+         * Allocate a new instance.
+         *
+         * @return
+         * @see Subscriber#onNext(Object)
+         */
+        static OnNext newInstance(Object signal, Subscriber<?> subscriber) {
+
+            OnNext entry = RECYCLER.get();
+
+            entry.signal = signal;
+            entry.subscriber = (Subscriber) subscriber;
+
+            return entry;
+        }
+
+        @Override
+        public void run() {
+            try {
+                subscriber.onNext(signal);
+            } finally {
+                recycle();
+            }
+        }
+
+        private void recycle() {
+
+            this.signal = null;
+            this.subscriber = null;
+
+            handle.recycle(this);
+        }
+    }
+
+    /**
+     * OnComplete {@link Runnable}. This listener is pooled and must be {@link #recycle() recycled after usage}.
+     */
+    static class OnComplete implements Runnable {
+
+        private static final Recycler<OnComplete> RECYCLER = new Recycler<OnComplete>() {
+            @Override
+            protected OnComplete newObject(Handle<OnComplete> handle) {
+                return new OnComplete(handle);
+            }
+        };
+
+        private final Recycler.Handle<OnComplete> handle;
+        private Throwable signal;
+        private Subscriber<?> subscriber;
+
+        OnComplete(Recycler.Handle<OnComplete> handle) {
+            this.handle = handle;
+        }
+
+        /**
+         * Allocate a new instance.
+         *
+         * @return
+         * @see Subscriber#onError(Throwable)
+         */
+        static OnComplete newInstance(Throwable signal, Subscriber<?> subscriber) {
+
+            OnComplete entry = RECYCLER.get();
+
+            entry.signal = signal;
+            entry.subscriber = subscriber;
+
+            return entry;
+        }
+
+        /**
+         * Allocate a new instance.
+         *
+         * @return
+         * @see Subscriber#onComplete()
+         */
+        static OnComplete newInstance(Subscriber<?> subscriber) {
+
+            OnComplete entry = RECYCLER.get();
+
+            entry.signal = null;
+            entry.subscriber = subscriber;
+
+            return entry;
+        }
+
+        @Override
+        public void run() {
+            try {
+                if (signal != null) {
+                    subscriber.onError(signal);
+                } else {
+                    subscriber.onComplete();
+                }
+            } finally {
+                recycle();
+            }
+        }
+
+        private void recycle() {
+
+            this.signal = null;
+            this.subscriber = null;
+
+            handle.recycle(this);
         }
     }
 }

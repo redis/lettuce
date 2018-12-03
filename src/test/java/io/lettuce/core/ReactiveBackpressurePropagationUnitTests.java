@@ -41,6 +41,7 @@ import io.lettuce.core.tracing.Tracing;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.channel.local.LocalAddress;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
  * @author Mark Paluch
@@ -86,7 +87,8 @@ class ReactiveBackpressurePropagationUnitTests {
 
         Command<String, String, List<String>> lrange = new Command<>(CommandType.LRANGE,
                 new ValueListOutput<>(StringCodec.UTF8));
-        RedisPublisher<String, String, String> publisher = new RedisPublisher<>((Command) lrange, statefulConnection, true);
+        RedisPublisher<String, String, String> publisher = new RedisPublisher<>((Command) lrange, statefulConnection, true,
+                ImmediateEventExecutor.INSTANCE);
 
         CountDownLatch pressureArrived = new CountDownLatch(1);
         CountDownLatch buildPressure = new CountDownLatch(1);
@@ -138,7 +140,8 @@ class ReactiveBackpressurePropagationUnitTests {
 
         Command<String, String, List<String>> lrange = new Command<>(CommandType.LRANGE,
                 new ValueListOutput<>(StringCodec.UTF8));
-        RedisPublisher<String, String, String> publisher = new RedisPublisher<>((Command) lrange, statefulConnection, true);
+        RedisPublisher<String, String, String> publisher = new RedisPublisher<>(lrange, statefulConnection, true,
+                ImmediateEventExecutor.INSTANCE);
 
         CountDownLatch pressureArrived = new CountDownLatch(1);
         CountDownLatch buildPressure = new CountDownLatch(1);

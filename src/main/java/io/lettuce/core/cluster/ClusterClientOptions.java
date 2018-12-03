@@ -174,6 +174,12 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         @Override
+        public ClientOptions.Builder publishOnScheduler(boolean publishOnScheduler) {
+            super.publishOnScheduler(publishOnScheduler);
+            return this;
+        }
+
+        @Override
         public Builder requestQueueSize(int requestQueueSize) {
             super.requestQueueSize(requestQueueSize);
             return this;
