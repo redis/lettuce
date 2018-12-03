@@ -42,7 +42,9 @@ public interface RedisTransactionalAsyncCommands<K, V> {
      *
      * @return List&lt;Object&gt; array-reply each element being the reply to each of the commands in the atomic transaction.
      *
-     *         When using {@code WATCH}, {@code EXEC} can return a
+     *         When using {@code WATCH}, {@code EXEC} can return a {@link TransactionResult#wasDiscarded discarded
+     *         TransactionResult}.
+     * @see TransactionResult#wasDiscarded
      */
     RedisFuture<List<Object>> exec();
 
