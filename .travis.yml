@@ -1,35 +1,9 @@
 language: java
 sudo: false
 
-matrix:
-  include:
-# 11
-    - env: JDK='Oracle JDK 11'
-      jdk: oraclejdk11
-    - env: JDK='OpenJDK 11'
-      jdk: openjdk11
-# 10
-    - env: JDK='OpenJDK 10'
-      install: . ./install-jdk.sh -F 10 -L GPL
-# 9
-    - env: JDK='Oracle JDK 9'
-      jdk: oraclejdk9
-    - env: JDK='OpenJDK 9'
-      install: . ./install-jdk.sh -F 9
-# 8
-    - env: JDK='Oracle JDK 8'
-      jdk: oraclejdk8
-    - env: JDK='OpenJDK 8'
-      jdk: openjdk8
-
-before_install:
-  - wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh
-  - echo "MAVEN_OPTS='-Dlicense.skip=true'" > ~/.mavenrc
-  - ./mvnw install -q -DskipTests=true
-
-install: true
-
-script: ./mvnw clean verify
+jdk:
+- oraclejdk11
+- oraclejdk8
 
 after_success:
   - chmod -R 777 ./travis/after_success.sh
