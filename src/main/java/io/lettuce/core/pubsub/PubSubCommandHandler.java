@@ -83,6 +83,18 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
 
+        if (output.type() != null && !output.isCompleted()) {
+
+            if (!super.decode(buffer, output)) {
+                return;
+            }
+
+            RedisCommand<?, ?, ?> peek = getStack().peek();
+            canComplete(peek);
+            endpoint.notifyMessage(output);
+            output = new PubSubOutput<>(codec);
+        }
+
         if (!getStack().isEmpty()) {
             super.decode(ctx, buffer);
         }

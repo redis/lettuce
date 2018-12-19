@@ -17,6 +17,7 @@ package io.lettuce.core.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +29,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
@@ -41,6 +44,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -49,6 +53,7 @@ import io.netty.channel.*;
  * @author Mark Paluch
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class PubSubCommandHandlerUnitTests {
 
     private Queue<RedisCommand<String, String, ?>> stack;
@@ -109,7 +114,7 @@ class PubSubCommandHandlerUnitTests {
         sut.channelActive(context);
         stack.add(command);
 
-        sut.channelRead(context, Unpooled.wrappedBuffer(":1000\r\n".getBytes()));
+        sut.channelRead(context, responseBytes(":1000\r\n"));
 
         assertThat(ReflectionTestUtils.getField(command, "exception")).isInstanceOf(IllegalStateException.class);
     }
@@ -121,7 +126,7 @@ class PubSubCommandHandlerUnitTests {
         sut.channelActive(context);
         stack.add(command);
 
-        sut.channelRead(context, Unpooled.wrappedBuffer("+OK\r\n".getBytes()));
+        sut.channelRead(context, responseBytes("+OK\r\n"));
 
         assertThat(command.get()).isEqualTo("OK");
     }
@@ -139,7 +144,7 @@ class PubSubCommandHandlerUnitTests {
         stack.add(command1);
         stack.add(command2);
 
-        sut.channelRead(context, Unpooled.wrappedBuffer("+OK\r\n+YEAH\r\n".getBytes()));
+        sut.channelRead(context, responseBytes("+OK\r\n+YEAH\r\n"));
 
         assertThat(command1.get()).isEqualTo("OK");
         assertThat(command2.get()).isEqualTo("YEAH");
@@ -155,7 +160,7 @@ class PubSubCommandHandlerUnitTests {
         sut.channelActive(context);
         stack.add(command1);
 
-        sut.channelRead(context, Unpooled.wrappedBuffer("*3\r\n$7\r\nmessage\r\n$3\r\nfoo\r\n$3\r\nbar\r\n".getBytes()));
+        sut.channelRead(context, responseBytes("*3\r\n$7\r\nmessage\r\n$3\r\nfoo\r\n$3\r\nbar\r\n"));
 
         assertThat(command1.isDone()).isFalse();
 
@@ -175,8 +180,7 @@ class PubSubCommandHandlerUnitTests {
         stack.add(command1);
         stack.add(command2);
 
-        sut.channelRead(context, Unpooled
-                .wrappedBuffer("+OK\r\n*4\r\n$8\r\npmessage\r\n$1\r\n*\r\n$3\r\nfoo\r\n$3\r\nbar\r\n+YEAH\r\n".getBytes()));
+        sut.channelRead(context, responseBytes("+OK\r\n*4\r\n$8\r\npmessage\r\n$1\r\n*\r\n$3\r\nfoo\r\n$3\r\nbar\r\n+YEAH\r\n"));
 
         assertThat(command1.get()).isEqualTo("OK");
         assertThat(command2.get()).isEqualTo("YEAH");
@@ -187,5 +191,109 @@ class PubSubCommandHandlerUnitTests {
         assertThat(captor.getValue().pattern()).isEqualTo("*");
         assertThat(captor.getValue().channel()).isEqualTo("foo");
         assertThat(captor.getValue().get()).isEqualTo("bar");
+    }
+
+    @Test
+    void shouldNotPropagatePartialPubSubResponseToOutput() throws Exception {
+
+        Command<String, String, String> command1 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
+                new Utf8StringCodec()), null);
+        Command<String, String, String> command2 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
+                new Utf8StringCodec()), null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command1);
+        stack.add(command2);
+
+        sut.channelRead(context, responseBytes("*3\r\n$9\r\nsubscribe\r\n$1\r\na\r\n:2\r\n*3\r\n$9\r\nsubscribe\r\n"));
+
+        assertThat(command1.isDone()).isTrue();
+        assertThat(command2.isDone()).isFalse();
+
+        assertThat(stack).hasSize(1);
+
+        ArgumentCaptor<PubSubOutput> captor = ArgumentCaptor.forClass(PubSubOutput.class);
+        verify(endpoint).notifyMessage(captor.capture());
+
+        assertThat(captor.getValue().channel()).isEqualTo("a");
+        assertThat(captor.getValue().count()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldCompleteWithChunkedResponseOnStack() throws Exception {
+
+        Command<String, String, String> command1 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
+                new Utf8StringCodec()), null);
+        Command<String, String, String> command2 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
+                new Utf8StringCodec()), null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command1);
+        stack.add(command2);
+
+        sut.channelRead(context, responseBytes("*3\r\n$9\r\nsubscribe\r\n$1\r\na\r\n:2\r\n*3\r\n$9\r\nsubscribe\r\n"));
+        sut.channelRead(context, responseBytes("$1\r\nb\r\n:2\r\n"));
+
+        assertThat(command1.isDone()).isTrue();
+        assertThat(command2.isDone()).isTrue();
+
+        assertThat(stack).isEmpty();
+
+        ArgumentCaptor<PubSubOutput> captor = ArgumentCaptor.forClass(PubSubOutput.class);
+        verify(endpoint, times(2)).notifyMessage(captor.capture());
+
+        assertThat(captor.getAllValues().get(0).channel()).isEqualTo("a");
+        assertThat(captor.getAllValues().get(1).channel()).isEqualTo("b");
+    }
+
+    @Test
+    void shouldCompleteWithChunkedResponseOutOfBand() throws Exception {
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        sut.channelRead(context, responseBytes("*3\r\n$9\r\nsubscribe\r\n$1\r\na\r\n:2\r\n*3\r\n$9\r\nsubscribe\r\n"));
+        sut.channelRead(context, responseBytes("$1\r\nb\r\n:2\r\n"));
+
+        ArgumentCaptor<PubSubOutput> captor = ArgumentCaptor.forClass(PubSubOutput.class);
+        verify(endpoint, times(2)).notifyMessage(captor.capture());
+
+        assertThat(captor.getAllValues().get(0).channel()).isEqualTo("a");
+        assertThat(captor.getAllValues().get(1).channel()).isEqualTo("b");
+    }
+
+    @Test
+    void shouldCompleteWithChunkedResponseInterleavedSending() throws Exception {
+
+        Command<String, String, String> command1 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
+                new Utf8StringCodec()), null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        sut.channelRead(context, responseBytes("*3\r\n$7\r\nmessage\r\n$3"));
+        stack.add(command1);
+        sut.channelRead(context, responseBytes("\r\nfoo\r\n$3\r\nbar\r\n"));
+        sut.channelRead(context, responseBytes("*3\r\n$9\r\nsubscribe\r\n$1\r\na\r\n:2"));
+        sut.channelRead(context, responseBytes("\r\n"));
+
+        assertThat(command1.isDone()).isTrue();
+        assertThat(stack).isEmpty();
+
+        ArgumentCaptor<PubSubOutput> captor = ArgumentCaptor.forClass(PubSubOutput.class);
+        verify(endpoint, times(2)).notifyMessage(captor.capture());
+
+        assertThat(captor.getAllValues().get(0).channel()).isEqualTo("foo");
+        assertThat(captor.getAllValues().get(0).get()).isEqualTo("bar");
+        assertThat(captor.getAllValues().get(1).channel()).isEqualTo("a");
+    }
+
+    private static ByteBuf responseBytes(String s) {
+        return Unpooled.wrappedBuffer(s.getBytes());
     }
 }
