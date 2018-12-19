@@ -38,6 +38,7 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
     private K channel;
     private K pattern;
     private long count;
+    private boolean completed;
 
     public PubSubOutput(RedisCodec<K, V> codec) {
         super(codec, null);
@@ -89,6 +90,7 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
                     break;
                 }
                 output = (T) codec.decodeValue(bytes);
+                completed = true;
                 break;
             case psubscribe:
             case punsubscribe:
@@ -106,5 +108,11 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
     @Override
     public void set(long integer) {
         count = integer;
+        // count comes last in (p)(un)subscribe ack.
+        completed = true;
+    }
+
+    boolean isCompleted() {
+        return completed;
     }
 }
