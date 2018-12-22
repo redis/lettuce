@@ -272,6 +272,12 @@
       <artifactId>mockrunner-jdbc</artifactId>
       <version>1.1.2</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
