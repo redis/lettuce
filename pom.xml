@@ -146,7 +146,7 @@
     <dependency>
       <groupId>com.atomikos</groupId>
       <artifactId>transactions-jdbc</artifactId>
-      <version>4.0.5</version>
+      <version>4.0.6</version>
       <scope>test</scope>
     </dependency>
 
