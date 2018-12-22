@@ -32,7 +32,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Tests for {@link MyBatisCursorItemReader}.

@@ -16,9 +16,7 @@
 package org.mybatis.spring.asyncsynchronization;
 
 import org.jboss.byteman.contrib.bmunit.BMRule;
-import org.jboss.byteman.contrib.bmunit.BMUnitRunner;
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
 import org.mybatis.spring.SqlSessionTemplateTest;
 
 
@@ -29,8 +27,8 @@ import org.mybatis.spring.SqlSessionTemplateTest;
  * @author Alex Rykov
  *
  */
-@Ignore // FIXME: Enable after migrate BMUnitRunner to BMUnitExtension
-@RunWith(BMUnitRunner.class)
+@Disabled // FIXME: Enable after migrate BMUnitRunner to BMUnitExtension
+// @ExtendWith(BMUnitRunner.class)
 @BMRule(name = "proxy synchronizations", targetClass = "TransactionSynchronizationManager", targetMethod = "registerSynchronization(TransactionSynchronization)", helper = "org.mybatis.spring.asyncsynchronization.AsyncAfterCompletionHelper", action = "$1=createSynchronizationWithAsyncAfterComplete($1)")
 public class SqlSessionTemplateAsyncAfterCompletionTest extends SqlSessionTemplateTest {
 }
