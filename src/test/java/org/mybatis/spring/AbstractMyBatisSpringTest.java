@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -107,8 +107,8 @@ public abstract class AbstractMyBatisSpringTest {
   }
 
   protected void assertExecuteCount(int count) {
-    assertThat(connection.getPreparedStatementResultSetHandler().getExecutedStatements().size()).as(
-        "should have executed %d SQL statements", count).isEqualTo(count);
+    assertThat(connection.getPreparedStatementResultSetHandler().getExecutedStatements().size())
+        .as("should have executed %d SQL statements", count).isEqualTo(count);
   }
 
   protected void assertConnectionClosed(MockConnection connection) {
@@ -133,8 +133,8 @@ public abstract class AbstractMyBatisSpringTest {
   }
 
   /*
-   * Setup a new Connection before each test since its closed state will need to be checked
-   * afterwards and there is no Connection.open().
+   * Setup a new Connection before each test since its closed state will need to be checked afterwards and there is no
+   * Connection.open().
    */
   @BeforeEach
   public void setupConnection() throws SQLException {

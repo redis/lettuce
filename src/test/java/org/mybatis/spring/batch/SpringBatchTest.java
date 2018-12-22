@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringJUnitConfig(locations = {"classpath:org/mybatis/spring/batch/applicationContext.xml"})
+@SpringJUnitConfig(locations = { "classpath:org/mybatis/spring/batch/applicationContext.xml" })
 class SpringBatchTest {
 
   @Autowired

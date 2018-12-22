@@ -36,9 +36,8 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * A {@link ImportBeanDefinitionRegistrar} to allow annotation configuration of
- * MyBatis mapper scanning. Using an @Enable annotation allows beans to be
- * registered via @Component configuration, whereas implementing
+ * A {@link ImportBeanDefinitionRegistrar} to allow annotation configuration of MyBatis mapper scanning. Using
+ * an @Enable annotation allows beans to be registered via @Component configuration, whereas implementing
  * {@code BeanDefinitionRegistryPostProcessor} will work for XML configuration.
  *
  * @author Michael Lanyon
@@ -105,19 +104,13 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
 
     List<String> basePackages = new ArrayList<>();
     basePackages.addAll(
-        Arrays.stream(annoAttrs.getStringArray("value"))
-            .filter(StringUtils::hasText)
-            .collect(Collectors.toList()));
+        Arrays.stream(annoAttrs.getStringArray("value")).filter(StringUtils::hasText).collect(Collectors.toList()));
 
-    basePackages.addAll(
-        Arrays.stream(annoAttrs.getStringArray("basePackages"))
-            .filter(StringUtils::hasText)
-            .collect(Collectors.toList()));
+    basePackages.addAll(Arrays.stream(annoAttrs.getStringArray("basePackages")).filter(StringUtils::hasText)
+        .collect(Collectors.toList()));
 
-    basePackages.addAll(
-        Arrays.stream(annoAttrs.getClassArray("basePackageClasses"))
-            .map(ClassUtils::getPackageName)
-            .collect(Collectors.toList()));
+    basePackages.addAll(Arrays.stream(annoAttrs.getClassArray("basePackageClasses")).map(ClassUtils::getPackageName)
+        .collect(Collectors.toList()));
 
     scanner.registerFilters();
     scanner.doScan(StringUtils.toStringArray(basePackages));
@@ -125,6 +118,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
 
   /**
    * A {@link MapperScannerRegistrar} for {@link MapperScans}.
+   * 
    * @since 2.0.0
    */
   static class RepeatingRegistrar extends MapperScannerRegistrar {
@@ -132,8 +126,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
      * {@inheritDoc}
      */
     @Override
-    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
-        BeanDefinitionRegistry registry) {
+    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
       AnnotationAttributes mapperScansAttrs = AnnotationAttributes
           .fromMap(importingClassMetadata.getAnnotationAttributes(MapperScans.class.getName()));
       if (mapperScansAttrs != null) {

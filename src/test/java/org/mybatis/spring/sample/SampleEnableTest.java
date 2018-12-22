@@ -21,17 +21,16 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
- * Test to ensure that the {@link MapperScan}
- * annotation works as expected.
+ * Test to ensure that the {@link MapperScan} annotation works as expected.
  *
  * @since 1.2.0
  */
 @SpringJUnitConfig
 class SampleEnableTest extends AbstractSampleTest {
 
-	@Configuration
-	@ImportResource("classpath:org/mybatis/spring/sample/config/applicationContext-infrastructure.xml")
-	@MapperScan("org.mybatis.spring.sample.mapper")
-	static class AppConfig {
-	}
+  @Configuration
+  @ImportResource("classpath:org/mybatis/spring/sample/config/applicationContext-infrastructure.xml")
+  @MapperScan("org.mybatis.spring.sample.mapper")
+  static class AppConfig {
+  }
 }

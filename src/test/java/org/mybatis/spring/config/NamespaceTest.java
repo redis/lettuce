@@ -42,8 +42,7 @@ import com.mockrunner.mock.jdbc.MockDataSource;
 /**
  * Test for the MapperScannerRegistrar.
  * <p>
- * This test works fine with Spring 3.1 and 3.2 but with 3.1 the registrar is
- * called twice.
+ * This test works fine with Spring 3.1 and 3.2 but with 3.1 the registrar is called twice.
  */
 class NamespaceTest {
   private ClassPathXmlApplicationContext applicationContext;
@@ -74,7 +73,8 @@ class NamespaceTest {
   @Test
   void testInterfaceScan() {
 
-    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/base-package.xml" }, setupSqlSessionFactory());
+    applicationContext = new ClassPathXmlApplicationContext(
+        new String[] { "org/mybatis/spring/config/base-package.xml" }, setupSqlSessionFactory());
 
     startContext();
 
@@ -88,7 +88,8 @@ class NamespaceTest {
   @Test
   void testNameGenerator() {
 
-    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/name-generator.xml" }, setupSqlSessionFactory());
+    applicationContext = new ClassPathXmlApplicationContext(
+        new String[] { "org/mybatis/spring/config/name-generator.xml" }, setupSqlSessionFactory());
 
     startContext();
 
@@ -102,7 +103,8 @@ class NamespaceTest {
   @Test
   void testMarkerInterfaceScan() {
 
-    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/marker-interface.xml" }, setupSqlSessionFactory());
+    applicationContext = new ClassPathXmlApplicationContext(
+        new String[] { "org/mybatis/spring/config/marker-interface.xml" }, setupSqlSessionFactory());
 
     startContext();
 
@@ -117,7 +119,8 @@ class NamespaceTest {
   @Test
   void testAnnotationScan() {
 
-    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/annotation.xml" }, setupSqlSessionFactory());
+    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/annotation.xml" },
+        setupSqlSessionFactory());
 
     startContext();
 
@@ -132,7 +135,8 @@ class NamespaceTest {
   @Test
   void testMarkerInterfaceAndAnnotationScan() {
 
-    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/marker-and-annotation.xml" }, setupSqlSessionFactory());
+    applicationContext = new ClassPathXmlApplicationContext(
+        new String[] { "org/mybatis/spring/config/marker-and-annotation.xml" }, setupSqlSessionFactory());
 
     startContext();
 
@@ -147,7 +151,8 @@ class NamespaceTest {
   @Test
   void testScanWithExplicitSqlSessionFactory() {
 
-    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/factory-ref.xml" }, setupSqlSessionFactory());
+    applicationContext = new ClassPathXmlApplicationContext(
+        new String[] { "org/mybatis/spring/config/factory-ref.xml" }, setupSqlSessionFactory());
 
     startContext();
 
@@ -161,7 +166,8 @@ class NamespaceTest {
   @Test
   void testScanWithExplicitSqlSessionTemplate() {
 
-    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/factory-ref.xml" }, setupSqlSessionTemplate());
+    applicationContext = new ClassPathXmlApplicationContext(
+        new String[] { "org/mybatis/spring/config/factory-ref.xml" }, setupSqlSessionTemplate());
 
     startContext();
 
@@ -176,8 +182,7 @@ class NamespaceTest {
   void testScanWithMapperFactoryBeanClass() {
     DummyMapperFactoryBean.clear();
     applicationContext = new ClassPathXmlApplicationContext(
-        new String[] { "org/mybatis/spring/config/mapper-factory-bean-class.xml" }
-        , setupSqlSessionTemplate());
+        new String[] { "org/mybatis/spring/config/mapper-factory-bean-class.xml" }, setupSqlSessionTemplate());
 
     startContext();
 

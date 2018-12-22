@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2018 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ abstract class AbstractSampleJobTest {
 
     Assertions.assertEquals("COMPLETED", jobExecution.getExitStatus().getExitCode());
 
-    List<Map<String, Object>> persons = jdbcTemplate
-        .queryForList("SELECT * FROM persons ORDER BY person_id", EmptySqlParameterSource.INSTANCE);
+    List<Map<String, Object>> persons = jdbcTemplate.queryForList("SELECT * FROM persons ORDER BY person_id",
+        EmptySqlParameterSource.INSTANCE);
     Assertions.assertEquals(5, persons.size());
     Object operationBy = persons.get(0).get("OPERATION_BY");
     Object operationAt = persons.get(0).get("OPERATION_AT");

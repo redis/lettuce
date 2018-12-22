@@ -25,8 +25,8 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Example of basic MyBatis-Spring integration usage with a manual DAO
- * implementation that subclasses SqlSessionDaoSupport.
+ * Example of basic MyBatis-Spring integration usage with a manual DAO implementation that subclasses
+ * SqlSessionDaoSupport.
  */
 @DirtiesContext
 @SpringJUnitConfig(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-sqlsession.xml" })

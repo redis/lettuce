@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -27,15 +27,13 @@ import org.apache.ibatis.plugin.Signature;
 /**
  * Keeps track of Executor commits, rollbacks and close status.
  *
- * The Executor is not accessible from DefaultSqlSession, so it is much easier to use an Interceptor
- * rather than subclass a new SqlSessionFactory, etc. Also, there is the potential to change the
- * default MyBatis behavior, which could change the test results.
+ * The Executor is not accessible from DefaultSqlSession, so it is much easier to use an Interceptor rather than
+ * subclass a new SqlSessionFactory, etc. Also, there is the potential to change the default MyBatis behavior, which
+ * could change the test results.
  */
-@Intercepts({
-    @Signature(type = Executor.class, method = "commit", args = { boolean.class }),
+@Intercepts({ @Signature(type = Executor.class, method = "commit", args = { boolean.class }),
     @Signature(type = Executor.class, method = "rollback", args = { boolean.class }),
-    @Signature(type = Executor.class, method = "close", args = { boolean.class })
-})
+    @Signature(type = Executor.class, method = "close", args = { boolean.class }) })
 final class ExecutorInterceptor implements Interceptor {
 
   private int commitCount;

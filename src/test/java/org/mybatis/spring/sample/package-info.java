@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@
  * <ul>
  * <li>Automatic configuration with MapperScannerConfigurer</li>
  * <li>Automatic DAO creation with MapperFactoryBean</li>
- * <li>Extending SqlSessionDaoSupport to code your mapper implementation</li> 
- * <li>Configuring a DAO for batch processing</li> 
+ * <li>Extending SqlSessionDaoSupport to code your mapper implementation</li>
+ * <li>Configuring a DAO for batch processing</li>
  * </ul>
  */
 package org.mybatis.spring.sample;
-

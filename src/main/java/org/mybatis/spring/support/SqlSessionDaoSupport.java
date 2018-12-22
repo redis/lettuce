@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2018 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -23,11 +23,10 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.dao.support.DaoSupport;
 
 /**
- * Convenient super class for MyBatis SqlSession data access objects.
- * It gives you access to the template which can then be used to execute SQL methods.
+ * Convenient super class for MyBatis SqlSession data access objects. It gives you access to the template which can then
+ * be used to execute SQL methods.
  * <p>
- * This class needs a SqlSessionTemplate or a SqlSessionFactory.
- * If both are set the SqlSessionFactory will be ignored.
+ * This class needs a SqlSessionTemplate or a SqlSessionFactory. If both are set the SqlSessionFactory will be ignored.
  * <p>
  * 
  * @author Putthiphong Boonphong
@@ -42,10 +41,11 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
   private SqlSessionTemplate sqlSessionTemplate;
 
   /**
-   * Set MyBatis SqlSessionFactory to be used by this DAO.
-   * Will automatically create SqlSessionTemplate for the given SqlSessionFactory.
+   * Set MyBatis SqlSessionFactory to be used by this DAO. Will automatically create SqlSessionTemplate for the given
+   * SqlSessionFactory.
    *
-   * @param sqlSessionFactory a factory of SqlSession
+   * @param sqlSessionFactory
+   *          a factory of SqlSession
    */
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     if (this.sqlSessionTemplate == null || sqlSessionFactory != this.sqlSessionTemplate.getSqlSessionFactory()) {
@@ -54,11 +54,14 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
   }
 
   /**
-   * Create a SqlSessionTemplate for the given SqlSessionFactory.
-   * Only invoked if populating the DAO with a SqlSessionFactory reference!
-   * <p>Can be overridden in subclasses to provide a SqlSessionTemplate instance
-   * with different configuration, or a custom SqlSessionTemplate subclass.
-   * @param sqlSessionFactory the MyBatis SqlSessionFactory to create a SqlSessionTemplate for
+   * Create a SqlSessionTemplate for the given SqlSessionFactory. Only invoked if populating the DAO with a
+   * SqlSessionFactory reference!
+   * <p>
+   * Can be overridden in subclasses to provide a SqlSessionTemplate instance with different configuration, or a custom
+   * SqlSessionTemplate subclass.
+   * 
+   * @param sqlSessionFactory
+   *          the MyBatis SqlSessionFactory to create a SqlSessionTemplate for
    * @return the new SqlSessionTemplate instance
    * @see #setSqlSessionFactory
    */
@@ -76,12 +79,11 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
     return (this.sqlSessionTemplate != null ? this.sqlSessionTemplate.getSqlSessionFactory() : null);
   }
 
-
   /**
-   * Set the SqlSessionTemplate for this DAO explicitly,
-   * as an alternative to specifying a SqlSessionFactory.
+   * Set the SqlSessionTemplate for this DAO explicitly, as an alternative to specifying a SqlSessionFactory.
    *
-   * @param sqlSessionTemplate a template of SqlSession
+   * @param sqlSessionTemplate
+   *          a template of SqlSession
    * @see #setSqlSessionFactory
    */
   public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
@@ -89,9 +91,8 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
   }
 
   /**
-   * Users should use this method to get a SqlSession to call its statement methods
-   * This is SqlSession is managed by spring. Users should not commit/rollback/close it
-   * because it will be automatically done.
+   * Users should use this method to get a SqlSession to call its statement methods This is SqlSession is managed by
+   * spring. Users should not commit/rollback/close it because it will be automatically done.
    *
    * @return Spring managed thread safe SqlSession
    */
@@ -100,14 +101,12 @@ public abstract class SqlSessionDaoSupport extends DaoSupport {
   }
 
   /**
-   * Return the SqlSessionTemplate for this DAO,
-   * pre-initialized with the SessionFactory or set explicitly.
-   * <p><b>Note: The returned SqlSessionTemplate is a shared instance.</b>
-   * You may introspect its configuration, but not modify the configuration
-   * (other than from within an {@link #initDao} implementation).
-   * Consider creating a custom SqlSessionTemplate instance via
-   * {@code new SqlSessionTemplate(getSqlSessionFactory())}, in which case
-   * you're allowed to customize the settings on the resulting instance.
+   * Return the SqlSessionTemplate for this DAO, pre-initialized with the SessionFactory or set explicitly.
+   * <p>
+   * <b>Note: The returned SqlSessionTemplate is a shared instance.</b> You may introspect its configuration, but not
+   * modify the configuration (other than from within an {@link #initDao} implementation). Consider creating a custom
+   * SqlSessionTemplate instance via {@code new SqlSessionTemplate(getSqlSessionFactory())}, in which case you're
+   * allowed to customize the settings on the resulting instance.
    *
    * @return a template of SqlSession
    */

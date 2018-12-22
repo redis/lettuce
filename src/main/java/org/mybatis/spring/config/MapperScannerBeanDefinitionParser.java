@@ -30,8 +30,7 @@ import org.springframework.util.StringUtils;
 import org.w3c.dom.Element;
 
 /**
- * A {#code BeanDefinitionParser} that handles the element scan of the MyBatis.
- * namespace
+ * A {#code BeanDefinitionParser} that handles the element scan of the MyBatis. namespace
  * 
  * @author Lishu Luo
  * @author Eduardo Macarron
@@ -64,7 +63,8 @@ public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
       String annotationClassName = element.getAttribute(ATTRIBUTE_ANNOTATION);
       if (StringUtils.hasText(annotationClassName)) {
         @SuppressWarnings("unchecked")
-        Class<? extends Annotation> markerInterface = (Class<? extends Annotation>) classLoader.loadClass(annotationClassName);
+        Class<? extends Annotation> markerInterface = (Class<? extends Annotation>) classLoader
+            .loadClass(annotationClassName);
         scanner.setAnnotationClass(markerInterface);
       }
       String markerInterfaceClassName = element.getAttribute(ATTRIBUTE_MARKER_INTERFACE);
@@ -81,8 +81,8 @@ public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
       String mapperFactoryBeanClassName = element.getAttribute(ATTRIBUTE_MAPPER_FACTORY_BEAN_CLASS);
       if (StringUtils.hasText(mapperFactoryBeanClassName)) {
         @SuppressWarnings("unchecked")
-        Class<? extends MapperFactoryBean> mapperFactoryBeanClass =
-            (Class<? extends MapperFactoryBean>)classLoader.loadClass(mapperFactoryBeanClassName);
+        Class<? extends MapperFactoryBean> mapperFactoryBeanClass = (Class<? extends MapperFactoryBean>) classLoader
+            .loadClass(mapperFactoryBeanClassName);
         scanner.setMapperFactoryBeanClass(mapperFactoryBeanClass);
       }
     } catch (Exception ex) {
@@ -94,7 +94,8 @@ public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
     scanner.setSqlSessionFactoryBeanName(sqlSessionFactoryBeanName);
     scanner.registerFilters();
     String basePackage = element.getAttribute(ATTRIBUTE_BASE_PACKAGE);
-    scanner.scan(StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
+    scanner.scan(
+        StringUtils.tokenizeToStringArray(basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
     return null;
   }
 

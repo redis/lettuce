@@ -61,20 +61,17 @@ public class DummyMapperFactoryBean<T> extends MapperFactoryBean<T> {
     // can for example read a custom annotation to set a custom sqlSessionFactory
 
     // just a dummy implementation example
-    return (SqlSessionFactory) Proxy.newProxyInstance(
-        SqlSessionFactory.class.getClassLoader(),
-        new Class[]{SqlSessionFactory.class},
-        (proxy, method, args) -> {
-            if ("getConfiguration".equals(method.getName())) {
-              return getSqlSession().getConfiguration();
-            }
-            // dummy
-            return null;
-        }
-    );
+    return (SqlSessionFactory) Proxy.newProxyInstance(SqlSessionFactory.class.getClassLoader(),
+        new Class[] { SqlSessionFactory.class }, (proxy, method, args) -> {
+          if ("getConfiguration".equals(method.getName())) {
+            return getSqlSession().getConfiguration();
+          }
+          // dummy
+          return null;
+        });
   }
 
-  public static int getMapperCount(){
+  public static int getMapperCount() {
     return mapperInstanceCount.get();
   }
 

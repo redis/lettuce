@@ -29,8 +29,7 @@ import static org.springframework.util.Assert.notNull;
 import static org.springframework.util.ClassUtils.getShortName;
 
 /**
- * {@code org.springframework.batch.item.ItemReader} for reading database
- * records using MyBatis in a paging fashion.
+ * {@code org.springframework.batch.item.ItemReader} for reading database records using MyBatis in a paging fashion.
  * <p>
  * Provided to facilitate the migration from Spring-Batch iBATIS 2 page item readers to MyBatis 3.
  *
@@ -55,17 +54,18 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   /**
    * Public setter for {@link SqlSessionFactory} for injection purposes.
    *
-   * @param sqlSessionFactory a factory object for the {@link SqlSession}.
+   * @param sqlSessionFactory
+   *          a factory object for the {@link SqlSession}.
    */
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     this.sqlSessionFactory = sqlSessionFactory;
   }
 
   /**
-   * Public setter for the statement id identifying the statement in the SqlMap
-   * configuration file.
+   * Public setter for the statement id identifying the statement in the SqlMap configuration file.
    *
-   * @param queryId the id for the statement
+   * @param queryId
+   *          the id for the statement
    */
   public void setQueryId(String queryId) {
     this.queryId = queryId;
@@ -74,8 +74,8 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   /**
    * The parameter values to be used for the query execution.
    *
-   * @param parameterValues the values keyed by the parameter named used in
-   * the query string.
+   * @param parameterValues
+   *          the values keyed by the parameter named used in the query string.
    */
   public void setParameterValues(Map<String, Object> parameterValues) {
     this.parameterValues = parameterValues;
@@ -83,6 +83,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 
   /**
    * Check mandatory properties.
+   * 
    * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
    */
   @Override
@@ -114,7 +115,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 
   @Override
   protected void doJumpToPage(int itemIndex) {
-      // Not Implemented
+    // Not Implemented
   }
 
 }

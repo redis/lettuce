@@ -19,7 +19,6 @@ import org.jboss.byteman.contrib.bmunit.BMRule;
 import org.junit.jupiter.api.Disabled;
 import org.mybatis.spring.SqlSessionTemplateTest;
 
-
 /**
  * 
  * The same test as original but afterCompletion is being called on a separate thread
