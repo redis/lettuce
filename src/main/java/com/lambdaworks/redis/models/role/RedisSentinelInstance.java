@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Redis sentinel instance.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -36,7 +36,7 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
 
     /**
      * Constructs a {@link RedisSentinelInstance}
-     * 
+     *
      * @param monitoredMasters list of monitored masters, must not be {@literal null} but may be empty
      */
     public RedisSentinelInstance(List<String> monitoredMasters) {

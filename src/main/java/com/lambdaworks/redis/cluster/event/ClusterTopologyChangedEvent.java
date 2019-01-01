@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.lambdaworks.redis.event.Event;
 
 /**
  * Signals a discovered cluster topology change. The event carries the view {@link #before()} and {@link #after} the change.
- * 
+ *
  * @author Mark Paluch
  * @since 3.4
  */
@@ -34,7 +34,7 @@ public class ClusterTopologyChangedEvent implements Event {
 
     /**
      * Creates a new {@link ClusterTopologyChangedEvent}.
-     * 
+     *
      * @param before the cluster topology view before the topology changed, must not be {@literal null}
      * @param after the cluster topology view after the topology changed, must not be {@literal null}
      */
@@ -45,7 +45,7 @@ public class ClusterTopologyChangedEvent implements Event {
 
     /**
      * Returns the cluster topology view before the topology changed.
-     * 
+     *
      * @return the cluster topology view before the topology changed.
      */
     public List<RedisClusterNode> before() {
@@ -54,7 +54,7 @@ public class ClusterTopologyChangedEvent implements Event {
 
     /**
      * Returns the cluster topology view after the topology changed.
-     * 
+     *
      * @return the cluster topology view after the topology changed.
      */
     public List<RedisClusterNode> after() {

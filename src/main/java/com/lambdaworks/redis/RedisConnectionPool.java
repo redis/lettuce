@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import com.lambdaworks.redis.support.ConnectionPoolSupport;
 
 /**
  * Connection pool for redis connections.
- * 
+ *
  * @author Mark Paluch
  * @param <T> Connection type.
  * @since 3.0
@@ -49,7 +49,7 @@ public class RedisConnectionPool<T> implements Closeable {
 
     /**
      * Create a new connection pool
-     * 
+     *
      * @param redisConnectionProvider the connection provider
      * @param maxActive max active connections
      * @param maxIdle max idle connections
@@ -131,7 +131,7 @@ public class RedisConnectionPool<T> implements Closeable {
 
     /**
      * Return a connection into the pool.
-     * 
+     *
      * @param t the connection.
      */
     public void freeConnection(T t) {
@@ -139,7 +139,7 @@ public class RedisConnectionPool<T> implements Closeable {
     }
 
     /**
-     * 
+     *
      * @return the number of idle connections
      */
     public int getNumIdle() {
@@ -147,7 +147,7 @@ public class RedisConnectionPool<T> implements Closeable {
     }
 
     /**
-     * 
+     *
      * @return the number of active connections.
      */
     public int getNumActive() {
@@ -167,7 +167,7 @@ public class RedisConnectionPool<T> implements Closeable {
     }
 
     /**
-     * 
+     *
      * @return the component type (pool resource type).
      */
     public Class<? extends T> getComponentType() {
@@ -176,7 +176,7 @@ public class RedisConnectionPool<T> implements Closeable {
 
     /**
      * Adds a CloseListener.
-     * 
+     *
      * @param listener the listener
      */
     void addListener(CloseEvents.CloseListener listener) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import com.lambdaworks.redis.output.KeyStreamingChannel;
 
 /**
  * Advanced synchronous and thread-safe Redis Cluster API.
- * 
+ *
  * @author Mark Paluch
  * @since 4.0
  */
@@ -45,7 +45,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list. In
      * contrast to the {@link RedisAdvancedClusterCommands}, node-connections do not route commands to other cluster nodes
-     * 
+     *
      * @param nodeId the node Id
      * @return a connection to the requested cluster node
      */
@@ -56,7 +56,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * {@link RedisAdvancedClusterCommands}, node-connections do not route commands to other cluster nodes. Host and port
      * connections are verified by default for cluster membership, see
      * {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
-     * 
+     *
      * @param host the host
      * @param port the port
      * @return a connection to the requested cluster node
@@ -163,7 +163,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
      * cluster nodes.
-     * 
+     *
      * @param keys the key
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      * @see RedisStringCommands#mget(Object[])
@@ -173,7 +173,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular
      * cluster nodes.
-     * 
+     *
      * @param map the map
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      * @see RedisStringCommands#mset(Map)
@@ -183,10 +183,10 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Set multiple keys to multiple values, only if none of the keys exist with pipelining. Cross-slot keys will result in
      * multiple calls to the particular cluster nodes.
-     * 
+     *
      * @param map the null
      * @return Boolean integer-reply specifically:
-     * 
+     *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      * @see RedisStringCommands#msetnx(Map)
      */
@@ -270,7 +270,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
 
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
-     * 
+     *
      * @param save {@literal true} force save operation
      * @see RedisServerCommands#shutdown(boolean)
      */

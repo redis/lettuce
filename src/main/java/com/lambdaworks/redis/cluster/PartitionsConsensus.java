@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
  * {@link PartitionsConsensus} takes the current {@link Partitions} and a {@link java.util.Map} of newly retrieved
  * {@link Partitions} to determine a view that shall be used. Implementing classes may reuse {@link Partitions} from input
  * arguments or construct a new {@link Partitions} object.
- * 
+ *
  * @author Mark Paluch
  * @since 4.2
  * @see com.lambdaworks.redis.cluster.models.partitions.Partitions
@@ -47,7 +47,7 @@ abstract class PartitionsConsensus {
 
     /**
      * Determine the {@link Partitions} to be used by {@link RedisClusterClient}.
-     * 
+     *
      * @param current the currently used topology view, must not be {@literal null}.
      * @param topologyViews the newly retrieved views, must not be {@literal null}.
      * @return the resulting {@link Partitions} to be used by {@link RedisClusterClient}.

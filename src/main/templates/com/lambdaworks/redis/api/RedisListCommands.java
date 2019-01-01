@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.output.ValueStreamingChannel;
 
 /**
  * ${intent} for Lists.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -32,11 +32,11 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Remove and get the first element in a list, or block until one is available.
-     * 
+     *
      * @param timeout the timeout in seconds
      * @param keys the keys
      * @return KeyValue&lt;K,V&gt; array-reply specifically:
-     * 
+     *
      *         A {@literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
      *         with the first element being the name of the key where an element was popped and the second element being the
      *         value of the popped element.
@@ -45,11 +45,11 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Remove and get the last element in a list, or block until one is available.
-     * 
+     *
      * @param timeout the timeout in seconds
      * @param keys the keys
      * @return KeyValue&lt;K,V&gt; array-reply specifically:
-     * 
+     *
      *         A {@literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
      *         with the first element being the name of the key where an element was popped and the second element being the
      *         value of the popped element.
@@ -58,7 +58,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Pop a value from a list, push it to another list and return it; or block until one is available.
-     * 
+     *
      * @param timeout the timeout in seconds
      * @param source the source key
      * @param destination the destination type: key
@@ -69,7 +69,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Get an element from a list by its index.
-     * 
+     *
      * @param key the key
      * @param index the index type: long
      * @return V bulk-string-reply the requested element, or {@literal null} when {@code index} is out of range.
@@ -78,7 +78,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Insert an element before or after another element in a list.
-     * 
+     *
      * @param key the key
      * @param before the before
      * @param pivot the pivot
@@ -90,7 +90,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Get the length of a list.
-     * 
+     *
      * @param key the key
      * @return Long integer-reply the length of the list at {@code key}.
      */
@@ -98,7 +98,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Remove and get the first element in a list.
-     * 
+     *
      * @param key the key
      * @return V bulk-string-reply the value of the first element, or {@literal null} when {@code key} does not exist.
      */
@@ -106,7 +106,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Prepend one or multiple values to a list.
-     * 
+     *
      * @param key the key
      * @param values the value
      * @return Long integer-reply the length of the list after the push operations.
@@ -115,7 +115,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Prepend a value to a list, only if the list exists.
-     * 
+     *
      * @param key the key
      * @param value the value
      * @return Long integer-reply the length of the list after the push operation.
@@ -135,7 +135,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Get a range of elements from a list.
-     * 
+     *
      * @param key the key
      * @param start the start type: long
      * @param stop the stop type: long
@@ -145,7 +145,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Get a range of elements from a list.
-     * 
+     *
      * @param channel the channel
      * @param key the key
      * @param start the start type: long
@@ -156,7 +156,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Remove elements from a list.
-     * 
+     *
      * @param key the key
      * @param count the count type: long
      * @param value the value
@@ -166,7 +166,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Set the value of an element in a list by its index.
-     * 
+     *
      * @param key the key
      * @param index the index type: long
      * @param value the value
@@ -176,7 +176,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Trim a list to the specified range.
-     * 
+     *
      * @param key the key
      * @param start the start type: long
      * @param stop the stop type: long
@@ -186,7 +186,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Remove and get the last element in a list.
-     * 
+     *
      * @param key the key
      * @return V bulk-string-reply the value of the last element, or {@literal null} when {@code key} does not exist.
      */
@@ -194,7 +194,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Remove the last element in a list, append it to another list and return it.
-     * 
+     *
      * @param source the source key
      * @param destination the destination type: key
      * @return V bulk-string-reply the element being popped and pushed.
@@ -203,7 +203,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Append one or multiple values to a list.
-     * 
+     *
      * @param key the key
      * @param values the value
      * @return Long integer-reply the length of the list after the push operation.
@@ -212,7 +212,7 @@ public interface RedisListCommands<K, V> {
 
     /**
      * Append a value to a list, only if the list exists.
-     * 
+     *
      * @param key the key
      * @param value the value
      * @return Long integer-reply the length of the list after the push operation.

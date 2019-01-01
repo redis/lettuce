@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.lambdaworks.redis.resource.Delay.StatefulDelay;
  * This strategy is based on <a href="https://www.awsarchitectureblog.com/2015/03/backoff.html">Exponential Backoff and
  * Jitter</a>.
  * </p>
- * 
+ *
  * @author Jongyeol Choi
  * @since 4.2
  * @see StatefulDelay

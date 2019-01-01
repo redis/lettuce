@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.lambdaworks.redis.models.role.RedisNodeDescription;
 
 /**
  * Methods to support a Cluster-wide SCAN operation over multiple hosts.
- * 
+ *
  * @author Mark Paluch
  */
 class ClusterScanSupport {
@@ -99,7 +99,7 @@ class ClusterScanSupport {
 
     /**
      * Retrieve the cursor to continue the scan.
-     * 
+     *
      * @param scanCursor can be {@literal null}.
      * @return
      */
@@ -146,7 +146,7 @@ class ClusterScanSupport {
 
     /**
      * Retrieve a list of node Ids to use for the SCAN operation.
-     * 
+     *
      * @param connection
      * @return
      */
@@ -249,7 +249,7 @@ class ClusterScanSupport {
 
     /**
      * State object for a cluster-wide SCAN using Key results.
-     * 
+     *
      * @param <K>
      */
     private static class ClusterKeyScanCursor<K> extends KeyScanCursor<K> implements ClusterScanCursor {

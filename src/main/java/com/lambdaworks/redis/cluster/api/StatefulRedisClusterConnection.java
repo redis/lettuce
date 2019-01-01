@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.lambdaworks.redis.cluster.models.partitions.Partitions;
 /**
  * A stateful cluster connection. Advanced cluster connections provide transparent command routing based on the first
  * command key.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -66,7 +66,7 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      *
      * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
      * validated against the current topology view in {@link com.lambdaworks.redis.cluster.models.partitions.Partitions}.
-     * 
+     *
      *
      * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
@@ -96,14 +96,14 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     /**
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
-     * 
+     *
      * @param readFrom the read from setting, must not be {@literal null}
      */
     void setReadFrom(ReadFrom readFrom);
 
     /**
      * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
-     * 
+     *
      * @return the read from setting
      */
     ReadFrom getReadFrom();

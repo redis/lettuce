@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * Asynchronous executed commands on a node selection for Server Control.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -34,28 +34,28 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Asynchronously rewrite the append-only file.
-     * 
+     *
      * @return String simple-string-reply always {@code OK}.
      */
     AsyncExecutions<String> bgrewriteaof();
 
     /**
      * Asynchronously save the dataset to disk.
-     * 
+     *
      * @return String simple-string-reply
      */
     AsyncExecutions<String> bgsave();
 
     /**
      * Get the current connection name.
-     * 
+     *
      * @return K bulk-string-reply The connection name, or a null bulk reply if no name is set.
      */
     AsyncExecutions<K> clientGetname();
 
     /**
      * Set the current connection name.
-     * 
+     *
      * @param name the client name
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      */
@@ -63,7 +63,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Kill the connection of a client identified by ip:port.
-     * 
+     *
      * @param addr ip:port
      * @return String simple-string-reply {@code OK} if the connection exists and has been closed
      */
@@ -79,7 +79,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Stop processing commands from clients for some time.
-     * 
+     *
      * @param timeout the timeout value in milliseconds
      * @return String simple-string-reply The command returns OK or an error if the timeout is invalid.
      */
@@ -87,7 +87,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Get the list of client connections.
-     * 
+     *
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
      */
@@ -95,14 +95,14 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Returns an array reply of details about all Redis commands.
-     * 
+     *
      * @return List&lt;Object&gt; array-reply
      */
     AsyncExecutions<List<Object>> command();
 
     /**
      * Returns an array reply of details about the requested commands.
-     * 
+     *
      * @param commands the commands to query for
      * @return List&lt;Object&gt; array-reply
      */
@@ -110,7 +110,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Returns an array reply of details about the requested commands.
-     * 
+     *
      * @param commands the commands to query for
      * @return List&lt;Object&gt; array-reply
      */
@@ -118,14 +118,14 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Get total number of Redis commands.
-     * 
+     *
      * @return Long integer-reply of number of total commands in this Redis server.
      */
     AsyncExecutions<Long> commandCount();
 
     /**
      * Get the value of a configuration parameter.
-     * 
+     *
      * @param parameter name of the parameter
      * @return List&lt;String&gt; bulk-string-reply
      */
@@ -133,14 +133,14 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Reset the stats returned by INFO.
-     * 
+     *
      * @return String simple-string-reply always {@code OK}.
      */
     AsyncExecutions<String> configResetstat();
 
     /**
      * Rewrite the configuration file with the in memory configuration.
-     * 
+     *
      * @return String simple-string-reply {@code OK} when the configuration was rewritten properly. Otherwise an error is
      *         returned.
      */
@@ -148,7 +148,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Set a configuration parameter to the given value.
-     * 
+     *
      * @param parameter the parameter name
      * @param value the parameter value
      * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
@@ -157,7 +157,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Return the number of keys in the selected database.
-     * 
+     *
      * @return Long integer-reply
      */
     AsyncExecutions<Long> dbsize();
@@ -179,7 +179,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Get debugging information about a key.
-     * 
+     *
      * @param key the key
      * @return String simple-string-reply
      */
@@ -209,7 +209,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Remove all keys from all databases.
-     * 
+     *
      * @return String simple-string-reply
      */
     AsyncExecutions<String> flushall();
@@ -223,7 +223,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Remove all keys from the current database.
-     * 
+     *
      * @return String simple-string-reply
      */
     AsyncExecutions<String> flushdb();
@@ -237,14 +237,14 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Get information and statistics about the server.
-     * 
+     *
      * @return String bulk-string-reply as a collection of text lines.
      */
     AsyncExecutions<String> info();
 
     /**
      * Get information and statistics about the server.
-     * 
+     *
      * @param section the section type: string
      * @return String bulk-string-reply as a collection of text lines.
      */
@@ -252,21 +252,21 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Get the UNIX time stamp of the last successful save to disk.
-     * 
+     *
      * @return Date integer-reply an UNIX time stamp.
      */
     AsyncExecutions<Date> lastsave();
 
     /**
      * Synchronously save the dataset to disk.
-     * 
+     *
      * @return String simple-string-reply The commands returns OK on success.
      */
     AsyncExecutions<String> save();
 
     /**
      * Make the server a slave of another instance, or promote it as master.
-     * 
+     *
      * @param host the host type: string
      * @param port the port type: string
      * @return String simple-string-reply
@@ -275,21 +275,21 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Promote server as master.
-     * 
+     *
      * @return String simple-string-reply
      */
     AsyncExecutions<String> slaveofNoOne();
 
     /**
      * Read the slow log.
-     * 
+     *
      * @return List&lt;Object&gt; deeply nested multi bulk replies
      */
     AsyncExecutions<List<Object>> slowlogGet();
 
     /**
      * Read the slow log.
-     * 
+     *
      * @param count the count
      * @return List&lt;Object&gt; deeply nested multi bulk replies
      */
@@ -297,21 +297,21 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Obtaining the current length of the slow log.
-     * 
+     *
      * @return Long length of the slow log.
      */
     AsyncExecutions<Long> slowlogLen();
 
     /**
      * Resetting the slow log.
-     * 
+     *
      * @return String simple-string-reply The commands returns OK on success.
      */
     AsyncExecutions<String> slowlogReset();
 
     /**
      * Internal command used for replication.
-     * 
+     *
      * @return String simple-string-reply
      */
     @Deprecated
@@ -319,11 +319,11 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
 
     /**
      * Return the current server time.
-     * 
+     *
      * @return List&lt;V&gt; array-reply specifically:
-     * 
+     *
      *         A multi bulk reply containing two elements:
-     * 
+     *
      *         unix time in seconds. microseconds.
      */
     AsyncExecutions<List<V>> time();

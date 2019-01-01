@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public class LettuceClassUtils {
     /**
      * Determine whether the {@link Class} identified by the supplied name is present and can be loaded. Will return
      * {@code false} if either the class or one of its dependencies is not present or cannot be loaded.
-     * 
+     *
      * @param className the name of the class to check
      * @return whether the specified class is present
      */
@@ -44,7 +44,7 @@ public class LettuceClassUtils {
 
     /**
      * Loads a class using the {@link #getDefaultClassLoader()}.
-     * 
+     *
      * @param className
      * @return
      * @throws ClassNotFoundException

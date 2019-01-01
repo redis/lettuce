@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.codec.RedisCodec;
 
 /**
  * An asynchronous and thread-safe API for a Redis connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -32,10 +32,10 @@ public class RedisAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, 
 
     /**
      * Initialize a new instance.
-     * 
+     *
      * @param connection the connection to operate on
      * @param codec the codec for command encoding
-     * 
+     *
      */
     public RedisAsyncCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);

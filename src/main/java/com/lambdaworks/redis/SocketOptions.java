@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ public class SocketOptions {
 
     /**
      * Returns the connection timeout.
-     * 
+     *
      * @return the connection timeout.
      */
     public long getConnectTimeout() {
@@ -160,7 +160,7 @@ public class SocketOptions {
 
     /**
      * Returns the the connection timeout unit.
-     * 
+     *
      * @return the connection timeout unit.
      */
     public TimeUnit getConnectTimeoutUnit() {
@@ -169,7 +169,7 @@ public class SocketOptions {
 
     /**
      * Returns whether to enable TCP keepalive.
-     * 
+     *
      * @return whether to enable TCP keepalive
      * @see java.net.SocketOptions#SO_KEEPALIVE
      */
@@ -179,7 +179,7 @@ public class SocketOptions {
 
     /**
      * Returns whether to use TCP NoDelay.
-     * 
+     *
      * @return {@literal true} to disable Nagle's algorithm, {@link false} to enable Nagle's algorithm.
      * @see java.net.SocketOptions#TCP_NODELAY
      */

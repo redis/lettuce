@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.Set;
 /**
  * Static utility methods for {@link Set} instances. This class is part of the internal API and may change without further
  * notice.
- * 
+ *
  * @author Mark Paluch
  * @since 4.2
  */
@@ -39,7 +39,7 @@ public final class LettuceSets {
 
     /**
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
-     * 
+     *
      * @param elements the elements that the set should contain, must not be {@literal null}.
      * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
@@ -54,7 +54,7 @@ public final class LettuceSets {
 
     /**
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
-     * 
+     *
      * @param elements the elements that the set should contain, must not be {@literal null}.
      * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
@@ -76,7 +76,7 @@ public final class LettuceSets {
 
     /**
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
-     * 
+     *
      * @param elements the elements that the set should contain, must not be {@literal null}.
      * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.

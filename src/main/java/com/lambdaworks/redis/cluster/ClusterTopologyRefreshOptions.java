@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Options to control the Cluster topology refreshing of {@link RedisClusterClient}.
- * 
+ *
  * @author Mark Paluch
  * @since 4.2
  */
@@ -288,7 +288,7 @@ public class ClusterTopologyRefreshOptions {
     /**
      * Flag, whether regular cluster topology updates are updated. The client starts updating the cluster topology in the
      * intervals of {@link #getRefreshPeriod()} /{@link #getRefreshPeriodUnit()}. Defaults to {@literal false}.
-     * 
+     *
      * @return {@literal true} it the cluster topology view is updated periodically
      */
     public boolean isPeriodicRefreshEnabled() {
@@ -297,7 +297,7 @@ public class ClusterTopologyRefreshOptions {
 
     /**
      * Period between the regular cluster topology updates. Defaults to {@literal 60}.
-     * 
+     *
      * @return the period between the regular cluster topology updates
      */
     public long getRefreshPeriod() {
@@ -306,7 +306,7 @@ public class ClusterTopologyRefreshOptions {
 
     /**
      * Unit for the {@link #getRefreshPeriod()}. Defaults to {@link TimeUnit#SECONDS}.
-     * 
+     *
      * @return unit for the {@link #getRefreshPeriod()}
      */
     public TimeUnit getRefreshPeriodUnit() {
@@ -316,7 +316,7 @@ public class ClusterTopologyRefreshOptions {
     /**
      * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@literal true}. Comes only
      * into effect if {@link #isPeriodicRefreshEnabled()} is {@literal true}.
-     * 
+     *
      * @return {@literal true} if stale connections are cleaned up after cluster topology updates
      */
     public boolean isCloseStaleConnections() {
@@ -328,7 +328,7 @@ public class ClusterTopologyRefreshOptions {
      * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node.If set
      * to {@literal false}, only the initial seed nodes will be used as sources for topology discovery and the number of clients
      * will be obtained only for the initial seed nodes. This can be useful when using Redis Cluster with many nodes.
-     * 
+     *
      * @return {@link true} if dynamic refresh sources are enabled
      */
     public boolean useDynamicRefreshSources() {

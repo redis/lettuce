@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.util.Collection;
 /**
  * Assertion utility class that assists in validating arguments. This class is part of the internal API and may change without
  * further notice.
- * 
+ *
  * @author Mark Paluch
  */
 public class LettuceAssert {

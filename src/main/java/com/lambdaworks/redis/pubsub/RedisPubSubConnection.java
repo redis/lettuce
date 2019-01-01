@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,21 +31,21 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
 
     /**
      * Add a new listener.
-     * 
+     *
      * @param listener Listener.
      */
     void addListener(RedisPubSubListener<K, V> listener);
 
     /**
      * Remove an existing listener.
-     * 
+     *
      * @param listener Listener.
      */
     void removeListener(RedisPubSubListener<K, V> listener);
 
     /**
      * Listen for messages published to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code psubscribe} completion
      */
@@ -53,7 +53,7 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code punsubscribe} completion
      */
@@ -61,7 +61,7 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
 
     /**
      * Listen for messages published to the given channels.
-     * 
+     *
      * @param channels the channels
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
      */
@@ -69,7 +69,7 @@ public interface RedisPubSubConnection<K, V> extends RedisAsyncConnection<K, V> 
 
     /**
      * Stop listening for messages posted to the given channels.
-     * 
+     *
      * @param channels the channels
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
      */

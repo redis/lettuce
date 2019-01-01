@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.lambdaworks.redis.ScriptOutputType;
 
 /**
  * Asynchronous executed commands on a node selection for Scripting.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -32,7 +32,7 @@ public interface NodeSelectionScriptingAsyncCommands<K, V> {
 
     /**
      * Execute a Lua script server side.
-     * 
+     *
      * @param script Lua 5.1 script.
      * @param type output type
      * @param keys key names
@@ -43,7 +43,7 @@ public interface NodeSelectionScriptingAsyncCommands<K, V> {
 
     /**
      * Execute a Lua script server side.
-     * 
+     *
      * @param script Lua 5.1 script.
      * @param type the type
      * @param keys the keys
@@ -55,7 +55,7 @@ public interface NodeSelectionScriptingAsyncCommands<K, V> {
 
     /**
      * Evaluates a script cached on the server side by its SHA1 digest
-     * 
+     *
      * @param digest SHA1 of the script
      * @param type the type
      * @param keys the keys
@@ -66,7 +66,7 @@ public interface NodeSelectionScriptingAsyncCommands<K, V> {
 
     /**
      * Execute a Lua script server side.
-     * 
+     *
      * @param digest SHA1 of the script
      * @param type the type
      * @param keys the keys
@@ -78,7 +78,7 @@ public interface NodeSelectionScriptingAsyncCommands<K, V> {
 
     /**
      * Check existence of scripts in the script cache.
-     * 
+     *
      * @param digests script digests
      * @return List&lt;Boolean&gt; array-reply The command returns an array of integers that correspond to the specified SHA1
      *         digest arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1
@@ -88,21 +88,21 @@ public interface NodeSelectionScriptingAsyncCommands<K, V> {
 
     /**
      * Remove all the scripts from the script cache.
-     * 
+     *
      * @return String simple-string-reply
      */
     AsyncExecutions<String> scriptFlush();
 
     /**
      * Kill the script currently in execution.
-     * 
+     *
      * @return String simple-string-reply
      */
     AsyncExecutions<String> scriptKill();
 
     /**
      * Load the specified Lua script into the script cache.
-     * 
+     *
      * @param script script content
      * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
      */

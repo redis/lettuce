@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.lambdaworks.redis.output;
 /**
  * Streaming API for multiple Keys. You can implement this interface in order to receive a call to {@code onKey} on every key.
  * Key uniqueness is not guaranteed.
- * 
+ *
  * @param <K> Key type.
  * @author Mark Paluch
  * @since 3.0
@@ -27,7 +27,7 @@ package com.lambdaworks.redis.output;
 public interface KeyStreamingChannel<K> {
     /**
      * Called on every incoming key.
-     * 
+     *
      * @param key the key
      */
     void onKey(K key);

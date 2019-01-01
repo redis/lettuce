@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.lambdaworks.redis.api.async.*;
 
 /**
  * A complete asynchronous and thread-safe cluster Redis API with 400+ Methods.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -39,7 +39,7 @@ public interface RedisClusterAsyncCommands<K, V>
 
     /**
      * Set the default timeout for operations.
-     * 
+     *
      * @param timeout the timeout value
      * @param unit the unit of the timeout value
      */
@@ -47,7 +47,7 @@ public interface RedisClusterAsyncCommands<K, V>
 
     /**
      * Authenticate to the server.
-     * 
+     *
      * @param password the password
      * @return String simple-string-reply
      */
@@ -223,7 +223,7 @@ public interface RedisClusterAsyncCommands<K, V>
 
     /**
      * Get array of cluster slots to node mappings.
-     * 
+     *
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of slot ranges with IP/Port mappings.
      */
     RedisFuture<List<Object>> clusterSlots();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Utility for checking a connection's state.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -35,7 +35,7 @@ class Connections {
     }
 
     /**
-     * 
+     *
      * @param connection must be either a {@link com.lambdaworks.redis.RedisAsyncConnection} or
      *        {@link com.lambdaworks.redis.RedisConnection} and must not be {@literal null}
      * @return true if the connection is valid (ping works)
@@ -72,7 +72,7 @@ class Connections {
     }
 
     /**
-     * 
+     *
      * @param connection must be either a {@link com.lambdaworks.redis.RedisAsyncConnection} or
      *        {@link com.lambdaworks.redis.RedisConnection} and must not be {@literal null}
      * @return true if the connection is open.
@@ -97,7 +97,7 @@ class Connections {
 
     /**
      * Closes silently a connection.
-     * 
+     *
      * @param connection must be either a {@link com.lambdaworks.redis.RedisAsyncConnection} or
      *        {@link com.lambdaworks.redis.RedisConnection} and must not be {@literal null}
      * @throws java.lang.NullPointerException if connection is null

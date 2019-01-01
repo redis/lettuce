@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.Map;
 
 /**
  * A reactive and thread-safe API for a Redis pub/sub connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -57,7 +57,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
 
     /**
      * Add a new listener.
-     * 
+     *
      * @param listener Listener.
      */
     @Override
@@ -115,7 +115,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
 
     /**
      * Remove an existing listener.
-     * 
+     *
      * @param listener Listener.
      */
     @Override

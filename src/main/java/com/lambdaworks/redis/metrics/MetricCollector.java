@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.lambdaworks.redis.metrics;
 
 /**
  * Generic metrics collector interface. A metrics collector collects metrics and emits metric events.
- * 
+ *
  * @author Mark Paluch
  * @param <T> data type of the metrics
  * @since 3.4
@@ -32,14 +32,14 @@ public interface MetricCollector<T> {
 
     /**
      * Returns the collected/aggregated metrics.
-     * 
+     *
      * @return the the collected/aggregated metrics
      */
     T retrieveMetrics();
 
     /**
      * Returns {@literal true} if the metric collector is enabled.
-     * 
+     *
      * @return {@literal true} if the metric collector is enabled
      */
     boolean isEnabled();

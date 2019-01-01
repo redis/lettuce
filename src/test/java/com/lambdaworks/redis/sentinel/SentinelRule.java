@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class SentinelRule implements TestRule {
     protected Logger log = LogManager.getLogger(getClass());
 
     /**
-     * 
+     *
      * @param redisClient
      * @param flushBeforeTest
      * @param sentinelPorts
@@ -125,7 +125,7 @@ public class SentinelRule implements TestRule {
     /**
      * Requires a master with a slave. If no master or slave is present, the rule flushes known masters and sets up a master
      * with a slave.
-     * 
+     *
      * @param masterId
      * @param redisPorts
      */
@@ -142,7 +142,7 @@ public class SentinelRule implements TestRule {
 
     /**
      * Wait until the master has a connected slave.
-     * 
+     *
      * @param masterId
      */
     public void waitForConnectedSlaves(String masterId) {
@@ -153,7 +153,7 @@ public class SentinelRule implements TestRule {
 
     /**
      * Wait until sentinel can provide an address for the master.
-     * 
+     *
      * @param masterId
      */
     public void waitForMaster(String masterId) {
@@ -204,7 +204,7 @@ public class SentinelRule implements TestRule {
 
     /**
      * Check if the master has slaves at all (no check for connection/alive).
-     * 
+     *
      * @param masterId
      * @return
      */
@@ -225,7 +225,7 @@ public class SentinelRule implements TestRule {
 
     /**
      * Check if a master runs on any of the given ports.
-     * 
+     *
      * @param redisPorts
      * @return
      */
@@ -253,7 +253,7 @@ public class SentinelRule implements TestRule {
 
     /**
      * Check if the master has connected slaves.
-     * 
+     *
      * @param masterId
      * @return
      */
@@ -293,7 +293,7 @@ public class SentinelRule implements TestRule {
 
     /**
      * Setup a master with one or more slaves (depending on port count).
-     * 
+     *
      * @param redisPorts
      * @return
      */
@@ -335,7 +335,7 @@ public class SentinelRule implements TestRule {
 
     /**
      * Retrieve the port of the first found master.
-     * 
+     *
      * @param connections
      * @return
      */

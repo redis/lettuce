@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Abstract representation of the output of a redis command.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Output type.
@@ -36,7 +36,7 @@ public abstract class CommandOutput<K, V, T> {
 
     /**
      * Initialize a new instance that encodes and decodes keys and values using the supplied codec.
-     * 
+     *
      * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
      * @param output Initial value of output.
      */
@@ -48,7 +48,7 @@ public abstract class CommandOutput<K, V, T> {
 
     /**
      * Get the command output.
-     * 
+     *
      * @return The command output.
      */
     public T get() {
@@ -58,7 +58,7 @@ public abstract class CommandOutput<K, V, T> {
     /**
      * Set the command output to a sequence of bytes, or null. Concrete {@link CommandOutput} implementations must override this
      * method unless they only receive an integer value which cannot be null.
-     * 
+     *
      * @param bytes The command output, or null.
      */
     public void set(ByteBuffer bytes) {
@@ -68,7 +68,7 @@ public abstract class CommandOutput<K, V, T> {
     /**
      * Set the command output to a 64-bit signed integer. Concrete {@link CommandOutput} implementations must override this
      * method unless they only receive a byte array value.
-     * 
+     *
      * @param integer The command output.
      */
     public void set(long integer) {
@@ -77,7 +77,7 @@ public abstract class CommandOutput<K, V, T> {
 
     /**
      * Set command output to an error message from the server.
-     * 
+     *
      * @param error Error message.
      */
     public void setError(ByteBuffer error) {
@@ -86,7 +86,7 @@ public abstract class CommandOutput<K, V, T> {
 
     /**
      * Set command output to an error message from the client.
-     * 
+     *
      * @param error Error message.
      */
     public void setError(String error) {
@@ -95,7 +95,7 @@ public abstract class CommandOutput<K, V, T> {
 
     /**
      * Check if the command resulted in an error.
-     * 
+     *
      * @return true if command resulted in an error.
      */
     public boolean hasError() {
@@ -104,7 +104,7 @@ public abstract class CommandOutput<K, V, T> {
 
     /**
      * Get the error that occurred.
-     * 
+     *
      * @return The error.
      */
     public String getError() {
@@ -113,9 +113,9 @@ public abstract class CommandOutput<K, V, T> {
 
     /**
      * Mark the command output complete.
-     * 
+     *
      * @param depth Remaining depth of output queue.
-     * 
+     *
      */
     public void complete(int depth) {
         // nothing to do by default

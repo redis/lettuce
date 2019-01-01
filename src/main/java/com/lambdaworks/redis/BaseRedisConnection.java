@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import com.lambdaworks.redis.protocol.CommandArgs;
 import com.lambdaworks.redis.protocol.ProtocolKeyword;
 
 /**
- * 
+ *
  * Basic synchronous executed commands.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -38,7 +38,7 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     /**
      * Post a message to a channel.
-     * 
+     *
      * @param channel the channel type: key
      * @param message the message type: value
      * @return Long integer-reply the number of clients that received the message.
@@ -47,14 +47,14 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     /**
      * Lists the currently *active channels*.
-     * 
+     *
      * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
      */
     List<K> pubsubChannels();
 
     /**
      * Lists the currently *active channels*.
-     * 
+     *
      * @param channel the key
      * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
      */
@@ -70,14 +70,14 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     /**
      * Returns the number of subscriptions to patterns.
-     * 
+     *
      * @return Long integer-reply the number of patterns all the clients are subscribed to.
      */
     Long pubsubNumpat();
 
     /**
      * Echo the given string.
-     * 
+     *
      * @param msg the message type: value
      * @return V bulk-string-reply
      */
@@ -93,7 +93,7 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     /**
      * Ping the server.
-     * 
+     *
      * @return String simple-string-reply
      */
     String ping();
@@ -114,14 +114,14 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     /**
      * Close the connection.
-     * 
+     *
      * @return String simple-string-reply always OK.
      */
     String quit();
 
     /**
      * Create a SHA1 digest from a Lua script.
-     * 
+     *
      * @param script script content
      * @return the SHA1 value
      */
@@ -129,30 +129,30 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     /**
      * Discard all commands issued after MULTI.
-     * 
+     *
      * @return String simple-string-reply always {@code OK}.
      */
     String discard();
 
     /**
      * Execute all commands issued after MULTI.
-     * 
+     *
      * @return List&lt;Object&gt; array-reply each element being the reply to each of the commands in the atomic transaction.
-     * 
+     *
      *         When using {@code WATCH}, {@code EXEC} can return a
      */
     List<Object> exec();
 
     /**
      * Mark the start of a transaction block.
-     * 
+     *
      * @return String simple-string-reply always {@code OK}.
      */
     String multi();
 
     /**
      * Watch the given keys to determine execution of the MULTI/EXEC block.
-     * 
+     *
      * @param keys the key
      * @return String simple-string-reply always {@code OK}.
      */
@@ -160,14 +160,14 @@ public interface BaseRedisConnection<K, V> extends Closeable {
 
     /**
      * Forget about all watched keys.
-     * 
+     *
      * @return String simple-string-reply always {@code OK}.
      */
     String unwatch();
 
     /**
      * Wait for replication.
-     * 
+     *
      * @param replicas minimum number of replicas
      * @param timeout timeout in milliseconds
      * @return number of replicas
@@ -202,7 +202,7 @@ public interface BaseRedisConnection<K, V> extends Closeable {
     void close();
 
     /**
-     * 
+     *
      * @return true if the connection is open (connected and not closed).
      */
     boolean isOpen();

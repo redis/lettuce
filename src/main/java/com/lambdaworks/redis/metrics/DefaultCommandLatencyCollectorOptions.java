@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
         /**
          * Disable the latency collector.
-         * 
+         *
          * @return this
          */
         public Builder disable() {
@@ -109,7 +109,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         /**
          * Set the target unit for the latencies. Defaults to {@link TimeUnit#MILLISECONDS}. See
          * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_TARGET_UNIT}.
-         * 
+         *
          * @param targetUnit the target unit, must not be {@literal null}
          * @return this
          *
@@ -125,7 +125,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
          * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_TARGET_PERCENTILES}.
          *
          * @param targetPercentiles the percentiles which should be emitted, must not be {@literal null}
-         * 
+         *
          * @return this
          */
         public Builder targetPercentiles(double[] targetPercentiles) {
@@ -140,7 +140,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
          *
          * @param resetLatenciesAfterEvent {@literal true} if the recorded latencies should be reset once the metrics event was
          *        emitted
-         * 
+         *
          * @return this
          */
         public Builder resetLatenciesAfterEvent(boolean resetLatenciesAfterEvent) {

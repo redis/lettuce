@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.lambdaworks.redis.RedisSentinelAsyncConnection;
 
 /**
  * Asynchronous executed commands for Redis Sentinel.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -37,7 +37,7 @@ public interface RedisSentinelAsyncCommands<K, V> extends Closeable, RedisSentin
 
     /**
      * Return the ip and port number of the master with that name.
-     * 
+     *
      * @param key the key
      * @return SocketAddress;
      */
@@ -45,14 +45,14 @@ public interface RedisSentinelAsyncCommands<K, V> extends Closeable, RedisSentin
 
     /**
      * Enumerates all the monitored masters and their states.
-     * 
+     *
      * @return Map&lt;K, V&gt;&gt;
      */
     RedisFuture<List<Map<K, V>>> masters();
 
     /**
      * Show the state and info of the specified master.
-     * 
+     *
      * @param key the key
      * @return Map&lt;K, V&gt;
      */
@@ -60,7 +60,7 @@ public interface RedisSentinelAsyncCommands<K, V> extends Closeable, RedisSentin
 
     /**
      * Provides a list of slaves for the master with the specified name.
-     * 
+     *
      * @param key the key
      * @return List&lt;Map&lt;K, V&gt;&gt;
      */
@@ -68,7 +68,7 @@ public interface RedisSentinelAsyncCommands<K, V> extends Closeable, RedisSentin
 
     /**
      * This command will reset all the masters with matching name.
-     * 
+     *
      * @param key the key
      * @return Long
      */
@@ -76,7 +76,7 @@ public interface RedisSentinelAsyncCommands<K, V> extends Closeable, RedisSentin
 
     /**
      * Perform a failover.
-     * 
+     *
      * @param key the master id
      * @return String
      */
@@ -84,7 +84,7 @@ public interface RedisSentinelAsyncCommands<K, V> extends Closeable, RedisSentin
 
     /**
      * This command tells the Sentinel to start monitoring a new master with the specified name, ip, port, and quorum.
-     * 
+     *
      * @param key the key
      * @param ip the IP address
      * @param port the port
@@ -95,18 +95,18 @@ public interface RedisSentinelAsyncCommands<K, V> extends Closeable, RedisSentin
 
     /**
      * Multiple option / value pairs can be specified (or none at all).
-     * 
+     *
      * @param key the key
      * @param option the option
      * @param value the value
-     * 
+     *
      * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
     RedisFuture<String> set(K key, String option, V value);
 
     /**
      * remove the specified master.
-     * 
+     *
      * @param key the key
      * @return String
      */
@@ -176,7 +176,7 @@ public interface RedisSentinelAsyncCommands<K, V> extends Closeable, RedisSentin
 
     /**
      * Ping the server.
-     * 
+     *
      * @return String simple-string-reply
      */
     RedisFuture<String> ping();

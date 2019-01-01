@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * Generic Cursor data structure.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -46,7 +46,7 @@ public class ScanCursor {
 
     /**
      * Creates a new {@link ScanCursor}.
-     * 
+     *
      * @param cursor
      * @param finished
      */
@@ -56,7 +56,7 @@ public class ScanCursor {
     }
 
     /**
-     * 
+     *
      * @return cursor id
      */
     public String getCursor() {
@@ -65,7 +65,7 @@ public class ScanCursor {
 
     /**
      * Set the cursor
-     * 
+     *
      * @param cursor the cursor id
      */
     public void setCursor(String cursor) {
@@ -75,7 +75,7 @@ public class ScanCursor {
     }
 
     /**
-     * 
+     *
      * @return true if the scan operation of this cursor is finished.
      */
     public boolean isFinished() {
@@ -88,7 +88,7 @@ public class ScanCursor {
 
     /**
      * Creates a Scan-Cursor reference.
-     * 
+     *
      * @param cursor the cursor id
      * @return ScanCursor
      */

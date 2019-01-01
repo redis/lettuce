@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.lambdaworks.redis.pubsub;
 
 /**
  * Interface for redis pub/sub listeners.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
@@ -25,7 +25,7 @@ package com.lambdaworks.redis.pubsub;
 public interface RedisPubSubListener<K, V> {
     /**
      * Message received from a channel subscription.
-     * 
+     *
      * @param channel Channel.
      * @param message Message.
      */
@@ -33,7 +33,7 @@ public interface RedisPubSubListener<K, V> {
 
     /**
      * Message received from a pattern subscription.
-     * 
+     *
      * @param pattern Pattern
      * @param channel Channel
      * @param message Message
@@ -42,7 +42,7 @@ public interface RedisPubSubListener<K, V> {
 
     /**
      * Subscribed to a channel.
-     * 
+     *
      * @param channel Channel
      * @param count Subscription count.
      */
@@ -50,7 +50,7 @@ public interface RedisPubSubListener<K, V> {
 
     /**
      * Subscribed to a pattern.
-     * 
+     *
      * @param pattern Pattern.
      * @param count Subscription count.
      */
@@ -58,7 +58,7 @@ public interface RedisPubSubListener<K, V> {
 
     /**
      * Unsubscribed from a channel.
-     * 
+     *
      * @param channel Channel
      * @param count Subscription count.
      */
@@ -66,7 +66,7 @@ public interface RedisPubSubListener<K, V> {
 
     /**
      * Unsubscribed from a pattern.
-     * 
+     *
      * @param pattern Channel
      * @param count Subscription count.
      */

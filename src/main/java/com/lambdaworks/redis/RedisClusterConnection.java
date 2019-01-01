@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.api.sync.BaseRedisCommands;
 
 /**
  * A complete synchronous and thread-safe cluster Redis API with 400+ Methods.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -220,7 +220,7 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
     /**
      * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to
      * actually send the command to the target instance. See the Redis Cluster specification for more information.
-     * 
+     *
      * @return String simple-string-reply
      */
     String asking();
@@ -268,14 +268,14 @@ public interface RedisClusterConnection<K, V> extends RedisHashesConnection<K, V
     /**
      * Tells a Redis cluster slave node that the client is ok reading possibly stale data and is not interested in running write
      * queries.
-     * 
+     *
      * @return String simple-string-reply
      */
     String readOnly();
 
     /**
      * Resets readOnly flag.
-     * 
+     *
      * @return String simple-string-reply
      */
     String readWrite();

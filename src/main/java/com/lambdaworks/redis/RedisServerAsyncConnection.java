@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.lambdaworks.redis.protocol.CommandType;
 
 /**
  * Asynchronous executed commands for Server Control.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -34,28 +34,28 @@ import com.lambdaworks.redis.protocol.CommandType;
 public interface RedisServerAsyncConnection<K, V> {
     /**
      * Asynchronously rewrite the append-only file.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> bgrewriteaof();
 
     /**
      * Asynchronously save the dataset to disk.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> bgsave();
 
     /**
      * Get the current connection name.
-     * 
+     *
      * @return RedisFuture&lt;K&gt; bulk-string-reply The connection name, or a null bulk reply if no name is set.
      */
     RedisFuture<K> clientGetname();
 
     /**
      * Set the current connection name.
-     * 
+     *
      * @param name the client name
      * @return RedisFuture&lt;String&gt; simple-string-reply {@code OK} if the connection name was successfully set.
      */
@@ -63,7 +63,7 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Kill the connection of a client identified by ip:port.
-     * 
+     *
      * @param addr the addr in format ip:port
      * @return RedisFuture&lt;String&gt; simple-string-reply {@code OK} if the connection exists and has been closed
      */
@@ -79,7 +79,7 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Stop processing commands from clients for some time.
-     * 
+     *
      * @param timeout the timeout value in milliseconds
      * @return RedisFuture&lt;String&gt; simple-string-reply The command returns OK or an error if the timeout is invalid.
      */
@@ -87,7 +87,7 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Get the list of client connections.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; bulk-string-reply a unique string, formatted as follows: One client connection per line
      *         (separated by LF), each line is composed of a succession of property=value fields separated by a space character.
      */
@@ -95,7 +95,7 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Returns an array reply of details about all Redis commands.
-     * 
+     *
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply
      */
     RedisFuture<List<Object>> command();
@@ -118,14 +118,14 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Get total number of Redis commands.
-     * 
+     *
      * @return RedisFuture&lt;Long&gt; integer-reply of number of total commands in this Redis server.
      */
     RedisFuture<Long> commandCount();
 
     /**
      * Get the value of a configuration parameter.
-     * 
+     *
      * @param parameter the parameter
      * @return RedisFuture&lt;List&lt;String&gt;&gt; bulk-string-reply
      */
@@ -133,14 +133,14 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Reset the stats returned by INFO.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK}.
      */
     RedisFuture<String> configResetstat();
 
     /**
      * Rewrite the configuration file with the in memory configuration.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply {@code OK} when the configuration was rewritten properly. Otherwise
      *         an error is returned.
      */
@@ -148,7 +148,7 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Set a configuration parameter to the given value.
-     * 
+     *
      * @param parameter the parameter name
      * @param value the parameter value
      * @return RedisFuture&lt;String&gt; simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an
@@ -158,14 +158,14 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Return the number of keys in the selected database.
-     * 
+     *
      * @return RedisFuture&lt;Long&gt; integer-reply
      */
     RedisFuture<Long> dbsize();
 
     /**
      * Get debugging information about a key.
-     * 
+     *
      * @param key the key
      * @return RedisFuture&lt;String&gt; simple-string-reply
      */
@@ -191,7 +191,7 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Remove all keys from all databases.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> flushall();
@@ -205,7 +205,7 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Remove all keys from the current database.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> flushdb();
@@ -219,14 +219,14 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Get information and statistics about the server.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; bulk-string-reply as a collection of text lines.
      */
     RedisFuture<String> info();
 
     /**
      * Get information and statistics about the server.
-     * 
+     *
      * @param section the section type: string
      * @return RedisFuture&lt;String&gt; bulk-string-reply as a collection of text lines.
      */
@@ -234,28 +234,28 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Get the UNIX time stamp of the last successful save to disk.
-     * 
+     *
      * @return RedisFuture&lt;Date&gt; integer-reply an UNIX time stamp.
      */
     RedisFuture<Date> lastsave();
 
     /**
      * Synchronously save the dataset to disk.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply The commands returns OK on success.
      */
     RedisFuture<String> save();
 
     /**
      * Synchronously save the dataset to disk and then shut down the server.
-     * 
+     *
      * @param save {@literal true} force save operation
      */
     void shutdown(boolean save);
 
     /**
      * Make the server a slave of another instance.
-     * 
+     *
      * @param host the host type: string
      * @param port the port type: string
      * @return RedisFuture&lt;String&gt; simple-string-reply
@@ -264,21 +264,21 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Promote server as master.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply
      */
     RedisFuture<String> slaveofNoOne();
 
     /**
      * Read the slow log.
-     * 
+     *
      * @return List&lt;Object&gt; deeply nested multi bulk replies
      */
     RedisFuture<List<Object>> slowlogGet();
 
     /**
      * Read the slow log.
-     * 
+     *
      * @param count the count
      * @return List&lt;Object&gt; deeply nested multi bulk replies
      */
@@ -286,21 +286,21 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Obtaining the current length of the slow log.
-     * 
+     *
      * @return RedisFuture&lt;Long&gt; length of the slow log.
      */
     RedisFuture<Long> slowlogLen();
 
     /**
      * Resetting the slow log.
-     * 
+     *
      * @return RedisFuture&lt;String&gt; simple-string-reply The commands returns OK on success.
      */
     RedisFuture<String> slowlogReset();
 
     /**
      * Internal command used for replication.
-     * 
+     *
      * @return RedisFuture&lt;String&gt;
      */
     @Deprecated
@@ -308,11 +308,11 @@ public interface RedisServerAsyncConnection<K, V> {
 
     /**
      * Return the current server time.
-     * 
+     *
      * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply specifically:
-     * 
+     *
      *         A multi bulk reply containing two elements:
-     * 
+     *
      *         unix time in seconds. microseconds.
      */
     RedisFuture<List<V>> time();

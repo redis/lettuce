@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.cluster.models.partitions.RedisClusterNode;
 
 /**
  * Parser for redis <a href="http://redis.io/commands/cluster-slots">CLUSTER SLOTS</a> command output.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -38,7 +38,7 @@ public class ClusterSlotsParser {
     /**
      * Parse the output of the Redis CLUSTER SLOTS command and convert it to a list of
      * {@link com.lambdaworks.redis.cluster.models.slots.ClusterSlotRange}
-     * 
+     *
      * @param clusterSlotsOutput output of CLUSTER SLOTS command
      * @return List&gt;ClusterSlotRange&gt;
      */

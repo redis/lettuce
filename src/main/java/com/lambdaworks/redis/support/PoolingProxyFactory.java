@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.lambdaworks.redis.RedisConnectionPool;
 /**
  * Pooling proxy factory to create transparent pooling proxies. These proxies will allocate internally connections and use
  * always valid connections. You don't need to allocate/free the connections anymore.
- * 
+ *
  * @author Mark Paluch
  * @since 3.0
  * @deprecated Will be removed in future versions. Use  {@link ConnectionPoolSupport}.
@@ -39,7 +39,7 @@ public class PoolingProxyFactory {
 
     /**
      * Creates a transparent connection pooling proxy. Will re-check the connection every 5 secs.
-     * 
+     *
      * @param connectionPool The Redis connection pool
      * @param <T> Type of the connection.
      * @return Transparent pooling proxy.

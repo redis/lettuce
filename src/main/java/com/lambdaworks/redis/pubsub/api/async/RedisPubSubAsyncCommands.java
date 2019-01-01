@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
 
     /**
      * Add a new listener.
-     * 
+     *
      * @param listener Listener.
      * @deprecated Use {@link #getStatefulConnection()} and
      *             {@link StatefulRedisPubSubConnection#addListener(RedisPubSubListener)}.
@@ -43,7 +43,7 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
 
     /**
      * Remove an existing listener.
-     * 
+     *
      * @param listener Listener.
      * @deprecated Use {@link #getStatefulConnection()} and
      *             {@link StatefulRedisPubSubConnection#removeListener(RedisPubSubListener)}.
@@ -53,7 +53,7 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
 
     /**
      * Listen for messages published to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code psubscribe} completion
      */
@@ -61,7 +61,7 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
-     * 
+     *
      * @param patterns the patterns
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code punsubscribe} completion
      */
@@ -69,7 +69,7 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
 
     /**
      * Listen for messages published to the given channels.
-     * 
+     *
      * @param channels the channels
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
      */
@@ -77,7 +77,7 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
 
     /**
      * Stop listening for messages posted to the given channels.
-     * 
+     *
      * @param channels the channels
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
      */

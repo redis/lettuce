@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.lambdaworks.redis.api.sync.*;
 
 /**
  * A complete synchronous and thread-safe Redis Cluster API with 400+ Methods.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -49,7 +49,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
      * @return String simple-string-reply
      */
     String auth(String password);
-    
+
     /**
      * Generate a new config epoch, incrementing the current epoch, assign the new epoch to this node, WITHOUT any consensus and
      * persist the configuration on disk before sending packets with the new configuration.
@@ -62,7 +62,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
     /**
      * Meet another cluster node to include the node into the cluster. The command starts the cluster handshake and returns with
      * {@literal OK} when the node was added to the cluster.
-     * 
+     *
      * @param ip IP address of the host
      * @param port port number.
      * @return String simple-string-reply
@@ -71,7 +71,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Blacklist and remove the cluster node from the cluster.
-     * 
+     *
      * @param nodeId the node Id
      * @return String simple-string-reply
      */
@@ -79,7 +79,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Adds slots to the cluster node. The current node will become the master for the specified slots.
-     * 
+     *
      * @param slots one or more slots from {@literal 0} to {@literal 16384}
      * @return String simple-string-reply
      */
@@ -87,7 +87,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Removes slots from the cluster node.
-     * 
+     *
      * @param slots one or more slots from {@literal 0} to {@literal 16384}
      * @return String simple-string-reply
      */
@@ -96,7 +96,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
     /**
      * Assign a slot to a node. The command migrates the specified slot from the current node to the specified node in
      * {@code nodeId}
-     * 
+     *
      * @param slot the slot
      * @param nodeId the id of the node that will become the master for the slot
      * @return String simple-string-reply
@@ -114,7 +114,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
     /**
      * Flag a slot as {@literal MIGRATING} (outgoing) towards the node specified in {@code nodeId}. The slot must be handled by
      * the current node in order to be migrated.
-     * 
+     *
      * @param slot the slot
      * @param nodeId the id of the node is targeted to become the master for the slot
      * @return String simple-string-reply
@@ -123,7 +123,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Flag a slot as {@literal IMPORTING} (incoming) from the node specified in {@code nodeId}.
-     * 
+     *
      * @param slot the slot
      * @param nodeId the id of the node is the master of the slot
      * @return String simple-string-reply
@@ -132,14 +132,14 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Get information and statistics about the cluster viewed by the current node.
-     * 
+     *
      * @return String bulk-string-reply as a collection of text lines.
      */
     String clusterInfo();
 
     /**
      * Obtain the nodeId for the currently connected node.
-     * 
+     *
      * @return String simple-string-reply
      */
     String clusterMyId();
@@ -147,7 +147,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
     /**
      * Obtain details about all cluster nodes. Can be parsed using
      * {@link com.lambdaworks.redis.cluster.models.partitions.ClusterPartitionParser#parse}
-     * 
+     *
      * @return String bulk-string-reply as a collection of text lines
      */
     String clusterNodes();
@@ -164,7 +164,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Retrieve the list of keys within the {@code slot}.
-     * 
+     *
      * @param slot the slot
      * @param count maximal number of keys
      * @return List&lt;K&gt; array-reply list of keys
@@ -220,7 +220,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Get array of cluster slots to node mappings.
-     * 
+     *
      * @return List&lt;Object&gt; array-reply nested list of slot ranges with IP/Port mappings.
      */
     List<Object> clusterSlots();
@@ -235,7 +235,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Turn this node into a slave of the node with the id {@code nodeId}.
-     * 
+     *
      * @param nodeId master node id
      * @return String simple-string-reply
      */
@@ -243,7 +243,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Failover a cluster node. Turns the currently connected node into a master and the master into its slave.
-     * 
+     *
      * @param force do not coordinate with master if {@literal true}
      * @return String simple-string-reply
      */
@@ -260,7 +260,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
      * <li>The new configuration is saved and the cluster state updated</li>
      * <li>If the node was a slave, the whole data set is flushed away</li>
      * </ul>
-     * 
+     *
      * @param hard {@literal true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
      * @return String simple-string-reply
      */
@@ -268,7 +268,7 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
 
     /**
      * Delete all the slots associated with the specified node. The number of deleted slots is returned.
-     * 
+     *
      * @return String simple-string-reply
      */
     String clusterFlushslots();
@@ -276,14 +276,14 @@ public interface RedisClusterCommands<K, V> extends RedisHashCommands<K, V>, Red
     /**
      * Tells a Redis cluster slave node that the client is ok reading possibly stale data and is not interested in running write
      * queries.
-     * 
+     *
      * @return String simple-string-reply
      */
     String readOnly();
 
     /**
      * Resets readOnly flag.
-     * 
+     *
      * @return String simple-string-reply
      */
     String readWrite();

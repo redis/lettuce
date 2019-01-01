@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ import com.lambdaworks.redis.pubsub.api.sync.RedisPubSubCommands;
 /**
  * An asynchronous thread-safe pub/sub connection to a redis server. After one or more channels are subscribed to only pub/sub
  * related commands or {@literal QUIT} may be called.
- * 
+ *
  * Incoming messages and results of the {@literal subscribe}/{@literal unsubscribe} calls will be passed to all registered
  * {@link RedisPubSubListener}s.
- * 
+ *
  * A {@link com.lambdaworks.redis.protocol.ConnectionWatchdog} monitors each connection and reconnects automatically until
  * {@link #close} is called. Channel and pattern subscriptions are renewed after reconnecting.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -39,14 +39,14 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
 
     /**
      * Returns the {@link RedisPubSubCommands} API for the current connection. Does not create a new connection.
-     * 
+     *
      * @return the synchronous API for the underlying connection.
      */
     RedisPubSubCommands<K, V> sync();
 
     /**
      * Returns the {@link RedisPubSubAsyncCommands} API for the current connection. Does not create a new connection.
-     * 
+     *
      * @return the asynchronous API for the underlying connection.
      */
     RedisPubSubAsyncCommands<K, V> async();
@@ -67,7 +67,7 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
 
     /**
      * Remove an existing {@link RedisPubSubListener listener}..
-     * 
+     *
      * @param listener the listener, must not be {@literal null}.
      */
     void removeListener(RedisPubSubListener<K, V> listener);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
 
 /**
  * {@link Range} defines {@literal lower} and {@literal upper} boundaries to retrieve items from a sorted set.
- * 
+ *
  * @author Mark Paluch
  * @since 4.3
  */
@@ -52,7 +52,7 @@ public class Range<T> {
 
     /**
      * Create a new range from {@code lower} and {@code upper} boundaries.
-     * 
+     *
      * @param lower lower boundary, must not be {@literal null}.
      * @param upper upper boundary, must not be {@literal null}.
      * @param <T> value type.
@@ -72,7 +72,7 @@ public class Range<T> {
 
     /**
      * Greater than or equals {@code lower}.
-     * 
+     *
      * @param lower the lower boundary value.
      * @return {@code this} {@link Range} with {@code lower} applied.
      */
@@ -96,7 +96,7 @@ public class Range<T> {
 
     /**
      * Less than or equals {@code lower}.
-     * 
+     *
      * @param upper the upper boundary value.
      * @return {@code this} {@link Range} with {@code upper} applied.
      */
@@ -108,7 +108,7 @@ public class Range<T> {
 
     /**
      * Less than {@code lower}.
-     * 
+     *
      * @param upper the upper boundary value.
      * @return {@code this} {@link Range} with {@code upper} applied.
      */
@@ -157,7 +157,7 @@ public class Range<T> {
 
         /**
          * Creates an unbounded (infinite) boundary that marks the beginning/end of the range.
-         * 
+         *
          * @return the unbounded boundary.
          * @param <T> inferred type.
          */
@@ -169,7 +169,7 @@ public class Range<T> {
         /**
          * Create a {@link Boundary} based on the {@code value} that includes the value when comparing ranges. Greater or
          * equals, less or equals. but not Greater or equal, less or equal to {@code value}.
-         * 
+         *
          * @param value must not be {@literal null}.
          * @param <T> value type.
          * @return the {@link Boundary}.

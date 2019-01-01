@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import io.netty.util.concurrent.Future;
  * </p>
  * You can implement your own {@link EventLoopGroupProvider} to share existing {@link EventLoopGroup EventLoopGroup's} with
  * lettuce.
- * 
+ *
  * @author Mark Paluch
  * @since 3.4
  */
@@ -65,7 +65,7 @@ public interface EventLoopGroupProvider {
     /**
      * Release a {@code eventLoopGroup} instance. The method will shutdown/terminate the {@link EventExecutorGroup} if it is no longer
      * needed.
-     * 
+     *
      * @param eventLoopGroup the eventLoopGroup instance, must not be {@literal null}
      * @param quietPeriod the quiet period
      * @param timeout the timeout

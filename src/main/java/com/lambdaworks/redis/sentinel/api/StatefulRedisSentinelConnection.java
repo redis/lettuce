@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import com.lambdaworks.redis.sentinel.api.sync.RedisSentinelCommands;
 
 /**
  * A thread-safe connection to a redis server. Multiple threads may share one {@link StatefulRedisSentinelConnection}.
- * 
+ *
  * A {@link ConnectionWatchdog} monitors each connection and reconnects automatically until {@link #close} is called. All
  * pending commands will be (re)sent after successful reconnection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
@@ -36,14 +36,14 @@ public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnectio
 
     /**
      * Returns the {@link RedisSentinelCommands} API for the current connection. Does not create a new connection.
-     * 
+     *
      * @return the synchronous API for the underlying connection.
      */
     RedisSentinelCommands<K, V> sync();
 
     /**
      * Returns the {@link RedisSentinelAsyncCommands} API for the current connection. Does not create a new connection. *
-     * 
+     *
      * @return the asynchronous API for the underlying connection.
      */
     RedisSentinelAsyncCommands<K, V> async();

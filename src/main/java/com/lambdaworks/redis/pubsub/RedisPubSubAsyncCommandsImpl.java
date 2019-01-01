@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.Map;
 
 /**
  * An asynchronous and thread-safe API for a Redis pub/sub connection.
- * 
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
@@ -44,7 +44,7 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
 
     /**
      * Initialize a new connection.
-     * 
+     *
      * @param connection the connection .
      * @param codec Codec used to encode/decode keys and values.
      */
@@ -56,7 +56,7 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
 
     /**
      * Add a new listener.
-     * 
+     *
      * @param listener Listener.
      */
     @Override
@@ -66,7 +66,7 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
 
     /**
      * Remove an existing listener.
-     * 
+     *
      * @param listener Listener.
      */
     @Override

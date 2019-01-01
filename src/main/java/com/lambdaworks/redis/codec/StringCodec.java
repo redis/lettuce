@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
 
     /**
      * Creates a new {@link StringCodec} for the given {@link Charset} that encodes and decodes keys and values.
-     * 
+     *
      * @param charset must not be {@literal null}.
      */
     public StringCodec(Charset charset) {
@@ -157,7 +157,7 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
 
     /**
      * Compatibility implementation.
-     * 
+     *
      * @param key
      * @return
      */

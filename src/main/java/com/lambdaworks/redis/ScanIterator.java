@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2016-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
 
     /**
      * Sequentially iterate over keys in the keyspace. This method uses {@code SCAN} to perform an iterative scan.
-     * 
+     *
      * @param commands the commands interface, must not be {@literal null}.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -285,7 +285,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
 
     /**
      * Returns a sequential {@code Stream} with this {@link ScanIterator} as its source.
-     * 
+     *
      * @return a {@link Stream} for this {@link ScanIterator}.
      */
     public Stream<T> stream() {
@@ -294,7 +294,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
 
     /**
      * Synchronous {@link ScanIterator} implementation.
-     * 
+     *
      * @param <T>
      */
     private static abstract class SyncScanIterator<T> extends ScanIterator<T> {

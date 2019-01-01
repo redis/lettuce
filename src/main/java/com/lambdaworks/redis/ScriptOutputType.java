@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.lambdaworks.redis;
 
 /**
  * A Lua script returns one of the following types:
- * 
+ *
  * <ul>
  * <li>{@link #BOOLEAN} boolean</li>
  * <li>{@link #INTEGER} 64-bit integer</li>
@@ -25,7 +25,7 @@ package com.lambdaworks.redis;
  * <li>{@link #VALUE} value</li>
  * <li>{@link #MULTI} of these types</li>
  * </ul>
- * 
+ *
  * <strong>Redis to Lua</strong> conversion table.
  * <ul>
  * <li>Redis integer reply -&gt; Lua number</li>
@@ -35,7 +35,7 @@ package com.lambdaworks.redis;
  * <li>Redis error reply -&gt; Lua table with a single {@code err} field containing the error</li>
  * <li>Redis Nil bulk reply and Nil multi bulk reply -&gt; Lua false boolean type</li>
  * </ul>
- * 
+ *
  * <strong>Lua to Redis</strong> conversion table.
  * <ul>
  * <li>Lua number -&gt; Redis integer reply (the number is converted into an integer)</li>
@@ -45,7 +45,7 @@ package com.lambdaworks.redis;
  * <li>Lua table with a single {@code err} field -&gt; Redis error reply</li>
  * <li>Lua boolean false -&gt; Redis Nil bulk reply.</li>
  * </ul>
- * 
+ *
  * @author Will Glozer
  */
 public enum ScriptOutputType {
