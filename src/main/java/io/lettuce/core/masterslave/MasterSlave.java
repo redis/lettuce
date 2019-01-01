@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 the original author or authors.
+ * Copyright 2011-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import io.lettuce.core.internal.LettuceLists;
  * StatefulRedisMasterSlaveConnection&lt;String, String&gt; connection = MasterSlave.connect(client,
  *         RedisURI.create(&quot;redis://localhost&quot;), StringCodec.UTF8);
  * // ...
- * 
+ *
  * connection.close();
  * client.shutdown();
  * </pre>
@@ -75,11 +75,11 @@ import io.lettuce.core.internal.LettuceLists;
  * <li>Standalone Master/Slave: Performs a one-time topology lookup which remains static afterward</li>
  * <li>Redis Sentinel: Subscribes to all Sentinels and listens for Pub/Sub messages to trigger topology refreshing</li>
  * </ul>
- * 
+ *
  * <h3>Connection Fault-Tolerance</h3>
  * Connecting to Master/Slave bears the possibility that individual nodes are not reachable. {@link MasterSlave} can still
  * connect to a partially-available set of nodes.
- * 
+ *
  * <ul>
  * <li>Redis Sentinel: At least one Sentinel must be reachable, the masterId must be registered and at least one host must be
  * available (master or slave). Allows for runtime-recovery based on Sentinel Events.</li>
