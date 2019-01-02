@@ -16,8 +16,10 @@
 package io.lettuce.core.cluster;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
@@ -61,19 +63,26 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         clientResources.eventExecutorGroup().submit(clusterTopologyRefreshTask);
     }
 
-    private void indicateTopologyRefreshSignal() {
+    private boolean indicateTopologyRefreshSignal() {
 
         logger.debug("ClusterTopologyRefreshScheduler.indicateTopologyRefreshSignal()");
 
         if (!acquireTimeout()) {
-            return;
+            return false;
         }
+
+        return scheduleRefresh();
+    }
+
+    private boolean scheduleRefresh() {
 
         if (isEventLoopActive() && redisClusterClient.getClusterClientOptions() != null) {
             clientResources.eventExecutorGroup().submit(clusterTopologyRefreshTask);
-        } else {
-            logger.debug("Adaptive ClusterTopologyRefresh is disabled");
+            return true;
         }
+
+        logger.debug("ClusterTopologyRefresh is disabled");
+        return false;
     }
 
     /**
@@ -81,7 +90,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
      *
      * @return false if the worker pool is terminating, shutdown or terminated
      */
-    protected boolean isEventLoopActive() {
+    private boolean isEventLoopActive() {
 
         EventExecutorGroup eventExecutors = clientResources.eventExecutorGroup();
         if (eventExecutors.isShuttingDown() || eventExecutors.isShutdown() || eventExecutors.isTerminated()) {
@@ -123,7 +132,9 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     public void onMovedRedirection() {
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT)) {
-            indicateTopologyRefreshSignal();
+            if (indicateTopologyRefreshSignal()) {
+                emitAdaptiveRefreshScheduledEvent();
+            }
         }
     }
 
@@ -132,7 +143,9 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.PERSISTENT_RECONNECTS)
                 && attempt >= getClusterTopologyRefreshOptions().getRefreshTriggersReconnectAttempts()) {
-            indicateTopologyRefreshSignal();
+            if (indicateTopologyRefreshSignal()) {
+                emitAdaptiveRefreshScheduledEvent();
+            }
         }
     }
 
@@ -140,7 +153,9 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     public void onUncoveredSlot(int slot) {
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.UNCOVERED_SLOT)) {
-            indicateTopologyRefreshSignal();
+            if (indicateTopologyRefreshSignal()) {
+                emitAdaptiveRefreshScheduledEvent();
+            }
         }
     }
 
@@ -148,8 +163,18 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     public void onUnknownNode() {
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.UNKNOWN_NODE)) {
-            indicateTopologyRefreshSignal();
+            if (indicateTopologyRefreshSignal()) {
+                emitAdaptiveRefreshScheduledEvent();
+            }
         }
+    }
+
+    private void emitAdaptiveRefreshScheduledEvent() {
+
+        AdaptiveRefreshTriggeredEvent event = new AdaptiveRefreshTriggeredEvent(redisClusterClient::getPartitions,
+                this::scheduleRefresh);
+
+        clientResources.eventBus().publish(event);
     }
 
     private ClusterTopologyRefreshOptions getClusterTopologyRefreshOptions() {
@@ -198,12 +223,30 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     private static class ClusterTopologyRefreshTask implements Runnable {
 
         private final RedisClusterClient redisClusterClient;
+        private final AtomicBoolean unique = new AtomicBoolean();
 
-        public ClusterTopologyRefreshTask(RedisClusterClient redisClusterClient) {
+        ClusterTopologyRefreshTask(RedisClusterClient redisClusterClient) {
             this.redisClusterClient = redisClusterClient;
         }
 
         public void run() {
+
+            if (unique.compareAndSet(false, true)) {
+                try {
+                    doRun();
+                } finally {
+                    unique.set(false);
+                }
+
+                return;
+            }
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("ClusterTopologyRefreshTask already in progress");
+            }
+        }
+
+        void doRun() {
 
             if (logger.isDebugEnabled()) {
                 logger.debug("ClusterTopologyRefreshTask requesting partitions from {}",
