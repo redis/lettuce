@@ -137,7 +137,16 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     }
 
     @Override
+    public void onUncoveredSlot(int slot) {
+
+        if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.UNCOVERED_SLOT)) {
+            indicateTopologyRefreshSignal();
+        }
+    }
+
+    @Override
     public void onUnknownNode() {
+
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.UNKNOWN_NODE)) {
             indicateTopologyRefreshSignal();
         }

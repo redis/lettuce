@@ -41,7 +41,17 @@ interface ClusterEventListener {
     }
 
     /**
+     * Event callback if a command should be routed to a slot that is not covered.
+     *
+     * @since 5.2
+     */
+    default void onUncoveredSlot(int slot) {
+    }
+
+    /**
      * Event callback if a connection is attempted to an unknown node.
+     *
+     * @since 5.1
      */
     default void onUnknownNode() {
     }

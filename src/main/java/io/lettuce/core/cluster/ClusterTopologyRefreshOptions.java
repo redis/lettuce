@@ -427,6 +427,13 @@ public class ClusterTopologyRefreshOptions {
         PERSISTENT_RECONNECTS,
 
         /**
+         * Attempts to use a slot that is not covered by a known node.
+         *
+         * @since 5.2
+         */
+        UNCOVERED_SLOT,
+
+        /**
          * Connection attempts to unknown nodes.
          *
          * @since 5.1

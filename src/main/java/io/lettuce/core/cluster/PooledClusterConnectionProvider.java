@@ -33,6 +33,7 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisInstance;
@@ -121,7 +122,9 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         if (writer == null) {
             RedisClusterNode partition = partitions.getPartitionBySlot(slot);
             if (partition == null) {
-                throw new PartitionSelectorException("Cannot determine a partition for slot " + slot + ".", partitions.clone());
+                clusterEventListener.onUncoveredSlot(slot);
+                return Futures.failed(new PartitionSelectorException("Cannot determine a partition for slot " + slot + ".",
+                        partitions.clone()));
             }
 
             // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
@@ -160,8 +163,9 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
             RedisClusterNode master = partitions.getPartitionBySlot(slot);
             if (master == null) {
-                throw new PartitionSelectorException(String.format("Cannot determine a partition to read for slot %d.", slot),
-                        partitions.clone());
+                clusterEventListener.onUncoveredSlot(slot);
+                return Futures.failed(new PartitionSelectorException(String.format(
+                        "Cannot determine a partition to read for slot %d.", slot), partitions.clone()));
             }
 
             List<RedisNodeDescription> candidates = getReadCandidates(master);
@@ -178,9 +182,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             });
 
             if (selection.isEmpty()) {
-                throw new PartitionSelectorException(String.format(
-                        "Cannot determine a partition to read for slot %d with setting %s.", slot, readFrom),
-                        partitions.clone());
+                clusterEventListener.onUncoveredSlot(slot);
+                return Futures.failed(new PartitionSelectorException(String.format(
+                        "Cannot determine a partition to read for slot %d with setting %s.", slot, readFrom), partitions
+                        .clone()));
             }
 
             readerCandidates = getReadFromConnections(selection);

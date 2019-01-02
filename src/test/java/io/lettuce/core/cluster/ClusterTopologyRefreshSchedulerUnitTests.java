@@ -45,11 +45,11 @@ class ClusterTopologyRefreshSchedulerUnitTests {
 
     private ClusterTopologyRefreshScheduler sut;
 
-    private ClusterTopologyRefreshOptions immediateRefresh = ClusterTopologyRefreshOptions.builder().enablePeriodicRefresh(1, TimeUnit.MILLISECONDS)
-            .enableAllAdaptiveRefreshTriggers().build();
+    private ClusterTopologyRefreshOptions immediateRefresh = ClusterTopologyRefreshOptions.builder()
+            .enablePeriodicRefresh(1, TimeUnit.MILLISECONDS).enableAllAdaptiveRefreshTriggers().build();
 
-    private ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder()
-            .topologyRefreshOptions(immediateRefresh).build();
+    private ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder().topologyRefreshOptions(immediateRefresh)
+            .build();
 
     @Mock
     private ClientResources clientResources;
@@ -176,6 +176,18 @@ class ClusterTopologyRefreshSchedulerUnitTests {
         when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
 
         sut.onReconnectAttempt(10);
+        verify(eventExecutors).submit(any(Runnable.class));
+    }
+
+    @Test
+    void shouldTriggerRefreshOnUncoveredSlot() {
+
+        ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder().topologyRefreshOptions(immediateRefresh)
+                .build();
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+
+        sut.onUncoveredSlot(1234);
         verify(eventExecutors).submit(any(Runnable.class));
     }
 
