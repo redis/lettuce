@@ -1,6 +1,10 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.5-2-0]]
+== What's new in Lettuce 5.2
+* Allow randomization of read candidates using Redis Cluster
+
 [[new-features.5-1-0]]
 == What's new in Lettuce 5.1
 * Add support for `ZPOPMIN`, `ZPOPMAX`, `BZPOPMIN`, `BZPOPMAX` commands.

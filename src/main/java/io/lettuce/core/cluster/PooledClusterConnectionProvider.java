@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -196,17 +197,30 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         if (cached) {
 
-            return CompletableFuture.allOf(readerCandidates).thenCompose(v -> {
+            return CompletableFuture.allOf(readerCandidates).thenCompose(
+                    v -> {
 
-                for (CompletableFuture<StatefulRedisConnection<K, V>> candidate : selectedReaderCandidates) {
+                        boolean orderSensitive = isOrderSensitive(selectedReaderCandidates);
 
-                    if (candidate.join().isOpen()) {
-                        return candidate;
-                    }
-                }
+                        if (!orderSensitive) {
 
-                return selectedReaderCandidates[0];
-            });
+                            CompletableFuture<StatefulRedisConnection<K, V>> candidate = findRandomActiveConnection(
+                                    selectedReaderCandidates, Function.identity());
+
+                            if (candidate != null) {
+                                return candidate;
+                            }
+                        }
+
+                        for (CompletableFuture<StatefulRedisConnection<K, V>> candidate : selectedReaderCandidates) {
+
+                            if (candidate.join().isOpen()) {
+                                return candidate;
+                            }
+                        }
+
+                        return selectedReaderCandidates[0];
+                    });
         }
 
         CompletableFuture<StatefulRedisConnection<K, V>[]> filteredReaderCandidates = new CompletableFuture<>();
@@ -232,6 +246,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         return filteredReaderCandidates
                 .thenApply(statefulRedisConnections -> {
 
+                    boolean orderSensitive = isOrderSensitive(statefulRedisConnections);
+
                     CompletableFuture<StatefulRedisConnection<K, V>> toCache[] = new CompletableFuture[statefulRedisConnections.length];
 
                     for (int i = 0; i < toCache.length; i++) {
@@ -239,6 +255,16 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                     }
                     synchronized (stateLock) {
                         readers[slot] = toCache;
+                    }
+
+                    if (!orderSensitive) {
+
+                        StatefulRedisConnection<K, V> candidate = findRandomActiveConnection(selectedReaderCandidates,
+                                CompletableFuture::join);
+
+                        if (candidate != null) {
+                            return candidate;
+                        }
                     }
 
                     for (StatefulRedisConnection<K, V> candidate : statefulRedisConnections) {
@@ -249,6 +275,31 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
                     return statefulRedisConnections[0];
                 });
+    }
+
+    private boolean isOrderSensitive(Object[] connections) {
+        return OrderingReadFromAccessor.isOrderSensitive(readFrom) || connections.length == 1;
+    }
+
+    private static <T, E extends StatefulConnection<?, ?>> T findRandomActiveConnection(
+            CompletableFuture<E>[] selectedReaderCandidates, Function<CompletableFuture<E>, T> mappingFunction) {
+
+        // Perform up to two attempts for random nodes.
+        for (int i = 0; i < Math.min(2, selectedReaderCandidates.length); i++) {
+
+            int index = ThreadLocalRandom.current().nextInt(selectedReaderCandidates.length);
+            CompletableFuture<E> candidateFuture = selectedReaderCandidates[index];
+
+            if (candidateFuture.isDone() && !candidateFuture.isCompletedExceptionally()) {
+
+                E candidate = candidateFuture.join();
+
+                if (candidate.isOpen()) {
+                    return mappingFunction.apply(candidateFuture);
+                }
+            }
+        }
+        return null;
     }
 
     private StatefulRedisConnection<K, V>[] getConnections(

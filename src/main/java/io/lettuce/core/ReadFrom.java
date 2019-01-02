@@ -56,12 +56,30 @@ public abstract class ReadFrom {
     public static final ReadFrom NEAREST = new ReadFromImpl.ReadFromNearest();
 
     /**
+     * Setting to read from any node.
+     * 
+     * @since 5.2
+     */
+    public static final ReadFrom ANY = new ReadFromImpl.ReadFromAnyNode();
+
+    /**
      * Chooses the nodes from the matching Redis nodes that match this read selector.
      *
      * @param nodes set of nodes that are suitable for reading
      * @return List of {@link RedisNodeDescription}s that are selected for reading
      */
     public abstract List<RedisNodeDescription> select(Nodes nodes);
+
+    /**
+     * Returns whether this {@link ReadFrom} requires ordering of the resulting {@link RedisNodeDescription nodes}.
+     * 
+     * @return {@literal true} if code using {@link ReadFrom} should retain ordering or {@literal false} to allow reordering of
+     *         {@link RedisNodeDescription nodes}.
+     * @since 5.2
+     */
+    boolean isOrderSensitive() {
+        return false;
+    }
 
     /**
      * Retrieve the {@link ReadFrom} preset by name.
@@ -94,6 +112,10 @@ public abstract class ReadFrom {
 
         if (name.equalsIgnoreCase("nearest")) {
             return NEAREST;
+        }
+
+        if (name.equalsIgnoreCase("any")) {
+            return ANY;
         }
 
         throw new IllegalArgumentException("ReadFrom " + name + " not supported");

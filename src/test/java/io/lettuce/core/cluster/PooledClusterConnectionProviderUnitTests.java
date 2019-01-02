@@ -20,12 +20,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -160,6 +158,66 @@ class PooledClusterConnectionProviderUnitTests {
         verify(connection).async();
         verify(asyncCommandsMock).readOnly();
         verify(connection).setAutoFlushCommands(true);
+    }
+
+    @Test
+    void shouldRandomizeReadNode() {
+
+        StatefulRedisConnection<String, String> nodeConnectionMock2 = mock(StatefulRedisConnection.class);
+        when(nodeConnectionMock.isOpen()).thenReturn(true);
+        when(nodeConnectionMock2.isOpen()).thenReturn(true);
+
+        when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:1"), any(), any())).thenReturn(
+                ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+
+        when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:2"), any(), any())).thenReturn(
+                ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock2)));
+
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.READONLY, null, null));
+        async.complete();
+
+        when(asyncCommandsMock.readOnly()).thenReturn(async);
+        when(nodeConnectionMock2.async()).thenReturn(asyncCommandsMock);
+
+        sut.setReadFrom(ReadFrom.ANY);
+
+        List<StatefulRedisConnection<String, String>> readCandidates = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            readCandidates.add(sut.getConnection(Intent.READ, 1));
+        }
+
+        assertThat(readCandidates).contains(nodeConnectionMock, nodeConnectionMock2);
+    }
+
+    @Test
+    void shouldNotRandomizeReadNode() {
+
+        StatefulRedisConnection<String, String> nodeConnectionMock2 = mock(StatefulRedisConnection.class);
+        when(nodeConnectionMock.isOpen()).thenReturn(true);
+        when(nodeConnectionMock2.isOpen()).thenReturn(true);
+
+        when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:1"), any(), any())).thenReturn(
+                ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+
+        when(clientMock.connectToNodeAsync(eq(CODEC), eq("localhost:2"), any(), any())).thenReturn(
+                ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock2)));
+
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.READONLY, null, null));
+        async.complete();
+
+        when(asyncCommandsMock.readOnly()).thenReturn(async);
+        when(nodeConnectionMock2.async()).thenReturn(asyncCommandsMock);
+
+        sut.setReadFrom(ReadFrom.SLAVE);
+
+        List<StatefulRedisConnection<String, String>> readCandidates = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            readCandidates.add(sut.getConnection(Intent.READ, 1));
+        }
+
+        assertThat(readCandidates).contains(nodeConnectionMock2).doesNotContain(nodeConnectionMock);
     }
 
     @Test

@@ -18,10 +18,7 @@ package io.lettuce.core.masterslave;
 import static io.lettuce.core.masterslave.MasterSlaveUtils.findNodeByHostAndPort;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.function.Function;
 
 import reactor.core.publisher.Flux;
@@ -144,7 +141,14 @@ public class MasterSlaveConnectionProvider<K, V> {
                     connections = connections.concatWith(Mono.fromFuture(getConnection(node)));
                 }
 
-                return connections.filter(StatefulConnection::isOpen).next().switchIfEmpty(connections.next()).toFuture();
+                if (OrderingReadFromAccessor.isOrderSensitive(readFrom) || selection.size() == 1) {
+                    return connections.filter(StatefulConnection::isOpen).next().switchIfEmpty(connections.next()).toFuture();
+                }
+
+                return connections.filter(StatefulConnection::isOpen).collectList().map(it -> {
+                    int index = ThreadLocalRandom.current().nextInt(it.size());
+                    return it.get(index);
+                }).switchIfEmpty(connections.next()).toFuture();
             } catch (RuntimeException e) {
                 throw Exceptions.bubble(e);
             }
@@ -318,11 +322,8 @@ public class MasterSlaveConnectionProvider<K, V> {
         @Override
         public ConnectionFuture<StatefulRedisConnection<K, V>> apply(ConnectionKey key) {
 
-            RedisURI.Builder builder = RedisURI.Builder
-                    .redis(key.host, key.port)
-                    .withSsl(initialRedisUri.isSsl())
-                    .withVerifyPeer(initialRedisUri.isVerifyPeer())
-                    .withStartTls(initialRedisUri.isStartTls());
+            RedisURI.Builder builder = RedisURI.Builder.redis(key.host, key.port).withSsl(initialRedisUri.isSsl())
+                    .withVerifyPeer(initialRedisUri.isVerifyPeer()).withStartTls(initialRedisUri.isStartTls());
 
             if (initialRedisUri.getPassword() != null && initialRedisUri.getPassword().length != 0) {
                 builder.withPassword(initialRedisUri.getPassword());
@@ -338,8 +339,8 @@ public class MasterSlaveConnectionProvider<K, V> {
 
             connectionFuture.thenAccept(connection -> {
                 synchronized (stateLock) {
-                connection.setAutoFlushCommands(autoFlushCommands);
-            }
+                    connection.setAutoFlushCommands(autoFlushCommands);
+                }
             });
 
             return connectionFuture;
