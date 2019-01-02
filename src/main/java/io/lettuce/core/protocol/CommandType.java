@@ -20,6 +20,7 @@ package io.lettuce.core.protocol;
  *
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Zhang Jessey
  */
 public enum CommandType implements ProtocolKeyword {
     // Connection

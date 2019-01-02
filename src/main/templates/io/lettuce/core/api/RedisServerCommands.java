@@ -175,6 +175,7 @@ public interface RedisServerCommands<K, V> {
 
     /**
      * Crash and recover
+     * 
      * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
@@ -219,6 +220,7 @@ public interface RedisServerCommands<K, V> {
 
     /**
      * Restart the server gracefully.
+     * 
      * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
@@ -281,6 +283,14 @@ public interface RedisServerCommands<K, V> {
      * @return Date integer-reply an UNIX time stamp.
      */
     Date lastsave();
+
+    /**
+     * Reports the number of bytes that a key and its value require to be stored in RAM.
+     * 
+     * @return memory usage in bytes.
+     * @since 5.2
+     */
+    Long memoryUsage(K key);
 
     /**
      * Synchronously save the dataset to disk.
@@ -351,10 +361,4 @@ public interface RedisServerCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     List<V> time();
-
-    /**
-     * get info about memory usage
-     * @return memory usage
-     */
-    Long memoryUsage(K key);
 }

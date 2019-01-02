@@ -176,6 +176,7 @@ public interface NodeSelectionServerCommands<K, V> {
 
     /**
      * Crash and recover
+     *
      * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
@@ -206,6 +207,7 @@ public interface NodeSelectionServerCommands<K, V> {
 
     /**
      * Restart the server gracefully.
+     *
      * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
@@ -270,6 +272,14 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<Date> lastsave();
 
     /**
+     * Reports the number of bytes that a key and its value require to be stored in RAM.
+     *
+     * @return memory usage in bytes.
+     * @since 5.2
+     */
+    Executions<Long> memoryUsage(K key);
+
+    /**
      * Synchronously save the dataset to disk.
      *
      * @return String simple-string-reply The commands returns OK on success.
@@ -331,10 +341,4 @@ public interface NodeSelectionServerCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     Executions<List<V>> time();
-
-    /**
-     * get info about memory usage
-     * @return memory usage
-     */
-    Executions<Long> memoryUsage(K key);
 }

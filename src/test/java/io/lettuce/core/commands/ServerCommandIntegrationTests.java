@@ -53,6 +53,7 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Zhang Jessey
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -328,6 +329,16 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("MEMORY")
+    void memoryUsage() {
+
+        redis.set("foo", "bar");
+        Long usedMemory = redis.memoryUsage("foo");
+
+        assertThat(usedMemory).isGreaterThanOrEqualTo(3);
+    }
+
+    @Test
     void save() {
 
         Wait.untilTrue(this::noSaveInProgress).waitOrTimeout();
@@ -407,21 +418,6 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
         redis.select(2);
         assertThat(redis.get(key)).isEqualTo("value1");
-    }
-
-    @Test
-    void memoryUsage() {
-
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("4.0.0"));
-
-        redis.select(0);
-        redis.set("", "");
-        redis.set("foo", "bar");
-        Long dispatch1 = redis.memoryUsage("");
-        Long dispatch2 = redis.memoryUsage("foo");
-
-        assertThat(dispatch1).isNotNull().isPositive();
-        assertThat(dispatch2 - dispatch1).isNotNull().isPositive();
     }
 
     private boolean noSaveInProgress() {

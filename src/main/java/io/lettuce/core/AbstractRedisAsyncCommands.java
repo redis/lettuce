@@ -892,6 +892,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<Long> memoryUsage(K key) {
+        return dispatch(commandBuilder.memoryUsage(key));
+    }
+
+    @Override
     public RedisFuture<List<KeyValue<K, V>>> mget(K... keys) {
         return dispatch(commandBuilder.mgetKeyValue(keys));
     }
@@ -2152,10 +2157,5 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return dispatch(commandBuilder.zunionstore(destination, storeArgs, keys));
-    }
-
-    @Override
-    public RedisFuture<Long> memoryUsage(K key){
-        return dispatch(commandBuilder.memoryUsage(key));
     }
 }

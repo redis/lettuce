@@ -956,6 +956,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> memoryUsage(K key) {
+        return createMono(() -> commandBuilder.memoryUsage(key));
+    }
+
+    @Override
     public Flux<KeyValue<K, V>> mget(K... keys) {
         return createDissolvingFlux(() -> commandBuilder.mgetKeyValue(keys));
     }
@@ -2217,10 +2222,5 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return createMono(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
-    }
-
-    @Override
-    public Mono<Long> memoryUsage(K key){
-        return createMono(() -> commandBuilder.memoryUsage(key));
     }
 }

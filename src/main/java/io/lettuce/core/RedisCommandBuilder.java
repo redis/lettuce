@@ -34,6 +34,7 @@ import io.lettuce.core.protocol.*;
  * @param <K>
  * @param <V>
  * @author Mark Paluch
+ * @author Zhang Jessey
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -1187,6 +1188,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(stop);
         return createCommand(LTRIM, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> memoryUsage(K key) {
+        return createCommand(MEMORY, new IntegerOutput<>(codec), new CommandArgs<>(codec).add(USAGE).add(key.toString()));
     }
 
     Command<K, V, List<V>> mget(K... keys) {
@@ -3088,10 +3093,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(destination).add(keys.length).addKeys(keys);
         storeArgs.build(args);
         return createCommand(ZUNIONSTORE, new IntegerOutput<>(codec), args);
-    }
-
-    Command<K, V, Long> memoryUsage(K key) {
-        return createCommand(MEMORY, new IntegerOutput<>(codec), new CommandArgs<>(codec).add(USAGE).add(key.toString()));
     }
 
     private boolean allElementsInstanceOf(Object[] objects, Class<?> expectedAssignableType) {
