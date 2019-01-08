@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -75,9 +75,9 @@ class MyBatisCursorItemReaderBuilderTest {
     ExecutionContext executionContext = new ExecutionContext();
     itemReader.open(executionContext);
 
-    Assertions.assertThat(itemReader.read().getName()).isEqualTo("foo1");
-    Assertions.assertThat(itemReader.read().getName()).isEqualTo("foo2");
-    Assertions.assertThat(itemReader.read().getName()).isEqualTo("foo3");
+    Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo1");
+    Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo2");
+    Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo3");
 
     itemReader.update(executionContext);
     Assertions.assertThat(executionContext.getInt("MyBatisCursorItemReader.read.count"))
@@ -104,9 +104,9 @@ class MyBatisCursorItemReaderBuilderTest {
     ExecutionContext executionContext = new ExecutionContext();
     itemReader.open(executionContext);
 
-    Assertions.assertThat(itemReader.read().getName()).isEqualTo("foo1");
-    Assertions.assertThat(itemReader.read().getName()).isEqualTo("foo2");
-    Assertions.assertThat(itemReader.read().getName()).isEqualTo("foo3");
+    Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo1");
+    Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo2");
+    Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo3");
 
     itemReader.update(executionContext);
     Assertions.assertThat(executionContext.isEmpty()).isTrue();
@@ -129,8 +129,8 @@ class MyBatisCursorItemReaderBuilderTest {
     ExecutionContext executionContext = new ExecutionContext();
     itemReader.open(executionContext);
 
-    Assertions.assertThat(itemReader.read().getName()).isEqualTo("foo1");
-    Assertions.assertThat(itemReader.read().getName()).isEqualTo("foo2");
+    Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo1");
+    Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo2");
 
     itemReader.update(executionContext);
     Assertions.assertThat(executionContext.getInt("MyBatisCursorItemReader.read.count.max"))
@@ -146,7 +146,7 @@ class MyBatisCursorItemReaderBuilderTest {
   private static class Foo {
     private final String name;
 
-    public Foo(String name) {
+    Foo(String name) {
       this.name = name;
     }
 

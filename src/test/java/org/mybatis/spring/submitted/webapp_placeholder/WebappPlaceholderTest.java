@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -27,13 +27,13 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @ExtendWith(SpringExtension.class)
 @WebAppConfiguration
 @SpringJUnitConfig(locations = "file:src/test/java/org/mybatis/spring/submitted/webapp_placeholder/spring.xml")
-public class WebappPlaceholderTest {
+class WebappPlaceholderTest {
 
   @Autowired
   private Mapper mapper;
 
   @Test
-  void testName() throws Exception {
+  void testName() {
     assertThat(mapper).isNotNull();
   }
 }

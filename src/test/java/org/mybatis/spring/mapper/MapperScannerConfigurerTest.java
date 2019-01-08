@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import org.springframework.stereotype.Component;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
-public final class MapperScannerConfigurerTest {
+class MapperScannerConfigurerTest {
   private GenericApplicationContext applicationContext;
 
   @BeforeEach
@@ -160,7 +160,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  void testScanWithExplicitSqlSessionFactory() throws Exception {
+  void testScanWithExplicitSqlSessionFactory() {
     setupSqlSessionFactory("sqlSessionFactory2");
 
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
@@ -170,7 +170,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  void testScanWithExplicitSqlSessionTemplate() throws Exception {
+  void testScanWithExplicitSqlSessionTemplate() {
     GenericBeanDefinition definition = new GenericBeanDefinition();
     definition.setBeanClass(SqlSessionTemplate.class);
     ConstructorArgumentValues constructorArgs = new ConstructorArgumentValues();
@@ -185,7 +185,7 @@ public final class MapperScannerConfigurerTest {
   }
 
   @Test
-  void testScanWithExplicitSqlSessionFactoryViaPlaceholder() throws Exception {
+  void testScanWithExplicitSqlSessionFactoryViaPlaceholder() {
     setupSqlSessionFactory("sqlSessionFactory2");
 
     // use a property placeholder for the session factory name

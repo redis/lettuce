@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.mybatis.spring.AbstractMyBatisSpringTest;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
-public final class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
+class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
 
   @Test
   void shouldNoOpWithTx() throws Exception {

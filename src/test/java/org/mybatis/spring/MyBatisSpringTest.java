@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -38,12 +38,12 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
+class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
   private SqlSession session;
 
   @AfterEach
-  public void validateSessionClose() {
+  void validateSessionClose() {
     // assume if the Executor is closed, the Session is too
     if ((session != null) && !executorInterceptor.isExecutorClosed()) {
       session = null;
@@ -55,7 +55,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
   // ensure MyBatis API still works with SpringManagedTransaction
   @Test
-  public void testMyBatisAPI() {
+  void testMyBatisAPI() {
     session = sqlSessionFactory.openSession();
     session.getMapper(TestMapper.class).findTest();
     session.close();
@@ -66,7 +66,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testMyBatisAPIWithCommit() {
+  void testMyBatisAPIWithCommit() {
     session = sqlSessionFactory.openSession();
     session.getMapper(TestMapper.class).findTest();
     session.commit(true);
@@ -78,7 +78,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testMyBatisAPIWithRollback() {
+  void testMyBatisAPIWithRollback() {
     session = sqlSessionFactory.openSession();
     session.getMapper(TestMapper.class).findTest();
     session.rollback(true);
@@ -91,7 +91,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
   // basic tests using SqlSessionUtils instead of using the MyBatis API directly
   @Test
-  public void testSpringAPI() {
+  void testSpringAPI() {
     session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
     session.getMapper(TestMapper.class).findTest();
     SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
@@ -102,7 +102,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testSpringAPIWithCommit() {
+  void testSpringAPIWithCommit() {
     session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
     session.getMapper(TestMapper.class).findTest();
     session.commit(true);
@@ -113,7 +113,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testSpringAPIWithRollback() {
+  void testSpringAPIWithRollback() {
     session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
     session.getMapper(TestMapper.class).findTest();
     session.rollback(true);
@@ -124,7 +124,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testSpringAPIWithMyBatisClose() {
+  void testSpringAPIWithMyBatisClose() {
     // This is a programming error and could lead to connection leak if there is a transaction
     // in progress. But, the API allows it, so make sure it at least works without a tx.
     session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
@@ -137,7 +137,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
   // Spring API should work with a MyBatis TransactionFactories
   @Test
-  public void testWithNonSpringTransactionFactory() {
+  void testWithNonSpringTransactionFactory() {
     Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
     Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
     sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
@@ -159,7 +159,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   // Spring TX, non-Spring TransactionFactory, Spring managed DataSource
   // this should not work since the DS will be out of sync with MyBatis
   @Test
-  public void testNonSpringTxFactoryWithTx() throws Exception {
+  void testNonSpringTxFactoryWithTx() throws Exception {
     Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
     Environment nonSpring = new Environment("non-spring", new JdbcTransactionFactory(), dataSource);
     sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
@@ -184,7 +184,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   // Spring TX, non-Spring TransactionFactory, MyBatis managed DataSource
   // this should work since the DS is managed MyBatis
   @Test
-  public void testNonSpringTxFactoryNonSpringDSWithTx() throws java.sql.SQLException {
+  void testNonSpringTxFactoryNonSpringDSWithTx() throws java.sql.SQLException {
     Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
 
     MockDataSource mockDataSource = new MockDataSource();
@@ -222,7 +222,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testChangeExecutorTypeInTx() throws Exception {
+  void testChangeExecutorTypeInTx() throws Exception {
     TransactionStatus status = null;
 
     try {
@@ -244,7 +244,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testChangeExecutorTypeInTxRequiresNew() throws Exception {
+  void testChangeExecutorTypeInTxRequiresNew() throws Exception {
 
     try {
       txManager.setDataSource(dataSource);
@@ -276,7 +276,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithJtaTxManager() {
+  void testWithJtaTxManager() {
     JtaTransactionManager jtaManager = new JtaTransactionManager(new MockUserTransaction());
 
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
@@ -297,7 +297,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithJtaTxManagerAndNonSpringTxManager() throws java.sql.SQLException {
+  void testWithJtaTxManagerAndNonSpringTxManager() throws java.sql.SQLException {
     Environment original = sqlSessionFactory.getConfiguration().getEnvironment();
 
     MockDataSource mockDataSource = new MockDataSource();
@@ -344,7 +344,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithTxSupports() {
+  void testWithTxSupports() {
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
     txDef.setPropagationBehaviorName("PROPAGATION_SUPPORTS");
 
@@ -363,7 +363,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
 
   @Test
-  public void testRollbackWithTxSupports() {
+  void testRollbackWithTxSupports() {
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
     txDef.setPropagationBehaviorName("PROPAGATION_SUPPORTS");
 
@@ -381,7 +381,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithTxRequired() {
+  void testWithTxRequired() {
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
     txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
 
@@ -399,7 +399,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testSqlSessionCommitWithTx() {
+  void testSqlSessionCommitWithTx() {
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
     txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
 
@@ -424,7 +424,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testWithInterleavedTx() throws Exception {
+  void testWithInterleavedTx() {
     // this session will use one Connection
     session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
     session.getMapper(TestMapper.class).findTest();
@@ -460,7 +460,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testSuspendAndResume() throws Exception {
+  void testSuspendAndResume() {
 
     try {
       txManager.setDataSource(dataSource);
@@ -512,7 +512,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testBatch() {
+  void testBatch() {
     setupBatchStatements();
 
     session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, exceptionTranslator);
@@ -533,7 +533,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testBatchInTx() {
+  void testBatchInTx() {
     setupBatchStatements();
 
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
@@ -557,7 +557,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testBatchWithError() {
+  void testBatchWithError() {
     try {
       setupBatchStatements();
 
@@ -577,7 +577,7 @@ public final class MyBatisSpringTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  public void testBatchInTxWithError() {
+  void testBatchInTxWithError() {
     setupBatchStatements();
 
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();

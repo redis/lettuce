@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -20,20 +20,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class AutowireTest {
-  private ClassPathXmlApplicationContext context;
+class AutowireTest {
 
   @Test
   void shouldReturnMapper() {
-    context = new ClassPathXmlApplicationContext("classpath:org/mybatis/spring/submitted/autowire/spring.xml");
+    try (ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:org/mybatis/spring/submitted/autowire/spring.xml")) {
 
-    FooMapper fooMapper = (FooMapper) context.getBean("fooMapper");
-    assertThat(fooMapper).isNotNull();
-    fooMapper.executeFoo();
+      FooMapper fooMapper = (FooMapper) context.getBean("fooMapper");
+      assertThat(fooMapper).isNotNull();
+      fooMapper.executeFoo();
 
-    BarMapper barMapper = (BarMapper) context.getBean("barMapper");
-    assertThat(barMapper).isNotNull();
-    barMapper.executeBar();
+      BarMapper barMapper = (BarMapper) context.getBean("barMapper");
+      assertThat(barMapper).isNotNull();
+      barMapper.executeBar();
+    }
 
   }
 }

@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -79,17 +79,17 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
   }
 
   @Test
-  void testCommit() throws SQLException {
+  void testCommit() {
     assertThrows(UnsupportedOperationException.class, sqlSessionTemplate::commit);
   }
 
   @Test
-  void testClose() throws SQLException {
+  void testClose() {
     assertThrows(UnsupportedOperationException.class, sqlSessionTemplate::close);
   }
 
   @Test
-  void testRollback() throws SQLException {
+  void testRollback() {
     assertThrows(UnsupportedOperationException.class, sqlSessionTemplate::rollback);
   }
 

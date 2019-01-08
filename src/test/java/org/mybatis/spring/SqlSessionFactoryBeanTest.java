@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import org.springframework.core.io.Resource;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
-public final class SqlSessionFactoryBeanTest {
+class SqlSessionFactoryBeanTest {
 
   private static final class TestObjectFactory extends DefaultObjectFactory {
     private static final long serialVersionUID = 1L;}
@@ -57,7 +57,7 @@ public final class SqlSessionFactoryBeanTest {
 
   private SqlSessionFactoryBean factoryBean;
 
-  public void setupFactoryBean() {
+  void setupFactoryBean() {
     factoryBean = new SqlSessionFactoryBean();
     factoryBean.setDataSource(dataSource);
   }
@@ -72,20 +72,20 @@ public final class SqlSessionFactoryBeanTest {
   // DataSource is the only required property that does not have a default value, so test for both
   // not setting it at all and setting it to null
   @Test
-  void testNullDataSource() throws Exception {
+  void testNullDataSource() {
     factoryBean = new SqlSessionFactoryBean();
     assertThrows(IllegalArgumentException.class, factoryBean::getObject);
   }
 
   @Test
-  void testSetNullDataSource() throws Exception {
+  void testSetNullDataSource() {
     factoryBean = new SqlSessionFactoryBean();
     factoryBean.setDataSource(null);
     assertThrows(IllegalArgumentException.class, factoryBean::getObject);
   }
 
   @Test
-  void testNullSqlSessionFactoryBuilder() throws Exception {
+  void testNullSqlSessionFactoryBuilder() {
     setupFactoryBean();
     factoryBean.setSqlSessionFactoryBuilder(null);
     assertThrows(IllegalArgumentException.class, factoryBean::getObject);
