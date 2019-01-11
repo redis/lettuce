@@ -44,7 +44,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
-import io.netty.util.internal.ConcurrentSet;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -71,7 +70,7 @@ public abstract class AbstractRedisClient {
 
     protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
     protected final ConnectionEvents connectionEvents = new ConnectionEvents();
-    protected final Set<Closeable> closeableResources = new ConcurrentSet<>();
+    protected final Set<Closeable> closeableResources = ConcurrentHashMap.newKeySet();
     protected final EventExecutorGroup genericWorkerPool;
     protected final HashedWheelTimer timer;
     protected final ChannelGroup channels;

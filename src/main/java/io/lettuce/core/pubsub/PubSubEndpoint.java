@@ -16,6 +16,7 @@
 package io.lettuce.core.pubsub;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.lettuce.core.ClientOptions;
@@ -25,7 +26,6 @@ import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
-import io.netty.util.internal.ConcurrentSet;
 
 /**
  * @author Mark Paluch
@@ -65,8 +65,8 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
         super(clientOptions, clientResources);
 
-        this.channels = new ConcurrentSet<>();
-        this.patterns = new ConcurrentSet<>();
+        this.channels = ConcurrentHashMap.newKeySet();
+        this.patterns = ConcurrentHashMap.newKeySet();
     }
 
     /**

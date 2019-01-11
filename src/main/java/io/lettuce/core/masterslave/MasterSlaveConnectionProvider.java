@@ -31,7 +31,6 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
-import io.netty.util.internal.ConcurrentSet;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -264,7 +263,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     @Deprecated
     protected Collection<StatefulRedisConnection<K, V>> allConnections() {
 
-        Set<StatefulRedisConnection<K, V>> set = new ConcurrentSet<>();
+        Set<StatefulRedisConnection<K, V>> set = ConcurrentHashMap.newKeySet();
         connectionProvider.forEach(set::add);
         return set;
     }

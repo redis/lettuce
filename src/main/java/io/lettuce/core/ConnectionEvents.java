@@ -17,9 +17,9 @@ package io.lettuce.core;
 
 import java.net.SocketAddress;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.lettuce.core.protocol.RedisCommand;
-import io.netty.util.internal.ConcurrentSet;
 
 /**
  * Close Events Facility. Can register/unregister CloseListener and fire a closed event to all registered listeners. This class
@@ -30,7 +30,7 @@ import io.netty.util.internal.ConcurrentSet;
  */
 public class ConnectionEvents {
 
-    private final Set<RedisConnectionStateListener> listeners = new ConcurrentSet<>();
+    private final Set<RedisConnectionStateListener> listeners = ConcurrentHashMap.newKeySet();
 
     void fireEventRedisConnected(RedisChannelHandler<?, ?> connection, SocketAddress socketAddress) {
         for (RedisConnectionStateListener listener : listeners) {
