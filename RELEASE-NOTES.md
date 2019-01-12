@@ -12,10 +12,11 @@ It is tested continuously against the latest Redis source-build.
 
 If you need any support, meet Lettuce at
 
-* Google Group: https://groups.google.com/d/forum/lettuce-redis-client-users
+* Google Group (General discussion, announcements and releases): https://groups.google.com/d/forum/lettuce-redis-client-users
 or lettuce-redis-client-users@googlegroups.com
-* Join the chat at https://gitter.im/lettuce-io/Lobby
-* GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
+* Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
+* Join the chat at https://gitter.im/lettuce-io/Lobby for general discussion
+* GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
 * Documentation: https://lettuce.io/core/5.1.3.RELEASE/reference/
 * Javadoc: https://lettuce.io/core/5.1.3.RELEASE/api/
 
