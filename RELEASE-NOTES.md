@@ -16,10 +16,13 @@ Lettuce 4.5.0.Final requires Java 8 up to Java 11.
 
 If you need any support, meet Lettuce at:
 
-* Google Group: https://groups.google.com/d/forum/lettuce-redis-client-users
-* Gitter: https://gitter.im/lettuce-io/Lobby
-* GitHub Issues: https://github.com/lettuce-io/lettuce-core/issues
+* Google Group (General discussion, announcements and releases): https://groups.google.com/d/forum/lettuce-redis-client-users
+or lettuce-redis-client-users@googlegroups.com
+* Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
+* Join the chat at https://gitter.im/lettuce-io/Lobby for general discussion
+* GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
 * Documentation: https://lettuce.io/docs/
+
 
 New Exceptions for Redis Responses
 ----------------------------------
