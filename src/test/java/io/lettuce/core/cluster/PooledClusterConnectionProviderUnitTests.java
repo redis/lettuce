@@ -150,7 +150,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         when(asyncCommandsMock.readOnly()).thenReturn(async);
 
-        sut.setReadFrom(ReadFrom.SLAVE);
+        sut.setReadFrom(ReadFrom.REPLICA);
 
         StatefulRedisConnection<String, String> connection = sut.getConnection(Intent.READ, 1);
 
@@ -209,7 +209,7 @@ class PooledClusterConnectionProviderUnitTests {
         when(asyncCommandsMock.readOnly()).thenReturn(async);
         when(nodeConnectionMock2.async()).thenReturn(asyncCommandsMock);
 
-        sut.setReadFrom(ReadFrom.SLAVE);
+        sut.setReadFrom(ReadFrom.REPLICA);
 
         List<StatefulRedisConnection<String, String>> readCandidates = new ArrayList<>();
 
@@ -231,7 +231,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         when(asyncCommandsMock.readOnly()).thenReturn(async);
 
-        sut.setReadFrom(ReadFrom.SLAVE);
+        sut.setReadFrom(ReadFrom.REPLICA);
 
         try {
             sut.getConnection(Intent.READ, 1);
@@ -255,7 +255,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         when(asyncCommandsMock.readOnly()).thenReturn(async);
 
-        sut.setReadFrom(ReadFrom.SLAVE);
+        sut.setReadFrom(ReadFrom.REPLICA);
 
         try {
             sut.getConnection(Intent.READ, 1);

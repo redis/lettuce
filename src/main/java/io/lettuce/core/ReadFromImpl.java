@@ -34,7 +34,7 @@ class ReadFromImpl {
 
     private static final Predicate<RedisNodeDescription> IS_MASTER = node -> node.getRole() == RedisInstance.Role.MASTER;
 
-    private static final Predicate<RedisNodeDescription> IS_SLAVE = node -> node.getRole() == RedisInstance.Role.SLAVE;
+    private static final Predicate<RedisNodeDescription> IS_REPLICA = node -> node.getRole() == RedisInstance.Role.SLAVE;
 
     /**
      * Read from master only.
@@ -55,32 +55,32 @@ class ReadFromImpl {
     }
 
     /**
-     * Read from master and slaves. Prefer master reads and fall back to slaves if the master is not available.
+     * Read from master and replicas. Prefer master reads and fall back to replicas if the master is not available.
      */
     static final class ReadFromMasterPreferred extends OrderedPredicateReadFromAdapter {
 
         ReadFromMasterPreferred() {
-            super(IS_MASTER, IS_SLAVE);
+            super(IS_MASTER, IS_REPLICA);
         }
     }
 
     /**
-     * Read from slave only.
+     * Read from replica only.
      */
-    static final class ReadFromSlave extends OrderedPredicateReadFromAdapter {
+    static final class ReadFromReplica extends OrderedPredicateReadFromAdapter {
 
-        ReadFromSlave() {
-            super(IS_SLAVE);
+        ReadFromReplica() {
+            super(IS_REPLICA);
         }
     }
 
     /**
-     * Read from master and slaves. Prefer slave reads and fall back to master if the no slave is not available.
+     * Read from master and replicas. Prefer replica reads and fall back to master if the no replica is not available.
      */
-    static final class ReadFromSlavePreferred extends OrderedPredicateReadFromAdapter {
+    static final class ReadFromReplicaPreferred extends OrderedPredicateReadFromAdapter {
 
-        ReadFromSlavePreferred() {
-            super(IS_SLAVE, IS_MASTER);
+        ReadFromReplicaPreferred() {
+            super(IS_REPLICA, IS_MASTER);
         }
     }
 
@@ -112,7 +112,7 @@ class ReadFromImpl {
 
     /**
      * {@link Predicate}-based {@link ReadFrom} implementation.
-     * 
+     *
      * @since 5.2
      */
     static class OrderedPredicateReadFromAdapter extends ReadFrom {
@@ -149,7 +149,7 @@ class ReadFromImpl {
 
     /**
      * Unordered {@link Predicate}-based {@link ReadFrom} implementation.
-     * 
+     *
      * @since 5.2
      */
     static class UnorderedPredicateReadFromAdapter extends OrderedPredicateReadFromAdapter {

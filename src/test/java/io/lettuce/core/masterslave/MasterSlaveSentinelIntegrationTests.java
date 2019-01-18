@@ -119,7 +119,7 @@ class MasterSlaveSentinelIntegrationTests extends TestSupport {
                 SentinelTestSettings.SENTINEL_URI);
 
         connection.sync().ping();
-        connection.setReadFrom(ReadFrom.SLAVE);
+        connection.setReadFrom(ReadFrom.REPLICA);
         slaveCall(connection);
 
         assertThat(channels.size()).isEqualTo(count + 2 /* connections */+ 1 /* sentinel connections */);
@@ -137,7 +137,7 @@ class MasterSlaveSentinelIntegrationTests extends TestSupport {
                 SentinelTestSettings.SENTINEL_URI);
 
         connection.sync().ping();
-        connection.setReadFrom(ReadFrom.SLAVE);
+        connection.setReadFrom(ReadFrom.REPLICA);
         slaveCall(connection);
         connection.close();
 

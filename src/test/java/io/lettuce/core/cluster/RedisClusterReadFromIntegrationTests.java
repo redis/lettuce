@@ -83,7 +83,7 @@ class RedisClusterReadFromIntegrationTests extends TestSupport {
     @Test
     void readWriteSlave() {
 
-        connection.setReadFrom(ReadFrom.SLAVE);
+        connection.setReadFrom(ReadFrom.REPLICA);
 
         sync.set(key, "value1");
 
@@ -94,7 +94,7 @@ class RedisClusterReadFromIntegrationTests extends TestSupport {
     @Test
     void readWriteSlavePreferred() {
 
-        connection.setReadFrom(ReadFrom.SLAVE_PREFERRED);
+        connection.setReadFrom(ReadFrom.REPLICA_PREFERRED);
 
         sync.set(key, "value1");
 

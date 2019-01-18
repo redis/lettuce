@@ -40,7 +40,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  * @author Adam McElwee
+ * @deprecated will be moved to {@code masterreplica} package with version 6.
  */
+@Deprecated
 public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(StaticMasterSlaveTopologyProvider.class);

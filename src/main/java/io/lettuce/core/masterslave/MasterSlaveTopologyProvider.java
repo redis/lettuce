@@ -37,11 +37,14 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  * @since 4.1
+ * @deprecated will be moved to {@code masterreplica} package with version 6.
  */
+@Deprecated
 public class MasterSlaveTopologyProvider implements TopologyProvider {
 
     public static final Pattern ROLE_PATTERN = Pattern.compile("^role\\:([a-z]+)$", Pattern.MULTILINE);
-    public static final Pattern SLAVE_PATTERN = Pattern.compile("^slave(\\d+)\\:([a-zA-Z\\,\\=\\d\\.\\:]+)$", Pattern.MULTILINE);
+    public static final Pattern SLAVE_PATTERN = Pattern
+            .compile("^slave(\\d+)\\:([a-zA-Z\\,\\=\\d\\.\\:]+)$", Pattern.MULTILINE);
     public static final Pattern MASTER_HOST_PATTERN = Pattern.compile("^master_host\\:([a-zA-Z\\,\\=\\d\\.\\:\\-]+)$",
             Pattern.MULTILINE);
     public static final Pattern MASTER_PORT_PATTERN = Pattern.compile("^master_port\\:(\\d+)$", Pattern.MULTILINE);

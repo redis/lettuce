@@ -27,7 +27,9 @@ import io.lettuce.core.codec.RedisCodec;
  *
  * @author Mark Paluch
  * @since 4.4
+ * @deprecated will be moved to {@code masterreplica} package with version 6.
  */
+@Deprecated
 public interface NodeConnectionFactory {
 
     /**

@@ -476,7 +476,7 @@ public class RedisClusterSetupTest extends TestSupport {
 
         ClusterSetup.setup2Masters(clusterRule);
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
-        clusterConnection.getStatefulConnection().setReadFrom(ReadFrom.SLAVE);
+        clusterConnection.getStatefulConnection().setReadFrom(ReadFrom.REPLICA);
 
         Futures.await(clusterConnection.set(key, value));
 

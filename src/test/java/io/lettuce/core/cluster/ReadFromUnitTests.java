@@ -67,13 +67,13 @@ class ReadFromUnitTests {
 
     @Test
     void slave() {
-        List<RedisNodeDescription> result = ReadFrom.SLAVE.select(getNodes());
+        List<RedisNodeDescription> result = ReadFrom.REPLICA.select(getNodes());
         assertThat(result).hasSize(2).contains(nearest, slave);
     }
 
     @Test
     void slavePreferred() {
-        List<RedisNodeDescription> result = ReadFrom.SLAVE_PREFERRED.select(getNodes());
+        List<RedisNodeDescription> result = ReadFrom.REPLICA_PREFERRED.select(getNodes());
         assertThat(result).hasSize(3).containsExactly(nearest, slave, master);
     }
 
@@ -110,12 +110,12 @@ class ReadFromUnitTests {
 
     @Test
     void valueOfSlave() {
-        assertThat(ReadFrom.valueOf("slave")).isEqualTo(ReadFrom.SLAVE);
+        assertThat(ReadFrom.valueOf("slave")).isEqualTo(ReadFrom.REPLICA);
     }
 
     @Test
     void valueOfSlavePreferred() {
-        assertThat(ReadFrom.valueOf("slavePreferred")).isEqualTo(ReadFrom.SLAVE_PREFERRED);
+        assertThat(ReadFrom.valueOf("slavePreferred")).isEqualTo(ReadFrom.REPLICA_PREFERRED);
     }
 
     private ReadFrom.Nodes getNodes() {

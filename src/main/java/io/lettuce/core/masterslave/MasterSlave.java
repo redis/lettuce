@@ -89,7 +89,9 @@ import io.lettuce.core.internal.LettuceLists;
  *
  * @author Mark Paluch
  * @since 4.1
+ * @deprecated since 5.2, use {@link io.lettuce.core.masterreplica.MasterReplica}
  */
+@Deprecated
 public class MasterSlave {
 
     /**

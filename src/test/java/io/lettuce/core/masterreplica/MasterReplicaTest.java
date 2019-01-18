@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.masterslave;
+package io.lettuce.core.masterreplica;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,17 +45,17 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Mark Paluch
  */
-class MasterSlaveTest extends AbstractRedisClientTest {
+class MasterReplicaTest extends AbstractRedisClientTest {
 
     private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd)
             .withClientName("my-client").withDatabase(5).build();
 
-    private StatefulRedisMasterSlaveConnectionImpl<String, String> connection;
+    private StatefulRedisMasterReplicaConnection<String, String> connection;
     private RedisAsyncCommands<String, String> connectionToNode1;
     private RedisAsyncCommands<String, String> connectionToNode2;
 
     private RedisURI master;
-    private RedisURI slave;
+    private RedisURI replica;
 
     @BeforeEach
     void before() throws Exception {
@@ -71,14 +71,13 @@ class MasterSlaveTest extends AbstractRedisClientTest {
 
         if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node1;
-            slave = node2;
-        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
-                && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
+            replica = node2;
+        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node2;
-            slave = node1;
+            replica = node1;
         } else {
             assumeTrue(false, String.format(
-                    "Cannot run the test because I don't have a distinct master and slave but %s and %s", node1Instance,
+                    "Cannot run the test because I don't have a distinct master and replica but %s and %s", node1Instance,
                     node2Instance));
         }
 
@@ -90,7 +89,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         connectionToNode2.configSet("masterauth", passwd);
         connectionToNode2.auth(passwd);
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(), masterURI);
+        connection = MasterReplica.connect(client, new Utf8StringCodec(), masterURI);
         connection.setReadFrom(ReadFrom.REPLICA);
     }
 
@@ -115,7 +114,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
     }
 
     @Test
-    void testMasterSlaveReadFromMaster() {
+    void testMasterReplicaReadFromMaster() {
 
         connection.setReadFrom(ReadFrom.MASTER);
         String server = connection.sync().info("server");
@@ -128,7 +127,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
     }
 
     @Test
-    void testMasterSlaveReadFromSlave() {
+    void testMasterReplicaReadFromReplica() {
 
         String server = connection.sync().info("server");
 
@@ -136,12 +135,12 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         Matcher matcher = pattern.matcher(server);
 
         assertThat(matcher.find()).isTrue();
-        assertThat(matcher.group(1)).isEqualTo("" + slave.getPort());
+        assertThat(matcher.group(1)).isEqualTo("" + replica.getPort());
         assertThat(connection.getReadFrom()).isEqualTo(ReadFrom.REPLICA);
     }
 
     @Test
-    void testMasterSlaveReadWrite() {
+    void testMasterReplicaReadWrite() {
 
         RedisCommands<String, String> redisCommands = connection.sync();
         redisCommands.set(key, value);
@@ -151,19 +150,19 @@ class MasterSlaveTest extends AbstractRedisClientTest {
     }
 
     @Test
-    void testConnectToSlave() {
+    void testConnectToReplica() {
 
         connection.close();
 
-        RedisURI slaveUri = RedisURI.Builder.redis(host, TestSettings.port(4)).withPassword(passwd).build();
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(), slaveUri);
+        RedisURI replicaUri = RedisURI.Builder.redis(host, TestSettings.port(4)).withPassword(passwd).build();
+        connection = MasterReplica.connect(client, new Utf8StringCodec(), replicaUri);
 
         RedisCommands<String, String> sync = connection.sync();
         sync.set(key, value);
     }
 
     @Test
-    void noSlaveForRead() {
+    void noReplicaForRead() {
 
         connection.setReadFrom(new ReadFrom() {
             @Override
@@ -172,11 +171,11 @@ class MasterSlaveTest extends AbstractRedisClientTest {
             }
         });
 
-        assertThatThrownBy(() -> slaveCall(connection)).isInstanceOf(RedisException.class);
+        assertThatThrownBy(() -> replicaCall(connection)).isInstanceOf(RedisException.class);
     }
 
     @Test
-    void masterSlaveConnectionShouldSetClientName() {
+    void masterReplicaConnectionShouldSetClientName() {
 
         assertThat(connection.sync().clientGetname()).isEqualTo(masterURI.getClientName());
         connection.sync().quit();
@@ -185,34 +184,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         connection.close();
     }
 
-    @Test
-    void testConnectionCount() {
-
-        MasterSlaveConnectionProvider connectionProvider = getConnectionProvider();
-
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(1);
-        slaveCall(connection);
-
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(2);
-    }
-
-    @Test
-    void testReconfigureTopology() {
-        MasterSlaveConnectionProvider connectionProvider = getConnectionProvider();
-
-        slaveCall(connection);
-
-        connectionProvider.setKnownNodes(Collections.emptyList());
-
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(0);
-    }
-
-    static String slaveCall(StatefulRedisMasterSlaveConnection<String, String> connection) {
+    static String replicaCall(StatefulRedisMasterReplicaConnection<String, String> connection) {
         return connection.sync().info("replication");
-    }
-
-    MasterSlaveConnectionProvider getConnectionProvider() {
-        MasterSlaveChannelWriter writer = connection.getChannelWriter();
-        return writer.getMasterSlaveConnectionProvider();
     }
 }

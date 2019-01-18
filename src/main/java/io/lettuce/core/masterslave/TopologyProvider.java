@@ -27,8 +27,10 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  *
  * @author Mark Paluch
  * @since 4.1
+ * @deprecated will be moved to {@code masterreplica} package with version 6.
  */
 @FunctionalInterface
+@Deprecated
 public interface TopologyProvider {
 
     /**
