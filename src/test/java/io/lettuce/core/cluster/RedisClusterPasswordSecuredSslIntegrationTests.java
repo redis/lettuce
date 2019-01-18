@@ -110,7 +110,7 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
         StatefulRedisClusterConnection<String, String> connection = redisClient.connect();
 
-        // slave
+        // replica
         StatefulRedisConnection<String, String> node2Connection = connection.getConnection(hostAddr(), 7444);
 
         try {

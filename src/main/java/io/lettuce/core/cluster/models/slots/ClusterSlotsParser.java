@@ -78,7 +78,7 @@ public class ClusterSlotsParser {
         int to = Math.toIntExact(getLongFromIterator(iterator, 0));
         RedisClusterNode master = null;
 
-        List<RedisClusterNode> slaves = new ArrayList<>();
+        List<RedisClusterNode> replicas = new ArrayList<>();
         if (iterator.hasNext()) {
             master = getRedisClusterNode(iterator, nodeCache);
             if(master != null) {
@@ -90,15 +90,15 @@ public class ClusterSlotsParser {
         }
 
         while (iterator.hasNext()) {
-            RedisClusterNode slave = getRedisClusterNode(iterator, nodeCache);
-            if (slave != null) {
-                slave.setSlaveOf(master.getNodeId());
-                slave.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
-                slaves.add(slave);
+            RedisClusterNode replica = getRedisClusterNode(iterator, nodeCache);
+            if (replica != null) {
+                replica.setSlaveOf(master.getNodeId());
+                replica.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
+                replicas.add(replica);
             }
         }
 
-        return new ClusterSlotRange(from, to, master, Collections.unmodifiableList(slaves));
+        return new ClusterSlotRange(from, to, master, Collections.unmodifiableList(replicas));
     }
 
     private static List<Integer> createSlots(int from, int to) {

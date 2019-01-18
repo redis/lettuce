@@ -34,7 +34,7 @@ class MasterSlaveUtilsUnitTests {
 
         RedisMasterSlaveNode master = new RedisMasterSlaveNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.MASTER);
-        RedisMasterSlaveNode slave = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 234),
+        RedisMasterSlaveNode replica = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.SLAVE);
 
         RedisMasterSlaveNode newmaster = new RedisMasterSlaveNode("host", 1234, RedisURI.create("host", 555),
@@ -42,11 +42,11 @@ class MasterSlaveUtilsUnitTests {
         RedisMasterSlaveNode newslave = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 666),
                 RedisInstance.Role.SLAVE);
 
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, slave), Arrays.asList(newmaster, newslave))).isFalse();
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(slave, master), Arrays.asList(newmaster, newslave))).isFalse();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, replica), Arrays.asList(newmaster, newslave))).isFalse();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(replica, master), Arrays.asList(newmaster, newslave))).isFalse();
 
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(newmaster, newslave), Arrays.asList(master, slave))).isFalse();
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(newmaster, newslave), Arrays.asList(slave, master))).isFalse();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(newmaster, newslave), Arrays.asList(master, replica))).isFalse();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(newmaster, newslave), Arrays.asList(replica, master))).isFalse();
     }
 
     @Test
@@ -54,13 +54,13 @@ class MasterSlaveUtilsUnitTests {
 
         RedisMasterSlaveNode master = new RedisMasterSlaveNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.MASTER);
-        RedisMasterSlaveNode slave = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 234),
+        RedisMasterSlaveNode replica = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.MASTER);
 
         RedisMasterSlaveNode newmaster = new RedisMasterSlaveNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.MASTER);
 
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, slave), Arrays.asList(newmaster))).isTrue();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, replica), Arrays.asList(newmaster))).isTrue();
     }
 
     @Test
@@ -68,7 +68,7 @@ class MasterSlaveUtilsUnitTests {
 
         RedisMasterSlaveNode master = new RedisMasterSlaveNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.MASTER);
-        RedisMasterSlaveNode slave = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 234),
+        RedisMasterSlaveNode replica = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.SLAVE);
 
         RedisMasterSlaveNode newmaster = new RedisMasterSlaveNode("host", 1234, RedisURI.create("host", 555),
@@ -76,10 +76,10 @@ class MasterSlaveUtilsUnitTests {
         RedisMasterSlaveNode newslave = new RedisMasterSlaveNode("newhost", 234, RedisURI.create("newhost", 666),
                 RedisInstance.Role.SLAVE);
 
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, slave), Arrays.asList(newmaster, newslave))).isTrue();
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(slave, master), Arrays.asList(newmaster, newslave))).isTrue();
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(newmaster, newslave), Arrays.asList(master, slave))).isTrue();
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(newslave, newmaster), Arrays.asList(master, slave))).isTrue();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, replica), Arrays.asList(newmaster, newslave))).isTrue();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(replica, master), Arrays.asList(newmaster, newslave))).isTrue();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(newmaster, newslave), Arrays.asList(master, replica))).isTrue();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(newslave, newmaster), Arrays.asList(master, replica))).isTrue();
     }
 
     @Test
@@ -87,7 +87,7 @@ class MasterSlaveUtilsUnitTests {
 
         RedisMasterSlaveNode master = new RedisMasterSlaveNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.MASTER);
-        RedisMasterSlaveNode slave = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 234),
+        RedisMasterSlaveNode replica = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.MASTER);
 
         RedisMasterSlaveNode newslave = new RedisMasterSlaveNode("host", 1234, RedisURI.create("host", 111),
@@ -95,7 +95,7 @@ class MasterSlaveUtilsUnitTests {
         RedisMasterSlaveNode newmaster = new RedisMasterSlaveNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.MASTER);
 
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, slave), Arrays.asList(newmaster, newslave))).isTrue();
-        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, slave), Arrays.asList(newslave, newmaster))).isTrue();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, replica), Arrays.asList(newmaster, newslave))).isTrue();
+        assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, replica), Arrays.asList(newslave, newmaster))).isTrue();
     }
 }

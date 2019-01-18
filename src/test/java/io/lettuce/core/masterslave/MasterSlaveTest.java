@@ -55,7 +55,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
     private RedisAsyncCommands<String, String> connectionToNode2;
 
     private RedisURI master;
-    private RedisURI slave;
+    private RedisURI replica;
 
     @BeforeEach
     void before() throws Exception {
@@ -71,14 +71,14 @@ class MasterSlaveTest extends AbstractRedisClientTest {
 
         if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node1;
-            slave = node2;
+            replica = node2;
         } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
                 && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node2;
-            slave = node1;
+            replica = node1;
         } else {
             assumeTrue(false, String.format(
-                    "Cannot run the test because I don't have a distinct master and slave but %s and %s", node1Instance,
+                    "Cannot run the test because I don't have a distinct master and replica but %s and %s", node1Instance,
                     node2Instance));
         }
 
@@ -136,7 +136,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         Matcher matcher = pattern.matcher(server);
 
         assertThat(matcher.find()).isTrue();
-        assertThat(matcher.group(1)).isEqualTo("" + slave.getPort());
+        assertThat(matcher.group(1)).isEqualTo("" + replica.getPort());
         assertThat(connection.getReadFrom()).isEqualTo(ReadFrom.REPLICA);
     }
 

@@ -34,7 +34,7 @@ public abstract class ClusterTestSettings extends TestSupport {
     public static final int port3 = port1 + 2;
     public static final int port4 = port1 + 3;
 
-    // master+slave or master+master
+    // master+replica or master+master
     public static final int port5 = port1 + 4;
     public static final int port6 = port1 + 5;
 

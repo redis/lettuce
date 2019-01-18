@@ -166,12 +166,12 @@ class ClusterCommandIntegrationTests extends TestSupport {
     @Test
     void readOnly() throws Exception {
 
-        // cluster node 3 is a slave for key "b"
+        // cluster node 3 is a replica for key "b"
         String key = "b";
         assertThat(SlotHash.getSlot(key)).isEqualTo(3300);
         prepareReadonlyTest(key);
 
-        // assume cluster node 3 is a slave for the master 1
+        // assume cluster node 3 is a replica for the master 1
         RedisCommands<String, String> connect3 = client
                 .connect(RedisURI.Builder.redis(host, ClusterTestSettings.port3).build()).sync();
 
@@ -189,12 +189,12 @@ class ClusterCommandIntegrationTests extends TestSupport {
     @Test
     void readOnlyWithReconnect() throws Exception {
 
-        // cluster node 3 is a slave for key "b"
+        // cluster node 3 is a replica for key "b"
         String key = "b";
         assertThat(SlotHash.getSlot(key)).isEqualTo(3300);
         prepareReadonlyTest(key);
 
-        // assume cluster node 3 is a slave for the master 1
+        // assume cluster node 3 is a replica for the master 1
         RedisCommands<String, String> connect3 = client
                 .connect(RedisURI.Builder.redis(host, ClusterTestSettings.port3).build()).sync();
 
@@ -209,12 +209,12 @@ class ClusterCommandIntegrationTests extends TestSupport {
     @Test
     void readOnlyReadWrite() throws Exception {
 
-        // cluster node 3 is a slave for key "b"
+        // cluster node 3 is a replica for key "b"
         String key = "b";
         assertThat(SlotHash.getSlot(key)).isEqualTo(3300);
         prepareReadonlyTest(key);
 
-        // assume cluster node 3 is a slave for the master 1
+        // assume cluster node 3 is a replica for the master 1
         final RedisCommands<String, String> connect3 = client.connect(
                 RedisURI.Builder.redis(host, ClusterTestSettings.port3).build()).sync();
 

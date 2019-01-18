@@ -86,7 +86,7 @@ class ClusterSetup {
 
     /**
      * Setup a cluster consisting of two members (see {@link ClusterTestSettings#port5} to {@link ClusterTestSettings#port6}).
-     * One master (0-16383) and one slave.
+     * One master (0-16383) and one replica.
      *
      * @param clusterRule
      */

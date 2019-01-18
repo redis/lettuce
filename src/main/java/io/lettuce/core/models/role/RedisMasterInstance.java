@@ -31,7 +31,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class RedisMasterInstance implements RedisInstance, Serializable {
 
     private long replicationOffset;
-    private List<ReplicationPartner> slaves = Collections.emptyList();
+    private List<ReplicationPartner> replicas = Collections.emptyList();
 
     public RedisMasterInstance() {
     }
@@ -40,12 +40,12 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
      * Constructs a {@link RedisMasterInstance}
      *
      * @param replicationOffset the replication offset
-     * @param slaves list of slaves, must not be {@literal null} but may be empty
+     * @param replicas list of replicas, must not be {@literal null} but may be empty
      */
-    public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> slaves) {
-        LettuceAssert.notNull(slaves, "Slaves must not be null");
+    public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> replicas) {
+        LettuceAssert.notNull(replicas, "Replicas must not be null");
         this.replicationOffset = replicationOffset;
-        this.slaves = slaves;
+        this.replicas = replicas;
     }
 
     /**
@@ -61,17 +61,27 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
         return replicationOffset;
     }
 
+    @Deprecated
     public List<ReplicationPartner> getSlaves() {
-        return slaves;
+        return getReplicas();
+    }
+
+    public List<ReplicationPartner> getReplicas() {
+        return replicas;
     }
 
     public void setReplicationOffset(long replicationOffset) {
         this.replicationOffset = replicationOffset;
     }
 
-    public void setSlaves(List<ReplicationPartner> slaves) {
-        LettuceAssert.notNull(slaves, "Slaves must not be null");
-        this.slaves = slaves;
+    @Deprecated
+    public void setSlaves(List<ReplicationPartner> replicas) {
+        setReplicas(replicas);
+    }
+
+    public void setReplicas(List<ReplicationPartner> replicas) {
+        LettuceAssert.notNull(replicas, "Replicas must not be null");
+        this.replicas = replicas;
     }
 
     @Override
@@ -79,7 +89,7 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
         final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
         sb.append(" [replicationOffset=").append(replicationOffset);
-        sb.append(", slaves=").append(slaves);
+        sb.append(", replicas=").append(replicas);
         sb.append(']');
         return sb.toString();
     }

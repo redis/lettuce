@@ -20,7 +20,7 @@ import java.io.Serializable;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Redis slave instance.
+ * Redis replica instance.
  *
  * @author Mark Paluch
  * @since 3.0
@@ -37,7 +37,7 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
      * Constructs a {@link RedisSlaveInstance}
      *
      * @param master master for the replication, must not be {@literal null}
-     * @param state slave state, must not be {@literal null}
+     * @param state replica state, must not be {@literal null}
      */
     RedisSlaveInstance(ReplicationPartner master, State state) {
         LettuceAssert.notNull(master, "Master must not be null");
@@ -82,7 +82,7 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     }
 
     /**
-     * State of the slave.
+     * State of the Replica.
      */
     public enum State {
         /**
@@ -91,17 +91,17 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
         CONNECT,
 
         /**
-         * the slave-master connection is in progress.
+         * the replica-master connection is in progress.
          */
         CONNECTING,
 
         /**
-         * the master and slave are trying to perform the synchronization.
+         * the master and replica are trying to perform the synchronization.
          */
         SYNC,
 
         /**
-         * the slave is online.
+         * the replica is online.
          */
         CONNECTED;
     }

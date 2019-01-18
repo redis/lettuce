@@ -64,8 +64,8 @@ class MasterSlaveTopologyProviderUnitTests {
         List<RedisNodeDescription> result = sut.getNodesFromInfo(info);
         assertThat(result).hasSize(2);
 
-        RedisNodeDescription slave = result.get(0);
-        assertThat(slave.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
+        RedisNodeDescription replica = result.get(0);
+        assertThat(replica.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
 
         RedisNodeDescription master = result.get(1);
         assertThat(master.getRole()).isEqualTo(RedisInstance.Role.MASTER);
@@ -81,8 +81,8 @@ class MasterSlaveTopologyProviderUnitTests {
         List<RedisNodeDescription> result = sut.getNodesFromInfo(info);
         assertThat(result).hasSize(2);
 
-        RedisNodeDescription slave = result.get(0);
-        assertThat(slave.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
+        RedisNodeDescription replica = result.get(0);
+        assertThat(replica.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
 
         RedisNodeDescription master = result.get(1);
         assertThat(master.getRole()).isEqualTo(RedisInstance.Role.MASTER);
@@ -99,8 +99,8 @@ class MasterSlaveTopologyProviderUnitTests {
         assertThat(result).hasSize(2);
 
 
-        RedisNodeDescription slave = result.get(0);
-        assertThat(slave.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
+        RedisNodeDescription replica = result.get(0);
+        assertThat(replica.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
 
         RedisNodeDescription master = result.get(1);
         assertThat(master.getRole()).isEqualTo(RedisInstance.Role.MASTER);

@@ -96,9 +96,9 @@ class MasterSlaveTopologyRefreshUnitTests {
         MasterSlaveTopologyRefresh refresh = new MasterSlaveTopologyRefresh(connectionFactory, executorService, provider);
 
         CompletableFuture<StatefulRedisConnection<String, String>> master = CompletableFuture.completedFuture(connection);
-        CompletableFuture<StatefulRedisConnection<String, String>> slave = CompletableFuture.completedFuture(connection);
+        CompletableFuture<StatefulRedisConnection<String, String>> replica = CompletableFuture.completedFuture(connection);
         when(connectionFactory.connectToNodeAsync(any(), any())).thenReturn((CompletableFuture) master,
-                (CompletableFuture) slave);
+                (CompletableFuture) replica);
 
         RedisURI redisURI = new RedisURI();
         redisURI.setTimeout(Duration.ofMillis(1));

@@ -309,7 +309,7 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<Void> shutdown(boolean save);
 
     /**
-     * Make the server a slave of another instance, or promote it as master.
+     * Make the server a replica of another instance, or promote it as master.
      *
      * @param host the host type: string
      * @param port the port type: string

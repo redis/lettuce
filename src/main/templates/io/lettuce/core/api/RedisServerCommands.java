@@ -175,7 +175,7 @@ public interface RedisServerCommands<K, V> {
 
     /**
      * Crash and recover
-     * 
+     *
      * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
@@ -220,7 +220,7 @@ public interface RedisServerCommands<K, V> {
 
     /**
      * Restart the server gracefully.
-     * 
+     *
      * @param delay optional delay in milliseconds
      * @return String simple-string-reply
      */
@@ -286,7 +286,7 @@ public interface RedisServerCommands<K, V> {
 
     /**
      * Reports the number of bytes that a key and its value require to be stored in RAM.
-     * 
+     *
      * @return memory usage in bytes.
      * @since 5.2
      */
@@ -307,7 +307,7 @@ public interface RedisServerCommands<K, V> {
     void shutdown(boolean save);
 
     /**
-     * Make the server a slave of another instance, or promote it as master.
+     * Make the server a replica of another instance, or promote it as master.
      *
      * @param host the host type: string
      * @param port the port type: string

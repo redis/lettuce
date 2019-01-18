@@ -308,7 +308,7 @@ public interface RedisServerCommands<K, V> {
     void shutdown(boolean save);
 
     /**
-     * Make the server a slave of another instance, or promote it as master.
+     * Make the server a replica of another instance, or promote it as master.
      *
      * @param host the host type: string
      * @param port the port type: string

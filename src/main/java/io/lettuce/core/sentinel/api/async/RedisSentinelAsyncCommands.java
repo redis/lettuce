@@ -58,7 +58,7 @@ public interface RedisSentinelAsyncCommands<K, V> {
     RedisFuture<Map<K, V>> master(K key);
 
     /**
-     * Provides a list of slaves for the master with the specified name.
+     * Provides a list of replicas for the master with the specified name.
      *
      * @param key the key
      * @return List&lt;Map&lt;K, V&gt;&gt;
