@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.mybatis.spring.mapper.ClassPathMapperScanner;
@@ -77,9 +78,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
     ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry);
 
     // this check is needed in Spring 3.1
-    if (resourceLoader != null) {
-      scanner.setResourceLoader(resourceLoader);
-    }
+    Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);
 
     Class<? extends Annotation> annotationClass = annoAttrs.getClass("annotationClass");
     if (!Annotation.class.equals(annotationClass)) {
