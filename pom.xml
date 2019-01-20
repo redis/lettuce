@@ -105,7 +105,7 @@
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
-    <mybatis.version>3.5.0-SNAPSHOT</mybatis.version>
+    <mybatis.version>3.5.0</mybatis.version>
     <spring.version>5.1.4.RELEASE</spring.version>
     <spring-batch.version>4.1.0.RELEASE</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
@@ -305,25 +305,6 @@
     </dependency>
 
   </dependencies>
-
-  <repositories>
-    <repository>
-      <id>sonatype-oss-snapshots</id>
-      <name>Sonatype OSS Snapshots Repository</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>spring-milestones</id>
-      <name>Spring Milestones</name>
-      <url>https://repo.spring.io/libs-milestone</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
 
   <build>
     <plugins>
