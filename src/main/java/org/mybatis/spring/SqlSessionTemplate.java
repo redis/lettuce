@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2018 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -412,7 +412,7 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
   * @see "org.springframework.beans.factory.support.DisposableBeanAdapter#CLOSE_METHOD_NAME"
   */
   @Override
-  public void destroy() throws Exception {
+  public void destroy() {
   //This method forces spring disposer to avoid call of SqlSessionTemplate.close() which gives UnsupportedOperationException
   }
 

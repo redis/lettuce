@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
   }
 
   @Override
-  protected T doRead() throws Exception {
+  protected T doRead() {
     T next = null;
     if (cursorIterator.hasNext()) {
       next = cursorIterator.next();
@@ -58,7 +58,7 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
   }
 
   @Override
-  protected void doOpen() throws Exception {
+  protected void doOpen() {
     Map<String, Object> parameters = new HashMap<>();
     if (parameterValues != null) {
       parameters.putAll(parameterValues);

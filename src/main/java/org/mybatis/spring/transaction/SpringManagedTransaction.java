@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class SpringManagedTransaction implements Transaction {
    * {@inheritDoc}
    */
   @Override
-  public void close() throws SQLException {
+  public void close() {
     DataSourceUtils.releaseConnection(this.connection, this.dataSource);
   }
     
@@ -125,7 +125,7 @@ public class SpringManagedTransaction implements Transaction {
    * {@inheritDoc}
    */
   @Override
-  public Integer getTimeout() throws SQLException {
+  public Integer getTimeout() {
     ConnectionHolder holder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
     if (holder != null && holder.hasTimeout()) {
       return holder.getTimeToLiveInSeconds();

@@ -23,7 +23,9 @@ import static org.springframework.util.StringUtils.tokenizeToStringArray;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
@@ -434,61 +436,51 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     } else {
       LOGGER.debug(() -> "Property 'configuration' or 'configLocation' not specified, using default MyBatis Configuration");
       targetConfiguration = new Configuration();
-      if (this.configurationProperties != null) {
-        targetConfiguration.setVariables(this.configurationProperties);
-      }
+      Optional.ofNullable(this.configurationProperties).ifPresent(targetConfiguration::setVariables);
     }
 
-    if (this.objectFactory != null) {
-      targetConfiguration.setObjectFactory(this.objectFactory);
-    }
-
-    if (this.objectWrapperFactory != null) {
-      targetConfiguration.setObjectWrapperFactory(this.objectWrapperFactory);
-    }
-
-    if (this.vfs != null) {
-      targetConfiguration.setVfsImpl(this.vfs);
-    }
+    Optional.ofNullable(this.objectFactory).ifPresent(targetConfiguration::setObjectFactory);
+    Optional.ofNullable(this.objectWrapperFactory).ifPresent(targetConfiguration::setObjectWrapperFactory);
+    Optional.ofNullable(this.vfs).ifPresent(targetConfiguration::setVfsImpl);
 
     if (hasLength(this.typeAliasesPackage)) {
       String[] typeAliasPackageArray = tokenizeToStringArray(this.typeAliasesPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-      for (String packageToScan : typeAliasPackageArray) {
+      Stream.of(typeAliasPackageArray).forEach(packageToScan -> {
         targetConfiguration.getTypeAliasRegistry().registerAliases(packageToScan,
-                typeAliasesSuperType == null ? Object.class : typeAliasesSuperType);
+            typeAliasesSuperType == null ? Object.class : typeAliasesSuperType);
         LOGGER.debug(() -> "Scanned package: '" + packageToScan + "' for aliases");
-      }
+      });
     }
 
     if (!isEmpty(this.typeAliases)) {
-      for (Class<?> typeAlias : this.typeAliases) {
+      Stream.of(this.typeAliases).forEach(typeAlias -> {
         targetConfiguration.getTypeAliasRegistry().registerAlias(typeAlias);
         LOGGER.debug(() -> "Registered type alias: '" + typeAlias + "'");
-      }
+      });
     }
 
     if (!isEmpty(this.plugins)) {
-      for (Interceptor plugin : this.plugins) {
+      Stream.of(this.plugins).forEach(plugin -> {
         targetConfiguration.addInterceptor(plugin);
         LOGGER.debug(() -> "Registered plugin: '" + plugin + "'");
-      }
+      });
     }
 
     if (hasLength(this.typeHandlersPackage)) {
       String[] typeHandlersPackageArray = tokenizeToStringArray(this.typeHandlersPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-      for (String packageToScan : typeHandlersPackageArray) {
+      Stream.of(typeHandlersPackageArray).forEach(packageToScan -> {
         targetConfiguration.getTypeHandlerRegistry().register(packageToScan);
         LOGGER.debug(() -> "Scanned package: '" + packageToScan + "' for type handlers");
-      }
+      });
     }
 
     if (!isEmpty(this.typeHandlers)) {
-      for (TypeHandler<?> typeHandler : this.typeHandlers) {
+      Stream.of(this.typeHandlers).forEach(typeHandler -> {
         targetConfiguration.getTypeHandlerRegistry().register(typeHandler);
         LOGGER.debug(() -> "Registered type handler: '" + typeHandler + "'");
-      }
+      });
     }
 
     if (this.databaseIdProvider != null) {//fix #64 set databaseId before parse mapper xmls
@@ -499,9 +491,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (this.cache != null) {
-      targetConfiguration.addCache(this.cache);
-    }
+    Optional.ofNullable(this.cache).ifPresent(targetConfiguration::addCache);
 
     if (xmlConfigBuilder != null) {
       try {
@@ -514,11 +504,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       }
     }
 
-    if (this.transactionFactory == null) {
-      this.transactionFactory = new SpringManagedTransactionFactory();
-    }
-
-    targetConfiguration.setEnvironment(new Environment(this.environment, this.transactionFactory, this.dataSource));
+    targetConfiguration.setEnvironment(new Environment(this.environment,
+        this.transactionFactory == null ? new SpringManagedTransactionFactory() : this.transactionFactory,
+        this.dataSource));
 
     if (!isEmpty(this.mapperLocations)) {
       for (Resource mapperLocation : this.mapperLocations) {
