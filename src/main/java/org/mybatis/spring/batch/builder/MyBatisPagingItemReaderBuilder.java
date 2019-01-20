@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.batch.MyBatisPagingItemReader;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A builder for the {@link MyBatisPagingItemReader}.
@@ -120,15 +121,9 @@ public class MyBatisPagingItemReaderBuilder<T> {
     reader.setSqlSessionFactory(this.sqlSessionFactory);
     reader.setQueryId(this.queryId);
     reader.setParameterValues(this.parameterValues);
-    if (this.pageSize != null) {
-      reader.setPageSize(this.pageSize);
-    }
-    if (this.saveState != null) {
-      reader.setSaveState(saveState);
-    }
-    if (this.maxItemCount != null) {
-      reader.setMaxItemCount(this.maxItemCount);
-    }
+    Optional.ofNullable(this.pageSize).ifPresent(reader::setPageSize);
+    Optional.ofNullable(this.saveState).ifPresent(reader::setSaveState);
+    Optional.ofNullable(this.maxItemCount).ifPresent(reader::setMaxItemCount);
     return reader;
   }
 

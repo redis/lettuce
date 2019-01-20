@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.batch.MyBatisBatchItemWriter;
 import org.springframework.core.convert.converter.Converter;
+
+import java.util.Optional;
 
 /**
  * A builder for the {@link MyBatisBatchItemWriter}.
@@ -107,12 +109,8 @@ public class MyBatisBatchItemWriterBuilder<T> {
     writer.setSqlSessionTemplate(this.sqlSessionTemplate);
     writer.setSqlSessionFactory(this.sqlSessionFactory);
     writer.setStatementId(this.statementId);
-    if (this.assertUpdates != null) {
-      writer.setAssertUpdates(this.assertUpdates);
-    }
-    if (this.itemToParameterConverter != null) {
-      writer.setItemToParameterConverter(this.itemToParameterConverter);
-    }
+    Optional.ofNullable(this.assertUpdates).ifPresent(writer::setAssertUpdates);
+    Optional.ofNullable(this.itemToParameterConverter).ifPresent(writer::setItemToParameterConverter);
     return writer;
   }
 
