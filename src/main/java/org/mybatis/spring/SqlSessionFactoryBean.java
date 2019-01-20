@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2018 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -418,44 +418,44 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    */
   protected SqlSessionFactory buildSqlSessionFactory() throws IOException {
 
-    Configuration configuration;
+    final Configuration targetConfiguration;
 
     XMLConfigBuilder xmlConfigBuilder = null;
     if (this.configuration != null) {
-      configuration = this.configuration;
-      if (configuration.getVariables() == null) {
-        configuration.setVariables(this.configurationProperties);
+      targetConfiguration = this.configuration;
+      if (targetConfiguration.getVariables() == null) {
+        targetConfiguration.setVariables(this.configurationProperties);
       } else if (this.configurationProperties != null) {
-        configuration.getVariables().putAll(this.configurationProperties);
+        targetConfiguration.getVariables().putAll(this.configurationProperties);
       }
     } else if (this.configLocation != null) {
       xmlConfigBuilder = new XMLConfigBuilder(this.configLocation.getInputStream(), null, this.configurationProperties);
-      configuration = xmlConfigBuilder.getConfiguration();
+      targetConfiguration = xmlConfigBuilder.getConfiguration();
     } else {
       LOGGER.debug(() -> "Property 'configuration' or 'configLocation' not specified, using default MyBatis Configuration");
-      configuration = new Configuration();
+      targetConfiguration = new Configuration();
       if (this.configurationProperties != null) {
-        configuration.setVariables(this.configurationProperties);
+        targetConfiguration.setVariables(this.configurationProperties);
       }
     }
 
     if (this.objectFactory != null) {
-      configuration.setObjectFactory(this.objectFactory);
+      targetConfiguration.setObjectFactory(this.objectFactory);
     }
 
     if (this.objectWrapperFactory != null) {
-      configuration.setObjectWrapperFactory(this.objectWrapperFactory);
+      targetConfiguration.setObjectWrapperFactory(this.objectWrapperFactory);
     }
 
     if (this.vfs != null) {
-      configuration.setVfsImpl(this.vfs);
+      targetConfiguration.setVfsImpl(this.vfs);
     }
 
     if (hasLength(this.typeAliasesPackage)) {
       String[] typeAliasPackageArray = tokenizeToStringArray(this.typeAliasesPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
       for (String packageToScan : typeAliasPackageArray) {
-        configuration.getTypeAliasRegistry().registerAliases(packageToScan,
+        targetConfiguration.getTypeAliasRegistry().registerAliases(packageToScan,
                 typeAliasesSuperType == null ? Object.class : typeAliasesSuperType);
         LOGGER.debug(() -> "Scanned package: '" + packageToScan + "' for aliases");
       }
@@ -463,14 +463,14 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     if (!isEmpty(this.typeAliases)) {
       for (Class<?> typeAlias : this.typeAliases) {
-        configuration.getTypeAliasRegistry().registerAlias(typeAlias);
+        targetConfiguration.getTypeAliasRegistry().registerAlias(typeAlias);
         LOGGER.debug(() -> "Registered type alias: '" + typeAlias + "'");
       }
     }
 
     if (!isEmpty(this.plugins)) {
       for (Interceptor plugin : this.plugins) {
-        configuration.addInterceptor(plugin);
+        targetConfiguration.addInterceptor(plugin);
         LOGGER.debug(() -> "Registered plugin: '" + plugin + "'");
       }
     }
@@ -479,28 +479,28 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       String[] typeHandlersPackageArray = tokenizeToStringArray(this.typeHandlersPackage,
           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
       for (String packageToScan : typeHandlersPackageArray) {
-        configuration.getTypeHandlerRegistry().register(packageToScan);
+        targetConfiguration.getTypeHandlerRegistry().register(packageToScan);
         LOGGER.debug(() -> "Scanned package: '" + packageToScan + "' for type handlers");
       }
     }
 
     if (!isEmpty(this.typeHandlers)) {
       for (TypeHandler<?> typeHandler : this.typeHandlers) {
-        configuration.getTypeHandlerRegistry().register(typeHandler);
+        targetConfiguration.getTypeHandlerRegistry().register(typeHandler);
         LOGGER.debug(() -> "Registered type handler: '" + typeHandler + "'");
       }
     }
 
     if (this.databaseIdProvider != null) {//fix #64 set databaseId before parse mapper xmls
       try {
-        configuration.setDatabaseId(this.databaseIdProvider.getDatabaseId(this.dataSource));
+        targetConfiguration.setDatabaseId(this.databaseIdProvider.getDatabaseId(this.dataSource));
       } catch (SQLException e) {
         throw new NestedIOException("Failed getting a databaseId", e);
       }
     }
 
     if (this.cache != null) {
-      configuration.addCache(this.cache);
+      targetConfiguration.addCache(this.cache);
     }
 
     if (xmlConfigBuilder != null) {
@@ -518,7 +518,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       this.transactionFactory = new SpringManagedTransactionFactory();
     }
 
-    configuration.setEnvironment(new Environment(this.environment, this.transactionFactory, this.dataSource));
+    targetConfiguration.setEnvironment(new Environment(this.environment, this.transactionFactory, this.dataSource));
 
     if (!isEmpty(this.mapperLocations)) {
       for (Resource mapperLocation : this.mapperLocations) {
@@ -528,7 +528,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
         try {
           XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(),
-              configuration, mapperLocation.toString(), configuration.getSqlFragments());
+              targetConfiguration, mapperLocation.toString(), targetConfiguration.getSqlFragments());
           xmlMapperBuilder.parse();
         } catch (Exception e) {
           throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
@@ -541,7 +541,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       LOGGER.debug(() -> "Property 'mapperLocations' was not specified or no matching resources found");
     }
 
-    return this.sqlSessionFactoryBuilder.build(configuration);
+    return this.sqlSessionFactoryBuilder.build(targetConfiguration);
   }
 
   /**
