@@ -8,12 +8,12 @@ MyBatis Spring Adapter
 
 ![mybatis-spring](http://mybatis.github.io/images/mybatis-logo.png)
 
-MyBatis-Spring adapter is an easy-to-use Spring3 bridge for MyBatis sql mapping framework.
+MyBatis-Spring adapter is an easy-to-use Spring bridge for MyBatis sql mapping framework.
 
 Supported Versions
 ------------------
 
-- 1.3.x - Continued support for Java 6
+- 1.3.x - Continued support for Java 6 and 7
 - master (2.0.x) - Support for Java 8, Spring 5, and Junit 5 plus other java 8 requirements
 
 Essentials
