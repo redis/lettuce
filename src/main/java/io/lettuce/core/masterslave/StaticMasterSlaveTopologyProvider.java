@@ -87,7 +87,7 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
 
                             if (nodeDescriptions.isEmpty()) {
                                 return Mono.error(new RedisConnectionException(String.format(
-                                        "Failed to connect to at leas one node in %s", redisURIs)));
+                                        "Failed to connect to at least one node in %s", redisURIs)));
                             }
 
                             return Mono.just(nodeDescriptions);
