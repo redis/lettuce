@@ -56,7 +56,7 @@ class NodeTopologyView {
         this.redisURI = redisURI;
 
         this.partitions = ClusterPartitionParser.parse(clusterNodes);
-        this.connectedClients = getClients(clientList);
+        this.connectedClients = clientList != null ? getClients(clientList) : 0;
         this.clusterNodes = clusterNodes;
         this.clientList = clientList;
         this.latency = latency;
@@ -69,9 +69,17 @@ class NodeTopologyView {
         TimedAsyncCommand<String, String, String> clients = clientListRequests.getRequest(redisURI);
 
         if (resultAvailable(nodes) && resultAvailable(clients)) {
-            return new NodeTopologyView(redisURI, nodes.get(), clients.get(), nodes.duration());
+            return new NodeTopologyView(redisURI, nodes.get(), optionallyGet(clients), nodes.duration());
         }
         return new NodeTopologyView(redisURI);
+    }
+
+    private static <T> T optionallyGet(TimedAsyncCommand<?, ?, T> command) throws ExecutionException, InterruptedException {
+
+        if (command.isCompletedExceptionally()) {
+            return null;
+        }
+        return command.get();
     }
 
     static boolean resultAvailable(RedisFuture<?> redisFuture) {
