@@ -10,7 +10,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>5.2.0.gh-834-SNAPSHOT</version>
+    <version>5.2.0.BUILD-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
