@@ -12,7 +12,7 @@ Supports advanced Redis features such as Sentinel, Cluster, Pipelining, Auto-Rec
 
 This version of Lettuce has been tested against the latest Redis source-build.
 
-* [synchronous](https://github.com/lettuce-io/lettuce-core/wiki/Basic-usage), [asynchronous](https://github.com/lettuce-io/lettuce-core/wiki/Asynchronous-API-%284.0%29) and [reactive](https://github.com/lettuce-io/lettuce-core/wiki/Reactive-API-%284.0%29) usage
+* [synchronous](https://github.com/lettuce-io/lettuce-core/wiki/Basic-usage), [asynchronous](https://github.com/lettuce-io/lettuce-core/wiki/Asynchronous-API-%284.0%29) and [reactive](https://github.com/lettuce-io/lettuce-core/wiki/Reactive-API-%285.0%29) usage
 * [Redis Sentinel](https://github.com/lettuce-io/lettuce-core/wiki/Redis-Sentinel)
 * [Redis Cluster](https://github.com/lettuce-io/lettuce-core/wiki/Redis-Cluster)
 * [SSL](https://github.com/lettuce-io/lettuce-core/wiki/SSL-Connections) and [Unix Domain Socket](https://github.com/lettuce-io/lettuce-core/wiki/Unix-Domain-Sockets) connections
@@ -121,15 +121,15 @@ Reactive API
 ```java
 StatefulRedisConnection<String, String> connection = client.connect();
 RedisStringReactiveCommands<String, String> reactive = connection.reactive();
-Observable<String> set = reactive.set("key", "value")
-Observable<String> get = reactive.get("key")
+Mono<String> set = reactive.set("key", "value");
+Mono<String> get = reactive.get("key");
 
 set.subscribe();
 
-get.toBlocking().single() == "value"
+get.block() == "value"
 ```
 
-See [Reactive API](https://github.com/lettuce-io/lettuce-core/wiki/Reactive-API-%284.0%29) for further details.
+See [Reactive API](https://github.com/lettuce-io/lettuce-core/wiki/Reactive-API-%285.0%29) for further details.
 
 Pub/Sub
 -------
