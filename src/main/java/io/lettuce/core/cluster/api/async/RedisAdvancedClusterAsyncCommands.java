@@ -36,8 +36,7 @@ import io.lettuce.core.output.KeyStreamingChannel;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface RedisAdvancedClusterAsyncCommands<K, V>
-        extends RedisClusterAsyncCommands<K, V> {
+public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsyncCommands<K, V> {
 
     /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list.
@@ -77,23 +76,49 @@ public interface RedisAdvancedClusterAsyncCommands<K, V>
     }
 
     /**
-     * Select all slaves.
+     * Select all replicas.
      *
-     * @return API with asynchronous executed commands on a selection of slave cluster nodes.
+     * @return API with asynchronous executed commands on a selection of replica cluster nodes.
+     * @deprecated since 5.2, use {@link #replicas()}
      */
+    @Deprecated
     default AsyncNodeSelection<K, V> slaves() {
         return readonly(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
     }
 
     /**
-     * Select all slaves.
+     * Select all replicas.
      *
      * @param predicate Predicate to filter nodes
-     * @return API with asynchronous executed commands on a selection of slave cluster nodes.
+     * @return API with asynchronous executed commands on a selection of replica cluster nodes.
+     * @deprecated use {@link #replicas(Predicate)}
      */
+    @Deprecated
     default AsyncNodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
-        return readonly(
-                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
+                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+    }
+
+    /**
+     * Select all replicas.
+     *
+     * @return API with asynchronous executed commands on a selection of replica cluster nodes.
+     * @since 5.2
+     */
+    default AsyncNodeSelection<K, V> replicas() {
+        return readonly(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
+    }
+
+    /**
+     * Select all replicas.
+     *
+     * @param predicate Predicate to filter nodes
+     * @return API with asynchronous executed commands on a selection of replica cluster nodes.
+     * @since 5.2
+     */
+    default AsyncNodeSelection<K, V> replicas(Predicate<RedisClusterNode> predicate) {
+        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
+                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -106,8 +131,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V>
     }
 
     /**
-     * Select slave nodes by a predicate and keeps a static selection. Slave connections operate in {@literal READONLY} mode.
-     * The set of nodes within the {@link NodeSelectionSupport} does not change when the cluster view changes.
+     * Select replica nodes by a predicate and keeps a static selection. Replica connections operate in {@literal READONLY}
+     * mode. The set of nodes within the {@link NodeSelectionSupport} does not change when the cluster view changes.
      *
      * @param predicate Predicate to filter nodes
      * @return API with asynchronous executed commands on a selection of cluster nodes matching {@code predicate}
@@ -152,7 +177,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V>
     RedisFuture<Long> unlink(K... keys);
 
     /**
-     * Determine how many keys exist with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     * Determine how many keys exist with pipelining. Cross-slot keys will result in multiple calls to the particular cluster
+     * nodes.
      *
      * @param keys the keys
      * @return Long integer-reply specifically: Number of existing keys

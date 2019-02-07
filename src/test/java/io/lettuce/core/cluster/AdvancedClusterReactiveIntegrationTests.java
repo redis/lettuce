@@ -306,7 +306,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     }
 
     @Test
-    void readFromSlaves() {
+    void readFromReplicas() {
 
         RedisClusterReactiveCommands<String, String> connection = commands.getConnection(ClusterTestSettings.host,
                 ClusterTestSettings.port4);

@@ -237,10 +237,10 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testSlavesReadWrite() {
+    void testReplicaReadWrite() {
 
         AsyncNodeSelection<String, String> nodes = commands.nodes(redisClusterNode -> redisClusterNode.getFlags().contains(
-                RedisClusterNode.NodeFlag.SLAVE));
+                RedisClusterNode.NodeFlag.REPLICA));
 
         assertThat(nodes.size()).isEqualTo(2);
 
@@ -263,10 +263,10 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testSlavesWithReadOnly() {
+    void testReplicasWithReadOnly() {
 
-        AsyncNodeSelection<String, String> nodes = commands.slaves(redisClusterNode -> redisClusterNode
-                .is(RedisClusterNode.NodeFlag.SLAVE));
+        AsyncNodeSelection<String, String> nodes = commands.replicas(redisClusterNode -> redisClusterNode
+                .is(RedisClusterNode.NodeFlag.REPLICA));
 
         assertThat(nodes.size()).isEqualTo(2);
 
@@ -299,7 +299,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
  {
 
         AsyncNodeSelection<String, String> selection = commands
-                .slaves(redisClusterNode -> redisClusterNode.getUri().getPort() == port);
+                .replicas(redisClusterNode -> redisClusterNode.getUri().getPort() == port);
         Wait.untilNotEquals(null, () -> {
             for (CompletableFuture<String> future : selection.commands().get(key).futures()) {
 

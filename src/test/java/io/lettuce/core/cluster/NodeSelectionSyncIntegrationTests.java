@@ -181,7 +181,7 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testSlavesReadWrite() {
+    void testReplicasReadWrite() {
 
         NodeSelection<String, String> nodes = commands.nodes(redisClusterNode -> redisClusterNode.getFlags().contains(
                 RedisClusterNode.NodeFlag.SLAVE));

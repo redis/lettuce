@@ -35,7 +35,7 @@ import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
- * {@link MasterSlaveConnector} to connect unmanaged Redis Master/Slave with auto-discovering master and slave nodes from a
+ * {@link MasterSlaveConnector} to connect unmanaged Redis Master/Slave with auto-discovering master and replica nodes from a
  * single {@link RedisURI}.
  *
  * @author Mark Paluch

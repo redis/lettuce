@@ -59,7 +59,7 @@ class ClusterSlotsParserUnitTests {
     }
 
     @Test
-    void testParseWithSlave() {
+    void testParseWithReplica() {
         List<?> list = Arrays.asList(LettuceLists.newList("100", "200", LettuceLists.newList("1", "2", "nodeId1"),
                 LettuceLists.newList("1", 2, "nodeId2")));
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
@@ -78,11 +78,11 @@ class ClusterSlotsParserUnitTests {
 
         assertThat(clusterSlotRange.getSlaveNodes()).hasSize(1);
 
-        RedisClusterNode slaveNode = clusterSlotRange.getSlaveNodes().get(0);
+        RedisClusterNode replica = clusterSlotRange.getReplicaNodes().get(0);
 
-        assertThat(slaveNode.getNodeId()).isEqualTo("nodeId2");
-        assertThat(slaveNode.getSlaveOf()).isEqualTo("nodeId1");
-        assertThat(slaveNode.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
+        assertThat(replica.getNodeId()).isEqualTo("nodeId2");
+        assertThat(replica.getSlaveOf()).isEqualTo("nodeId1");
+        assertThat(replica.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
     }
 
     @Test

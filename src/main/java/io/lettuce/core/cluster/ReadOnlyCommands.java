@@ -62,7 +62,7 @@ class ReadOnlyCommands {
         SUNION, TIME, TTL, TYPE, ZCARD, ZCOUNT, ZLEXCOUNT, ZRANGE, //
         ZRANGEBYLEX, ZRANGEBYSCORE, ZRANK, ZREVRANGE, ZREVRANGEBYLEX, ZREVRANGEBYSCORE, ZREVRANK, ZSCAN, ZSCORE, //
 
-        // Pub/Sub commands are no key-space commands so they are safe to execute on slave nodes
+        // Pub/Sub commands are no key-space commands so they are safe to execute on replica nodes
         PUBLISH, PUBSUB, PSUBSCRIBE, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE
     }
 }

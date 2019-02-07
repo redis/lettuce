@@ -472,7 +472,7 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
-    public void readFromSlaveTest() {
+    public void readFromReplicaTest() {
 
         ClusterSetup.setup2Masters(clusterRule);
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();

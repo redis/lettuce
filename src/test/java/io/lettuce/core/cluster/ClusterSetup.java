@@ -90,7 +90,7 @@ class ClusterSetup {
      *
      * @param clusterRule
      */
-    public static void setupMasterWithSlave(ClusterRule clusterRule) {
+    public static void setupMasterWithReplica(ClusterRule clusterRule) {
 
         clusterRule.clusterReset();
         clusterRule.meet(ClusterTestSettings.host, ClusterTestSettings.port5);
@@ -132,17 +132,6 @@ class ClusterSetup {
 
     private static Stream<RedisClusterNode> partitionStream(ClusterRule clusterRule) {
         return clusterRule.getClusterClient().getPartitions().getPartitions().stream();
-    }
-
-    private static boolean is2Masters2Slaves(ClusterRule clusterRule) {
-        RedisClusterClient clusterClient = clusterRule.getClusterClient();
-
-        long slaves = clusterClient.getPartitions().stream()
-                .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)).count();
-        long masters = clusterClient.getPartitions().stream()
-                .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER)).count();
-
-        return slaves == 2 && masters == 2;
     }
 
 }

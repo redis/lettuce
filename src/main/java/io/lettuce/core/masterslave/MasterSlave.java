@@ -60,7 +60,7 @@ import io.lettuce.core.internal.LettuceLists;
  *
  * <ul>
  * <li>{@link MasterSlaveTopologyProvider}: Dynamic topology lookup using the {@code INFO REPLICATION} output. Slaves are listed
- * as {@code slaveN=...} entries. The initial connection can either point to a master or a slave and the topology provider will
+ * as {@code slaveN=...} entries. The initial connection can either point to a master or a replica and the topology provider will
  * discover nodes. The connection needs to be re-established outside of lettuce in a case of Master/Slave failover or topology
  * changes.</li>
  * <li>{@link StaticMasterSlaveTopologyProvider}: Topology is defined by the list of {@link RedisURI URIs} and the {@code ROLE}
@@ -99,7 +99,7 @@ public class MasterSlave {
      * {@link RedisCodec codec} to encode/decode keys.
      * <p>
      * This {@link MasterSlave} performs auto-discovery of nodes using either Redis Sentinel or Master/Slave. A {@link RedisURI}
-     * can point to either a master or a slave host.
+     * can point to either a master or a replica host.
      * </p>
      *
      * @param redisClient the Redis client.
@@ -124,7 +124,7 @@ public class MasterSlave {
      * supplied {@link RedisCodec codec} to encode/decode keys.
      * <p>
      * This {@link MasterSlave} performs auto-discovery of nodes using either Redis Sentinel or Master/Slave. A {@link RedisURI}
-     * can point to either a master or a slave host.
+     * can point to either a master or a replica host.
      * </p>
      *
      * @param redisClient the Redis client.

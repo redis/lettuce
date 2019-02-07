@@ -296,7 +296,7 @@ class TopologyComparatorsUnitTests {
     }
 
     @Test
-    void isChangedFlagsChangedSlaveToMaster() {
+    void isChangedFlagsChangedReplicaToMaster() {
         String nodes1 = "3d005a179da7d8dc1adae6409d47b39c369e992b 127.0.0.1:7380 slave - 0 1401258245007 2 disconnected 8000-11999\n"
                 + "c37ab8396be428403d4e55c0d317348be27ed973 127.0.0.1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
 
@@ -309,7 +309,7 @@ class TopologyComparatorsUnitTests {
     }
 
     @Test
-    void isChangedFlagsChangedMasterToSlave() {
+    void isChangedFlagsChangedMasterToReplica() {
         String nodes1 = "3d005a179da7d8dc1adae6409d47b39c369e992b 127.0.0.1:7380 master - 0 1401258245007 2 disconnected 8000-11999\n"
                 + "c37ab8396be428403d4e55c0d317348be27ed973 127.0.0.1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
 

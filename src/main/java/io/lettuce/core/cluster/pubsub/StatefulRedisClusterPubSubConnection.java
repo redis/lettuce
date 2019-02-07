@@ -63,7 +63,7 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
  *  connection.addListener(…);
  *
  *  RedisClusterPubSubCommands<String, String> sync = connection.sync();
- *  sync.slaves().commands().psubscribe("__key*__:*");
+ *  sync.replicas().commands().psubscribe("__key*__:*");
  *     </code>
  * </pre>
  *

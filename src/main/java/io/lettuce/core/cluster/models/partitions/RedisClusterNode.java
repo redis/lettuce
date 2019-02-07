@@ -26,8 +26,8 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 /**
  * Representation of a Redis Cluster node. A {@link RedisClusterNode} is identified by its {@code nodeId}.
  * <p/>
- * A {@link RedisClusterNode} can be a {@link #getRole() responsible master} or slave. Masters can be responsible for zero to
- * {@link io.lettuce.core.cluster.SlotHash#SLOT_COUNT 16384} slots. Each slave refers to exactly one {@link #getSlaveOf()
+ * A {@link RedisClusterNode} can be a {@link #getRole() responsible master} or replica. Masters can be responsible for zero to
+ * {@link io.lettuce.core.cluster.SlotHash#SLOT_COUNT 16384} slots. Each replica refers to exactly one {@link #getSlaveOf()
  * master}. Nodes can have different {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag flags} assigned.
  * <p/>
  * This class is mutable and not thread-safe if mutated by multiple threads concurrently.
@@ -358,6 +358,6 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * Redis Cluster node flags.
      */
     public enum NodeFlag {
-        NOFLAGS, MYSELF, SLAVE, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
+        NOFLAGS, MYSELF, SLAVE, REPLICA, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }
 }

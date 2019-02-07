@@ -72,7 +72,7 @@ class ReadFromUnitTests {
     }
 
     @Test
-    void slavePreferred() {
+    void replicaPreferred() {
         List<RedisNodeDescription> result = ReadFrom.REPLICA_PREFERRED.select(getNodes());
         assertThat(result).hasSize(3).containsExactly(nearest, replica, master);
     }

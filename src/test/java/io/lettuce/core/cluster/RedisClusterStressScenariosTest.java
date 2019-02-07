@@ -75,7 +75,7 @@ public class RedisClusterStressScenariosTest extends TestSupport {
     @Before
     public void before() {
 
-        ClusterSetup.setupMasterWithSlave(clusterRule);
+        ClusterSetup.setupMasterWithReplica(clusterRule);
 
         redis5 = client.connect(RedisURI.Builder.redis(host, ClusterTestSettings.port5).build());
         redis6 = client.connect(RedisURI.Builder.redis(host, ClusterTestSettings.port6).build());

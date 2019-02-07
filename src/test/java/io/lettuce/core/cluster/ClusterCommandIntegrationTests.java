@@ -115,7 +115,7 @@ class ClusterCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testClusterSlaves() {
+    void testClusterReplicas() {
 
         sync.set("b", value);
         RedisFuture<Long> replication = async.waitForReplication(1, 5);
@@ -178,12 +178,12 @@ class ClusterCommandIntegrationTests extends TestSupport {
         assertThat(connect3.readOnly()).isEqualTo("OK");
         waitUntilValueIsVisible(key, connect3);
 
-        String resultBViewedBySlave = connect3.get("b");
-        assertThat(resultBViewedBySlave).isEqualTo(value);
+        String resultBViewedByReplica = connect3.get("b");
+        assertThat(resultBViewedByReplica).isEqualTo(value);
         connect3.quit();
 
-        resultBViewedBySlave = connect3.get("b");
-        assertThat(resultBViewedBySlave).isEqualTo(value);
+        resultBViewedByReplica = connect3.get("b");
+        assertThat(resultBViewedByReplica).isEqualTo(value);
     }
 
     @Test
@@ -202,8 +202,8 @@ class ClusterCommandIntegrationTests extends TestSupport {
         connect3.quit();
         waitUntilValueIsVisible(key, connect3);
 
-        String resultViewedBySlave = connect3.get("b");
-        assertThat(resultViewedBySlave).isEqualTo(value);
+        String resultViewedByReplica = connect3.get("b");
+        assertThat(resultViewedByReplica).isEqualTo(value);
     }
 
     @Test

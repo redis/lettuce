@@ -59,7 +59,7 @@ class MasterSlaveTopologyRefresh {
     }
 
     /**
-     * Load master slave nodes. Result contains an ordered list of {@link RedisNodeDescription}s. The sort key is the latency.
+     * Load master replica nodes. Result contains an ordered list of {@link RedisNodeDescription}s. The sort key is the latency.
      * Nodes with lower latency come first.
      *
      * @param seed collection of {@link RedisURI}s

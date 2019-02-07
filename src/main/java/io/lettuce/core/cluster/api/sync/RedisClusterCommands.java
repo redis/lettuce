@@ -163,12 +163,12 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
     String clusterNodes();
 
     /**
-     * List slaves for a certain node identified by its {@code nodeId}. Can be parsed using
+     * List replicas for a certain node identified by its {@code nodeId}. Can be parsed using
      * {@link io.lettuce.core.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
-     * @return List&lt;String&gt; array-reply list of slaves. The command returns data in the same format as
-     *         {@link #clusterNodes()} but one line per slave.
+     * @return List&lt;String&gt; array-reply list of replicas. The command returns data in the same format as
+     *         {@link #clusterNodes()} but one line per replica.
      */
     List<String> clusterSlaves(String nodeId);
 
@@ -244,7 +244,7 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
     String asking();
 
     /**
-     * Turn this node into a slave of the node with the id {@code nodeId}.
+     * Turn this node into a replica of the node with the id {@code nodeId}.
      *
      * @param nodeId master node id
      * @return String simple-string-reply
@@ -252,7 +252,7 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
     String clusterReplicate(String nodeId);
 
     /**
-     * Failover a cluster node. Turns the currently connected node into a master and the master into its slave.
+     * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
      *
      * @param force do not coordinate with master if {@literal true}
      * @return String simple-string-reply
@@ -264,11 +264,11 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
      * <ul>
      * <li>All other nodes are forgotten</li>
      * <li>All the assigned / open slots are released</li>
-     * <li>If the node is a slave, it turns into a master</li>
+     * <li>If the node is a replica, it turns into a master</li>
      * <li>Only for hard reset: a new Node ID is generated</li>
      * <li>Only for hard reset: currentEpoch and configEpoch are set to 0</li>
      * <li>The new configuration is saved and the cluster state updated</li>
-     * <li>If the node was a slave, the whole data set is flushed away</li>
+     * <li>If the node was a replica, the whole data set is flushed away</li>
      * </ul>
      *
      * @param hard {@literal true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
@@ -284,7 +284,7 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
     String clusterFlushslots();
 
     /**
-     * Tells a Redis cluster slave node that the client is ok reading possibly stale data and is not interested in running write
+     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running write
      * queries.
      *
      * @return String simple-string-reply

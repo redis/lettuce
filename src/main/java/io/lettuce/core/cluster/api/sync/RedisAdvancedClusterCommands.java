@@ -74,23 +74,49 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     }
 
     /**
-     * Select all slaves.
+     * Select all replicas.
      *
-     * @return API with synchronous executed commands on a selection of slave cluster nodes.
+     * @return API with synchronous executed commands on a selection of replica cluster nodes.
+     * @deprecated since 5.2, use {@link #replicas()}
      */
+    @Deprecated
     default NodeSelection<K, V> slaves() {
         return readonly(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
     }
 
     /**
-     * Select all slaves.
+     * Select all replicas.
      *
      * @param predicate Predicate to filter nodes
-     * @return API with synchronous executed commands on a selection of slave cluster nodes.
+     * @return API with synchronous executed commands on a selection of replica cluster nodes.
+     * @deprecated since 5.2, use {@link #replicas(Predicate)}
      */
+    @Deprecated
     default NodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
-        return readonly(
-                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
+                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+    }
+
+    /**
+     * Select all replicas.
+     *
+     * @return API with synchronous executed commands on a selection of replica cluster nodes.
+     * @since 5.2
+     */
+    default NodeSelection<K, V> replicas() {
+        return readonly(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
+    }
+
+    /**
+     * Select all replicas.
+     *
+     * @param predicate Predicate to filter nodes
+     * @return API with synchronous executed commands on a selection of replica cluster nodes.
+     * @since 5.2
+     */
+    default NodeSelection<K, V> replicas(Predicate<RedisClusterNode> predicate) {
+        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
+                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -103,8 +129,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     }
 
     /**
-     * Select slave nodes by a predicate and keeps a static selection. Slave connections operate in {@literal READONLY} mode.
-     * The set of nodes within the {@link NodeSelectionSupport} does not change when the cluster view changes.
+     * Select replica nodes by a predicate and keeps a static selection. Replica connections operate in {@literal READONLY}
+     * mode. The set of nodes within the {@link NodeSelectionSupport} does not change when the cluster view changes.
      *
      * @param predicate Predicate to filter nodes
      * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}
@@ -149,7 +175,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     Long unlink(K... keys);
 
     /**
-     * Determine how many keys exist with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     * Determine how many keys exist with pipelining. Cross-slot keys will result in multiple calls to the particular cluster
+     * nodes.
      *
      * @param keys the keys
      * @return Long integer-reply specifically: Number of existing keys

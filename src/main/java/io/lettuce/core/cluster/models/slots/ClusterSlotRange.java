@@ -27,7 +27,7 @@ import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Represents a range of slots together with its master and slaves.
+ * Represents a range of slots together with its master and replicas.
  *
  * @author Mark Paluch
  * @since 3.0
@@ -39,7 +39,7 @@ public class ClusterSlotRange implements Serializable {
     private int to;
 
     private RedisClusterNode masterNode;
-    private List<RedisClusterNode> slaveNodes = Collections.emptyList();
+    private List<RedisClusterNode> replicaNodes = Collections.emptyList();
 
     public ClusterSlotRange() {
     }
@@ -50,17 +50,17 @@ public class ClusterSlotRange implements Serializable {
      * @param from from slot
      * @param to to slot
      * @param masterNode master for the slots, may be {@literal null}
-     * @param slaveNodes list of slaves must not be {@literal null} but may be empty
+     * @param replicaNodes list of replicas must not be {@literal null} but may be empty
      */
-    public ClusterSlotRange(int from, int to, RedisClusterNode masterNode, List<RedisClusterNode> slaveNodes) {
+    public ClusterSlotRange(int from, int to, RedisClusterNode masterNode, List<RedisClusterNode> replicaNodes) {
 
         LettuceAssert.notNull(masterNode, "MasterNode must not be null");
-        LettuceAssert.notNull(slaveNodes, "SlaveNodes must not be null");
+        LettuceAssert.notNull(replicaNodes, "ReplicaNodes must not be null");
 
         this.from = from;
         this.to = to;
         this.masterNode = masterNode;
-        this.slaveNodes = slaveNodes;
+        this.replicaNodes = replicaNodes;
     }
 
     private RedisClusterNode toRedisClusterNode(HostAndPort hostAndPort, String slaveOf, Set<RedisClusterNode.NodeFlag> flags) {
@@ -98,12 +98,22 @@ public class ClusterSlotRange implements Serializable {
         this.masterNode = masterNode;
     }
 
+    @Deprecated
     public List<RedisClusterNode> getSlaveNodes() {
-        return slaveNodes;
+        return replicaNodes;
     }
 
+    @Deprecated
     public void setSlaveNodes(List<RedisClusterNode> slaveNodes) {
-        this.slaveNodes = slaveNodes;
+        this.replicaNodes = slaveNodes;
+    }
+
+    public List<RedisClusterNode> getReplicaNodes() {
+        return replicaNodes;
+    }
+
+    public void setReplicaNodes(List<RedisClusterNode> replicaNodes) {
+        this.replicaNodes = replicaNodes;
     }
 
     public void setFrom(int from) {
@@ -121,7 +131,7 @@ public class ClusterSlotRange implements Serializable {
         sb.append(" [from=").append(from);
         sb.append(", to=").append(to);
         sb.append(", masterNode=").append(masterNode);
-        sb.append(", slaveNodes=").append(slaveNodes);
+        sb.append(", replicaNodes=").append(replicaNodes);
         sb.append(']');
         return sb.toString();
     }

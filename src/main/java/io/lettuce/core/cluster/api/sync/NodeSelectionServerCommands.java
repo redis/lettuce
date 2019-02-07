@@ -287,7 +287,7 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<String> save();
 
     /**
-     * Make the server a slave of another instance, or promote it as master.
+     * Make the server a replica of another instance, or promote it as master.
      *
      * @param host the host type: string
      * @param port the port type: string
