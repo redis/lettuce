@@ -58,13 +58,19 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
-        <netty-version>4.1.33.Final</netty-version>
-        <spring-version>4.3.20.RELEASE</spring-version>
-        <reactor-version>3.2.6.RELEASE</reactor-version>
+
+        <assertj-core.version>3.11.1</assertj-core.version>
         <brave-version>5.2.0</brave-version>
         <junit-version>5.4.0</junit-version>
         <log4j2-version>2.11.2</log4j2-version>
+        <mockito.version>2.22.0</mockito.version>
+        <netty-version>4.1.33.Final</netty-version>
+        <reactor-version>3.2.6.RELEASE</reactor-version>
+        <reactive-streams-tck.version>1.0.0</reactive-streams-tck.version>
+        <slf4j.version>1.7.25</slf4j.version>
+        <spring-version>4.3.20.RELEASE</spring-version>
+
+        <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipITs>true</skipITs>
     </properties>
 
@@ -112,7 +118,7 @@
 
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j2-bom</artifactId>
+                <artifactId>log4j-bom</artifactId>
                 <version>${log4j2-version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -123,15 +129,7 @@
 
     <dependencies>
 
-        <!-- Start of Core Dependencies -->
-
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-            <version>${reactor-version}</version>
-        </dependency>
-
-        <!-- Netty -->
+        <!-- Start of core dependencies -->
 
         <dependency>
             <groupId>io.netty</groupId>
@@ -140,15 +138,38 @@
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-transport</artifactId>
+            <artifactId>netty-handler</artifactId>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-handler</artifactId>
+            <artifactId>netty-transport</artifactId>
         </dependency>
 
-        <!-- End of Core Dependencies -->
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>${reactor-version}</version>
+        </dependency>
+
+        <!-- End of core dependencies -->
+
+        <!-- Start of optional dependencies -->
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>2.6.0</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-tcnative</artifactId>
+            <version>1.1.33.Fork26</version>
+            <classifier>${os.detected.classifier}</classifier>
+            <optional>true</optional>
+        </dependency>
 
         <!-- OS-native transports -->
 
@@ -166,22 +187,13 @@
             <optional>true</optional>
         </dependency>
 
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-tcnative</artifactId>
-            <version>1.1.33.Fork26</version>
-            <classifier>${os.detected.classifier}</classifier>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-pool2</artifactId>
-            <version>2.6.0</version>
-            <optional>true</optional>
-        </dependency>
-
         <!-- Metrics/Tracing -->
+
+        <dependency>
+            <groupId>io.zipkin.brave</groupId>
+            <artifactId>brave</artifactId>
+            <optional>true</optional>
+        </dependency>
 
         <dependency>
             <groupId>org.latencyutils</groupId>
@@ -194,12 +206,6 @@
             <groupId>org.hdrhistogram</groupId>
             <artifactId>HdrHistogram</artifactId>
             <version>2.1.11</version>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>io.zipkin.brave</groupId>
-            <artifactId>brave</artifactId>
             <optional>true</optional>
         </dependency>
 
@@ -246,31 +252,19 @@
             <optional>true</optional>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-aop</artifactId>
-            <scope>test</scope>
-        </dependency>
-
         <!-- CDI -->
-
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-            <version>1</version>
-            <optional>true</optional>
-        </dependency>
 
         <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
             <version>2.0</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>
             <optional>true</optional>
         </dependency>
 
@@ -281,66 +275,39 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- End of optional dependencies -->
+
         <!-- Test -->
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj-core.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-library</artifactId>
+            <version>1.3</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.8</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.6.3</version>
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <version>${reactor-version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.googlecode.multithreadedtc</groupId>
-            <artifactId>multithreadedtc</artifactId>
-            <version>1.01</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>2.22.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>2.22.0</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- CDI -->
 
         <dependency>
             <groupId>org.apache.openwebbeans</groupId>
@@ -363,12 +330,40 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- JUnit -->
+
         <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.11.1</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Logging -->
 
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -385,7 +380,55 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.7.25</version>
+            <version>${slf4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.googlecode.multithreadedtc</groupId>
+            <artifactId>multithreadedtc</artifactId>
+            <version>1.01</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.reactivestreams</groupId>
+            <artifactId>reactive-streams-tck</artifactId>
+            <version>${reactive-streams-tck.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <version>${reactor-version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -399,34 +442,6 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-expression</artifactId>
             <version>${spring-version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.reactivestreams</groupId>
-            <artifactId>reactive-streams-tck</artifactId>
-            <version>1.0.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-library</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.javaparser</groupId>
-            <artifactId>javaparser-core</artifactId>
-            <version>3.6.3</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.8</version>
             <scope>test</scope>
         </dependency>
 
@@ -863,7 +878,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.0</version>
+                <version>${mockito.version}</version>
                 <configuration>
                     <systemProperties>
                         <io.netty.eventLoopThreads>4</io.netty.eventLoopThreads>
@@ -881,7 +896,7 @@
                     <dependency>
                         <groupId>org.apache.maven.surefire</groupId>
                         <artifactId>surefire-junit-platform</artifactId>
-                        <version>2.22.0</version>
+                        <version>${mockito.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -889,7 +904,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.0</version>
+                <version>${mockito.version}</version>
                 <configuration>
                     <systemProperties>
                         <io.netty.eventLoopThreads>4</io.netty.eventLoopThreads>
@@ -906,7 +921,7 @@
                     <dependency>
                         <groupId>org.apache.maven.surefire</groupId>
                         <artifactId>surefire-junit-platform</artifactId>
-                        <version>2.22.0</version>
+                        <version>${mockito.version}</version>
                     </dependency>
                 </dependencies>
 
