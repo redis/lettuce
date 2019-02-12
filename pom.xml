@@ -59,7 +59,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
-        <netty-version>4.1.31.Final</netty-version>
+        <netty-version>4.1.33.Final</netty-version>
         <spring-version>4.3.20.RELEASE</spring-version>
         <reactor-version>3.2.3.RELEASE</reactor-version>
         <brave-version>5.2.0</brave-version>
