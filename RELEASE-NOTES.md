@@ -3,7 +3,7 @@ Lettuce 5.1.4 RELEASE NOTES
 
 The Lettuce team is pleased to announce the Lettuce 5.1.4 service release! 
 This release ships with 14 tickets fixed. This release introduces reactive signal emission on
-non-I/O threads so reactive single-connection systems can utilize more threads for
+non-I/O threads, so reactive single-connection systems can utilize more threads for
 item processing and are not limited to a single thread.
 
 Thanks to all contributors who made Lettuce 5.1.4.RELEASE possible.
