@@ -59,7 +59,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <assertj-core.version>3.11.1</assertj-core.version>
+        <assertj-core.version>3.12.0</assertj-core.version>
         <brave-version>5.2.0</brave-version>
         <junit-version>5.4.0</junit-version>
         <log4j2-version>2.11.2</log4j2-version>
