@@ -45,6 +45,10 @@ import io.lettuce.test.Delay;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 
+/**
+ * @author Mark Paluch
+ * @author Nikolai Perevozchikov
+ */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ReactiveConnectionIntegrationTests extends TestSupport {
@@ -246,7 +250,9 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
 
         int counter = 0;
         for (int i = 0; i < 1000; i++) {
-            if (reactive.eval("return 1", INTEGER).next().block() == null) counter++;
+            if (reactive.eval("return 1", INTEGER).next().block() == null) {
+                counter++;
+            }
         }
 
         assertThat(counter).isZero();
