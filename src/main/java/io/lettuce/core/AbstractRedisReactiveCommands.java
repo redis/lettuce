@@ -46,6 +46,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Nikolai Perevozchikov
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashReactiveCommands<K, V>,
