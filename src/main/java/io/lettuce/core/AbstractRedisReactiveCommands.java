@@ -402,10 +402,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         if (tracingEnabled) {
 
             return withTraceContext().flatMapMany(
-                    it -> Flux.from(new RedisPublisher<>(decorate(commandSupplier, it), connection, dissolve, getScheduler())));
+                    it -> Flux.from(new RedisPublisher<>(decorate(commandSupplier, it), connection, dissolve, getScheduler()
+                            .next())));
         }
 
-        return Flux.from(new RedisPublisher<>(commandSupplier, connection, dissolve, getScheduler()));
+        return Flux.from(new RedisPublisher<>(commandSupplier, connection, dissolve, getScheduler().next()));
     }
 
     private Mono<TraceContext> withTraceContext() {

@@ -16,6 +16,7 @@
 package io.lettuce.core;
 
 import static io.lettuce.core.ClientOptions.DisconnectedBehavior.REJECT_COMMANDS;
+import static io.lettuce.core.ScriptOutputType.INTEGER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
@@ -233,6 +234,24 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
                         }).verify();
 
         connection.close();
+    }
+
+    @Test
+    @Inject
+    void publishOnSchedulerTest(RedisClient client) {
+
+        client.setOptions(ClientOptions.builder().publishOnScheduler(true).build());
+
+        RedisReactiveCommands<String, String> reactive = client.connect().reactive();
+
+        int counter = 0;
+        for (int i = 0; i < 1000; i++) {
+            if (reactive.eval("return 1", INTEGER).next().block() == null) counter++;
+        }
+
+        assertThat(counter).isZero();
+
+        reactive.getStatefulConnection().close();
     }
 
     private static Subscriber<String> createSubscriberWithExceptionOnComplete() {
