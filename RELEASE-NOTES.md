@@ -31,3 +31,4 @@ Other
 -----
 * Upgrade to AssertJ 3.12.0 #983
 * Upgrade to AssertJ 3.12.1 #991
+* Javadoc is missing Javadoc links to Project Reactor types #942
