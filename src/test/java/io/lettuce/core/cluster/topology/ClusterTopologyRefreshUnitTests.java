@@ -17,10 +17,11 @@ package io.lettuce.core.cluster.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import java.net.InetSocketAddress;
@@ -52,6 +53,7 @@ import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DnsResolvers;
 import io.lettuce.core.resource.SocketAddressResolver;
 import io.lettuce.test.settings.TestSettings;
+import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
  * @author Mark Paluch
@@ -95,10 +97,14 @@ class ClusterTopologyRefreshUnitTests {
     @Mock
     private RedisAsyncCommands<String, String> asyncCommands2;
 
+    @Mock
+    private EventExecutorGroup eventExecutors;
+
     @BeforeEach
     void before() {
 
         when(clientResources.socketAddressResolver()).thenReturn(SocketAddressResolver.create(DnsResolvers.JVM_DEFAULT));
+        when(clientResources.eventExecutorGroup()).thenReturn(eventExecutors);
         when(connection1.async()).thenReturn(asyncCommands1);
         when(connection2.async()).thenReturn(asyncCommands2);
         when(connection1.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
@@ -162,6 +168,18 @@ class ClusterTopologyRefreshUnitTests {
         for (Partitions value : values) {
             assertThat(value).extracting("nodeId").containsSequence("1", "2");
         }
+    }
+
+    @Test
+    void shouldNotRequestTopologyIfExecutorShutsDown() {
+
+        when(eventExecutors.isShuttingDown()).thenReturn(true);
+
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381));
+
+        sut.loadViews(seed, true);
+
+        verifyZeroInteractions(nodeConnectionFactory);
     }
 
     @Test
@@ -335,9 +353,9 @@ class ClusterTopologyRefreshUnitTests {
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381));
 
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
-            .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
         when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
-            .thenReturn(completedFuture((StatefulRedisConnection) connection2));
+                .thenReturn(completedFuture((StatefulRedisConnection) connection2));
 
         sut.loadViews(seed, true);
 
@@ -464,7 +482,6 @@ class ClusterTopologyRefreshUnitTests {
         CompletableFuture<T> future = new CompletableFuture<>();
         future.completeExceptionally(e);
 
-        return ConnectionFuture.from(InetSocketAddress.createUnresolved(TestSettings.host(), TestSettings.port()),
-                future);
+        return ConnectionFuture.from(InetSocketAddress.createUnresolved(TestSettings.host(), TestSettings.port()), future);
     }
 }

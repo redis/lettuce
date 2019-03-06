@@ -946,15 +946,17 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
+     * Shutdown this client and close all open connections asynchronously. The client should be discarded after calling
+     * shutdown.
      *
      * @param quietPeriod the quiet period as described in the documentation
      * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
      *        during the quiet period
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
+     * @since 4.4
      */
     @Override
-    public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
+    public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         if (clusterTopologyRefreshActivated.compareAndSet(true, false)) {
 
@@ -964,11 +966,11 @@ public class RedisClusterClient extends AbstractRedisClient {
                 scheduledFuture.cancel(false);
                 clusterTopologyRefreshFuture.set(null);
             } catch (Exception e) {
-                logger.debug("Could not unschedule Cluster topology refresh", e);
+                logger.debug("Could not cancel Cluster topology refresh", e);
             }
         }
 
-        super.shutdown(quietPeriod, timeout, timeUnit);
+        return super.shutdownAsync(quietPeriod, timeout, timeUnit);
     }
 
     /**
