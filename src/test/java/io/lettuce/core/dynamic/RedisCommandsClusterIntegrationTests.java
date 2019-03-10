@@ -19,12 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.Value;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -36,30 +38,31 @@ import io.lettuce.test.LettuceExtension;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-public class RedisCommandsClusterIntegrationTests extends TestSupport {
+class RedisCommandsClusterIntegrationTests extends TestSupport {
 
     private final StatefulRedisClusterConnection<String, String> connection;
 
     @Inject
-    public RedisCommandsClusterIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
+    RedisCommandsClusterIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         this.connection = connection;
         this.connection.sync().flushall();
     }
 
     @Test
-    public void sync() {
+    void future() throws ExecutionException, InterruptedException {
 
         RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         SynchronousCommands api = factory.getCommands(SynchronousCommands.class);
 
         api.setSync(key, value, Timeout.create(Duration.ofSeconds(10)));
-        assertThat(api.get("key")).isEqualTo("value");
+
+        assertThat(api.get("key").get()).isEqualTo("value");
         assertThat(api.getAsBytes("key")).isEqualTo("value".getBytes());
     }
 
     @Test
-    public void shouldRouteBinaryKey() {
+    void shouldRouteBinaryKey() {
 
         connection.sync().set(key, value);
 
@@ -71,7 +74,7 @@ public class RedisCommandsClusterIntegrationTests extends TestSupport {
     }
 
     @Test
-    public void mgetAsValues() {
+    void mgetAsValues() {
 
         connection.sync().set(key, value);
 
@@ -88,7 +91,7 @@ public class RedisCommandsClusterIntegrationTests extends TestSupport {
 
         byte[] get(byte[] key);
 
-        String get(String key);
+        RedisFuture<String> get(String key);
 
         @Command("GET")
         byte[] getAsBytes(String key);

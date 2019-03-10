@@ -59,7 +59,14 @@ class AsyncExecutableCommand implements ExecutableCommand {
         AsyncCommand<Object, Object, Object> asyncCommand = new AsyncCommand<>(command);
 
         if (commandMethod.isFutureExecution()) {
-            return connection.dispatch(asyncCommand);
+
+            RedisCommand<Object, Object, Object> dispatched = connection.dispatch(asyncCommand);
+
+            if (dispatched instanceof AsyncCommand) {
+                return dispatched;
+            }
+
+            return asyncCommand;
         }
 
         connection.dispatch(asyncCommand);
