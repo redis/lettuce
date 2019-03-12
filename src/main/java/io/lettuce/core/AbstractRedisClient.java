@@ -435,55 +435,65 @@ public abstract class AbstractRedisClient {
 
             logger.debug("Initiate shutdown ({}, {}, {})", quietPeriod, timeout, timeUnit);
 
-            List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
-
-            while (!closeableResources.isEmpty()) {
-                Closeable closeableResource = closeableResources.iterator().next();
-
-                if (closeableResource instanceof AsyncCloseable) {
-
-                    closeFutures.add(((AsyncCloseable) closeableResource).closeAsync());
-                } else {
-                    try {
-                        closeableResource.close();
-                    } catch (Exception e) {
-                        logger.debug("Exception on Close: " + e.getMessage(), e);
-                    }
-                }
-                closeableResources.remove(closeableResource);
-            }
-
-            for (Channel c : channels) {
-
-                ChannelPipeline pipeline = c.pipeline();
-
-                ConnectionWatchdog commandHandler = pipeline.get(ConnectionWatchdog.class);
-                if (commandHandler != null) {
-                    commandHandler.setListenOnChannelInactive(false);
-                }
-            }
-
-            try {
-                closeFutures.add(toCompletableFuture(channels.close()));
-            } catch (Exception e) {
-                logger.debug("Cannot close channels", e);
-            }
-
-            if (!sharedResources) {
-                Future<?> groupCloseFuture = clientResources.shutdown(quietPeriod, timeout, timeUnit);
-                closeFutures.add(toCompletableFuture(groupCloseFuture));
-            } else {
-                for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
-                    Future<?> groupCloseFuture = clientResources.eventLoopGroupProvider().release(eventExecutors, quietPeriod,
-                            timeout, timeUnit);
-                    closeFutures.add(toCompletableFuture(groupCloseFuture));
-                }
-            }
-
-            return Futures.allOf(closeFutures);
+            return closeOtherResources().thenCompose((value) ->
+                    closeClientResources(quietPeriod, timeout, timeUnit)
+            );
         }
 
         return completedFuture(null);
+    }
+
+    private CompletableFuture<Void> closeOtherResources() {
+        List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
+
+        while (!closeableResources.isEmpty()) {
+            Closeable closeableResource = closeableResources.iterator().next();
+
+            if (closeableResource instanceof AsyncCloseable) {
+
+                closeFutures.add(((AsyncCloseable) closeableResource).closeAsync());
+            } else {
+                try {
+                    closeableResource.close();
+                } catch (Exception e) {
+                    logger.debug("Exception on Close: " + e.getMessage(), e);
+                }
+            }
+            closeableResources.remove(closeableResource);
+        }
+
+        for (Channel c : channels) {
+
+            ChannelPipeline pipeline = c.pipeline();
+
+            ConnectionWatchdog commandHandler = pipeline.get(ConnectionWatchdog.class);
+            if (commandHandler != null) {
+                commandHandler.setListenOnChannelInactive(false);
+            }
+        }
+
+        try {
+            closeFutures.add(toCompletableFuture(channels.close()));
+        } catch (Exception e) {
+            logger.debug("Cannot close channels", e);
+        }
+
+        return Futures.allOf(closeFutures);
+    }
+
+    private CompletableFuture<Void> closeClientResources(long quietPeriod, long timeout, TimeUnit timeUnit) {
+        List<CompletableFuture<Void>> groupCloseFutures = new ArrayList<>();
+        if (!sharedResources) {
+            Future<?> groupCloseFuture = clientResources.shutdown(quietPeriod, timeout, timeUnit);
+            groupCloseFutures.add(toCompletableFuture(groupCloseFuture));
+        } else {
+            for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
+                Future<?> groupCloseFuture = clientResources.eventLoopGroupProvider().release(eventExecutors, quietPeriod,
+                        timeout, timeUnit);
+                groupCloseFutures.add(toCompletableFuture(groupCloseFuture));
+            }
+        }
+        return Futures.allOf(groupCloseFutures);
     }
 
     protected int getResourceCount() {
