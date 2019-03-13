@@ -480,7 +480,7 @@ public abstract class AbstractRedisClient {
         return Futures.allOf(closeFutures);
     }
 
-    private CompletionStage<Void> closeClientResources(long quietPeriod, long timeout, TimeUnit timeUnit) {
+    private CompletableFuture<Void> closeClientResources(long quietPeriod, long timeout, TimeUnit timeUnit) {
         List<CompletableFuture<Void>> groupCloseFutures = new ArrayList<>();
         if (!sharedResources) {
             Future<?> groupCloseFuture = clientResources.shutdown(quietPeriod, timeout, timeUnit);
