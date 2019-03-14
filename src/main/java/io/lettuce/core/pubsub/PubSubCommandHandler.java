@@ -30,6 +30,8 @@ import io.lettuce.core.resource.ClientResources;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing Redis Pub/Sub commands and reading the response stream from the
@@ -44,6 +46,8 @@ import io.netty.channel.ChannelHandlerContext;
  * @author Mark Paluch
  */
 public class PubSubCommandHandler<K, V> extends CommandHandler {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(PubSubCommandHandler.class);
 
     private final PubSubEndpoint<K, V> endpoint;
     private final RedisCodec<K, V> codec;
@@ -91,7 +95,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
 
             RedisCommand<?, ?, ?> peek = getStack().peek();
             canComplete(peek);
-            endpoint.notifyMessage(output);
+            doNotifyMessage(output);
             output = new PubSubOutput<>(codec);
         }
 
@@ -103,7 +107,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
         while ((replay = queue.poll()) != null) {
 
             replay.replay(output);
-            endpoint.notifyMessage(output);
+            doNotifyMessage(output);
             output = new PubSubOutput<>(codec);
         }
 
@@ -113,7 +117,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
                 return;
             }
 
-            endpoint.notifyMessage(output);
+            doNotifyMessage(output);
             output = new PubSubOutput<>(codec);
         }
 
@@ -201,7 +205,15 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
     protected void afterDecode(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
 
         if (command.getOutput() instanceof PubSubOutput) {
-            endpoint.notifyMessage((PubSubOutput) command.getOutput());
+            doNotifyMessage((PubSubOutput) command.getOutput());
+        }
+    }
+
+    private void doNotifyMessage(PubSubOutput<K, V, V> output) {
+        try {
+            endpoint.notifyMessage(output);
+        } catch (Exception e) {
+            logger.error("Unexpected error occurred in PubSubEndpoint.notifyMessage", e);
         }
     }
 
