@@ -18,6 +18,7 @@ package io.lettuce.core.pubsub;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
@@ -84,6 +85,34 @@ class PubSubEndpointUnitTests {
         sut.notifyMessage(createMessage("unsubscribe", "channel1", ByteArrayCodec.INSTANCE));
 
         assertThat(sut.getChannels()).isEmpty();
+    }
+
+    @Test
+    void listenerNotificationShouldFailGracefully() {
+
+        PubSubEndpoint<byte[], byte[]> sut = new PubSubEndpoint<>(ClientOptions.create(), TestClientResources.get());
+
+        AtomicInteger notified = new AtomicInteger();
+
+        sut.addListener(new RedisPubSubAdapter<byte[], byte[]>() {
+            @Override
+            public void message(byte[] channel, byte[] message) {
+
+                notified.incrementAndGet();
+                throw new UnsupportedOperationException();
+            }
+        });
+
+        sut.addListener(new RedisPubSubAdapter<byte[], byte[]>() {
+            @Override
+            public void message(byte[] channel, byte[] message) {
+                notified.incrementAndGet();
+            }
+        });
+
+        sut.notifyMessage(createMessage("message", "channel1", ByteArrayCodec.INSTANCE));
+
+        assertThat(notified).hasValue(1);
     }
 
     private static <K, V> PubSubOutput<K, V, V> createMessage(String action, String channel, RedisCodec<K, V> codec) {

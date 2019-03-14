@@ -26,12 +26,15 @@ import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * @author Mark Paluch
  */
 public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(PubSubEndpoint.class);
     private static final Set<String> ALLOWED_COMMANDS_SUBSCRIBED;
     private static final Set<String> SUBSCRIBE_COMMANDS;
     private final List<RedisPubSubListener<K, V>> listeners = new CopyOnWriteArrayList<>();
@@ -167,7 +170,11 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         }
 
         updateInternalState(output);
-        notifyListeners(output);
+        try {
+            notifyListeners(output);
+        } catch (Exception e) {
+            logger.error("Unexpected error occurred in RedisPubSubListener callback", e);
+        }
     }
 
     protected void notifyListeners(PubSubOutput<K, V, V> output) {
