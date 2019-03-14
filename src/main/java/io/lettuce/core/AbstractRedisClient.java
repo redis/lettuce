@@ -61,6 +61,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  * @author Jongyeol Choi
+ * @author Poorva Gokhale
  * @since 3.0
  * @see ClientResources
  */
@@ -434,16 +435,14 @@ public abstract class AbstractRedisClient {
         if (shutdown.compareAndSet(false, true)) {
 
             logger.debug("Initiate shutdown ({}, {}, {})", quietPeriod, timeout, timeUnit);
-
-            return closeOtherResources().thenCompose((value) ->
-                    closeClientResources(quietPeriod, timeout, timeUnit)
-            );
+            return closeResources().thenCompose((value) -> closeClientResources(quietPeriod, timeout, timeUnit));
         }
 
         return completedFuture(null);
     }
 
-    private CompletableFuture<Void> closeOtherResources() {
+    private CompletableFuture<Void> closeResources() {
+
         List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
 
         while (!closeableResources.isEmpty()) {
