@@ -24,6 +24,11 @@ import io.lettuce.core.AbstractRedisReactiveCommands;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 
@@ -133,6 +138,25 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
     @Override
     public Mono<String> info(String section) {
         return createMono(() -> commandBuilder.info(section));
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
+
+        LettuceAssert.notNull(type, "Command type must not be null");
+        LettuceAssert.notNull(output, "CommandOutput type must not be null");
+
+        return (Flux) createFlux(() -> new Command<>(type, output));
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args) {
+
+        LettuceAssert.notNull(type, "Command type must not be null");
+        LettuceAssert.notNull(output, "CommandOutput type must not be null");
+        LettuceAssert.notNull(args, "CommandArgs type must not be null");
+
+        return (Flux) createFlux(() -> new Command<>(type, output, args));
     }
 
     @Override

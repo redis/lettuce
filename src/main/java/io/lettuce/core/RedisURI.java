@@ -349,9 +349,19 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @param password the password, must not be {@literal null}.
      */
     public void setPassword(String password) {
+        setPassword((CharSequence) password);
+    }
+
+    /**
+     * Sets the password. Use empty string to skip authentication.
+     *
+     * @param password the password, must not be {@literal null}.
+     * @since 5.2
+     */
+    public void setPassword(CharSequence password) {
 
         LettuceAssert.notNull(password, "Password must not be null");
-        this.password = password.toCharArray();
+        this.password = password.toString().toCharArray();
     }
 
     /**
@@ -958,11 +968,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private int database;
         private String clientName;
         private char[] password;
+        private char[] sentinelPassword;
         private boolean ssl = false;
         private boolean verifyPeer = true;
         private boolean startTls = false;
         private Duration timeout = DEFAULT_TIMEOUT_DURATION;
-        private final List<HostAndPort> sentinels = new ArrayList<>();
+        private final List<RedisURI> sentinels = new ArrayList<>();
 
         private Builder() {
         }
@@ -971,7 +982,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * Set Redis socket. Creates a new builder.
          *
          * @param socket the host name
-         * @return New builder with Redis socket.
+         * @return new builder with Redis socket.
          */
         public static Builder socket(String socket) {
 
@@ -986,7 +997,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * Set Redis host. Creates a new builder.
          *
          * @param host the host name
-         * @return New builder with Redis host/port.
+         * @return new builder with Redis host/port.
          */
         public static Builder redis(String host) {
             return redis(host, DEFAULT_REDIS_PORT);
@@ -997,7 +1008,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          *
          * @param host the host name
          * @param port the port
-         * @return New builder with Redis host/port.
+         * @return new builder with Redis host/port.
          */
         public static Builder redis(String host, int port) {
 
@@ -1012,7 +1023,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * Set Sentinel host. Creates a new builder.
          *
          * @param host the host name
-         * @return New builder with Sentinel host/port.
+         * @return new builder with Sentinel host/port.
          */
         public static Builder sentinel(String host) {
 
@@ -1027,7 +1038,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          *
          * @param host the host name
          * @param port the port
-         * @return New builder with Sentinel host/port.
+         * @return new builder with Sentinel host/port.
          */
         public static Builder sentinel(String host, int port) {
 
@@ -1043,7 +1054,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          *
          * @param host the host name
          * @param masterId sentinel master id
-         * @return New builder with Sentinel host/port.
+         * @return new builder with Sentinel host/port.
          */
         public static Builder sentinel(String host, String masterId) {
             return sentinel(host, DEFAULT_SENTINEL_PORT, masterId);
@@ -1055,14 +1066,30 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @param host the host name
          * @param port the port
          * @param masterId sentinel master id
-         * @return New builder with Sentinel host/port.
+         * @return new builder with Sentinel host/port.
          */
         public static Builder sentinel(String host, int port, String masterId) {
+            return sentinel(host, port, masterId, null);
+        }
+
+        /**
+         * Set Sentinel host, port, master id and Sentinel authentication. Creates a new builder.
+         *
+         * @param host the host name
+         * @param port the port
+         * @param masterId sentinel master id
+         * @param password the Sentinel password (supported since Redis 5.0.1)
+         * @return new builder with Sentinel host/port.
+         */
+        public static Builder sentinel(String host, int port, String masterId, CharSequence password) {
 
             LettuceAssert.notEmpty(host, "Host must not be empty");
             LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
 
             Builder builder = RedisURI.builder();
+            if (password != null) {
+                builder.sentinelPassword = password.toString().toCharArray();
+            }
             return builder.withSentinelMasterId(masterId).withSentinel(host, port);
         }
 
@@ -1085,11 +1112,49 @@ public class RedisURI implements Serializable, ConnectionPoint {
          */
         public Builder withSentinel(String host, int port) {
 
+            if (this.sentinelPassword != null) {
+                return withSentinel(host, port, new String(this.sentinelPassword));
+            }
+
+            return withSentinel(host, port, null);
+        }
+
+        /**
+         * Add a withSentinel host/port and Sentinel authentication to the existing builder.
+         *
+         * @param host the host name
+         * @param port the port
+         * @param password the Sentinel password (supported since Redis 5.0.1)
+         * @return the builder
+         * @since 5.2
+         */
+        public Builder withSentinel(String host, int port, CharSequence password) {
+
             LettuceAssert.assertState(this.host == null, "Cannot use with Redis mode.");
             LettuceAssert.notEmpty(host, "Host must not be empty");
             LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
 
-            sentinels.add(HostAndPort.of(host, port));
+            RedisURI redisURI = RedisURI.create(host, port);
+
+            if (password != null) {
+                redisURI.setPassword(password.toString());
+            }
+
+            return withSentinel(redisURI);
+        }
+
+        /**
+         * Add a withSentinel RedisURI to the existing builder.
+         *
+         * @param redisURI the sentinel URI
+         * @return the builder
+         * @since 5.2
+         */
+        public Builder withSentinel(RedisURI redisURI) {
+
+            LettuceAssert.notNull(redisURI, "Redis URI must not be null");
+
+            sentinels.add(redisURI);
             return this;
         }
 
@@ -1290,8 +1355,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             redisURI.setSentinelMasterId(sentinelMasterId);
 
-            for (HostAndPort sentinel : sentinels) {
-                redisURI.getSentinels().add(new RedisURI(sentinel.getHostText(), sentinel.getPort(), timeout));
+            for (RedisURI sentinel : sentinels) {
+
+                sentinel.setTimeout(timeout);
+                redisURI.getSentinels().add(sentinel);
             }
 
             redisURI.setSocket(socket);

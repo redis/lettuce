@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.KillArgs;
+import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
@@ -178,6 +181,29 @@ public interface RedisSentinelCommands<K, V> {
      * @return String simple-string-reply
      */
     String ping();
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     * @since 5.2
+     */
+    <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@literal null}.
+     * @param output the command output, must not be {@literal null}.
+     * @param args the command arguments, must not be {@literal null}.
+     * @param <T> response type
+     * @return the command response
+     * @since 5.2
+     */
+    <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
     /**
      * @return true if the connection is open (connected and not closed).

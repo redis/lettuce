@@ -21,9 +21,11 @@ import static io.lettuce.core.LettuceStrings.isNotEmpty;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
@@ -283,8 +285,7 @@ public class RedisClient extends AbstractRedisClient {
 
     @SuppressWarnings("unchecked")
     private <K, V, S> ConnectionFuture<S> connectStatefulAsync(StatefulRedisConnectionImpl<K, V> connection,
-            RedisCodec<K, V> codec, Endpoint endpoint,
-            RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier) {
+            RedisCodec<K, V> codec, Endpoint endpoint, RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
         if (redisURI.isSsl()) {
@@ -432,8 +433,7 @@ public class RedisClient extends AbstractRedisClient {
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout);
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, codec, endpoint,
-                redisURI,
-                () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
+                redisURI, () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
 
         return future.whenComplete((conn, throwable) -> {
 
@@ -523,6 +523,59 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
+        logger.debug("Trying to get a Redis Sentinel connection for one of: " + redisURI.getSentinels());
+
+        if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
+            return doConnectSentinelAsync(codec, redisURI.getClientName(), redisURI, timeout).toCompletableFuture();
+        }
+
+        List<RedisURI> sentinels = redisURI.getSentinels();
+        Queue<Throwable> exceptionCollector = new LinkedBlockingQueue<>();
+        validateUrisAreOfSameConnectionType(sentinels);
+
+        Mono<StatefulRedisSentinelConnection<K, V>> connectionLoop = null;
+
+        for (RedisURI uri : sentinels) {
+
+            String clientName = LettuceStrings.isNotEmpty(uri.getClientName()) ? uri.getClientName() : redisURI.getClientName();
+
+            Mono<StatefulRedisSentinelConnection<K, V>> connectionMono = Mono
+                    .defer(() -> Mono.fromCompletionStage(doConnectSentinelAsync(codec, clientName, uri, timeout)))
+                    .onErrorMap(CompletionException.class, Throwable::getCause)
+                    .onErrorMap(e -> new RedisConnectionException("Cannot connect Redis Sentinel at " + uri, e))
+                    .doOnError(exceptionCollector::add);
+
+            if (connectionLoop == null) {
+                connectionLoop = connectionMono;
+            } else {
+                connectionLoop = connectionLoop.onErrorResume(t -> connectionMono);
+            }
+        }
+
+        if (connectionLoop == null) {
+            return Mono.<StatefulRedisSentinelConnection<K, V>> error(
+                    new RedisConnectionException("Cannot connect to a Redis Sentinel: " + redisURI.getSentinels())).toFuture();
+        }
+
+        return connectionLoop.onErrorMap(
+                e -> {
+
+                    RedisConnectionException ex = new RedisConnectionException("Cannot connect to a Redis Sentinel: "
+                            + redisURI.getSentinels(), e);
+
+                    for (Throwable throwable : exceptionCollector) {
+                        if (e != throwable) {
+                            ex.addSuppressed(throwable);
+                        }
+                    }
+
+                    return ex;
+                }).toFuture();
+    }
+
+    private <K, V> ConnectionFuture<StatefulRedisSentinelConnection<K, V>> doConnectSentinelAsync(RedisCodec<K, V> codec,
+            String clientName, RedisURI redisURI, Duration timeout) {
+
         ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
         connectionBuilder.clientResources(clientResources);
@@ -536,7 +589,7 @@ public class RedisClient extends AbstractRedisClient {
 
         StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(writer, codec, timeout);
 
-        logger.debug("Trying to get a Redis Sentinel connection for one of: " + redisURI.getSentinels());
+        logger.debug("Connecting to Redis Sentinel, address: " + redisURI);
 
         connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientOptions, clientResources, endpoint))
                 .connection(connection);
@@ -546,55 +599,32 @@ public class RedisClient extends AbstractRedisClient {
             connectionBuilder.enablePingBeforeConnect();
         }
 
-        Mono<StatefulRedisSentinelConnection<K, V>> connect;
-        if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
+        channelType(connectionBuilder, redisURI);
+        ConnectionFuture<?> sync = initializeChannelAsync(connectionBuilder);
 
-            channelType(connectionBuilder, redisURI);
-            connect = Mono.fromCompletionStage(initializeChannelAsync(connectionBuilder));
-        } else {
+        if (!clientOptions.isPingBeforeActivateConnection() && hasPassword(redisURI)) {
 
-            List<RedisURI> sentinels = redisURI.getSentinels();
-            validateUrisAreOfSameConnectionType(sentinels);
+            sync = sync.thenCompose(channelHandler -> {
 
-            Mono<StatefulRedisSentinelConnection<K, V>> connectionLoop = Mono.defer(() -> {
-
-                RedisURI uri = sentinels.get(0);
-                channelType(connectionBuilder, uri);
-                return connectSentinel(connectionBuilder, uri);
+                CommandArgs<K, V> args = new CommandArgs<>(codec).add(redisURI.getPassword());
+                return connection.async().dispatch(CommandType.AUTH, new StatusOutput<>(codec), args).toCompletableFuture();
             });
+        }
 
-            for (int i = 1; i < sentinels.size(); i++) {
+        if (LettuceStrings.isNotEmpty(clientName)) {
+            sync = sync.thenApply(channelHandler -> {
+                connection.setClientName(clientName);
+                return channelHandler;
+            });
+        }
 
-                RedisURI uri = sentinels.get(i);
-                connectionLoop = connectionLoop.onErrorResume(t -> connectSentinel(connectionBuilder, uri));
+        return sync.thenApply(ignore -> (StatefulRedisSentinelConnection<K, V>) connection).whenComplete((ignore, e) -> {
+
+            if (e != null) {
+                logger.warn("Cannot connect Redis Sentinel at " + redisURI + ": " + e.toString());
+                connection.close();
             }
-
-            connect = connectionLoop;
-        }
-
-        if (LettuceStrings.isNotEmpty(redisURI.getClientName())) {
-            connect = connect.doOnNext(c -> connection.setClientName(redisURI.getClientName()));
-        }
-
-        return connect.doOnError(e -> {
-
-            connection.close();
-            throw new RedisConnectionException("Cannot connect to a Redis Sentinel: " + redisURI.getSentinels(), e);
-        }).toFuture();
-    }
-
-    private <K, V> Mono<StatefulRedisSentinelConnection<K, V>> connectSentinel(ConnectionBuilder connectionBuilder, RedisURI uri) {
-
-        connectionBuilder.socketAddressSupplier(getSocketAddressSupplier(uri));
-        SocketAddress socketAddress = clientResources.socketAddressResolver().resolve(uri);
-        logger.debug("Connecting to Redis Sentinel, address: " + socketAddress);
-
-        Mono<StatefulRedisSentinelConnection<K, V>> connectionMono = Mono
-                .fromCompletionStage(initializeChannelAsync(connectionBuilder));
-
-        return connectionMono.onErrorMap(CompletionException.class, Throwable::getCause) //
-                .doOnError(t -> logger.warn("Cannot connect Redis Sentinel at " + uri + ": " + t.toString())) //
-                .onErrorMap(e -> new RedisConnectionException("Cannot connect Redis Sentinel at " + uri, e));
+        });
     }
 
     /**

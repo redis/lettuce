@@ -23,8 +23,9 @@ import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.protocol.AsyncCommand;
-import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.protocol.*;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 
@@ -134,6 +135,25 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     @Override
     public RedisFuture<String> info(String section) {
         return dispatch(commandBuilder.info(section));
+    }
+
+    @Override
+    public <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output) {
+
+        LettuceAssert.notNull(type, "Command type must not be null");
+        LettuceAssert.notNull(output, "CommandOutput type must not be null");
+
+        return dispatch(new AsyncCommand<>(new Command<>(type, output)));
+    }
+
+    @Override
+    public <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
+
+        LettuceAssert.notNull(type, "Command type must not be null");
+        LettuceAssert.notNull(output, "CommandOutput type must not be null");
+        LettuceAssert.notNull(args, "CommandArgs type must not be null");
+
+        return dispatch(new AsyncCommand<>(new Command<>(type, output, args)));
     }
 
     public <T> AsyncCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {

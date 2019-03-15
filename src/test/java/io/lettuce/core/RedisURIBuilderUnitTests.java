@@ -51,7 +51,7 @@ class RedisURIBuilderUnitTests {
 
     @Test
     void shouldFailIfBuilderIsEmpty() {
-        assertThatThrownBy(() -> RedisURI.builder().build()).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> RedisURI.builder().build()).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -82,12 +82,13 @@ class RedisURIBuilderUnitTests {
 
     @Test
     void redisHostAndPortWithInvalidPort() {
-        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost", -1)).isInstanceOf(IllegalArgumentException. class);
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost", -1)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void redisWithInvalidPort() {
-        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withPort(65536)).isInstanceOf(IllegalArgumentException. class);
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withPort(65536)).isInstanceOf(
+                IllegalArgumentException.class);
     }
 
     @Test
@@ -168,37 +169,72 @@ class RedisURIBuilderUnitTests {
         RedisURI sentinel3 = result.getSentinels().get(2);
         assertThat(sentinel3.getPort()).isEqualTo(RedisURI.DEFAULT_SENTINEL_PORT);
         assertThat(sentinel3.getHost()).isEqualTo("host3");
+    }
 
+    @Test
+    void withAuthenticatedSentinel() {
+
+        RedisURI result = RedisURI.Builder.sentinel("host", 1234, "master", "foo").build();
+
+        RedisURI sentinel = result.getSentinels().get(0);
+        assertThat(new String(sentinel.getPassword())).isEqualTo("foo");
+    }
+
+    @Test
+    void withAuthenticatedSentinelUri() {
+
+        RedisURI sentinel = new RedisURI("host", 1234, Duration.ZERO);
+        sentinel.setPassword("bar");
+        RedisURI result = RedisURI.Builder.sentinel("host", 1234, "master").withSentinel(sentinel).build();
+
+        assertThat(result.getSentinels().get(0).getPassword()).isNull();
+        assertThat(new String(result.getSentinels().get(1).getPassword())).isEqualTo("bar");
+    }
+
+    @Test
+    void withAuthenticatedSentinelWithSentinel() {
+
+        RedisURI result = RedisURI.Builder.sentinel("host", 1234, "master", "foo").withSentinel("bar").build();
+
+        assertThat(new String(result.getSentinels().get(0).getPassword())).isEqualTo("foo");
+        assertThat(new String(result.getSentinels().get(1).getPassword())).isEqualTo("foo");
+
+        result = RedisURI.Builder.sentinel("host", 1234, "master", "foo").withSentinel("bar", 1234, "baz").build();
+
+        assertThat(new String(result.getSentinels().get(0).getPassword())).isEqualTo("foo");
+        assertThat(new String(result.getSentinels().get(1).getPassword())).isEqualTo("baz");
     }
 
     @Test
     void redisSentinelWithInvalidPort() {
-        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 65536)).isInstanceOf(IllegalArgumentException. class);
+        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 65536)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void redisSentinelWithMasterIdAndInvalidPort() {
-        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 65536, "")).isInstanceOf(IllegalArgumentException. class);
+        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 65536, "")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void redisSentinelWithNullMasterId() {
-        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 1, null)).isInstanceOf(IllegalArgumentException. class);
+        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 1, null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void redisSentinelWithSSLNotPossible() {
-        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 1, "master").withSsl(true)).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 1, "master").withSsl(true)).isInstanceOf(
+                IllegalStateException.class);
     }
 
     @Test
     void redisSentinelWithTLSNotPossible() {
-        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 1, "master").withStartTls(true)).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 1, "master").withStartTls(true)).isInstanceOf(
+                IllegalStateException.class);
     }
 
     @Test
     void invalidScheme() {
-        assertThatThrownBy(() -> RedisURI.create("http://www.web.de")).isInstanceOf(IllegalArgumentException. class);
+        assertThatThrownBy(() -> RedisURI.create("http://www.web.de")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -226,5 +262,4 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getPort()).isEqualTo(0);
         assertThat(result.isSsl()).isFalse();
     }
-
 }
