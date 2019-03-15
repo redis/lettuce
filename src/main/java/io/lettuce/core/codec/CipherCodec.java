@@ -303,14 +303,16 @@ public abstract class CipherCodec {
                 throw new IllegalArgumentException("Cannot extract KeyDescriptor. Malformed message header.");
             }
 
+            int startPosition = bytes.position();
+
             for (int i = 0; i < bytes.remaining(); i++) {
                 if (bytes.get(bytes.position() + i) == '$') {
-                    end = bytes.position() + i;
+                    end = (bytes.position() - startPosition) + i;
                     break;
                 }
 
                 if (bytes.get(bytes.position() + i) == '+') {
-                    version = bytes.position() + i;
+                    version = (bytes.position() - startPosition) + i;
                 }
             }
 
@@ -318,7 +320,7 @@ public abstract class CipherCodec {
                 throw new IllegalArgumentException("Cannot extract KeyDescriptor");
             }
 
-            byte[] name = new byte[version - 1];
+            byte[] name = new byte[version];
             bytes.get(name);
             bytes.get();
 
