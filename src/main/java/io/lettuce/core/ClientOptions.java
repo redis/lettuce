@@ -49,7 +49,6 @@ public class ClientOptions implements Serializable {
     private final SocketOptions socketOptions;
     private final SslOptions sslOptions;
     private final TimeoutOptions timeoutOptions;
-    private final Builder builder;
 
     protected ClientOptions(Builder builder) {
         this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
@@ -62,7 +61,6 @@ public class ClientOptions implements Serializable {
         this.socketOptions = builder.socketOptions;
         this.sslOptions = builder.sslOptions;
         this.timeoutOptions = builder.timeoutOptions;
-        this.builder = builder;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -76,7 +74,6 @@ public class ClientOptions implements Serializable {
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
         this.timeoutOptions = original.getTimeoutOptions();
-        this.builder = original.builder;
     }
 
     /**
@@ -284,7 +281,15 @@ public class ClientOptions implements Serializable {
      * @since 5.1
      */
     public ClientOptions.Builder mutate() {
-        return this.builder;
+        Builder builder = new Builder();
+
+        builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
+                .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).requestQueueSize(getRequestQueueSize())
+                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
+
+        return builder;
     }
 
     /**
