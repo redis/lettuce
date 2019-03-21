@@ -36,7 +36,13 @@ class ClientOptionsUnitTests {
 
     @Test
     void testCopy() {
-        checkAssertions(ClientOptions.copyOf(ClientOptions.builder().build()));
+
+        ClientOptions original = ClientOptions.builder().build();
+        ClientOptions copy = ClientOptions.copyOf(original);
+
+        checkAssertions(copy);
+
+        assertThat(original.mutate()).isNotSameAs(copy.mutate());
     }
 
     void checkAssertions(ClientOptions sut) {

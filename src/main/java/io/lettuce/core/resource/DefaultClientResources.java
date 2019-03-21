@@ -127,13 +127,9 @@ public class DefaultClientResources implements ClientResources {
     private final NettyCustomizer nettyCustomizer;
     private final Tracing tracing;
 
-    private final Builder builder;
-
     private volatile boolean shutdownCalled = false;
 
     protected DefaultClientResources(Builder builder) {
-
-        this.builder = builder;
 
         if (builder.eventLoopGroupProvider == null) {
             int ioThreadPoolSize = builder.ioThreadPoolSize;
@@ -148,7 +144,7 @@ public class DefaultClientResources implements ClientResources {
             this.eventLoopGroupProvider = new DefaultEventLoopGroupProvider(ioThreadPoolSize);
 
         } else {
-            this.sharedEventLoopGroupProvider = true;
+            this.sharedEventLoopGroupProvider = builder.sharedEventLoopGroupProvider;
             this.eventLoopGroupProvider = builder.eventLoopGroupProvider;
         }
 
@@ -165,7 +161,7 @@ public class DefaultClientResources implements ClientResources {
                     computationThreadPoolSize);
             sharedEventExecutor = false;
         } else {
-            sharedEventExecutor = true;
+            sharedEventExecutor = builder.sharedEventExecutor;
             eventExecutorGroup = builder.eventExecutorGroup;
         }
 
@@ -174,7 +170,7 @@ public class DefaultClientResources implements ClientResources {
             sharedTimer = false;
         } else {
             timer = builder.timer;
-            sharedTimer = true;
+            sharedTimer = builder.sharedTimer;
         }
 
         if (builder.eventBus == null) {
@@ -198,7 +194,7 @@ public class DefaultClientResources implements ClientResources {
 
             sharedCommandLatencyCollector = false;
         } else {
-            sharedCommandLatencyCollector = true;
+            sharedCommandLatencyCollector = builder.sharedCommandLatencyCollector;
             commandLatencyCollector = builder.commandLatencyCollector;
         }
 
@@ -251,6 +247,11 @@ public class DefaultClientResources implements ClientResources {
      */
     public static class Builder implements ClientResources.Builder {
 
+        private boolean sharedEventLoopGroupProvider;
+        private boolean sharedEventExecutor;
+        private boolean sharedTimer;
+        private boolean sharedCommandLatencyCollector;
+
         private int ioThreadPoolSize = DEFAULT_IO_THREADS;
         private int computationThreadPoolSize = DEFAULT_COMPUTATION_THREADS;
         private EventExecutorGroup eventExecutorGroup;
@@ -299,6 +300,7 @@ public class DefaultClientResources implements ClientResources {
 
             LettuceAssert.notNull(eventLoopGroupProvider, "EventLoopGroupProvider must not be null");
 
+            this.sharedEventLoopGroupProvider = true;
             this.eventLoopGroupProvider = eventLoopGroupProvider;
             return this;
         }
@@ -333,6 +335,7 @@ public class DefaultClientResources implements ClientResources {
 
             LettuceAssert.notNull(eventExecutorGroup, "EventExecutorGroup must not be null");
 
+            this.sharedEventExecutor = true;
             this.eventExecutorGroup = eventExecutorGroup;
             return this;
         }
@@ -352,6 +355,7 @@ public class DefaultClientResources implements ClientResources {
 
             LettuceAssert.notNull(timer, "Timer must not be null");
 
+            this.sharedTimer = true;
             this.timer = timer;
             return this;
         }
@@ -414,6 +418,7 @@ public class DefaultClientResources implements ClientResources {
 
             LettuceAssert.notNull(commandLatencyCollector, "CommandLatencyCollector must not be null");
 
+            this.sharedCommandLatencyCollector = true;
             this.commandLatencyCollector = commandLatencyCollector;
             return this;
         }
@@ -531,6 +536,12 @@ public class DefaultClientResources implements ClientResources {
     /**
      * Returns a builder to create new {@link DefaultClientResources} whose settings are replicated from the current
      * {@link DefaultClientResources}.
+     * <p>
+     * Note: The resulting {@link DefaultClientResources} retains shared state for {@link Timer},
+     * {@link CommandLatencyCollector}, {@link EventExecutorGroup}, and {@link EventLoopGroupProvider} if these are left
+     * unchanged. Thus you need only to shut down the last created {@link ClientResources} instances. Shutdown affects any
+     * previously created {@link ClientResources}.
+     * </p>
      *
      * @return a {@link DefaultClientResources.Builder} to create new {@link DefaultClientResources} whose settings are
      *         replicated from the current {@link DefaultClientResources}.
@@ -539,7 +550,21 @@ public class DefaultClientResources implements ClientResources {
      */
     @Override
     public DefaultClientResources.Builder mutate() {
-        return this.builder;
+
+        Builder builder = new Builder();
+
+        builder.eventExecutorGroup(eventExecutorGroup()).timer(timer()).eventBus(eventBus())
+                .commandLatencyCollector(commandLatencyCollector())
+                .commandLatencyPublisherOptions(commandLatencyPublisherOptions()).dnsResolver(dnsResolver())
+                .socketAddressResolver(socketAddressResolver()).reconnectDelay(reconnectDelay)
+                .nettyCustomizer(nettyCustomizer()).tracing(tracing());
+
+        builder.sharedCommandLatencyCollector = sharedEventLoopGroupProvider;
+        builder.sharedEventExecutor = sharedEventExecutor;
+        builder.sharedEventLoopGroupProvider = sharedEventLoopGroupProvider;
+        builder.sharedTimer = sharedTimer;
+
+        return builder;
     }
 
     @Override

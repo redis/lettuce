@@ -21,6 +21,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.SslOptions;
 import io.lettuce.core.TimeoutOptions;
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
@@ -40,7 +41,6 @@ public class ClusterClientOptions extends ClientOptions {
     private final boolean validateClusterNodeMembership;
     private final int maxRedirects;
     private final ClusterTopologyRefreshOptions topologyRefreshOptions;
-    private final ClusterClientOptions.Builder builder;
 
     protected ClusterClientOptions(Builder builder) {
 
@@ -60,7 +60,6 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         this.topologyRefreshOptions = refreshOptions;
-        this.builder = builder;
     }
 
     protected ClusterClientOptions(ClusterClientOptions original) {
@@ -70,7 +69,6 @@ public class ClusterClientOptions extends ClientOptions {
         this.validateClusterNodeMembership = original.validateClusterNodeMembership;
         this.maxRedirects = original.maxRedirects;
         this.topologyRefreshOptions = original.topologyRefreshOptions;
-        this.builder = original.builder;
     }
 
     /**
@@ -90,6 +88,35 @@ public class ClusterClientOptions extends ClientOptions {
      */
     public static ClusterClientOptions.Builder builder() {
         return new ClusterClientOptions.Builder();
+    }
+
+    /**
+     * Returns a new {@link ClusterClientOptions.Builder} initialized from {@link ClientOptions} to construct
+     * {@link ClusterClientOptions}.
+     *
+     * @return a new {@link ClusterClientOptions.Builder} to construct {@link ClusterClientOptions}.
+     * @since 5.1.6
+     */
+    public static ClusterClientOptions.Builder builder(ClientOptions clientOptions) {
+
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+
+        if (clientOptions instanceof ClusterClientOptions) {
+            return ((ClusterClientOptions) clientOptions).mutate();
+        }
+
+        Builder builder = new Builder();
+        builder.autoReconnect(clientOptions.isAutoReconnect()).bufferUsageRatio(clientOptions.getBufferUsageRatio())
+                .cancelCommandsOnReconnectFailure(clientOptions.isCancelCommandsOnReconnectFailure())
+                .disconnectedBehavior(clientOptions.getDisconnectedBehavior())
+                .publishOnScheduler(clientOptions.isPublishOnScheduler())
+                .pingBeforeActivateConnection(clientOptions.isPingBeforeActivateConnection())
+                .requestQueueSize(clientOptions.getRequestQueueSize()).socketOptions(clientOptions.getSocketOptions())
+                .sslOptions(clientOptions.getSslOptions())
+                .suspendReconnectOnProtocolFailure(clientOptions.isSuspendReconnectOnProtocolFailure())
+                .timeoutOptions(clientOptions.getTimeoutOptions());
+
+        return builder;
     }
 
     /**
@@ -174,7 +201,7 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         @Override
-        public ClientOptions.Builder publishOnScheduler(boolean publishOnScheduler) {
+        public Builder publishOnScheduler(boolean publishOnScheduler) {
             super.publishOnScheduler(publishOnScheduler);
             return this;
         }
@@ -235,7 +262,19 @@ public class ClusterClientOptions extends ClientOptions {
      * @since 5.1
      */
     public ClusterClientOptions.Builder mutate() {
-        return this.builder;
+
+        Builder builder = new Builder();
+
+        builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
+                .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
+                .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).requestQueueSize(getRequestQueueSize())
+                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
+                .validateClusterNodeMembership(isValidateClusterNodeMembership()).maxRedirects(getMaxRedirects())
+                .topologyRefreshOptions(getTopologyRefreshOptions());
+
+        return builder;
     }
 
     /**

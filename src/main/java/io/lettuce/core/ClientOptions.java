@@ -52,7 +52,6 @@ public class ClientOptions implements Serializable {
     private final SslOptions sslOptions;
     private final TimeoutOptions timeoutOptions;
     private final int bufferUsageRatio;
-    private final Builder builder;
 
     protected ClientOptions(Builder builder) {
         this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
@@ -66,7 +65,6 @@ public class ClientOptions implements Serializable {
         this.sslOptions = builder.sslOptions;
         this.timeoutOptions = builder.timeoutOptions;
         this.bufferUsageRatio = builder.bufferUsageRatio;
-        this.builder = builder;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -81,7 +79,6 @@ public class ClientOptions implements Serializable {
         this.sslOptions = original.getSslOptions();
         this.timeoutOptions = original.getTimeoutOptions();
         this.bufferUsageRatio = original.getBufferUsageRatio();
-        this.builder = original.builder;
     }
 
     /**
@@ -310,7 +307,16 @@ public class ClientOptions implements Serializable {
      * @since 5.1
      */
     public ClientOptions.Builder mutate() {
-        return this.builder;
+        Builder builder = new Builder();
+
+        builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
+                .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
+                .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).requestQueueSize(getRequestQueueSize())
+                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
+
+        return builder;
     }
 
     /**

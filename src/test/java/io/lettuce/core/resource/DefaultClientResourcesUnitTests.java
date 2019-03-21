@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import reactor.test.StepVerifier;
 import io.lettuce.core.event.Event;
@@ -34,6 +35,7 @@ import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.test.Futures;
 import io.lettuce.test.resource.FastShutdown;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -213,5 +215,42 @@ class DefaultClientResourcesUnitTests {
         assertThat(delay1).isSameAs(delay2);
 
         FastShutdown.shutdown(resources);
+    }
+
+    @Test
+    void considersSharedStateFromMutation() {
+
+        ClientResources clientResources = ClientResources.create();
+        HashedWheelTimer timer = (HashedWheelTimer) clientResources.timer();
+
+        assertThat(ReflectionTestUtils.getField(timer, "workerState")).isEqualTo(0);
+
+        ClientResources copy = clientResources.mutate().build();
+        assertThat(copy.timer()).isSameAs(timer);
+
+        copy.shutdown().awaitUninterruptibly();
+
+        assertThat(ReflectionTestUtils.getField(timer, "workerState")).isEqualTo(2);
+    }
+
+    @Test
+    void considersDecoupledSharedStateFromMutation() {
+
+        ClientResources clientResources = ClientResources.create();
+        HashedWheelTimer timer = (HashedWheelTimer) clientResources.timer();
+
+        assertThat(ReflectionTestUtils.getField(timer, "workerState")).isEqualTo(0);
+
+        ClientResources copy = clientResources.mutate().timer(new HashedWheelTimer()).build();
+        HashedWheelTimer copyTimer = (HashedWheelTimer) copy.timer();
+        assertThat(copy.timer()).isNotSameAs(timer);
+
+        copy.shutdown().awaitUninterruptibly();
+
+        assertThat(ReflectionTestUtils.getField(timer, "workerState")).isEqualTo(0);
+        assertThat(ReflectionTestUtils.getField(copyTimer, "workerState")).isEqualTo(0);
+
+        copyTimer.stop();
+        timer.stop();
     }
 }
