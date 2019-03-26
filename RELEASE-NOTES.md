@@ -1,13 +1,11 @@
-Lettuce 5.1.5 RELEASE NOTES
+Lettuce 5.1.6 RELEASE NOTES
 ===========================
 
-The Lettuce team is pleased to announce the Lettuce 5.1.5 service release! 
-This release ships with two critical fixes, primarily for the recently introduced reactive signal emission on
-non-I/O threads, so reactive single-connection systems can utilize more threads for
-item processing and are not limited to a single thread.
-The issue that is being fixed is retention of signal ordering as signals can be dispatched out of order.
+The Lettuce team is pleased to announce the Lettuce 5.1.6 service release! 
+This release ships bug fixes and dependency upgrades. Upgrading to
+the new version is recommended.
 
-Thanks to all contributors who made Lettuce 5.1.5.RELEASE possible.
+Thanks to all contributors who made Lettuce 5.1.6.RELEASE possible.
 
 Lettuce requires a minimum of Java 8 to build and run and #RunsLikeHeaven on Java 11. 
 It is tested continuously against the latest Redis source-build.
@@ -19,16 +17,20 @@ or lettuce-redis-client-users@googlegroups.com
 * Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
 * Join the chat at https://gitter.im/lettuce-io/Lobby for general discussion
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/5.1.5.RELEASE/reference/
-* Javadoc: https://lettuce.io/core/5.1.5.RELEASE/api/
+* Documentation: https://lettuce.io/core/5.1.6.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/5.1.6.RELEASE/api/
+
+Enhancements
+------------
+* Improve mutators for ClientOptions, ClusterClientOptions, and ClientResources #1003
 
 Fixes
 -----
-* Result is lost when published on another executor #986 (Thanks to @trueinsider)
-* Cancel ClusterTopologyRefreshTask in RedisClusterClient.shutdownAsync() #989 (Thanks to @johnsiu)
+* ClassCastException occurs when using RedisCluster with custom-command-interface and Async API #994 (Thanks to @tamanugi)
+* Application-level exceptions in Pub/Sub notifications mess up pub sub decoding state and cause timeouts #997 (Thanks to @giridharkannan)
+* RedisClient.shutdown hangs because event loops terminate before connections are closed #998 (Thanks to @Poorva17)
 
 Other
 -----
-* Upgrade to AssertJ 3.12.0 #983
-* Upgrade to AssertJ 3.12.1 #991
-* Javadoc is missing Javadoc links to Project Reactor types #942
+* Upgrade to Reactor Core 3.2.8.RELEASE #1006
+
