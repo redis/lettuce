@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private Class<?> markerInterface;
 
-  private MapperFactoryBean<?> mapperFactoryBean = new MapperFactoryBean<>();
+  private Class<? extends MapperFactoryBean> mapperFactoryBeanClass = MapperFactoryBean.class;
 
   public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
     super(registry, false);
@@ -103,10 +103,23 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
     this.sqlSessionFactoryBeanName = sqlSessionFactoryBeanName;
   }
 
+  /**
+   * @deprecated Since 2.0.1, Please use the {@link #setMapperFactoryBeanClass(Class)}.
+   */
+  @Deprecated
   public void setMapperFactoryBean(MapperFactoryBean<?> mapperFactoryBean) {
-    this.mapperFactoryBean = mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean<>();
+    this.mapperFactoryBeanClass = mapperFactoryBean == null ? MapperFactoryBean.class : mapperFactoryBean.getClass();
   }
 
+  /**
+   * Set the {@code MapperFactoryBean} class.
+   *
+   * @param mapperFactoryBeanClass the {@code MapperFactoryBean} class
+   * @since 2.0.1
+   */
+  public void setMapperFactoryBeanClass(Class<? extends MapperFactoryBean> mapperFactoryBeanClass) {
+    this.mapperFactoryBeanClass = mapperFactoryBeanClass == null ? MapperFactoryBean.class : mapperFactoryBeanClass;
+  }
 
   /**
    * Configures parent scanner to search for the right interfaces. It can search
@@ -174,7 +187,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
       // the mapper interface is the original class of the bean
       // but, the actual class of the bean is MapperFactoryBean
       definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName); // issue #59
-      definition.setBeanClass(this.mapperFactoryBean.getClass());
+      definition.setBeanClass(this.mapperFactoryBeanClass);
 
       definition.getPropertyValues().add("addToConfig", this.addToConfig);
 
