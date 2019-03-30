@@ -97,7 +97,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
 
     Class<? extends MapperFactoryBean> mapperFactoryBeanClass = annoAttrs.getClass("factoryBean");
     if (!MapperFactoryBean.class.equals(mapperFactoryBeanClass)) {
-      scanner.setMapperFactoryBean(BeanUtils.instantiateClass(mapperFactoryBeanClass));
+      scanner.setMapperFactoryBeanClass(mapperFactoryBeanClass);
     }
 
     scanner.setSqlSessionTemplateBeanName(annoAttrs.getString("sqlSessionTemplateRef"));
