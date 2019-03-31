@@ -15,6 +15,7 @@
  */
 package org.mybatis.spring.config;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.AfterEach;
@@ -25,6 +26,7 @@ import org.mybatis.spring.mapper.AnnotatedMapper;
 import org.mybatis.spring.mapper.MapperInterface;
 import org.mybatis.spring.mapper.MapperSubinterface;
 import org.mybatis.spring.mapper.child.MapperChildInterface;
+import org.mybatis.spring.type.DummyMapperFactoryBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
@@ -168,6 +170,24 @@ class NamespaceTest {
     applicationContext.getBean("mapperSubinterface");
     applicationContext.getBean("mapperChildInterface");
     applicationContext.getBean("annotatedMapper");
+  }
+
+  @Test
+  void testScanWithMapperFactoryBeanClass() {
+    DummyMapperFactoryBean.clear();
+    applicationContext = new ClassPathXmlApplicationContext(
+        new String[] { "org/mybatis/spring/config/mapper-factory-bean-class.xml" }
+        , setupSqlSessionTemplate());
+
+    startContext();
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
+
+    assertTrue(DummyMapperFactoryBean.getMapperCount() > 0);
   }
 
   private GenericApplicationContext setupSqlSessionTemplate() {

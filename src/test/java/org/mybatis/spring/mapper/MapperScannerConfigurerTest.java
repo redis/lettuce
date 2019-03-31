@@ -16,6 +16,7 @@
 package org.mybatis.spring.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Properties;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.child.MapperChildInterface;
+import org.mybatis.spring.type.DummyMapperFactoryBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
@@ -253,6 +255,23 @@ class MapperScannerConfigurerTest {
         .getBean("sqlSessionFactory");
     assertThat(sessionFactory.getConfiguration().getDefaultExecutorType()).isSameAs(ExecutorType.REUSE);
   }
+
+  @Test
+  void testScanWithMapperFactoryBeanClass() {
+    DummyMapperFactoryBean.clear();
+    applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add(
+        "mapperFactoryBeanClass", DummyMapperFactoryBean.class);
+
+    startContext();
+
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
+
+    assertTrue(DummyMapperFactoryBean.getMapperCount() > 0);
+  }
+
 
   private void setupSqlSessionFactory(String name) {
     GenericBeanDefinition definition = new GenericBeanDefinition();

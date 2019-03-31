@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2016 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
   private static final String ATTRIBUTE_NAME_GENERATOR = "name-generator";
   private static final String ATTRIBUTE_TEMPLATE_REF = "template-ref";
   private static final String ATTRIBUTE_FACTORY_REF = "factory-ref";
+  private static final String ATTRIBUTE_MAPPER_FACTORY_BEAN_CLASS = "mapper-factory-bean-class";
 
   /**
    * {@inheritDoc}
@@ -76,6 +77,13 @@ public class MapperScannerBeanDefinitionParser implements BeanDefinitionParser {
         Class<?> nameGeneratorClass = classLoader.loadClass(nameGeneratorClassName);
         BeanNameGenerator nameGenerator = BeanUtils.instantiateClass(nameGeneratorClass, BeanNameGenerator.class);
         scanner.setBeanNameGenerator(nameGenerator);
+      }
+      String mapperFactoryBeanClassName = element.getAttribute(ATTRIBUTE_MAPPER_FACTORY_BEAN_CLASS);
+      if (StringUtils.hasText(mapperFactoryBeanClassName)) {
+        @SuppressWarnings("unchecked")
+        Class<? extends MapperFactoryBean> mapperFactoryBeanClass =
+            (Class<? extends MapperFactoryBean>)classLoader.loadClass(mapperFactoryBeanClassName);
+        scanner.setMapperFactoryBeanClass(mapperFactoryBeanClass);
       }
     } catch (Exception ex) {
       readerContext.error(ex.getMessage(), readerContext.extractSource(element), ex.getCause());

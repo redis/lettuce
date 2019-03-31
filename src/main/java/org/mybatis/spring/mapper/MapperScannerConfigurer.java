@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2018 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -107,6 +107,8 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   private Class<? extends Annotation> annotationClass;
 
   private Class<?> markerInterface;
+
+  private Class<? extends MapperFactoryBean> mapperFactoryBeanClass;
 
   private ApplicationContext applicationContext;
 
@@ -242,6 +244,16 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
   }
 
   /**
+   * The class of the {@link MapperFactoryBean} to return a mybatis proxy as spring bean.
+   *
+   * @param mapperFactoryBeanClass The class of the MapperFactoryBean
+   * @since 2.0.1
+   */
+  public void setMapperFactoryBeanClass(Class<? extends MapperFactoryBean> mapperFactoryBeanClass) {
+    this.mapperFactoryBeanClass = mapperFactoryBeanClass;
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -314,6 +326,7 @@ public class MapperScannerConfigurer implements BeanDefinitionRegistryPostProces
     scanner.setSqlSessionTemplateBeanName(this.sqlSessionTemplateBeanName);
     scanner.setResourceLoader(this.applicationContext);
     scanner.setBeanNameGenerator(this.nameGenerator);
+    scanner.setMapperFactoryBeanClass(this.mapperFactoryBeanClass);
     scanner.registerFilters();
     scanner.scan(StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
   }
