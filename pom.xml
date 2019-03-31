@@ -99,7 +99,7 @@
   </distributionManagement>
 
   <properties>
-    <clirr.comparisonVersion>1.2.2</clirr.comparisonVersion>
+    <clirr.comparisonVersion>1.3.2</clirr.comparisonVersion>
     <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.mapper.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
     <gcu.product>Spring</gcu.product>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
