@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2018 the original author or authors.
+       Copyright 2010-2019 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -101,6 +101,21 @@
             <tool:annotation>
               <tool:expected-type type="java.lang.Class" />
               <tool:assignable-to type="org.springframework.beans.factory.support.BeanNameGenerator" />
+            </tool:annotation>
+          </xsd:appinfo>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute name="mapper-factory-bean-class" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            <![CDATA[
+              The fully-qualified class name of the MapperFactoryBean to return a mybatis proxy as spring bean. (Since 2.0.1)
+            ]]>
+          </xsd:documentation>
+          <xsd:appinfo>
+            <tool:annotation>
+              <tool:expected-type type="java.lang.Class" />
+              <tool:assignable-to type="org.mybatis.spring.mapper.MapperFactoryBean" />
             </tool:annotation>
           </xsd:appinfo>
         </xsd:annotation>

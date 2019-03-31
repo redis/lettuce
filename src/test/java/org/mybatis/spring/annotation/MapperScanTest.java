@@ -166,6 +166,7 @@ class MapperScanTest {
 
   @Test
   void testCustomMapperFactoryBean() {
+    DummyMapperFactoryBean.clear();
     applicationContext.register(AppConfigWithCustomMapperFactoryBean.class);
 
     startContext();
