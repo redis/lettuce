@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2018 the original author or authors.
+       Copyright 2010-2019 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -177,11 +177,15 @@ public MyBatisCursorItemReader<Employee> reader() {
       <subsection name="MyBatisBatchItemWriter">
       
         <p>
-          这是一个 <code>ItemWriter</code>，通过利用 <code>SqlSessionTemplate</code> 中的批量处理功能来对给定的所有记录执行多个语句。<code>SqlSessionFactory</code> 需要被配置为 <code>BATCH</code> 执行类型。
+          这是一个 <code>ItemWriter</code>，通过利用 <code>SqlSessionTemplate</code>
+          中的批量处理功能来对给定的所有记录执行多个语句。<code>SqlSessionFactory</code>
+          需要被配置为 <code>BATCH</code> 执行类型。
         </p>
 
         <p>
-          当调用 <code>write()</code> 时，将会执行 <code>statementId</code> 属性中指定的映射语句。一般情况下，<code>write()</code> 应该在一个事务中进行调用。<br/>
+          当调用 <code>write()</code> 时，将会执行 <code>statementId</code>
+          属性中指定的映射语句。一般情况下，<code>write()</code>
+          应该在一个事务中进行调用。<br/>
         </p>
  
         <p>下面是一个配置样例：</p>
@@ -201,18 +205,19 @@ public MyBatisBatchItemWriter<User> writer() {
 }]]></source>
 
 
-        <p><strong>Converting a item that read using ItemReader to an any parameter object:</strong></p>
+        <p><strong>将 ItemReader 读取的记录转换为任意的参数对象：</strong></p>
 
         <p>
-          By default behavior, the <code>MyBatisBatchItemWriter</code> passes a item that read using <code>ItemReader</code>
-          (or convert by <code>ItemProcessor</code>) to the MyBatis(<code>SqlSession#update()</code>) as the parameter object.
-          If you want to customize a parameter object that passes to the MyBatis, you can realize to use the <code>itemToParameterConverter</code> option.
-          For example using <code>itemToParameterConverter</code> option, you can passes any objects other than the item object to the MyBatis.
-          Follows below a sample:
+          默认情况下，<code>MyBatisBatchItemWriter</code> 会将 <code>ItemReader</code>
+          读取的对象（或 <code>ItemProcessor</code> 转换过的对象) 以参数对象的形式传递给
+          MyBatis（<code>SqlSession#update()</code>）。
+		  如果你想自定义传递给 MyBatis 的参数对象，可以使用 <code>itemToParameterConverter</code> 选项。
+          使用该选项后，可以传递任意对象给 MyBatis。
+          举个例子：
         </p>
 
         <p>
-          At first, you create a custom converter class (or factory method). The following sample uses a factory method.
+		  首先，创建一个自定义的转换器类（或工厂方法）。以下例子使用了工厂方法。
         </p>
 
         <source><![CDATA[
@@ -227,7 +232,7 @@ public static <T> Converter<T, Map<String, Object>> createItemToParameterMapConv
 }]]></source>
 
         <p>
-          At next, you write a sql mapping.
+		  接下来，编写 SQL 映射。
         </p>
 
         <source><![CDATA[
@@ -237,11 +242,11 @@ public static <T> Converter<T, Map<String, Object>> createItemToParameterMapConv
 </select>]]></source>
 
         <p>
-          At last, you configure the <code>MyBatisBatchItemWriter</code>.
+		  最后，配置 <code>MyBatisBatchItemWriter</code>。
         </p>
 
         <source><![CDATA[
-// Sample for Java Config
+// Java 配置样例
 @Bean
 public MyBatisBatchItemWriter<Person> writer() throws Exception {
   return new MyBatisBatchItemWriterBuilder<Person>()
@@ -252,7 +257,7 @@ public MyBatisBatchItemWriter<Person> writer() throws Exception {
 }]]></source>
 
         <source><![CDATA[
-<!-- Sample for XML Config -->
+<!-- XML 配置样例 -->
 <bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
   <property name="sqlSessionFactory" ref="sqlSessionFactory"/>
   <property name="statementId" value="org.mybatis.spring.sample.mapper.PersonMapper.createPerson"/>
