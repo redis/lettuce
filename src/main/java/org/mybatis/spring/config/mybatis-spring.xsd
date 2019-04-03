@@ -78,7 +78,12 @@
             <![CDATA[
               Specifies which SqlSessionFactory to use in the case that there is more than one in the spring context. Usually this is only needed when you have more than one datasource.
                     ]]>
-                  </xsd:documentation>
+          </xsd:documentation>
+          <xsd:appinfo>
+            <tool:annotation kind="ref">
+              <tool:expected-type type="org.apache.ibatis.session.SqlSessionFactory"/>
+            </tool:annotation>
+          </xsd:appinfo>
         </xsd:annotation>
       </xsd:attribute>
       <xsd:attribute name="template-ref" type="xsd:string">
@@ -88,6 +93,11 @@
               Specifies which SqlSessionTemplate to use in the case that there is more than one in the spring context. Usually this is only needed when you have more than one datasource.
             ]]>
           </xsd:documentation>
+          <xsd:appinfo>
+            <tool:annotation kind="ref">
+              <tool:expected-type type="org.mybatis.spring.SqlSessionTemplate"/>
+            </tool:annotation>
+          </xsd:appinfo>
         </xsd:annotation>
       </xsd:attribute>
       <xsd:attribute name="name-generator" type="xsd:string">
