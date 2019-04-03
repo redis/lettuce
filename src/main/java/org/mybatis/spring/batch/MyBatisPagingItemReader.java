@@ -15,18 +15,18 @@
  */
 package org.mybatis.spring.batch;
 
-import static org.springframework.util.Assert.notNull;
-import static org.springframework.util.ClassUtils.getShortName;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.batch.item.database.AbstractPagingItemReader;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import static org.springframework.util.Assert.notNull;
+import static org.springframework.util.ClassUtils.getShortName;
 
 /**
  * {@code org.springframework.batch.item.ItemReader} for reading database
@@ -89,12 +89,14 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   public void afterPropertiesSet() throws Exception {
     super.afterPropertiesSet();
     notNull(sqlSessionFactory, "A SqlSessionFactory is required.");
-    sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
     notNull(queryId, "A queryId is required.");
   }
 
   @Override
   protected void doReadPage() {
+    if (sqlSessionTemplate == null) {
+      sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
+    }
     Map<String, Object> parameters = new HashMap<>();
     if (parameterValues != null) {
       parameters.putAll(parameterValues);
