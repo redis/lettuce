@@ -341,7 +341,7 @@ class SqlSessionFactoryBeanTest {
   @Test
   void testSearchATypeAliasPackage() throws Exception {
     setupFactoryBean();
-    factoryBean.setTypeAliasesPackage("org/mybatis/spring/type");
+    factoryBean.setTypeAliasesPackage("org.mybatis.spring.type");
 
     TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
     typeAliasRegistry.resolveAlias("testAlias");
@@ -354,7 +354,7 @@ class SqlSessionFactoryBeanTest {
   void testSearchATypeAliasPackageWithSuperType() throws Exception {
     setupFactoryBean();
     factoryBean.setTypeAliasesSuperType(SuperType.class);
-    factoryBean.setTypeAliasesPackage("org/mybatis/spring/type");
+    factoryBean.setTypeAliasesPackage("org.mybatis.*.type");
 
     TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
     typeAliasRegistry.resolveAlias("testAlias2");
@@ -365,9 +365,31 @@ class SqlSessionFactoryBeanTest {
   }
 
   @Test
+  void testSearchATypeAliasPackageWithSamePackage() throws Exception {
+    setupFactoryBean();
+    factoryBean.setTypeAliasesPackage("org.mybatis.spring.type, org.*.spring.type");
+
+    TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
+    typeAliasRegistry.resolveAlias("testAlias");
+    typeAliasRegistry.resolveAlias("testAlias2");
+    typeAliasRegistry.resolveAlias("dummyTypeHandler");
+    typeAliasRegistry.resolveAlias("superType");
+  }
+
+  @Test
   void testSearchATypeHandlerPackage() throws Exception {
     setupFactoryBean();
-    factoryBean.setTypeHandlersPackage("org/mybatis/spring/type");
+    factoryBean.setTypeHandlersPackage("org.**.type");
+
+    TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
+    assertThat(typeHandlerRegistry.hasTypeHandler(BigInteger.class)).isTrue();
+    assertThat(typeHandlerRegistry.hasTypeHandler(BigDecimal.class)).isTrue();
+  }
+
+  @Test
+  void testSearchATypeHandlerPackageWithSamePackage() throws Exception {
+    setupFactoryBean();
+    factoryBean.setTypeHandlersPackage("org.mybatis.spring.type, org.mybatis.*.type");
 
     TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
     assertThat(typeHandlerRegistry.hasTypeHandler(BigInteger.class)).isTrue();

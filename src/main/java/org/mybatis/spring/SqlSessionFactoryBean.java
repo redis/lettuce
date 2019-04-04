@@ -15,24 +15,21 @@
  */
 package org.mybatis.spring;
 
-import static org.springframework.util.Assert.notNull;
-import static org.springframework.util.Assert.state;
-import static org.springframework.util.ObjectUtils.isEmpty;
-import static org.springframework.util.StringUtils.hasLength;
-import static org.springframework.util.StringUtils.tokenizeToStringArray;
-
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Stream;
-
-import javax.sql.DataSource;
 
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.executor.ErrorContext;
+import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.io.VFS;
 import org.apache.ibatis.mapping.DatabaseIdProvider;
 import org.apache.ibatis.mapping.Environment;
@@ -55,7 +52,19 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.NestedIOException;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.type.ClassMetadata;
+import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
+import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
+import org.springframework.util.ClassUtils;
+
+import static org.springframework.util.Assert.notNull;
+import static org.springframework.util.Assert.state;
+import static org.springframework.util.ObjectUtils.isEmpty;
+import static org.springframework.util.StringUtils.hasLength;
+import static org.springframework.util.StringUtils.tokenizeToStringArray;
 
 /**
  * {@code FactoryBean} that creates an MyBatis {@code SqlSessionFactory}.
@@ -78,6 +87,9 @@ import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, InitializingBean, ApplicationListener<ApplicationEvent> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SqlSessionFactoryBean.class);
+
+  private static final ResourcePatternResolver RESOURCE_PATTERN_RESOLVER = new PathMatchingResourcePatternResolver();
+  private static final MetadataReaderFactory METADATA_READER_FACTORY = new CachingMetadataReaderFactory();
 
   private Resource configLocation;
 
@@ -211,6 +223,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   /**
    * Packages to search for type aliases.
    *
+   * <p>Since 2.0.1, allow to specify a wildcard such as {@code com.example.*.model}.
+   *
    * @since 1.0.1
    *
    * @param typeAliasesPackage package to scan for domain objects
@@ -236,6 +250,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
   /**
    * Packages to search for type handlers.
    *
+   * <p>Since 2.0.1, allow to specify a wildcard such as {@code com.example.*.typehandler}.
+
    * @since 1.0.1
    *
    * @param typeHandlersPackage package to scan for type handlers
@@ -416,9 +432,9 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
    * Since 1.3.0, it can be specified a {@link Configuration} instance directly(without config file).
    *
    * @return SqlSessionFactory
-   * @throws IOException if loading the config file failed
+   * @throws Exception if configuration is failed
    */
-  protected SqlSessionFactory buildSqlSessionFactory() throws IOException {
+  protected SqlSessionFactory buildSqlSessionFactory() throws Exception {
 
     final Configuration targetConfiguration;
 
@@ -444,13 +460,8 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     Optional.ofNullable(this.vfs).ifPresent(targetConfiguration::setVfsImpl);
 
     if (hasLength(this.typeAliasesPackage)) {
-      String[] typeAliasPackageArray = tokenizeToStringArray(this.typeAliasesPackage,
-          ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-      Stream.of(typeAliasPackageArray).forEach(packageToScan -> {
-        targetConfiguration.getTypeAliasRegistry().registerAliases(packageToScan,
-            typeAliasesSuperType == null ? Object.class : typeAliasesSuperType);
-        LOGGER.debug(() -> "Scanned package: '" + packageToScan + "' for aliases");
-      });
+      scanClasses(this.typeAliasesPackage, this.typeAliasesSuperType)
+          .forEach(targetConfiguration.getTypeAliasRegistry()::registerAlias);
     }
 
     if (!isEmpty(this.typeAliases)) {
@@ -468,12 +479,11 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     }
 
     if (hasLength(this.typeHandlersPackage)) {
-      String[] typeHandlersPackageArray = tokenizeToStringArray(this.typeHandlersPackage,
-          ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
-      Stream.of(typeHandlersPackageArray).forEach(packageToScan -> {
-        targetConfiguration.getTypeHandlerRegistry().register(packageToScan);
-        LOGGER.debug(() -> "Scanned package: '" + packageToScan + "' for type handlers");
-      });
+      scanClasses(this.typeHandlersPackage, TypeHandler.class).stream()
+          .filter(clazz -> !clazz.isInterface())
+          .filter(clazz -> !Modifier.isAbstract(clazz.getModifiers()))
+          .filter(clazz -> ClassUtils.getConstructorIfAvailable(clazz) != null)
+          .forEach(targetConfiguration.getTypeHandlerRegistry()::register);
     }
 
     if (!isEmpty(this.typeHandlers)) {
@@ -569,6 +579,29 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
       // fail-fast -> check all statements are completed
       this.sqlSessionFactory.getConfiguration().getMappedStatementNames();
     }
+  }
+
+  private Set<Class<?>> scanClasses(String packagePatterns, Class<?> assignableType)
+      throws IOException {
+    Set<Class<?>> classes = new HashSet<>();
+    String[] packagePatternArray = tokenizeToStringArray(packagePatterns,
+        ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
+    for (String packagePattern : packagePatternArray) {
+      Resource[] resources = RESOURCE_PATTERN_RESOLVER.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
+          ClassUtils.convertClassNameToResourcePath(packagePattern) + "/**/*.class");
+      for (Resource resource : resources) {
+        try {
+          ClassMetadata classMetadata = METADATA_READER_FACTORY.getMetadataReader(resource).getClassMetadata();
+          Class<?> clazz = Resources.classForName(classMetadata.getClassName());
+          if (assignableType == null || assignableType.isAssignableFrom(clazz)) {
+            classes.add(clazz);
+          }
+        } catch (Throwable e) {
+          LOGGER.warn(() -> "Cannot load the '" + resource + "'. Cause by " + e.toString());
+        }
+      }
+    }
+    return classes;
   }
 
 }
