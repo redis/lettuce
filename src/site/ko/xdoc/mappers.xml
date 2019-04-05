@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2019 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -75,18 +75,14 @@
       
        <h4>자바설정 사용</h4>
        
-       <p>스프링의 Java Config기능을 사용하면 다음처럼 <code>SqlSessionTemplate</code> 에서 직접 매퍼를 얻을 수 있다. </p>
-
     <source><![CDATA[
 @Bean
-public UserMapper userMapper() throws Exception {
-  SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
-  return sessionTemplate.getMapper(UserMapper.class);
+public MapperFactoryBean<UserMapper> userMapper() throws Exception {
+  MapperFactoryBean<UserMapper> factoryBean = new MapperFactoryBean<>(UserMapper.class);
+  factoryBean.setSqlSessionFactory(sqlSessionFactory());
+  return factoryBean;
 }]]></source>
 
-       <p>마이바티스의 디폴트 <code>SqlSession</code>에서 매퍼를 리턴받을수 없다. 
-       디폴트 <code>SqlSession</code>은 쓰레드에 안전하지 않고 생성된 <code>SqlSession</code>이 닫힐때까지만 살아있기 때문이다.
-       대신 샘플코드에서 보여주는 것처럼 <code><a href="sqlsession.html#SqlSessionTemplate">SqlSessionTemplate</a></code> 를 사용해야만 한다. </p>
     </subsection>
 
     <subsection name="매퍼 스캔" id="scan">

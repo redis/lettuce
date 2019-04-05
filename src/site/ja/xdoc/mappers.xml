@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2019 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -86,22 +86,14 @@
       
        <h4>Java Config で設定する場合</h4>
        
-       <p>
-         Java Config を使って Spring を設定する場合は、次のようにして <code>SqlSessionTemplate</code> から直接 Mapper を取得することができます。
-       </p>
-
     <source><![CDATA[
 @Bean
-public UserMapper userMapper() throws Exception {
-  SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
-  return sessionTemplate.getMapper(UserMapper.class);
+public MapperFactoryBean<UserMapper> userMapper() throws Exception {
+  MapperFactoryBean<UserMapper> factoryBean = new MapperFactoryBean<>(UserMapper.class);
+  factoryBean.setSqlSessionFactory(sqlSessionFactory());
+  return factoryBean;
 }]]></source>
 
-       <p>
-         ここで、MyBatis のデフォルトの <code>SqlSession</code> から取得した Mapper を返してはいけません。
-         なぜなら、この Mapper はスレッドセーフではなく、取得元の <code>SqlSession</code> がクローズされると破棄されてしまうからです。
-         上記の例のように、必ず <code><a href="sqlsession.html#SqlSessionTemplate">SqlSessionTemplate</a></code> を使って Mapper を取得するようにしてください。
-       </p>
     </subsection>
 
     <subsection name="Mapper の自動検出" id="scan">

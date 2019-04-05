@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2017 the original author or authors.
+       Copyright 2010-2019 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -95,24 +95,14 @@
       
        <h4>Con Java Config</h4>
 
-       <p>
-         Cuando uses Java Config puedes obtener un mapper directamente desde un <code>SqlSessionTemplate</code> como sigue: 
-       </p>
-
     <source><![CDATA[
 @Bean
-public UserMapper userMapper() throws Exception {
-  SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
-  return sessionTemplate.getMapper(UserMapper.class);
+public MapperFactoryBean<UserMapper> userMapper() throws Exception {
+  MapperFactoryBean<UserMapper> factoryBean = new MapperFactoryBean<>(UserMapper.class);
+  factoryBean.setSqlSessionFactory(sqlSessionFactory());
+  return factoryBean;
 }]]></source>
 
-       <p>
-         Ten en cuenta que no puedes devolver un mapper obtenido de la una <code>SqlSession</code> normal de MyBatis
-         porque no sería thread safe y solo viviría hasta que la <code>SqlSession</code> que lo creó se cierre.
-         Debes usar un  
-         <code><a href="sqlsession.html#SqlSessionTemplate">SqlSessionTemplate</a></code> en su lugar, 
-         como se muestra en el ejemplo.
-       </p>
     </subsection>
 
     <subsection name="Escanear mappers" id="scan">

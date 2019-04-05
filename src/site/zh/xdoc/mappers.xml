@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-       Copyright 2010-2018 the original author or authors.
+       Copyright 2010-2019 the original author or authors.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.
@@ -81,20 +81,14 @@
 
         <h4>Java 配置</h4>
 
-        <p>
-          当使用 Spring 的 Java 配置时，你可以直接从一个 <code>SqlSessionTemplate</code> 获取映射器，就像下面这样：
-        </p>
-
         <source><![CDATA[
 @Bean
-public UserMapper userMapper() throws Exception {
-  SqlSessionTemplate sessionTemplate = new SqlSessionTemplate(sqlSessionFactory());
-  return sessionTemplate.getMapper(UserMapper.class);
+public MapperFactoryBean<UserMapper> userMapper() throws Exception {
+  MapperFactoryBean<UserMapper> factoryBean = new MapperFactoryBean<>(UserMapper.class);
+  factoryBean.setSqlSessionFactory(sqlSessionFactory());
+  return factoryBean;
 }]]></source>
 
-        <p>
-          注意，你不能返回一个从 MyBatis 默认的 <code>SqlSession</code> 中获取的映射器，因为它是非线程安全的，并且只会在父 <code>SqlSession</code> 关闭之前有效。你必须使用 <code><a href="sqlsession.html#SqlSessionTemplate">SqlSessionTemplate</a></code> 代替，就像上面的例子所示。
-        </p>
       </subsection>
 
       <subsection name="发现映射器" id="scan">
