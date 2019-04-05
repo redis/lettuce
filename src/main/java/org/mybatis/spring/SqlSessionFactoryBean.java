@@ -518,25 +518,28 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         this.transactionFactory == null ? new SpringManagedTransactionFactory() : this.transactionFactory,
         this.dataSource));
 
-    if (!isEmpty(this.mapperLocations)) {
-      for (Resource mapperLocation : this.mapperLocations) {
-        if (mapperLocation == null) {
-          continue;
+    if (this.mapperLocations != null) {
+      if (this.mapperLocations.length == 0) {
+        LOGGER.warn(() -> "Property 'mapperLocations' was specified but matching resources are not found.");
+      } else {
+        for (Resource mapperLocation : this.mapperLocations) {
+          if (mapperLocation == null) {
+            continue;
+          }
+          try {
+            XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(),
+                targetConfiguration, mapperLocation.toString(), targetConfiguration.getSqlFragments());
+            xmlMapperBuilder.parse();
+          } catch (Exception e) {
+            throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
+          } finally {
+            ErrorContext.instance().reset();
+          }
+          LOGGER.debug(() -> "Parsed mapper file: '" + mapperLocation + "'");
         }
-
-        try {
-          XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(mapperLocation.getInputStream(),
-              targetConfiguration, mapperLocation.toString(), targetConfiguration.getSqlFragments());
-          xmlMapperBuilder.parse();
-        } catch (Exception e) {
-          throw new NestedIOException("Failed to parse mapping resource: '" + mapperLocation + "'", e);
-        } finally {
-          ErrorContext.instance().reset();
-        }
-        LOGGER.debug(() -> "Parsed mapper file: '" + mapperLocation + "'");
       }
     } else {
-      LOGGER.debug(() -> "Property 'mapperLocations' was not specified or no matching resources found");
+      LOGGER.debug(() -> "Property 'mapperLocations' was not specified.");
     }
 
     return this.sqlSessionFactoryBuilder.build(targetConfiguration);
