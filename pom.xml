@@ -105,7 +105,7 @@
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
-    <mybatis.version>3.5.0</mybatis.version>
+    <mybatis.version>3.5.1</mybatis.version>
     <spring.version>5.1.6.RELEASE</spring.version>
     <spring-batch.version>4.1.1.RELEASE</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
