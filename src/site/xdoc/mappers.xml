@@ -106,6 +106,7 @@ public MapperFactoryBean<UserMapper> userMapper() throws Exception {
   factoryBean.setSqlSessionFactory(sqlSessionFactory());
   return factoryBean;
 }]]></source>
+    </subsection>
 
     <subsection name="Scanning for mappers" id="scan">
       <p>
