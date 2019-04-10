@@ -154,7 +154,7 @@ public class TopologyComparators {
             return false;
         }
 
-        if (o1.getSlots().size() != o2.getSlots().size() || !o1.getSlots().containsAll(o2.getSlots())) {
+        if (!o1.hasSameSlotsOf(o2)) {
             return false;
         }
 
