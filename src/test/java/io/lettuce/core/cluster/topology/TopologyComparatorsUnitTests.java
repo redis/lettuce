@@ -20,10 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.util.Lists.newArrayList;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.junit.jupiter.api.Test;
 
@@ -306,6 +303,34 @@ class TopologyComparatorsUnitTests {
         Partitions partitions1 = ClusterPartitionParser.parse(nodes1);
         Partitions partitions2 = ClusterPartitionParser.parse(nodes2);
         assertThat(isChanged(partitions1, partitions2)).isTrue();
+    }
+
+    @Test
+    void aNodeShouldNotHaveSameSlotsIfOtherNodeIsNull() {
+        RedisClusterNode nodeA = createNode(3);
+        assertThat(nodeA.hasSameSlotsOf(null)).isFalse();
+    }
+
+    @Test
+    void nodesShouldHaveSameSlots() {
+        RedisClusterNode nodeA = createNode(1, 4, 36, 98);
+        RedisClusterNode nodeB = createNode(4, 36, 1, 98);
+        assertThat(nodeA.getSlots().containsAll(nodeB.getSlots())).isTrue();
+        assertThat(nodeA.hasSameSlotsOf(nodeB)).isTrue();
+    }
+
+    @Test
+    void nodesShouldNotHaveSameSlots() {
+        RedisClusterNode nodeA = createNode(1, 4, 36, 99);
+        RedisClusterNode nodeB = createNode(4, 36, 1, 100);
+        assertThat(nodeA.getSlots().containsAll(nodeB.getSlots())).isFalse();
+        assertThat(nodeA.hasSameSlotsOf(nodeB)).isFalse();
+    }
+
+    private RedisClusterNode createNode(Integer ... slots) {
+        RedisClusterNode node = new RedisClusterNode();
+        node.setSlots(Arrays.asList(slots));
+        return node;
     }
 
     @Test
