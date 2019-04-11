@@ -30,6 +30,7 @@ import io.lettuce.core.internal.LettuceLists;
  * Comparators for {@link RedisClusterNode} and {@link RedisURI}.
  *
  * @author Mark Paluch
+ * @author Alessandro Simi
  */
 public class TopologyComparators {
 
@@ -43,8 +44,7 @@ public class TopologyComparators {
      * @return List containing {@link RedisClusterNode}s ordered by {@code fixedOrder} and {@link RedisURI}
      * @see #sortByUri(Iterable)
      */
-    public static List<RedisClusterNode> predefinedSort(Iterable<RedisClusterNode> clusterNodes,
-            Iterable<RedisURI> fixedOrder) {
+    public static List<RedisClusterNode> predefinedSort(Iterable<RedisClusterNode> clusterNodes, Iterable<RedisURI> fixedOrder) {
 
         LettuceAssert.notNull(clusterNodes, "Cluster nodes must not be null");
         LettuceAssert.notNull(fixedOrder, "Fixed order must not be null");
@@ -154,7 +154,7 @@ public class TopologyComparators {
             return false;
         }
 
-        if (!o1.hasSameSlotsOf(o2)) {
+        if (!o1.hasSameSlotsAs(o2)) {
             return false;
         }
 

@@ -33,6 +33,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * This class is mutable and not thread-safe if mutated by multiple threads concurrently.
  *
  * @author Mark Paluch
+ * @author Alessandro Simi
  * @since 3.0
  */
 @SuppressWarnings("serial")
@@ -255,9 +256,13 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         }
     }
 
-    public boolean hasSameSlotsOf(RedisClusterNode other) {
-        if (other == null) return false;
-        else return this.slots.equals(other.slots);
+    public boolean hasSameSlotsAs(RedisClusterNode other) {
+
+        if (this.slots == null || other.slots == null) {
+            return false;
+        }
+
+        return this.slots.equals(other.slots);
     }
 
     public Set<NodeFlag> getFlags() {
