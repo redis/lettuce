@@ -31,7 +31,10 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceLists;
 
 /**
+ * Unit tests for {@link TopologyComparators}.
+ *
  * @author Mark Paluch
+ * @author Alessandro Simi
  */
 class TopologyComparatorsUnitTests {
 
@@ -306,17 +309,11 @@ class TopologyComparatorsUnitTests {
     }
 
     @Test
-    void aNodeShouldNotHaveSameSlotsIfOtherNodeIsNull() {
-        RedisClusterNode nodeA = createNode(3);
-        assertThat(nodeA.hasSameSlotsOf(null)).isFalse();
-    }
-
-    @Test
     void nodesShouldHaveSameSlots() {
         RedisClusterNode nodeA = createNode(1, 4, 36, 98);
         RedisClusterNode nodeB = createNode(4, 36, 1, 98);
         assertThat(nodeA.getSlots().containsAll(nodeB.getSlots())).isTrue();
-        assertThat(nodeA.hasSameSlotsOf(nodeB)).isTrue();
+        assertThat(nodeA.hasSameSlotsAs(nodeB)).isTrue();
     }
 
     @Test
@@ -324,10 +321,10 @@ class TopologyComparatorsUnitTests {
         RedisClusterNode nodeA = createNode(1, 4, 36, 99);
         RedisClusterNode nodeB = createNode(4, 36, 1, 100);
         assertThat(nodeA.getSlots().containsAll(nodeB.getSlots())).isFalse();
-        assertThat(nodeA.hasSameSlotsOf(nodeB)).isFalse();
+        assertThat(nodeA.hasSameSlotsAs(nodeB)).isFalse();
     }
 
-    private RedisClusterNode createNode(Integer ... slots) {
+    private RedisClusterNode createNode(Integer... slots) {
         RedisClusterNode node = new RedisClusterNode();
         node.setSlots(Arrays.asList(slots));
         return node;

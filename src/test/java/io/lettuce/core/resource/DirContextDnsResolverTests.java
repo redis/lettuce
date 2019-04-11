@@ -31,9 +31,11 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
+ * Tests for {@link DirContextDnsResolver}.
+ *
  * @author Mark Paluch
  */
-
+@Disabled("Tests require an internet connection")
 class DirContextDnsResolverTests {
 
     private DirContextDnsResolver resolver;
