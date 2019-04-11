@@ -1,6 +1,7 @@
 ---
 name: 🐛 Bug Report
 about: If something isn't working as expected 🤔.
+labels: 'type: bug', 'status: waiting-for-triage'
 ---
 
 ## Bug Report
@@ -11,13 +12,27 @@ about: If something isn't working as expected 🤔.
 
 <!-- A clear and concise description of the behavior.-->
 
+<details>
+<summary>Stack trace</summary>
+
+```java
+// your stack trace here;
+```
+
+</details>
+
 #### Input Code
 
 <!-- Java/Kotlin/Scala/Groovy/… or Repo link if applicable: -->
 
+<details>
+<summary>Input Code</summary>
+
 ```java
 // your code here;
 ```
+
+</details>
 
 #### Expected behavior/code
 

@@ -1,6 +1,7 @@
 ---
 name: Support Question
 about: If you have a question 💬, please check out Gitter, Stack Overflow, or post it to the mailing list! Do not post them here.
+labels: 'for: stackoverflow'
 ---
 
 We primarily use GitHub as an issue tracker; for usage and support questions, please check out these resources below. Thanks! 😁.
