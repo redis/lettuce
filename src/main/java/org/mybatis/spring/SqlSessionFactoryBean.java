@@ -460,7 +460,10 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
     Optional.ofNullable(this.vfs).ifPresent(targetConfiguration::setVfsImpl);
 
     if (hasLength(this.typeAliasesPackage)) {
-      scanClasses(this.typeAliasesPackage, this.typeAliasesSuperType)
+      scanClasses(this.typeAliasesPackage, this.typeAliasesSuperType).stream()
+          .filter(clazz -> !clazz.isAnonymousClass())
+          .filter(clazz -> !clazz.isInterface())
+          .filter(clazz -> !clazz.isMemberClass())
           .forEach(targetConfiguration.getTypeAliasRegistry()::registerAlias);
     }
 
@@ -480,6 +483,7 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
 
     if (hasLength(this.typeHandlersPackage)) {
       scanClasses(this.typeHandlersPackage, TypeHandler.class).stream()
+          .filter(clazz -> !clazz.isAnonymousClass())
           .filter(clazz -> !clazz.isInterface())
           .filter(clazz -> !Modifier.isAbstract(clazz.getModifiers()))
           .filter(clazz -> ClassUtils.getConstructorIfAvailable(clazz) != null)

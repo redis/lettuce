@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Properties;
+import java.util.UUID;
 
 import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.io.JBoss6VFS;
@@ -42,6 +43,7 @@ import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.mybatis.spring.type.DummyTypeAlias;
 import org.mybatis.spring.type.DummyTypeHandler;
 import org.mybatis.spring.type.SuperType;
+import org.mybatis.spring.type.TypeHandlerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -341,13 +343,20 @@ class SqlSessionFactoryBeanTest {
   @Test
   void testSearchATypeAliasPackage() throws Exception {
     setupFactoryBean();
-    factoryBean.setTypeAliasesPackage("org.mybatis.spring.type");
+    factoryBean.setTypeAliasesPackage("org.mybatis.spring.type, org.mybatis.spring.scan");
 
     TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
+    System.out.println(typeAliasRegistry.getTypeAliases().keySet());
+    assertThat(typeAliasRegistry.getTypeAliases().size()).isEqualTo(81);
     typeAliasRegistry.resolveAlias("testAlias");
     typeAliasRegistry.resolveAlias("testAlias2");
     typeAliasRegistry.resolveAlias("dummyTypeHandler");
+    typeAliasRegistry.resolveAlias("dummyTypeHandler2");
     typeAliasRegistry.resolveAlias("superType");
+    typeAliasRegistry.resolveAlias("dummyMapperFactoryBean");
+    typeAliasRegistry.resolveAlias("scanclass1");
+    typeAliasRegistry.resolveAlias("scanclass2");
+    typeAliasRegistry.resolveAlias("scanenum");
   }
 
   @Test
@@ -384,6 +393,7 @@ class SqlSessionFactoryBeanTest {
     TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
     assertThat(typeHandlerRegistry.hasTypeHandler(BigInteger.class)).isTrue();
     assertThat(typeHandlerRegistry.hasTypeHandler(BigDecimal.class)).isTrue();
+    assertThat(typeHandlerRegistry.getTypeHandler(UUID.class)).isInstanceOf(TypeHandlerFactory.InnerTypeHandler.class);
   }
 
   @Test
@@ -444,4 +454,5 @@ class SqlSessionFactoryBeanTest {
     assertThat(factory.getConfiguration().getParameterMapNames().size()).isEqualTo(0);
     assertThat(factory.getConfiguration().getSqlFragments().size()).isEqualTo(0);
   }
+
 }
