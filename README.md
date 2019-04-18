@@ -1,4 +1,4 @@
-<img src="https://avatars2.githubusercontent.com/u/25752188?v=4" width="80" height="80"> Lettuce - Advanced Java Redis client
+<img src="https://avatars2.githubusercontent.com/u/25752188?v=4" width="50" height="50"> Lettuce - Advanced Java Redis client
 ===============================
 
 [![Build Status](https://travis-ci.org/lettuce-io/lettuce-core.svg)](https://travis-ci.org/lettuce-io/lettuce-core) [![codecov](https://codecov.io/gh/lettuce-io/lettuce-core/branch/master/graph/badge.svg)](https://codecov.io/gh/lettuce-io/lettuce-core)
