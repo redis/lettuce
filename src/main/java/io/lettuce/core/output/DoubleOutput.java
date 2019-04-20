@@ -38,4 +38,9 @@ public class DoubleOutput<K, V> extends CommandOutput<K, V, Double> {
     public void set(ByteBuffer bytes) {
         output = (bytes == null) ? null : parseDouble(decodeAscii(bytes));
     }
+
+    @Override
+    public void set(double number) {
+        output = number;
+    }
 }

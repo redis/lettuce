@@ -22,6 +22,7 @@ import io.lettuce.core.SocketOptions;
 import io.lettuce.core.SslOptions;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
@@ -110,7 +111,7 @@ public class ClusterClientOptions extends ClientOptions {
                 .cancelCommandsOnReconnectFailure(clientOptions.isCancelCommandsOnReconnectFailure())
                 .disconnectedBehavior(clientOptions.getDisconnectedBehavior())
                 .publishOnScheduler(clientOptions.isPublishOnScheduler())
-                .pingBeforeActivateConnection(clientOptions.isPingBeforeActivateConnection())
+.protocolVersion(clientOptions.getProtocolVersion())
                 .requestQueueSize(clientOptions.getRequestQueueSize()).socketOptions(clientOptions.getSocketOptions())
                 .sslOptions(clientOptions.getSslOptions())
                 .suspendReconnectOnProtocolFailure(clientOptions.isSuspendReconnectOnProtocolFailure())
@@ -177,9 +178,8 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         @Override
-        @Deprecated
-        public Builder pingBeforeActivateConnection(boolean pingBeforeActivateConnection) {
-            super.pingBeforeActivateConnection(pingBeforeActivateConnection);
+        public Builder protocolVersion(ProtocolVersion protocolVersion) {
+            super.protocolVersion(protocolVersion);
             return this;
         }
 
@@ -269,7 +269,7 @@ public class ClusterClientOptions extends ClientOptions {
         builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
-                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).requestQueueSize(getRequestQueueSize())
+                .protocolVersion(getProtocolVersion()).requestQueueSize(getRequestQueueSize())
                 .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
                 .validateClusterNodeMembership(isValidateClusterNodeMembership()).maxRedirects(getMaxRedirects())

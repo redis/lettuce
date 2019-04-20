@@ -50,8 +50,10 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.models.command.CommandDetailParser;
 import io.lettuce.core.output.KeyValueStreamingChannel;
-import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.CommandExpiryWriter;
+import io.lettuce.core.protocol.CommandHandler;
+import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -539,7 +541,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, codec,
                 endpoint, getFirstUri(), socketAddressSupplier,
-                () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
+                () -> new PubSubCommandHandler<>(clientOptions,
+                        clientResources, codec, endpoint));
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
                 connection.close();
@@ -598,11 +601,16 @@ public class RedisClusterClient extends AbstractRedisClient {
                     .onErrorResume(t -> connect(socketAddressSupplier, codec, endpoint, connection, commandHandlerSupplier));
         }
 
-        return connectionMono.flatMap(c -> c.reactive().command().collectList() //
-                .map(CommandDetailParser::parse) //
-                .doOnNext(detail -> c.setState(new RedisState(detail))) //
-                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
-                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
+        return connectionMono
+                .flatMap(
+                        c -> c.reactive().command().collectList()
+                                //
+                                .map(CommandDetailParser::parse)
+                                //
+                                .doOnNext(detail -> c.setState(new RedisState(detail)))
+                                //
+                                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
+                                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
                 .doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterConnection<K, V>) it).toFuture();
@@ -669,11 +677,17 @@ public class RedisClusterClient extends AbstractRedisClient {
                     .onErrorResume(t -> connect(socketAddressSupplier, codec, endpoint, connection, commandHandlerSupplier));
         }
 
-        return connectionMono.flatMap(c -> c.reactive().command().collectList() //
-                .map(CommandDetailParser::parse) //
-                .doOnNext(detail -> c.setState(new RedisState(detail)))
-                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
-                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
+        return connectionMono
+                .flatMap(
+                        c -> c.reactive()
+                                .command()
+                                .collectList()
+                                //
+                                .map(CommandDetailParser::parse)
+                                //
+                                .doOnNext(detail -> c.setState(new RedisState(detail)))
+                                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
+                                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
                 .doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterPubSubConnection<K, V>) it).toFuture();
@@ -694,39 +708,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         ConnectionBuilder connectionBuilder = createConnectionBuilder(connection, endpoint, connectionSettings,
                 socketAddressSupplier, commandHandlerSupplier);
 
-        if (clientOptions.isPingBeforeActivateConnection()) {
-            if (hasPassword(connectionSettings)) {
-                connectionBuilder.enableAuthPingBeforeConnect();
-            } else {
-                connectionBuilder.enablePingBeforeConnect();
-            }
-        }
-
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
         ConnectionFuture<?> sync = future;
 
-        if (!clientOptions.isPingBeforeActivateConnection() && hasPassword(connectionSettings)) {
-
-            sync = sync.thenCompose(channelHandler -> {
-
-                CommandArgs<K, V> args = new CommandArgs<>(codec).add(connectionSettings.getPassword());
-                AsyncCommand<K, V, String> command = new AsyncCommand<>(
-                        new Command<>(CommandType.AUTH, new StatusOutput<>(codec), args));
-
-                if (connection instanceof StatefulRedisClusterConnectionImpl) {
-                    ((StatefulRedisClusterConnectionImpl) connection).dispatch(command);
-                }
-
-                if (connection instanceof StatefulRedisConnectionImpl) {
-                    ((StatefulRedisConnectionImpl) connection).dispatch(command);
-                }
-
-                return command;
-            });
-
-        }
-
-        if (LettuceStrings.isNotEmpty(connectionSettings.getClientName())) {
+        if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2
+                && LettuceStrings.isNotEmpty(connectionSettings.getClientName())) {
             sync = sync.thenApply(channelHandler -> {
 
                 if (connection instanceof StatefulRedisClusterConnectionImpl) {
@@ -768,6 +754,22 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.commandHandler(commandHandlerSupplier);
         connectionBuilder(socketAddressSupplier, connectionBuilder, connectionSettings);
         channelType(connectionBuilder, connectionSettings);
+
+        if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2) {
+
+            if (hasPassword(connectionSettings)) {
+                connectionBuilder.auth(connectionSettings.getPassword());
+                connectionBuilder.handshakeAuthResp2();
+            }
+        } else if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP3) {
+
+            if (LettuceStrings.isNotEmpty(connectionSettings.getUsername())) {
+                connectionBuilder.auth(connectionSettings.getUsername(), connectionSettings.getPassword());
+                connectionBuilder.handshakeAuthResp3();
+            } else {
+                connectionBuilder.handshakeResp3();
+            }
+        }
         return connectionBuilder;
     }
 

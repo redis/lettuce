@@ -406,30 +406,6 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void clusterAuthPingBeforeConnect() {
-
-        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
-                RedisURI.Builder.redis(TestSettings.host(), ClusterTestSettings.port7).withPassword("foobared").build());
-        clusterClient.setOptions(ClusterClientOptions.builder().pingBeforeActivateConnection(true).build());
-
-        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
-        RedisAdvancedClusterCommands<String, String> sync = connection.sync();
-
-        List<String> time = sync.time();
-        assertThat(time).hasSize(2);
-
-        TestFutures.awaitOrTimeout(connection.async().quit());
-
-        Wait.untilTrue(connection::isOpen).waitOrTimeout();
-
-        time = sync.time();
-        assertThat(time).hasSize(2);
-
-        connection.close();
-        FastShutdown.shutdown(clusterClient);
-    }
-
-    @Test
     void clusterNeedsAuthButNotSupplied() {
 
         RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),

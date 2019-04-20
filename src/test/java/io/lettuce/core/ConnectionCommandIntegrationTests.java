@@ -23,10 +23,12 @@ import java.time.Duration;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import io.lettuce.RedisBug;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -49,23 +51,24 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @RedisBug("HELLO AUTH currently not working")
     void auth() {
 
         WithPassword.run(client, () -> {
             RedisCommands<String, String> connection = client.connect().sync();
-                try {
-                    connection.ping();
-                    fail("Server doesn't require authentication");
-                } catch (RedisException e) {
-                    assertThat(e.getMessage()).isEqualTo("NOAUTH Authentication required.");
-                    assertThat(connection.auth(passwd)).isEqualTo("OK");
-                    assertThat(connection.set(key, value)).isEqualTo("OK");
-                }
+            try {
+                connection.ping();
+                fail("Server doesn't require authentication");
+            } catch (RedisException e) {
+                assertThat(e.getMessage()).isEqualTo("NOAUTH Authentication required.");
+                assertThat(connection.auth(passwd)).isEqualTo("OK");
+                assertThat(connection.set(key, value)).isEqualTo("OK");
+            }
 
-                RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
-                RedisCommands<String, String> authConnection = client.connect(redisURI).sync();
-                authConnection.ping();
-                authConnection.getStatefulConnection().close();
+            RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
+            RedisCommands<String, String> authConnection = client.connect(redisURI).sync();
+            authConnection.ping();
+            authConnection.getStatefulConnection().close();
         });
 
     }
@@ -97,17 +100,17 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         assertThatThrownBy(() -> redis.auth("")).isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test
+    @Disabled("HELLO AUTH currently not working")
     void authReconnect() {
         WithPassword.run(client, () -> {
 
             RedisCommands<String, String> connection = client.connect().sync();
-                assertThat(connection.auth(passwd)).isEqualTo("OK");
-                assertThat(connection.set(key, value)).isEqualTo("OK");
-                connection.quit();
+            assertThat(connection.auth(passwd)).isEqualTo("OK");
+            assertThat(connection.set(key, value)).isEqualTo("OK");
+            connection.quit();
 
             Delay.delay(Duration.ofMillis(100));
-                assertThat(connection.get(key)).isEqualTo(value);
+            assertThat(connection.get(key)).isEqualTo(value);
 
             connection.getStatefulConnection().close();
         });

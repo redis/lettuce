@@ -114,6 +114,11 @@ public class RedisConditions {
      * @return {@literal true} if the command is present with the given arity.
      */
     public boolean hasCommandArity(String command, int arity) {
+
+        if (!hasCommand(command)) {
+            throw new IllegalStateException("Unknown command: " + command + " in " + commands);
+        }
+
         return commands.get(command.toUpperCase()) == arity;
     }
 

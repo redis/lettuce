@@ -162,12 +162,12 @@ public class SentinelConnectionIntegrationTests extends TestSupport {
     }
 
     @Test
-    void sentinelConnectionPingBeforeConnectShouldDiscardPassword() {
+    void sentinelConnectionShouldDiscardPassword() {
 
         RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), SentinelTestSettings.MASTER_ID)
                 .withPassword("hello-world").build();
 
-        redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+        redisClient.setOptions(ClientOptions.builder().build());
         StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel(redisURI);
 
         assertThat(connection.sync().ping()).isEqualTo("PONG");

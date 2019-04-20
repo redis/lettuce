@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.RedisBug;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -89,6 +90,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @RedisBug("RESP error")
     void clientGetSetname() {
         assertThat(redis.clientGetname()).isNull();
         assertThat(redis.clientSetname("test")).isEqualTo("OK");

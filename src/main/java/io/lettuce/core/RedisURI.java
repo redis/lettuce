@@ -167,6 +167,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private int port;
     private int database;
     private String clientName;
+    private String username;
     private char[] password;
     private boolean ssl = false;
     private boolean verifyPeer = true;
@@ -314,6 +315,26 @@ public class RedisURI implements Serializable, ConnectionPoint {
      */
     public void setSocket(String socket) {
         this.socket = socket;
+    }
+
+    /**
+     * Returns the username.
+     *
+     * @return the username
+     * @since 6.0
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * Sets the username.
+     *
+     * @param username the username, must not be {@literal null}.
+     * @since 6.0
+     */
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     /**

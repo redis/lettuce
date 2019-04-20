@@ -40,13 +40,22 @@ public class ScoredValueOutput<K, V> extends CommandOutput<K, V, ScoredValue<V>>
     @Override
     public void set(ByteBuffer bytes) {
 
+        if (bytes == null) {
+            return;
+        }
+
         if (value == null) {
             value = codec.decodeValue(bytes);
             return;
         }
 
         double score = LettuceStrings.toDouble(decodeAscii(bytes));
-        output = ScoredValue.just(score, value);
+        set(score);
+    }
+
+    @Override
+    public void set(double number) {
+        output = ScoredValue.just(number, value);
         value = null;
     }
 }

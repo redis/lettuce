@@ -43,4 +43,9 @@ public class BooleanOutput<K, V> extends CommandOutput<K, V, Boolean> {
     public void set(ByteBuffer bytes) {
         output = (bytes != null) ? Boolean.TRUE : Boolean.FALSE;
     }
+
+    @Override
+    public void set(boolean value) {
+        output = value;
+    }
 }

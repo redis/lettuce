@@ -42,6 +42,12 @@ public class ValueListOutput<K, V> extends CommandOutput<K, V, List<V>> implemen
 
     @Override
     public void set(ByteBuffer bytes) {
+
+        // RESP 3 behavior
+        if (bytes == null && !initialized) {
+            return;
+        }
+
         subscriber.onNext(output, bytes == null ? null : codec.decodeValue(bytes));
     }
 

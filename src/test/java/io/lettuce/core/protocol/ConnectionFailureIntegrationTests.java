@@ -69,9 +69,9 @@ class ConnectionFailureIntegrationTests extends TestSupport {
      * @throws Exception
      */
     @Test
-    void pingBeforeConnectFails() throws Exception {
+    void invalidFirstByte() throws Exception {
 
-        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+        client.setOptions(ClientOptions.builder().build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -97,10 +97,9 @@ class ConnectionFailureIntegrationTests extends TestSupport {
      * @throws Exception
      */
     @Test
-    void pingBeforeConnectFailOnReconnect() throws Exception {
+    void failOnReconnect() throws Exception {
 
-        ClientOptions clientOptions = ClientOptions.builder().pingBeforeActivateConnection(true)
-                .suspendReconnectOnProtocolFailure(true).build();
+        ClientOptions clientOptions = ClientOptions.builder().suspendReconnectOnProtocolFailure(true).build();
         client.setOptions(clientOptions);
 
         RandomResponseServer ts = getRandomResponseServer();
@@ -142,10 +141,10 @@ class ConnectionFailureIntegrationTests extends TestSupport {
      * @throws Exception
      */
     @Test
-    void pingBeforeConnectFailOnReconnectShouldSendEvents() throws Exception {
+    void failOnReconnectShouldSendEvents() throws Exception {
 
         client.setOptions(
-                ClientOptions.builder().pingBeforeActivateConnection(true).suspendReconnectOnProtocolFailure(false).build());
+                ClientOptions.builder().suspendReconnectOnProtocolFailure(false).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -192,7 +191,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
     void cancelCommandsOnReconnectFailure() throws Exception {
 
         client.setOptions(
-                ClientOptions.builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true).build());
+                ClientOptions.builder().cancelCommandsOnReconnectFailure(true).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -246,7 +245,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
         RedisClient client = RedisClient.create(clientResources);
 
-        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+        client.setOptions(ClientOptions.builder().build());
 
         try {
             RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client

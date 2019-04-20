@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.RedisBug;
 import io.lettuce.core.*;
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -343,6 +344,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @RedisBug("-inf is suffixed with NULL byte")
     @SuppressWarnings({ "unchecked" })
     void zrangebyscoreWithScoresInfinity() {
 

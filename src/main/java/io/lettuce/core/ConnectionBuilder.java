@@ -16,6 +16,9 @@
 package io.lettuce.core;
 
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,10 +57,12 @@ public class ConnectionBuilder {
     private ClientOptions clientOptions;
     private Duration timeout;
     private ClientResources clientResources;
+    private String username;
     private char[] password;
+    private String clientName;
     private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
     private ConnectionWatchdog connectionWatchdog;
-    private Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier = PlainChannelInitializer.NO_PING;
+    private Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier = ConnectionBuilder.PING_COMMAND_SUPPLIER;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
@@ -88,22 +93,18 @@ public class ConnectionBuilder {
         return handlers;
     }
 
-    /**
-     * @deprecated since 5.2. PING during connection handshake becomes mandatory with RESP3. This method will be removed with
-     *             Lettuce 6.
-     */
-    @Deprecated
-    public void enablePingBeforeConnect() {
-        pingCommandSupplier = PING_COMMAND_SUPPLIER;
+    public void handshakeAuthResp2() {
+        pingCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
     }
 
-    /**
-     * @deprecated since 5.2. PING during connection handshake becomes mandatory with RESP3. This method will be removed with
-     *             Lettuce 6.
-     */
-    @Deprecated
-    public void enableAuthPingBeforeConnect() {
-        pingCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
+    public void handshakeAuthResp3() {
+        pingCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.hello(3, this.username.getBytes(),
+                encode(this.password), this.clientName != null ? this.clientName.getBytes() : null));
+    }
+
+    public void handshakeResp3() {
+        pingCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.hello(3, null, null,
+                this.clientName != null ? this.clientName.getBytes() : null));
     }
 
     protected ConnectionWatchdog createConnectionWatchdog() {
@@ -201,6 +202,23 @@ public class ConnectionBuilder {
         return this;
     }
 
+    public ConnectionBuilder clientName(String clientName) {
+        this.clientName = clientName;
+        return this;
+    }
+
+    public ConnectionBuilder auth(String username, char[] password) {
+        this.username = username;
+        this.password = password;
+        return this;
+    }
+
+    public ConnectionBuilder auth(char[] password) {
+        this.password = password;
+        return this;
+    }
+
+    @Deprecated
     public ConnectionBuilder password(char[] password) {
         this.password = password;
         return this;
@@ -232,5 +250,14 @@ public class ConnectionBuilder {
 
     Supplier<AsyncCommand<?, ?, ?>> getPingCommandSupplier() {
         return pingCommandSupplier;
+    }
+
+    static byte[] encode(char[] chars) {
+
+        ByteBuffer encoded = Charset.defaultCharset().encode(CharBuffer.wrap(chars));
+        byte[] bytes = new byte[encoded.remaining()];
+        encoded.get(bytes);
+
+        return bytes;
     }
 }

@@ -27,8 +27,10 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.RedisBug;
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisException;
@@ -43,6 +45,8 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Mark Paluch
  */
+@RedisBug("HELLO AUTH currently not working")
+@Disabled("Redis Bug")
 class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
     private StatefulRedisMasterSlaveConnectionImpl<String, String> connection;
@@ -68,8 +72,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
         if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node1;
             replica = node2;
-        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
-                && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
+        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node2;
             replica = node1;
         } else {

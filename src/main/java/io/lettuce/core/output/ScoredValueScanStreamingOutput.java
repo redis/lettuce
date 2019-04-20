@@ -48,9 +48,13 @@ public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, Strea
         }
 
         double score = LettuceStrings.toDouble(decodeAscii(bytes));
-        channel.onValue(ScoredValue.fromNullable(score, value));
+        set(score);
+    }
+
+    @Override
+    public void set(double number) {
+        channel.onValue(ScoredValue.fromNullable(number, value));
         value = null;
         output.setCount(output.getCount() + 1);
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,31 +19,37 @@ import static io.lettuce.core.protocol.RedisStateMachine.State;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.*;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 
 /**
- * @author Will Glozer
+ * Unit tests for {@link RedisStateMachine} using RESP3.
+ *
  * @author Mark Paluch
  */
-class StateMachineUnitTests {
-    private RedisCodec<String, String> codec = StringCodec.UTF8;
+class RedisStateMachineResp3UnitTests {
+
+    private RedisCodec<String, String> codec = new Utf8StringCodec();
+    private Charset charset = Charset.forName("UTF-8");
     private CommandOutput<String, String, String> output;
     private RedisStateMachine rsm;
 
@@ -67,76 +73,108 @@ class StateMachineUnitTests {
     @BeforeEach
     final void createStateMachine() {
         output = new StatusOutput<>(codec);
-        rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
-    }
-
-    @AfterEach
-    void tearDown() {
-        rsm.close();
-    }
-
-    @Test
-    void errorShouldSwitchToResp2Protocol() {
-        assertThat(rsm.decode(buffer("-ERR\r\n"), output)).isTrue();
-        assertThat(output.getError()).isEqualTo("ERR");
-        assertThat(rsm.isDiscoverProtocol()).isFalse();
-        assertThat(rsm.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP2);
-    }
-
-    @Test
-    void helloShouldSwitchToResp3() {
-        assertThat(rsm.decode(buffer("@0\n"), output)).isTrue();
-        assertThat(rsm.isDiscoverProtocol()).isFalse();
-        assertThat(rsm.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
+        rsm = new RedisStateMachine();
+        rsm.setProtocolVersion(ProtocolVersion.RESP3);
     }
 
     @Test
     void single() {
-        assertThat(rsm.decode(buffer("+OK\r\n"), output)).isTrue();
+        assertThat(rsm.decode(buffer("+OK\n"), output)).isTrue();
         assertThat(output.get()).isEqualTo("OK");
     }
 
     @Test
     void error() {
-        assertThat(rsm.decode(buffer("-ERR\r\n"), output)).isTrue();
+        assertThat(rsm.decode(buffer("-ERR\n"), output)).isTrue();
         assertThat(output.getError()).isEqualTo("ERR");
     }
 
     @Test
     void errorWithoutLineBreak() {
         assertThat(rsm.decode(buffer("-ERR"), output)).isFalse();
-        assertThat(rsm.decode(buffer("\r\n"), output)).isTrue();
+        assertThat(rsm.decode(buffer("\n"), output)).isTrue();
         assertThat(output.getError()).isEqualTo("");
     }
 
     @Test
     void integer() {
         CommandOutput<String, String, Long> output = new IntegerOutput<>(codec);
-        assertThat(rsm.decode(buffer(":1\r\n"), output)).isTrue();
+        assertThat(rsm.decode(buffer(":1\n"), output)).isTrue();
         assertThat((long) output.get()).isEqualTo(1);
+    }
+
+    @Test
+    void floatNumber() {
+        CommandOutput<String, String, Double> output = new DoubleOutput<>(codec);
+        assertThat(rsm.decode(buffer(",12.345\n"), output)).isTrue();
+        assertThat(output.get()).isEqualTo(12.345);
+    }
+
+    @Test
+    void bigNumber() {
+        CommandOutput<String, String, String> output = new StatusOutput<>(codec);
+        assertThat(rsm.decode(buffer("(3492890328409238509324850943850943825024385\n"), output)).isTrue();
+        assertThat(output.get()).isEqualTo("3492890328409238509324850943850943825024385");
+    }
+
+    @Test
+    void booleanValue() {
+        CommandOutput<String, String, Boolean> output = new BooleanOutput<>(codec);
+        assertThat(rsm.decode(buffer("#t\n"), output)).isTrue();
+        assertThat(output.get()).isTrue();
+
+        output = new BooleanOutput<>(codec);
+        assertThat(rsm.decode(buffer("#f\n"), output)).isTrue();
+        assertThat(output.get()).isFalse();
+    }
+
+    @Test
+    void hello() {
+        CommandOutput<String, String, Map<String, Object>> output = new GenericMapOutput<>(codec);
+        assertThat(
+                rsm.decode(buffer("%7\n" + "$6\nserver\n$5\nredis\n" + "$7\nversion\n$11\n999.999.999\n" + "$5\nproto\n:3\n"
+                        + "$2\nid\n:184\n" + "$4\nmode\n$10\nstandalone\n" + "$4\nrole\n$6\nmaster\n" + "$7\nmodules\n*0\n"),
+                        output)).isTrue();
+        assertThat(output.get()).containsEntry("mode", "standalone");
     }
 
     @Test
     void bulk() {
         CommandOutput<String, String, String> output = new ValueOutput<>(codec);
-        assertThat(rsm.decode(buffer("$-1\r\n"), output)).isTrue();
+        assertThat(rsm.decode(buffer("$-1\n"), output)).isTrue();
         assertThat(output.get()).isNull();
-        assertThat(rsm.decode(buffer("$3\r\nfoo\r\n"), output)).isTrue();
+        assertThat(rsm.decode(buffer("$3\nfoo\n"), output)).isTrue();
         assertThat(output.get()).isEqualTo("foo");
     }
 
     @Test
     void multi() {
         CommandOutput<String, String, List<String>> output = new ValueListOutput<>(codec);
-        ByteBuf buffer = buffer("*2\r\n$-1\r\n$2\r\nok\r\n");
+        ByteBuf buffer = buffer("*2\n$-1\n$2\nok\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get()).isEqualTo(Arrays.asList(null, "ok"));
     }
 
     @Test
+    void multiSet() {
+        CommandOutput<String, String, List<String>> output = new ValueListOutput<>(codec);
+        ByteBuf buffer = buffer("~2\n$-1\n$2\nok\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(output.get()).isEqualTo(Arrays.asList(null, "ok"));
+    }
+
+    @Test
+    void multiMap() {
+        CommandOutput<String, String, Map<String, Object>> output = new GenericMapOutput<>(codec);
+        ByteBuf buffer = buffer("%1\n$3\nfoo\n$2\nok\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(output.get()).containsEntry("foo", "ok");
+    }
+
+    @Test
     void multiEmptyArray1() {
         CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<>(codec);
-        ByteBuf buffer = buffer("*2\r\n$3\r\nABC\r\n*0\r\n");
+        ByteBuf buffer = buffer("*2\n$3\nABC\n*0\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get().get(0)).isEqualTo("ABC");
         assertThat(output.get().get(1)).isEqualTo(Arrays.asList());
@@ -146,7 +184,7 @@ class StateMachineUnitTests {
     @Test
     void multiEmptyArray2() {
         CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<>(codec);
-        ByteBuf buffer = buffer("*2\r\n*0\r\n$3\r\nABC\r\n");
+        ByteBuf buffer = buffer("*2\n*0\n$3\nABC\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get().get(0)).isEqualTo(Arrays.asList());
         assertThat(output.get().get(1)).isEqualTo("ABC");
@@ -156,7 +194,7 @@ class StateMachineUnitTests {
     @Test
     void multiEmptyArray3() {
         CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<>(codec);
-        ByteBuf buffer = buffer("*2\r\n*2\r\n$2\r\nAB\r\n$2\r\nXY\r\n*0\r\n");
+        ByteBuf buffer = buffer("*2\n*2\n$2\nAB\n$2\nXY\n*0\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get().get(0)).isEqualTo(Arrays.asList("AB", "XY"));
         assertThat(output.get().get(1)).isEqualTo(Arrays.asList());
@@ -183,6 +221,6 @@ class StateMachineUnitTests {
     }
 
     ByteBuf buffer(String content) {
-        return Unpooled.copiedBuffer(content, StandardCharsets.UTF_8);
+        return Unpooled.copiedBuffer(content, charset);
     }
 }

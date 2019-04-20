@@ -42,6 +42,10 @@ public class KeyValueScoredValueOutput<K, V> extends CommandOutput<K, V, KeyValu
     @Override
     public void set(ByteBuffer bytes) {
 
+        if (bytes == null) {
+            return;
+        }
+
         if (key == null) {
             key = codec.decodeKey(bytes);
             return;
@@ -54,9 +58,14 @@ public class KeyValueScoredValueOutput<K, V> extends CommandOutput<K, V, KeyValu
 
         double score = LettuceStrings.toDouble(decodeAscii(bytes));
 
-        output = KeyValue.just(key, ScoredValue.just(score, value));
+        set(score);
+    }
+
+    @Override
+    public void set(double number) {
+
+        output = KeyValue.just(key, ScoredValue.just(number, value));
         key = null;
         value = null;
     }
-
 }

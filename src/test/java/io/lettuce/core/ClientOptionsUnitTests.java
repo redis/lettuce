@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.protocol.ProtocolVersion;
+
 /**
  * @author Mark Paluch
  */
@@ -48,7 +50,7 @@ class ClientOptionsUnitTests {
     void checkAssertions(ClientOptions sut) {
         assertThat(sut.isAutoReconnect()).isEqualTo(true);
         assertThat(sut.isCancelCommandsOnReconnectFailure()).isEqualTo(false);
-        assertThat(sut.isPingBeforeActivateConnection()).isEqualTo(false);
+        assertThat(sut.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
         assertThat(sut.isSuspendReconnectOnProtocolFailure()).isEqualTo(false);
         assertThat(sut.getDisconnectedBehavior()).isEqualTo(ClientOptions.DisconnectedBehavior.DEFAULT);
         assertThat(sut.getBufferUsageRatio()).isEqualTo(ClientOptions.DEFAULT_BUFFER_USAGE_RATIO);

@@ -73,21 +73,27 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
             return;
         }
 
-        Double value = (bytes == null) ? 0 : parseDouble(decodeAscii(bytes));
+        double value = (bytes == null) ? 0 : parseDouble(decodeAscii(bytes));
+        set(value);
+    }
+
+    @Override
+    public void set(double number) {
+
         if (withDistance) {
             if (distance == null) {
-                distance = value;
+                distance = number;
                 return;
             }
         }
+
         if (withCoordinates) {
             if (x == null) {
-                x = value;
+                x = number;
                 return;
             }
 
-            coordinates = new GeoCoordinates(x, value);
-            return;
+            coordinates = new GeoCoordinates(x, number);
         }
     }
 

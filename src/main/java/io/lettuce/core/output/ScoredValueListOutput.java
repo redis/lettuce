@@ -52,7 +52,13 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
         }
 
         double score = LettuceStrings.toDouble(decodeAscii(bytes));
-        subscriber.onNext(output, ScoredValue.fromNullable(score, value));
+        set(score);
+    }
+
+    @Override
+    public void set(double number) {
+
+        subscriber.onNext(output, ScoredValue.fromNullable(number, value));
         value = null;
     }
 

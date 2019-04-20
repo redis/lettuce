@@ -33,6 +33,7 @@ import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.netty.bootstrap.Bootstrap;
@@ -148,7 +149,8 @@ public abstract class AbstractRedisClient {
         redisBootstrap.option(ChannelOption.WRITE_BUFFER_LOW_WATER_MARK, 8 * 1024);
         redisBootstrap.option(ChannelOption.ALLOCATOR, BUF_ALLOCATOR);
 
-        SocketOptions socketOptions = getOptions().getSocketOptions();
+        ClientOptions clientOptions = getOptions();
+        SocketOptions socketOptions = clientOptions.getSocketOptions();
 
         redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
                 Math.toIntExact(socketOptions.getConnectTimeout().toMillis()));
@@ -159,11 +161,37 @@ public abstract class AbstractRedisClient {
         }
 
         connectionBuilder.timeout(redisURI.getTimeout());
-        connectionBuilder.password(redisURI.getPassword());
+        connectionBuilder.clientName(redisURI.getClientName());
+
+        if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2) {
+
+            if (hasPassword(redisURI)) {
+                connectionBuilder.auth(redisURI.getPassword());
+                connectionBuilder.handshakeAuthResp2();
+            }
+        } else if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP3) {
+
+            if (hasPassword(redisURI)) {
+                if (LettuceStrings.isNotEmpty(redisURI.getUsername())) {
+                    connectionBuilder.auth(redisURI.getUsername(), redisURI.getPassword());
+
+                } else {
+                    connectionBuilder.auth("default", redisURI.getPassword());
+                }
+                connectionBuilder.handshakeAuthResp3();
+
+            } else {
+                connectionBuilder.handshakeResp3();
+            }
+        }
 
         connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
         connectionBuilder.socketAddressSupplier(socketAddressSupplier);
+    }
+
+    private boolean hasPassword(RedisURI connectionSettings) {
+        return connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0;
     }
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {

@@ -18,6 +18,7 @@ package io.lettuce.core;
 import java.io.Serializable;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -29,7 +30,7 @@ import io.lettuce.core.resource.ClientResources;
 @SuppressWarnings("serial")
 public class ClientOptions implements Serializable {
 
-    public static final boolean DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION = false;
+    public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = ProtocolVersion.newestSupported();
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
     public static final boolean DEFAULT_CANCEL_CMD_RECONNECT_FAIL = false;
     public static final boolean DEFAULT_PUBLISH_ON_SCHEDULER = false;
@@ -41,7 +42,7 @@ public class ClientOptions implements Serializable {
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
     public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
 
-    private final boolean pingBeforeActivateConnection;
+    private final ProtocolVersion protocolVersion;
     private final boolean autoReconnect;
     private final boolean cancelCommandsOnReconnectFailure;
     private final boolean publishOnScheduler;
@@ -54,7 +55,7 @@ public class ClientOptions implements Serializable {
     private final int bufferUsageRatio;
 
     protected ClientOptions(Builder builder) {
-        this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
+        this.protocolVersion = builder.protocolVersion;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         this.publishOnScheduler = builder.publishOnScheduler;
         this.autoReconnect = builder.autoReconnect;
@@ -68,7 +69,7 @@ public class ClientOptions implements Serializable {
     }
 
     protected ClientOptions(ClientOptions original) {
-        this.pingBeforeActivateConnection = original.isPingBeforeActivateConnection();
+        this.protocolVersion = original.getProtocolVersion();
         this.autoReconnect = original.isAutoReconnect();
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.publishOnScheduler = original.isPublishOnScheduler();
@@ -114,7 +115,7 @@ public class ClientOptions implements Serializable {
      */
     public static class Builder {
 
-        private boolean pingBeforeActivateConnection = DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION;
+        private ProtocolVersion protocolVersion = DEFAULT_PROTOCOL_VERSION;
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
         private boolean publishOnScheduler = DEFAULT_PUBLISH_ON_SCHEDULER;
@@ -130,17 +131,17 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Sets the {@literal PING} before activate connection flag. Defaults to {@literal false}. See
-         * {@link #DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION}.
+         * Sets the {@link ProtocolVersion} to use. Defaults to {@literal RESP3}. See {@link #DEFAULT_PROTOCOL_VERSION}.
          *
-         * @param pingBeforeActivateConnection true/false
+         * @param protocolVersion version to use.
          * @return {@code this}
-         * @deprecated since 5.2. PING during connection handshake becomes mandatory with RESP3. This method will be removed
-         *             with Lettuce 6.
+         * @since 6.0
+         * @see ProtocolVersion#newestSupported()
          */
-        @Deprecated
-        public Builder pingBeforeActivateConnection(boolean pingBeforeActivateConnection) {
-            this.pingBeforeActivateConnection = pingBeforeActivateConnection;
+        public Builder protocolVersion(ProtocolVersion protocolVersion) {
+
+            LettuceAssert.notNull(protocolVersion, "ProtocolVersion must not be null");
+            this.protocolVersion = protocolVersion;
             return this;
         }
 
@@ -315,25 +316,19 @@ public class ClientOptions implements Serializable {
         builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
-                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).requestQueueSize(getRequestQueueSize())
-                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .requestQueueSize(getRequestQueueSize()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
 
     /**
-     * Enables initial {@literal PING} barrier before any connection is usable. If {@literal true} (default is {@literal false}
-     * ), every connection and reconnect will issue a {@literal PING} command and awaits its response before the connection is
-     * activated and enabled for use. If the check fails, the connect/reconnect is treated as failure.
+     * Returns the {@link ProtocolVersion} to use.
      *
-     * @return {@literal true} if {@literal PING} barrier is enabled.
-     * @deprecated since 5.2. PING during connection handshake becomes mandatory with RESP3. This method will be removed with
-     *             Lettuce 6.
+     * @return the {@link ProtocolVersion} to use.
      */
-    @Deprecated
-    public boolean isPingBeforeActivateConnection() {
-        return pingBeforeActivateConnection;
+    public ProtocolVersion getProtocolVersion() {
+        return protocolVersion;
     }
 
     /**

@@ -82,12 +82,9 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
     @Override
     public void complete(int depth) {
 
-        if (depth == 1) {
-            stream = null;
-        }
-
-        if (depth == 3) {
+        if (depth == 1 && body != null) {
             subscriber.onNext(output, new StreamMessage<>(stream, id, body));
+            stream = null;
             key = null;
             id = null;
             body = null;

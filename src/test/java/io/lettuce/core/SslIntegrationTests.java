@@ -222,14 +222,6 @@ class SslIntegrationTests extends TestSupport {
     }
 
     @Test
-    void pingBeforeActivate() {
-
-        redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
-
-        verifyConnection(URI_NO_VERIFY);
-    }
-
-    @Test
     void regularSslWithReconnect() {
 
         RedisCommands<String, String> connection = redisClient.connect(URI_NO_VERIFY).sync();
@@ -304,14 +296,6 @@ class SslIntegrationTests extends TestSupport {
 
         assertThatThrownBy(() -> verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY))
                 .isInstanceOf(RedisConnectionException.class);
-    }
-
-    @Test
-    void masterSlavePingBeforeActivate() {
-
-        redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
-
-        verifyMasterSlaveConnection(MASTER_SLAVE_URIS_NO_VERIFY);
     }
 
     @Test

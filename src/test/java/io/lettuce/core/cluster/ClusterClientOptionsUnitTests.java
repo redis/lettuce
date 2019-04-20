@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
  * @author Mark Paluch
@@ -30,10 +31,12 @@ class ClusterClientOptionsUnitTests {
     void testCopy() {
 
         ClusterClientOptions options = ClusterClientOptions.builder().autoReconnect(false).requestQueueSize(100)
-                .suspendReconnectOnProtocolFailure(true).maxRedirects(1234).validateClusterNodeMembership(false).build();
+                .suspendReconnectOnProtocolFailure(true).maxRedirects(1234).validateClusterNodeMembership(false)
+                .protocolVersion(ProtocolVersion.RESP2).build();
 
         ClusterClientOptions copy = ClusterClientOptions.copyOf(options);
 
+        assertThat(copy.getProtocolVersion()).isEqualTo(options.getProtocolVersion());
         assertThat(copy.getRefreshPeriod()).isEqualTo(options.getRefreshPeriod());
         assertThat(copy.isCloseStaleConnections()).isEqualTo(options.isCloseStaleConnections());
         assertThat(copy.isRefreshClusterView()).isEqualTo(options.isRefreshClusterView());
@@ -51,6 +54,7 @@ class ClusterClientOptionsUnitTests {
         ClientOptions clientOptions = ClientOptions.builder().build();
         ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder(clientOptions).build();
 
+        assertThat(clusterClientOptions.getProtocolVersion()).isEqualTo(clusterClientOptions.getProtocolVersion());
         assertThat(clusterClientOptions.getDisconnectedBehavior()).isEqualTo(clusterClientOptions.getDisconnectedBehavior());
         assertThat(clusterClientOptions.getSslOptions()).isEqualTo(clusterClientOptions.getSslOptions());
         assertThat(clusterClientOptions.getTimeoutOptions()).isEqualTo(clusterClientOptions.getTimeoutOptions());
@@ -59,8 +63,6 @@ class ClusterClientOptionsUnitTests {
         assertThat(clusterClientOptions.isCloseStaleConnections()).isEqualTo(clusterClientOptions.isCloseStaleConnections());
         assertThat(clusterClientOptions.isCancelCommandsOnReconnectFailure()).isEqualTo(
                 clusterClientOptions.isCancelCommandsOnReconnectFailure());
-        assertThat(clusterClientOptions.isPingBeforeActivateConnection()).isEqualTo(
-                clusterClientOptions.isPingBeforeActivateConnection());
         assertThat(clusterClientOptions.isPublishOnScheduler()).isEqualTo(clusterClientOptions.isPublishOnScheduler());
         assertThat(clusterClientOptions.isSuspendReconnectOnProtocolFailure()).isEqualTo(
                 clusterClientOptions.isSuspendReconnectOnProtocolFailure());

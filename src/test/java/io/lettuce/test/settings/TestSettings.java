@@ -77,7 +77,7 @@ public class TestSettings {
 
     /**
      *
-     * @return password of your redis instance. Defaults to {@literal passwd}. Can be overriden with
+     * @return password of your redis instance. Defaults to {@literal passwd}. Can be overridden with
      *         {@code -Dpassword=YourPassword}
      */
     public static String password() {

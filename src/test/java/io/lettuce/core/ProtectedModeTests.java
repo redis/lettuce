@@ -118,9 +118,9 @@ class ProtectedModeTests {
     }
 
     @Test
-    void pingBeforeConnectFailsOnPing() {
+    void connectFailsOnPing() {
 
-        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+        client.setOptions(ClientOptions.builder().build());
         assertThatThrownBy(() -> client.connect()).isInstanceOf(RedisConnectionException.class).hasCauseInstanceOf(
                 RedisConnectionException.class);
     }

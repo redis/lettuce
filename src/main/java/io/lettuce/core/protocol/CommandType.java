@@ -25,9 +25,10 @@ import java.nio.charset.StandardCharsets;
  * @author Zhang Jessey
  */
 public enum CommandType implements ProtocolKeyword {
+
     // Connection
 
-    AUTH, ECHO, PING, QUIT, READONLY, READWRITE, SELECT, SWAPDB,
+    AUTH, ECHO, HELLO, PING, QUIT, READONLY, READWRITE, SELECT, SWAPDB,
 
     // Server
 

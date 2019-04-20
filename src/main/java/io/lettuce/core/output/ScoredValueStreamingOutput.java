@@ -47,7 +47,13 @@ public class ScoredValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> 
         }
 
         double score = LettuceStrings.toDouble(decodeAscii(bytes));
-        channel.onValue(ScoredValue.fromNullable(score, value));
+        set(score);
+    }
+
+    @Override
+    public void set(double number) {
+
+        channel.onValue(ScoredValue.fromNullable(number, value));
         value = null;
         output = output.longValue() + 1;
     }

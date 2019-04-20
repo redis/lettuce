@@ -46,7 +46,12 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
         }
 
         double score = LettuceStrings.toDouble(decodeAscii(bytes));
-        output.getValues().add(ScoredValue.fromNullable(score, value));
+        set(score);
+    }
+
+    @Override
+    public void set(double number) {
+        output.getValues().add(ScoredValue.fromNullable(number, value));
         value = null;
     }
 }

@@ -98,6 +98,7 @@ public class CommandDetailParser {
 
         Set<CommandDetail.Flag> parsedFlags = parseFlags(flags);
 
+        // TODO: Extract command grouping (ACL)
         return new CommandDetail(name, arity, parsedFlags, firstKey, lastKey, keyStepCount);
     }
 
