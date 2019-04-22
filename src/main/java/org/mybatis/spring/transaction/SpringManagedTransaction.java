@@ -30,12 +30,11 @@ import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * {@code SpringManagedTransaction} handles the lifecycle of a JDBC connection.
- * It retrieves a connection from Spring's transaction manager and returns it back to it
- * when it is no longer needed.
+ * {@code SpringManagedTransaction} handles the lifecycle of a JDBC connection. It retrieves a connection from Spring's
+ * transaction manager and returns it back to it when it is no longer needed.
  * <p>
- * If Spring's transaction handling is active it will no-op all commit/rollback/close calls
- * assuming that the Spring transaction manager will do the job.
+ * If Spring's transaction handling is active it will no-op all commit/rollback/close calls assuming that the Spring
+ * transaction manager will do the job.
  * <p>
  * If it is not it will behave like {@code JdbcTransaction}.
  *
@@ -71,24 +70,19 @@ public class SpringManagedTransaction implements Transaction {
   }
 
   /**
-   * Gets a connection from Spring transaction manager and discovers if this
-   * {@code Transaction} should manage connection or let it to Spring.
+   * Gets a connection from Spring transaction manager and discovers if this {@code Transaction} should manage
+   * connection or let it to Spring.
    * <p>
-   * It also reads autocommit setting because when using Spring Transaction MyBatis
-   * thinks that autocommit is always false and will always call commit/rollback
-   * so we need to no-op that calls.
+   * It also reads autocommit setting because when using Spring Transaction MyBatis thinks that autocommit is always
+   * false and will always call commit/rollback so we need to no-op that calls.
    */
   private void openConnection() throws SQLException {
     this.connection = DataSourceUtils.getConnection(this.dataSource);
     this.autoCommit = this.connection.getAutoCommit();
     this.isConnectionTransactional = DataSourceUtils.isConnectionTransactional(this.connection, this.dataSource);
 
-    LOGGER.debug(() ->
-        "JDBC Connection ["
-            + this.connection
-            + "] will"
-            + (this.isConnectionTransactional ? " " : " not ")
-            + "be managed by Spring");
+    LOGGER.debug(() -> "JDBC Connection [" + this.connection + "] will"
+        + (this.isConnectionTransactional ? " " : " not ") + "be managed by Spring");
   }
 
   /**
@@ -120,7 +114,7 @@ public class SpringManagedTransaction implements Transaction {
   public void close() {
     DataSourceUtils.releaseConnection(this.connection, this.dataSource);
   }
-    
+
   /**
    * {@inheritDoc}
    */
@@ -129,7 +123,7 @@ public class SpringManagedTransaction implements Transaction {
     ConnectionHolder holder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
     if (holder != null && holder.hasTimeout()) {
       return holder.getTimeToLiveInSeconds();
-    } 
+    }
     return null;
   }
 

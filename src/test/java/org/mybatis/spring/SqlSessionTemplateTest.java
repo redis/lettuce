@@ -108,8 +108,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
       // will synchronize the template with the current tx
       template.getConnection();
 
-      SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager
-          .getResource(sqlSessionFactory);
+      SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sqlSessionFactory);
 
       assertThat(holder.getExecutorType()).isEqualTo(ExecutorType.BATCH);
     } finally {
@@ -177,7 +176,7 @@ public class SqlSessionTemplateTest extends AbstractMyBatisSpringTest {
     sqlSessionTemplate.getMapper(TestMapper.class).findTest();
 
     txManager.commit(status);
-    
+
     assertCommit();
     assertSingleConnection();
   }

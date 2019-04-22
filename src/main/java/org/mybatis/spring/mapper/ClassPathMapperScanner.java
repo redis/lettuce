@@ -36,14 +36,12 @@ import java.util.Arrays;
 import java.util.Set;
 
 /**
- * A {@link ClassPathBeanDefinitionScanner} that registers Mappers by
- * {@code basePackage}, {@code annotationClass}, or {@code markerInterface}. If
- * an {@code annotationClass} and/or {@code markerInterface} is specified, only
- * the specified types will be searched (searching for all interfaces will be
- * disabled).
+ * A {@link ClassPathBeanDefinitionScanner} that registers Mappers by {@code basePackage}, {@code annotationClass}, or
+ * {@code markerInterface}. If an {@code annotationClass} and/or {@code markerInterface} is specified, only the
+ * specified types will be searched (searching for all interfaces will be disabled).
  * <p>
- * This functionality was previously a private class of
- * {@link MapperScannerConfigurer}, but was broken out in version 1.2.0.
+ * This functionality was previously a private class of {@link MapperScannerConfigurer}, but was broken out in version
+ * 1.2.0.
  *
  * @author Hunter Presnall
  * @author Eduardo Macarron
@@ -114,7 +112,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
   /**
    * Set the {@code MapperFactoryBean} class.
    *
-   * @param mapperFactoryBeanClass the {@code MapperFactoryBean} class
+   * @param mapperFactoryBeanClass
+   *          the {@code MapperFactoryBean} class
    * @since 2.0.1
    */
   public void setMapperFactoryBeanClass(Class<? extends MapperFactoryBean> mapperFactoryBeanClass) {
@@ -122,9 +121,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
   }
 
   /**
-   * Configures parent scanner to search for the right interfaces. It can search
-   * for all interfaces or just for those that extends a markerInterface or/and
-   * those annotated with the annotationClass
+   * Configures parent scanner to search for the right interfaces. It can search for all interfaces or just for those
+   * that extends a markerInterface or/and those annotated with the annotationClass
    */
   public void registerFilters() {
     boolean acceptAllInterfaces = true;
@@ -159,16 +157,16 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
   }
 
   /**
-   * Calls the parent search that will search and register all the candidates.
-   * Then the registered objects are post processed to set them as
-   * MapperFactoryBeans
+   * Calls the parent search that will search and register all the candidates. Then the registered objects are post
+   * processed to set them as MapperFactoryBeans
    */
   @Override
   public Set<BeanDefinitionHolder> doScan(String... basePackages) {
     Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
     if (beanDefinitions.isEmpty()) {
-      LOGGER.warn(() -> "No MyBatis mapper was found in '" + Arrays.toString(basePackages) + "' package. Please check your configuration.");
+      LOGGER.warn(() -> "No MyBatis mapper was found in '" + Arrays.toString(basePackages)
+          + "' package. Please check your configuration.");
     } else {
       processBeanDefinitions(beanDefinitions);
     }
@@ -181,8 +179,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
     for (BeanDefinitionHolder holder : beanDefinitions) {
       definition = (GenericBeanDefinition) holder.getBeanDefinition();
       String beanClassName = definition.getBeanClassName();
-      LOGGER.debug(() -> "Creating MapperFactoryBean with name '" + holder.getBeanName()
-          + "' and '" + beanClassName + "' mapperInterface");
+      LOGGER.debug(() -> "Creating MapperFactoryBean with name '" + holder.getBeanName() + "' and '" + beanClassName
+          + "' mapperInterface");
 
       // the mapper interface is the original class of the bean
       // but, the actual class of the bean is MapperFactoryBean
@@ -193,7 +191,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
       boolean explicitFactoryUsed = false;
       if (StringUtils.hasText(this.sqlSessionFactoryBeanName)) {
-        definition.getPropertyValues().add("sqlSessionFactory", new RuntimeBeanReference(this.sqlSessionFactoryBeanName));
+        definition.getPropertyValues().add("sqlSessionFactory",
+            new RuntimeBeanReference(this.sqlSessionFactoryBeanName));
         explicitFactoryUsed = true;
       } else if (this.sqlSessionFactory != null) {
         definition.getPropertyValues().add("sqlSessionFactory", this.sqlSessionFactory);
@@ -202,13 +201,16 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
       if (StringUtils.hasText(this.sqlSessionTemplateBeanName)) {
         if (explicitFactoryUsed) {
-          LOGGER.warn(() -> "Cannot use both: sqlSessionTemplate and sqlSessionFactory together. sqlSessionFactory is ignored.");
+          LOGGER.warn(
+              () -> "Cannot use both: sqlSessionTemplate and sqlSessionFactory together. sqlSessionFactory is ignored.");
         }
-        definition.getPropertyValues().add("sqlSessionTemplate", new RuntimeBeanReference(this.sqlSessionTemplateBeanName));
+        definition.getPropertyValues().add("sqlSessionTemplate",
+            new RuntimeBeanReference(this.sqlSessionTemplateBeanName));
         explicitFactoryUsed = true;
       } else if (this.sqlSessionTemplate != null) {
         if (explicitFactoryUsed) {
-          LOGGER.warn(() -> "Cannot use both: sqlSessionTemplate and sqlSessionFactory together. sqlSessionFactory is ignored.");
+          LOGGER.warn(
+              () -> "Cannot use both: sqlSessionTemplate and sqlSessionFactory together. sqlSessionFactory is ignored.");
         }
         definition.getPropertyValues().add("sqlSessionTemplate", this.sqlSessionTemplate);
         explicitFactoryUsed = true;
@@ -237,9 +239,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
     if (super.checkCandidate(beanName, beanDefinition)) {
       return true;
     } else {
-      LOGGER.warn(() -> "Skipping MapperFactoryBean with name '" + beanName
-          + "' and '" + beanDefinition.getBeanClassName() + "' mapperInterface"
-          + ". Bean already defined with the same name!");
+      LOGGER.warn(() -> "Skipping MapperFactoryBean with name '" + beanName + "' and '"
+          + beanDefinition.getBeanClassName() + "' mapperInterface" + ". Bean already defined with the same name!");
       return false;
     }
   }

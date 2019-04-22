@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -29,10 +29,9 @@ import org.springframework.transaction.TransactionException;
 /**
  * Default exception translator.
  *
- * Translates MyBatis SqlSession returned exception into a Spring
- * {@code DataAccessException} using Spring's {@code SQLExceptionTranslator}
- * Can load {@code SQLExceptionTranslator} eagerly or when the
- * first exception is translated.
+ * Translates MyBatis SqlSession returned exception into a Spring {@code DataAccessException} using Spring's
+ * {@code SQLExceptionTranslator} Can load {@code SQLExceptionTranslator} eagerly or when the first exception is
+ * translated.
  *
  * @author Eduardo Macarron
  */
@@ -45,9 +44,11 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
   /**
    * Creates a new {@code DataAccessExceptionTranslator} instance.
    *
-   * @param dataSource DataSource to use to find metadata and establish which error codes are usable.
-   * @param exceptionTranslatorLazyInit if true, the translator instantiates internal stuff only the first time will
-   *        have the need to translate exceptions.
+   * @param dataSource
+   *          DataSource to use to find metadata and establish which error codes are usable.
+   * @param exceptionTranslatorLazyInit
+   *          if true, the translator instantiates internal stuff only the first time will have the need to translate
+   *          exceptions.
    */
   public MyBatisExceptionTranslator(DataSource dataSource, boolean exceptionTranslatorLazyInit) {
     this.dataSource = dataSource;
@@ -75,7 +76,7 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
         throw (TransactionException) e.getCause();
       }
       return new MyBatisSystemException(e);
-    } 
+    }
     return null;
   }
 

@@ -61,8 +61,7 @@ class SqlSessionDaoSupportTest extends AbstractMyBatisSpringTest {
     sqlSessionDaoSupport.afterPropertiesSet();
 
     assertThat(((SqlSessionTemplate) sqlSessionDaoSupport.getSqlSession()).getSqlSessionFactory())
-        .as("should store the Factory")
-        .isEqualTo(sqlSessionFactory);
+        .as("should store the Factory").isEqualTo(sqlSessionFactory);
   }
 
   @Test

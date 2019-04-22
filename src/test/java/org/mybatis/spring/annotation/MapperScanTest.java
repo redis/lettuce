@@ -192,8 +192,7 @@ class MapperScanTest {
     startContext();
 
     assertThat(applicationContext.getBean("mapperInterface").getClass())
-        .as("scanner should not overwrite existing bean definition")
-        .isSameAs(Object.class);
+        .as("scanner should not overwrite existing bean definition").isSameAs(Object.class);
   }
 
   private void setupSqlSessionFactory() {
@@ -235,7 +234,7 @@ class MapperScanTest {
     applicationContext.registerBeanDefinition("sqlSessionTemplate", definition);
 
     applicationContext.register(AppConfigWithSqlSessionTemplate.class);
-    
+
     startContext();
 
     // all interfaces with methods should be loaded
@@ -243,7 +242,7 @@ class MapperScanTest {
     applicationContext.getBean("mapperSubinterface");
     applicationContext.getBean("mapperChildInterface");
     applicationContext.getBean("annotatedMapper");
-    
+
   }
 
   @Test
@@ -318,10 +317,8 @@ class MapperScanTest {
   }
 
   @Configuration
-  @MapperScans({
-      @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1")
-      ,@MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds2")
-  })
+  @MapperScans({ @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1"),
+      @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds2") })
   public static class AppConfigWithMapperScans {
   }
 

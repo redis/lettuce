@@ -169,10 +169,9 @@ class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     try {
       status = txManager.getTransaction(new DefaultTransactionDefinition());
 
-      assertThrows(TransientDataAccessResourceException.class, () ->
-          session = SqlSessionUtils.getSqlSession(sqlSessionFactory)
-      );
-//      fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
+      assertThrows(TransientDataAccessResourceException.class,
+          () -> session = SqlSessionUtils.getSqlSession(sqlSessionFactory));
+      // fail("should not be able to get an SqlSession using non-Spring tx manager when there is an active Spring tx");
     } finally {
       // rollback required to close connection
       txManager.rollback(status);
@@ -230,11 +229,10 @@ class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
       session = SqlSessionUtils.getSqlSession(sqlSessionFactory);
 
-      assertThrows(TransientDataAccessResourceException.class, () ->
-        session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, exceptionTranslator)
-      );
+      assertThrows(TransientDataAccessResourceException.class,
+          () -> session = SqlSessionUtils.getSqlSession(sqlSessionFactory, ExecutorType.BATCH, exceptionTranslator));
 
-//      fail("should not be able to change the Executor type during an existing transaction");
+      // fail("should not be able to change the Executor type during an existing transaction");
     } finally {
       SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
@@ -360,7 +358,6 @@ class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     assertNoCommit();
     assertSingleConnection();
   }
-
 
   @Test
   void testRollbackWithTxSupports() {
@@ -568,9 +565,7 @@ class MyBatisSpringTest extends AbstractMyBatisSpringTest {
       session.update("org.mybatis.spring.TestMapper.insertFail");
       session.getMapper(TestMapper.class).insertTest("test3");
 
-      assertThrows(PersistenceException.class, () ->
-          session.commit(true)
-      );
+      assertThrows(PersistenceException.class, () -> session.commit(true));
     } finally {
       SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
     }
@@ -594,15 +589,13 @@ class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
     SqlSessionUtils.closeSqlSession(session, sqlSessionFactory);
 
-    assertThrows(DataAccessException.class, () ->
-      txManager.commit(status)
-    );
+    assertThrows(DataAccessException.class, () -> txManager.commit(status));
   }
 
   private void setupBatchStatements() {
     // these queries must be the same as the query in TestMapper.xml
-    connection.getPreparedStatementResultSetHandler().addPreparedStatement(
-        new MockPreparedStatement(connection, "INSERT ? INTO test"));
+    connection.getPreparedStatementResultSetHandler()
+        .addPreparedStatement(new MockPreparedStatement(connection, "INSERT ? INTO test"));
 
     connection.getPreparedStatementResultSetHandler().prepareThrowsSQLException("INSERT fail");
   }

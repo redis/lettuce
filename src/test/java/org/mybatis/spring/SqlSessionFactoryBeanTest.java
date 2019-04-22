@@ -52,8 +52,11 @@ import com.mockrunner.mock.jdbc.MockDataSource;
 class SqlSessionFactoryBeanTest {
 
   private static final class TestObjectFactory extends DefaultObjectFactory {
-    private static final long serialVersionUID = 1L;}
-  private static final class TestObjectWrapperFactory extends DefaultObjectWrapperFactory {}
+    private static final long serialVersionUID = 1L;
+  }
+
+  private static final class TestObjectWrapperFactory extends DefaultObjectWrapperFactory {
+  }
 
   private static MockDataSource dataSource = new MockDataSource();
 
@@ -152,9 +155,11 @@ class SqlSessionFactoryBeanTest {
 
     SqlSessionFactory factory = factoryBean.getObject();
 
-    assertThat(factory.getConfiguration().getEnvironment().getId()).isEqualTo(SqlSessionFactoryBean.class.getSimpleName());
+    assertThat(factory.getConfiguration().getEnvironment().getId())
+        .isEqualTo(SqlSessionFactoryBean.class.getSimpleName());
     assertThat(factory.getConfiguration().getEnvironment().getDataSource()).isSameAs(dataSource);
-    assertThat(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass()).isSameAs(SpringManagedTransactionFactory.class);
+    assertThat(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass())
+        .isSameAs(SpringManagedTransactionFactory.class);
     assertThat(factory.getConfiguration().getVfsImpl()).isSameAs(JBoss6VFS.class);
 
     assertThat(factory.getConfiguration().isCacheEnabled()).isFalse();
@@ -250,12 +255,13 @@ class SqlSessionFactoryBeanTest {
   void testSetConfigLocation() throws Exception {
     setupFactoryBean();
 
-    factoryBean.setConfigLocation(new org.springframework.core.io.ClassPathResource(
-        "org/mybatis/spring/mybatis-config.xml"));
+    factoryBean
+        .setConfigLocation(new org.springframework.core.io.ClassPathResource("org/mybatis/spring/mybatis-config.xml"));
 
     SqlSessionFactory factory = factoryBean.getObject();
 
-    assertThat(factory.getConfiguration().getEnvironment().getId()).isEqualTo(SqlSessionFactoryBean.class.getSimpleName());
+    assertThat(factory.getConfiguration().getEnvironment().getId())
+        .isEqualTo(SqlSessionFactoryBean.class.getSimpleName());
     assertThat(factory.getConfiguration().getEnvironment().getDataSource()).isSameAs(dataSource);
     assertThat(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass())
         .isSameAs(org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
@@ -264,7 +270,8 @@ class SqlSessionFactoryBeanTest {
     // properties explicitly set differently than the defaults in the config xml
     assertThat(factory.getConfiguration().isCacheEnabled()).isFalse();
     assertThat(factory.getConfiguration().isUseGeneratedKeys()).isTrue();
-    assertThat(factory.getConfiguration().getDefaultExecutorType()).isSameAs(org.apache.ibatis.session.ExecutorType.REUSE);
+    assertThat(factory.getConfiguration().getDefaultExecutorType())
+        .isSameAs(org.apache.ibatis.session.ExecutorType.REUSE);
 
     // for each statement in the xml file: org.mybatis.spring.TestMapper.xxx & xxx
     assertThat(factory.getConfiguration().getMappedStatementNames().size()).isEqualTo(8);
@@ -278,11 +285,12 @@ class SqlSessionFactoryBeanTest {
     setupFactoryBean();
 
     factoryBean.setConfiguration(new Configuration());
-    factoryBean.setConfigLocation(new org.springframework.core.io.ClassPathResource(
-            "org/mybatis/spring/mybatis-config.xml"));
+    factoryBean
+        .setConfigLocation(new org.springframework.core.io.ClassPathResource("org/mybatis/spring/mybatis-config.xml"));
 
     Throwable e = assertThrows(IllegalStateException.class, factoryBean::getObject);
-    assertThat(e.getMessage()).isEqualTo("Property 'configuration' and 'configLocation' can not specified with together");
+    assertThat(e.getMessage())
+        .isEqualTo("Property 'configuration' and 'configLocation' can not specified with together");
   }
 
   @Test
@@ -446,7 +454,8 @@ class SqlSessionFactoryBeanTest {
       Class<? extends TransactionFactory> transactionFactoryClass) {
     assertThat(factory.getConfiguration().getEnvironment().getId()).isEqualTo(environment);
     assertThat(factory.getConfiguration().getEnvironment().getDataSource()).isSameAs(dataSource);
-    assertThat(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass()).isSameAs(transactionFactoryClass);
+    assertThat(factory.getConfiguration().getEnvironment().getTransactionFactory().getClass())
+        .isSameAs(transactionFactoryClass);
 
     // no mappers configured => no mapped statements or other parsed elements
     assertThat(factory.getConfiguration().getMappedStatementNames().size()).isEqualTo(0);

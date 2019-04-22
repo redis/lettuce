@@ -54,7 +54,7 @@ public interface TypeHandlerFactory {
     return new InnerTypeHandler();
   }
 
-  @MappedTypes({UUID.class})
+  @MappedTypes({ UUID.class })
   class InnerTypeHandler implements TypeHandler<UUID> {
 
     @Override

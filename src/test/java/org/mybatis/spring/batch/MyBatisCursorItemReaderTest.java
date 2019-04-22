@@ -56,8 +56,7 @@ class MyBatisCursorItemReaderTest {
   @Test
   void testCloseOnFailing() throws Exception {
 
-    Mockito.when(this.sqlSessionFactory.openSession(ExecutorType.SIMPLE))
-        .thenReturn(this.sqlSession);
+    Mockito.when(this.sqlSessionFactory.openSession(ExecutorType.SIMPLE)).thenReturn(this.sqlSession);
     Mockito.when(this.cursor.iterator()).thenReturn(getFoos().iterator());
     Mockito.when(this.sqlSession.selectCursor("selectFoo", Collections.singletonMap("id", 1)))
         .thenThrow(new RuntimeException("error."));
@@ -73,8 +72,7 @@ class MyBatisCursorItemReaderTest {
       itemReader.open(executionContext);
       fail();
     } catch (ItemStreamException e) {
-      Assertions.assertThat(e).hasMessage("Failed to initialize the reader")
-          .hasCause(new RuntimeException("error."));
+      Assertions.assertThat(e).hasMessage("Failed to initialize the reader").hasCause(new RuntimeException("error."));
     } finally {
       itemReader.close();
       Mockito.verify(this.sqlSession).close();

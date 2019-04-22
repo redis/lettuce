@@ -40,12 +40,12 @@ public class MyBatisBatchItemWriterBuilder<T> {
   /**
    * Set the {@link SqlSessionTemplate} to be used by writer for database access.
    *
-   * @param sqlSessionTemplate the {@link SqlSessionTemplate} to be used by writer for database access
+   * @param sqlSessionTemplate
+   *          the {@link SqlSessionTemplate} to be used by writer for database access
    * @return this instance for method chaining
    * @see MyBatisBatchItemWriter#setSqlSessionTemplate(SqlSessionTemplate)
    */
-  public MyBatisBatchItemWriterBuilder<T> sqlSessionTemplate(
-      SqlSessionTemplate sqlSessionTemplate) {
+  public MyBatisBatchItemWriterBuilder<T> sqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
     this.sqlSessionTemplate = sqlSessionTemplate;
     return this;
   }
@@ -53,7 +53,8 @@ public class MyBatisBatchItemWriterBuilder<T> {
   /**
    * Set the {@link SqlSessionFactory} to be used by writer for database access.
    *
-   * @param sqlSessionFactory the {@link SqlSessionFactory} to be used by writer for database access
+   * @param sqlSessionFactory
+   *          the {@link SqlSessionFactory} to be used by writer for database access
    * @return this instance for method chaining
    * @see MyBatisBatchItemWriter#setSqlSessionFactory(SqlSessionFactory)
    */
@@ -65,7 +66,8 @@ public class MyBatisBatchItemWriterBuilder<T> {
   /**
    * Set the statement id identifying the statement in the SqlMap configuration file.
    *
-   * @param statementId the id for the statement
+   * @param statementId
+   *          the id for the statement
    * @return this instance for method chaining
    * @see MyBatisBatchItemWriter#setStatementId(String)
    */
@@ -75,10 +77,10 @@ public class MyBatisBatchItemWriterBuilder<T> {
   }
 
   /**
-   * The flag that determines whether an assertion is made that all items cause at least one row to
-   * be updated.
+   * The flag that determines whether an assertion is made that all items cause at least one row to be updated.
    *
-   * @param assertUpdates the flag to set. Defaults to true
+   * @param assertUpdates
+   *          the flag to set. Defaults to true
    * @return this instance for method chaining
    * @see MyBatisBatchItemWriter#setAssertUpdates(boolean)
    */
@@ -90,7 +92,8 @@ public class MyBatisBatchItemWriterBuilder<T> {
   /**
    * Set a converter that converting item to parameter object.
    *
-   * @param itemToParameterConverter a converter that converting item to parameter object
+   * @param itemToParameterConverter
+   *          a converter that converting item to parameter object
    * @return this instance for method chaining
    * @see MyBatisBatchItemWriter#setItemToParameterConverter(Converter)
    */

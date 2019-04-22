@@ -59,16 +59,14 @@ class MyBatisBatchItemWriterBuilderTest {
     MockitoAnnotations.initMocks(this);
     {
       Configuration configuration = new Configuration();
-      Environment environment =
-          new Environment("unittest", new JdbcTransactionFactory(), dataSource);
+      Environment environment = new Environment("unittest", new JdbcTransactionFactory(), dataSource);
       configuration.setEnvironment(environment);
       Mockito.when(this.sqlSessionFactory.getConfiguration()).thenReturn(configuration);
-      Mockito.when(this.sqlSessionFactory.openSession(ExecutorType.BATCH))
-          .thenReturn(this.sqlSession);
+      Mockito.when(this.sqlSessionFactory.openSession(ExecutorType.BATCH)).thenReturn(this.sqlSession);
     }
     {
       BatchResult result = new BatchResult(null, null);
-      result.setUpdateCounts(new int[] {1});
+      result.setUpdateCounts(new int[] { 1 });
       Mockito.when(this.sqlSession.flushStatements()).thenReturn(Collections.singletonList(result));
     }
   }
@@ -161,8 +159,7 @@ class MyBatisBatchItemWriterBuilderTest {
     itemWriter.write(foos);
 
     Map<String, Object> parameter = new HashMap<>();
-    parameter.put("now",
-        LocalDateTime.now(Clock.fixed(Instant.ofEpochMilli(0), ZoneId.systemDefault())));
+    parameter.put("now", LocalDateTime.now(Clock.fixed(Instant.ofEpochMilli(0), ZoneId.systemDefault())));
     parameter.put("item", foos.get(0));
     Mockito.verify(this.sqlSession).update("updateFoo", parameter);
     parameter.put("item", foos.get(1));

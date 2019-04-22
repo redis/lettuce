@@ -31,7 +31,8 @@ class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
     TransactionStatus status = txManager.getTransaction(txDef);
 
     SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory();
-    SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource, null, false);
+    SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource,
+        null, false);
     transaction.getConnection();
     transaction.commit();
     transaction.close();
@@ -41,26 +42,28 @@ class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
     txManager.commit(status);
   }
 
-  //    @Test
-  //    public void shouldManageWithOtherDatasource() throws Exception {
-  //        DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
-  //        txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
-  //        TransactionStatus status = txManager.getTransaction(txDef);
+  // @Test
+  // public void shouldManageWithOtherDatasource() throws Exception {
+  // DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
+  // txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
+  // TransactionStatus status = txManager.getTransaction(txDef);
   //
-  //        SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(new MockDataSource());
-  //        SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection, false);
-  //        transaction.commit();
-  //        transaction.close();
-  //        assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
-  //        assertTrue("should close the Connection", connection.isClosed());
+  // SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory(new MockDataSource());
+  // SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(connection,
+  // false);
+  // transaction.commit();
+  // transaction.close();
+  // assertEquals("should call commit on Connection", 1, connection.getNumberCommits());
+  // assertTrue("should close the Connection", connection.isClosed());
   //
-  //        txManager.commit(status);
-  //    }
+  // txManager.commit(status);
+  // }
 
   @Test
   void shouldManageWithNoTx() throws Exception {
     SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory();
-    SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource, null, false);
+    SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource,
+        null, false);
     transaction.getConnection();
     transaction.commit();
     transaction.close();
@@ -71,7 +74,8 @@ class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
   @Test
   void shouldNotCommitWithNoTxAndAutocommitIsOn() throws Exception {
     SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory();
-    SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource, null, false);
+    SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource,
+        null, false);
     connection.setAutoCommit(true);
     transaction.getConnection();
     transaction.commit();
@@ -83,7 +87,8 @@ class SpringTransactionManagerTest extends AbstractMyBatisSpringTest {
   @Test
   void shouldIgnoreAutocommit() throws Exception {
     SpringManagedTransactionFactory transactionFactory = new SpringManagedTransactionFactory();
-    SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource, null, true);
+    SpringManagedTransaction transaction = (SpringManagedTransaction) transactionFactory.newTransaction(dataSource,
+        null, true);
     transaction.getConnection();
     transaction.commit();
     transaction.close();

@@ -63,8 +63,7 @@ class MyBatisPagingItemReaderBuilderTest {
     Environment environment = new Environment("unittest", new JdbcTransactionFactory(), dataSource);
     configuration.setEnvironment(environment);
     Mockito.when(this.sqlSessionFactory.getConfiguration()).thenReturn(configuration);
-    Mockito.when(this.sqlSessionFactory.openSession(ExecutorType.BATCH))
-        .thenReturn(this.sqlSession);
+    Mockito.when(this.sqlSessionFactory.openSession(ExecutorType.BATCH)).thenReturn(this.sqlSession);
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("id", 1);
     parameters.put("_page", 0);
@@ -92,10 +91,8 @@ class MyBatisPagingItemReaderBuilderTest {
     Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo3");
 
     itemReader.update(executionContext);
-    Assertions.assertThat(executionContext.getInt("MyBatisPagingItemReader.read.count"))
-        .isEqualTo(3);
-    Assertions.assertThat(executionContext.containsKey("MyBatisPagingItemReader.read.count.max"))
-        .isFalse();
+    Assertions.assertThat(executionContext.getInt("MyBatisPagingItemReader.read.count")).isEqualTo(3);
+    Assertions.assertThat(executionContext.containsKey("MyBatisPagingItemReader.read.count.max")).isFalse();
 
     Assertions.assertThat(itemReader.read()).isNull();
   }
@@ -142,8 +139,7 @@ class MyBatisPagingItemReaderBuilderTest {
     Assertions.assertThat(itemReader.read()).extracting(Foo::getName).isEqualTo("foo2");
 
     itemReader.update(executionContext);
-    Assertions.assertThat(executionContext.getInt("MyBatisPagingItemReader.read.count.max"))
-        .isEqualTo(2);
+    Assertions.assertThat(executionContext.getInt("MyBatisPagingItemReader.read.count.max")).isEqualTo(2);
 
     Assertions.assertThat(itemReader.read()).isNull();
   }

@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2018 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -65,9 +65,7 @@ class MyBatisBatchItemWriterTest {
 
     given(mockSqlSessionTemplate.flushStatements()).willReturn(batchResults);
 
-    assertThrows(InvalidDataAccessResourceUsageException.class, () ->
-      writer.write(employees)
-    );
+    assertThrows(InvalidDataAccessResourceUsageException.class, () -> writer.write(employees));
   }
 
   @Test
@@ -75,14 +73,12 @@ class MyBatisBatchItemWriterTest {
     List<Employee> employees = Arrays.asList(new Employee(), new Employee());
 
     BatchResult batchResult = new BatchResult(null, null);
-    batchResult.setUpdateCounts(new int[]{1, 0});
+    batchResult.setUpdateCounts(new int[] { 1, 0 });
     List<BatchResult> batchResults = Collections.singletonList(batchResult);
 
     given(mockSqlSessionTemplate.flushStatements()).willReturn(batchResults);
 
-    assertThrows(EmptyResultDataAccessException.class, () ->
-        writer.write(employees)
-    );
+    assertThrows(EmptyResultDataAccessException.class, () -> writer.write(employees));
   }
 
   @Test
@@ -104,8 +100,7 @@ class MyBatisBatchItemWriterTest {
     this.writer.setItemToParameterConverter(item -> {
       Map<String, Object> parameter = new HashMap<>();
       parameter.put("item", item);
-      parameter.put("now",
-          LocalDateTime.now(Clock.fixed(Instant.ofEpochMilli(0), ZoneId.systemDefault())));
+      parameter.put("now", LocalDateTime.now(Clock.fixed(Instant.ofEpochMilli(0), ZoneId.systemDefault())));
       return parameter;
     });
 
@@ -115,8 +110,7 @@ class MyBatisBatchItemWriterTest {
 
     Map<String, Object> parameter = new HashMap<>();
     parameter.put("item", employee);
-    parameter.put("now",
-        LocalDateTime.now(Clock.fixed(Instant.ofEpochMilli(0), ZoneId.systemDefault())));
+    parameter.put("now", LocalDateTime.now(Clock.fixed(Instant.ofEpochMilli(0), ZoneId.systemDefault())));
     Mockito.verify(this.mockSqlSessionTemplate).update("updateEmployee", parameter);
   }
 

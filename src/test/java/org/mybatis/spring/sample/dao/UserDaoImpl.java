@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2017 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@ import org.mybatis.spring.sample.domain.User;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 
 /**
- * This DAO extends SqlSessionDaoSupport and uses a Spring managed SqlSession
- * instead of the MyBatis one. SqlSessions are handled by Spring so you don't
- * need to open/close/commit/rollback.
- * MyBatis exceptions are translated to Spring Data Exceptions.
+ * This DAO extends SqlSessionDaoSupport and uses a Spring managed SqlSession instead of the MyBatis one. SqlSessions
+ * are handled by Spring so you don't need to open/close/commit/rollback. MyBatis exceptions are translated to Spring
+ * Data Exceptions.
  */
 public class UserDaoImpl extends SqlSessionDaoSupport implements UserDao {
 

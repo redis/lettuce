@@ -38,10 +38,12 @@ public class ScanClass2 {
   }
 
   public String createSqlUsingAnonymousClass() {
-    return new SQL() {{
-      SELECT("a");
-      FROM("test2");
-    }}.toString();
+    return new SQL() {
+      {
+        SELECT("a");
+        FROM("test2");
+      }
+    }.toString();
   }
 
   public Supplier<String> createSqlSupplier() {

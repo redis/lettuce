@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2018 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -71,12 +71,10 @@ public class SampleJobConfig {
 
   @Bean
   public SqlSessionFactory sqlSessionFactory() throws Exception {
-    PathMatchingResourcePatternResolver resourcePatternResolver =
-        new PathMatchingResourcePatternResolver();
+    PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
     SqlSessionFactoryBean ss = new SqlSessionFactoryBean();
     ss.setDataSource(dataSource());
-    ss.setMapperLocations(
-        resourcePatternResolver.getResources("org/mybatis/spring/sample/mapper/*.xml"));
+    ss.setMapperLocations(resourcePatternResolver.getResources("org/mybatis/spring/sample/mapper/*.xml"));
     org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
     configuration.setDefaultExecutorType(ExecutorType.BATCH);
     ss.setConfiguration(configuration);
@@ -109,15 +107,16 @@ public class SampleJobConfig {
     // @formatter:on
   }
 
-public static <T> Converter<T, Map<String, Object>> createItemToParameterMapConverter(String operationBy, LocalDateTime operationAt) {
-  return item -> {
-    Map<String, Object> parameter = new HashMap<>();
-    parameter.put("item", item);
-    parameter.put("operationBy", operationBy);
-    parameter.put("operationAt", operationAt);
-    return parameter;
-  };
-}
+  public static <T> Converter<T, Map<String, Object>> createItemToParameterMapConverter(String operationBy,
+      LocalDateTime operationAt) {
+    return item -> {
+      Map<String, Object> parameter = new HashMap<>();
+      parameter.put("item", item);
+      parameter.put("operationBy", operationBy);
+      parameter.put("operationAt", operationAt);
+      return parameter;
+    };
+  }
 
   @Bean
   public Job importUserJob() throws Exception {

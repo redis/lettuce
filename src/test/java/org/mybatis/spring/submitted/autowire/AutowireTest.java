@@ -24,7 +24,8 @@ class AutowireTest {
 
   @Test
   void shouldReturnMapper() {
-    try (ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:org/mybatis/spring/submitted/autowire/spring.xml")) {
+    try (ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(
+        "classpath:org/mybatis/spring/submitted/autowire/spring.xml")) {
 
       FooMapper fooMapper = (FooMapper) context.getBean("fooMapper");
       assertThat(fooMapper).isNotNull();

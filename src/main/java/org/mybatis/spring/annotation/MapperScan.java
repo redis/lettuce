@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2018 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -29,11 +29,13 @@ import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.context.annotation.Import;
 
 /**
- * Use this annotation to register MyBatis mapper interfaces when using Java
- * Config. It performs when same work as {@link MapperScannerConfigurer} via
- * {@link MapperScannerRegistrar}.
+ * Use this annotation to register MyBatis mapper interfaces when using Java Config. It performs when same work as
+ * {@link MapperScannerConfigurer} via {@link MapperScannerRegistrar}.
  *
- * <p>Configuration example:</p>
+ * <p>
+ * Configuration example:
+ * </p>
+ * 
  * <pre class="code">
  * &#064;Configuration
  * &#064;MapperScan("org.mybatis.spring.sample.mapper")
@@ -41,9 +43,7 @@ import org.springframework.context.annotation.Import;
  *
  *   &#064;Bean
  *   public DataSource dataSource() {
- *     return new EmbeddedDatabaseBuilder()
- *              .addScript("schema.sql")
- *              .build();
+ *     return new EmbeddedDatabaseBuilder().addScript("schema.sql").build();
  *   }
  *
  *   &#064;Bean
@@ -75,8 +75,7 @@ import org.springframework.context.annotation.Import;
 public @interface MapperScan {
 
   /**
-   * Alias for the {@link #basePackages()} attribute. Allows for more concise
-   * annotation declarations e.g.:
+   * Alias for the {@link #basePackages()} attribute. Allows for more concise annotation declarations e.g.:
    * {@code @MapperScan("org.my.pkg")} instead of {@code @MapperScan(basePackages = "org.my.pkg"})}.
    *
    * @return base package names
@@ -84,27 +83,26 @@ public @interface MapperScan {
   String[] value() default {};
 
   /**
-   * Base packages to scan for MyBatis interfaces. Note that only interfaces
-   * with at least one method will be registered; concrete classes will be
-   * ignored.
+   * Base packages to scan for MyBatis interfaces. Note that only interfaces with at least one method will be
+   * registered; concrete classes will be ignored.
    *
    * @return base package names for scanning mapper interface
    */
   String[] basePackages() default {};
 
   /**
-   * Type-safe alternative to {@link #basePackages()} for specifying the packages
-   * to scan for annotated components. The package of each class specified will be scanned.
-   * <p>Consider creating a special no-op marker class or interface in each package
-   * that serves no purpose other than being referenced by this attribute.
+   * Type-safe alternative to {@link #basePackages()} for specifying the packages to scan for annotated components. The
+   * package of each class specified will be scanned.
+   * <p>
+   * Consider creating a special no-op marker class or interface in each package that serves no purpose other than being
+   * referenced by this attribute.
    *
    * @return classes that indicate base package for scanning mapper interface
    */
   Class<?>[] basePackageClasses() default {};
 
   /**
-   * The {@link BeanNameGenerator} class to be used for naming detected components
-   * within the Spring container.
+   * The {@link BeanNameGenerator} class to be used for naming detected components within the Spring container.
    *
    * @return the class of {@link BeanNameGenerator}
    */
@@ -113,8 +111,7 @@ public @interface MapperScan {
   /**
    * This property specifies the annotation that the scanner will search for.
    * <p>
-   * The scanner will register all interfaces in the base package that also have
-   * the specified annotation.
+   * The scanner will register all interfaces in the base package that also have the specified annotation.
    * <p>
    * Note this can be combined with markerInterface.
    *
@@ -125,8 +122,8 @@ public @interface MapperScan {
   /**
    * This property specifies the parent that the scanner will search for.
    * <p>
-   * The scanner will register all interfaces in the base package that also have
-   * the specified interface class as a parent.
+   * The scanner will register all interfaces in the base package that also have the specified interface class as a
+   * parent.
    * <p>
    * Note this can be combined with annotationClass.
    *
@@ -135,18 +132,16 @@ public @interface MapperScan {
   Class<?> markerInterface() default Class.class;
 
   /**
-   * Specifies which {@code SqlSessionTemplate} to use in the case that there is
-   * more than one in the spring context. Usually this is only needed when you
-   * have more than one datasource.
+   * Specifies which {@code SqlSessionTemplate} to use in the case that there is more than one in the spring context.
+   * Usually this is only needed when you have more than one datasource.
    *
    * @return the bean name of {@code SqlSessionTemplate}
    */
   String sqlSessionTemplateRef() default "";
 
   /**
-   * Specifies which {@code SqlSessionFactory} to use in the case that there is
-   * more than one in the spring context. Usually this is only needed when you
-   * have more than one datasource.
+   * Specifies which {@code SqlSessionFactory} to use in the case that there is more than one in the spring context.
+   * Usually this is only needed when you have more than one datasource.
    *
    * @return the bean name of {@code SqlSessionFactory}
    */

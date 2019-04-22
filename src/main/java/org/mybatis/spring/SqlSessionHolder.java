@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2018 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -23,10 +23,9 @@ import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.transaction.support.ResourceHolderSupport;
 
 /**
- * Used to keep current {@code SqlSession} in {@code TransactionSynchronizationManager}.
- * The {@code SqlSessionFactory} that created that {@code SqlSession} is used as a key.
- * {@code ExecutorType} is also kept to be able to check if the user is trying to change it
- * during a TX (that is not allowed) and throw a Exception in that case.
+ * Used to keep current {@code SqlSession} in {@code TransactionSynchronizationManager}. The {@code SqlSessionFactory}
+ * that created that {@code SqlSession} is used as a key. {@code ExecutorType} is also kept to be able to check if the
+ * user is trying to change it during a TX (that is not allowed) and throw a Exception in that case.
  *
  * @author Hunter Presnall
  * @author Eduardo Macarron
@@ -42,12 +41,14 @@ public final class SqlSessionHolder extends ResourceHolderSupport {
   /**
    * Creates a new holder instance.
    *
-   * @param sqlSession the {@code SqlSession} has to be hold.
-   * @param executorType the {@code ExecutorType} has to be hold.
-   * @param exceptionTranslator the {@code PersistenceExceptionTranslator} has to be hold.
+   * @param sqlSession
+   *          the {@code SqlSession} has to be hold.
+   * @param executorType
+   *          the {@code ExecutorType} has to be hold.
+   * @param exceptionTranslator
+   *          the {@code PersistenceExceptionTranslator} has to be hold.
    */
-  public SqlSessionHolder(SqlSession sqlSession,
-      ExecutorType executorType,
+  public SqlSessionHolder(SqlSession sqlSession, ExecutorType executorType,
       PersistenceExceptionTranslator exceptionTranslator) {
 
     notNull(sqlSession, "SqlSession must not be null");

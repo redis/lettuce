@@ -1,5 +1,5 @@
 /**
- *    Copyright 2010-2015 the original author or authors.
+ *    Copyright 2010-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
     userMapperMaster.save(user);
     userMapperSlave.save(user);
   }
-  
+
   @Override
   @Transactional
   public void saveWithFailure(User user) {
@@ -44,8 +44,10 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public boolean checkUserExists(int id) {
-    if (userMapperMaster.select(id) != null) return true;
-    if (userMapperSlave.select(id) != null) return true;
+    if (userMapperMaster.select(id) != null)
+      return true;
+    if (userMapperSlave.select(id) != null)
+      return true;
     return false;
   }
 }

@@ -33,8 +33,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 public class AsyncAfterCompletionHelper {
   /**
    * 
-   * Invocation handler that performs afterCompletion on a separate thread 
-   * See Github issue #18
+   * Invocation handler that performs afterCompletion on a separate thread See Github issue #18
    * 
    * @author Alex Rykov
    * 
@@ -48,8 +47,7 @@ public class AsyncAfterCompletionHelper {
     }
 
     @Override
-    public Object invoke(final Object proxy, final Method method,
-        final Object[] args) throws Throwable {
+    public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
       if ("afterCompletion".equals(method.getName())) {
         final Set<Object> retValSet = new HashSet<>();
         final Set<Throwable> exceptionSet = new HashSet<>();
@@ -89,8 +87,7 @@ public class AsyncAfterCompletionHelper {
       return synchronization;
     }
     Class<?>[] interfaces = { TransactionSynchronization.class };
-    return (TransactionSynchronization) Proxy.newProxyInstance(synchronization
-        .getClass().getClassLoader(), interfaces,
+    return (TransactionSynchronization) Proxy.newProxyInstance(synchronization.getClass().getClassLoader(), interfaces,
         new AsyncAfterCompletionInvocationHandler(synchronization));
 
   }
