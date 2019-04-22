@@ -343,10 +343,7 @@
         </includes>
       </resource>
       <resource>
-        <directory>${project.build.sourceDirectory}</directory>
-        <excludes>
-          <exclude>**/*.java</exclude>
-        </excludes>
+        <directory>${project.basedir}/src/main/resources</directory>
       </resource>
     </resources>
     <testResources>
