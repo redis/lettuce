@@ -168,7 +168,7 @@
     <dependency>
       <groupId>org.jboss.byteman</groupId>
       <artifactId>byteman-bmunit</artifactId>
-      <version>4.0.5</version>
+      <version>4.0.6</version>
       <scope>test</scope>
     </dependency>
 
