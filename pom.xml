@@ -107,10 +107,10 @@
 
     <mybatis.version>3.5.1</mybatis.version>
     <spring.version>5.1.6.RELEASE</spring.version>
-    <spring-batch.version>4.1.1.RELEASE</spring-batch.version>
+    <spring-batch.version>4.1.2.RELEASE</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
 
-    <junit.version>5.4.1</junit.version>
+    <junit.version>5.4.2</junit.version>
   </properties>
 
   <dependencies>
@@ -168,7 +168,7 @@
     <dependency>
       <groupId>org.jboss.byteman</groupId>
       <artifactId>byteman-bmunit</artifactId>
-      <version>4.0.5</version>
+      <version>4.0.6</version>
       <scope>test</scope>
     </dependency>
 
@@ -223,14 +223,14 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>2.23.4</version>
+      <version>2.27.0</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.11.1</version>
+      <version>3.12.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -292,15 +292,15 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.transaction</groupId>
-      <artifactId>javax.transaction-api</artifactId>
-      <version>1.3</version>
+      <groupId>jakarta.transaction</groupId>
+      <artifactId>jakarta.transaction-api</artifactId>
+      <version>1.3.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <version>4.0.1</version>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <version>4.0.2</version>
       <scope>test</scope>
     </dependency>
 
