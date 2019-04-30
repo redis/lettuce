@@ -97,7 +97,26 @@ public MapperFactoryBean<UserMapper> userMapper() throws Exception {
       </ul>
       
       <p><code>&lt;mybatis:scan/&gt;</code> 와 <code>@MapperScan</code> 모두 마이바티스 스프링 연동모듈 1.2.0에서 추가된 기능이다. 
-      <code>@MapperScan</code> 은 스프링 버전이 3.1이상이어야 한다. </p> 
+      <code>@MapperScan</code> 은 스프링 버전이 3.1이상이어야 한다. </p>
+
+      <p>
+        Since 2.0.2, mapper scanning feature support a option (<code>lazy-initialization</code>)
+        that control lazy initialization enabled/disabled of mapper bean.
+        The motivation for adding this option is supporting a lazy initialization control feature supported by Spring Boot 2.2.
+        The default of this option is <code>false</code> (= not use lazy initialization).
+        If developer want to use lazy initialization for mapper bean, it should be set to the <code>true</code> expressly.
+      </p>
+      <p>
+        <span class="label important">IMPORTANT</span> If use the lazy initialization feature,
+        the developer need to understand following limitations. If any of following conditions are matches,
+        the lazy initialization feature cannot use on your application.
+      </p>
+      <ul>
+        <li>When refers to the statement of <b>other mapper</b> using <code><![CDATA[<association>]]></code>(<code>@One</code>) and <code><![CDATA[<collection>]]></code>(<code>@Many</code>)</li>
+        <li>When includes to the fragment of <b>other mapper</b> using <code><![CDATA[<include>]]></code></li>
+        <li>When refers to the cache of <b>other mapper</b> using <code><![CDATA[<cache-ref>]]></code>(<code>@CacheNamespaceRef</code>)</li>
+        <li>When refers to the result mapping of <b>other mapper</b> using <code><![CDATA[<select resultMap="...">]]></code>(<code>@ResultMap</code>)</li>
+      </ul>
 
       <h4>&lt;mybatis:scan/&gt;</h4>
       
