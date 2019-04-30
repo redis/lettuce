@@ -154,4 +154,16 @@ public @interface MapperScan {
    */
   Class<? extends MapperFactoryBean> factoryBean() default MapperFactoryBean.class;
 
+  /**
+   * Whether enable lazy initialization of mapper bean.
+   *
+   * <p>
+   * Default is {@code false}.
+   * </p>
+   * 
+   * @return set {@code true} to enable lazy initialization
+   * @since 2.0.2
+   */
+  String lazyInitialization() default "";
+
 }

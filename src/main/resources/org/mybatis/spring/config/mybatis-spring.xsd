@@ -130,6 +130,15 @@
           </xsd:appinfo>
         </xsd:annotation>
       </xsd:attribute>
+      <xsd:attribute name="lazy-initialization" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            <![CDATA[
+              Whether enable lazy initialization of mapper bean. Set true to enable lazy initialization. (Since 2.0.2)
+            ]]>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>
