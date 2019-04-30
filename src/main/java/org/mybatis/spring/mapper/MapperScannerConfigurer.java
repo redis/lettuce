@@ -19,6 +19,7 @@ import static org.springframework.util.Assert.notNull;
 
 import java.lang.annotation.Annotation;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
@@ -37,6 +38,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 /**
@@ -93,6 +95,8 @@ public class MapperScannerConfigurer
 
   private boolean addToConfig = true;
 
+  private String lazyInitialization;
+
   private SqlSessionFactory sqlSessionFactory;
 
   private SqlSessionTemplate sqlSessionTemplate;
@@ -138,6 +142,20 @@ public class MapperScannerConfigurer
    */
   public void setAddToConfig(boolean addToConfig) {
     this.addToConfig = addToConfig;
+  }
+
+  /**
+   * Set whether enable lazy initialization for mapper bean.
+   * <p>
+   * Default is {@code false}.
+   * </p>
+   *
+   * @param lazyInitialization
+   *          Set the @{code true} to enable
+   * @since 2.0.2
+   */
+  public void setLazyInitialization(String lazyInitialization) {
+    this.lazyInitialization = lazyInitialization;
   }
 
   /**
@@ -331,6 +349,9 @@ public class MapperScannerConfigurer
     scanner.setResourceLoader(this.applicationContext);
     scanner.setBeanNameGenerator(this.nameGenerator);
     scanner.setMapperFactoryBeanClass(this.mapperFactoryBeanClass);
+    if (StringUtils.hasText(lazyInitialization)) {
+      scanner.setLazyInitialization(Boolean.valueOf(lazyInitialization));
+    }
     scanner.registerFilters();
     scanner.scan(
         StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
@@ -364,7 +385,19 @@ public class MapperScannerConfigurer
       this.basePackage = updatePropertyValue("basePackage", values);
       this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName", values);
       this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName", values);
+      this.lazyInitialization = updatePropertyValue("lazyInitialization", values);
     }
+    this.basePackage = Optional.ofNullable(this.basePackage).map(getEnvironment()::resolvePlaceholders).orElse(null);
+    this.sqlSessionFactoryBeanName = Optional.ofNullable(this.sqlSessionFactoryBeanName)
+        .map(getEnvironment()::resolvePlaceholders).orElse(null);
+    this.sqlSessionTemplateBeanName = Optional.ofNullable(this.sqlSessionTemplateBeanName)
+        .map(getEnvironment()::resolvePlaceholders).orElse(null);
+    this.lazyInitialization = Optional.ofNullable(this.lazyInitialization).map(getEnvironment()::resolvePlaceholders)
+        .orElse(null);
+  }
+
+  private Environment getEnvironment() {
+    return this.applicationContext.getEnvironment();
   }
 
   private String updatePropertyValue(String propertyName, PropertyValues values) {

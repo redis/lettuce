@@ -16,6 +16,7 @@
 package org.mybatis.spring.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -88,6 +89,10 @@ class MapperScannerConfigurerTest {
   @Test
   void testInterfaceScan() {
     startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+
+    assertEquals(5, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
 
     // all interfaces with methods should be loaded
     applicationContext.getBean("mapperInterface");
@@ -166,7 +171,13 @@ class MapperScannerConfigurerTest {
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add("sqlSessionFactoryBeanName",
         "sqlSessionFactory2");
 
-    testInterfaceScan();
+    startContext();
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
   }
 
   @Test
@@ -181,7 +192,13 @@ class MapperScannerConfigurerTest {
     applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add("sqlSessionTemplateBeanName",
         "sqlSessionTemplate");
 
-    testInterfaceScan();
+    startContext();
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
   }
 
   @Test
@@ -201,7 +218,13 @@ class MapperScannerConfigurerTest {
 
     applicationContext.registerBeanDefinition("propertiesPlaceholder", propertyDefinition);
 
-    testInterfaceScan();
+    startContext();
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
   }
 
   @Test
@@ -224,6 +247,8 @@ class MapperScannerConfigurerTest {
     definition.getPropertyValues().removePropertyValue("basePackage");
     definition.getPropertyValues().add("basePackage", "${basePackageProperty}");
     definition.getPropertyValues().add("processPropertyPlaceHolders", true);
+    // for lazy initialization
+    definition.getPropertyValues().add("lazyInitialization", "${mybatis.lazy-initialization:false}");
 
     // also use a property placeholder for an SqlSessionFactory property
     // to make sure the configLocation was setup correctly and MapperScanner did not change
@@ -235,6 +260,7 @@ class MapperScannerConfigurerTest {
     Properties props = new java.util.Properties();
     props.put("basePackageProperty", "org.mybatis.spring.mapper");
     props.put("configLocationProperty", "classpath:org/mybatis/spring/mybatis-config.xml");
+    props.put("mybatis.lazy-initialization", "true");
 
     GenericBeanDefinition propertyDefinition = new GenericBeanDefinition();
     propertyDefinition.setBeanClass(PropertyPlaceholderConfigurer.class);
@@ -242,7 +268,19 @@ class MapperScannerConfigurerTest {
 
     applicationContext.registerBeanDefinition("propertiesPlaceholder", propertyDefinition);
 
-    testInterfaceScan();
+    startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    System.out.println(sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers());
+    assertEquals(1, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
+
+    assertEquals(5, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
 
     // make sure the configLocation was setup correctly
     // mybatis-config.xml changes the executor from the default SIMPLE type

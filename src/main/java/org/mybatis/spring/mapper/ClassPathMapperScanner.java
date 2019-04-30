@@ -55,6 +55,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private boolean addToConfig = true;
 
+  private boolean lazyInitialization;
+
   private SqlSessionFactory sqlSessionFactory;
 
   private SqlSessionTemplate sqlSessionTemplate;
@@ -79,6 +81,20 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   public void setAnnotationClass(Class<? extends Annotation> annotationClass) {
     this.annotationClass = annotationClass;
+  }
+
+  /**
+   * Set whether enable lazy initialization for mapper bean.
+   * <p>
+   * Default is {@code false}.
+   * </p>
+   *
+   * @param lazyInitialization
+   *          Set the @{code true} to enable
+   * @since 2.0.2
+   */
+  public void setLazyInitialization(boolean lazyInitialization) {
+    this.lazyInitialization = lazyInitialization;
   }
 
   public void setMarkerInterface(Class<?> markerInterface) {
@@ -220,6 +236,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
         LOGGER.debug(() -> "Enabling autowire by type for MapperFactoryBean with name '" + holder.getBeanName() + "'.");
         definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
       }
+      definition.setLazyInit(lazyInitialization);
     }
   }
 

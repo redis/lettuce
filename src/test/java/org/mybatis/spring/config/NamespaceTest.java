@@ -15,9 +15,7 @@
  */
 package org.mybatis.spring.config;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
@@ -38,6 +36,10 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test for the MapperScannerRegistrar.
@@ -77,6 +79,9 @@ class NamespaceTest {
         new String[] { "org/mybatis/spring/config/base-package.xml" }, setupSqlSessionFactory());
 
     startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(5, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
 
     // all interfaces with methods should be loaded
     applicationContext.getBean("mapperInterface");
@@ -193,6 +198,26 @@ class NamespaceTest {
     applicationContext.getBean("annotatedMapper");
 
     assertTrue(DummyMapperFactoryBean.getMapperCount() > 0);
+  }
+
+  @Test
+  void testLazy() {
+
+    applicationContext = new ClassPathXmlApplicationContext(new String[] { "org/mybatis/spring/config/lazy.xml" },
+        setupSqlSessionTemplate());
+
+    startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(0, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
+
+    assertEquals(4, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
   }
 
   private GenericApplicationContext setupSqlSessionTemplate() {

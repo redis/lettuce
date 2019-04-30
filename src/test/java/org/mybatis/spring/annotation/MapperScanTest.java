@@ -15,15 +15,18 @@
  */
 package org.mybatis.spring.annotation;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.annotation.mapper.ds1.Ds1Mapper;
 import org.mybatis.spring.mapper.AnnotatedMapper;
 import org.mybatis.spring.mapper.MapperInterface;
 import org.mybatis.spring.mapper.MapperSubinterface;
@@ -36,7 +39,11 @@ import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
@@ -261,8 +268,37 @@ class MapperScanTest {
 
     startContext();
 
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(2, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+
     applicationContext.getBean("ds1Mapper");
     applicationContext.getBean("ds2Mapper");
+  }
+
+  @Test
+  void testLazyScanWithPropertySourcesPlaceholderConfigurer() {
+    applicationContext.register(LazyConfigWithPropertySourcesPlaceholderConfigurer.class);
+
+    startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(0, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+    applicationContext.getBean(Ds1Mapper.class);
+    assertEquals(1, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+
+  }
+
+  @Test
+  void testLazyConfigWithPropertySource() {
+    applicationContext.register(LazyConfigWithPropertySource.class);
+
+    startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(0, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+    applicationContext.getBean(Ds1Mapper.class);
+    assertEquals(1, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+
   }
 
   @Configuration
@@ -320,6 +356,23 @@ class MapperScanTest {
   @MapperScans({ @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1"),
       @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds2") })
   public static class AppConfigWithMapperScans {
+  }
+
+  @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1", lazyInitialization = "${mybatis.lazy-initialization:false}")
+  public static class LazyConfigWithPropertySourcesPlaceholderConfigurer {
+    @Bean
+    static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+      PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
+      configurer.setLocation(new ClassPathResource("/org/mybatis/spring/annotation/scan.properties"));
+      return configurer;
+    }
+
+  }
+
+  @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1", lazyInitialization = "${mybatis.lazy-initialization:false}")
+  @PropertySource("classpath:/org/mybatis/spring/annotation/scan.properties")
+  public static class LazyConfigWithPropertySource {
+
   }
 
   public static class BeanNameGenerator implements org.springframework.beans.factory.support.BeanNameGenerator {

@@ -36,6 +36,7 @@
   </bean>
 
   <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+    <property name="lazyInitialization" value="${mybatis.lazy-initialization:false}"/>
     <property name="processPropertyPlaceHolders" value="true" />
     <property name="basePackage" value="${basePkg}" />
   </bean>
