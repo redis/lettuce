@@ -120,7 +120,7 @@ public MapperFactoryBean<UserMapper> userMapper() throws Exception {
       </p>
       <p>
         <span class="label important">重要</span> 遅延初期化機能を使用する場合は、開発者は以下の制限を理解しておく必要があります。
-        以下の条件のいずれかに一致する場合、あなたのアプリケーションで遅延初期化機能を使用することはできません。
+        以下の条件のいずれかに一致する場合、通常あなたのアプリケーションで遅延初期化機能を使用することはできません。
       </p>
       <ul>
         <li><code><![CDATA[<association>]]></code>(<code>@One</code>) and <code><![CDATA[<collection>]]></code>(<code>@Many</code>)を利用して、<b>他のMapperの</b>ステートメントを参照している場合</li>
@@ -128,6 +128,16 @@ public MapperFactoryBean<UserMapper> userMapper() throws Exception {
         <li><code><![CDATA[<cache-ref>]]></code>(<code>@CacheNamespaceRef</code>)を利用して、<b>他のMapperの</b>キャッシュを参照している場合</li>
         <li><code><![CDATA[<select resultMap="...">]]></code>(<code>@ResultMap</code>)を利用して、<b>他のMapperの</b>結果マッピングを参照している場合</li>
       </ul>
+
+      <p>
+        <span class="label important">NOTE</span> しかしながら、以下のように<code>@DependsOn</code>(Springの機能)を利用して、
+        依存するMapper Beanも同時に初期化すると遅延初期化機能を利用することができるようになります。
+      </p>
+
+      <source><![CDATA[@DependsOn("vendorMapper")
+public interface GoodsMapper {
+  // ...
+}]]></source>
 
       <h4>&lt;mybatis:scan/&gt;</h4>
       

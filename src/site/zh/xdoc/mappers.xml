@@ -117,7 +117,7 @@ public MapperFactoryBean<UserMapper> userMapper() throws Exception {
         <p>
           <span class="label important">IMPORTANT</span> If use the lazy initialization feature,
           the developer need to understand following limitations. If any of following conditions are matches,
-          the lazy initialization feature cannot use on your application.
+          usually the lazy initialization feature cannot use on your application.
         </p>
         <ul>
           <li>When refers to the statement of <b>other mapper</b> using <code><![CDATA[<association>]]></code>(<code>@One</code>) and <code><![CDATA[<collection>]]></code>(<code>@Many</code>)</li>
@@ -125,6 +125,15 @@ public MapperFactoryBean<UserMapper> userMapper() throws Exception {
           <li>When refers to the cache of <b>other mapper</b> using <code><![CDATA[<cache-ref>]]></code>(<code>@CacheNamespaceRef</code>)</li>
           <li>When refers to the result mapping of <b>other mapper</b> using <code><![CDATA[<select resultMap="...">]]></code>(<code>@ResultMap</code>)</li>
         </ul>
+
+        <p>
+          <span class="label important">NOTE</span> However, It become possible to use it by simultaneously initializing dependent beans using <code>@DependsOn</code>(Spring's feature) as follow:
+        </p>
+
+        <source><![CDATA[@DependsOn("vendorMapper")
+public interface GoodsMapper {
+  // ...
+}]]></source>
 
         <h4>&lt;mybatis:scan/&gt;</h4>
 
