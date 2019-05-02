@@ -29,6 +29,10 @@ import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.wrapper.DefaultObjectWrapperFactory;
 import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
+import org.apache.ibatis.scripting.LanguageDriver;
+import org.apache.ibatis.scripting.LanguageDriverRegistry;
+import org.apache.ibatis.scripting.defaults.RawLanguageDriver;
+import org.apache.ibatis.scripting.xmltags.XMLLanguageDriver;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -440,6 +444,42 @@ class SqlSessionFactoryBeanTest {
     assertThat(this.factoryBean.getCache().getId()).isEqualTo("test-cache");
   }
 
+  @Test
+  void testScriptingLanguageDriverEmpty() throws Exception {
+    setupFactoryBean();
+    this.factoryBean.setScriptingLanguageDrivers();
+    LanguageDriverRegistry registry = this.factoryBean.getObject().getConfiguration().getLanguageRegistry();
+    assertThat(registry.getDefaultDriver()).isInstanceOf(XMLLanguageDriver.class);
+    assertThat(registry.getDefaultDriverClass()).isEqualTo(XMLLanguageDriver.class);
+  }
+
+  @Test
+  void testScriptingLanguageDriver() throws Exception {
+    setupFactoryBean();
+    this.factoryBean.setScriptingLanguageDrivers(new MyLanguageDriver1(), new MyLanguageDriver2());
+    LanguageDriverRegistry registry = this.factoryBean.getObject().getConfiguration().getLanguageRegistry();
+    assertThat(registry.getDefaultDriver()).isInstanceOf(XMLLanguageDriver.class);
+    assertThat(registry.getDefaultDriverClass()).isEqualTo(XMLLanguageDriver.class);
+    assertThat(registry.getDriver(MyLanguageDriver1.class)).isNotNull();
+    assertThat(registry.getDriver(MyLanguageDriver2.class)).isNotNull();
+    assertThat(registry.getDriver(XMLLanguageDriver.class)).isNotNull();
+    assertThat(registry.getDriver(RawLanguageDriver.class)).isNotNull();
+  }
+
+  @Test
+  void testScriptingLanguageDriverWithDefault() throws Exception {
+    setupFactoryBean();
+    this.factoryBean.setScriptingLanguageDrivers(new MyLanguageDriver1(), new MyLanguageDriver2());
+    this.factoryBean.setDefaultScriptingLanguageDriver(MyLanguageDriver1.class);
+    LanguageDriverRegistry registry = this.factoryBean.getObject().getConfiguration().getLanguageRegistry();
+    assertThat(registry.getDefaultDriver()).isInstanceOf(MyLanguageDriver1.class);
+    assertThat(registry.getDefaultDriverClass()).isEqualTo(MyLanguageDriver1.class);
+    assertThat(registry.getDriver(MyLanguageDriver1.class)).isNotNull();
+    assertThat(registry.getDriver(MyLanguageDriver2.class)).isNotNull();
+    assertThat(registry.getDriver(XMLLanguageDriver.class)).isNotNull();
+    assertThat(registry.getDriver(RawLanguageDriver.class)).isNotNull();
+  }
+
   private void assertDefaultConfig(SqlSessionFactory factory) {
     assertConfig(factory, SqlSessionFactoryBean.class.getSimpleName(),
         org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
@@ -462,6 +502,12 @@ class SqlSessionFactoryBeanTest {
     assertThat(factory.getConfiguration().getResultMapNames().size()).isEqualTo(0);
     assertThat(factory.getConfiguration().getParameterMapNames().size()).isEqualTo(0);
     assertThat(factory.getConfiguration().getSqlFragments().size()).isEqualTo(0);
+  }
+
+  private static class MyLanguageDriver1 extends RawLanguageDriver {
+  }
+
+  private static class MyLanguageDriver2 extends RawLanguageDriver {
   }
 
 }

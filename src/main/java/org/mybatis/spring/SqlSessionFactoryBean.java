@@ -36,6 +36,7 @@ import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
+import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
@@ -124,6 +125,10 @@ public class SqlSessionFactoryBean
   private String typeAliasesPackage;
 
   private Class<?> typeAliasesSuperType;
+
+  private LanguageDriver[] scriptingLanguageDrivers;
+
+  private Class<? extends LanguageDriver> defaultScriptingLanguageDriver;
 
   // issue #19. No default provider.
   private DatabaseIdProvider databaseIdProvider;
@@ -436,6 +441,28 @@ public class SqlSessionFactoryBean
   }
 
   /**
+   * Set scripting language drivers.
+   *
+   * @param scriptingLanguageDrivers
+   *          scripting language drivers
+   * @since 2.0.2
+   */
+  public void setScriptingLanguageDrivers(LanguageDriver... scriptingLanguageDrivers) {
+    this.scriptingLanguageDrivers = scriptingLanguageDrivers;
+  }
+
+  /**
+   * Set a default scripting language driver class.
+   *
+   * @param defaultScriptingLanguageDriver
+   *          A default scripting language driver class
+   * @since 2.0.2
+   */
+  public void setDefaultScriptingLanguageDriver(Class<? extends LanguageDriver> defaultScriptingLanguageDriver) {
+    this.defaultScriptingLanguageDriver = defaultScriptingLanguageDriver;
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -518,6 +545,15 @@ public class SqlSessionFactoryBean
         LOGGER.debug(() -> "Registered type handler: '" + typeHandler + "'");
       });
     }
+
+    if (!isEmpty(this.scriptingLanguageDrivers)) {
+      Stream.of(this.scriptingLanguageDrivers).forEach(languageDriver -> {
+        targetConfiguration.getLanguageRegistry().register(languageDriver);
+        LOGGER.debug(() -> "Registered scripting language driver: '" + languageDriver + "'");
+      });
+    }
+    Optional.ofNullable(this.defaultScriptingLanguageDriver)
+        .ifPresent(targetConfiguration::setDefaultScriptingLanguage);
 
     if (this.databaseIdProvider != null) {// fix #64 set databaseId before parse mapper xmls
       try {
