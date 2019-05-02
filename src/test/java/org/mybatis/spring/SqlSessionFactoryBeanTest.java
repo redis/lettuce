@@ -301,7 +301,7 @@ class SqlSessionFactoryBeanTest {
   void testFragmentsAreReadWithMapperLocations() throws Exception {
     setupFactoryBean();
 
-    factoryBean.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/TestMapper.xml") });
+    factoryBean.setMapperLocations(new ClassPathResource("org/mybatis/spring/TestMapper.xml"));
 
     SqlSessionFactory factory = factoryBean.getObject();
 
@@ -321,7 +321,7 @@ class SqlSessionFactoryBeanTest {
   @Test
   void testEmptyMapperLocations() throws Exception {
     setupFactoryBean();
-    factoryBean.setMapperLocations(new org.springframework.core.io.Resource[0]);
+    factoryBean.setMapperLocations();
 
     assertDefaultConfig(factoryBean.getObject());
   }
@@ -337,7 +337,7 @@ class SqlSessionFactoryBeanTest {
   @Test
   void testAddATypeHandler() throws Exception {
     setupFactoryBean();
-    factoryBean.setTypeHandlers(new TypeHandler[] { new DummyTypeHandler() });
+    factoryBean.setTypeHandlers(new DummyTypeHandler());
 
     TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
     assertThat(typeHandlerRegistry.hasTypeHandler(BigInteger.class)).isTrue();
@@ -347,7 +347,7 @@ class SqlSessionFactoryBeanTest {
   void testAddATypeAlias() throws Exception {
     setupFactoryBean();
 
-    factoryBean.setTypeAliases(new Class[] { DummyTypeAlias.class });
+    factoryBean.setTypeAliases(DummyTypeAlias.class);
     TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
     typeAliasRegistry.resolveAlias("testAlias");
   }

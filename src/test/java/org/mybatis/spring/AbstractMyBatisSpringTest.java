@@ -53,10 +53,10 @@ public abstract class AbstractMyBatisSpringTest {
   public static void setupBase() throws Exception {
     // create an SqlSessionFactory that will use SpringManagedTransactions
     SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
-    factoryBean.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/TestMapper.xml") });
+    factoryBean.setMapperLocations(new ClassPathResource("org/mybatis/spring/TestMapper.xml"));
     // note running without SqlSessionFactoryBean.configLocation set => default configuration
     factoryBean.setDataSource(dataSource);
-    factoryBean.setPlugins(new Interceptor[] { executorInterceptor });
+    factoryBean.setPlugins(executorInterceptor);
 
     exceptionTranslator = new MyBatisExceptionTranslator(dataSource, true);
 
