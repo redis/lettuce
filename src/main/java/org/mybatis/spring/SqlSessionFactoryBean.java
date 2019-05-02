@@ -231,7 +231,7 @@ public class SqlSessionFactoryBean
    *          list of plugins
    *
    */
-  public void setPlugins(Interceptor[] plugins) {
+  public void setPlugins(Interceptor... plugins) {
     this.plugins = plugins;
   }
 
@@ -289,7 +289,7 @@ public class SqlSessionFactoryBean
    * @param typeHandlers
    *          Type handler list
    */
-  public void setTypeHandlers(TypeHandler<?>[] typeHandlers) {
+  public void setTypeHandlers(TypeHandler<?>... typeHandlers) {
     this.typeHandlers = typeHandlers;
   }
 
@@ -301,7 +301,7 @@ public class SqlSessionFactoryBean
    * @param typeAliases
    *          Type aliases list
    */
-  public void setTypeAliases(Class<?>[] typeAliases) {
+  public void setTypeAliases(Class<?>... typeAliases) {
     this.typeAliases = typeAliases;
   }
 
@@ -351,7 +351,7 @@ public class SqlSessionFactoryBean
    * @param mapperLocations
    *          location of MyBatis mapper files
    */
-  public void setMapperLocations(Resource[] mapperLocations) {
+  public void setMapperLocations(Resource... mapperLocations) {
     this.mapperLocations = mapperLocations;
   }
 

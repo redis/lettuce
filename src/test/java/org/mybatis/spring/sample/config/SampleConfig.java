@@ -50,7 +50,7 @@ public class SampleConfig {
   public SqlSessionFactory sqlSessionFactory() throws Exception {
     SqlSessionFactoryBean ss = new SqlSessionFactoryBean();
     ss.setDataSource(dataSource());
-    ss.setMapperLocations(new Resource[] { new ClassPathResource("org/mybatis/spring/sample/mapper/UserMapper.xml") });
+    ss.setMapperLocations(new ClassPathResource("org/mybatis/spring/sample/mapper/UserMapper.xml"));
     return ss.getObject();
   }
 

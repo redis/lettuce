@@ -64,7 +64,7 @@ class MapperFactoryBeanTest extends AbstractMyBatisSpringTest {
     factoryBean.setDatabaseIdProvider(null);
     // mapperLocations properties defaults to null
     factoryBean.setDataSource(dataSource);
-    factoryBean.setPlugins(new Interceptor[] { executorInterceptor });
+    factoryBean.setPlugins(executorInterceptor);
 
     SqlSessionFactory sqlSessionFactory = factoryBean.getObject();
 
