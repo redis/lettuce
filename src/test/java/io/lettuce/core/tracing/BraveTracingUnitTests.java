@@ -29,7 +29,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import zipkin2.Span;
 import brave.Tracer;
 import brave.Tracing;
-import brave.internal.recorder.MutableSpan;
+import brave.handler.MutableSpan;
 import brave.propagation.CurrentTraceContext;
 import io.lettuce.core.TestSupport;
 import io.netty.channel.unix.DomainSocketAddress;
