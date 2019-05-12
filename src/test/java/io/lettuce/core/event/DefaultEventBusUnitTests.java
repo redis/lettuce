@@ -48,7 +48,7 @@ class DefaultEventBusUnitTests {
     @Test
     void publishToMultipleSubscribers() throws Exception {
 
-        EventBus sut = new DefaultEventBus(Schedulers.immediate());
+        EventBus sut = new DefaultEventBus(Schedulers.parallel());
 
         ArrayBlockingQueue<Event> arrayQueue = new ArrayBlockingQueue<>(5);
 
