@@ -42,6 +42,8 @@ public class DefaultEventBus implements EventBus {
 
     @Override
     public void publish(Event event) {
-        bus.onNext(event);
+        if (bus.hasDownstreams()) {
+            bus.onNext(event);
+        }
     }
 }
