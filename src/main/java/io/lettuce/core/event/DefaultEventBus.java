@@ -15,8 +15,8 @@
  */
 package io.lettuce.core.event;
 
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Scheduler;
 
 /**
@@ -27,11 +27,11 @@ import reactor.core.scheduler.Scheduler;
  */
 public class DefaultEventBus implements EventBus {
 
-    private final TopicProcessor<Event> bus;
+    private final EmitterProcessor<Event> bus;
     private final Scheduler scheduler;
 
     public DefaultEventBus(Scheduler scheduler) {
-        this.bus = TopicProcessor.create();
+        this.bus = EmitterProcessor.create();
         this.scheduler = scheduler;
     }
 
