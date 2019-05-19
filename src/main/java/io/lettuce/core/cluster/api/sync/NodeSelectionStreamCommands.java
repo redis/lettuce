@@ -160,6 +160,34 @@ public interface NodeSelectionStreamCommands<K, V> {
     Executions<String> xgroupSetid(StreamOffset<K> streamOffset, K group);
 
     /**
+     * Retrieve information about the stream at {@code key}.
+     *
+     * @param key the stream key.
+     * @return List&lt;Object&gt; array-reply.
+     * @since 5.2
+     */
+    Executions<List<Object>> xinfoStream(K key);
+
+    /**
+     * Retrieve information about the stream consumer groups at {@code key}.
+     *
+     * @param key the stream key.
+     * @return List&lt;Object&gt; array-reply.
+     * @since 5.2
+     */
+    Executions<List<Object>> xinfoGroups(K key);
+
+    /**
+     * Retrieve information about consumer groups of group {@code group} and stream at {@code key}.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @return List&lt;Object&gt; array-reply.
+     * @since 5.2
+     */
+    Executions<List<Object>> xinfoConsumers(K key, K group);
+
+    /**
      * Get the length of a steam.
      *
      * @param key the stream key.

@@ -1627,6 +1627,21 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<Object> xinfoStream(K key) {
+        return createDissolvingFlux(() -> commandBuilder.xinfoStream(key));
+    }
+
+    @Override
+    public Flux<Object> xinfoGroups(K key) {
+        return createDissolvingFlux(() -> commandBuilder.xinfoGroups(key));
+    }
+
+    @Override
+    public Flux<Object> xinfoConsumers(K key, K group) {
+        return createDissolvingFlux(() -> commandBuilder.xinfoConsumers(key, group));
+    }
+
+    @Override
     public Mono<Long> xlen(K key) {
         return createMono(() -> commandBuilder.xlen(key));
     }

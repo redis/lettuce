@@ -25,7 +25,6 @@ public interface ProtocolKeyword {
     /**
      *
      * @return byte[] encoded representation.
-     *
      */
     byte[] getBytes();
 

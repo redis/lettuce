@@ -1550,6 +1550,21 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<List<Object>> xinfoStream(K key) {
+        return dispatch(commandBuilder.xinfoStream(key));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> xinfoGroups(K key) {
+        return dispatch(commandBuilder.xinfoGroups(key));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> xinfoConsumers(K key, K group) {
+        return dispatch(commandBuilder.xinfoConsumers(key, group));
+    }
+
+    @Override
     public RedisFuture<Long> xlen(K key) {
         return dispatch(commandBuilder.xlen(key));
     }

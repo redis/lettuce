@@ -161,6 +161,34 @@ public interface RedisStreamReactiveCommands<K, V> {
     Mono<String> xgroupSetid(StreamOffset<K> streamOffset, K group);
 
     /**
+     * Retrieve information about the stream at {@code key}.
+     *
+     * @param key the stream key.
+     * @return Object array-reply.
+     * @since 5.2
+     */
+    Flux<Object> xinfoStream(K key);
+
+    /**
+     * Retrieve information about the stream consumer groups at {@code key}.
+     *
+     * @param key the stream key.
+     * @return Object array-reply.
+     * @since 5.2
+     */
+    Flux<Object> xinfoGroups(K key);
+
+    /**
+     * Retrieve information about consumer groups of group {@code group} and stream at {@code key}.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @return Object array-reply.
+     * @since 5.2
+     */
+    Flux<Object> xinfoConsumers(K key, K group);
+
+    /**
      * Get the length of a steam.
      *
      * @param key the stream key.

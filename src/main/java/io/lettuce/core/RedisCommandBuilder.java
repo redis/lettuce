@@ -2188,6 +2188,30 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XGROUP, new StatusOutput<>(codec), args);
     }
 
+    public Command<K, V, List<Object>> xinfoStream(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(STREAM).addKey(key);
+
+        return createCommand(XINFO, new ArrayOutput<>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> xinfoGroups(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(GROUPS).addKey(key);
+
+        return createCommand(XINFO, new ArrayOutput<>(codec), args);
+    }
+
+    public Command<K, V, List<Object>> xinfoConsumers(K key, K group) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CONSUMERS).addKey(key).addKey(group);
+
+        return createCommand(XINFO, new ArrayOutput<>(codec), args);
+    }
+
     public Command<K, V, Long> xlen(K key) {
         notNullKey(key);
 
