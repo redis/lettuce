@@ -548,7 +548,7 @@
                     </plugin>
 
                     <plugin>
-                        <groupId>net.ju-n.maven.plugins</groupId>
+                        <groupId>net.nicoulaj.maven.plugins</groupId>
                         <artifactId>checksum-maven-plugin</artifactId>
                         <version>1.8</version>
                         <configuration>
