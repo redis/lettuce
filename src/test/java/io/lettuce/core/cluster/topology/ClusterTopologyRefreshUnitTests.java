@@ -16,13 +16,11 @@
 package io.lettuce.core.cluster.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -291,8 +289,8 @@ class ClusterTopologyRefreshUnitTests {
             sut.loadViews(seed, true);
             fail("Missing RedisConnectionException");
         } catch (Exception e) {
-            assertThat(e).hasNoCause().hasMessage("Unable to establish a connection to Redis Cluster");
-            assertThat(e.getSuppressed()).hasSize(2);
+            assertThat(e).hasMessageStartingWith("Unable to establish a connection to Redis Cluster");
+            assertThat(e.getSuppressed()).hasSize(1);
         }
 
         verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380)));
@@ -437,6 +435,43 @@ class ClusterTopologyRefreshUnitTests {
 
         assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
                 .containsSequence(RedisURI.create("127.0.0.1", 7381), seed.get(0));
+    }
+
+    @Test
+    void shouldPropagateCommandFailures() {
+
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381));
+
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7380))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class), eq(new InetSocketAddress("127.0.0.1", 7381))))
+                .thenReturn(completedFuture((StatefulRedisConnection) connection2));
+
+        reset(connection1, connection2);
+
+        when(connection1.async()).thenReturn(asyncCommands1);
+        when(connection2.async()).thenReturn(asyncCommands2);
+        when(connection1.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+        when(connection2.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+
+        when(connection1.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
+
+            TimedAsyncCommand command = invocation.getArgument(0);
+            command.completeExceptionally(new RedisException("AUTH"));
+            return command;
+        });
+
+        RedisException nestedException = new RedisException("AUTH");
+
+        when(connection2.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
+
+            TimedAsyncCommand command = invocation.getArgument(0);
+            command.completeExceptionally(nestedException);
+            return command;
+        });
+
+        assertThatThrownBy(() -> sut.loadViews(seed, true)).isInstanceOf(RedisException.class)
+                .hasRootCauseInstanceOf(RedisException.class).hasSuppressedException(nestedException);
     }
 
     Requests createClusterNodesRequests(int duration, String nodes) {

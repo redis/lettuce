@@ -98,8 +98,16 @@ public class ClusterTopologyRefresh {
                         nodeSpecificViews = getNodeSpecificViews(requestedTopology, requestedClients, commandTimeoutNs);
                     }
 
+                    if (nodeSpecificViews.isEmpty()) {
+                        tryFail(requestedTopology, seed);
+                    }
+
                     return nodeSpecificViews.toMap();
                 }
+            }
+
+            if (nodeSpecificViews.isEmpty()) {
+                tryFail(requestedTopology, seed);
             }
 
             return nodeSpecificViews.toMap();
@@ -115,6 +123,30 @@ public class ClusterTopologyRefresh {
                     logger.debug("Cannot close ClusterTopologyRefresh connections", e);
                 }
             }
+        }
+    }
+
+    private void tryFail(Requests requestedTopology, Iterable<RedisURI> seed) {
+
+        RedisException exception = null;
+
+        for (RedisURI node : requestedTopology.nodes()) {
+
+            TimedAsyncCommand<String, String, String> request = requestedTopology.getRequest(node);
+            if (request != null && request.isCompletedExceptionally()) {
+
+                Throwable cause = RefreshFutures.getException(request);
+                if (exception == null) {
+                    exception = new RedisException("Cannot retrieve initial cluster partitions from initial URIs " + seed,
+                            cause);
+                } else if (cause != null) {
+                    exception.addSuppressed(cause);
+                }
+            }
+        }
+
+        if (exception != null) {
+            throw exception;
         }
     }
 
