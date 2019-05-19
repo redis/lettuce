@@ -111,7 +111,7 @@ class ClusterPartiallyDownIntegrationTests extends TestSupport {
             fail("Missing RedisException");
         } catch (RedisException e) {
             assertThat(e).hasCauseInstanceOf(RedisConnectionException.class);
-            assertThat(e.getCause()).hasMessage("Unable to establish a connection to Redis Cluster");
+            assertThat(e.getCause()).hasMessageStartingWith("Unable to establish a connection to Redis Cluster");
         }
     }
 

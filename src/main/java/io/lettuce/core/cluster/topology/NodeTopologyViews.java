@@ -59,6 +59,13 @@ class NodeTopologyViews {
         return result;
     }
 
+    /**
+     * @return {@literal true} if no views are present.
+     */
+    public boolean isEmpty() {
+        return views.isEmpty();
+    }
+
     public Map<RedisURI, Partitions> toMap() {
 
         Map<RedisURI, Partitions> nodeSpecificViews = new TreeMap<>(TopologyComparators.RedisURIComparator.INSTANCE);

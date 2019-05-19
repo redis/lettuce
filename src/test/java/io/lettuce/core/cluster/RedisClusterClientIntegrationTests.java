@@ -394,6 +394,18 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
+    void partitionRetrievalShouldFail() {
+
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), ClusterTestSettings.port7).build());
+
+        assertThatThrownBy(clusterClient::getPartitions).isInstanceOf(RedisException.class).hasRootCauseInstanceOf(
+                RedisCommandExecutionException.class);
+
+        FastShutdown.shutdown(clusterClient);
+    }
+
+    @Test
     void clusterAuthPingBeforeConnect() {
 
         RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),

@@ -16,8 +16,11 @@
 package io.lettuce.core.cluster.topology;
 
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import io.lettuce.core.RedisCommandInterruptedException;
 
 /**
  * @author Mark Paluch
@@ -60,5 +63,25 @@ class RefreshFutures {
 
         }
         return waitTime;
+    }
+
+    /**
+     * Retrieve the exception from a {@link Future}.
+     *
+     * @param future
+     * @return
+     * @since 5.1.7
+     */
+    static Throwable getException(Future<?> future) {
+
+        try {
+            future.get();
+        } catch (InterruptedException e) {
+            throw new RedisCommandInterruptedException(e);
+        } catch (ExecutionException e) {
+            return e.getCause();
+        }
+
+        return null;
     }
 }

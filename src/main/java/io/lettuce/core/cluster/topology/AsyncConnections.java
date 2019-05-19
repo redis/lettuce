@@ -81,9 +81,16 @@ class AsyncConnections {
 
         if (connections.isEmpty() && !sync.isEmpty() && !exceptions.isEmpty()) {
 
-            RedisConnectionException collector = new RedisConnectionException(
-                    "Unable to establish a connection to Redis Cluster");
-            exceptions.forEach(collector::addSuppressed);
+            RedisConnectionException collector = null;
+
+            for (Throwable exception : exceptions) {
+                if (collector == null) {
+                    collector = new RedisConnectionException("Unable to establish a connection to Redis Cluster at "
+                            + this.futures.keySet(), exception);
+                } else {
+                    collector.addSuppressed(exception);
+                }
+            }
 
             throw collector;
         }
