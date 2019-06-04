@@ -38,7 +38,7 @@ import io.lettuce.core.protocol.LettuceCharsets;
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, client name,
  * password and timeouts within the RedisURI.
  *
- * You have following possibilities to create a {@link RedisURI}:
+ * You have the following possibilities to create a {@link RedisURI}:
  *
  * <ul>
  * <li>Use an URI:
