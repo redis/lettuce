@@ -9,7 +9,7 @@ This section provides some basic introduction to Redis. The rest of the document
 
 [[overview.redis]]
 === Knowing Redis
-NoSQL stores have taken the storage world by storm. It is a vast domain with a plethora of solutions, terms and patterns (to make things worse even the term itself has multiple http://www.google.com/search?q=nosoql+acronym[meanings]). While some of the principles are common, it is crucial that the user is familiar to some degree with Redis. The best way to get acquainted to this solutions is to read their documentation and follow their documentation - it usually doesn't take more then 5-10 minutes to go through them and if you are coming from an RDMBS-only background many times these exercises can be an eye opener.
+NoSQL stores have taken the storage world by storm. It is a vast domain with a plethora of solutions, terms and patterns (to make things worse even the term itself has multiple http://www.google.com/search?q=nosql+acronym[meanings]). While some of the principles are common, it is crucial that the user is familiar to some degree with Redis. The best way to get acquainted to this solutions is to read their documentation and follow their documentation - it usually doesn't take more then 5-10 minutes to go through them and if you are coming from an RDMBS-only background many times these exercises can be an eye opener.
 
 The jumping off ground for learning about Redis is http://www.redis.io/[redis.io]. Here is a list of other useful resources:
 
