@@ -1,9 +1,6 @@
-dist: trusty
+dist: xenial
 
 language: java
-
-jdk:
-  - oraclejdk8
 
 env:
   matrix:
@@ -16,10 +13,10 @@ env:
 sudo: false
 
 before_install:
-  - if [[ ! -f downloads/stunnel-5.50.tar.gz ]]; then wget -O downloads/stunnel-5.50.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.50.tar.gz; fi
-  - if [[ ! -f ./stunnel-5.50/configure ]]; then tar -xzf downloads/stunnel-5.50.tar.gz; fi
-  - if [[ ! -f ./stunnel-5.50/src/stunnel ]]; then cd ./stunnel-5.50; ./configure; make; cd ..; fi
-  - export PATH="$PATH:$(pwd)/stunnel-5.50/src"
+  - if [[ ! -f downloads/stunnel-5.54.tar.gz ]]; then wget -O downloads/stunnel-5.54.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.54.tar.gz; fi
+  - if [[ ! -f ./stunnel-5.54/configure ]]; then tar -xzf downloads/stunnel-5.54.tar.gz; fi
+  - if [[ ! -f ./stunnel-5.54/src/stunnel ]]; then cd ./stunnel-5.54; ./configure; make; cd ..; fi
+  - export PATH="$PATH:$(pwd)/stunnel-5.54/src"
 
 install: make prepare ssl-keys
 
@@ -32,7 +29,7 @@ cache:
   directories:
     - '$HOME/.m2/repository'
     - '$TRAVIS_BUILD_DIR/downloads'
-    - '$TRAVIS_BUILD_DIR/stunnel-5.50'
+    - '$TRAVIS_BUILD_DIR/stunnel-5.54'
 
 notifications:
   webhooks:
