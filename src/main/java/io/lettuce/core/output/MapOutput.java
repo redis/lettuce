@@ -16,6 +16,7 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -32,10 +33,11 @@ import io.lettuce.core.codec.RedisCodec;
  */
 public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
 
+    private boolean initialized;
     private K key;
 
     public MapOutput(RedisCodec<K, V> codec) {
-        super(codec, null);
+        super(codec, Collections.emptyMap());
     }
 
     @Override
@@ -68,8 +70,9 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
     @Override
     public void multi(int count) {
 
-        if (output == null) {
+        if (!initialized) {
             output = new LinkedHashMap<>(count / 2, 1);
+            initialized = true;
         }
     }
 }

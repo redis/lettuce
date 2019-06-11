@@ -82,7 +82,6 @@ public class TransactionCommandIntegrationTests extends TestSupport {
 
         assertThat(transactionResult.wasDiscarded()).isTrue();
         assertThat(transactionResult).isEmpty();
-
     }
 
     @Test

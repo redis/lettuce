@@ -46,7 +46,12 @@ public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, Lis
     @Override
     public void set(ByteBuffer bytes) {
 
-        double value = (bytes == null) ? 0 : parseDouble(decodeAscii(bytes));
+        if (bytes == null) {
+            subscriber.onNext(output, Value.empty());
+            return;
+        }
+
+        double value = parseDouble(decodeAscii(bytes));
         set(value);
     }
 

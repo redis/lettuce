@@ -42,6 +42,11 @@ public class KeyListOutput<K, V> extends CommandOutput<K, V, List<K>> implements
 
     @Override
     public void set(ByteBuffer bytes) {
+
+        if (bytes == null) {
+            return;
+        }
+
         subscriber.onNext(output, bytes == null ? null : codec.decodeKey(bytes));
     }
 

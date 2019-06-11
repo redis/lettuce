@@ -45,6 +45,11 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
     @Override
     public void set(ByteBuffer bytes) {
 
+        if (bytes == null) {
+            subscriber.onNext(output, null);
+            return;
+        }
+
         double value = (bytes == null) ? 0 : parseDouble(decodeAscii(bytes));
         set(value);
     }
