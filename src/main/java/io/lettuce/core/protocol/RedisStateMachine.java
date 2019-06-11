@@ -41,6 +41,8 @@ public class RedisStateMachine {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisStateMachine.class);
     private static final ByteBuffer QUEUED = StandardCharsets.US_ASCII.encode("QUEUED");
+    private static final int TERMINATOR_LENGTH = 2;
+    private static final int NOT_FOUND = -1;
 
     static class State {
         enum Type {
@@ -82,7 +84,6 @@ public class RedisStateMachine {
             BULK_ERROR,
 
             /**
-             *
              * First byte: {@code =}.
              *
              * @since 6.0/RESP3
@@ -99,16 +100,16 @@ public class RedisStateMachine {
             /**
              * First byte: {@code %}.
              *
-             * @since 6.0/RESP3
              * @see #HELLO_V3
+             * @since 6.0/RESP3
              */
             MAP,
 
             /**
              * First byte: {@code ~}.
              *
-             * @since 6.0/RESP3
              * @see #MULTI
+             * @since 6.0/RESP3
              */
             SET,
 
@@ -120,19 +121,18 @@ public class RedisStateMachine {
             ATTRIBUTE,
 
             /**
-             *
              * First byte: {@code >}.
              *
-             * @since 6.0/RESP3
              * @see #MULTI
+             * @since 6.0/RESP3
              */
             PUSH,
 
             /**
              * First byte: {@code @}.
              *
-             * @since 6.0/RESP3
              * @see #MAP
+             * @since 6.0/RESP3
              */
             HELLO_V3,
 
@@ -158,7 +158,7 @@ public class RedisStateMachine {
         }
 
         Type type = null;
-        int count = -1;
+        int count = NOT_FOUND;
 
         @Override
         public String toString() {
@@ -175,11 +175,10 @@ public class RedisStateMachine {
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final ByteBuf responseElementBuffer;
     private final AtomicBoolean closed = new AtomicBoolean();
+    private final Resp2LongProcessor longProcessor = new Resp2LongProcessor();
 
-    private Resp2LongProcessor longProcessor = new Resp2LongProcessor();
     private ProtocolVersion protocolVersion = null;
     private int stackElements;
-    private int terminatorLength = 2; /* RESP2 CR+LF, RESP3 LF */
 
     /**
      * Initialize a new instance.
@@ -198,16 +197,6 @@ public class RedisStateMachine {
 
     public void setProtocolVersion(ProtocolVersion protocolVersion) {
         this.protocolVersion = protocolVersion;
-
-        if (protocolVersion == ProtocolVersion.RESP2) {
-            this.longProcessor = new Resp2LongProcessor();
-            this.terminatorLength = 2;
-        }
-
-        if (protocolVersion == ProtocolVersion.RESP3) {
-            this.longProcessor = new Resp3LongProcessor();
-            this.terminatorLength = 1;
-        }
     }
 
     /**
@@ -298,21 +287,21 @@ public class RedisStateMachine {
                     safeSet(output, null, command);
                     break;
                 case INTEGER:
-                    if ((end = findLineEnd(buffer)) == -1) {
+                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
                         break loop;
                     }
                     long integer = readLong(buffer, buffer.readerIndex(), end);
                     safeSet(output, integer, command);
                     break;
                 case BOOLEAN:
-                    if ((end = findLineEnd(buffer)) == -1) {
+                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
                         break loop;
                     }
                     boolean value = readBoolean(buffer);
                     safeSet(output, value, command);
                     break;
                 case FLOAT:
-                    if ((end = findLineEnd(buffer)) == -1) {
+                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
                         break loop;
                     }
                     double f = readFloat(buffer, buffer.readerIndex(), end);
@@ -320,29 +309,29 @@ public class RedisStateMachine {
                     break;
                 case BULK:
                 case VERBATIM:
-                    if ((end = findLineEnd(buffer)) == -1) {
+                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
                         break loop;
                     }
                     length = (int) readLong(buffer, buffer.readerIndex(), end);
-                    if (length == -1) {
+                    if (length == NOT_FOUND) {
                         safeSet(output, null, command);
                     } else {
                         state.type = BYTES;
-                        state.count = length + this.terminatorLength;
+                        state.count = length + TERMINATOR_LENGTH;
                         buffer.markReaderIndex();
                         continue loop;
                     }
                     break;
                 case BULK_ERROR:
-                    if ((end = findLineEnd(buffer)) == -1) {
+                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
                         break loop;
                     }
                     length = (int) readLong(buffer, buffer.readerIndex(), end);
-                    if (length == -1) {
+                    if (length == NOT_FOUND) {
                         safeSetError(output, null, command);
                     } else {
                         state.type = BYTES;
-                        state.count = length + this.terminatorLength;
+                        state.count = length + TERMINATOR_LENGTH;
                         buffer.markReaderIndex();
                         continue loop;
                     }
@@ -353,8 +342,8 @@ public class RedisStateMachine {
                 case SET:
                 case MAP:
 
-                    if (state.count == -1) {
-                        if ((end = findLineEnd(buffer)) == -1) {
+                    if (state.count == NOT_FOUND) {
+                        if ((end = findLineEnd(buffer)) == NOT_FOUND) {
                             break loop;
                         }
                         length = (int) readLong(buffer, buffer.readerIndex(), end);
@@ -407,10 +396,13 @@ public class RedisStateMachine {
             logger.debug("Decoded {}, empty stack: {}", command, isEmpty(stack));
         }
 
-        /*
-         * if (isDiscoverProtocol()) { if (resp3Indicator) { setProtocolVersion(ProtocolVersion.RESP3); } else {
-         * setProtocolVersion(ProtocolVersion.RESP2); } }
-         */
+        if (isDiscoverProtocol()) {
+            if (resp3Indicator) {
+                setProtocolVersion(ProtocolVersion.RESP3);
+            } else {
+                setProtocolVersion(ProtocolVersion.RESP2);
+            }
+        }
 
         return isEmpty(stack);
     }
@@ -435,19 +427,11 @@ public class RedisStateMachine {
     private int findLineEnd(ByteBuf buffer) {
 
         int index = buffer.forEachByte(ByteProcessor.FIND_LF);
-
-        if (getProtocolVersion() != ProtocolVersion.RESP3) {
-            return (index > 0 && buffer.getByte(index - 1) == '\r') ? index : -1;
-        }
-
-        return index;
+        return (index > 0 && buffer.getByte(index - 1) == '\r') ? index - 1 : NOT_FOUND;
     }
 
     private State.Type readReplyType(ByteBuf buffer) {
-
-        State.Type type = getType(buffer.readerIndex(), buffer.readByte());
-
-        return type;
+        return getType(buffer.readerIndex(), buffer.readByte());
     }
 
     private State.Type getType(int index, byte b) {
@@ -495,10 +479,10 @@ public class RedisStateMachine {
 
     private double readFloat(ByteBuf buffer, int start, int end) {
 
-        int valueLength = (end - start) - (this.terminatorLength - 1);
+        int valueLength = end - start;
         String value = buffer.toString(start, valueLength, StandardCharsets.US_ASCII);
 
-        buffer.skipBytes(valueLength + this.terminatorLength);
+        buffer.skipBytes(valueLength + TERMINATOR_LENGTH);
 
         return Double.parseDouble(value);
     }
@@ -506,7 +490,7 @@ public class RedisStateMachine {
     private boolean readBoolean(ByteBuf buffer) {
 
         byte b = buffer.readByte();
-        buffer.skipBytes(this.terminatorLength);
+        buffer.skipBytes(TERMINATOR_LENGTH);
 
         switch (b) {
             case 't':
@@ -523,43 +507,43 @@ public class RedisStateMachine {
         ByteBuffer bytes = null;
         int end = findLineEnd(buffer);
 
-        if (end > -1) {
+        if (end > NOT_FOUND) {
+            bytes = readBytes0(buffer, end - buffer.readerIndex());
 
-            int start = buffer.readerIndex();
-            responseElementBuffer.clear();
-            int size = (end - start) - (this.terminatorLength - 1);
-
-            if (responseElementBuffer.capacity() < size) {
-                responseElementBuffer.capacity(size);
-            }
-
-            buffer.readBytes(responseElementBuffer, size);
-
-            bytes = responseElementBuffer.internalNioBuffer(0, size);
-
-            buffer.readerIndex(end + 1);
+            buffer.skipBytes(TERMINATOR_LENGTH);
             buffer.markReaderIndex();
         }
+
         return bytes;
     }
 
     private ByteBuffer readBytes(ByteBuf buffer, int count) {
 
-        ByteBuffer bytes = null;
-
         if (buffer.readableBytes() >= count) {
-            responseElementBuffer.clear();
 
-            int size = count - this.terminatorLength;
+            ByteBuffer byteBuffer = readBytes0(buffer, count - TERMINATOR_LENGTH);
 
-            if (responseElementBuffer.capacity() < size) {
-                responseElementBuffer.capacity(size);
-            }
-            buffer.readBytes(responseElementBuffer, size);
+            buffer.skipBytes(TERMINATOR_LENGTH);
+            buffer.markReaderIndex();
 
-            bytes = responseElementBuffer.internalNioBuffer(0, size);
-            buffer.skipBytes(this.terminatorLength);
+            return byteBuffer;
         }
+
+        return null;
+    }
+
+    private ByteBuffer readBytes0(ByteBuf buffer, int count) {
+
+        ByteBuffer bytes;
+        responseElementBuffer.clear();
+
+        if (responseElementBuffer.capacity() < count) {
+            responseElementBuffer.capacity(count);
+        }
+
+        buffer.readBytes(responseElementBuffer, count);
+        bytes = responseElementBuffer.internalNioBuffer(0, count);
+
         return bytes;
     }
 
@@ -813,18 +797,20 @@ public class RedisStateMachine {
             this.result = 0;
             this.first = true;
 
-            buffer.forEachByte(start, end - start - 1, this);
+            int length = end - start;
+            buffer.forEachByte(start, length, this);
 
             if (!this.negative) {
                 this.result = -this.result;
             }
-            buffer.readerIndex(end + 1);
+
+            buffer.skipBytes(length + TERMINATOR_LENGTH);
 
             return this.result;
         }
 
         @Override
-        public boolean process(byte value) throws Exception {
+        public boolean process(byte value) {
 
             if (first) {
                 first = false;
@@ -843,25 +829,6 @@ public class RedisStateMachine {
             result = result * 10 - digit;
 
             return true;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    static class Resp3LongProcessor extends Resp2LongProcessor {
-
-        public long getValue(ByteBuf buffer, int start, int end) {
-
-            this.result = 0;
-            this.first = true;
-
-            buffer.forEachByte(start, end - start, this);
-
-            if (!this.negative) {
-                this.result = -this.result;
-            }
-            buffer.readerIndex(end + 1);
-
-            return this.result;
         }
     }
 }

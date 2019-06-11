@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.logging.log4j.Level;
@@ -78,16 +79,8 @@ class RedisStateMachineResp2UnitTests {
     }
 
     @Test
-    void errorShouldSwitchToResp2Protocol() {
-        assertThat(rsm.decode(buffer("-ERR\r\n"), output)).isTrue();
-        assertThat(output.getError()).isEqualTo("ERR");
-        assertThat(rsm.isDiscoverProtocol()).isFalse();
-        assertThat(rsm.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP2);
-    }
-
-    @Test
     void helloShouldSwitchToResp3() {
-        assertThat(rsm.decode(buffer("@0\n"), output)).isTrue();
+        assertThat(rsm.decode(buffer("@0\r\n"), output)).isTrue();
         assertThat(rsm.isDiscoverProtocol()).isFalse();
         assertThat(rsm.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
     }
@@ -100,8 +93,10 @@ class RedisStateMachineResp2UnitTests {
 
     @Test
     void error() {
-        assertThat(rsm.decode(buffer("-ERR\r\n"), output)).isTrue();
+        ByteBuf buffer = buffer("-ERR\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.getError()).isEqualTo("ERR");
+        assertThat(buffer.readerIndex()).isEqualTo(6);
     }
 
     @Test
@@ -114,17 +109,23 @@ class RedisStateMachineResp2UnitTests {
     @Test
     void integer() {
         CommandOutput<String, String, Long> output = new IntegerOutput<>(codec);
-        assertThat(rsm.decode(buffer(":1\r\n"), output)).isTrue();
+        ByteBuf buffer = buffer(":1\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat((long) output.get()).isEqualTo(1);
+        assertThat(buffer.readerIndex()).isEqualTo(4);
     }
 
     @Test
     void bulk() {
         CommandOutput<String, String, String> output = new ValueOutput<>(codec);
-        assertThat(rsm.decode(buffer("$-1\r\n"), output)).isTrue();
+        ByteBuf buffer = buffer("$-1\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(buffer.readerIndex()).isEqualTo(5);
         assertThat(output.get()).isNull();
-        assertThat(rsm.decode(buffer("$3\r\nfoo\r\n"), output)).isTrue();
+        buffer = buffer("$3\r\nfoo\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get()).isEqualTo("foo");
+        assertThat(buffer.readerIndex()).isEqualTo(9);
     }
 
     @Test
@@ -161,7 +162,7 @@ class RedisStateMachineResp2UnitTests {
         ByteBuf buffer = buffer("*2\r\n*2\r\n$2\r\nAB\r\n$2\r\nXY\r\n*0\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get().get(0)).isEqualTo(Arrays.asList("AB", "XY"));
-        assertThat(output.get().get(1)).isEqualTo(Arrays.asList());
+        assertThat(output.get().get(1)).isEqualTo(Collections.emptyList());
         assertThat(output.get().size()).isEqualTo(2);
     }
 

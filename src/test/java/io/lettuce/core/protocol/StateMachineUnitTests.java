@@ -85,7 +85,7 @@ class StateMachineUnitTests {
 
     @Test
     void helloShouldSwitchToResp3() {
-        assertThat(rsm.decode(buffer("@0\n"), output)).isTrue();
+        assertThat(rsm.decode(buffer("@0\r\n"), output)).isTrue();
         assertThat(rsm.isDiscoverProtocol()).isFalse();
         assertThat(rsm.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
     }
