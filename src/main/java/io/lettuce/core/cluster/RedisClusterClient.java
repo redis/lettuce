@@ -763,13 +763,19 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
         } else if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP3) {
 
-            if (LettuceStrings.isNotEmpty(connectionSettings.getUsername())) {
-                connectionBuilder.auth(connectionSettings.getUsername(), connectionSettings.getPassword());
-                connectionBuilder.handshakeAuthResp3();
+            if (hasPassword(connectionSettings)) {
+                if (LettuceStrings.isNotEmpty(connectionSettings.getUsername())) {
+                    connectionBuilder.auth(connectionSettings.getUsername(), connectionSettings.getPassword());
+                    connectionBuilder.handshakeAuthResp3();
+                } else {
+                    connectionBuilder.auth("default", connectionSettings.getPassword());
+                    connectionBuilder.handshakeAuthResp3();
+                }
             } else {
                 connectionBuilder.handshakeResp3();
             }
         }
+
         return connectionBuilder;
     }
 

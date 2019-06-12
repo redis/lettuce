@@ -174,7 +174,6 @@ public abstract class AbstractRedisClient {
             if (hasPassword(redisURI)) {
                 if (LettuceStrings.isNotEmpty(redisURI.getUsername())) {
                     connectionBuilder.auth(redisURI.getUsername(), redisURI.getPassword());
-
                 } else {
                     connectionBuilder.auth("default", redisURI.getPassword());
                 }

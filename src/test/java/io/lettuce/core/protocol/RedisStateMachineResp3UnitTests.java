@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -30,16 +31,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.*;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 
 /**
@@ -49,8 +49,8 @@ import io.netty.buffer.Unpooled;
  */
 class RedisStateMachineResp3UnitTests {
 
-    private RedisCodec<String, String> codec = new Utf8StringCodec();
-    private Charset charset = Charset.forName("UTF-8");
+    private RedisCodec<String, String> codec = StringCodec.UTF8;
+    private Charset charset = StandardCharsets.UTF_8;
     private CommandOutput<String, String, String> output;
     private RedisStateMachine rsm;
 
@@ -74,8 +74,13 @@ class RedisStateMachineResp3UnitTests {
     @BeforeEach
     final void createStateMachine() {
         output = new StatusOutput<>(codec);
-        rsm = new RedisStateMachine();
+        rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
         rsm.setProtocolVersion(ProtocolVersion.RESP3);
+    }
+
+    @AfterEach
+    void tearDown() {
+        rsm.close();
     }
 
     @Test
