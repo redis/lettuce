@@ -131,6 +131,16 @@ class RedisURIUnitTests {
     }
 
     @Test
+    void sentinelSecureUriTest() {
+
+        RedisURI redisURI = RedisURI.create("rediss-sentinel://auth@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
+        assertThat(redisURI.isSsl()).isTrue();
+
+        assertThat(redisURI.toURI().toString()).isEqualTo(
+                "rediss-sentinel://auth@h1:222,h2,h3:1234?database=5&sentinelMasterId=masterId");
+    }
+
+    @Test
     void socketEqualsTest() {
 
         RedisURI redisURI1 = RedisURI.create("redis-socket:///var/tmp/socket");

@@ -262,6 +262,26 @@ work/stunnel.conf:
 	@echo accept = 127.0.0.1:7445 >> $@
 	@echo connect = 127.0.0.1:7481 >> $@
 
+	@echo [ssl-sentinel-1] >> $@
+	@echo accept = 127.0.0.1:26822 >> $@
+	@echo connect = 127.0.0.1:26379 >> $@
+
+	@echo [ssl-sentinel-2] >> $@
+	@echo accept = 127.0.0.1:26823 >> $@
+	@echo connect = 127.0.0.1:26380 >> $@
+
+	@echo [ssl-sentinel-3] >> $@
+	@echo accept = 127.0.0.1:26824 >> $@
+	@echo connect = 127.0.0.1:26381 >> $@
+
+	@echo [ssl-sentinel-master] >> $@
+	@echo accept = 127.0.0.1:6925 >> $@
+	@echo connect = 127.0.0.1:6482 >> $@
+
+	@echo [ssl-sentinel-slave] >> $@
+	@echo accept = 127.0.0.1:6926 >> $@
+	@echo connect = 127.0.0.1:6482 >> $@
+
 	@echo [stunnel-client-cert] >> $@
 	@echo accept = 127.0.0.1:6445 >> $@
 	@echo connect = 127.0.0.1:6479 >> $@

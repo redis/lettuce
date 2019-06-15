@@ -4,6 +4,7 @@
 [[new-features.5-2-0]]
 == What's new in Lettuce 5.2
 * Allow randomization of read candidates using Redis Cluster
+* SSL support for Redis Sentinel
 
 [[new-features.5-1-0]]
 == What's new in Lettuce 5.1

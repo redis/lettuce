@@ -91,6 +91,7 @@ import io.lettuce.core.protocol.LettuceCharsets;
  * <li><b>rediss</b> Redis Standalone SSL</li>
  * <li><b>redis-socket</b> Redis Standalone Unix Domain Socket</li>
  * <li><b>redis-sentinel</b> Redis Sentinel</li>
+ * <li><b>rediss-sentinel</b> Redis Sentinel SSL</li>
  * </ul>
  *
  * <p>
@@ -119,6 +120,7 @@ import io.lettuce.core.protocol.LettuceCharsets;
 public class RedisURI implements Serializable, ConnectionPoint {
 
     public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";
+    public static final String URI_SCHEME_REDIS_SENTINEL_SECURE = "rediss-sentinel";
     public static final String URI_SCHEME_REDIS = "redis";
     public static final String URI_SCHEME_REDIS_SECURE = "rediss";
     public static final String URI_SCHEME_REDIS_SECURE_ALT = "redis+ssl";
@@ -451,12 +453,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Sets whether to use SSL model.
+     * Sets whether to use SSL. Sets SSL also for already configured Redis Sentinel nodes.
      *
      * @param ssl
      */
     public void setSsl(boolean ssl) {
         this.ssl = ssl;
+        this.sentinels.forEach(it -> it.setSsl(ssl));
     }
 
     /**
@@ -469,12 +472,14 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Sets whether to verify peers when using {@link #isSsl() SSL}.
+     * Sets whether to verify peers when using {@link #isSsl() SSL}. Sets peer verification also for already configured Redis
+     * Sentinel nodes.
      *
      * @param verifyPeer {@literal true} to verify peers when using {@link #isSsl() SSL}.
      */
     public void setVerifyPeer(boolean verifyPeer) {
         this.verifyPeer = verifyPeer;
+        this.sentinels.forEach(it -> it.setVerifyPeer(verifyPeer));
     }
 
     /**
@@ -487,12 +492,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Returns whether StartTLS is enabled.
+     * Returns whether StartTLS is enabled. Sets StartTLS also for already configured Redis Sentinel nodes.
      *
      * @param startTls {@literal true} if StartTLS is enabled.
      */
     public void setStartTls(boolean startTls) {
         this.startTls = startTls;
+        this.sentinels.forEach(it -> it.setStartTls(startTls));
     }
 
     /**
@@ -527,7 +533,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         LettuceAssert.notNull(uri.getScheme(), "URI scheme must not be null");
 
         Builder builder;
-        if (uri.getScheme().equals(URI_SCHEME_REDIS_SENTINEL)) {
+        if (isSentinel(uri.getScheme())) {
             builder = configureSentinel(uri);
         } else {
             builder = configureStandalone(uri);
@@ -587,7 +593,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             }
         }
 
-        if (uri.getScheme().equals(URI_SCHEME_REDIS_SENTINEL)) {
+        if (isSentinel(uri.getScheme())) {
             LettuceAssert.notEmpty(builder.sentinelMasterId, "URI must contain the sentinelMasterId");
         }
 
@@ -653,7 +659,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     private String getPortPart(int port, String scheme) {
 
-        if (URI_SCHEME_REDIS_SENTINEL.equals(scheme) && port == DEFAULT_SENTINEL_PORT) {
+        if (isSentinel(scheme) && port == DEFAULT_SENTINEL_PORT) {
             return "";
         }
 
@@ -680,7 +686,11 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         if (host == null && !sentinels.isEmpty()) {
-            scheme = URI_SCHEME_REDIS_SENTINEL;
+            if (isSsl()) {
+                scheme = URI_SCHEME_REDIS_SENTINEL_SECURE;
+            } else {
+                scheme = URI_SCHEME_REDIS_SENTINEL;
+            }
         }
         return scheme;
     }
@@ -952,8 +962,16 @@ public class RedisURI implements Serializable, ConnectionPoint {
             builder.withSentinelMasterId(masterId);
         }
 
+        if (uri.getScheme().equals(URI_SCHEME_REDIS_SENTINEL_SECURE)) {
+            builder.withSsl(true);
+        }
+
         LettuceAssert.notNull(builder, "Invalid URI, cannot get host part");
         return builder;
+    }
+
+    private static boolean isSentinel(String scheme) {
+        return URI_SCHEME_REDIS_SENTINEL.equals(scheme) || URI_SCHEME_REDIS_SENTINEL_SECURE.equals(scheme);
     }
 
     /**
@@ -1189,44 +1207,41 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Adds ssl information to the builder. Does only affect Redis URI, cannot be used with Sentinel connections.
+         * Adds ssl information to the builder. Sets SSL also for already configured Redis Sentinel nodes.
          *
          * @param ssl {@literal true} if use SSL
          * @return the builder
          */
         public Builder withSsl(boolean ssl) {
 
-            LettuceAssert.assertState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
-
             this.ssl = ssl;
+            this.sentinels.forEach(it -> it.setSsl(ssl));
             return this;
         }
 
         /**
-         * Enables/disables StartTLS when using SSL. Does only affect Redis URI, cannot be used with Sentinel connections.
+         * Enables/disables StartTLS when using SSL. Sets StartTLS also for already configured Redis Sentinel nodes.
          *
          * @param startTls {@literal true} if use StartTLS
          * @return the builder
          */
         public Builder withStartTls(boolean startTls) {
 
-            LettuceAssert.assertState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
-
             this.startTls = startTls;
+            this.sentinels.forEach(it -> it.setStartTls(startTls));
             return this;
         }
 
         /**
-         * Enables/disables peer verification. Does only affect Redis URI, cannot be used with Sentinel connections.
+         * Enables/disables peer verification. Sets peer verification also for already configured Redis Sentinel nodes.
          *
          * @param verifyPeer {@literal true} to verify hosts when using SSL
          * @return the builder
          */
         public Builder withVerifyPeer(boolean verifyPeer) {
 
-            LettuceAssert.assertState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
-
             this.verifyPeer = verifyPeer;
+            this.sentinels.forEach(it -> it.setVerifyPeer(verifyPeer));
             return this;
         }
 

@@ -25,6 +25,8 @@ import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 /**
+ * Unit tests for {@link RedisURI.Builder}.
+ *
  * @author Mark Paluch
  */
 class RedisURIBuilderUnitTests {
@@ -181,6 +183,19 @@ class RedisURIBuilderUnitTests {
     }
 
     @Test
+    void withTlsSentinel() {
+
+        RedisURI result = RedisURI.Builder.sentinel("host", 1234, "master", "foo").withSsl(true).withStartTls(true)
+                .withVerifyPeer(false).build();
+
+        RedisURI sentinel = result.getSentinels().get(0);
+        assertThat(new String(sentinel.getPassword())).isEqualTo("foo");
+        assertThat(sentinel.isSsl()).isTrue();
+        assertThat(sentinel.isStartTls()).isTrue();
+        assertThat(sentinel.isVerifyPeer()).isFalse();
+    }
+
+    @Test
     void withAuthenticatedSentinelUri() {
 
         RedisURI sentinel = new RedisURI("host", 1234, Duration.ZERO);
@@ -218,18 +233,6 @@ class RedisURIBuilderUnitTests {
     @Test
     void redisSentinelWithNullMasterId() {
         assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 1, null)).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void redisSentinelWithSSLNotPossible() {
-        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 1, "master").withSsl(true)).isInstanceOf(
-                IllegalStateException.class);
-    }
-
-    @Test
-    void redisSentinelWithTLSNotPossible() {
-        assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 1, "master").withStartTls(true)).isInstanceOf(
-                IllegalStateException.class);
     }
 
     @Test
