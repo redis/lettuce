@@ -124,5 +124,5 @@ openssl pkcs12 -export -clcerts \
 ${KEYTOOL} -importcert -keystore ${TRUSTSTORE_FILE} -file ${CA_DIR}/certs/ca.cert.pem -noprompt -storepass changeit
 ${KEYTOOL} -importkeystore \
                               -srckeystore ${CA_DIR}/client.p12 -srcstoretype PKCS12 -srcstorepass changeit\
-                              -destkeystore ${KEYSTORE_FILE} -deststoretype JKS \
+                              -destkeystore ${KEYSTORE_FILE} -deststoretype PKCS12 \
                               -noprompt -storepass changeit

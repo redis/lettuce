@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.cert.CertificateException;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -391,7 +391,7 @@ class SslIntegrationTests extends TestSupport {
         RedisFuture<Void> defectFuture = connection.subscribe("foo");
 
         assertThatThrownBy(() -> Futures.await(defectFuture)).hasCauseInstanceOf(DecoderException.class)
-                .hasRootCauseInstanceOf(CertificateException.class);
+                .hasRootCauseInstanceOf(GeneralSecurityException.class);
 
         assertThat(defectFuture.toCompletableFuture()).isDone();
 
