@@ -68,7 +68,7 @@ import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.tokenizeToStringArray;
 
 /**
- * {@code FactoryBean} that creates an MyBatis {@code SqlSessionFactory}. This is the usual way to set up a shared
+ * {@code FactoryBean} that creates a MyBatis {@code SqlSessionFactory}. This is the usual way to set up a shared
  * MyBatis {@code SqlSessionFactory} in a Spring application context; the SqlSessionFactory can then be passed to
  * MyBatis-based DAOs via dependency injection.
  *
