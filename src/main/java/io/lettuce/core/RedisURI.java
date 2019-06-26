@@ -1031,7 +1031,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         public static Builder redis(String host, int port) {
 
             LettuceAssert.notEmpty(host, "Host must not be empty");
-            LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
+            LettuceAssert.isTrue(isValidPort(port), () -> String.format("Port out of range: %s", port));
 
             Builder builder = RedisURI.builder();
             return builder.withHost(host).withPort(port);
@@ -1061,7 +1061,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         public static Builder sentinel(String host, int port) {
 
             LettuceAssert.notEmpty(host, "Host must not be empty");
-            LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
+            LettuceAssert.isTrue(isValidPort(port), () -> String.format("Port out of range: %s", port));
 
             Builder builder = RedisURI.builder();
             return builder.withSentinel(host, port);
@@ -1102,7 +1102,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         public static Builder sentinel(String host, int port, String masterId, CharSequence password) {
 
             LettuceAssert.notEmpty(host, "Host must not be empty");
-            LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
+            LettuceAssert.isTrue(isValidPort(port), () -> String.format("Port out of range: %s", port));
 
             Builder builder = RedisURI.builder();
             if (password != null) {
@@ -1150,7 +1150,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             LettuceAssert.assertState(this.host == null, "Cannot use with Redis mode.");
             LettuceAssert.notEmpty(host, "Host must not be empty");
-            LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
+            LettuceAssert.isTrue(isValidPort(port), () -> String.format("Port out of range: %s", port));
 
             RedisURI redisURI = RedisURI.create(host, port);
 
@@ -1200,7 +1200,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         public Builder withPort(int port) {
 
             LettuceAssert.assertState(this.host != null, "Host is null. Cannot use in Sentinel mode.");
-            LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
+            LettuceAssert.isTrue(isValidPort(port), () -> String.format("Port out of range: %s", port));
 
             this.port = port;
             return this;
@@ -1253,7 +1253,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          */
         public Builder withDatabase(int database) {
 
-            LettuceAssert.isTrue(database >= 0, "Invalid database number: " + database);
+            LettuceAssert.isTrue(database >= 0, () -> "Invalid database number: " + database);
 
             this.database = database;
             return this;

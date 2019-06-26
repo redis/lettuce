@@ -52,10 +52,10 @@ public class HostAndPort {
      */
     public static HostAndPort of(String host, int port) {
 
-        LettuceAssert.isTrue(isValidPort(port), String.format("Port out of range: %s", port));
+        LettuceAssert.isTrue(isValidPort(port), () -> String.format("Port out of range: %s", port));
 
         HostAndPort parsedHost = parse(host);
-        LettuceAssert.isTrue(!parsedHost.hasPort(), String.format("Host has a port: %s", host));
+        LettuceAssert.isTrue(!parsedHost.hasPort(), () -> String.format("Host has a port: %s", host));
         return new HostAndPort(host, port);
     }
 
@@ -92,13 +92,13 @@ public class HostAndPort {
         if (!LettuceStrings.isEmpty(portString)) {
             // Try to parse the whole port string as a number.
             // JDK7 accepts leading plus signs. We don't want to.
-            LettuceAssert.isTrue(!portString.startsWith("+"), String.format("Cannot port number: %s", hostPortString));
+            LettuceAssert.isTrue(!portString.startsWith("+"), () -> String.format("Cannot port number: %s", hostPortString));
             try {
                 port = Integer.parseInt(portString);
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException(String.format("Cannot parse port number: %s", hostPortString));
             }
-            LettuceAssert.isTrue(isValidPort(port), String.format("Port number out of range: %s", hostPortString));
+            LettuceAssert.isTrue(isValidPort(port), () -> String.format("Port number out of range: %s", hostPortString));
         }
 
         return new HostAndPort(host, port);
@@ -187,13 +187,13 @@ public class HostAndPort {
     private static String[] getHostAndPortFromBracketedHost(String hostPortString) {
 
         LettuceAssert.isTrue(hostPortString.charAt(0) == '[',
-                String.format("Bracketed host-port string must start with a bracket: %s", hostPortString));
+                () -> String.format("Bracketed host-port string must start with a bracket: %s", hostPortString));
 
         int colonIndex = hostPortString.indexOf(':');
         int closeBracketIndex = hostPortString.lastIndexOf(']');
 
         LettuceAssert.isTrue(colonIndex > -1 && closeBracketIndex > colonIndex,
-                String.format("Invalid bracketed host/port: %s", hostPortString));
+                () -> String.format("Invalid bracketed host/port: %s", hostPortString));
 
         String host = hostPortString.substring(1, closeBracketIndex);
         if (closeBracketIndex + 1 == hostPortString.length()) {
@@ -204,7 +204,7 @@ public class HostAndPort {
                     "Only a colon may follow a close bracket: " + hostPortString);
             for (int i = closeBracketIndex + 2; i < hostPortString.length(); ++i) {
                 LettuceAssert.isTrue(Character.isDigit(hostPortString.charAt(i)),
-                        String.format("Port must be numeric: %s", hostPortString));
+                        () -> String.format("Port must be numeric: %s", hostPortString));
             }
             return new String[] { host, hostPortString.substring(closeBracketIndex + 2) };
         }

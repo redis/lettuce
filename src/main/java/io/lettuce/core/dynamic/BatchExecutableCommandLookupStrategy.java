@@ -60,7 +60,7 @@ class BatchExecutableCommandLookupStrategy extends ExecutableCommandLookupStrate
     public ExecutableCommand resolveCommandMethod(CommandMethod method, RedisCommandsMetadata metadata) {
 
         LettuceAssert.isTrue(!method.isReactiveExecution(),
-                String.format("Command method %s not supported by this command lookup strategy", method));
+                () -> String.format("Command method %s not supported by this command lookup strategy", method));
 
         ExecutionSpecificParameters parameters = (ExecutionSpecificParameters) method.getParameters();
 

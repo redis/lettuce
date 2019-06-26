@@ -65,7 +65,7 @@ public class RoleParser {
     public static RedisInstance parse(List<?> roleOutput) {
         LettuceAssert.isTrue(roleOutput != null && !roleOutput.isEmpty(), "Empty role output");
         LettuceAssert.isTrue(roleOutput.get(0) instanceof String && ROLE_MAPPING.containsKey(roleOutput.get(0)),
-                "First role element must be a string (any of " + ROLE_MAPPING.keySet() + ")");
+                () -> "First role element must be a string (any of " + ROLE_MAPPING.keySet() + ")");
 
         RedisInstance.Role role = ROLE_MAPPING.get(roleOutput.get(0));
 

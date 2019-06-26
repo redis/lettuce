@@ -158,8 +158,8 @@ public class SslOptions {
         public Builder keystore(File keystore, char[] keystorePassword) {
 
             LettuceAssert.notNull(keystore, "Keystore must not be null");
-            LettuceAssert.isTrue(keystore.exists(), String.format("Keystore file %s does not exist", truststore));
-            LettuceAssert.isTrue(keystore.isFile(), String.format("Keystore file %s is not a file", truststore));
+            LettuceAssert.isTrue(keystore.exists(), () -> String.format("Keystore file %s does not exist", truststore));
+            LettuceAssert.isTrue(keystore.isFile(), () -> String.format("Keystore file %s is not a file", truststore));
 
             try {
                 return keystore(keystore.toURI().toURL(), keystorePassword);
@@ -230,8 +230,8 @@ public class SslOptions {
         public Builder truststore(File truststore, String truststorePassword) {
 
             LettuceAssert.notNull(truststore, "Truststore must not be null");
-            LettuceAssert.isTrue(truststore.exists(), String.format("Truststore file %s does not exist", truststore));
-            LettuceAssert.isTrue(truststore.isFile(), String.format("Truststore file %s is not a file", truststore));
+            LettuceAssert.isTrue(truststore.exists(), () -> String.format("Truststore file %s does not exist", truststore));
+            LettuceAssert.isTrue(truststore.isFile(), () -> String.format("Truststore file %s is not a file", truststore));
 
             try {
                 return truststore(truststore.toURI().toURL(), truststorePassword);

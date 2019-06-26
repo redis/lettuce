@@ -56,10 +56,10 @@ class ReactiveExecutableCommandLookupStrategy implements ExecutableCommandLookup
     public ExecutableCommand resolveCommandMethod(CommandMethod method, RedisCommandsMetadata commandsMetadata) {
 
         LettuceAssert.isTrue(!method.isBatchExecution(),
-                String.format("Command batching %s not supported with ReactiveExecutableCommandLookupStrategy", method));
+                () -> String.format("Command batching %s not supported with ReactiveExecutableCommandLookupStrategy", method));
 
         LettuceAssert.isTrue(method.isReactiveExecution(),
-                String.format("Command method %s not supported by ReactiveExecutableCommandLookupStrategy", method));
+                () -> String.format("Command method %s not supported by ReactiveExecutableCommandLookupStrategy", method));
 
         ReactiveCommandSegmentCommandFactory commandFactory = commandFactoryResolver.resolveRedisCommandFactory(method,
                 commandsMetadata);
