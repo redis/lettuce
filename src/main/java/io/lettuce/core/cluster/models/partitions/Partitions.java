@@ -158,9 +158,7 @@ public class Partitions implements Collection<RedisClusterNode> {
             for (RedisClusterNode partition : partitions) {
 
                 readView.add(partition);
-                for (Integer integer : partition.getSlots()) {
-                    slotCache[integer.intValue()] = partition;
-                }
+                partition.forEachSlot(i -> slotCache[i] = partition);
             }
 
             this.slotCache = slotCache;

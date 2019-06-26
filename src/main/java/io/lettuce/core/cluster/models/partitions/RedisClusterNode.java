@@ -17,6 +17,7 @@ package io.lettuce.core.cluster.models.partitions;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.IntConsumer;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.SlotHash;
@@ -67,6 +68,23 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.configEpoch = configEpoch;
 
         setSlotBits(slots);
+        setFlags(flags);
+    }
+
+    RedisClusterNode(RedisURI uri, String nodeId, boolean connected, String slaveOf, long pingSentTimestamp,
+            long pongReceivedTimestamp, long configEpoch, BitSet slots, Set<NodeFlag> flags) {
+
+        this.uri = uri;
+        this.nodeId = nodeId;
+        this.connected = connected;
+        this.slaveOf = slaveOf;
+        this.pingSentTimestamp = pingSentTimestamp;
+        this.pongReceivedTimestamp = pongReceivedTimestamp;
+        this.configEpoch = configEpoch;
+
+        this.slots = new BitSet(slots.length());
+        this.slots.or(slots);
+
         setFlags(flags);
     }
 
@@ -223,6 +241,28 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         }
 
         return slots;
+    }
+
+    /**
+     * Performs the given action for each slot of this {@link RedisClusterNode} until all elements have been processed or the
+     * action throws an exception. Unless otherwise specified by the implementing class, actions are performed in the order of
+     * iteration (if an iteration order is specified). Exceptions thrown by the action are relayed to the caller.
+     *
+     * @param consumer
+     * @since 5.2
+     */
+    public void forEachSlot(IntConsumer consumer) {
+
+        if (slots == null || slots.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < this.slots.length(); i++) {
+
+            if (this.slots.get(i)) {
+                consumer.accept(i);
+            }
+        }
     }
 
     /**

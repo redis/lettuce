@@ -184,19 +184,22 @@ public class ClusterTopologyRefresh {
                     node.addAlias(nodeUri);
                 }
 
-                List<RedisClusterNodeSnapshot> nodeWithStats = nodeTopologyView.getPartitions() //
-                        .stream() //
-                        .filter(ClusterTopologyRefresh::validNode) //
-                        .map(RedisClusterNodeSnapshot::new).collect(Collectors.toList());
+                List<RedisClusterNodeSnapshot> nodeWithStats = new ArrayList<>(nodeTopologyView.getPartitions().size());
 
-                nodeWithStats.stream() //
-                        .filter(partition -> partition.is(RedisClusterNode.NodeFlag.MYSELF)) //
-                        .forEach(partition -> {
+                for (RedisClusterNode partition : nodeTopologyView.getPartitions()) {
+
+                    if (validNode(partition)) {
+                        RedisClusterNodeSnapshot redisClusterNodeSnapshot = new RedisClusterNodeSnapshot(partition);
+                        nodeWithStats.add(redisClusterNodeSnapshot);
+
+                        if (partition.is(RedisClusterNode.NodeFlag.MYSELF)) {
 
                             // record latency for later partition ordering
-                                latencies.put(partition.getNodeId(), nodeTopologyView.getLatency());
-                                clientCountByNodeId.put(partition.getNodeId(), nodeTopologyView.getConnectedClients());
-                            });
+                            latencies.put(partition.getNodeId(), nodeTopologyView.getLatency());
+                            clientCountByNodeId.put(partition.getNodeId(), nodeTopologyView.getConnectedClients());
+                        }
+                    }
+                }
 
                 allNodes.addAll(nodeWithStats);
 
@@ -318,8 +321,22 @@ public class ClusterTopologyRefresh {
 
     private static <E> Set<E> difference(Set<E> set1, Set<E> set2) {
 
-        Set<E> result = set1.stream().filter(e -> !set2.contains(e)).collect(Collectors.toSet());
-        result.addAll(set2.stream().filter(e -> !set1.contains(e)).collect(Collectors.toList()));
+        Set<E> result = new HashSet<>(set1.size());
+
+        for (E e1 : set1) {
+            if (!set2.contains(e1)) {
+                result.add(e1);
+            }
+        }
+
+        List<E> list = new ArrayList<>(set2.size());
+        for (E e : set2) {
+            if (!set1.contains(e)) {
+                list.add(e);
+            }
+        }
+
+        result.addAll(list);
 
         return result;
     }
