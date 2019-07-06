@@ -15,7 +15,9 @@
  */
 package io.lettuce.core.dynamic;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.*;
 
 import io.lettuce.core.AbstractRedisReactiveCommands;
@@ -40,6 +42,7 @@ import io.lettuce.core.models.command.CommandDetail;
 import io.lettuce.core.models.command.CommandDetailParser;
 import io.lettuce.core.protocol.LettuceCharsets;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.support.ConnectionWrapping;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -245,14 +248,7 @@ public class RedisCommandFactory {
 
             CommandMethodVerifier verifier = verifyCommandMethods ? commandMethodVerifier : CommandMethodVerifier.NONE;
 
-            AbstractRedisReactiveCommands reactive = null;
-            if (connection instanceof StatefulRedisConnection) {
-                reactive = (AbstractRedisReactiveCommands) ((StatefulRedisConnection) connection).reactive();
-            }
-
-            if (connection instanceof StatefulRedisClusterConnection) {
-                reactive = (AbstractRedisReactiveCommands) ((StatefulRedisClusterConnection) connection).reactive();
-            }
+            AbstractRedisReactiveCommands reactive = getReactiveCommands();
 
             LettuceAssert.isTrue(reactive != null, "Reactive commands is null");
 
@@ -261,6 +257,27 @@ public class RedisCommandFactory {
 
             this.reactive = new ReactiveExecutableCommandLookupStrategy(redisCodecs, commandOutputFactoryResolver, verifier,
                     reactive);
+        }
+
+        private AbstractRedisReactiveCommands getReactiveCommands() {
+
+            Object reactive = null;
+
+            if (connection instanceof StatefulRedisConnection) {
+                reactive = ((StatefulRedisConnection) connection).reactive();
+            }
+
+            if (connection instanceof StatefulRedisClusterConnection) {
+                reactive = ((StatefulRedisClusterConnection) connection).reactive();
+            }
+
+            if (Proxy.isProxyClass(reactive.getClass())) {
+
+                InvocationHandler invocationHandler = Proxy.getInvocationHandler(reactive);
+                reactive = ConnectionWrapping.unwrap(invocationHandler);
+            }
+
+            return (AbstractRedisReactiveCommands) reactive;
         }
 
         @Override
