@@ -22,15 +22,25 @@ import static org.mockito.Mockito.when;
 
 import javax.inject.Inject;
 
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.support.AsyncConnectionPoolSupport;
+import io.lettuce.core.support.BoundedAsyncPool;
+import io.lettuce.core.support.BoundedPoolConfig;
+import io.lettuce.core.support.ConnectionPoolSupport;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Mark Paluch
@@ -38,10 +48,12 @@ import io.lettuce.test.LettuceExtension;
 @ExtendWith(LettuceExtension.class)
 class RedisCommandsIntegrationTests extends TestSupport {
 
+    private final RedisClient client;
     private final RedisCommands<String, String> redis;
 
     @Inject
-    RedisCommandsIntegrationTests(StatefulRedisConnection<String, String> connection) {
+    RedisCommandsIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
+        this.client = client;
         this.redis = connection.sync();
     }
 
@@ -95,15 +107,48 @@ class RedisCommandsIntegrationTests extends TestSupport {
         }
     }
 
+    @Test
+    void shouldWorkWithPooledConnection() throws Exception {
+
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
+                client::connect, new GenericObjectPoolConfig<>());
+
+        try (StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
+
+            RedisCommandFactory factory = new RedisCommandFactory(connection);
+            SimpleCommands commands = factory.getCommands(SimpleCommands.class);
+            commands.get("foo");
+        }
+
+        pool.close();
+    }
+
+    @Test
+    void shouldWorkWithAsyncPooledConnection() {
+
+        BoundedAsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
+                () -> client.connectAsync(StringCodec.ASCII, RedisURI.create(TestSettings.host(), TestSettings.port())),
+                BoundedPoolConfig.create());
+
+        try (StatefulRedisConnection<String, String> connection = pool.acquire().join()) {
+
+            RedisCommandFactory factory = new RedisCommandFactory(connection);
+            SimpleCommands commands = factory.getCommands(SimpleCommands.class);
+            commands.get("foo");
+        }
+
+        pool.close();
+    }
+
+    private interface SimpleCommands extends Commands {
+        String get(String key);
+    }
+
     private interface TooFewParameters extends Commands {
-
         String get();
-
     }
 
     private interface WithTypo extends Commands {
-
         String gat(String key);
-
     }
 }

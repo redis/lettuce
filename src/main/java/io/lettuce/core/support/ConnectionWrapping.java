@@ -33,7 +33,22 @@ import io.lettuce.core.internal.AsyncCloseable;
  * @author Mark Paluch
  * @since 5.1
  */
-class ConnectionWrapping {
+public class ConnectionWrapping {
+
+    /**
+     * Unwrap a potentially {@link Wrapper} object. Recurses across {@link Wrapper wrappers}
+     *
+     * @param object the potentially wrapped object.
+     * @return the {@code object} if it is not wrapped or the {@link Wrapper#unwrap() unwrapped} object.
+     */
+    public static Object unwrap(Object object) {
+
+        while (object instanceof Wrapper<?>) {
+            object = ((Wrapper<?>) object).unwrap();
+        }
+
+        return object;
+    }
 
     /**
      * Wrap a connection along its {@link Origin} reference.
@@ -66,7 +81,7 @@ class ConnectionWrapping {
      * @param <T> Connection type.
      * @since 4.3
      */
-    static class ReturnObjectOnCloseInvocationHandler<T> extends AbstractInvocationHandler {
+    static class ReturnObjectOnCloseInvocationHandler<T> extends AbstractInvocationHandler implements Wrapper<T> {
 
         private T connection;
         private T proxiedConnection;
@@ -147,6 +162,11 @@ class ConnectionWrapping {
         public T getConnection() {
             return connection;
         }
+
+        @Override
+        public T unwrap() {
+            return getConnection();
+        }
     }
 
     /**
@@ -158,7 +178,7 @@ class ConnectionWrapping {
      */
     @SuppressWarnings("try")
     static class DelegateCloseToConnectionInvocationHandler<T extends AsyncCloseable & AutoCloseable> extends
-            AbstractInvocationHandler {
+            AbstractInvocationHandler implements Wrapper<Object> {
 
         private final T proxiedConnection;
         private final Object api;
@@ -169,7 +189,6 @@ class ConnectionWrapping {
             this.api = api;
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
@@ -194,6 +213,11 @@ class ConnectionWrapping {
                 throw e.getTargetException();
             }
         }
+
+        @Override
+        public Object unwrap() {
+            return api;
+        }
     }
 
     /**
@@ -217,5 +241,15 @@ class ConnectionWrapping {
          * Return the object asynchronously.
          */
         CompletableFuture<Void> returnObjectAsync(T o) throws Exception;
+    }
+
+    /**
+     * Marker interface to indicate a wrapper.
+     *
+     * @param <T> Type of the wrapped object.
+     * @since 5.2
+     */
+    interface Wrapper<T> {
+        T unwrap();
     }
 }
