@@ -39,6 +39,7 @@ import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -51,11 +52,13 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
  *
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Mark Paluch
  * @since 4.0
  */
-public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
-        RedisAdvancedClusterReactiveCommands<K, V> {
+public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
+        implements RedisAdvancedClusterReactiveCommands<K, V> {
 
     private static final Predicate<RedisClusterNode> ALL_NODES = node -> true;
 
@@ -66,8 +69,22 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      *
      * @param connection the stateful connection.
      * @param codec Codec used to encode/decode keys and values.
+     * @deprecated since 5.2, use {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec)}.
      */
-    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
+    @Deprecated
+    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection,
+            RedisCodec<K, V> codec) {
+        super(connection, codec);
+        this.codec = codec;
+    }
+
+    /**
+     * Initialize a new connection.
+     *
+     * @param connection the stateful connection.
+     * @param codec Codec used to encode/decode keys and values.
+     */
+    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
         this.codec = codec;
     }
@@ -191,7 +208,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
 
-        if (getStatefulConnection().getState().hasCommand(GEORADIUS_RO)) {
+        if (hasRedisState() && getRedisState().hasCommand(GEORADIUS_RO)) {
             return super.georadius_ro(key, longitude, latitude, distance, unit);
         }
 
@@ -202,7 +219,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
 
-        if (getStatefulConnection().getState().hasCommand(GEORADIUS_RO)) {
+        if (hasRedisState() && getRedisState().hasCommand(GEORADIUS_RO)) {
             return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
         }
 
@@ -212,7 +229,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Flux<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
 
-        if (getStatefulConnection().getState().hasCommand(GEORADIUSBYMEMBER_RO)) {
+        if (hasRedisState() && getRedisState().hasCommand(GEORADIUSBYMEMBER_RO)) {
             return super.georadiusbymember_ro(key, member, distance, unit);
         }
 
@@ -222,7 +239,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
 
-        if (getStatefulConnection().getState().hasCommand(GEORADIUSBYMEMBER_RO)) {
+        if (hasRedisState() && getRedisState().hasCommand(GEORADIUSBYMEMBER_RO)) {
             return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
         }
 
@@ -410,18 +427,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public StatefulRedisClusterConnectionImpl<K, V> getStatefulConnection() {
-        return (StatefulRedisClusterConnectionImpl<K, V>) super.getConnection();
-    }
-
-    @Override
     public RedisClusterReactiveCommands<K, V> getConnection(String nodeId) {
         return getStatefulConnection().getConnection(nodeId).reactive();
     }
 
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String nodeId) {
-        return getMono(getConnectionProvider().<K, V> getConnectionAsync(Intent.WRITE, nodeId)).map(
-                StatefulRedisConnection::reactive);
+        return getMono(getConnectionProvider().<K, V> getConnectionAsync(Intent.WRITE, nodeId))
+                .map(StatefulRedisConnection::reactive);
     }
 
     @Override
@@ -430,13 +442,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String host, int port) {
-        return getMono(getConnectionProvider().<K, V> getConnectionAsync(Intent.WRITE, host, port)).map(
-                StatefulRedisConnection::reactive);
+        return getMono(getConnectionProvider().<K, V> getConnectionAsync(Intent.WRITE, host, port))
+                .map(StatefulRedisConnection::reactive);
     }
 
-    private AsyncClusterConnectionProvider getConnectionProvider() {
-        return (AsyncClusterConnectionProvider) getStatefulConnection().getClusterDistributionChannelWriter()
-                .getClusterConnectionProvider();
+    @Override
+    public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
+        return (StatefulRedisClusterConnection<K, V>) super.getConnection();
     }
 
     @Override
@@ -490,7 +502,8 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Mono<T>> scanFunction,
             ClusterScanSupport.ScanCursorMapper<Mono<T>> resultMapper) {
 
-        return clusterScan(getStatefulConnection(), cursor, scanFunction, (ClusterScanSupport.ScanCursorMapper) resultMapper);
+        return clusterScan(getStatefulConnection(), getConnectionProvider(), cursor, scanFunction,
+                (ClusterScanSupport.ScanCursorMapper) resultMapper);
     }
 
     private <T> Flux<T> pipeliningWithMap(Map<K, V> map, Function<Map<K, V>, Flux<T>> function,
@@ -560,23 +573,35 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return Mono.error(new RedisException("No partition for slot " + slot));
     }
 
+    private RedisState getRedisState() {
+        return ((StatefulRedisClusterConnectionImpl<K, V>) super.getConnection()).getState();
+    }
+
+    private boolean hasRedisState() {
+        return super.getConnection() instanceof StatefulRedisClusterConnectionImpl;
+    }
+
+    private AsyncClusterConnectionProvider getConnectionProvider() {
+
+        ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) getStatefulConnection().getChannelWriter();
+        return (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
+    }
+
     /**
      * Perform a SCAN in the cluster.
      *
      */
-    static <T extends ScanCursor, K, V> Mono<T> clusterScan(StatefulRedisClusterConnectionImpl<K, V> connection,
-            ScanCursor cursor, BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Mono<T>> scanFunction,
+    static <T extends ScanCursor, K, V> Mono<T> clusterScan(StatefulRedisClusterConnection<K, V> connection,
+            AsyncClusterConnectionProvider connectionProvider, ScanCursor cursor,
+            BiFunction<RedisKeyReactiveCommands<K, V>, ScanCursor, Mono<T>> scanFunction,
             ClusterScanSupport.ScanCursorMapper<Mono<T>> mapper) {
 
         List<String> nodeIds = ClusterScanSupport.getNodeIds(connection, cursor);
         String currentNodeId = ClusterScanSupport.getCurrentNodeId(cursor, nodeIds);
         ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
 
-        AsyncClusterConnectionProvider connectionProvider = (AsyncClusterConnectionProvider) connection
-                .getClusterDistributionChannelWriter().getClusterConnectionProvider();
-
-        Mono<T> scanCursor = getMono(connectionProvider.<K, V> getConnectionAsync(Intent.WRITE, currentNodeId)).flatMap(
-                conn -> scanFunction.apply(conn.reactive(), continuationCursor));
+        Mono<T> scanCursor = getMono(connectionProvider.<K, V> getConnectionAsync(Intent.WRITE, currentNodeId))
+                .flatMap(conn -> scanFunction.apply(conn.reactive(), continuationCursor));
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
 

@@ -170,7 +170,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port);
     }
 
-    public ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {
+    ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {
         return (ClusterDistributionChannelWriter) super.getChannelWriter();
     }
 

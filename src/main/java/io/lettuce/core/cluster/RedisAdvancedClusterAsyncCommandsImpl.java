@@ -55,12 +55,14 @@ import io.lettuce.core.protocol.CommandType;
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
  *
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Mark Paluch
  * @since 3.3
  */
 @SuppressWarnings("unchecked")
-public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V> implements
-        RedisAdvancedClusterAsyncCommands<K, V> {
+public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V>
+        implements RedisAdvancedClusterAsyncCommands<K, V> {
 
     private final RedisCodec<K, V> codec;
 
@@ -69,8 +71,21 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      *
      * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
+     * @deprecated since 5.1, use {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec)}.
      */
+    @Deprecated
     public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
+        super(connection, codec);
+        this.codec = codec;
+    }
+
+    /**
+     * Initialize a new connection.
+     *
+     * @param connection the stateful connection
+     * @param codec Codec used to encode/decode keys and values.
+     */
+    public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
         this.codec = codec;
     }
@@ -201,7 +216,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
 
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+        if (hasRedisState() && getRedisState().hasCommand(CommandType.GEORADIUS_RO)) {
             return super.georadius_ro(key, longitude, latitude, distance, unit);
         }
 
@@ -212,7 +227,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
             GeoArgs.Unit unit, GeoArgs geoArgs) {
 
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+        if (hasRedisState() && getRedisState().hasCommand(CommandType.GEORADIUS_RO)) {
             return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
         }
 
@@ -222,7 +237,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
 
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
+        if (hasRedisState() && getRedisState().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
             return super.georadiusbymember_ro(key, member, distance, unit);
         }
 
@@ -233,7 +248,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
 
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
+        if (hasRedisState() && getRedisState().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
             return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
         }
 
@@ -483,23 +498,18 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     private CompletableFuture<RedisClusterAsyncCommands<K, V>> getConnectionAsync(String nodeId) {
-        return getConnectionProvider().<K, V> getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, nodeId).thenApply(
-                StatefulRedisConnection::async);
+        return getConnectionProvider().<K, V> getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, nodeId)
+                .thenApply(StatefulRedisConnection::async);
     }
 
     private CompletableFuture<RedisClusterAsyncCommands<K, V>> getConnectionAsync(String host, int port) {
-        return getConnectionProvider().<K, V> getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port).thenApply(
-                StatefulRedisConnection::async);
+        return getConnectionProvider().<K, V> getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port)
+                .thenApply(StatefulRedisConnection::async);
     }
 
     @Override
-    public StatefulRedisClusterConnectionImpl<K, V> getStatefulConnection() {
-        return (StatefulRedisClusterConnectionImpl<K, V>) super.getConnection();
-    }
-
-    protected AsyncClusterConnectionProvider getConnectionProvider() {
-        return (AsyncClusterConnectionProvider) getStatefulConnection().getClusterDistributionChannelWriter()
-                .getClusterConnectionProvider();
+    public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
+        return (StatefulRedisClusterConnection<K, V>) super.getConnection();
     }
 
     @Override
@@ -534,8 +544,8 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
                 RedisClusterAsyncCommands.class, ASYNC);
-        return (AsyncNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(), new Class<?>[] {
-                NodeSelectionAsyncCommands.class, AsyncNodeSelection.class }, h);
+        return (AsyncNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(),
+                new Class<?>[] { NodeSelectionAsyncCommands.class, AsyncNodeSelection.class }, h);
     }
 
     @Override
@@ -637,6 +647,20 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return null;
+    }
+
+    private RedisState getRedisState() {
+        return ((StatefulRedisClusterConnectionImpl<K, V>) super.getConnection()).getState();
+    }
+
+    private boolean hasRedisState() {
+        return super.getConnection() instanceof StatefulRedisClusterConnectionImpl;
+    }
+
+    private AsyncClusterConnectionProvider getConnectionProvider() {
+
+        ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) getStatefulConnection().getChannelWriter();
+        return (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
     }
 
     /**

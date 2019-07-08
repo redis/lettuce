@@ -32,9 +32,10 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @since 5.0
  */
-public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommandsImpl<K, V> implements
-        RedisPubSubReactiveCommands<K, V> {
+public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommandsImpl<K, V>
+        implements RedisPubSubReactiveCommands<K, V> {
 
     private final PubSubCommandBuilder<K, V> commandBuilder;
 

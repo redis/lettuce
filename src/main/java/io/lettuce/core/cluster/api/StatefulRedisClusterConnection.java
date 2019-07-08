@@ -18,6 +18,7 @@ package io.lettuce.core.cluster.api;
 import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -148,8 +149,12 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     ReadFrom getReadFrom();
 
     /**
-     *
      * @return Known partitions for this connection.
      */
     Partitions getPartitions();
+
+    /**
+     * @return the underlying {@link RedisChannelWriter}.
+     */
+    RedisChannelWriter getChannelWriter();
 }

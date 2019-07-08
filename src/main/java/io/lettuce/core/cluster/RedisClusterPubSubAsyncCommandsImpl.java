@@ -41,10 +41,15 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 
 /**
+ * An asynchronous and thread-safe API for a Redis pub/sub connection.
+ *
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Mark Paluch
+ * @since 5.0
  */
-class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommandsImpl<K, V> implements
-        RedisClusterPubSubAsyncCommands<K, V> {
+public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommandsImpl<K, V>
+        implements RedisClusterPubSubAsyncCommands<K, V> {
 
     /**
      * Initialize a new connection.
@@ -52,7 +57,7 @@ class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommands
      * @param connection the connection .
      * @param codec Codec used to encode/decode keys and values.
      */
-    public RedisClusterPubSubAsyncCommandsImpl(StatefulRedisClusterPubSubConnection<K, V> connection, RedisCodec<K, V> codec) {
+    public RedisClusterPubSubAsyncCommandsImpl(StatefulRedisPubSubConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
     }
 
@@ -115,9 +120,9 @@ class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommands
                 new Class<?>[] { NodeSelectionPubSubAsyncCommands.class, PubSubAsyncNodeSelection.class }, h);
     }
 
-    private static class StaticPubSubAsyncNodeSelection<K, V> extends
-            AbstractNodeSelection<RedisPubSubAsyncCommands<K, V>, NodeSelectionPubSubAsyncCommands<K, V>, K, V> implements
-            PubSubAsyncNodeSelection<K, V> {
+    private static class StaticPubSubAsyncNodeSelection<K, V>
+            extends AbstractNodeSelection<RedisPubSubAsyncCommands<K, V>, NodeSelectionPubSubAsyncCommands<K, V>, K, V>
+            implements PubSubAsyncNodeSelection<K, V> {
 
         private final List<RedisClusterNode> redisClusterNodes;
         private final ClusterDistributionChannelWriter writer;
@@ -146,8 +151,8 @@ class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncCommands
             RedisURI uri = redisClusterNode.getUri();
             AsyncClusterConnectionProvider async = (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
 
-            return async.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort()).thenApply(
-                    it -> (StatefulRedisPubSubConnection<K, V>) it);
+            return async.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort())
+                    .thenApply(it -> (StatefulRedisPubSubConnection<K, V>) it);
         }
     }
 }

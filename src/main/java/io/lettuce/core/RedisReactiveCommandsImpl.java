@@ -27,8 +27,8 @@ import io.lettuce.core.codec.RedisCodec;
  * @param <V> Value type.
  * @author Mark Paluch
  */
-public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
-        RedisReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
+public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
+        implements RedisReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
 
     /**
      * Initialize a new instance.
@@ -42,7 +42,6 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public StatefulRedisConnection<K, V> getStatefulConnection() {
         return (StatefulRedisConnection<K, V>) super.getConnection();
     }

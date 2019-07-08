@@ -129,7 +129,7 @@ public class RedisClusterStressScenariosTest extends TestSupport {
         RedisAdvancedClusterAsyncCommandsImpl<String, String> connection = (RedisAdvancedClusterAsyncCommandsImpl<String, String>) clusterClient
                 .connect().async();
 
-        RedisChannelHandler<String, String> statefulConnection = connection.getStatefulConnection();
+        RedisChannelHandler<String, String> statefulConnection = (RedisChannelHandler) connection.getStatefulConnection();
 
         connection.set("a", "b");
         ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) statefulConnection.getChannelWriter();
