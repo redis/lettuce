@@ -186,7 +186,7 @@ public class SqlSessionFactoryBean
 
   /**
    * Gets the VFS.
-   * 
+   *
    * @return a specified VFS
    */
   public Class<? extends VFS> getVfs() {
@@ -195,7 +195,7 @@ public class SqlSessionFactoryBean
 
   /**
    * Sets the VFS.
-   * 
+   *
    * @param vfs
    *          a VFS
    */
@@ -205,7 +205,7 @@ public class SqlSessionFactoryBean
 
   /**
    * Gets the Cache.
-   * 
+   *
    * @return a specified Cache
    */
   public Cache getCache() {
@@ -214,7 +214,7 @@ public class SqlSessionFactoryBean
 
   /**
    * Sets the Cache.
-   * 
+   *
    * @param cache
    *          a Cache
    */
@@ -270,7 +270,7 @@ public class SqlSessionFactoryBean
    *
    * <p>
    * Since 2.0.1, allow to specify a wildcard such as {@code com.example.*.typehandler}.
-   * 
+   *
    * @since 1.0.1
    *
    * @param typeHandlersPackage
@@ -331,7 +331,7 @@ public class SqlSessionFactoryBean
 
   /**
    * Set a customized MyBatis configuration.
-   * 
+   *
    * @param configuration
    *          MyBatis configuration
    * @since 1.3.0
@@ -535,7 +535,6 @@ public class SqlSessionFactoryBean
     if (hasLength(this.typeHandlersPackage)) {
       scanClasses(this.typeHandlersPackage, TypeHandler.class).stream().filter(clazz -> !clazz.isAnonymousClass())
           .filter(clazz -> !clazz.isInterface()).filter(clazz -> !Modifier.isAbstract(clazz.getModifiers()))
-          .filter(clazz -> ClassUtils.getConstructorIfAvailable(clazz) != null)
           .forEach(targetConfiguration.getTypeHandlerRegistry()::register);
     }
 

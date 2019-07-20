@@ -22,6 +22,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.io.JBoss6VFS;
@@ -43,6 +45,7 @@ import org.apache.ibatis.type.TypeException;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.junit.jupiter.api.Test;
+import org.mybatis.core.jdk.type.AtomicNumberTypeHandler;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.mybatis.spring.type.DummyTypeAlias;
 import org.mybatis.spring.type.DummyTypeHandler;
@@ -400,12 +403,14 @@ class SqlSessionFactoryBeanTest {
   @Test
   void testSearchATypeHandlerPackage() throws Exception {
     setupFactoryBean();
-    factoryBean.setTypeHandlersPackage("org.**.type");
+    factoryBean.setTypeHandlersPackage("org.mybatis.**.type");
 
     TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
     assertThat(typeHandlerRegistry.hasTypeHandler(BigInteger.class)).isTrue();
     assertThat(typeHandlerRegistry.hasTypeHandler(BigDecimal.class)).isTrue();
     assertThat(typeHandlerRegistry.getTypeHandler(UUID.class)).isInstanceOf(TypeHandlerFactory.InnerTypeHandler.class);
+    assertThat(typeHandlerRegistry.getTypeHandler(AtomicInteger.class)).isInstanceOf(AtomicNumberTypeHandler.class);
+    assertThat(typeHandlerRegistry.getTypeHandler(AtomicLong.class)).isInstanceOf(AtomicNumberTypeHandler.class);
   }
 
   @Test
