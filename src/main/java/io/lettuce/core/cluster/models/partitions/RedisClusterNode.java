@@ -125,6 +125,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return redisClusterNode;
     }
 
+    /**
+     * Clone {@code this} {@link RedisClusterNode}.
+     *
+     * @return a copy of {@code this} {@link RedisClusterNode}.
+     */
     @Override
     public RedisClusterNode clone() {
         return new RedisClusterNode(this);
@@ -225,6 +230,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.configEpoch = configEpoch;
     }
 
+    /**
+     * Return the slots as {@link List}. Note that this method creates a new {@link List} for each time it gets called.
+     *
+     * @return the slots as {@link List}.
+     */
     public List<Integer> getSlots() {
 
         if (slots == null || slots.isEmpty()) {
@@ -296,7 +306,17 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         }
     }
 
+    /**
+     * Return {@literal true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
+     *
+     * @param other the node to compare with.
+     * @return {@literal true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
+     */
     public boolean hasSameSlotsAs(RedisClusterNode other) {
+
+        if (this.slots == null && other.slots == null) {
+            return true;
+        }
 
         if (this.slots == null || other.slots == null) {
             return false;
@@ -305,6 +325,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return this.slots.equals(other.slots);
     }
 
+    /**
+     * Return the {@link NodeFlag NodeFlags}.
+     *
+     * @return the {@link NodeFlag NodeFlags}.
+     */
     public Set<NodeFlag> getFlags() {
         return flags;
     }
