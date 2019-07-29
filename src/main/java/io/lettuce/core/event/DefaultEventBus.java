@@ -15,8 +15,9 @@
  */
 package io.lettuce.core.event;
 
-import reactor.core.publisher.EmitterProcessor;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Scheduler;
 
 /**
@@ -27,11 +28,13 @@ import reactor.core.scheduler.Scheduler;
  */
 public class DefaultEventBus implements EventBus {
 
-    private final EmitterProcessor<Event> bus;
+    private final DirectProcessor<Event> bus;
+    private final FluxSink<Event> sink;
     private final Scheduler scheduler;
 
     public DefaultEventBus(Scheduler scheduler) {
-        this.bus = EmitterProcessor.create();
+        this.bus = DirectProcessor.create();
+        this.sink = bus.sink();
         this.scheduler = scheduler;
     }
 
@@ -42,8 +45,6 @@ public class DefaultEventBus implements EventBus {
 
     @Override
     public void publish(Event event) {
-        if (bus.hasDownstreams()) {
-            bus.onNext(event);
-        }
+        sink.next(event);
     }
 }
