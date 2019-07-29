@@ -494,7 +494,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
         }
 
-        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<K, V>(writer, codec, timeout);
+        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(writer, codec, timeout);
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, codec, endpoint,
                 getFirstUri(), socketAddressSupplier, () -> new CommandHandler(clientOptions, clientResources, endpoint));
@@ -578,7 +578,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, writer,
                 clusterTopologyRefreshScheduler);
-        PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
+        PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<>(this,
                 clusterWriter, codec, clusterTopologyRefreshScheduler);
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
@@ -643,7 +643,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<K, V>(clientOptions, clientResources);
+        PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<>(clientOptions, clientResources);
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(clientOptions)) {
@@ -792,8 +792,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
                 logger.debug("Using a new cluster topology");
 
-                List<RedisClusterNode> before = new ArrayList<RedisClusterNode>(getPartitions());
-                List<RedisClusterNode> after = new ArrayList<RedisClusterNode>(loadedPartitions);
+                List<RedisClusterNode> before = new ArrayList<>(getPartitions());
+                List<RedisClusterNode> after = new ArrayList<>(loadedPartitions);
 
                 getResources().eventBus().publish(new ClusterTopologyChangedEvent(before, after));
             }
