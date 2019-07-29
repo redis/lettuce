@@ -309,6 +309,17 @@ class TopologyComparatorsUnitTests {
     }
 
     @Test
+    void shouldConsiderNodesWithoutSlotsUnchanged() {
+
+        String nodes1 = "3d005a179da7d8dc1adae6409d47b39c369e992b 127.0.0.1:7380 slave - 0 1401258245007 2 disconnected\n"
+                + "c37ab8396be428403d4e55c0d317348be27ed973 127.0.0.1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
+
+        Partitions partitions1 = ClusterPartitionParser.parse(nodes1);
+        Partitions partitions2 = ClusterPartitionParser.parse(nodes1);
+        assertThat(isChanged(partitions1, partitions2)).isFalse();
+    }
+
+    @Test
     void nodesShouldHaveSameSlots() {
         RedisClusterNode nodeA = createNode(1, 4, 36, 98);
         RedisClusterNode nodeB = createNode(4, 36, 1, 98);
