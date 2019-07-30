@@ -60,7 +60,7 @@
 
         <assertj-core.version>3.12.1</assertj-core.version>
         <brave-version>5.2.0</brave-version>
-        <junit-version>5.4.2</junit-version>
+        <junit-version>5.5.1</junit-version>
         <log4j2-version>2.11.2</log4j2-version>
         <mockito.version>3.0.0</mockito.version>
         <netty-version>4.1.38.Final</netty-version>
