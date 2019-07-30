@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  * Completable latch support expecting an number of inbound events to trigger an outbound event signalled though a
  * {@link CompletionStage}. This latch is created by specifying a number of expected events of type {@code T} or exceptions and
  * synchronized through either a timeout or receiving the matching number of events.
- * <p/>
+ * <p>
  * Inbound events can be consumed through callback hook methods. Events arriving after synchronization are dropped.
  *
  * @author Mark Paluch

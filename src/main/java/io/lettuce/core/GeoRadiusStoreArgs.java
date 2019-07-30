@@ -23,7 +23,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/georadius">GEORADIUS</a> command to store
  * {@literal GEORADIUS} results or {@literal GEORADIUS} distances in a sorted set.
- * <p/>
+ * <p>
  * {@link GeoRadiusStoreArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch

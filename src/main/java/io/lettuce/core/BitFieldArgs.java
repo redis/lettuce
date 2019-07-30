@@ -27,7 +27,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/bitfield">BITFIELD</a> command.
- * <p/>
+ * <p>
  * {@link BitFieldArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch

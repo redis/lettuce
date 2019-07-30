@@ -144,7 +144,7 @@ public class SocketOptions {
          * Sets whether to disable Nagle's algorithm. Defaults to {@literal false} (Nagle enabled). See
          * {@link #DEFAULT_SO_NO_DELAY}.
          *
-         * @param tcpNoDelay {@literal true} to disable Nagle's algorithm, {@link false} to enable Nagle's algorithm.
+         * @param tcpNoDelay {@literal true} to disable Nagle's algorithm, {@literal false} to enable Nagle's algorithm.
          * @return {@code this}
          * @see java.net.SocketOptions#TCP_NODELAY
          */
@@ -186,7 +186,7 @@ public class SocketOptions {
     /**
      * Returns whether to use TCP NoDelay.
      *
-     * @return {@literal true} to disable Nagle's algorithm, {@link false} to enable Nagle's algorithm.
+     * @return {@literal true} to disable Nagle's algorithm, {@literal false} to enable Nagle's algorithm.
      * @see java.net.SocketOptions#TCP_NODELAY
      */
     public boolean isTcpNoDelay() {

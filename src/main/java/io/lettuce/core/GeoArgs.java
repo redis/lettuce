@@ -21,9 +21,9 @@ import io.lettuce.core.protocol.CommandKeyword;
 
 /**
  *
- * Argument list builder for the Redis <a href="http://redis.io/commands/georadius">GEORADIUS</a> and <a
- * href="http://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> commands.
- * <p/>
+ * Argument list builder for the Redis <a href="http://redis.io/commands/georadius">GEORADIUS</a> and
+ * <a href="http://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> commands.
+ * <p>
  * {@link GeoArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch

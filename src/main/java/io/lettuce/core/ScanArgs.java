@@ -29,7 +29,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * Argument list builder for the Redis scan commands ({@literal SCAN, HSCAN, SSCAN, ZSCAN}). Static import the methods from
  *
  * {@link Builder} and chain the method calls: {@code matches("weight_*").limit(0, 2)}.
- * <p/>
+ * <p>
  * {@link ScanArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch

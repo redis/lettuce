@@ -24,7 +24,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/xread">XREAD</a> and {@literal XREADGROUP} commands.
  * Static import the methods from {@link XReadArgs.Builder} and call the methods: {@code block(…)} .
- * <p/>
+ * <p>
  * {@link XReadArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch

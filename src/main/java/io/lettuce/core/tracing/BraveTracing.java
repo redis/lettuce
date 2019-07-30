@@ -31,7 +31,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * {@link io.lettuce.core.tracing.Tracer.Span} to trace the actual command. A parent {@link brave.Span} is picked up for
  * imperative (synchronous/asynchronous) API usage from {@link brave.Tracing#currentTracer()}. The context is not propagated
  * across asynchronous call chains resulting from {@link java.util.concurrent.CompletionStage} chaining.
- * <p/>
+ * <p>
  * Reactive API usage leverages Reactor's {@link reactor.util.context.Context} so that subscribers can register one of the
  * following objects (using their {@link Class} as context key):
  *

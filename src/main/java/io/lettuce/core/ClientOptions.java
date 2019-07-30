@@ -174,7 +174,7 @@ public class ClientOptions implements Serializable {
         /**
          * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
          * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
-         * <p/>
+         * <p>
          * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
          * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
          * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@literal false}
@@ -329,7 +329,7 @@ public class ClientOptions implements Serializable {
     /**
      * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
      * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
-     * <p/>
+     * <p>
      * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
      * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
      * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@literal false} ,
