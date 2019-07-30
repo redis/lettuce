@@ -22,7 +22,7 @@ import io.lettuce.core.internal.LettuceAssert;
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/restore">RESTORE</a> command. Static import the methods
  * from {@link RestoreArgs.Builder} and call the methods: {@code ttl(…)} .
- * <p/>
+ * <p>
  * {@link RestoreArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch

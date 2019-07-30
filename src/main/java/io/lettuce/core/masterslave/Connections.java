@@ -39,9 +39,9 @@ import io.lettuce.core.protocol.CommandType;
 /**
  * Connection collector with non-blocking synchronization. This synchronizer emits itself through a {@link Mono} as soon as it
  * gets synchronized via either receiving connects/exceptions from all connections or timing out.
- * <p/>
+ * <p>
  * It can be used only once via {@link #getOrTimeout(Duration, ScheduledExecutorService)}.
- * <p/>
+ * <p>
  * Synchronizer uses a gate to determine whether it was already emitted or awaiting incoming events (exceptions, successful
  * connects). Connections arriving after closing the gate are discarded.
  *

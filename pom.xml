@@ -78,7 +78,6 @@
         <connection>scm:git:https://github.com/lettuce-io/lettuce-core.git</connection>
         <developerConnection>scm:git:https://github.com/lettuce-io/lettuce-core.git</developerConnection>
         <url>http://github.com/lettuce-io/lettuce-core</url>
-        <tag>HEAD</tag>
     </scm>
 
     <dependencyManagement>
@@ -674,6 +673,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.1.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -724,6 +724,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
+                        <version>3.1.1</version>
                         <executions>
                             <execution>
                                 <id>src</id>

@@ -22,7 +22,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/xadd">XADD</a> command. Static import the methods from
  * {@link Builder} and call the methods: {@code maxlen(…)} .
- * <p/>
+ * <p>
  * {@link XAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch

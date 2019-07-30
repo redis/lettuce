@@ -39,7 +39,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * Operator utilities to handle noop subscriptions, validate request size and to cap concurrent additive operations to
  * Long.MAX_VALUE, which is generic to {@link Subscription#request(long)} handling.
- * <p/>
+ * <p>
  * This class duplicates some methods from {@link reactor.core.publisher.Operators} to be independent from Reactor API changes.
  *
  * @author Mark Paluch

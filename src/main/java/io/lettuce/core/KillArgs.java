@@ -27,7 +27,7 @@ import io.lettuce.core.protocol.CommandArgs;
  *
  * Argument list builder for the Redis <a href="http://redis.io/commands/client-kill">CLIENT KILL</a> command. Static import the
  * methods from {@link Builder} and chain the method calls: {@code id(1).skipme()}.
- * <p/>
+ * <p>
  * {@link KillArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
