@@ -20,9 +20,11 @@ import java.util.Collection;
 import io.lettuce.core.output.StreamingOutput.Subscriber;
 
 /**
- * Simple subscriber
+ * Simple subscriber feeding a {@link Collection} {@link #onNext(Collection, Object)}. Does not support {@link #onNext(Object)
+ * plain onNext}.
  *
  * @author Mark Paluch
+ * @author Julien Ruaux
  * @since 4.2
  */
 public class ListSubscriber<T> extends Subscriber<T> {
