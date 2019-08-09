@@ -50,7 +50,7 @@ if [ $TRAVIS_REPO_SLUG == "mybatis/spring" ] && [ "$TRAVIS_PULL_REQUEST" == "fal
     # echo -e "Successfully deploy site under Travis job ${TRAVIS_JOB_NUMBER}"
 
     # Notify Sonar
-    ./mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.login=ccf0be39fd0ca5ea5aa712247c79da7233cd3caa
+    ./mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=ccf0be39fd0ca5ea5aa712247c79da7233cd3caa
     echo -e "Successfully ran Sonar integration under Travis job ${TRAVIS_JOB_NUMBER}"	
   else
     echo "Java Version does not support additonal activity for travis CI"
