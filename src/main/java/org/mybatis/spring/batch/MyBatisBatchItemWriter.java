@@ -64,7 +64,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   private Converter<T, ?> itemToParameterConverter = new PassThroughConverter<>();
 
   /**
-   * Public setter for the flag that determines whether an assertion is made that all items cause only one row to be
+   * Public setter for the flag that determines whether an assertion is made that number of BatchResult objects returned is one and all items cause at least one row to be
    * updated.
    *
    * @param assertUpdates
