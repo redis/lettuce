@@ -281,31 +281,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             publishers.add(super.mget(entry.getValue()));
         }
 
-        Flux<KeyValue<K, V>> fluxes = Flux.concat(publishers);
-
-        Mono<List<KeyValue<K, V>>> map = fluxes.collectList().map(vs -> {
-
-            KeyValue<K, V>[] values = new KeyValue[vs.size()];
-            int offset = 0;
-            for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-
-                for (int i = 0; i < keyList.size(); i++) {
-
-                    int index = entry.getValue().indexOf(keyList.get(i));
-                    if (index == -1) {
-                        continue;
-                    }
-
-                    values[i] = vs.get(offset + index);
-                }
-
-                offset += entry.getValue().size();
-            }
-
-            return Arrays.asList(values);
-        });
-
-        return map.flatMapIterable(keyValues -> keyValues);
+        return Flux.merge(publishers);
     }
 
     @Override
