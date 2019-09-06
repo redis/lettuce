@@ -262,6 +262,9 @@ public interface RedisStringReactiveCommands<K, V> {
 
     /**
      * Get the values of all the given keys.
+     * <p>
+     * Values are not guaranteed to be returned in the same order as the requested keys.
+     * </p>
      *
      * @param keys the key
      * @return V array-reply list of values at the specified keys.
