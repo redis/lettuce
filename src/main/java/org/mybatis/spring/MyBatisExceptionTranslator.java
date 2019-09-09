@@ -16,6 +16,7 @@
 package org.mybatis.spring;
 
 import java.sql.SQLException;
+import java.util.function.Supplier;
 
 import javax.sql.DataSource;
 
@@ -37,12 +38,11 @@ import org.springframework.transaction.TransactionException;
  */
 public class MyBatisExceptionTranslator implements PersistenceExceptionTranslator {
 
-  private final DataSource dataSource;
-
+  private final Supplier<SQLExceptionTranslator> exceptionTranslatorSupplier;
   private SQLExceptionTranslator exceptionTranslator;
 
   /**
-   * Creates a new {@code DataAccessExceptionTranslator} instance.
+   * Creates a new {@code PersistenceExceptionTranslator} instance with {@code SQLErrorCodeSQLExceptionTranslator}.
    *
    * @param dataSource
    *          DataSource to use to find metadata and establish which error codes are usable.
@@ -51,8 +51,22 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
    *          exceptions.
    */
   public MyBatisExceptionTranslator(DataSource dataSource, boolean exceptionTranslatorLazyInit) {
-    this.dataSource = dataSource;
+    this(() -> new SQLErrorCodeSQLExceptionTranslator(dataSource), exceptionTranslatorLazyInit);
+  }
 
+  /**
+   * Creates a new {@code PersistenceExceptionTranslator} instance with specified {@code SQLExceptionTranslator}.
+   *
+   * @param exceptionTranslatorSupplier
+   *          Supplier for creating a {@code SQLExceptionTranslator} instance
+   * @param exceptionTranslatorLazyInit
+   *          if true, the translator instantiates internal stuff only the first time will have the need to translate
+   *          exceptions.
+   * @since 2.0.3
+   */
+  public MyBatisExceptionTranslator(Supplier<SQLExceptionTranslator> exceptionTranslatorSupplier,
+      boolean exceptionTranslatorLazyInit) {
+    this.exceptionTranslatorSupplier = exceptionTranslatorSupplier;
     if (!exceptionTranslatorLazyInit) {
       this.initExceptionTranslator();
     }
@@ -85,7 +99,7 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
    */
   private synchronized void initExceptionTranslator() {
     if (this.exceptionTranslator == null) {
-      this.exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
+      this.exceptionTranslator = exceptionTranslatorSupplier.get();
     }
   }
 
