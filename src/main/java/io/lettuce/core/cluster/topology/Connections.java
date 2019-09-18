@@ -104,7 +104,7 @@ class Connections {
     }
 
     /*
-     * Initiate {@code CLIENT LIST} on all connections and return the {@link Requests}.
+     * Initiate {@code INFO CLIENTS} on all connections and return the {@link Requests}.
      *
      * @return the {@link Requests}.
      */
@@ -115,8 +115,8 @@ class Connections {
         synchronized (this.connections) {
             for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
-                CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.LIST);
-                Command<String, String, String> command = new Command<>(CommandType.CLIENT,
+                CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.CLIENTS);
+                Command<String, String, String> command = new Command<>(CommandType.INFO,
                         new StatusOutput<>(StringCodec.UTF8), args);
                 TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
 

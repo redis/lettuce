@@ -84,7 +84,13 @@ class NodeTopologyView {
     }
 
     private int getClients(String rawClientsOutput) {
-        return rawClientsOutput.trim().split("\\n").length;
+        String[] rows = rawClientsOutput.trim().split("\\n");
+        for(String row : rows){
+            if(row.startsWith("connected_clients")){
+                return Integer.valueOf(row.trim().split(":")[1]);
+            }
+        }
+        return 0;
     }
 
     long getLatency() {

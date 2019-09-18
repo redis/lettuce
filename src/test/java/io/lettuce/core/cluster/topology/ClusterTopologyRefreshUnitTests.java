@@ -150,6 +150,18 @@ class ClusterTopologyRefreshUnitTests {
     }
 
     @Test
+    void getNodeTopologyView() throws Exception{
+        Requests requestedTopology = createClusterNodesRequests(1, NODE_1_VIEW);
+        Requests requestedClients = createClientListRequests(1, "# Clients\r\nconnected_clients:2438\r\n" +
+                "client_longest_output_list:0\r\n" +
+                "client_biggest_input_buf:0\r\n" +
+                "blocked_clients:0");
+        RedisURI redisURI = RedisURI.create("redis://localhost:1" );
+        NodeTopologyView nodeTopologyView = NodeTopologyView.from(redisURI, requestedTopology, requestedClients);
+        assertThat(nodeTopologyView.getConnectedClients()).isEqualTo(2438);
+    }
+
+    @Test
     void getNodeSpecificViewsNode1IsFasterThanNode2() throws Exception {
 
         Requests requests = createClusterNodesRequests(1, NODE_1_VIEW);
