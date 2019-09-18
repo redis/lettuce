@@ -87,7 +87,7 @@ class NodeTopologyView {
         String[] rows = rawClientsOutput.trim().split("\\n");
         for(String row : rows){
             if(row.startsWith("connected_clients")){
-                return Integer.valueOf(row.trim().split(":")[1]);
+                return Integer.parseInt(row.trim().split(":")[1]);
             }
         }
         return 0;
