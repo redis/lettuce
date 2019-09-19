@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import javax.crypto.Cipher;
@@ -95,8 +96,10 @@ class CustomCodecIntegrationTests extends TestSupport {
 
     @Test
     void testDeflateCompressedJavaSerializer() {
-        RedisCommands<String, Object> connection = client.connect(
-                CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.DEFLATE)).sync();
+        RedisCommands<String, Object> connection = client
+                .connect(
+                        CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.DEFLATE))
+                .sync();
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
@@ -106,8 +109,9 @@ class CustomCodecIntegrationTests extends TestSupport {
 
     @Test
     void testGzipompressedJavaSerializer() {
-        RedisCommands<String, Object> connection = client.connect(
-                CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP)).sync();
+        RedisCommands<String, Object> connection = client
+                .connect(CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP))
+                .sync();
         List<String> list = list("one", "two");
         connection.set(key, list);
         assertThat(connection.get(key)).isEqualTo(list);
@@ -118,8 +122,8 @@ class CustomCodecIntegrationTests extends TestSupport {
     @Test
     void testEncryptedCodec() {
 
-        RedisCommands<String, String> connection = client.connect(
-                CipherCodec.forValues(StringCodec.UTF8, encrypt, decrypt)).sync();
+        RedisCommands<String, String> connection = client.connect(CipherCodec.forValues(StringCodec.UTF8, encrypt, decrypt))
+                .sync();
 
         connection.set(key, "foobar");
         assertThat(connection.get(key)).isEqualTo("foobar");
@@ -163,9 +167,25 @@ class CustomCodecIntegrationTests extends TestSupport {
         connection.getStatefulConnection().close();
     }
 
+    @Test
+    void testComposedCodec() {
+
+        RedisCodec<String, Object> composed = RedisCodec.of(StringCodec.ASCII, new SerializedObjectCodec());
+        RedisCommands<String, Object> connection = client.connect(composed).sync();
+
+        connection.set(key, new Person());
+
+        List<String> keys = connection.keys(key);
+        assertThat(keys).hasSize(1);
+
+        assertThat(connection.get(key)).isInstanceOf(Person.class);
+
+        connection.getStatefulConnection().close();
+    }
+
     class SerializedObjectCodec implements RedisCodec<String, Object> {
 
-        private Charset charset = Charset.forName("UTF-8");
+        private Charset charset = StandardCharsets.UTF_8;
 
         @Override
         public String decodeKey(ByteBuffer bytes) {
@@ -200,5 +220,9 @@ class CustomCodecIntegrationTests extends TestSupport {
                 return null;
             }
         }
+    }
+
+    static class Person implements Serializable {
+
     }
 }

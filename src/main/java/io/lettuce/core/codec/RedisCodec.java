@@ -27,8 +27,24 @@ import java.nio.ByteBuffer;
  *
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Dimitris Mandalidis
  */
 public interface RedisCodec<K, V> {
+
+    /**
+     * Returns a composite {@link RedisCodec} that uses {@code keyCodec} for keys and {@code valueCodec} for values.
+     *
+     * @param <K> the type of the key
+     * @param <V> the type of the value
+     * @param keyCodec the codec to encode/decode the keys.
+     * @param valueCodec the codec to encode/decode the values.
+     * @return a composite {@link RedisCodec}.
+     * @since 5.2
+     */
+    static <K, V> RedisCodec<K, V> of(RedisCodec<K, ?> keyCodec, RedisCodec<?, V> valueCodec) {
+        return new ComposedRedisCodec<>(keyCodec, valueCodec);
+    }
+
     /**
      * Decode the key output by redis.
      *
