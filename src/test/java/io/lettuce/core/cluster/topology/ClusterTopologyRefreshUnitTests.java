@@ -121,6 +121,11 @@ class ClusterTopologyRefreshUnitTests {
                 command.complete();
             }
 
+            if (command.getType() == CommandType.INFO) {
+                command.getOutput().set(ByteBuffer.wrap("# Clients\nconnected_clients:2\nclient_longest_output_list:0\nclient_biggest_input_buf:0\nblocked_clients:0".getBytes()));
+                command.complete();
+            }
+
             command.encodedAtNs = 10;
             command.completedAtNs = 50;
 
@@ -137,6 +142,11 @@ class ClusterTopologyRefreshUnitTests {
 
             if (command.getType() == CommandType.CLIENT) {
                 command.getOutput().set(ByteBuffer.wrap("".getBytes()));
+                command.complete();
+            }
+
+            if (command.getType() == CommandType.INFO) {
+                command.getOutput().set(ByteBuffer.wrap("# Clients\nconnected_clients:2\nclient_longest_output_list:0\nclient_biggest_input_buf:0\nblocked_clients:0".getBytes()));
                 command.complete();
             }
 
@@ -229,7 +239,7 @@ class ClusterTopologyRefreshUnitTests {
                 + "n6 10.37.110.65:7000 master - 0 1452553663844 45 connected 0-3828 6788-7996 10000-10038 15000-16383";
 
         Requests clusterNodesRequests = createClusterNodesRequests(1, nodes1);
-        Requests clientRequests = createClientListRequests(1, "c1\nc2\n");
+        Requests clientRequests = createClientListRequests(1, "# Clients\r\nconnected_clients:2\r\nclient_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0");
 
         NodeTopologyViews nodeSpecificViews = sut
                 .getNodeSpecificViews(clusterNodesRequests, clientRequests, COMMAND_TIMEOUT_NS);
