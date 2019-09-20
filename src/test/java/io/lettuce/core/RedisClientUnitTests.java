@@ -15,6 +15,7 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.core.RedisURI.Builder.redis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -26,6 +27,8 @@ import java.io.Closeable;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.protocol.ConnectionWatchdog;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -95,5 +98,22 @@ class RedisClientUnitTests {
 
         verify(clientResources).shutdown(anyLong(), anyLong(), any());
         assertThat(future).isDone();
+    }
+
+    @Test
+    void connectionDeferred() {
+        RedisClient redisClient = new RedisClient(ClientResources.create(),
+                redis("host.invalid", 9999).build()); // https://en.wikipedia.org/wiki/.invalid
+        redisClient.setOptions(ClientOptions.builder()
+                .autoReconnect(true)
+                .allowDeferredConnection(true)
+                .build());
+        // not failed with an exception
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisChannelHandler<String, String> channelHandler = (RedisChannelHandler<String, String>) connection;
+        RedisChannelWriter channelWriter = channelHandler.getChannelWriter();
+        ConnectionWatchdog connectionWatchdog = (ConnectionWatchdog) ReflectionTestUtils.getField(channelWriter, "connectionWatchdog");
+        assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
+        assertThat(connection.isOpen()).isFalse();
     }
 }

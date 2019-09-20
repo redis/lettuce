@@ -213,6 +213,12 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                             }
                         }
 
+                        if (evt instanceof ConnectionEvents.Deferred) {
+                            if (!initializedFuture.isDone()) {
+                                initializedFuture.complete(false);
+                            }
+                        }
+
                         super.userEventTriggered(ctx, evt);
                     }
 

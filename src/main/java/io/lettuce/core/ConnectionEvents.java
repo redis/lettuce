@@ -71,6 +71,12 @@ public class ConnectionEvents {
     }
 
     /**
+     * Internal event when a connection is deferred and will try to became active in the background.
+     */
+    public static class Deferred {
+    }
+
+    /**
      * Internal event when a channel is activated.
      */
     public static class PingBeforeActivate {

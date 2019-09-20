@@ -94,6 +94,12 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                             clientResources.eventBus().publish(new ConnectionActivatedEvent(local(ctx), remote(ctx)));
                         }
                     }
+                    if (evt instanceof ConnectionEvents.Deferred) {
+                        if (!initializedFuture.isDone()) {
+                            initializedFuture.complete(false);
+                        }
+                    }
+
                     super.userEventTriggered(ctx, evt);
                 }
 

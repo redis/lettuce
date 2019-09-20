@@ -137,6 +137,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         if (evt instanceof ConnectionEvents.Activated) {
             attempts = 0;
             resetReconnectDelay();
+        } else if (evt instanceof ConnectionEvents.Deferred) {
+            arm();
+            scheduleReconnect();
         }
 
         super.userEventTriggered(ctx, evt);

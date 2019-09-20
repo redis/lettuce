@@ -79,7 +79,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <h3>Resource lifecycle</h3>
  *
  * This extension allocates resources lazily and stores them in its {@link ExtensionContext}
- * {@link org.junit.jupiter.api.extension.ExtensionContext.Store} for resuse across multiple tests. Client and
+ * {@link org.junit.jupiter.api.extension.ExtensionContext.Store} for reuse across multiple tests. Client and
  * {@link ClientResources} are allocated through{@link DefaultRedisClient} respective {@link TestClientResources} so shutdown is
  * managed by the actual suppliers. Singleton connection resources are closed after the test class (test container) is finished.
  * Newable connection resources are closed after the actual test is finished.

@@ -34,6 +34,7 @@ public class ClientOptions implements Serializable {
     public static final boolean DEFAULT_CANCEL_CMD_RECONNECT_FAIL = false;
     public static final boolean DEFAULT_PUBLISH_ON_SCHEDULER = false;
     public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
+    public static final boolean DEFAULT_ALLOW_DEFERRED_CONNECTION = false;
     public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
     public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
     public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
@@ -46,6 +47,7 @@ public class ClientOptions implements Serializable {
     private final boolean cancelCommandsOnReconnectFailure;
     private final boolean publishOnScheduler;
     private final boolean suspendReconnectOnProtocolFailure;
+    private final boolean allowDeferredConnection;
     private final int requestQueueSize;
     private final DisconnectedBehavior disconnectedBehavior;
     private final SocketOptions socketOptions;
@@ -59,6 +61,7 @@ public class ClientOptions implements Serializable {
         this.publishOnScheduler = builder.publishOnScheduler;
         this.autoReconnect = builder.autoReconnect;
         this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
+        this.allowDeferredConnection = builder.allowDeferredConnection;
         this.requestQueueSize = builder.requestQueueSize;
         this.disconnectedBehavior = builder.disconnectedBehavior;
         this.socketOptions = builder.socketOptions;
@@ -73,6 +76,7 @@ public class ClientOptions implements Serializable {
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.publishOnScheduler = original.isPublishOnScheduler();
         this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
+        this.allowDeferredConnection = original.isAllowDeferredConnection();
         this.requestQueueSize = original.getRequestQueueSize();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
         this.socketOptions = original.getSocketOptions();
@@ -119,6 +123,7 @@ public class ClientOptions implements Serializable {
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
         private boolean publishOnScheduler = DEFAULT_PUBLISH_ON_SCHEDULER;
         private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
+        private boolean allowDeferredConnection = DEFAULT_ALLOW_DEFERRED_CONNECTION;
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
         private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
@@ -169,7 +174,19 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Allows cancelling queued commands in case a reconnect fails.Defaults to {@literal false}. See
+         * Allows connection to be established later in the background if it failed during initialisation.
+         * Defaults to {@literal false}. See {@link #DEFAULT_ALLOW_DEFERRED_CONNECTION}.
+         *
+         * @param allowDeferredConnection true/false
+         * @return {@code this}
+         */
+        public Builder allowDeferredConnection(boolean allowDeferredConnection) {
+            this.allowDeferredConnection = allowDeferredConnection;
+            return this;
+        }
+
+        /**
+         * Allows cancelling queued commands in case a reconnect fails. Defaults to {@literal false}. See
          * {@link #DEFAULT_CANCEL_CMD_RECONNECT_FAIL}.
          *
          * @param cancelCommandsOnReconnectFailure true/false
@@ -383,6 +400,17 @@ public class ClientOptions implements Serializable {
      */
     public boolean isSuspendReconnectOnProtocolFailure() {
         return suspendReconnectOnProtocolFailure;
+    }
+
+    /**
+     * If this flag is {@literal true} and the connection could not be established during initialization, instead of falling
+     * with a {@link RedisConnectionException}, client will return a closed connection and will try to reconnect in the background.
+     * Defaults to {@literal false}.
+     *
+     * Does not make any sense if {@link #autoReconnect} is {@literal false}.
+     */
+    public boolean isAllowDeferredConnection() {
+        return allowDeferredConnection;
     }
 
     /**

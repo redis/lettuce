@@ -320,23 +320,31 @@ public abstract class AbstractRedisClient {
             }
         });
 
-        connectFuture.addListener(future -> {
+        connectFuture.addListener((ChannelFutureListener) future -> {
 
             if (!future.isSuccess()) {
-
                 logger.debug("Connecting to Redis at {}: {}", redisAddress, future.cause());
-                connectionBuilder.endpoint().initialState();
-                channelReadyFuture.completeExceptionally(future.cause());
-                return;
+                if (clientOptions.isAllowDeferredConnection() && clientOptions.isAutoReconnect()) {
+                    logger.debug("Connection deferred - will try to reconnect in background");
+                    future.channel().pipeline().fireUserEventTriggered(new ConnectionEvents.Deferred());
+                } else {
+                    connectionBuilder.endpoint().initialState();
+                    channelReadyFuture.completeExceptionally(future.cause());
+                    return;
+                }
             }
 
             initFuture.whenComplete((success, throwable) -> {
 
                 if (throwable == null) {
-
-                    logger.debug("Connecting to Redis at {}: Success", redisAddress);
+                    if (success) {
+                        logger.debug("Connecting to Redis at {}: Success", redisAddress);
+                    }
                     RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
                     connection.registerCloseables(closeableResources, connection);
+                    if (!success) {
+                        connection.deactivated();
+                    }
                     channelReadyFuture.complete(connectFuture.channel());
                     return;
                 }
