@@ -42,17 +42,17 @@ class RequestsUnitTests {
         String clusterNodesOutput = "1 127.0.0.1:7380 master,myself - 0 1401258245007 2 disconnected 8000-11999\n";
         clusterNodesRequests.addRequest(redisURI, getCommand(clusterNodesOutput));
 
-        Requests clientListRequests = new Requests();
-        String clientListOutput = "id=2 addr=127.0.0.1:58919 fd=6 name= age=3 idle=0 flags=N db=0 sub=0 psub=0 multi=-1 qbuf=0 qbuf-free=32768 obl=0 oll=0 omem=0 events=r cmd=client\n";
-        clientListRequests.addRequest(redisURI, getCommand(clientListOutput));
+        Requests infoClientRequests = new Requests();
+        String infoClientOutput = "# Clients\r\nconnected_clients:1\r\nclient_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0";
+        infoClientRequests.addRequest(redisURI, getCommand(infoClientOutput));
 
-        NodeTopologyView nodeTopologyView = NodeTopologyView.from(redisURI, clusterNodesRequests, clientListRequests);
+        NodeTopologyView nodeTopologyView = NodeTopologyView.from(redisURI, clusterNodesRequests, infoClientRequests);
 
         assertThat(nodeTopologyView.isAvailable()).isTrue();
         assertThat(nodeTopologyView.getConnectedClients()).isEqualTo(1);
         assertThat(nodeTopologyView.getPartitions()).hasSize(1);
         assertThat(nodeTopologyView.getClusterNodes()).isEqualTo(clusterNodesOutput);
-        assertThat(nodeTopologyView.getClientList()).isEqualTo(clientListOutput);
+        assertThat(nodeTopologyView.getClientList()).isEqualTo(infoClientOutput);
     }
 
     @Test
