@@ -79,10 +79,6 @@ public class ConnectionBuilder {
         handlers.add(new CommandEncoder());
         handlers.add(commandHandlerSupplier.get());
 
-        if (clientOptions.isAutoReconnect()) {
-            handlers.add(createConnectionWatchdog());
-        }
-
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
 
         if (clientOptions.isAutoReconnect()) {
