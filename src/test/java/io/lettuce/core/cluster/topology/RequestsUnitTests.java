@@ -30,6 +30,7 @@ import io.lettuce.core.protocol.CommandType;
 
 /**
  * @author Mark Paluch
+ * @author Xujs
  */
 class RequestsUnitTests {
 
@@ -43,13 +44,13 @@ class RequestsUnitTests {
         clusterNodesRequests.addRequest(redisURI, getCommand(clusterNodesOutput));
 
         Requests infoClientRequests = new Requests();
-        String infoClientOutput = "# Clients\r\nconnected_clients:1\r\nclient_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0";
+        String infoClientOutput = "# Clients\r\nconnected_clients:100\r\nclient_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0";
         infoClientRequests.addRequest(redisURI, getCommand(infoClientOutput));
 
         NodeTopologyView nodeTopologyView = NodeTopologyView.from(redisURI, clusterNodesRequests, infoClientRequests);
 
         assertThat(nodeTopologyView.isAvailable()).isTrue();
-        assertThat(nodeTopologyView.getConnectedClients()).isEqualTo(1);
+        assertThat(nodeTopologyView.getConnectedClients()).isEqualTo(100);
         assertThat(nodeTopologyView.getPartitions()).hasSize(1);
         assertThat(nodeTopologyView.getClusterNodes()).isEqualTo(clusterNodesOutput);
         assertThat(nodeTopologyView.getClientList()).isEqualTo(infoClientOutput);
@@ -79,8 +80,7 @@ class RequestsUnitTests {
 
         RedisURI redisURI = RedisURI.create("localhost", 6379);
         Requests requests = new Requests();
-        Command<String, String, String> command = new Command<>(CommandType.TYPE,
-                new StatusOutput<>(new Utf8StringCodec()));
+        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(new Utf8StringCodec()));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
 
         requests.addRequest(redisURI, timedAsyncCommand);
@@ -93,8 +93,7 @@ class RequestsUnitTests {
 
         RedisURI redisURI = RedisURI.create("localhost", 6379);
         Requests requests = new Requests();
-        Command<String, String, String> command = new Command<>(CommandType.TYPE,
-                new StatusOutput<>(new Utf8StringCodec()));
+        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(new Utf8StringCodec()));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
 
         requests.addRequest(redisURI, timedAsyncCommand);
@@ -104,8 +103,7 @@ class RequestsUnitTests {
     }
 
     private TimedAsyncCommand getCommand(String response) {
-        Command<String, String, String> command = new Command<>(CommandType.TYPE,
-                new StatusOutput<>(new Utf8StringCodec()));
+        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(new Utf8StringCodec()));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
 
         command.getOutput().set(ByteBuffer.wrap(response.getBytes()));
