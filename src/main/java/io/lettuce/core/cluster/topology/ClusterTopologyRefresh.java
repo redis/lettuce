@@ -16,6 +16,7 @@
 package io.lettuce.core.cluster.topology;
 
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -28,7 +29,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.topology.TopologyComparators.SortAction;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
@@ -41,7 +42,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 public class ClusterTopologyRefresh {
 
-    static final Utf8StringCodec CODEC = new Utf8StringCodec();
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterTopologyRefresh.class);
 
     private final NodeConnectionFactory nodeConnectionFactory;
@@ -57,10 +57,11 @@ public class ClusterTopologyRefresh {
      * an ordered list of {@link RedisClusterNode}s. The sort key is latency. Nodes with lower latency come first.
      *
      * @param seed collection of {@link RedisURI}s
+     * @param connectTimeout connect timeout
      * @param discovery {@literal true} to discover additional nodes
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
-    public Map<RedisURI, Partitions> loadViews(Iterable<RedisURI> seed, boolean discovery) {
+    public Map<RedisURI, Partitions> loadViews(Iterable<RedisURI> seed, Duration connectTimeout, boolean discovery) {
 
         if (!isEventLoopActive()) {
             return Collections.emptyMap();
@@ -70,7 +71,7 @@ public class ClusterTopologyRefresh {
 
         Connections connections = null;
         try {
-            connections = getConnections(seed).get(commandTimeoutNs, TimeUnit.NANOSECONDS);
+            connections = getConnections(seed).get(commandTimeoutNs + connectTimeout.toNanos(), TimeUnit.NANOSECONDS);
 
             if (!isEventLoopActive()) {
                 return Collections.emptyMap();
@@ -259,7 +260,7 @@ public class ClusterTopologyRefresh {
                 SocketAddress socketAddress = clientResources.socketAddressResolver().resolve(redisURI);
 
                 ConnectionFuture<StatefulRedisConnection<String, String>> connectionFuture = nodeConnectionFactory
-                        .connectToNodeAsync(CODEC, socketAddress);
+                        .connectToNodeAsync(StringCodec.UTF8, socketAddress);
 
                 CompletableFuture<StatefulRedisConnection<String, String>> sync = new CompletableFuture<>();
 
