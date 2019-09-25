@@ -122,7 +122,9 @@ class ClusterTopologyRefreshUnitTests {
             }
 
             if (command.getType() == CommandType.INFO) {
-                command.getOutput().set(ByteBuffer.wrap("# Clients\nconnected_clients:2\nclient_longest_output_list:0\nclient_biggest_input_buf:0\nblocked_clients:0".getBytes()));
+                command.getOutput().set(ByteBuffer.wrap(
+                        "# Clients\nconnected_clients:2\nclient_longest_output_list:0\nclient_biggest_input_buf:0\nblocked_clients:0"
+                                .getBytes()));
                 command.complete();
             }
 
@@ -146,7 +148,9 @@ class ClusterTopologyRefreshUnitTests {
             }
 
             if (command.getType() == CommandType.INFO) {
-                command.getOutput().set(ByteBuffer.wrap("# Clients\nconnected_clients:2\nclient_longest_output_list:0\nclient_biggest_input_buf:0\nblocked_clients:0".getBytes()));
+                command.getOutput().set(ByteBuffer.wrap(
+                        "# Clients\nconnected_clients:2\nclient_longest_output_list:0\nclient_biggest_input_buf:0\nblocked_clients:0"
+                                .getBytes()));
                 command.complete();
             }
 
@@ -160,10 +164,11 @@ class ClusterTopologyRefreshUnitTests {
     }
 
     @Test
-    void getNodeTopologyView() throws Exception{
+    void getNodeTopologyView() throws Exception {
         Requests requestedTopology = createClusterNodesRequests(1, NODE_1_VIEW);
-        Requests requestedClients = createClientListRequests(1, "# Clients\r\nconnected_clients:2438\r\nclient_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0");
-        RedisURI redisURI = RedisURI.create("redis://localhost:1" );
+        Requests requestedClients = createClientListRequests(1,
+                "# Clients\r\nconnected_clients:2438\r\nclient_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0");
+        RedisURI redisURI = RedisURI.create("redis://localhost:1");
         NodeTopologyView nodeTopologyView = NodeTopologyView.from(redisURI, requestedTopology, requestedClients);
         assertThat(nodeTopologyView.getConnectedClients()).isEqualTo(2438);
     }
@@ -239,10 +244,11 @@ class ClusterTopologyRefreshUnitTests {
                 + "n6 10.37.110.65:7000 master - 0 1452553663844 45 connected 0-3828 6788-7996 10000-10038 15000-16383";
 
         Requests clusterNodesRequests = createClusterNodesRequests(1, nodes1);
-        Requests clientRequests = createClientListRequests(1, "# Clients\r\nconnected_clients:2\r\nclient_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0");
+        Requests clientRequests = createClientListRequests(1,
+                "# Clients\r\nconnected_clients:2\r\nclient_longest_output_list:0\r\nclient_biggest_input_buf:0\r\nblocked_clients:0");
 
-        NodeTopologyViews nodeSpecificViews = sut
-                .getNodeSpecificViews(clusterNodesRequests, clientRequests, COMMAND_TIMEOUT_NS);
+        NodeTopologyViews nodeSpecificViews = sut.getNodeSpecificViews(clusterNodesRequests, clientRequests,
+                COMMAND_TIMEOUT_NS);
 
         List<Partitions> values = new ArrayList<>(nodeSpecificViews.toMap().values());
 
@@ -267,8 +273,8 @@ class ClusterTopologyRefreshUnitTests {
 
         Requests clientRequests = createClientListRequests(5, "c1\nc2\n").mergeWith(createClientListRequests(1, "c1\nc2\n"));
 
-        NodeTopologyViews nodeSpecificViews = sut
-                .getNodeSpecificViews(clusterNodesRequests, clientRequests, COMMAND_TIMEOUT_NS);
+        NodeTopologyViews nodeSpecificViews = sut.getNodeSpecificViews(clusterNodesRequests, clientRequests,
+                COMMAND_TIMEOUT_NS);
         List<Partitions> values = new ArrayList<>(nodeSpecificViews.toMap().values());
 
         assertThat(values).hasSize(2);
@@ -394,8 +400,8 @@ class ClusterTopologyRefreshUnitTests {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByClientCount(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
-                .containsSequence(seed.get(0), RedisURI.create("127.0.0.1", 7381));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(seed.get(0),
+                RedisURI.create("127.0.0.1", 7381));
     }
 
     @Test
@@ -414,8 +420,8 @@ class ClusterTopologyRefreshUnitTests {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByClientCount(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
-                .containsSequence(RedisURI.create("127.0.0.1", 7381), seed.get(0));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(RedisURI.create("127.0.0.1", 7381),
+                seed.get(0));
     }
 
     @Test
@@ -432,8 +438,8 @@ class ClusterTopologyRefreshUnitTests {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByLatency(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
-                .containsSequence(seed.get(0), RedisURI.create("127.0.0.1", 7381));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(seed.get(0),
+                RedisURI.create("127.0.0.1", 7381));
     }
 
     @Test
@@ -452,8 +458,8 @@ class ClusterTopologyRefreshUnitTests {
 
         List<RedisClusterNode> nodes = TopologyComparators.sortByLatency(partitions);
 
-        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri)
-                .containsSequence(RedisURI.create("127.0.0.1", 7381), seed.get(0));
+        assertThat(nodes).hasSize(2).extracting(RedisClusterNode::getUri).containsSequence(RedisURI.create("127.0.0.1", 7381),
+                seed.get(0));
     }
 
     @Test

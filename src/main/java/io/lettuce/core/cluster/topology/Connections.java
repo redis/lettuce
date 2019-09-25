@@ -31,6 +31,7 @@ import io.lettuce.core.protocol.CommandType;
 /**
  * @author Mark Paluch
  * @author Christian Weitendorf
+ * @author Xujs
  */
 class Connections {
 
@@ -91,8 +92,8 @@ class Connections {
             for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
                 CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.NODES);
-                Command<String, String, String> command = new Command<>(CommandType.CLUSTER, new StatusOutput<>(
-                        StringCodec.UTF8), args);
+                Command<String, String, String> command = new Command<>(CommandType.CLUSTER,
+                        new StatusOutput<>(StringCodec.UTF8), args);
                 TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
 
                 entry.getValue().dispatch(timedCommand);
@@ -115,9 +116,8 @@ class Connections {
         synchronized (this.connections) {
             for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
-                CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.CLIENTS);
-                Command<String, String, String> command = new Command<>(CommandType.INFO,
-                        new StatusOutput<>(StringCodec.UTF8), args);
+                Command<String, String, String> command = new Command<>(CommandType.INFO, new StatusOutput<>(StringCodec.UTF8),
+                        new CommandArgs<>(StringCodec.UTF8).add("CLIENTS"));
                 TimedAsyncCommand<String, String, String> timedCommand = new TimedAsyncCommand<>(command);
 
                 entry.getValue().dispatch(timedCommand);

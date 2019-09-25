@@ -16,6 +16,8 @@
 package io.lettuce.core.cluster.topology;
 
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
@@ -25,9 +27,11 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author Mark Paluch
+ * @author Xujs
  */
 class NodeTopologyView {
 
+    private static final Pattern NUMBER = Pattern.compile("(\\d+)");
     private final boolean available;
     private final RedisURI redisURI;
 
@@ -39,7 +43,7 @@ class NodeTopologyView {
 
     private final String clientList;
 
-    NodeTopologyView(RedisURI redisURI) {
+    private NodeTopologyView(RedisURI redisURI) {
 
         this.available = false;
         this.redisURI = redisURI;
@@ -74,7 +78,7 @@ class NodeTopologyView {
         return new NodeTopologyView(redisURI);
     }
 
-    static boolean resultAvailable(RedisFuture<?> redisFuture) {
+    private static boolean resultAvailable(RedisFuture<?> redisFuture) {
 
         if (redisFuture != null && redisFuture.isDone() && !redisFuture.isCancelled()) {
             return true;
@@ -85,9 +89,11 @@ class NodeTopologyView {
 
     private int getClients(String rawClientsOutput) {
         String[] rows = rawClientsOutput.trim().split("\\n");
-        for(String row : rows){
-            if(row.startsWith("connected_clients")){
-                return Integer.parseInt(row.trim().split(":")[1]);
+        for (String row : rows) {
+
+            Matcher matcher = NUMBER.matcher(row);
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1));
             }
         }
         return 0;
