@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 
 /**
@@ -29,7 +30,7 @@ import io.lettuce.core.codec.Utf8StringCodec;
  */
 class BooleanListOutputUnitTests {
 
-    private BooleanListOutput<?, ?> sut = new BooleanListOutput<>(new Utf8StringCodec());
+    private BooleanListOutput<?, ?> sut = new BooleanListOutput<>(StringCodec.UTF8);
 
     @Test
     void defaultSubscriberIsSet() {

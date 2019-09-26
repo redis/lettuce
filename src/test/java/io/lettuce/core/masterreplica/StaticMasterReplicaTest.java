@@ -34,6 +34,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RoleParser;
@@ -87,7 +88,7 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
         node1.setPassword(passwd);
         node2.setPassword(passwd);
 
-        connection = MasterReplica.connect(client, new Utf8StringCodec(), Arrays.asList(master, slave));
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(master, slave));
         connection.setReadFrom(ReadFrom.REPLICA);
     }
 
@@ -139,7 +140,7 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = MasterReplica.connect(client, new Utf8StringCodec(), Arrays.asList(master));
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(master));
         connection.setReadFrom(ReadFrom.REPLICA);
 
         assertThatThrownBy(() -> replicaCall(connection)).isInstanceOf(RedisException.class);
@@ -150,7 +151,7 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = MasterReplica.connect(client, new Utf8StringCodec(), Arrays.asList(master));
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(master));
 
         connection.sync().set(key, value);
         assertThat(connection.sync().get(key)).isEqualTo("value");
@@ -161,7 +162,7 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = MasterReplica.connect(client, new Utf8StringCodec(), Arrays.asList(slave));
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(slave));
         connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
 
         assertThat(connection.sync().info()).isNotEmpty();
@@ -172,7 +173,7 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = MasterReplica.connect(client, new Utf8StringCodec(), Arrays.asList(slave));
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(slave));
 
         assertThatThrownBy(() -> connection.sync().set(key, value)).isInstanceOf(RedisException.class);
     }

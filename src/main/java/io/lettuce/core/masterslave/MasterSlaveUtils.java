@@ -19,14 +19,12 @@ import java.util.Collection;
 import java.util.Comparator;
 
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
  * @author Mark Paluch
  */
 class MasterSlaveUtils {
-    static final Utf8StringCodec CODEC = new Utf8StringCodec();
 
     /**
      * Check if properties changed.

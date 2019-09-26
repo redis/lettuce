@@ -26,6 +26,7 @@ import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 
 /**
@@ -35,15 +36,13 @@ class ListOutputUnitTests {
 
     static Collection<Fixture> parameters() {
 
-        Utf8StringCodec codec = new Utf8StringCodec();
-
-        KeyListOutput<String, String> keyListOutput = new KeyListOutput<>(codec);
+        KeyListOutput<String, String> keyListOutput = new KeyListOutput<>(StringCodec.UTF8);
         Fixture keyList = new Fixture(keyListOutput, keyListOutput, "hello world".getBytes(), "hello world");
 
-        ValueListOutput<String, String> valueListOutput = new ValueListOutput<>(codec);
+        ValueListOutput<String, String> valueListOutput = new ValueListOutput<>(StringCodec.UTF8);
         Fixture valueList = new Fixture(valueListOutput, valueListOutput, "hello world".getBytes(), "hello world");
 
-        StringListOutput<String, String> stringListOutput = new StringListOutput<>(codec);
+        StringListOutput<String, String> stringListOutput = new StringListOutput<>(StringCodec.UTF8);
         Fixture stringList = new Fixture(stringListOutput, stringListOutput, "hello world".getBytes(), "hello world");
 
         return Arrays.asList(keyList, valueList, stringList);

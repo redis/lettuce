@@ -49,6 +49,7 @@ import edu.umd.cs.mtc.MultithreadedTestCase;
 import edu.umd.cs.mtc.TestFramework;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.output.StatusOutput;
@@ -70,7 +71,7 @@ class DefaultEndpointUnitTests {
     private DefaultEndpoint sut;
 
     private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<>(
-            new Utf8StringCodec()), null);
+            StringCodec.UTF8), null);
 
     @Mock
     private Channel channel;

@@ -48,6 +48,7 @@ public class RedisStateIntegrationTests {
     @Test
     void shouldDiscoverCommands() {
 
+
         List<CommandDetail> commandDetails = CommandDetailParser.parse(redis.command());
         RedisState state = new RedisState(commandDetails);
 

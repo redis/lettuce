@@ -39,7 +39,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.role.RedisInstance;
 
 /**
@@ -48,8 +48,6 @@ import io.lettuce.core.models.role.RedisInstance;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class MasterSlaveConnectionProviderUnitTests {
-
-    private static final Utf8StringCodec CODEC = new Utf8StringCodec();
 
     private MasterSlaveConnectionProvider<String, String> sut;
 
@@ -68,7 +66,8 @@ class MasterSlaveConnectionProviderUnitTests {
     void before() {
 
         nodeConnectionMock = (StatefulRedisConnection) channelHandlerMock;
-        sut = new MasterSlaveConnectionProvider<>(clientMock, CODEC, RedisURI.create("localhost", 1), Collections.emptyMap());
+        sut = new MasterSlaveConnectionProvider<>(clientMock, StringCodec.UTF8, RedisURI.create("localhost", 1),
+                Collections.emptyMap());
         sut.setKnownNodes(Arrays.asList(new RedisMasterSlaveNode("localhost", 1, RedisURI.create("localhost", 1),
                 RedisInstance.Role.MASTER)));
     }
@@ -78,7 +77,8 @@ class MasterSlaveConnectionProviderUnitTests {
 
         when(channelHandlerMock.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
 
-        when(clientMock.connectAsync(eq(CODEC), any())).thenReturn(ConnectionFuture.completed(null, nodeConnectionMock));
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), any()))
+                .thenReturn(ConnectionFuture.completed(null, nodeConnectionMock));
 
         StatefulRedisConnection<String, String> connection = sut.getConnection(MasterSlaveConnectionProvider.Intent.READ);
         assertThat(connection).isNotNull();

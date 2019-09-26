@@ -111,7 +111,7 @@ class CustomCommandIntegrationTests extends TestSupport {
     void masterSlaveAsyncPing() {
 
         RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
-                new StatusOutput<>(new Utf8StringCodec()), null);
+                new StatusOutput<>(StringCodec.UTF8), null);
 
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         getStandaloneConnection().dispatch(async);
@@ -145,7 +145,7 @@ class CustomCommandIntegrationTests extends TestSupport {
     void masterSlaveFireAndForget() {
 
         RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
-                new StatusOutput<>(new Utf8StringCodec()), null);
+                new StatusOutput<>(StringCodec.UTF8), null);
         getStandaloneConnection().dispatch(command);
         assertThat(command.isCancelled()).isFalse();
 

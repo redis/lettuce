@@ -25,6 +25,7 @@ import java.util.*;
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.*;
@@ -45,8 +46,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static final byte[] MINUS_BYTES = { '-' };
     private static final byte[] PLUS_BYTES = { '+' };
-
-    private final RedisCodec<String, String> STRING_CODEC = new Utf8StringCodec();
 
     RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
@@ -419,8 +418,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<Object>> command() {
-        CommandArgs<K, V> args = new CommandArgs<K, V>((RedisCodec) STRING_CODEC);
-        return createCommand(COMMAND, new ArrayOutput<K, V>((RedisCodec) STRING_CODEC), args);
+        CommandArgs<K, V> args = new CommandArgs<K, V>((RedisCodec) StringCodec.UTF8);
+        return createCommand(COMMAND, new ArrayOutput<K, V>((RedisCodec) StringCodec.UTF8), args);
     }
 
     Command<K, V, Long> commandCount() {
@@ -433,22 +432,22 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notEmpty(commands, "Commands " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(commands, "Commands " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
-        CommandArgs<K, V> args = new CommandArgs<K, V>((RedisCodec) STRING_CODEC);
+        CommandArgs<K, V> args = new CommandArgs<K, V>((RedisCodec) StringCodec.UTF8);
         args.add(INFO);
 
         for (String command : commands) {
             args.add(command);
         }
 
-        return createCommand(COMMAND, new ArrayOutput<K, V>((RedisCodec) STRING_CODEC), args);
+        return createCommand(COMMAND, new ArrayOutput<K, V>((RedisCodec) StringCodec.UTF8), args);
     }
 
     Command<K, V, Map<String, String>> configGet(String parameter) {
         LettuceAssert.notNull(parameter, "Parameter " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(parameter, "Parameter " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<>((RedisCodec) STRING_CODEC).add(GET).add(parameter);
-        return createCommand(CONFIG, new MapOutput<>((RedisCodec) STRING_CODEC), args);
+        CommandArgs<K, V> args = new CommandArgs<>((RedisCodec) StringCodec.UTF8).add(GET).add(parameter);
+        return createCommand(CONFIG, new MapOutput<>((RedisCodec) StringCodec.UTF8), args);
     }
 
     Command<K, V, String> configResetstat() {

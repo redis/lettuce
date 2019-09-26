@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
@@ -46,7 +46,6 @@ import io.netty.util.Version;
  */
 class AtLeastOnceTest extends AbstractRedisClientTest {
 
-    private final Utf8StringCodec CODEC = new Utf8StringCodec();
     private String key = "key";
 
     @BeforeEach
@@ -136,13 +135,13 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connection.set(key, "1");
         AsyncCommand<String, String, String> working = new AsyncCommand<>(new Command<>(CommandType.INCR, new IntegerOutput(
-                CODEC), new CommandArgs<>(CODEC).addKey(key)));
+                StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).addKey(key)));
         channelWriter.write(working);
         assertThat(working.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(connection.get(key)).isEqualTo("2");
 
         AsyncCommand<String, String, Object> command = new AsyncCommand(new Command<>(CommandType.INCR,
-                new IntegerOutput(CODEC), new CommandArgs<>(CODEC).addKey(key))) {
+                new IntegerOutput(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).addKey(key))) {
 
             @Override
             public void encode(ByteBuf buf) {
@@ -254,8 +253,8 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
     }
 
     AsyncCommand<String, String, Object> getBlockOnEncodeCommand(final CountDownLatch block) {
-        return new AsyncCommand<String, String, Object>(new Command<>(CommandType.INCR, new IntegerOutput(CODEC),
-                new CommandArgs<>(CODEC).addKey(key))) {
+        return new AsyncCommand<String, String, Object>(new Command<>(CommandType.INCR, new IntegerOutput(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key))) {
 
             @Override
             public void encode(ByteBuf buf) {
@@ -278,7 +277,7 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
         connection.set(key, "1");
 
         AsyncCommand<String, String, String> command = new AsyncCommand(new Command<>(CommandType.INCR, new StatusOutput<>(
-                CODEC), new CommandArgs<>(CODEC).addKey(key)));
+                StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).addKey(key)));
 
         channelWriter.write(command);
 

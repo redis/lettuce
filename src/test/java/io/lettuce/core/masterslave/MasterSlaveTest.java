@@ -35,6 +35,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -90,7 +91,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         connectionToNode2.configSet("masterauth", passwd);
         connectionToNode2.auth(passwd);
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(), masterURI);
+        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8, masterURI);
         connection.setReadFrom(ReadFrom.REPLICA);
     }
 
@@ -156,7 +157,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         connection.close();
 
         RedisURI slaveUri = RedisURI.Builder.redis(host, TestSettings.port(4)).withPassword(passwd).build();
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(), slaveUri);
+        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8, slaveUri);
 
         RedisCommands<String, String> sync = connection.sync();
         sync.set(key, value);

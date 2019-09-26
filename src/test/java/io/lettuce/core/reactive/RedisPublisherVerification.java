@@ -32,6 +32,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestRedisPublisher;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.Command;
@@ -47,7 +48,6 @@ import io.lettuce.test.settings.TestSettings;
  */
 public class RedisPublisherVerification extends PublisherVerification<String> {
 
-    private static final Utf8StringCodec CODEC = new Utf8StringCodec();
     private static RedisClient client;
     private static StatefulRedisConnection<String, String> connection;
 
@@ -85,8 +85,8 @@ public class RedisPublisherVerification extends PublisherVerification<String> {
         }
 
         Supplier<Command<String, String, List<String>>> supplier = () -> {
-            CommandArgs<String, String> args = new CommandArgs<>(CODEC).addKey(key).add(0).add(-1);
-            return new Command<>(LRANGE, new ValueListOutput<>(CODEC), args);
+            CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addKey(key).add(0).add(-1);
+            return new Command<>(LRANGE, new ValueListOutput<>(StringCodec.UTF8), args);
         };
 
         return new TestRedisPublisher(supplier, connection, true);

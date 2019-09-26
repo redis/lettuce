@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ScoredValue;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 
 /**
@@ -30,7 +31,7 @@ import io.lettuce.core.codec.Utf8StringCodec;
  */
 class ScoredValueListOutputUnitTests {
 
-    private ScoredValueListOutput<String, String> sut = new ScoredValueListOutput<>(new Utf8StringCodec());
+    private ScoredValueListOutput<String, String> sut = new ScoredValueListOutput<>(StringCodec.UTF8);
 
     @Test
     void defaultSubscriberIsSet() {

@@ -24,7 +24,9 @@ import io.lettuce.core.protocol.LettuceCharsets;
  * @author Mark Paluch
  * @see StringCodec
  * @see LettuceCharsets#UTF8
+ * @deprecated since 5.2, use {@link StringCodec#UTF8} instead.
  */
+@Deprecated
 public class Utf8StringCodec extends StringCodec implements RedisCodec<String, String> {
 
     /**

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
@@ -39,7 +39,7 @@ import io.netty.util.Timer;
 public class ConnectionBuilder {
 
     private static final RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(
-            new Utf8StringCodec());
+            StringCodec.UTF8);
     private static final Supplier<AsyncCommand<?, ?, ?>> PING_COMMAND_SUPPLIER = () -> new AsyncCommand<>(
             INITIALIZING_CMD_BUILDER.ping());
 

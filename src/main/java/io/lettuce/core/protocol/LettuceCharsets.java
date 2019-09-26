@@ -17,6 +17,7 @@ package io.lettuce.core.protocol;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * {@link Charset}-related utilities.
@@ -28,12 +29,12 @@ public class LettuceCharsets {
     /**
      * US-ASCII charset.
      */
-    public static final Charset ASCII = Charset.forName("US-ASCII");
+    public static final Charset ASCII = StandardCharsets.US_ASCII;
 
     /**
      * UTF-8 charset.
      */
-    public static final Charset UTF8 = Charset.forName("UTF-8");
+    public static final Charset UTF8 = StandardCharsets.UTF_8;
 
     /**
      * Utility constructor.

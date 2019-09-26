@@ -19,7 +19,7 @@ import static io.lettuce.core.protocol.RedisStateMachine.State;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -45,8 +45,7 @@ import io.netty.buffer.Unpooled;
  * @author Mark Paluch
  */
 class StateMachineUnitTests {
-    private RedisCodec<String, String> codec = new Utf8StringCodec();
-    private Charset charset = Charset.forName("UTF-8");
+    private RedisCodec<String, String> codec = StringCodec.UTF8;
     private CommandOutput<String, String, String> output;
     private RedisStateMachine rsm;
 
@@ -166,6 +165,6 @@ class StateMachineUnitTests {
     }
 
     ByteBuf buffer(String content) {
-        return Unpooled.copiedBuffer(content, charset);
+        return Unpooled.copiedBuffer(content, StandardCharsets.UTF_8);
     }
 }

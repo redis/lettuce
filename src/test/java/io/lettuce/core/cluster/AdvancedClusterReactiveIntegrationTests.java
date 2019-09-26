@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.codec.StringCodec;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 import io.lettuce.core.*;
@@ -114,7 +115,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
         msetCrossSlot();
 
-        Map<Integer, List<String>> partitioned = SlotHash.partition(new Utf8StringCodec(), KeysAndValues.KEYS);
+        Map<Integer, List<String>> partitioned = SlotHash.partition(StringCodec.UTF8, KeysAndValues.KEYS);
         assertThat(partitioned.size()).isGreaterThan(100);
 
         Flux<KeyValue<String, String>> flux = commands.mget(KeysAndValues.KEYS.toArray(new String[KeysAndValues.COUNT]));

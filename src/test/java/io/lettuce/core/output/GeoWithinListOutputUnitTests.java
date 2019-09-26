@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.GeoCoordinates;
 import io.lettuce.core.GeoWithin;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 
 /**
@@ -31,7 +32,7 @@ import io.lettuce.core.codec.Utf8StringCodec;
  */
 class GeoWithinListOutputUnitTests {
 
-    private GeoWithinListOutput<String, String> sut = new GeoWithinListOutput<>(new Utf8StringCodec(), false, false, false);
+    private GeoWithinListOutput<String, String> sut = new GeoWithinListOutput<>(StringCodec.UTF8, false, false, false);
 
     @Test
     void defaultSubscriberIsSet() {
@@ -54,7 +55,7 @@ class GeoWithinListOutputUnitTests {
     @Test
     void commandOutputKeyAndDistanceDecoded() {
 
-        sut = new GeoWithinListOutput<>(new Utf8StringCodec(), true, false, false);
+        sut = new GeoWithinListOutput<>(StringCodec.UTF8, true, false, false);
 
         sut.multi(1);
         sut.set(ByteBuffer.wrap("key".getBytes()));
@@ -67,7 +68,7 @@ class GeoWithinListOutputUnitTests {
     @Test
     void commandOutputKeyAndHashDecoded() {
 
-        sut = new GeoWithinListOutput<>(new Utf8StringCodec(), false, true, false);
+        sut = new GeoWithinListOutput<>(StringCodec.UTF8, false, true, false);
 
         sut.multi(1);
         sut.set(ByteBuffer.wrap("key".getBytes()));
@@ -80,7 +81,7 @@ class GeoWithinListOutputUnitTests {
     @Test
     void commandOutputLongKeyAndHashDecoded() {
 
-        GeoWithinListOutput<Long, Long> sut = new GeoWithinListOutput<>((RedisCodec) new Utf8StringCodec(), false, true, false);
+        GeoWithinListOutput<Long, Long> sut = new GeoWithinListOutput<>((RedisCodec) StringCodec.UTF8, false, true, false);
 
         sut.multi(1);
         sut.set(1234);
@@ -93,7 +94,7 @@ class GeoWithinListOutputUnitTests {
     @Test
     void commandOutputKeyAndCoordinatesDecoded() {
 
-        sut = new GeoWithinListOutput<>(new Utf8StringCodec(), false, false, true);
+        sut = new GeoWithinListOutput<>(StringCodec.UTF8, false, false, true);
 
         sut.multi(1);
         sut.set(ByteBuffer.wrap("key".getBytes()));

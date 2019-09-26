@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.GeoCoordinates;
 import io.lettuce.core.Value;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 
 /**
@@ -31,7 +32,7 @@ import io.lettuce.core.codec.Utf8StringCodec;
  */
 class GeoCoordinatesValueListOutputUnitTests {
 
-    private GeoCoordinatesValueListOutput<?, ?> sut = new GeoCoordinatesValueListOutput<>(new Utf8StringCodec());
+    private GeoCoordinatesValueListOutput<?, ?> sut = new GeoCoordinatesValueListOutput<>(StringCodec.UTF8);
 
     @Test
     void defaultSubscriberIsSet() {

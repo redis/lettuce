@@ -47,7 +47,7 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.test.Delay;
@@ -148,7 +148,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         clusterClient.setDefaultTimeout(2, TimeUnit.MINUTES);
 
-        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect(Utf8StringCodec.UTF8);
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect(StringCodec.UTF8);
 
         assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(2));
         assertThat(connection.getConnection(host, ClusterTestSettings.port1).getTimeout()).isEqualTo(Duration.ofMinutes(2));
@@ -171,7 +171,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     void shouldApplyTimeoutOnPubSubConnectionUsingCodec() {
 
         clusterClient.setDefaultTimeout(Duration.ofMinutes(1));
-        StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub(Utf8StringCodec.UTF8);
+        StatefulRedisPubSubConnection<String, String> connection = clusterClient.connectPubSub(StringCodec.UTF8);
 
         assertThat(connection.getTimeout()).isEqualTo(Duration.ofMinutes(1));
         connection.close();
@@ -188,8 +188,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
         assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
 
-        StatefulRedisConnection<String, String> nodeConnection = connection.getConnection(connection.getPartitions()
-                .getPartition(0).getNodeId());
+        StatefulRedisConnection<String, String> nodeConnection = connection
+                .getConnection(connection.getPartitions().getPartition(0).getNodeId());
         assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
 
         connection.close();
@@ -207,8 +207,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
 
-        StatefulRedisConnection<String, String> nodeConnection = connection.getConnection(connection.getPartitions()
-                .getPartition(0).getNodeId());
+        StatefulRedisConnection<String, String> nodeConnection = connection
+                .getConnection(connection.getPartitions().getPartition(0).getNodeId());
         assertThat(nodeConnection.sync().clientGetname()).isEqualTo("my-client");
 
         connection.close();
@@ -229,8 +229,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         Partitions partitions = clusterClient.getPartitions();
         partitions.clear();
-        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 1), "foo", false, null, 0, 0, 0, Collections
-                .emptyList(), Collections.emptySet()));
+        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 1), "foo", false, null, 0, 0, 0,
+                Collections.emptyList(), Collections.emptySet()));
 
         Partitions reloaded = clusterClient.loadPartitions();
 
@@ -399,8 +399,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(TestSettings.host(), ClusterTestSettings.port7).build());
 
-        assertThatThrownBy(clusterClient::getPartitions).isInstanceOf(RedisException.class).hasRootCauseInstanceOf(
-                RedisCommandExecutionException.class);
+        assertThatThrownBy(clusterClient::getPartitions).isInstanceOf(RedisException.class)
+                .hasRootCauseInstanceOf(RedisCommandExecutionException.class);
 
         FastShutdown.shutdown(clusterClient);
     }
@@ -463,8 +463,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         RedisClusterNode redis1Node = getOwnPartition(redissync2);
 
-        RedisClusterCommands<String, String> connection = sync
-                .getConnection(TestSettings.hostAddr(), ClusterTestSettings.port2);
+        RedisClusterCommands<String, String> connection = sync.getConnection(TestSettings.hostAddr(),
+                ClusterTestSettings.port2);
 
         String result = connection.clusterMyId();
         assertThat(result).isEqualTo(redis1Node.getNodeId());

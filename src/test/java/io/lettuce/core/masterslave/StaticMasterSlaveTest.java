@@ -35,6 +35,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RoleParser;
@@ -89,7 +90,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
         node1.setPassword(passwd);
         node2.setPassword(passwd);
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(),
+        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
                 Arrays.asList(master, replica));
         connection.setReadFrom(ReadFrom.REPLICA);
     }
@@ -142,7 +143,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(),
+        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
                 Arrays.asList(master));
         connection.setReadFrom(ReadFrom.REPLICA);
 
@@ -154,7 +155,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(),
+        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
                 Arrays.asList(master));
 
         connection.sync().set(key, value);
@@ -166,7 +167,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(),
+        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
                 Arrays.asList(replica));
         connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
 
@@ -178,7 +179,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, new Utf8StringCodec(),
+        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
                 Arrays.asList(replica));
 
         assertThatThrownBy(() -> connection.sync().set(key, value)).isInstanceOf(RedisException.class);

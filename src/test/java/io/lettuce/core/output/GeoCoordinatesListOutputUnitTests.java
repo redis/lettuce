@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.GeoCoordinates;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 
 /**
@@ -30,7 +31,7 @@ import io.lettuce.core.codec.Utf8StringCodec;
  */
 class GeoCoordinatesListOutputUnitTests {
 
-    private GeoCoordinatesListOutput<?, ?> sut = new GeoCoordinatesListOutput<>(new Utf8StringCodec());
+    private GeoCoordinatesListOutput<?, ?> sut = new GeoCoordinatesListOutput<>(StringCodec.UTF8);
 
     @Test
     void setIntegerShouldFail() {

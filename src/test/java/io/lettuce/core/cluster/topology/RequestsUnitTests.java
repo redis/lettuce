@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
@@ -80,7 +80,7 @@ class RequestsUnitTests {
 
         RedisURI redisURI = RedisURI.create("localhost", 6379);
         Requests requests = new Requests();
-        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(new Utf8StringCodec()));
+        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(StringCodec.UTF8));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
 
         requests.addRequest(redisURI, timedAsyncCommand);
@@ -93,7 +93,7 @@ class RequestsUnitTests {
 
         RedisURI redisURI = RedisURI.create("localhost", 6379);
         Requests requests = new Requests();
-        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(new Utf8StringCodec()));
+        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(StringCodec.UTF8));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
 
         requests.addRequest(redisURI, timedAsyncCommand);
@@ -103,7 +103,7 @@ class RequestsUnitTests {
     }
 
     private TimedAsyncCommand getCommand(String response) {
-        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(new Utf8StringCodec()));
+        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(StringCodec.UTF8));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
 
         command.getOutput().set(ByteBuffer.wrap(response.getBytes()));

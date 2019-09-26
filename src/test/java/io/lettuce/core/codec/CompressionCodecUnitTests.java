@@ -36,7 +36,7 @@ class CompressionCodecUnitTests {
 
     @Test
     void keyPassthroughTest() {
-        RedisCodec<String, String> sut = CompressionCodec.valueCompressor(new Utf8StringCodec(),
+        RedisCodec<String, String> sut = CompressionCodec.valueCompressor(StringCodec.UTF8,
                 CompressionCodec.CompressionType.GZIP);
         ByteBuffer byteBuffer = sut.encodeKey(value);
         assertThat(toString(byteBuffer.duplicate())).isEqualTo(value);
@@ -47,7 +47,7 @@ class CompressionCodecUnitTests {
 
     @Test
     void gzipValueTest() {
-        RedisCodec<String, String> sut = CompressionCodec.valueCompressor(new Utf8StringCodec(),
+        RedisCodec<String, String> sut = CompressionCodec.valueCompressor(StringCodec.UTF8,
                 CompressionCodec.CompressionType.GZIP);
         ByteBuffer byteBuffer = sut.encodeValue(key);
         assertThat(toBytes(byteBuffer.duplicate())).isEqualTo(keyGzipBytes);
@@ -58,7 +58,7 @@ class CompressionCodecUnitTests {
 
     @Test
     void deflateValueTest() {
-        RedisCodec<String, String> sut = CompressionCodec.valueCompressor(new Utf8StringCodec(),
+        RedisCodec<String, String> sut = CompressionCodec.valueCompressor(StringCodec.UTF8,
                 CompressionCodec.CompressionType.DEFLATE);
         ByteBuffer byteBuffer = sut.encodeValue(key);
         assertThat(toBytes(byteBuffer.duplicate())).isEqualTo(keyDeflateBytes);
@@ -69,7 +69,7 @@ class CompressionCodecUnitTests {
 
     @Test
     void wrongCompressionTypeOnDecode() {
-        RedisCodec<String, String> sut = CompressionCodec.valueCompressor(new Utf8StringCodec(),
+        RedisCodec<String, String> sut = CompressionCodec.valueCompressor(StringCodec.UTF8,
                 CompressionCodec.CompressionType.DEFLATE);
 
         assertThatThrownBy(() -> sut.decodeValue(ByteBuffer.wrap(keyGzipBytes)))

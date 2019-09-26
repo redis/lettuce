@@ -15,8 +15,6 @@
  */
 package io.lettuce.core.masterslave;
 
-import static io.lettuce.core.masterslave.MasterSlaveUtils.CODEC;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.codec.StringCodec;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.RedisClient;
@@ -90,8 +89,8 @@ public class SentinelTopologyProvider implements TopologyProvider {
 
         logger.debug("lookup topology for masterId {}", masterId);
 
-        Mono<StatefulRedisSentinelConnection<String, String>> connect = Mono.fromFuture(redisClient.connectSentinelAsync(CODEC,
-                sentinelUri));
+        Mono<StatefulRedisSentinelConnection<String, String>> connect = Mono
+                .fromFuture(redisClient.connectSentinelAsync(StringCodec.UTF8, sentinelUri));
 
         return connect.flatMap(this::getNodes).toFuture();
     }

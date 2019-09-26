@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.*;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.StatusOutput;
@@ -38,7 +39,7 @@ import io.lettuce.test.Futures;
  */
 public class AsyncCommandUnitTests {
 
-    private RedisCodec<String, String> codec = new Utf8StringCodec();
+    private RedisCodec<String, String> codec = StringCodec.UTF8;
     private Command<String, String, String> internal;
     private AsyncCommand<String, String, String> sut;
 

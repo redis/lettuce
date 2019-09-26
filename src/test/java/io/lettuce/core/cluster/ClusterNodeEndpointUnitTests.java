@@ -33,6 +33,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.AsyncCommand;
@@ -49,7 +50,7 @@ import io.lettuce.test.Futures;
 class ClusterNodeEndpointUnitTests {
 
     private AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.APPEND,
-            new StatusOutput<>(new Utf8StringCodec()), null));
+            new StatusOutput<>(StringCodec.UTF8), null));
 
     private Queue<RedisCommand<String, String, ?>> disconnectedBuffer;
 
