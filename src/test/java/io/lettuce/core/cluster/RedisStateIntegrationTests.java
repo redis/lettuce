@@ -17,7 +17,6 @@ package io.lettuce.core.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collection;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -51,9 +50,6 @@ public class RedisStateIntegrationTests {
 
         List<CommandDetail> commandDetails = CommandDetailParser.parse(redis.command());
         RedisState state = new RedisState(commandDetails);
-
-        assertThat(state).extracting("availableCommands").flatExtracting(it -> (Collection<Object>) it)
-                .contains(CommandType.GEOADD).doesNotContain(UnknownCommand.FOO);
 
         assertThat(state.hasCommand(CommandType.GEOADD)).isTrue();
         assertThat(state.hasCommand(UnknownCommand.FOO)).isFalse();
