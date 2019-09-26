@@ -14,18 +14,9 @@
             <includes>
                 <include>io.lettuce:lettuce-core:jar:${project.version}</include>
             </includes>
-            <outputDirectory></outputDirectory>
             <unpack>false</unpack>
             <useProjectArtifact>true</useProjectArtifact>
             <useProjectAttachments>true</useProjectAttachments>
-        </dependencySet>
-        <dependencySet>
-            <includes>
-                <include>io.netty:netty-transport-native-epoll</include>
-            </includes>
-            <scope>provided</scope>
-            <outputDirectory>dependencies</outputDirectory>
-            <unpack>false</unpack>
         </dependencySet>
         <dependencySet>
             <includes>

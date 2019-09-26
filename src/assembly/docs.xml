@@ -10,7 +10,7 @@
     <fileSets>
         <fileSet>
             <directory>${project.build.directory}/site/reference/html</directory>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory/>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
     </fileSets>
