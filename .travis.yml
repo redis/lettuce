@@ -5,6 +5,10 @@ jdk:
   - openjdk11
   - openjdk8
 
+script:
+  - ./mvnw clean verify
+  - ./mvnw clean verify -Dspring.version=5.2.0.RELEASE -Dspring-batch.version=4.2.0.RELEASE -Denforcer.fail=false
+
 after_success:
   - chmod -R 777 ./travis/after_success.sh
   - ./travis/after_success.sh
