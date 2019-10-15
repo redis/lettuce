@@ -89,9 +89,14 @@ class AnnotationRedisCodecResolverUnitTests {
     }
 
     @Test
-    void resolutionShouldFail() {
-
+    void resolutionOfMethodWithMixedTypesShouldFail() {
         Method method = ReflectionUtils.findMethod(CommandMethods.class, "mixedTypes", String.class, byte[].class);
+        assertThatThrownBy(() -> resolve(method)).isInstanceOf(IllegalStateException. class);
+    }
+
+    @Test
+    void resolutionOfMethodWithMixedCodecsShouldFail() {
+        Method method = ReflectionUtils.findMethod(CommandMethods.class, "mixedCodecs",  String.class, byte[].class, String.class);
         assertThatThrownBy(() -> resolve(method)).isInstanceOf(IllegalStateException. class);
     }
 
@@ -128,6 +133,8 @@ class AnnotationRedisCodecResolverUnitTests {
         String nothingAnnotated(String key, String value);
 
         String mixedTypes(@Key String key, @Value byte[] value);
+
+        String mixedCodecs(@Key String key1, @Key byte[] key2, @Value String value);
 
         String withWrappers(@Value Range<String> range, @Value io.lettuce.core.Value<Number> value);
 
