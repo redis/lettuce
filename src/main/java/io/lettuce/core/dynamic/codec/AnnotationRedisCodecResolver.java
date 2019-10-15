@@ -33,9 +33,9 @@ import io.lettuce.core.internal.LettuceLists;
  * determine a {@link RedisCodec} that is able to handle all involved types.
  *
  * @author Mark Paluch
- * @since 5.0
  * @see Key
  * @see Value
+ * @since 5.0
  */
 public class AnnotationRedisCodecResolver implements RedisCodecResolver {
 
@@ -71,16 +71,21 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
             return codecs.get(0);
         }
 
-        if ((keyTypes.size() == 1 && (valueTypes.isEmpty() || valueTypes.size() == 1))
-                || (valueTypes.size() == 1 && (keyTypes.isEmpty() || keyTypes.size() == 1))) {
-
-            RedisCodec<?, ?> codec = resolveCodec(keyTypes, valueTypes);
-            if (codec != null) {
-                return codec;
+        if (methodHasAtMostOneCodec(keyTypes, valueTypes)) {
+            RedisCodec<?, ?> resolvedCodec = resolveCodec(keyTypes, valueTypes);
+            if (resolvedCodec != null) {
+                return resolvedCodec;
             }
         }
 
         throw new IllegalStateException(String.format("Cannot resolve Codec for method %s", commandMethod.getMethod()));
+    }
+
+    private boolean methodHasAtMostOneCodec(Set<Class<?>> keyTypes, Set<Class<?>> valueTypes) {
+        final int keyTypesSize = keyTypes.size();
+        final int valueTypesSize = valueTypes.size();
+
+        return keyTypesSize == 1 && valueTypesSize <= 1 || valueTypesSize == 1 && keyTypesSize <= 1;
     }
 
     private Voted<RedisCodec<?, ?>> voteForTypeMajority(CommandMethod commandMethod) {
@@ -139,12 +144,10 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
     }
 
     private RedisCodec<?, ?> resolveCodec(Set<Class<?>> keyTypes, Set<Class<?>> valueTypes) {
-
         Class<?> keyType = keyTypes.isEmpty() ? null : keyTypes.iterator().next();
         Class<?> valueType = valueTypes.isEmpty() ? null : valueTypes.iterator().next();
 
         for (RedisCodec<?, ?> codec : codecs) {
-
             ClassTypeInformation<?> typeInformation = ClassTypeInformation.from(codec.getClass());
             TypeInformation<?> keyTypeArgument = typeInformation.getTypeArgument(RedisCodec.class, 0);
             TypeInformation<?> valueTypeArgument = typeInformation.getTypeArgument(RedisCodec.class, 1);
