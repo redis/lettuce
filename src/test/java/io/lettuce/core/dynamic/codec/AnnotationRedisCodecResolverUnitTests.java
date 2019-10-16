@@ -37,7 +37,10 @@ import io.lettuce.core.dynamic.annotation.Value;
 import io.lettuce.core.dynamic.support.ReflectionUtils;
 
 /**
+ * Unit tests for {@link AnnotationRedisCodecResolver}.
+ *
  * @author Mark Paluch
+ * @author Manyanda Chitimbo
  */
 class AnnotationRedisCodecResolverUnitTests {
 
@@ -91,13 +94,14 @@ class AnnotationRedisCodecResolverUnitTests {
     @Test
     void resolutionOfMethodWithMixedTypesShouldFail() {
         Method method = ReflectionUtils.findMethod(CommandMethods.class, "mixedTypes", String.class, byte[].class);
-        assertThatThrownBy(() -> resolve(method)).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> resolve(method)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void resolutionOfMethodWithMixedCodecsShouldFail() {
-        Method method = ReflectionUtils.findMethod(CommandMethods.class, "mixedCodecs",  String.class, byte[].class, String.class);
-        assertThatThrownBy(() -> resolve(method)).isInstanceOf(IllegalStateException. class);
+        Method method = ReflectionUtils.findMethod(CommandMethods.class, "mixedCodecs", String.class, byte[].class,
+                String.class);
+        assertThatThrownBy(() -> resolve(method)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
