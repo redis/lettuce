@@ -271,7 +271,7 @@ public class RedisCommandFactory {
                 reactive = ((StatefulRedisClusterConnection) connection).reactive();
             }
 
-            if (Proxy.isProxyClass(reactive.getClass())) {
+            if (reactive != null && Proxy.isProxyClass(reactive.getClass())) {
 
                 InvocationHandler invocationHandler = Proxy.getInvocationHandler(reactive);
                 reactive = ConnectionWrapping.unwrap(invocationHandler);
@@ -302,7 +302,8 @@ public class RedisCommandFactory {
         private Batcher batcher = Batcher.NONE;
         private BatchExecutableCommandLookupStrategy batchingStrategy;
 
-        public BatchAwareCommandLookupStrategy(ExecutableCommandLookupStrategy fallbackStrategy, RedisCommandsMetadata metadata) {
+        public BatchAwareCommandLookupStrategy(ExecutableCommandLookupStrategy fallbackStrategy,
+                RedisCommandsMetadata metadata) {
 
             this.fallbackStrategy = fallbackStrategy;
             this.verifier = verifyCommandMethods ? commandMethodVerifier : CommandMethodVerifier.NONE;

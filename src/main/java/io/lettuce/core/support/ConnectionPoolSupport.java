@@ -171,13 +171,13 @@ public abstract class ConnectionPoolSupport {
 
         SoftReferenceObjectPool<T> pool = new SoftReferenceObjectPool<T>(new RedisPooledObjectFactory<>(connectionSupplier)) {
             @Override
-            public T borrowObject() throws Exception {
+            public synchronized T borrowObject() throws Exception {
                 return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get()) : super
                         .borrowObject();
             }
 
             @Override
-            public void returnObject(T obj) throws Exception {
+            public synchronized void returnObject(T obj) throws Exception {
 
                 if (wrapConnections && obj instanceof HasTargetConnection) {
                     super.returnObject((T) ((HasTargetConnection) obj).getTargetConnection());
