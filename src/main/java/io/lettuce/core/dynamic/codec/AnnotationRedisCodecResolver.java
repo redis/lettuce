@@ -33,9 +33,10 @@ import io.lettuce.core.internal.LettuceLists;
  * determine a {@link RedisCodec} that is able to handle all involved types.
  *
  * @author Mark Paluch
+ * @author Manyanda Chitimbo
+ * @since 5.0
  * @see Key
  * @see Value
- * @since 5.0
  */
 public class AnnotationRedisCodecResolver implements RedisCodecResolver {
 
@@ -71,7 +72,7 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
             return codecs.get(0);
         }
 
-        if (methodHasAtMostOneCodec(keyTypes, valueTypes)) {
+        if ((keyTypes.size() == 1 && hasAtMostOne(valueTypes)) || (valueTypes.size() == 1 && hasAtMostOne(keyTypes))) {
             RedisCodec<?, ?> resolvedCodec = resolveCodec(keyTypes, valueTypes);
             if (resolvedCodec != null) {
                 return resolvedCodec;
@@ -81,11 +82,8 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         throw new IllegalStateException(String.format("Cannot resolve Codec for method %s", commandMethod.getMethod()));
     }
 
-    private boolean methodHasAtMostOneCodec(Set<Class<?>> keyTypes, Set<Class<?>> valueTypes) {
-        final int keyTypesSize = keyTypes.size();
-        final int valueTypesSize = valueTypes.size();
-
-        return keyTypesSize == 1 && valueTypesSize <= 1 || valueTypesSize == 1 && keyTypesSize <= 1;
+    private boolean hasAtMostOne(Collection<?> collection) {
+        return collection.size() <= 1;
     }
 
     private Voted<RedisCodec<?, ?>> voteForTypeMajority(CommandMethod commandMethod) {
