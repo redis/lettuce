@@ -95,7 +95,7 @@ class ReadFromImpl {
         }
 
         @Override
-        boolean isOrderSensitive() {
+        protected boolean isOrderSensitive() {
             return true;
         }
     }
@@ -142,7 +142,7 @@ class ReadFromImpl {
         }
 
         @Override
-        boolean isOrderSensitive() {
+        protected boolean isOrderSensitive() {
             return true;
         }
     }
@@ -160,7 +160,7 @@ class ReadFromImpl {
         }
 
         @Override
-        boolean isOrderSensitive() {
+        protected boolean isOrderSensitive() {
             return false;
         }
     }

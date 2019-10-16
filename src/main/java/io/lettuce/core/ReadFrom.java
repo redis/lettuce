@@ -96,7 +96,7 @@ public abstract class ReadFrom {
      *         {@link RedisNodeDescription nodes}.
      * @since 5.2
      */
-    boolean isOrderSensitive() {
+    protected boolean isOrderSensitive() {
         return false;
     }
 
