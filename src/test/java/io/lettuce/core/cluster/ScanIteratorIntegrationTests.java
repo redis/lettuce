@@ -49,6 +49,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
     @Inject
     ScanIteratorIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         this.connection = connection;
+        this.connection.setReadFrom(ReadFrom.MASTER);
         this.redis = connection.sync();
     }
 
@@ -95,6 +96,19 @@ class ScanIteratorIntegrationTests extends TestSupport {
     void keysMultiPass() {
 
         redis.mset(KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.scan(redis);
+
+        List<String> keys = scan.stream().collect(Collectors.toList());
+
+        assertThat(keys).containsAll(KeysAndValues.KEYS);
+    }
+
+    @Test
+    void keysMultiPassFromAnyNode() {
+
+        redis.mset(KeysAndValues.MAP);
+        this.connection.setReadFrom(ReadFrom.ANY);
 
         ScanIterator<String> scan = ScanIterator.scan(redis);
 

@@ -18,6 +18,7 @@ package io.lettuce.core.cluster;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
@@ -158,7 +159,13 @@ class ClusterScanSupport {
                 });
 
                 if (!selection.isEmpty()) {
-                    RedisClusterNode selectedNode = (RedisClusterNode) selection.get(0);
+
+                    int indexToUse = 0;
+                    if (!OrderingReadFromAccessor.isOrderSensitive(connection.getReadFrom())) {
+                        indexToUse = ThreadLocalRandom.current().nextInt(selection.size());
+                    }
+
+                    RedisClusterNode selectedNode = (RedisClusterNode) selection.get(indexToUse);
                     nodeIds.add(selectedNode.getNodeId());
                     continue;
                 }
