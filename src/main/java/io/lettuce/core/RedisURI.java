@@ -909,6 +909,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
             }
         }
 
+        LettuceAssert.notNull(builder, "Invalid URI, cannot get host or socket part");
+
         if (URI_SCHEME_REDIS_SECURE.equals(uri.getScheme()) || URI_SCHEME_REDIS_SECURE_ALT.equals(uri.getScheme())) {
             builder.withSsl(true);
         }
@@ -958,6 +960,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
             }
         }
 
+        LettuceAssert.notNull(builder, "Invalid URI, cannot get host part");
+
         if (isNotEmpty(masterId)) {
             builder.withSentinelMasterId(masterId);
         }
@@ -966,7 +970,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
             builder.withSsl(true);
         }
 
-        LettuceAssert.notNull(builder, "Invalid URI, cannot get host part");
         return builder;
     }
 

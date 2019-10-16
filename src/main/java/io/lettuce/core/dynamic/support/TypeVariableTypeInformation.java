@@ -21,6 +21,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import io.lettuce.core.internal.LettuceAssert;
 
@@ -39,7 +40,8 @@ public class TypeVariableTypeInformation<T> extends ParentTypeAwareTypeInformati
      *
      * @param variable must not be {@literal null}
      * @param owningType must not be {@literal null}
-     * @param parent
+     * @param parent can be be {@literal null}
+     * @param typeVariableMap must not be {@literal null}
      */
     public TypeVariableTypeInformation(TypeVariable<?> variable, Type owningType, TypeDiscoverer<?> parent,
             Map<TypeVariable<?>, Type> typeVariableMap) {
@@ -115,6 +117,11 @@ public class TypeVariableTypeInformation<T> extends ParentTypeAwareTypeInformati
         TypeVariableTypeInformation<?> that = (TypeVariableTypeInformation<?>) obj;
 
         return getType().equals(that.getType());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), variable, owningType);
     }
 
     @Override

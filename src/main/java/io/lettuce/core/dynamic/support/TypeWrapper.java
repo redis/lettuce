@@ -209,9 +209,9 @@ abstract class TypeWrapper {
                 return this.provider;
             }
 
-            if (Type.class == method.getReturnType() && args == null) {
+            if (Type.class == method.getReturnType()) {
                 return forTypeProvider(new MethodInvokeTypeProvider(this.provider, method, -1));
-            } else if (Type[].class == method.getReturnType() && args == null) {
+            } else if (Type[].class == method.getReturnType()) {
                 Type[] result = new Type[((Type[]) method.invoke(this.provider.getType(), args)).length];
                 for (int i = 0; i < result.length; i++) {
                     result[i] = forTypeProvider(new MethodInvokeTypeProvider(this.provider, method, i));
