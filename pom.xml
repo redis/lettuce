@@ -111,6 +111,9 @@
     <module.name>org.mybatis.spring</module.name>
 
     <junit.version>5.5.0</junit.version>
+
+    <!-- Remove after parent 32 (support for jdk 13) -->
+    <jacoco.version>0.8.4</jacoco.version>
   </properties>
 
   <dependencies>
