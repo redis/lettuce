@@ -15,10 +15,12 @@
  */
 package io.lettuce.core.cluster.topology;
 
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -268,18 +270,24 @@ public class ClusterTopologyRefresh {
 
                     if (throwable != null) {
 
-                        String message = String.format("Unable to connect to %s", socketAddress);
-                        if (throwable instanceof RedisConnectionException) {
-                            if (logger.isDebugEnabled()) {
-                                logger.debug(throwable.getMessage(), throwable);
-                            } else {
-                                logger.warn(throwable.getMessage());
-                            }
-                        } else {
-                            logger.warn(message, throwable);
+                        Throwable throwableToUse = throwable;
+                        if (throwable instanceof CompletionException) {
+                            throwableToUse = throwableToUse.getCause();
                         }
 
-                        sync.completeExceptionally(new RedisConnectionException(message, throwable));
+                        String message = String.format("Unable to connect to [%s]: %s", socketAddress,
+                                throwableToUse.getMessage() != null ? throwableToUse.getMessage() : throwableToUse.toString());
+                        if (throwableToUse instanceof RedisConnectionException || throwableToUse instanceof IOException) {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(message, throwableToUse);
+                            } else {
+                                logger.warn(message);
+                            }
+                        } else {
+                            logger.warn(message, throwableToUse);
+                        }
+
+                        sync.completeExceptionally(new RedisConnectionException(message, throwableToUse));
                     } else {
                         connection.async().clientSetname("lettuce#ClusterTopologyRefresh");
                         sync.complete(connection);
@@ -288,7 +296,7 @@ public class ClusterTopologyRefresh {
 
                 connections.addConnection(redisURI, sync);
             } catch (RuntimeException e) {
-                logger.warn(String.format("Unable to connect to %s", redisURI), e);
+                logger.warn(String.format("Unable to connect to [%s]", redisURI), e);
             }
         }
 
