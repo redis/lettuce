@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.codec.StringCodec;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 import io.lettuce.core.*;
@@ -41,7 +40,7 @@ import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.test.*;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.netty.util.internal.ConcurrentSet;
@@ -249,7 +248,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
         Futures.awaitAll(futures);
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             CompletableFuture<Long> future = commands.keys("*").count().toFuture();
             Futures.await(future);
         }
@@ -314,8 +313,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
         connection.readOnly().subscribe();
         commands.set(key, value).subscribe();
 
-        NodeSelectionAsyncIntegrationTests
-                .waitForReplication(commands.getStatefulConnection().async(), ClusterTestSettings.key,
+        NodeSelectionAsyncIntegrationTests.waitForReplication(commands.getStatefulConnection().async(), ClusterTestSettings.key,
                 ClusterTestSettings.port4);
 
         AtomicBoolean error = new AtomicBoolean();
@@ -415,8 +413,8 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
             }
         } while (!scanCursor.isFinished());
 
-        assertThat(adapter.getList()).containsAll(
-                KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+        assertThat(adapter.getList())
+                .containsAll(KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
     }
 
     private void writeKeysToTwoNodes() {
