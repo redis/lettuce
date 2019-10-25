@@ -49,13 +49,14 @@ class ScanIteratorIntegrationTests extends TestSupport {
     @Inject
     ScanIteratorIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         this.connection = connection;
-        this.connection.setReadFrom(ReadFrom.MASTER);
         this.redis = connection.sync();
+        this.connection.sync().flushall();
     }
 
     @BeforeEach
     void setUp() {
         this.redis.flushall();
+        this.connection.setReadFrom(ReadFrom.MASTER);
     }
 
     @Test
@@ -184,7 +185,6 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
     @Test
     void setSinglePass() {
-
         redis.sadd(key, KeysAndValues.KEYS.toArray(new String[0]));
 
         ScanIterator<String> scan = ScanIterator.sscan(redis, key, ScanArgs.Builder.limit(50).match("key-11*"));
