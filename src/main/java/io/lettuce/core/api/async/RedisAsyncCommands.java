@@ -39,7 +39,7 @@ public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, 
      * @param password the password
      * @return String simple-string-reply
      */
-    String auth(String password);
+    RedisFuture<String> auth(CharSequence password);
 
     /**
      * Change the selected database for the current connection.
@@ -47,7 +47,7 @@ public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, 
      * @param db the database number
      * @return String simple-string-reply
      */
-    String select(int db);
+    RedisFuture<String> select(int db);
 
     /**
      * Swap two Redis databases, so that immediately all the clients connected to a given DB will see the data of the other DB,

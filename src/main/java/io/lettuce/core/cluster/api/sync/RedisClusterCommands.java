@@ -58,7 +58,7 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
      * @param password the password
      * @return String simple-string-reply
      */
-    String auth(String password);
+    String auth(CharSequence password);
 
     /**
      * Generate a new config epoch, incrementing the current epoch, assign the new epoch to this node, WITHOUT any consensus and

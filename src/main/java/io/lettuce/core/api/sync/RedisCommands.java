@@ -38,7 +38,7 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisClust
      * @param password the password
      * @return String simple-string-reply
      */
-    String auth(String password);
+    String auth(CharSequence password);
 
     /**
      * Change the selected database for the current Commands.

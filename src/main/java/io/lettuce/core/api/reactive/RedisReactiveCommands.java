@@ -39,7 +39,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      * @param password the password
      * @return String simple-string-reply
      */
-    Mono<String> auth(String password);
+    Mono<String> auth(CharSequence password);
 
     /**
      * Change the selected database for the current connection.

@@ -127,11 +127,11 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            async.authAsync(password);
+            async.auth(password);
         }
 
         if (db != 0) {
-            async.selectAsync(db);
+            async.select(db);
         }
 
         if (clientName != null) {

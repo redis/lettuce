@@ -180,7 +180,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            async.authAsync(password);
+            async.auth(password);
         }
 
         if (clientName != null) {

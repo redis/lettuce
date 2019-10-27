@@ -30,10 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.test.Delay;
-import io.lettuce.test.LettuceExtension;
-import io.lettuce.test.Wait;
-import io.lettuce.test.WithPassword;
+import io.lettuce.test.*;
 
 /**
  * @author Will Glozer
@@ -135,11 +132,10 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void authInvalidPassword() {
         RedisAsyncCommands<String, String> async = client.connect().async();
         try {
-            async.auth("invalid");
+            Futures.await(async.auth("invalid"));
             fail("Authenticated with invalid password");
         } catch (RedisException e) {
             assertThat(e.getMessage()).isEqualTo("ERR Client sent AUTH, but no password is set");
@@ -151,11 +147,10 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void selectInvalid() {
         RedisAsyncCommands<String, String> async = client.connect().async();
         try {
-            async.select(1024);
+            Futures.await(async.select(1024));
             fail("Selected invalid db index");
         } catch (RedisException e) {
             assertThat(e.getMessage()).startsWith("ERR");

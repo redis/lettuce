@@ -75,14 +75,15 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public String auth(String password) {
+    public RedisFuture<String> auth(CharSequence password) {
 
         LettuceAssert.notNull(password, "Password must not be null");
-        AsyncCommand<K, V, String> cmd = authAsync(password.toCharArray());
-        return LettuceFutures.awaitOrCancel(cmd, connection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
+        return dispatch(commandBuilder.auth(password));
     }
 
-    public AsyncCommand<K, V, String> authAsync(char[] password) {
+    public RedisFuture<String> auth(char[] password) {
+
+        LettuceAssert.notNull(password, "Password must not be null");
         return dispatch(commandBuilder.auth(password));
     }
 
@@ -1194,12 +1195,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
         return dispatch(commandBuilder.sdiffstore(destination, keys));
     }
 
-    public String select(int db) {
-        AsyncCommand<K, V, String> cmd = selectAsync(db);
-        return LettuceFutures.awaitOrCancel(cmd, connection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
-    }
-
-    protected AsyncCommand<K, V, String> selectAsync(int db) {
+    public RedisFuture<String> select(int db) {
         return dispatch(commandBuilder.select(db));
     }
 
@@ -1403,7 +1399,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+    public RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
         return dispatch(commandBuilder.sscanStreaming(channel, key, scanCursor, scanArgs));
     }
 
@@ -1848,7 +1845,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
+    public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
         return dispatch(commandBuilder.zrangebyscore(channel, key, range, limit));
     }
 
@@ -2065,12 +2063,14 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
+    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset,
+            long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
     @Override
-    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
+    public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset,
+            long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 

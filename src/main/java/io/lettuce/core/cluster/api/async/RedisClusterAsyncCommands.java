@@ -61,7 +61,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      * @param password the password
      * @return String simple-string-reply
      */
-    String auth(String password);
+    RedisFuture<String> auth(CharSequence password);
 
     /**
      * Generate a new config epoch, incrementing the current epoch, assign the new epoch to this node, WITHOUT any consensus and
