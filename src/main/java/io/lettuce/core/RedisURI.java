@@ -510,12 +510,20 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Creates an URI based on the RedisURI.
+     * Creates an URI based on the RedisURI if possible.
+     * <p>
+     * An URI an represent a Standalone address using host and port or socket addressing or a Redis Sentinel address using
+     * host/port. A Redis Sentinel URI with multiple nodes using Unix Domain Sockets cannot be rendered to a {@link URI}.
      *
-     * @return URI based on the RedisURI
+     * @return URI based on the RedisURI.
+     * @throws IllegalStateException if the URI cannot be rendered.
      */
     public URI toURI() {
-        return URI.create(createUriString());
+        try {
+            return URI.create(createUriString());
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot render URI for " + toString(), e);
+        }
     }
 
     private String createUriString() {
@@ -559,7 +567,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
                     password = password.substring(index + 1);
                 }
             }
-            if (password != null && !password.equals("")) {
+            if (LettuceStrings.isNotEmpty(password)) {
                 builder.withPassword(password);
             }
         }
@@ -628,6 +636,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         if (socket != null) {
             authority = urlEncode(socket);
+        } else {
+            if (database != 0) {
+                authority += "/" + database;
+            }
         }
 
         if (password != null && password.length != 0) {
@@ -640,7 +652,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         List<String> queryPairs = new ArrayList<>();
 
-        if (database != 0) {
+        if (database != 0 && LettuceStrings.isNotEmpty(socket)) {
             queryPairs.add(PARAMETER_NAME_DATABASE + "=" + database);
         }
 
@@ -702,7 +714,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         return scheme;
     }
 
-    private String toQueryParamUnit(TimeUnit unit) {
+    private static String toQueryParamUnit(TimeUnit unit) {
 
         for (Map.Entry<String, TimeUnit> entry : TIME_UNIT_MAP.entrySet()) {
             if (entry.getValue().equals(unit)) {
@@ -715,7 +727,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * URL encode the {@code str} without slash escaping {@code %2F}
      *
-     * @param str
+     * @param str the string to encode.
      * @return the URL-encoded string
      */
     private static String urlEncode(String str) {
@@ -744,6 +756,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
         return new InetSocketAddress(host, port);
     }
 
+    /**
+     * @return the RedisURL in a URI-like form.
+     */
     @Override
     public String toString() {
         return createUriString();

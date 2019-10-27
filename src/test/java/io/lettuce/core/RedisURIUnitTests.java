@@ -44,7 +44,7 @@ class RedisURIUnitTests {
 
         assertThat(redisURI1).isEqualTo(redisURI2);
         assertThat(redisURI1.hashCode()).isEqualTo(redisURI2.hashCode());
-        assertThat(redisURI1).hasToString("redis://auth@localhost:1234?database=5");
+        assertThat(redisURI1).hasToString("redis://auth@localhost:1234/5");
 
         assertThat(redisURI3).isNotEqualTo(redisURI2);
         assertThat(redisURI3.hashCode()).isNotEqualTo(redisURI2.hashCode());
@@ -129,8 +129,7 @@ class RedisURIUnitTests {
         assertThat(redisURI.getSentinels().get(2).getPort()).isEqualTo(1234);
         assertThat(redisURI.getDatabase()).isEqualTo(5);
 
-        assertThat(redisURI).hasToString(
-                "redis-sentinel://auth@h1:222,h2,h3:1234?database=5&sentinelMasterId=masterId");
+        assertThat(redisURI).hasToString("redis-sentinel://auth@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
     }
 
     @Test
@@ -139,8 +138,7 @@ class RedisURIUnitTests {
         RedisURI redisURI = RedisURI.create("rediss-sentinel://auth@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
         assertThat(redisURI.isSsl()).isTrue();
 
-        assertThat(redisURI).hasToString(
-                "rediss-sentinel://auth@h1:222,h2,h3:1234?database=5&sentinelMasterId=masterId");
+        assertThat(redisURI).hasToString("rediss-sentinel://auth@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
     }
 
     @Test
@@ -148,7 +146,7 @@ class RedisURIUnitTests {
 
         RedisURI redisURI1 = RedisURI.create("redis-socket:///var/tmp/socket");
         RedisURI redisURI2 = RedisURI.create("redis-socket:///var/tmp/socket");
-        RedisURI redisURI3 = RedisURI.create("redis-socket:///var/tmp/other-socket?db=2");
+        RedisURI redisURI3 = RedisURI.create("redis-socket:///var/tmp/other-socket?database=2");
 
         assertThat(redisURI1).isEqualTo(redisURI2);
         assertThat(redisURI1.hashCode()).isEqualTo(redisURI2.hashCode());
@@ -156,6 +154,7 @@ class RedisURIUnitTests {
 
         assertThat(redisURI3).isNotEqualTo(redisURI2);
         assertThat(redisURI3.hashCode()).isNotEqualTo(redisURI2.hashCode());
+        assertThat(redisURI3).hasToString("redis-socket:///var/tmp/other-socket?database=2");
     }
 
     @Test
@@ -197,7 +196,7 @@ class RedisURIUnitTests {
                 RedisURI.DEFAULT_TIMEOUT_UNIT);
 
         RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/5?timeout=5000ms");
-        assertThat(redisURI).hasToString("redis://auth@localhost:1234?database=5&timeout=5s");
+        assertThat(redisURI).hasToString("redis://auth@localhost:1234/5?timeout=5s");
     }
 
     @Test
@@ -226,7 +225,7 @@ class RedisURIUnitTests {
         RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/?database=21");
         assertThat(redisURI.getDatabase()).isEqualTo(21);
 
-        assertThat(redisURI).hasToString("redis://auth@localhost:1234?database=21");
+        assertThat(redisURI).hasToString("redis://auth@localhost:1234/21");
     }
 
     @Test
