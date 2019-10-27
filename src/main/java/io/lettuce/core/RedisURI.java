@@ -349,7 +349,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Sets the password. Use empty string to skip authentication.
      *
      * @param password the password, must not be {@literal null}.
+     * @deprecated since 6.0. Use {@link #setPassword(CharSequence)} or {@link #setPassword(char[])} avoid String caching.
      */
+    @Deprecated
     public void setPassword(String password) {
         setPassword((CharSequence) password);
     }
@@ -1283,12 +1285,33 @@ public class RedisURI implements Serializable, ConnectionPoint {
          *
          * @param password the password
          * @return the builder
+         * @deprecated since 6.0. Use {@link #withPassword(CharSequence)} or {@link #withPassword(char[])} avoid String caching.
          */
+        @Deprecated
         public Builder withPassword(String password) {
 
             LettuceAssert.notNull(password, "Password must not be null");
 
             return withPassword(password.toCharArray());
+        }
+
+        /**
+         * Configures authentication.
+         *
+         * @param password the password
+         * @return the builder
+         * @since 6.0
+         */
+        public Builder withPassword(CharSequence password) {
+
+            LettuceAssert.notNull(password, "Password must not be null");
+
+            char[] chars = new char[password.length()];
+            for (int i = 0; i < password.length(); i++) {
+                chars[i] = password.charAt(0);
+            }
+
+            return withPassword(chars);
         }
 
         /**

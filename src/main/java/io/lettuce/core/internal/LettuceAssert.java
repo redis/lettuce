@@ -41,7 +41,7 @@ public class LettuceAssert {
      * @param message the exception message to use if the assertion fails
      * @throws IllegalArgumentException if the object is {@code null} or the underlying string is empty
      */
-    public static void notEmpty(String string, String message) {
+    public static void notEmpty(CharSequence string, String message) {
         if (LettuceStrings.isEmpty(string)) {
             throw new IllegalArgumentException(message);
         }
@@ -55,7 +55,7 @@ public class LettuceAssert {
      * @throws IllegalArgumentException if the object is {@code null} or the underlying string is empty
      * @since 5.2.0
      */
-    public static void notEmpty(String string, Supplier<String> messageSupplier) {
+    public static void notEmpty(CharSequence string, Supplier<String> messageSupplier) {
         if (LettuceStrings.isEmpty(string)) {
             throw new IllegalArgumentException(messageSupplier.get());
         }
