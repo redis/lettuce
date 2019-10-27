@@ -83,7 +83,7 @@ class ClientIntegrationTests extends TestSupport {
     @Test
     void timeout() {
 
-        redis.setTimeout(0, TimeUnit.MICROSECONDS);
+        redis.setTimeout(Duration.ZERO);
         assertThatThrownBy(() -> redis.eval(" os.execute(\"sleep \" .. tonumber(1))", ScriptOutputType.STATUS)).isInstanceOf(
                 RedisCommandTimeoutException.class);
 

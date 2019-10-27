@@ -43,16 +43,6 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
     void setTimeout(Duration timeout);
 
     /**
-     * Set the default timeout for operations.
-     *
-     * @param timeout the timeout value
-     * @param unit the unit of the timeout value
-     * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
-     */
-    @Deprecated
-    void setTimeout(long timeout, TimeUnit unit);
-
-    /**
      * Authenticate to the server.
      *
      * @param password the password

@@ -18,6 +18,7 @@ package io.lettuce.core.commands;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -62,7 +63,7 @@ public class ListCommandIntegrationTests extends TestSupport {
 
     @Test
     void blpopTimeout() {
-        redis.setTimeout(10, TimeUnit.SECONDS);
+        redis.setTimeout(Duration.ofSeconds(10));
         assertThat(redis.blpop(1, key)).isNull();
     }
 

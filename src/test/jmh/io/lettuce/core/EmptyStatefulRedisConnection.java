@@ -59,10 +59,6 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
     }
 
     @Override
-    public void setTimeout(long timeout, TimeUnit unit) {
-    }
-
-    @Override
     public void close() {
     }
 

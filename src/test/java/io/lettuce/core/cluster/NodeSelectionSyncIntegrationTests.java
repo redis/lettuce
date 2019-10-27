@@ -19,6 +19,7 @@ import static io.lettuce.core.ScriptOutputType.STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -165,7 +166,7 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
 
         RedisAdvancedClusterCommands<String, String> connection2 = clusterClient.connect().sync();
 
-        connection2.setTimeout(1, TimeUnit.SECONDS);
+        connection2.setTimeout(Duration.ofSeconds(1));
         NodeSelection<String, String> masters = connection2.masters();
         masters.commands().configSet("lua-time-limit", "10");
 

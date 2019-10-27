@@ -79,12 +79,6 @@ class MasterReplicaConnectionWrapper<K, V> implements StatefulRedisMasterReplica
     }
 
     @Override
-    @Deprecated
-    public void setTimeout(long timeout, TimeUnit unit) {
-        delegate.setTimeout(timeout, unit);
-    }
-
-    @Override
     public Duration getTimeout() {
         return delegate.getTimeout();
     }

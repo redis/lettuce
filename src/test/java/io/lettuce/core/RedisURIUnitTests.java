@@ -192,8 +192,7 @@ class RedisURIUnitTests {
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=-1", 0, TimeUnit.MILLISECONDS);
 
         RedisURI defaultUri = new RedisURI();
-        checkUriTimeout("redis://auth@localhost:1234/5?timeout=junk", defaultUri.getTimeout().getSeconds(),
-                RedisURI.DEFAULT_TIMEOUT_UNIT);
+        checkUriTimeout("redis://auth@localhost:1234/5?timeout=junk", defaultUri.getTimeout().getSeconds(), TimeUnit.SECONDS);
 
         RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/5?timeout=5000ms");
         assertThat(redisURI).hasToString("redis://auth@localhost:1234/5?timeout=5s");

@@ -1218,11 +1218,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
         connection.setTimeout(timeout);
     }
 
-    @Deprecated
-    public void setTimeout(long timeout, TimeUnit unit) {
-        connection.setTimeout(timeout, unit);
-    }
-
     @Override
     public RedisFuture<Long> setbit(K key, long offset, int value) {
         return dispatch(commandBuilder.setbit(key, offset, value));

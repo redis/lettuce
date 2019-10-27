@@ -102,18 +102,6 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     * Set the command timeout for this connection.
-     *
-     * @param timeout Command timeout.
-     * @param unit Unit of time for the timeout.
-     * @deprecated since 5.0, use {@link #setTimeout(Duration)}
-     */
-    @Deprecated
-    public void setTimeout(long timeout, TimeUnit unit) {
-        setTimeout(Duration.ofNanos(unit.toNanos(timeout)));
-    }
-
-    /**
      * Close the connection (synchronous).
      */
     @Override

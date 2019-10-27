@@ -23,7 +23,10 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -73,7 +76,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         RandomResponseServer ts = getRandomResponseServer();
 
         RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.nonexistentPort())
-                .withTimeout(10, TimeUnit.MINUTES).build();
+                .withTimeout(Duration.ofMinutes(10)).build();
 
         try {
             client.connect(redisUri);
@@ -141,8 +144,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
     @Test
     void pingBeforeConnectFailOnReconnectShouldSendEvents() throws Exception {
 
-        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).suspendReconnectOnProtocolFailure(false)
-                .build());
+        client.setOptions(
+                ClientOptions.builder().pingBeforeActivateConnection(true).suspendReconnectOnProtocolFailure(false).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -188,16 +191,16 @@ class ConnectionFailureIntegrationTests extends TestSupport {
     @Test
     void cancelCommandsOnReconnectFailure() throws Exception {
 
-        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true)
-                .build());
+        client.setOptions(
+                ClientOptions.builder().pingBeforeActivateConnection(true).cancelCommandsOnReconnectFailure(true).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
         RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
 
         try {
-            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client.connect(
-                    redisUri).async();
+            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
+                    .connect(redisUri).async();
             ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
                     .getConnectionWatchdog(connection.getStatefulConnection());
 
@@ -224,8 +227,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
             assertThatThrownBy(set1::get).isInstanceOf(CancellationException.class).hasNoCause();
             assertThatThrownBy(set2::get).isInstanceOf(CancellationException.class).hasNoCause();
 
-            assertThatThrownBy(() -> Futures.await(connection.info())).isInstanceOf(RedisException.class).hasMessageContaining(
-                    "Invalid first byte");
+            assertThatThrownBy(() -> Futures.await(connection.info())).isInstanceOf(RedisException.class)
+                    .hasMessageContaining("Invalid first byte");
 
             connection.getStatefulConnection().close();
         } finally {
@@ -246,8 +249,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
         try {
-            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client.connect(
-                    redisUri).async();
+            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
+                    .connect(redisUri).async();
             ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
                     .getConnectionWatchdog(connection.getStatefulConnection());
 
@@ -292,14 +295,13 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
     /**
      * Expect to disable {@link ConnectionWatchdog} when closing a broken connection.
-     *
      */
     @Test
     void closingDisconnectedConnectionShouldDisableConnectionWatchdog() {
 
         client.setOptions(ClientOptions.create());
 
-        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).withTimeout(10, TimeUnit.MINUTES)
+        RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).withTimeout(Duration.ofMinutes(10))
                 .build();
 
         StatefulRedisConnection<String, String> connection = client.connect(redisUri);

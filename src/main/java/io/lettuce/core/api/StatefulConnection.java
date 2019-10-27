@@ -44,16 +44,6 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
     void setTimeout(Duration timeout);
 
     /**
-     * Set the default command timeout for this connection.
-     *
-     * @param timeout Command timeout.
-     * @param unit Unit of time for the timeout.
-     * @deprecated since 5.0, use {@link #setTimeout(Duration)}
-     */
-    @Deprecated
-    void setTimeout(long timeout, TimeUnit unit);
-
-    /**
      * @return the timeout.
      */
     Duration getTimeout();

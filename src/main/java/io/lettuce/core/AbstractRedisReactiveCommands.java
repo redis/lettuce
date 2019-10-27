@@ -1299,10 +1299,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         connection.setTimeout(timeout);
     }
 
-    public void setTimeout(long timeout, TimeUnit unit) {
-        connection.setTimeout(timeout, unit);
-    }
-
     @Override
     public Mono<Long> setbit(K key, long offset, int value) {
         return createMono(() -> commandBuilder.setbit(key, offset, value));

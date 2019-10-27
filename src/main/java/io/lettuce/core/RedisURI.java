@@ -26,7 +26,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.internal.HostAndPort;
@@ -54,7 +54,7 @@ import io.lettuce.core.protocol.LettuceCharsets;
  * more options.</li>
  * <li>Construct your own instance:
  * <p>
- * {@code new RedisURI("localhost", 6379, 60, TimeUnit.SECONDS);}
+ * {@code new RedisURI("localhost", 6379, Duration.ofSeconds(60));}
  * </p>
  * or
  * <p>
@@ -133,18 +133,18 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public static final String PARAMETER_NAME_SENTINEL_MASTER_ID = "sentinelMasterId";
     public static final String PARAMETER_NAME_CLIENT_NAME = "clientName";
 
-    public static final Map<String, TimeUnit> TIME_UNIT_MAP;
+    public static final Map<String, LongFunction<Duration>> CONVERTER_MAP;
 
     static {
-        Map<String, TimeUnit> unitMap = new HashMap<String, TimeUnit>();
-        unitMap.put("ns", TimeUnit.NANOSECONDS);
-        unitMap.put("us", TimeUnit.MICROSECONDS);
-        unitMap.put("ms", TimeUnit.MILLISECONDS);
-        unitMap.put("s", TimeUnit.SECONDS);
-        unitMap.put("m", TimeUnit.MINUTES);
-        unitMap.put("h", TimeUnit.HOURS);
-        unitMap.put("d", TimeUnit.DAYS);
-        TIME_UNIT_MAP = Collections.unmodifiableMap(unitMap);
+        Map<String, LongFunction<Duration>> unitMap = new HashMap<>();
+        unitMap.put("ns", Duration::ofNanos);
+        unitMap.put("us", us -> Duration.ofNanos(us * 1000));
+        unitMap.put("ms", Duration::ofMillis);
+        unitMap.put("s", Duration::ofSeconds);
+        unitMap.put("m", Duration::ofMinutes);
+        unitMap.put("h", Duration::ofHours);
+        unitMap.put("d", Duration::ofDays);
+        CONVERTER_MAP = Collections.unmodifiableMap(unitMap);
     }
 
     /**
@@ -161,7 +161,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Default timeout: 60 sec
      */
     public static final long DEFAULT_TIMEOUT = 60;
-    public static final TimeUnit DEFAULT_TIMEOUT_UNIT = TimeUnit.SECONDS;
     public static final Duration DEFAULT_TIMEOUT_DURATION = Duration.ofSeconds(DEFAULT_TIMEOUT);
 
     private String host;
@@ -200,23 +199,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
         setHost(host);
         setPort(port);
         setTimeout(timeout);
-    }
-
-    /**
-     * Constructor with host/port and timeout.
-     *
-     * @param host the host
-     * @param port the port
-     * @param timeout timeout value
-     * @param unit unit of the timeout value
-     * @deprecated since 5.0, use {@link #RedisURI(String, int, Duration)}
-     */
-    @Deprecated
-    public RedisURI(String host, int port, long timeout, TimeUnit unit) {
-
-        setHost(host);
-        setPort(port);
-        setTimeout(Duration.ofNanos(unit.toNanos(timeout)));
     }
 
     /**
@@ -669,9 +651,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
         if (timeout.getSeconds() != DEFAULT_TIMEOUT) {
 
             if (timeout.getNano() == 0) {
-                queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout.getSeconds() + toQueryParamUnit(TimeUnit.SECONDS));
+                queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout.getSeconds() + "s");
             } else {
-                queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout.toMillis() + toQueryParamUnit(TimeUnit.MILLISECONDS));
+                queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout.toMillis() + "ns");
             }
         }
 
@@ -714,16 +696,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
             }
         }
         return scheme;
-    }
-
-    private static String toQueryParamUnit(TimeUnit unit) {
-
-        for (Map.Entry<String, TimeUnit> entry : TIME_UNIT_MAP.entrySet()) {
-            if (entry.getValue().equals(unit)) {
-                return entry.getKey();
-            }
-        }
-        return "";
     }
 
     /**
@@ -815,7 +787,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         if (numbersEnd == 0) {
             if (timeoutString.startsWith("-")) {
-                builder.withTimeout(0, TimeUnit.MILLISECONDS);
+                builder.withTimeout(Duration.ZERO);
             } else {
                 // no-op, leave defaults
             }
@@ -825,12 +797,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
             builder.withTimeout(Duration.ofMillis(timeoutValue));
 
             String suffix = timeoutString.substring(numbersEnd);
-            TimeUnit timeoutUnit = TIME_UNIT_MAP.get(suffix);
-            if (timeoutUnit == null) {
-                timeoutUnit = TimeUnit.MILLISECONDS;
+            LongFunction<Duration> converter = CONVERTER_MAP.get(suffix);
+            if (converter == null) {
+                converter = Duration::ofMillis;
             }
 
-            builder.withTimeout(timeoutValue, timeoutUnit);
+            builder.withTimeout(converter.apply(timeoutValue));
         }
     }
 
@@ -1342,23 +1314,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             this.timeout = timeout;
             return this;
-        }
-
-        /**
-         * Configures a timeout.
-         *
-         * @param timeout must be greater or equal 0.
-         * @param unit the timeout time unit.
-         * @return the builder
-         * @deprecated since 5.0, use {@link #withTimeout(Duration)}.
-         */
-        @Deprecated
-        public Builder withTimeout(long timeout, TimeUnit unit) {
-
-            LettuceAssert.notNull(unit, "TimeUnit must not be null");
-            LettuceAssert.isTrue(timeout >= 0, "Timeout must be greater or equal 0");
-
-            return withTimeout(Duration.ofNanos(unit.toNanos(timeout)));
         }
 
         /**

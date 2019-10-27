@@ -297,7 +297,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
         try (ServerSocket serverSocket = new ServerSocket(0)) {
 
             RedisURI redisURI = RedisURI.Builder.redis(TestSettings.host(), serverSocket.getLocalPort())
-                    .withTimeout(500, TimeUnit.MILLISECONDS).build();
+                    .withTimeout(Duration.ofMillis(500)).build();
 
             try {
                 client.connect(redisURI);
