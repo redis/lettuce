@@ -720,9 +720,11 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     *
      * @return the resolved {@link SocketAddress} based either on host/port or the socket.
+     * @deprecated since 5.2. Will be removed with 6.0. Use
+     *             {@link io.lettuce.core.resource.SocketAddressResolver#resolve(RedisURI)}.
      */
+    @Deprecated
     public SocketAddress getResolvedAddress() {
 
         if (getSocket() != null) {
