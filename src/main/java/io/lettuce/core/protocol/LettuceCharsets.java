@@ -23,7 +23,10 @@ import java.nio.charset.StandardCharsets;
  * {@link Charset}-related utilities.
  *
  * @author Will Glozer
+ * @author Mark Paluch
+ * @deprecated since 5.2, use {@link StandardCharsets} instead. Will be removed with 6.0.
  */
+@Deprecated
 public class LettuceCharsets {
 
     /**
