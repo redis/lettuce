@@ -515,6 +515,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @return URI based on the RedisURI
      */
     public URI toURI() {
+        return URI.create(createUriString());
+    }
+
+    private String createUriString() {
         String scheme = getScheme();
         String authority = getAuthority(scheme);
         String queryString = getQueryString();
@@ -523,8 +527,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         if (!queryString.isEmpty()) {
             uri += "?" + queryString;
         }
-
-        return URI.create(uri);
+        return uri;
     }
 
     private static RedisURI buildRedisUriFromUri(URI uri) {
@@ -614,9 +617,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         if (sentinels.size() != 0) {
 
-            authority = sentinels.stream()
-                    .map(redisURI -> urlEncode(redisURI.getHost()) + getPortPart(redisURI.getPort(), scheme))
-                    .collect(Collectors.joining(","));
+            authority = sentinels.stream().map(redisURI -> {
+                if (LettuceStrings.isNotEmpty(redisURI.getSocket())) {
+                    return String.format("[Socket %s]", redisURI.getSocket());
+                }
+
+                return urlEncode(redisURI.getHost()) + getPortPart(redisURI.getPort(), scheme);
+            }).collect(Collectors.joining(","));
         }
 
         if (socket != null) {
@@ -711,7 +718,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @param str
      * @return the URL-encoded string
      */
-    private String urlEncode(String str) {
+    private static String urlEncode(String str) {
         try {
             return URLEncoder.encode(str, LettuceCharsets.UTF8.name()).replaceAll("%2F", "/");
         } catch (UnsupportedEncodingException e) {
@@ -739,27 +746,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName());
-
-        sb.append(" [");
-
-        if (host != null) {
-            sb.append("host='").append(host).append('\'');
-            sb.append(", port=").append(port);
-        }
-
-        if (socket != null) {
-            sb.append("socket='").append(socket).append('\'');
-        }
-
-        if (sentinelMasterId != null) {
-            sb.append("sentinels=").append(getSentinels());
-            sb.append(", sentinelMasterId=").append(sentinelMasterId);
-        }
-
-        sb.append(']');
-        return sb.toString();
+        return createUriString();
     }
 
     @Override
@@ -941,7 +928,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 authority = authority.substring(authority.indexOf('@') + 1);
             }
 
-            String[] hosts = authority.split("\\,");
+            String[] hosts = authority.split(",");
             for (String host : hosts) {
                 HostAndPort hostAndPort = HostAndPort.parse(host);
                 if (builder == null) {
