@@ -18,8 +18,8 @@ package io.lettuce.core;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -32,6 +32,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.util.context.Context;
+import sun.rmi.runtime.Log;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -141,20 +142,16 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         static final int ST_COMPLETED = 1;
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        static final AtomicLongFieldUpdater<RedisSubscription> DEMAND = AtomicLongFieldUpdater.newUpdater(
-                RedisSubscription.class, "demand");
+        static final AtomicLongFieldUpdater<RedisSubscription> DEMAND = AtomicLongFieldUpdater
+                .newUpdater(RedisSubscription.class, "demand");
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        static final AtomicReferenceFieldUpdater<RedisSubscription, State> STATE = AtomicReferenceFieldUpdater.newUpdater(
-                RedisSubscription.class, State.class, "state");
+        static final AtomicReferenceFieldUpdater<RedisSubscription, State> STATE = AtomicReferenceFieldUpdater
+                .newUpdater(RedisSubscription.class, State.class, "state");
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
         static final AtomicReferenceFieldUpdater<RedisSubscription, CommandDispatch> COMMAND_DISPATCH = AtomicReferenceFieldUpdater
                 .newUpdater(RedisSubscription.class, CommandDispatch.class, "commandDispatch");
-
-        @SuppressWarnings({ "rawtypes", "unchecked" })
-        static final AtomicIntegerFieldUpdater<RedisSubscription> COMPLETION = AtomicIntegerFieldUpdater.newUpdater(
-                RedisSubscription.class, "completion");
 
         private final SubscriptionCommand<?, ?, T> subscriptionCommand;
         private final boolean traceEnabled = LOG.isTraceEnabled();
@@ -164,14 +161,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         final RedisCommand<?, ?, T> command;
         final boolean dissolve;
         private final Executor executor;
+        final ArrayBlockingQueue<Log> logs = new ArrayBlockingQueue<>(1024 * 4);
 
         // accessed via AtomicLongFieldUpdater
         @SuppressWarnings("unused")
         volatile long demand;
         @SuppressWarnings("unused")
         volatile State state = State.UNSUBSCRIBED;
-        @SuppressWarnings("unused")
-        volatile int completion = ST_PROGRESS;
         @SuppressWarnings("unused")
         volatile CommandDispatch commandDispatch = CommandDispatch.UNDISPATCHED;
 
@@ -274,13 +270,14 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             }
 
             // Fast-path publishing, preserve ordering
-            if (state == State.DEMAND && data.isEmpty()) {
+            if (data.isEmpty() && state() == State.DEMAND) {
 
                 long initial = getDemand();
 
-                if (initial > 0 && DEMAND.compareAndSet(this, initial, initial - 1)) {
+                if (initial > 0) {
 
                     try {
+                        DEMAND.decrementAndGet(this);
                         this.subscriber.onNext(t);
                     } catch (Exception e) {
                         onError(e);
@@ -330,11 +327,12 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 LOG.trace("{} onAllDataRead()", state);
             }
 
-            state.onAllDataRead(this);
+            allDataRead = true;
+            onDataAvailable();
         }
 
         /**
-         * Called by a listener interface to indicate that as error has occured.
+         * Called by a listener interface to indicate that as error has occurred.
          *
          * @param t the error
          */
@@ -370,15 +368,12 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             return STATE.compareAndSet(this, oldState, newState);
         }
 
+        boolean afterRead() {
+            return changeState(State.READING, getDemand() > 0 ? State.DEMAND : State.NO_DEMAND);
+        }
+
         public boolean complete() {
-
-            if (COMPLETION.compareAndSet(this, ST_PROGRESS, ST_COMPLETED)) {
-
-                STATE.set(this, State.COMPLETED);
-                return true;
-            }
-
-            return false;
+            return changeState(State.READING, State.COMPLETED);
         }
 
         void checkCommandDispatch() {
@@ -411,37 +406,20 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         /**
          * Reads and publishes data from the input. Continues until either there is no more demand, or until there is no more
          * data to be read.
-         *
-         * @return {@literal true} if there is more demand, {@literal false} otherwise.
          */
-        boolean readAndPublish() {
+        void readAndPublish() {
 
             while (hasDemand()) {
-
-                long initial = getDemand();
-
-                if (!hasDemand(initial)) {
-                    return false;
-                }
 
                 T data = read();
 
                 if (data == null) {
-                    return hasDemand(initial);
+                    return;
                 }
 
-                boolean success = DEMAND.compareAndSet(this, initial, initial - 1);
-
-                if (success) {
-                    this.subscriber.onNext(data);
-                }
+                DEMAND.decrementAndGet(this);
+                this.subscriber.onNext(data);
             }
-
-            return false;
-        }
-
-        private static boolean hasDemand(long n) {
-            return n > 0;
         }
 
         RedisPublisher.State state() {
@@ -548,10 +526,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     }
 
                     subscription.potentiallyReadMore();
-
-                    if (subscription.allDataRead) {
-                        onAllDataRead(subscription);
-                    }
+                    onDataAvailable(subscription);
                 } else {
                     onError(subscription, Exceptions.nullOrNegativeRequestException(n));
                 }
@@ -566,15 +541,15 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             @Override
             void onDataAvailable(RedisSubscription<?> subscription) {
 
-                while (subscription.hasDemand()) {
+                try {
+                    do {
 
-                    if (subscription.state() == NO_DEMAND && !subscription.changeState(NO_DEMAND, DEMAND)) {
-                        return;
-                    }
-
-                    if (!read(subscription)) {
-                        return;
-                    }
+                        if (!read(subscription)) {
+                            return;
+                        }
+                    } while (subscription.hasDemand());
+                } catch (Exception e) {
+                    subscription.onError(e);
                 }
             }
 
@@ -583,9 +558,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 if (Operators.request(RedisSubscription.DEMAND, subscription, n)) {
 
-                    if (subscription.changeState(NO_DEMAND, DEMAND)) {
-                        read(subscription);
-                    }
+                    onDataAvailable(subscription);
 
                     subscription.potentiallyReadMore();
                 } else {
@@ -600,34 +573,32 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
              */
             private boolean read(RedisSubscription<?> subscription) {
 
+                State state = subscription.state();
+
                 // concurrency/entry guard
-                if (!subscription.changeState(this, READING)) {
+                if (state == NO_DEMAND || state == DEMAND) {
+                    if (!subscription.changeState(state, READING)) {
+                        return false;
+                    }
+                } else {
                     return false;
                 }
 
-                boolean hasDemand = subscription.readAndPublish();
+                subscription.readAndPublish();
 
-                try {
-
-                    if (subscription.data.isEmpty()) {
-
-                        if (subscription.allDataRead) {
-                            subscription.onAllDataRead();
-                        }
-
-                        return false;
-                    }
-
-                    return true;
-                } finally {
-
-                    // concurrency/leave guard
-                    if (hasDemand) {
-                        subscription.changeState(READING, DEMAND);
-                    } else {
-                        subscription.changeState(READING, NO_DEMAND);
-                    }
+                if (subscription.allDataRead && subscription.data.isEmpty()) {
+                    state.onAllDataRead(subscription);
+                    return false;
                 }
+
+                // concurrency/leave guard
+                subscription.afterRead();
+
+                if (subscription.allDataRead || !subscription.data.isEmpty()) {
+                    return true;
+                }
+
+                return false;
             }
         },
 
@@ -695,8 +666,6 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         void onAllDataRead(RedisSubscription<?> subscription) {
 
-            subscription.allDataRead = true;
-
             if (subscription.data.isEmpty() && subscription.complete()) {
 
                 readData(subscription);
@@ -711,13 +680,15 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         void onError(RedisSubscription<?> subscription, Throwable t) {
 
-            if (subscription.changeState(this, COMPLETED)) {
+            State state;
+            while ((state = subscription.state()) != COMPLETED && subscription.changeState(state, COMPLETED)) {
 
                 readData(subscription);
 
                 Subscriber<?> subscriber = subscription.subscriber;
                 if (subscriber != null) {
                     subscriber.onError(t);
+                    return;
                 }
             }
         }

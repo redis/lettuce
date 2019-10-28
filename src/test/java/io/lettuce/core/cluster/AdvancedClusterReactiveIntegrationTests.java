@@ -251,6 +251,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
         for (int i = 0; i < 1000; i++) {
             CompletableFuture<Long> future = commands.keys("*").count().toFuture();
             Futures.await(future);
+            assertThat(future).isCompletedWithValue(1000L);
         }
     }
 
