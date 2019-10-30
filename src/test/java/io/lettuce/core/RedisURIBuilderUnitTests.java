@@ -265,4 +265,14 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getPort()).isEqualTo(0);
         assertThat(result.isSsl()).isFalse();
     }
+
+    @Test
+    void redisSocketWithTlsVersion() {
+        RedisURI result = RedisURI.Builder.redis("host", 2).withTlsVersion("TLSv1.2").withSsl(true).build();
+
+        assertThat(result.getHost()).isEqualTo("host");
+        assertThat(result.getPort()).isEqualTo(2);
+        assertThat(result.isSsl()).isEqualTo(true);
+        assertThat(result.getTlsVersion()).isEqualTo("TLSv1.2");
+    }
 }
