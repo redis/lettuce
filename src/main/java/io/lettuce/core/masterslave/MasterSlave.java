@@ -28,6 +28,8 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Master-Slave connection API.
@@ -60,9 +62,9 @@ import io.lettuce.core.internal.LettuceLists;
  *
  * <ul>
  * <li>{@link MasterSlaveTopologyProvider}: Dynamic topology lookup using the {@code INFO REPLICATION} output. Slaves are listed
- * as {@code slaveN=...} entries. The initial connection can either point to a master or a replica and the topology provider will
- * discover nodes. The connection needs to be re-established outside of lettuce in a case of Master/Slave failover or topology
- * changes.</li>
+ * as {@code slaveN=...} entries. The initial connection can either point to a master or a replica and the topology provider
+ * will discover nodes. The connection needs to be re-established outside of lettuce in a case of Master/Slave failover or
+ * topology changes.</li>
  * <li>{@link StaticMasterSlaveTopologyProvider}: Topology is defined by the list of {@link RedisURI URIs} and the {@code ROLE}
  * output. MasterSlave uses only the supplied nodes and won't discover additional nodes in the setup. The connection needs to be
  * re-established outside of lettuce in a case of Master/Slave failover or topology changes.</li>
@@ -76,9 +78,8 @@ import io.lettuce.core.internal.LettuceLists;
  * <li>Redis Sentinel: Subscribes to all Sentinels and listens for Pub/Sub messages to trigger topology refreshing</li>
  * </ul>
  *
- * <h3>Connection Fault-Tolerance</h3>
- * Connecting to Master/Slave bears the possibility that individual nodes are not reachable. {@link MasterSlave} can still
- * connect to a partially-available set of nodes.
+ * <h3>Connection Fault-Tolerance</h3> Connecting to Master/Slave bears the possibility that individual nodes are not reachable.
+ * {@link MasterSlave} can still connect to a partially-available set of nodes.
  *
  * <ul>
  * <li>Redis Sentinel: At least one Sentinel must be reachable, the masterId must be registered and at least one host must be
@@ -162,10 +163,15 @@ public class MasterSlave {
      * treated as static topology and no additional hosts are discovered in such case. Redis Standalone Master/Slave will
      * discover the roles of the supplied {@link RedisURI URIs} and issue commands to the appropriate node.
      * </p>
+     * <p>
+     * When using Redis Sentinel, ensure that {@link Iterable redisURIs} contains only a single entry as only the first URI is
+     * considered. {@link RedisURI} pointing to multiple Sentinels can be configured through
+     * {@link RedisURI.Builder#withSentinel}.
+     * </p>
      *
      * @param redisClient the Redis client.
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server to connect to, must not be {@literal null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection.
@@ -183,10 +189,15 @@ public class MasterSlave {
      * treated as static topology and no additional hosts are discovered in such case. Redis Standalone Master/Slave will
      * discover the roles of the supplied {@link RedisURI URIs} and issue commands to the appropriate node.
      * </p>
+     * <p>
+     * When using Redis Sentinel, ensure that {@link Iterable redisURIs} contains only a single entry as only the first URI is
+     * considered. {@link RedisURI} pointing to multiple Sentinels can be configured through
+     * {@link RedisURI.Builder#withSentinel}.
+     * </p>
      *
      * @param redisClient the Redis client.
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server to connect to, must not be {@literal null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return {@link CompletableFuture} that is notified once the connect is finished.
@@ -206,8 +217,16 @@ public class MasterSlave {
         List<RedisURI> uriList = LettuceLists.newList(redisURIs);
         LettuceAssert.isTrue(!uriList.isEmpty(), "RedisURIs must not be empty");
 
-        if (isSentinel(uriList.get(0))) {
-            return new SentinelConnector<>(redisClient, codec, uriList.get(0)).connectAsync();
+        RedisURI first = uriList.get(0);
+        if (isSentinel(first)) {
+
+            if (uriList.size() > 1) {
+                InternalLogger logger = InternalLoggerFactory.getInstance(MasterSlave.class);
+                logger.warn(
+                        "RedisURIs contains multiple endpoints of which the first is configured for Sentinel usage. Using only the first URI [{}] without considering the remaining URIs. Make sure to include all Sentinel endpoints in a single RedisURI.",
+                        first);
+            }
+            return new SentinelConnector<>(redisClient, codec, first).connectAsync();
         }
 
         return new StaticMasterSlaveConnector<>(redisClient, codec, uriList).connectAsync();
@@ -253,21 +272,19 @@ public class MasterSlave {
 
     private static <T> CompletableFuture<T> transformAsyncConnectionException(CompletionStage<T> future, Object context) {
 
-        return ConnectionFuture
-                .from(null, future.toCompletableFuture())
-                .thenCompose((v, e) -> {
+        return ConnectionFuture.from(null, future.toCompletableFuture()).thenCompose((v, e) -> {
 
-                    if (e != null) {
+            if (e != null) {
 
-                        // filter intermediate RedisConnectionException exceptions that bloat the stack trace
-                        if (e.getCause() instanceof RedisConnectionException
-                                && e.getCause().getCause() instanceof RedisConnectionException) {
-                            return Futures.failed(RedisConnectionException.create(context.toString(), e.getCause()));
-                        }
-                        return Futures.failed(RedisConnectionException.create(context.toString(), e));
-                    }
+                // filter intermediate RedisConnectionException exceptions that bloat the stack trace
+                if (e.getCause() instanceof RedisConnectionException
+                        && e.getCause().getCause() instanceof RedisConnectionException) {
+                    return Futures.failed(RedisConnectionException.create(context.toString(), e.getCause()));
+                }
+                return Futures.failed(RedisConnectionException.create(context.toString(), e));
+            }
 
-                    return CompletableFuture.completedFuture(v);
-                }).toCompletableFuture();
+            return CompletableFuture.completedFuture(v);
+        }).toCompletableFuture();
     }
 }
