@@ -49,18 +49,19 @@ import io.lettuce.core.masterslave.MasterSlave;
  * Master-Replica topologies are either static or semi-static. Redis Standalone instances with attached replicas provide no
  * failover/HA mechanism. Redis Sentinel managed instances are controlled by Redis Sentinel and allow failover (which include
  * master promotion). The {@link MasterReplica} API supports both mechanisms. The topology is provided by a
- * {@link TopologyProvider}:
+ * {@link io.lettuce.core.masterslave.TopologyProvider}:
  *
  * <ul>
- * <li>{@link MasterSlaveTopologyProvider}: Dynamic topology lookup using the {@code INFO REPLICATION} output. Replicas are
- * listed as {@code replicaN=...} entries. The initial connection can either point to a master or a replica and the topology
- * provider will discover nodes. The connection needs to be re-established outside of lettuce in a case of Master/Replica
- * failover or topology changes.</li>
- * <li>{@link StaticMasterSlaveTopologyProvider}: Topology is defined by the list of {@link RedisURI URIs} and the {@code ROLE}
- * output. MasterReplica uses only the supplied nodes and won't discover additional nodes in the setup. The connection needs to
- * be re-established outside of lettuce in a case of Master/Replica failover or topology changes.</li>
- * <li>{@link SentinelTopologyProvider}: Dynamic topology lookup using the Redis Sentinel API. In particular,
- * {@code SENTINEL MASTER} and {@code SENTINEL SLAVES} output. Master/Replica failover is handled by lettuce.</li>
+ * <li>{@link io.lettuce.core.masterslave.MasterSlaveTopologyProvider}: Dynamic topology lookup using the
+ * {@code INFO REPLICATION} output. Replicas are listed as {@code replicaN=...} entries. The initial connection can either point
+ * to a master or a replica and the topology provider will discover nodes. The connection needs to be re-established outside of
+ * lettuce in a case of Master/Replica failover or topology changes.</li>
+ * <li>{@link io.lettuce.core.masterslave.StaticMasterSlaveTopologyProvider}: Topology is defined by the list of {@link RedisURI
+ * URIs} and the {@code ROLE} output. MasterReplica uses only the supplied nodes and won't discover additional nodes in the
+ * setup. The connection needs to be re-established outside of lettuce in a case of Master/Replica failover or topology
+ * changes.</li>
+ * <li>{@link io.lettuce.core.masterslave.SentinelTopologyProvider}: Dynamic topology lookup using the Redis Sentinel API. In
+ * particular, {@code SENTINEL MASTER} and {@code SENTINEL SLAVES} output. Master/Replica failover is handled by lettuce.</li>
  * </ul>
  *
  * <h3>Topology Updates</h4>
@@ -69,9 +70,8 @@ import io.lettuce.core.masterslave.MasterSlave;
  * <li>Redis Sentinel: Subscribes to all Sentinels and listens for Pub/Sub messages to trigger topology refreshing</li>
  * </ul>
  *
- * <h3>Connection Fault-Tolerance</h3>
- * Connecting to Master/Replica bears the possibility that individual nodes are not reachable. {@link MasterReplica} can still
- * connect to a partially-available set of nodes.
+ * <h3>Connection Fault-Tolerance</h3> Connecting to Master/Replica bears the possibility that individual nodes are not
+ * reachable. {@link MasterReplica} can still connect to a partially-available set of nodes.
  *
  * <ul>
  * <li>Redis Sentinel: At least one Sentinel must be reachable, the masterId must be registered and at least one host must be
@@ -135,10 +135,15 @@ public class MasterReplica {
      * be treated as static topology and no additional hosts are discovered in such case. Redis Standalone Master/Replica will
      * discover the roles of the supplied {@link RedisURI URIs} and issue commands to the appropriate node.
      * </p>
+     * <p>
+     * When using Redis Sentinel, ensure that {@link Iterable redisURIs} contains only a single entry as only the first URI is
+     * considered. {@link RedisURI} pointing to multiple Sentinels can be configured through
+     * {@link RedisURI.Builder#withSentinel}.
+     * </p>
      *
      * @param redisClient the Redis client.
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server to connect to, must not be {@literal null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection.
@@ -156,10 +161,15 @@ public class MasterReplica {
      * be treated as static topology and no additional hosts are discovered in such case. Redis Standalone Master/Replica will
      * discover the roles of the supplied {@link RedisURI URIs} and issue commands to the appropriate node.
      * </p>
+     * <p>
+     * When using Redis Sentinel, ensure that {@link Iterable redisURIs} contains only a single entry as only the first URI is
+     * considered. {@link RedisURI} pointing to multiple Sentinels can be configured through
+     * {@link RedisURI.Builder#withSentinel}.
+     * </p>
      *
      * @param redisClient the Redis client.
      * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server to connect to, must not be {@literal null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return {@link CompletableFuture} that is notified once the connect is finished.
