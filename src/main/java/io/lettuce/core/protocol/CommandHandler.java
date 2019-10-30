@@ -533,6 +533,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
         ByteBuf input = (ByteBuf) msg;
+        input.touch("CommandHandler.read(…)");
 
         if (!input.isReadable() || input.refCnt() == 0) {
             logger.warn("{} Input not readable {}, {}", logPrefix(), input.isReadable(), input.refCnt());
@@ -558,6 +559,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 logger.trace("{} Buffer: {}", logPrefix(), input.toString(Charset.defaultCharset()).trim());
             }
 
+            buffer.touch("CommandHandler.read(…)");
             buffer.writeBytes(input);
 
             decode(ctx, buffer);

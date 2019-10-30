@@ -70,6 +70,7 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
     @SuppressWarnings("unchecked")
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
 
+        out.touch("CommandEncoder.encode(…)");
         if (msg instanceof RedisCommand) {
             RedisCommand<?, ?, ?> command = (RedisCommand<?, ?, ?>) msg;
             encode(ctx, out, command);
