@@ -342,6 +342,7 @@ public class CommandArgs<K, V> {
      */
     public void encode(ByteBuf buf) {
 
+        buf.touch("CommandArgs.encode(…)");
         for (SingularArgument singularArgument : singularArguments) {
             singularArgument.encode(buf);
         }

@@ -108,6 +108,7 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
      */
     public void encode(ByteBuf buf) {
 
+        buf.touch("Command.encode(…)");
         buf.writeByte('*');
         CommandArgs.IntegerArgument.writeInteger(buf, 1 + (args != null ? args.count() : 0));
 

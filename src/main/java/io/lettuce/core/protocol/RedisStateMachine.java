@@ -89,6 +89,7 @@ public class RedisStateMachine {
         int length, end;
         ByteBuffer bytes;
 
+        buffer.touch("RedisStateMachine.decode(…)");
         if (debugEnabled) {
             logger.debug("Decode {}", command);
         }
