@@ -444,7 +444,7 @@ public class BitFieldArgs implements CompositeArgument {
             args.add(CommandType.SET).add(bitFieldType.asString());
 
             if (bitOffset) {
-                args.add(String.format("#%d", offset));
+                args.add("#"+offset);
             } else {
                 args.add(offset);
             }
@@ -478,7 +478,7 @@ public class BitFieldArgs implements CompositeArgument {
             args.add(CommandType.GET).add(bitFieldType.asString());
 
             if (bitOffset) {
-                args.add(String.format("#%d", offset));
+                args.add("#"+offset);
             } else {
                 args.add(offset);
             }
@@ -512,7 +512,7 @@ public class BitFieldArgs implements CompositeArgument {
             args.add(CommandType.INCRBY).add(bitFieldType.asString());
 
             if (bitOffset) {
-                args.add(String.format("#%d", offset));
+                args.add("#" + offset);
             } else {
                 args.add(offset);
             }
@@ -613,7 +613,7 @@ public class BitFieldArgs implements CompositeArgument {
         }
 
         private String asString() {
-            return String.format("%s%d", (signed ? "i" : "u"), bits);
+            return (signed ? "i" : "u") + bits;
         }
 
         @Override
@@ -657,7 +657,7 @@ public class BitFieldArgs implements CompositeArgument {
 
         @Override
         public String toString() {
-            return String.format("%s%d", (multiplyByTypeWidth ? "#" : ""), offset);
+            return (multiplyByTypeWidth ? "#" : "") + offset;
         }
     }
 }
