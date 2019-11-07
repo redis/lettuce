@@ -31,6 +31,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * {@link BitFieldArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @author Ian Pojman
  * @since 4.2
  */
 public class BitFieldArgs implements CompositeArgument {
@@ -444,7 +445,7 @@ public class BitFieldArgs implements CompositeArgument {
             args.add(CommandType.SET).add(bitFieldType.asString());
 
             if (bitOffset) {
-                args.add("#"+offset);
+                args.add("#" + offset);
             } else {
                 args.add(offset);
             }
@@ -478,7 +479,7 @@ public class BitFieldArgs implements CompositeArgument {
             args.add(CommandType.GET).add(bitFieldType.asString());
 
             if (bitOffset) {
-                args.add("#"+offset);
+                args.add("#" + offset);
             } else {
                 args.add(offset);
             }
