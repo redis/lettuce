@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.ByteProcessor;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -55,7 +55,7 @@ public class RedisStateMachine {
     private final State[] stack = new State[32];
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final LongProcessor longProcessor = new LongProcessor();
-    private final ByteBuf responseElementBuffer = PooledByteBufAllocator.DEFAULT.directBuffer(1024);
+    private final ByteBuf responseElementBuffer;
     private final AtomicBoolean closed = new AtomicBoolean();
 
     private int stackElements;
@@ -63,7 +63,8 @@ public class RedisStateMachine {
     /**
      * Initialize a new instance.
      */
-    public RedisStateMachine() {
+    public RedisStateMachine(ByteBufAllocator alloc) {
+        this.responseElementBuffer = alloc.directBuffer(1024);
     }
 
     /**

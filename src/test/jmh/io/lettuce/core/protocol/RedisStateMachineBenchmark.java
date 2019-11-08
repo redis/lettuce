@@ -23,6 +23,7 @@ import org.openjdk.jmh.annotations.*;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.output.ArrayOutput;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 
 /**
@@ -59,7 +60,7 @@ public class RedisStateMachineBenchmark {
 
     private ByteBuf masterBuffer;
 
-    private final RedisStateMachine stateMachine = new RedisStateMachine();
+    private final RedisStateMachine stateMachine = new RedisStateMachine(ByteBufAllocator.DEFAULT);
     private final byte[] payload = ("*3\r\n" + //
             "$4\r\n" + //
             "LLEN\r\n" + //
