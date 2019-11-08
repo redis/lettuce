@@ -244,16 +244,4 @@ class RedisURIUnitTests {
 
         assertThat(redisURI).hasToString("redis://host:1234");
     }
-
-    @Test
-    void parsingWithTlsVersion() {
-        RedisURI redisURI = RedisURI.create("rediss://password@host:6380/?database=8&timeout=2000&TLSversion=TLSv1.2");
-
-        assertThat(redisURI.getHost()).isEqualTo("host");
-        assertThat(redisURI.getPort()).isEqualTo(6380);
-        assertThat(redisURI.getDatabase()).isEqualTo(8);
-        assertThat(redisURI.getTlsVersion()).isEqualTo("TLSv1.2");
-        assertThat(redisURI.isSsl()).isEqualTo(true);
-    }
-
 }

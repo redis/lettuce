@@ -132,7 +132,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public static final String PARAMETER_NAME_DATABASE_ALT = "db";
     public static final String PARAMETER_NAME_SENTINEL_MASTER_ID = "sentinelMasterId";
     public static final String PARAMETER_NAME_CLIENT_NAME = "clientName";
-    public static final String PARAMETER_NAME_TLS_VERSION = "tlsversion";
 
     public static final Map<String, LongFunction<Duration>> CONVERTER_MAP;
 
@@ -171,7 +170,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private int database;
     private String clientName;
     private char[] password;
-    private String tlsVersion;
     private boolean ssl = false;
     private boolean verifyPeer = true;
     private boolean startTls = false;
@@ -338,14 +336,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
     @Deprecated
     public void setPassword(String password) {
         setPassword((CharSequence) password);
-    }
-
-    public String getTlsVersion() {
-        return tlsVersion;
-    }
-
-    public void setTlsVersion(String tlsVersion) {
-        this.tlsVersion = tlsVersion;
     }
 
     /**
@@ -594,10 +584,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
                 if (forStartWith.startsWith(PARAMETER_NAME_SENTINEL_MASTER_ID.toLowerCase() + "=")) {
                     parseSentinelMasterId(builder, queryParam);
-                }
-
-                if (forStartWith.startsWith(PARAMETER_NAME_TLS_VERSION.toLowerCase() + "=")) {
-                    parseTlsVersion(builder, queryParam);
                 }
             }
         }
@@ -856,13 +842,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
     }
 
-    private static void parseTlsVersion(Builder builder, String queryParam) {
-        String tlsVersion = getValuePart(queryParam);
-        if (isNotEmpty(tlsVersion)) {
-            builder.withTlsVersion(tlsVersion);
-        }
-    }
-
     private static String getValuePart(String queryParam) {
         int index = queryParam.indexOf('=');
         if (index < 0) {
@@ -982,7 +961,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private String host;
         private String socket;
         private String sentinelMasterId;
-        private String tlsVersion;
         private int port;
         private int database;
         private String clientName;
@@ -1220,15 +1198,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
             return this;
         }
 
-        public Builder withTlsVersion(String tlsVersion) {
-            this.tlsVersion = tlsVersion;
-            return this;
-        }
-
-        public String getTlsVersion() {
-            return tlsVersion;
-        }
-
         /**
          * Enables/disables StartTLS when using SSL. Sets StartTLS also for already configured Redis Sentinel nodes.
          *
@@ -1390,7 +1359,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 redisURI.getSentinels().add(sentinel);
             }
 
-            redisURI.setTlsVersion(tlsVersion);
             redisURI.setSocket(socket);
             redisURI.setSsl(ssl);
             redisURI.setStartTls(startTls);
