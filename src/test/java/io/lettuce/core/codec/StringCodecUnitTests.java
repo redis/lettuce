@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.protocol.LettuceCharsets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -37,7 +36,7 @@ class StringCodecUnitTests {
     @Test
     void encodeUtf8Buf() {
 
-        StringCodec codec = new StringCodec(LettuceCharsets.UTF8);
+        StringCodec codec = new StringCodec(StandardCharsets.UTF_8);
 
         ByteBuf buffer = Unpooled.buffer(1234);
         codec.encode(teststring, buffer);
@@ -48,12 +47,12 @@ class StringCodecUnitTests {
     @Test
     void encodeAsciiBuf() {
 
-        StringCodec codec = new StringCodec(LettuceCharsets.ASCII);
+        StringCodec codec = new StringCodec(StandardCharsets.US_ASCII);
 
         ByteBuf buffer = Unpooled.buffer(1234);
         codec.encode(teststringPlain, buffer);
 
-        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(teststringPlain);
+        assertThat(buffer.toString(StandardCharsets.US_ASCII)).isEqualTo(teststringPlain);
     }
 
     @Test
@@ -70,7 +69,7 @@ class StringCodecUnitTests {
     @Test
     void encodeAndDecodeUtf8Buf() {
 
-        StringCodec codec = new StringCodec(LettuceCharsets.UTF8);
+        StringCodec codec = new StringCodec(StandardCharsets.UTF_8);
 
         ByteBuf buffer = Unpooled.buffer(1234);
         codec.encodeKey(teststring, buffer);
@@ -81,7 +80,7 @@ class StringCodecUnitTests {
     @Test
     void encodeAndDecodeUtf8() {
 
-        StringCodec codec = new StringCodec(LettuceCharsets.UTF8);
+        StringCodec codec = new StringCodec(StandardCharsets.UTF_8);
         ByteBuffer byteBuffer = codec.encodeKey(teststring);
 
         assertThat(codec.decodeKey(byteBuffer)).isEqualTo(teststring);
@@ -90,7 +89,7 @@ class StringCodecUnitTests {
     @Test
     void encodeAndDecodeAsciiBuf() {
 
-        StringCodec codec = new StringCodec(LettuceCharsets.ASCII);
+        StringCodec codec = new StringCodec(StandardCharsets.US_ASCII);
 
         ByteBuf buffer = Unpooled.buffer(1234);
         codec.encode(teststringPlain, buffer);
@@ -112,8 +111,9 @@ class StringCodecUnitTests {
     @Test
     void estimateSize() {
 
-        assertThat(new StringCodec(LettuceCharsets.UTF8).estimateSize(teststring)).isEqualTo((int) (teststring.length() * 1.1));
-        assertThat(new StringCodec(LettuceCharsets.ASCII).estimateSize(teststring)).isEqualTo(teststring.length());
+        assertThat(new StringCodec(StandardCharsets.UTF_8).estimateSize(teststring))
+                .isEqualTo((int) (teststring.length() * 1.1));
+        assertThat(new StringCodec(StandardCharsets.US_ASCII).estimateSize(teststring)).isEqualTo(teststring.length());
         assertThat(new StringCodec(StandardCharsets.ISO_8859_1).estimateSize(teststring)).isEqualTo(teststring.length());
     }
 }

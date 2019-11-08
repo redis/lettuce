@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 
 /**
  * @author Mark Paluch

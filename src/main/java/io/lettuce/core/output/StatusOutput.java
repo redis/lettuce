@@ -15,9 +15,8 @@
  */
 package io.lettuce.core.output;
 
-import static io.lettuce.core.protocol.LettuceCharsets.buffer;
-
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.codec.RedisCodec;
 
@@ -30,7 +29,7 @@ import io.lettuce.core.codec.RedisCodec;
  */
 public class StatusOutput<K, V> extends CommandOutput<K, V, String> {
 
-    private static final ByteBuffer OK = buffer("OK");
+    private static final ByteBuffer OK = StandardCharsets.US_ASCII.encode("OK");
 
     public StatusOutput(RedisCodec<K, V> codec) {
         super(codec, null);

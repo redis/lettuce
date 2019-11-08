@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.LongFunction;
@@ -32,7 +33,6 @@ import java.util.stream.Collectors;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
-import io.lettuce.core.protocol.LettuceCharsets;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, client name,
@@ -706,7 +706,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      */
     private static String urlEncode(String str) {
         try {
-            return URLEncoder.encode(str, LettuceCharsets.UTF8.name()).replaceAll("%2F", "/");
+            return URLEncoder.encode(str, StandardCharsets.UTF_8.name()).replaceAll("%2F", "/");
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }

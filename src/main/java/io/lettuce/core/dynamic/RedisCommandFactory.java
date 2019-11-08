@@ -18,6 +18,7 @@ package io.lettuce.core.dynamic;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import io.lettuce.core.AbstractRedisReactiveCommands;
@@ -40,7 +41,6 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.models.command.CommandDetail;
 import io.lettuce.core.models.command.CommandDetailParser;
-import io.lettuce.core.protocol.LettuceCharsets;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.support.ConnectionWrapping;
 import io.netty.util.internal.logging.InternalLogger;
@@ -108,7 +108,7 @@ public class RedisCommandFactory {
      * @param connection must not be {@literal null}.
      */
     public RedisCommandFactory(StatefulConnection<?, ?> connection) {
-        this(connection, LettuceLists.newList(new ByteArrayCodec(), new StringCodec(LettuceCharsets.UTF8)));
+        this(connection, LettuceLists.newList(new ByteArrayCodec(), new StringCodec(StandardCharsets.UTF_8)));
     }
 
     /**

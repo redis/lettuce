@@ -25,7 +25,6 @@ import io.lettuce.core.GeoCoordinates;
 import io.lettuce.core.GeoWithin;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 
 /**
  * @author Mark Paluch

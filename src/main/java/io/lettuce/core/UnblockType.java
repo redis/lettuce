@@ -15,7 +15,8 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.protocol.LettuceCharsets;
+import java.nio.charset.StandardCharsets;
+
 import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
@@ -31,7 +32,7 @@ public enum UnblockType implements ProtocolKeyword {
     private final byte[] bytes;
 
     UnblockType() {
-        bytes = name().getBytes(LettuceCharsets.ASCII);
+        bytes = name().getBytes(StandardCharsets.US_ASCII);
     }
 
     @Override

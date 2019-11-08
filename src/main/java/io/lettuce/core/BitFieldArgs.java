@@ -15,6 +15,7 @@
  */
 package io.lettuce.core;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +23,6 @@ import java.util.List;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.protocol.LettuceCharsets;
 import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
@@ -566,7 +566,7 @@ public class BitFieldArgs implements CompositeArgument {
         public final byte[] bytes;
 
         OverflowType() {
-            bytes = name().getBytes(LettuceCharsets.ASCII);
+            bytes = name().getBytes(StandardCharsets.US_ASCII);
         }
 
         @Override

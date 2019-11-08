@@ -16,6 +16,7 @@
 package io.lettuce.core.protocol;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -47,7 +48,7 @@ import io.netty.buffer.UnpooledByteBufAllocator;
  */
 public class CommandArgs<K, V> {
 
-    static final byte[] CRLF = "\r\n".getBytes(LettuceCharsets.ASCII);
+    static final byte[] CRLF = "\r\n".getBytes(StandardCharsets.US_ASCII);
 
     protected final RedisCodec<K, V> codec;
 

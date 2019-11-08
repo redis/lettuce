@@ -18,6 +18,7 @@ package io.lettuce.core.protocol;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
@@ -116,7 +117,7 @@ class CommandArgsUnitTests {
         ByteBuf expected = Unpooled.buffer();
         expected.writeBytes(("$1\r\n" + "1\r\n" + "$1\r\n" + "2\r\n").getBytes());
 
-        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+        assertThat(buffer.toString(StandardCharsets.US_ASCII)).isEqualTo(expected.toString(StandardCharsets.US_ASCII));
     }
 
     @Test
@@ -130,7 +131,7 @@ class CommandArgsUnitTests {
         ByteBuf expected = Unpooled.buffer();
         expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
 
-        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+        assertThat(buffer.toString(StandardCharsets.US_ASCII)).isEqualTo(expected.toString(StandardCharsets.US_ASCII));
     }
 
     @Test
@@ -144,7 +145,7 @@ class CommandArgsUnitTests {
         ByteBuf expected = Unpooled.buffer();
         expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
 
-        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+        assertThat(buffer.toString(StandardCharsets.US_ASCII)).isEqualTo(expected.toString(StandardCharsets.US_ASCII));
     }
 
     @Test
@@ -158,7 +159,7 @@ class CommandArgsUnitTests {
         ByteBuf expected = Unpooled.buffer();
         expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
 
-        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+        assertThat(buffer.toString(StandardCharsets.US_ASCII)).isEqualTo(expected.toString(StandardCharsets.US_ASCII));
     }
 
     @Test
@@ -172,6 +173,6 @@ class CommandArgsUnitTests {
         ByteBuf expected = Unpooled.buffer();
         expected.writeBytes(("$3\r\n" + "one\r\n").getBytes());
 
-        assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
+        assertThat(buffer.toString(StandardCharsets.US_ASCII)).isEqualTo(expected.toString(StandardCharsets.US_ASCII));
     }
 }

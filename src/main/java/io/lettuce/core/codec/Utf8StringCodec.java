@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.codec;
 
-import io.lettuce.core.protocol.LettuceCharsets;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A {@link RedisCodec} that handles UTF-8 encoded keys and values.
@@ -23,7 +23,7 @@ import io.lettuce.core.protocol.LettuceCharsets;
  * @author Will Glozer
  * @author Mark Paluch
  * @see StringCodec
- * @see LettuceCharsets#UTF8
+ * @see StandardCharsets#UTF_8
  * @deprecated since 5.2, use {@link StringCodec#UTF8} instead.
  */
 @Deprecated
@@ -33,6 +33,6 @@ public class Utf8StringCodec extends StringCodec implements RedisCodec<String, S
      * Initialize a new instance that encodes and decodes strings using the UTF-8 charset;
      */
     public Utf8StringCodec() {
-        super(LettuceCharsets.UTF8);
+        super(StandardCharsets.UTF_8);
     }
 }

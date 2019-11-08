@@ -32,7 +32,6 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.lettuce.test.Futures;
@@ -71,8 +70,8 @@ class CustomCommandIntegrationTests extends TestSupport {
     @Test
     void dispatchSet() {
 
-        String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(
-                StringCodec.UTF8).addKey(key).addValue(value));
+        String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key).addValue(value));
 
         assertThat(response).isEqualTo("OK");
     }
@@ -89,17 +88,16 @@ class CustomCommandIntegrationTests extends TestSupport {
     void dispatchShouldFailForWrongDataType() {
 
         redis.hset(key, key, value);
-        assertThatThrownBy(
-                () -> redis.dispatch(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
-                        new CommandArgs<>(StringCodec.UTF8).addKey(key))).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> redis.dispatch(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key))).isInstanceOf(RedisCommandExecutionException.class);
     }
 
     @Test
     void dispatchTransactions() {
 
         redis.multi();
-        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(
-                StringCodec.UTF8).addKey(key).addValue(value));
+        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key).addValue(value));
 
         TransactionResult exec = redis.exec();
 
@@ -110,8 +108,8 @@ class CustomCommandIntegrationTests extends TestSupport {
     @Test
     void masterSlaveAsyncPing() {
 
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
-                new StatusOutput<>(StringCodec.UTF8), null);
+        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(StringCodec.UTF8),
+                null);
 
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         getStandaloneConnection().dispatch(async);
@@ -144,8 +142,8 @@ class CustomCommandIntegrationTests extends TestSupport {
     @Test
     void masterSlaveFireAndForget() {
 
-        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING,
-                new StatusOutput<>(StringCodec.UTF8), null);
+        RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(StringCodec.UTF8),
+                null);
         getStandaloneConnection().dispatch(command);
         assertThat(command.isCancelled()).isFalse();
 

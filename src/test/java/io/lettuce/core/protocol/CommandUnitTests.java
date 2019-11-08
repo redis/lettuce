@@ -15,9 +15,10 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.protocol.LettuceCharsets.buffer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,7 +70,7 @@ public class CommandUnitTests {
     @Test
     void get() {
         assertThat(sut.get()).isNull();
-        sut.getOutput().set(buffer("one"));
+        sut.getOutput().set(StandardCharsets.US_ASCII.encode("one"));
         assertThat(sut.get()).isEqualTo("one");
     }
 
@@ -108,7 +109,7 @@ public class CommandUnitTests {
 
     @Test
     void getWithTimeout() {
-        sut.getOutput().set(buffer("one"));
+        sut.getOutput().set(StandardCharsets.US_ASCII.encode("one"));
         sut.complete();
 
         assertThat(sut.get()).isEqualTo("one");

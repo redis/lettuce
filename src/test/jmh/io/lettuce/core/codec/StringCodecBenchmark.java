@@ -24,7 +24,6 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 
-import io.lettuce.core.protocol.LettuceCharsets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -74,13 +73,13 @@ public class StringCodecBenchmark {
     public static class Input {
 
         Blackhole blackhole;
-        StringCodec asciiCodec = new StringCodec(LettuceCharsets.ASCII);
-        StringCodec utf8Codec = new StringCodec(LettuceCharsets.UTF8);
+        StringCodec asciiCodec = new StringCodec(StandardCharsets.US_ASCII);
+        StringCodec utf8Codec = new StringCodec(StandardCharsets.UTF_8);
         StringCodec isoCodec = new StringCodec(StandardCharsets.ISO_8859_1);
 
         String teststring = "hello üäü~∑†®†ª€∂‚¶¢ Wørld";
         String teststringPlain = "hello uufadsfasdfadssdfadfs";
-        ByteBuffer input = ByteBuffer.wrap(teststring.getBytes(LettuceCharsets.UTF8));
+        ByteBuffer input = ByteBuffer.wrap(teststring.getBytes(StandardCharsets.UTF_8));
 
         ByteBuf byteBuf = Unpooled.buffer(512);
 

@@ -15,10 +15,10 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.protocol.LettuceCharsets.buffer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -29,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.*;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.test.Futures;
@@ -78,8 +77,8 @@ public class AsyncCommandUnitTests {
 
     @Test
     void awaitNotCompleted() {
-        assertThatThrownBy(() -> LettuceFutures.awaitOrCancel(sut, 0, TimeUnit.NANOSECONDS)).isInstanceOf(
-                RedisCommandTimeoutException.class);
+        assertThatThrownBy(() -> LettuceFutures.awaitOrCancel(sut, 0, TimeUnit.NANOSECONDS))
+                .isInstanceOf(RedisCommandTimeoutException.class);
     }
 
     @Test
@@ -91,8 +90,8 @@ public class AsyncCommandUnitTests {
     @Test
     void awaitWithCancelledCommand() {
         sut.cancel();
-        assertThatThrownBy(() -> LettuceFutures.awaitOrCancel(sut, 5, TimeUnit.SECONDS)).isInstanceOf(
-                CancellationException.class);
+        assertThatThrownBy(() -> LettuceFutures.awaitOrCancel(sut, 5, TimeUnit.SECONDS))
+                .isInstanceOf(CancellationException.class);
     }
 
     @Test
@@ -125,7 +124,7 @@ public class AsyncCommandUnitTests {
 
     @Test
     void asyncGet() {
-        sut.getOutput().set(buffer("one"));
+        sut.getOutput().set(StandardCharsets.US_ASCII.encode("one"));
         sut.complete();
         assertThat(Futures.get(sut.toCompletableFuture())).isEqualTo("one");
         sut.getOutput().toString();
@@ -133,23 +132,21 @@ public class AsyncCommandUnitTests {
 
     @Test
     void customKeyword() {
-        sut = new AsyncCommand<>(
-                new Command<>(MyKeywords.DUMMY, new StatusOutput<>(codec), null));
+        sut = new AsyncCommand<>(new Command<>(MyKeywords.DUMMY, new StatusOutput<>(codec), null));
 
         assertThat(sut.toString()).contains(MyKeywords.DUMMY.name());
     }
 
     @Test
     void customKeywordWithArgs() {
-        sut = new AsyncCommand<>(
-                new Command<>(MyKeywords.DUMMY, null, new CommandArgs<>(codec)));
+        sut = new AsyncCommand<>(new Command<>(MyKeywords.DUMMY, null, new CommandArgs<>(codec)));
         sut.getArgs().add(MyKeywords.DUMMY);
         assertThat(sut.getArgs().toString()).contains(MyKeywords.DUMMY.name());
     }
 
     @Test
     void getWithTimeout() throws Exception {
-        sut.getOutput().set(buffer("one"));
+        sut.getOutput().set(StandardCharsets.US_ASCII.encode("one"));
         sut.complete();
 
         assertThat(sut.get(0, TimeUnit.MILLISECONDS)).isEqualTo("one");
@@ -174,13 +171,13 @@ public class AsyncCommandUnitTests {
     @Test
     void getInterrupted2() {
         Thread.currentThread().interrupt();
-        assertThatThrownBy(() -> sut.get(5, TimeUnit.MILLISECONDS)).isInstanceOf(InterruptedException. class);
+        assertThatThrownBy(() -> sut.get(5, TimeUnit.MILLISECONDS)).isInstanceOf(InterruptedException.class);
     }
 
     @Test
     void awaitInterrupted2() {
         Thread.currentThread().interrupt();
-        assertThatThrownBy(() -> sut.await(5, TimeUnit.MILLISECONDS)).isInstanceOf(RedisCommandInterruptedException. class);
+        assertThatThrownBy(() -> sut.await(5, TimeUnit.MILLISECONDS)).isInstanceOf(RedisCommandInterruptedException.class);
     }
 
     @Test
@@ -191,7 +188,7 @@ public class AsyncCommandUnitTests {
                 return null;
             }
         };
-        assertThatThrownBy(() -> output.set(null)).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> output.set(null)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -202,7 +199,7 @@ public class AsyncCommandUnitTests {
                 return null;
             }
         };
-        assertThatThrownBy(() -> output.set(0)).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> output.set(0)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

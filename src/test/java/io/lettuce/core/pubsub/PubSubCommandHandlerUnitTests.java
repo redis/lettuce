@@ -37,7 +37,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.output.StatusOutput;
@@ -63,8 +62,8 @@ class PubSubCommandHandlerUnitTests {
 
     private PubSubCommandHandler<String, String> sut;
 
-    private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<>(
-            StringCodec.UTF8), null);
+    private final Command<String, String, String> command = new Command<>(CommandType.APPEND,
+            new StatusOutput<>(StringCodec.UTF8), null);
 
     @Mock
     private ChannelHandlerContext context;
@@ -102,8 +101,8 @@ class PubSubCommandHandlerUnitTests {
             return null;
         });
 
-        when(clientResources.commandLatencyCollector()).thenReturn(
-                new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
+        when(clientResources.commandLatencyCollector())
+                .thenReturn(new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
         when(clientResources.tracing()).thenReturn(Tracing.disabled());
 
         sut = new PubSubCommandHandler<>(ClientOptions.create(), clientResources, StringCodec.UTF8, endpoint);
@@ -183,7 +182,8 @@ class PubSubCommandHandlerUnitTests {
         stack.add(command1);
         stack.add(command2);
 
-        sut.channelRead(context, responseBytes("+OK\r\n*4\r\n$8\r\npmessage\r\n$1\r\n*\r\n$3\r\nfoo\r\n$3\r\nbar\r\n+YEAH\r\n"));
+        sut.channelRead(context,
+                responseBytes("+OK\r\n*4\r\n$8\r\npmessage\r\n$1\r\n*\r\n$3\r\nfoo\r\n$3\r\nbar\r\n+YEAH\r\n"));
 
         assertThat(command1.get()).isEqualTo("OK");
         assertThat(command2.get()).isEqualTo("YEAH");
@@ -199,10 +199,10 @@ class PubSubCommandHandlerUnitTests {
     @Test
     void shouldNotPropagatePartialPubSubResponseToOutput() throws Exception {
 
-        Command<String, String, String> command1 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
-                StringCodec.UTF8), null);
-        Command<String, String, String> command2 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
-                StringCodec.UTF8), null);
+        Command<String, String, String> command1 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(StringCodec.UTF8),
+                null);
+        Command<String, String, String> command2 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(StringCodec.UTF8),
+                null);
 
         sut.channelRegistered(context);
         sut.channelActive(context);
@@ -226,10 +226,10 @@ class PubSubCommandHandlerUnitTests {
     @Test
     void shouldCompleteWithChunkedResponseOnStack() throws Exception {
 
-        Command<String, String, String> command1 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
-                StringCodec.UTF8), null);
-        Command<String, String, String> command2 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
-                StringCodec.UTF8), null);
+        Command<String, String, String> command1 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(StringCodec.UTF8),
+                null);
+        Command<String, String, String> command2 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(StringCodec.UTF8),
+                null);
 
         sut.channelRegistered(context);
         sut.channelActive(context);
@@ -270,10 +270,10 @@ class PubSubCommandHandlerUnitTests {
     @Test
     void shouldCompleteUnsubscribe() throws Exception {
 
-        Command<String, String, String> subCmd = new Command<>(CommandType.SUBSCRIBE,
-                new PubSubOutput<>(StringCodec.UTF8), null);
-        Command<String, String, String> unSubCmd = new Command<>(CommandType.UNSUBSCRIBE, new PubSubOutput<>(
-                StringCodec.UTF8), null);
+        Command<String, String, String> subCmd = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(StringCodec.UTF8),
+                null);
+        Command<String, String, String> unSubCmd = new Command<>(CommandType.UNSUBSCRIBE, new PubSubOutput<>(StringCodec.UTF8),
+                null);
 
         doAnswer((Answer<PubSubEndpoint<String, String>>) inv -> {
             PubSubOutput<String, String, String> out = inv.getArgument(0);
@@ -300,8 +300,8 @@ class PubSubCommandHandlerUnitTests {
     @Test
     void shouldCompleteWithChunkedResponseInterleavedSending() throws Exception {
 
-        Command<String, String, String> command1 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(
-                StringCodec.UTF8), null);
+        Command<String, String, String> command1 = new Command<>(CommandType.SUBSCRIBE, new PubSubOutput<>(StringCodec.UTF8),
+                null);
 
         sut.channelRegistered(context);
         sut.channelActive(context);

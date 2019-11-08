@@ -17,12 +17,12 @@ package io.lettuce.core.commands;
 
 import java.nio.ByteBuffer;
 
-import io.lettuce.core.codec.Utf8StringCodec;
+import io.lettuce.core.codec.StringCodec;
 
 /**
  * @author Mark Paluch
  */
-public class BitStringCodec extends Utf8StringCodec {
+public class BitStringCodec extends StringCodec {
 
     @Override
     public String decodeValue(ByteBuffer bytes) {

@@ -15,6 +15,8 @@
  */
 package io.lettuce.core.protocol;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Redis commands.
  *
@@ -102,7 +104,7 @@ public enum CommandType implements ProtocolKeyword {
     public final byte[] bytes;
 
     CommandType() {
-        bytes = name().getBytes(LettuceCharsets.ASCII);
+        bytes = name().getBytes(StandardCharsets.US_ASCII);
     }
 
     @Override

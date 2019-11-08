@@ -35,7 +35,6 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.test.settings.TestSettings;
@@ -68,13 +67,14 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
         if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node1;
             slave = node2;
-        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
+        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
+                && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node2;
             slave = node1;
         } else {
-            assumeTrue(false, String.format(
-                    "Cannot run the test because I don't have a distinct master and slave but %s and %s", node1Instance,
-                    node2Instance));
+            assumeTrue(false,
+                    String.format("Cannot run the test because I don't have a distinct master and slave but %s and %s",
+                            node1Instance, node2Instance));
         }
 
         connectionToNode1.configSet("requirepass", passwd);

@@ -16,6 +16,7 @@
 package io.lettuce.core.masterslave;
 
 import java.io.Closeable;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -31,7 +32,6 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceLists;
-import io.lettuce.core.protocol.LettuceCharsets;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -48,7 +48,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SentinelTopologyRefresh.class);
-    private static final StringCodec CODEC = new StringCodec(LettuceCharsets.ASCII);
+    private static final StringCodec CODEC = new StringCodec(StandardCharsets.US_ASCII);
     private static final Set<String> PROCESSING_CHANNELS = new HashSet<>(
             Arrays.asList("failover-end", "failover-end-for-timeout"));
 
@@ -155,8 +155,8 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
         SentinelTopologyRefreshConnections collector = collectConnections(connectionFutures);
 
-        CompletionStage<SentinelTopologyRefreshConnections> completionStage = collector.getOrTimeout(timeout, redisClient
-                .getResources().eventExecutorGroup());
+        CompletionStage<SentinelTopologyRefreshConnections> completionStage = collector.getOrTimeout(timeout,
+                redisClient.getResources().eventExecutorGroup());
 
         return completionStage.whenComplete((aVoid, throwable) -> {
 
@@ -359,8 +359,8 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
     private static class TopologyRefreshMessagePredicate implements MessagePredicate {
 
         private final String masterId;
-        private Set<String> TOPOLOGY_CHANGE_CHANNELS = new HashSet<>(Arrays.asList("+slave", "+sdown", "-sdown",
-                "fix-slave-config", "+convert-to-slave", "+role-change"));
+        private Set<String> TOPOLOGY_CHANGE_CHANNELS = new HashSet<>(
+                Arrays.asList("+slave", "+sdown", "-sdown", "fix-slave-config", "+convert-to-slave", "+role-change"));
 
         TopologyRefreshMessagePredicate(String masterId) {
             this.masterId = masterId;

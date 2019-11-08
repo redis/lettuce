@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.GeoCoordinates;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 
 /**
  * @author Mark Paluch
@@ -35,7 +34,7 @@ class GeoCoordinatesListOutputUnitTests {
 
     @Test
     void setIntegerShouldFail() {
-        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

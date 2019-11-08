@@ -17,13 +17,9 @@ package io.lettuce.core.codec;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CoderResult;
+import java.nio.charset.*;
 
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.LettuceCharsets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
@@ -38,8 +34,8 @@ import io.netty.util.CharsetUtil;
  */
 public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder<String, String> {
 
-    public static final StringCodec UTF8 = new StringCodec(LettuceCharsets.UTF8);
-    public static final StringCodec ASCII = new StringCodec(LettuceCharsets.ASCII);
+    public static final StringCodec UTF8 = new StringCodec(StandardCharsets.UTF_8);
+    public static final StringCodec ASCII = new StringCodec(StandardCharsets.US_ASCII);
 
     private static final byte[] EMPTY = new byte[0];
 

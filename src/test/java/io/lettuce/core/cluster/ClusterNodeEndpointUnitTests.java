@@ -34,7 +34,6 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
@@ -49,8 +48,8 @@ import io.lettuce.test.Futures;
 @ExtendWith(MockitoExtension.class)
 class ClusterNodeEndpointUnitTests {
 
-    private AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.APPEND,
-            new StatusOutput<>(StringCodec.UTF8), null));
+    private AsyncCommand<String, String, String> command = new AsyncCommand<>(
+            new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8), null));
 
     private Queue<RedisCommand<String, String, ?>> disconnectedBuffer;
 

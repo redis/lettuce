@@ -31,7 +31,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.*;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.sentinel.SentinelTestSettings;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.settings.TestSettings;
@@ -54,10 +53,9 @@ class MasterSlaveSentinelIntegrationTests extends TestSupport {
     @Test
     void testMasterSlaveSentinelBasic() {
 
-        RedisURI uri = RedisURI
-                .create("redis-sentinel://127.0.0.1:21379,127.0.0.1:22379,127.0.0.1:26379?sentinelMasterId=mymaster&timeout=5s");
-        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient,
-                StringCodec.UTF8, uri);
+        RedisURI uri = RedisURI.create(
+                "redis-sentinel://127.0.0.1:21379,127.0.0.1:22379,127.0.0.1:26379?sentinelMasterId=mymaster&timeout=5s");
+        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8, uri);
 
         connection.setReadFrom(ReadFrom.MASTER);
         String server = slaveCall(connection);
@@ -72,8 +70,8 @@ class MasterSlaveSentinelIntegrationTests extends TestSupport {
         RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), SentinelTestSettings.MASTER_ID)
                 .withClientName("my-client").build();
 
-        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient,
-                StringCodec.UTF8, redisURI);
+        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
+                redisURI);
 
         assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
         connection.sync().quit();
@@ -85,10 +83,9 @@ class MasterSlaveSentinelIntegrationTests extends TestSupport {
     @Test
     void testMasterSlaveSentinelWithTwoUnavailableSentinels() {
 
-        RedisURI uri = RedisURI
-                .create("redis-sentinel://127.0.0.1:21379,127.0.0.1:22379,127.0.0.1:26379?sentinelMasterId=mymaster&timeout=5s");
-        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient,
-                StringCodec.UTF8, uri);
+        RedisURI uri = RedisURI.create(
+                "redis-sentinel://127.0.0.1:21379,127.0.0.1:22379,127.0.0.1:26379?sentinelMasterId=mymaster&timeout=5s");
+        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8, uri);
 
         connection.setReadFrom(ReadFrom.MASTER);
         String server = connection.sync().info("replication");
@@ -123,7 +120,7 @@ class MasterSlaveSentinelIntegrationTests extends TestSupport {
         connection.setReadFrom(ReadFrom.REPLICA);
         slaveCall(connection);
 
-        assertThat(channels.size()).isEqualTo(count + 2 /* connections */+ 1 /* sentinel connections */);
+        assertThat(channels.size()).isEqualTo(count + 2 /* connections */ + 1 /* sentinel connections */);
 
         connection.close();
     }

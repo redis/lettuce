@@ -15,10 +15,10 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.protocol.LettuceCharsets.buffer;
 import static io.lettuce.core.protocol.RedisStateMachine.State.Type.*;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -41,7 +41,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class RedisStateMachine {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisStateMachine.class);
-    private static final ByteBuffer QUEUED = buffer("QUEUED");
+    private static final ByteBuffer QUEUED = StandardCharsets.US_ASCII.encode("QUEUED");
 
     static class State {
         enum Type {

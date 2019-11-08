@@ -15,6 +15,8 @@
  */
 package io.lettuce.core.protocol;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Keyword modifiers for redis commands.
  *
@@ -45,7 +47,7 @@ public enum CommandKeyword implements ProtocolKeyword {
     public final byte[] bytes;
 
     private CommandKeyword() {
-        bytes = name().getBytes(LettuceCharsets.ASCII);
+        bytes = name().getBytes(StandardCharsets.US_ASCII);
     }
 
     @Override

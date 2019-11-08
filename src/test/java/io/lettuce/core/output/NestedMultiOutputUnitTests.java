@@ -15,8 +15,9 @@
  */
 package io.lettuce.core.output;
 
-import static io.lettuce.core.protocol.LettuceCharsets.buffer;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +32,7 @@ class NestedMultiOutputUnitTests {
     void nestedMultiError() {
 
         NestedMultiOutput<String, String> output = new NestedMultiOutput<>(StringCodec.UTF8);
-        output.setError(buffer("Oops!"));
+        output.setError(StandardCharsets.US_ASCII.encode("Oops!"));
         assertThat(output.getError()).isNotNull();
     }
 }

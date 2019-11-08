@@ -30,7 +30,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
@@ -46,8 +45,8 @@ class ClusterCommandUnitTests {
     private RedisChannelWriter writerMock;
 
     private ClusterCommand<String, String, String> sut;
-    private Command<String, String, String> command = new Command<>(CommandType.TYPE,
-            new StatusOutput<>(StringCodec.UTF8), null);
+    private Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(StringCodec.UTF8),
+            null);
 
     @BeforeEach
     void before() {
