@@ -32,7 +32,7 @@ import io.lettuce.core.event.Event;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.resource.FastShutdown;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.HashedWheelTimer;
@@ -118,7 +118,7 @@ class DefaultClientResourcesUnitTests {
         assertThat(sut.eventBus()).isSameAs(eventBusMock);
         assertThat(sut.nettyCustomizer()).isSameAs(nettyCustomizer);
 
-        assertThat(Futures.get(sut.shutdown())).isTrue();
+        assertThat(TestFutures.getOrTimeout(sut.shutdown())).isTrue();
 
         verifyZeroInteractions(executorMock);
         verifyZeroInteractions(groupProviderMock);
@@ -149,7 +149,7 @@ class DefaultClientResourcesUnitTests {
         assertThat(copy.timer()).isSameAs(timerMock2).isNotSameAs(timerMock);
         assertThat(sut.eventBus()).isSameAs(eventBusMock);
 
-        assertThat(Futures.get(sut.shutdown())).isTrue();
+        assertThat(TestFutures.getOrTimeout(sut.shutdown())).isTrue();
 
         verifyZeroInteractions(executorMock);
         verifyZeroInteractions(groupProviderMock);
@@ -168,7 +168,7 @@ class DefaultClientResourcesUnitTests {
         assertThat(eventLoopGroup.executorCount()).isEqualTo(3);
         assertThat(sut.ioThreadPoolSize()).isEqualTo(3);
 
-        assertThat(Futures.get(sut.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
+        assertThat(TestFutures.getOrTimeout(sut.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
     }
 
     @Test
@@ -181,7 +181,7 @@ class DefaultClientResourcesUnitTests {
 
         StepVerifier.create(eventBus.get()).then(() -> eventBus.publish(event)).expectNext(event).thenCancel().verify();
 
-        assertThat(Futures.get(sut.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
+        assertThat(TestFutures.getOrTimeout(sut.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
     }
 
     @Test

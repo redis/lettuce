@@ -34,7 +34,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.commands.CustomCommandIntegrationTests;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
 
 /**
@@ -89,7 +89,7 @@ class CustomClusterCommandIntegrationTests extends TestSupport {
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         connection.dispatch(async);
 
-        assertThat(Futures.get((RedisFuture) async)).isEqualTo("PONG");
+        assertThat(TestFutures.getOrTimeout((RedisFuture) async)).isEqualTo("PONG");
     }
 
     @Test
@@ -107,8 +107,8 @@ class CustomClusterCommandIntegrationTests extends TestSupport {
         AsyncCommand<String, String, String> async2 = new AsyncCommand<>(command2);
         connection.dispatch(Arrays.asList(async1, async2));
 
-        assertThat(Futures.get(async1.toCompletableFuture())).isEqualTo("PONG");
-        assertThat(Futures.get(async2.toCompletableFuture())).isEqualTo("PONG");
+        assertThat(TestFutures.getOrTimeout(async1.toCompletableFuture())).isEqualTo("PONG");
+        assertThat(TestFutures.getOrTimeout(async2.toCompletableFuture())).isEqualTo("PONG");
     }
 
     @Test
@@ -128,9 +128,9 @@ class CustomClusterCommandIntegrationTests extends TestSupport {
         AsyncCommand<String, String, String> async3 = new AsyncCommand<>(command3);
         connection.dispatch(Arrays.asList(async1, async2, async3));
 
-        assertThat(Futures.get(async1.toCompletableFuture())).isEqualTo("OK");
-        assertThat(Futures.get(async2.toCompletableFuture())).isEqualTo("value");
-        assertThat(Futures.get(async3.toCompletableFuture())).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(async1.toCompletableFuture())).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(async2.toCompletableFuture())).isEqualTo("value");
+        assertThat(TestFutures.getOrTimeout(async3.toCompletableFuture())).isEqualTo("OK");
     }
 
     @Test

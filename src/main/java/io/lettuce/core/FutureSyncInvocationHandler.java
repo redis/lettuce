@@ -41,14 +41,13 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
     FutureSyncInvocationHandler(StatefulConnection<?, ?> connection, Object asyncApi, Class<?>[] interfaces) {
         this.connection = connection;
-        this.timeoutProvider = new TimeoutProvider(() -> connection.getOptions().getTimeoutOptions(), () -> connection
-                .getTimeout().toNanos());
+        this.timeoutProvider = new TimeoutProvider(() -> connection.getOptions().getTimeoutOptions(),
+                () -> connection.getTimeout().toNanos());
         this.asyncApi = asyncApi;
         this.translator = MethodTranslator.of(asyncApi.getClass(), interfaces);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
 
         try {

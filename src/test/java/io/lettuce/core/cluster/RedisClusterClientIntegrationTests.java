@@ -51,7 +51,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.test.Delay;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
@@ -249,7 +249,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         RedisFuture<String> resultMoved = redis1.async().set(ClusterTestSettings.KEY_A, value);
 
-        assertThatThrownBy(() -> Futures.await(resultMoved)).hasMessageContaining("MOVED 15495");
+        assertThatThrownBy(() -> TestFutures.awaitOrTimeout(resultMoved)).hasMessageContaining("MOVED 15495");
 
         clusterClient.reloadPartitions();
         RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
@@ -308,18 +308,18 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         assertThat(setB.toCompletableFuture()).isInstanceOf(AsyncCommand.class);
 
-        Futures.await(setB);
+        TestFutures.awaitOrTimeout(setB);
         assertThat(setB.getError()).isNull();
-        assertThat(Futures.get(setB)).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(setB)).isEqualTo("OK");
 
         // gets redirection to node 3
         RedisFuture<String> setA = connection.set(ClusterTestSettings.KEY_A, value);
 
         assertThat((CompletionStage) setA).isInstanceOf(AsyncCommand.class);
 
-        Futures.await(setA);
+        TestFutures.awaitOrTimeout(setA);
         assertThat(setA.getError()).isNull();
-        assertThat(Futures.get(setA)).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(setA)).isEqualTo("OK");
 
         connection.getStatefulConnection().close();
     }
@@ -379,7 +379,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         List<String> time = sync.time();
         assertThat(time).hasSize(2);
 
-        Futures.await(connection.async().quit());
+        TestFutures.awaitOrTimeout(connection.async().quit());
 
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
@@ -418,7 +418,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         List<String> time = sync.time();
         assertThat(time).hasSize(2);
 
-        Futures.await(connection.async().quit());
+        TestFutures.awaitOrTimeout(connection.async().quit());
 
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
@@ -496,7 +496,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         RedisClusterNode partition = connection.getPartitions().getPartition(0);
 
-        StatefulRedisConnection<String, String> node = Futures.get(connection.getConnectionAsync(partition.getNodeId()));
+        StatefulRedisConnection<String, String> node = TestFutures
+                .getOrTimeout(connection.getConnectionAsync(partition.getNodeId()));
 
         assertThat(node.sync().ping()).isEqualTo("PONG");
     }
@@ -516,7 +517,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     void testStatefulConnection() {
         RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
 
-        assertThat(Futures.get(async.ping())).isEqualTo("PONG");
+        assertThat(TestFutures.getOrTimeout(async.ping())).isEqualTo("PONG");
     }
 
     @Test
@@ -541,7 +542,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         // commands are dispatched to a different connection, therefore it works for us.
         sync.set(ClusterTestSettings.KEY_B, value);
 
-        Futures.await(connection.async().quit());
+        TestFutures.awaitOrTimeout(connection.async().quit());
 
         assertThat(ReflectionTestUtils.getField(connection, "readOnly")).isEqualTo(Boolean.TRUE);
 

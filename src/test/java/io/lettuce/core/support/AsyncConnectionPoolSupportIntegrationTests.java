@@ -35,7 +35,7 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.StatefulRedisClusterConnectionImpl;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.netty.channel.group.ChannelGroup;
@@ -73,8 +73,8 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
         borrowAndClose(pool);
         borrowAndCloseAsync(pool);
 
-        Futures.await(pool.release(Futures.get(pool.acquire()).sync().getStatefulConnection()));
-        Futures.await(pool.release(Futures.get(pool.acquire()).async().getStatefulConnection()));
+        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire()).sync().getStatefulConnection()));
+        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire()).async().getStatefulConnection()));
 
         assertThat(channels).hasSize(1);
 
@@ -95,9 +95,9 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
         borrowAndReturn(pool);
         borrowAndClose(pool);
 
-        StatefulRedisConnection<String, String> c1 = Futures.get(pool.acquire());
-        StatefulRedisConnection<String, String> c2 = Futures.get(pool.acquire());
-        StatefulRedisConnection<String, String> c3 = Futures.get(pool.acquire());
+        StatefulRedisConnection<String, String> c1 = TestFutures.getOrTimeout(pool.acquire());
+        StatefulRedisConnection<String, String> c2 = TestFutures.getOrTimeout(pool.acquire());
+        StatefulRedisConnection<String, String> c3 = TestFutures.getOrTimeout(pool.acquire());
 
         assertThat(channels).hasSize(3);
 
@@ -118,7 +118,7 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
 
         borrowAndReturn(pool);
 
-        StatefulRedisConnection<String, String> connection = Futures.get(pool.acquire());
+        StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
         assertThat(Proxy.isProxyClass(connection.getClass())).isFalse();
         pool.release(connection);
 
@@ -131,7 +131,7 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
         AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
                 () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
 
-        StatefulRedisConnection<String, String> connection = Futures.get(pool.acquire());
+        StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
         RedisCommands<String, String> sync = connection.sync();
         sync.set(key, value);
 
@@ -152,7 +152,7 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
         AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
                 () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
 
-        StatefulRedisConnection<String, String> connection = Futures.get(pool.acquire());
+        StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
         RedisCommands<String, String> sync = connection.sync();
 
         assertThat(connection).isInstanceOf(StatefulRedisConnection.class).isNotInstanceOf(
@@ -176,7 +176,7 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
         AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
                 () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create(), true);
 
-        StatefulRedisConnection<String, String> connection = Futures.get(pool.acquire());
+        StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
         RedisCommands<String, String> sync = connection.sync();
         sync.ping();
 
@@ -202,7 +202,7 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
             return c.async().ping().whenComplete((s, throwable) -> pool.release(c));
         });
 
-        Futures.await(pingResponse);
+        TestFutures.awaitOrTimeout(pingResponse);
         assertThat(pingResponse).isCompletedWithValue("PONG");
 
         pool.close();
@@ -211,17 +211,17 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
     private void borrowAndReturn(AsyncPool<StatefulRedisConnection<String, String>> pool) {
 
         for (int i = 0; i < 10; i++) {
-            StatefulRedisConnection<String, String> connection = Futures.get(pool.acquire());
+            StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
             RedisCommands<String, String> sync = connection.sync();
             sync.ping();
-            Futures.await(pool.release(connection));
+            TestFutures.awaitOrTimeout(pool.release(connection));
         }
     }
 
     private void borrowAndClose(AsyncPool<StatefulRedisConnection<String, String>> pool) {
 
         for (int i = 0; i < 10; i++) {
-            StatefulRedisConnection<String, String> connection = Futures.get(pool.acquire());
+            StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
             RedisCommands<String, String> sync = connection.sync();
             sync.ping();
             connection.close();
@@ -231,10 +231,10 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
     private void borrowAndCloseAsync(AsyncPool<StatefulRedisConnection<String, String>> pool) {
 
         for (int i = 0; i < 10; i++) {
-            StatefulRedisConnection<String, String> connection = Futures.get(pool.acquire());
+            StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
             RedisCommands<String, String> sync = connection.sync();
             sync.ping();
-            Futures.get(connection.closeAsync());
+            TestFutures.getOrTimeout(connection.closeAsync());
         }
     }
 }

@@ -135,7 +135,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     void authInvalidPassword() {
         RedisAsyncCommands<String, String> async = client.connect().async();
         try {
-            Futures.await(async.auth("invalid"));
+            TestFutures.awaitOrTimeout(async.auth("invalid"));
             fail("Authenticated with invalid password");
         } catch (RedisException e) {
             assertThat(e.getMessage()).isEqualTo("ERR Client sent AUTH, but no password is set");
@@ -150,7 +150,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     void selectInvalid() {
         RedisAsyncCommands<String, String> async = client.connect().async();
         try {
-            Futures.await(async.select(1024));
+            TestFutures.awaitOrTimeout(async.select(1024));
             fail("Selected invalid db index");
         } catch (RedisException e) {
             assertThat(e.getMessage()).startsWith("ERR");

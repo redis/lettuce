@@ -380,7 +380,7 @@ class SslIntegrationTests extends TestSupport {
 
         Wait.untilTrue(() -> connection2.pubsubChannels().containsAll(Arrays.asList("c1", "c2"))).waitOrTimeout();
 
-        Futures.await(connection.quit());
+        TestFutures.awaitOrTimeout(connection.quit());
 
         List<String> future = connection2.pubsubChannels();
         assertThat(future).doesNotContain("c1", "c2");
@@ -390,7 +390,7 @@ class SslIntegrationTests extends TestSupport {
 
         RedisFuture<Void> defectFuture = connection.subscribe("foo");
 
-        assertThatThrownBy(() -> Futures.await(defectFuture)).hasCauseInstanceOf(DecoderException.class)
+        assertThatThrownBy(() -> TestFutures.awaitOrTimeout(defectFuture)).hasCauseInstanceOf(DecoderException.class)
                 .hasRootCauseInstanceOf(GeneralSecurityException.class);
 
         assertThat(defectFuture.toCompletableFuture()).isDone();

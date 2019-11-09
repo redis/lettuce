@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 
 /**
  * @author Mark Paluch
@@ -57,7 +57,7 @@ class BoundedAsyncPoolUnitTests {
 
         BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.create());
 
-        String object = Futures.get(pool.acquire());
+        String object = TestFutures.getOrTimeout(pool.acquire());
 
         assertThat(pool.getIdle()).isEqualTo(0);
         assertThat(object).isEqualTo("1");
@@ -79,7 +79,7 @@ class BoundedAsyncPoolUnitTests {
         BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.builder().minIdle(2)
                 .build());
 
-        Futures.await(pool.acquire());
+        TestFutures.awaitOrTimeout(pool.acquire());
 
         assertThat(pool.getIdle()).isEqualTo(2);
         assertThat(pool.getObjectCount()).isEqualTo(3);
@@ -91,7 +91,7 @@ class BoundedAsyncPoolUnitTests {
         BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.builder().minIdle(2)
                 .maxTotal(2).build());
 
-        Futures.await(pool.acquire());
+        TestFutures.awaitOrTimeout(pool.acquire());
 
         assertThat(pool.getIdle()).isEqualTo(1);
         assertThat(pool.getObjectCount()).isEqualTo(2);
@@ -102,7 +102,7 @@ class BoundedAsyncPoolUnitTests {
 
         BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.create());
 
-        String object = Futures.get(pool.acquire());
+        String object = TestFutures.getOrTimeout(pool.acquire());
         assertThat(pool.getObjectCount()).isEqualTo(1);
         pool.release(object);
 
@@ -114,9 +114,9 @@ class BoundedAsyncPoolUnitTests {
 
         BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.create());
 
-        pool.release(Futures.get(pool.acquire()));
+        pool.release(TestFutures.getOrTimeout(pool.acquire()));
 
-        assertThat(Futures.get(pool.acquire())).isEqualTo("1");
+        assertThat(TestFutures.getOrTimeout(pool.acquire())).isEqualTo("1");
         assertThat(pool.getIdle()).isEqualTo(0);
     }
 
@@ -128,7 +128,7 @@ class BoundedAsyncPoolUnitTests {
 
         List<String> objects = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            objects.add(Futures.get(pool.acquire()));
+            objects.add(TestFutures.getOrTimeout(pool.acquire()));
         }
 
         for (int i = 0; i < 2; i++) {
@@ -150,10 +150,10 @@ class BoundedAsyncPoolUnitTests {
         BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.builder().maxTotal(4)
                 .build());
 
-        String object1 = Futures.get(pool.acquire());
-        String object2 = Futures.get(pool.acquire());
-        String object3 = Futures.get(pool.acquire());
-        String object4 = Futures.get(pool.acquire());
+        String object1 = TestFutures.getOrTimeout(pool.acquire());
+        String object2 = TestFutures.getOrTimeout(pool.acquire());
+        String object3 = TestFutures.getOrTimeout(pool.acquire());
+        String object4 = TestFutures.getOrTimeout(pool.acquire());
 
         assertThat(pool.getIdle()).isZero();
         assertThat(pool.getObjectCount()).isEqualTo(4);
@@ -180,10 +180,10 @@ class BoundedAsyncPoolUnitTests {
 
         for (int i = 0; i < 20; i++) {
 
-            String object1 = Futures.get(pool.acquire());
-            String object2 = Futures.get(pool.acquire());
-            String object3 = Futures.get(pool.acquire());
-            String object4 = Futures.get(pool.acquire());
+            String object1 = TestFutures.getOrTimeout(pool.acquire());
+            String object2 = TestFutures.getOrTimeout(pool.acquire());
+            String object3 = TestFutures.getOrTimeout(pool.acquire());
+            String object4 = TestFutures.getOrTimeout(pool.acquire());
 
             assertThat(pool.acquire()).isCompletedExceptionally();
 

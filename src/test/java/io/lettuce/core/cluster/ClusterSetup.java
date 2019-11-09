@@ -23,7 +23,7 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.settings.TestSettings;
 
@@ -110,7 +110,8 @@ class ClusterSetup {
 
         Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
 
-        Futures.await(connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port6).clusterReplicate(
+        TestFutures.awaitOrTimeout(connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port6)
+                .clusterReplicate(
                 node1.clusterMyId()));
 
         clusterRule.getClusterClient().reloadPartitions();

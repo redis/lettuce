@@ -29,9 +29,10 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.*;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 
 /**
  * @author Mark Paluch
@@ -67,12 +68,12 @@ public class AsyncCommandUnitTests {
     @Test
     void awaitAllCompleted() {
         sut.complete();
-        assertThat(LettuceFutures.awaitAll(5, TimeUnit.MILLISECONDS, sut)).isTrue();
+        assertThat(Futures.await(5, TimeUnit.MILLISECONDS, sut)).isTrue();
     }
 
     @Test
     void awaitAll() {
-        assertThat(LettuceFutures.awaitAll(-1, TimeUnit.NANOSECONDS, sut)).isFalse();
+        assertThat(Futures.awaitAll(-1, TimeUnit.NANOSECONDS, sut)).isFalse();
     }
 
     @Test
@@ -98,7 +99,7 @@ public class AsyncCommandUnitTests {
     void awaitAllWithExecutionException() {
         sut.completeExceptionally(new RedisCommandExecutionException("error"));
 
-        assertThatThrownBy(() -> LettuceFutures.awaitAll(0, TimeUnit.SECONDS, sut)).isInstanceOf(RedisException.class);
+        assertThatThrownBy(() -> Futures.await(0, TimeUnit.SECONDS, sut)).isInstanceOf(RedisException.class);
     }
 
     @Test
@@ -126,7 +127,7 @@ public class AsyncCommandUnitTests {
     void asyncGet() {
         sut.getOutput().set(StandardCharsets.US_ASCII.encode("one"));
         sut.complete();
-        assertThat(Futures.get(sut.toCompletableFuture())).isEqualTo("one");
+        assertThat(TestFutures.getOrTimeout(sut.toCompletableFuture())).isEqualTo("one");
         sut.getOutput().toString();
     }
 

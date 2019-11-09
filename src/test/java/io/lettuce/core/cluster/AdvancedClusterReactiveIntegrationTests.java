@@ -240,17 +240,17 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
         List<RedisFuture<?>> futures = new ArrayList<>();
         RedisClusterAsyncCommands<String, String> async = commands.getStatefulConnection().async();
-        Futures.await(async.flushall());
+        TestFutures.awaitOrTimeout(async.flushall());
 
         for (int i = 0; i < 1000; i++) {
             futures.add(async.set("key-" + i, "value-" + i));
         }
 
-        Futures.awaitAll(futures);
+        TestFutures.awaitOrTimeout(futures);
 
         for (int i = 0; i < 1000; i++) {
             CompletableFuture<Long> future = commands.keys("*").count().toFuture();
-            Futures.await(future);
+            TestFutures.awaitOrTimeout(future);
             assertThat(future).isCompletedWithValue(1000L);
         }
     }

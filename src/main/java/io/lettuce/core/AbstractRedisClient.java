@@ -194,8 +194,8 @@ public abstract class AbstractRedisClient {
             Class<? extends EventLoopGroup> eventLoopGroupClass = NativeTransports.eventLoopGroupClass();
 
             if (!eventLoopGroups.containsKey(NativeTransports.eventLoopGroupClass())) {
-                eventLoopGroups
-                        .put(eventLoopGroupClass, clientResources.eventLoopGroupProvider().allocate(eventLoopGroupClass));
+                eventLoopGroups.put(eventLoopGroupClass,
+                        clientResources.eventLoopGroupProvider().allocate(eventLoopGroupClass));
             }
         }
 
@@ -294,8 +294,8 @@ public abstract class AbstractRedisClient {
                     initializeChannelAsync0(connectionBuilder, channelReadyFuture, redisAddress);
                 }, channelReadyFuture::completeExceptionally);
 
-        return new DefaultConnectionFuture<>(socketAddressFuture, channelReadyFuture.thenApply(channel -> (T) connectionBuilder
-                .connection()));
+        return new DefaultConnectionFuture<>(socketAddressFuture,
+                channelReadyFuture.thenApply(channel -> (T) connectionBuilder.connection()));
     }
 
     private void initializeChannelAsync0(ConnectionBuilder connectionBuilder, CompletableFuture<Channel> channelReadyFuture,
@@ -348,8 +348,8 @@ public abstract class AbstractRedisClient {
                 if (throwable instanceof RedisConnectionException) {
                     failure = throwable;
                 } else if (throwable instanceof TimeoutException) {
-                    failure = new RedisConnectionException("Could not initialize channel within "
-                            + connectionBuilder.getTimeout(), throwable);
+                    failure = new RedisConnectionException(
+                            "Could not initialize channel within " + connectionBuilder.getTimeout(), throwable);
                 } else {
                     failure = throwable;
                 }
@@ -387,6 +387,7 @@ public abstract class AbstractRedisClient {
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
+
 
         try {
             shutdownAsync(quietPeriod, timeout, timeUnit).get();
@@ -442,7 +443,7 @@ public abstract class AbstractRedisClient {
 
     private CompletableFuture<Void> closeResources() {
 
-        List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
+        List<CompletionStage<Void>> closeFutures = new ArrayList<>();
 
         while (!closeableResources.isEmpty()) {
             Closeable closeableResource = closeableResources.iterator().next();
@@ -471,7 +472,7 @@ public abstract class AbstractRedisClient {
         }
 
         try {
-            closeFutures.add(toCompletableFuture(channels.close()));
+            closeFutures.add(Futures.toCompletionStage(channels.close()));
         } catch (Exception e) {
             logger.debug("Cannot close channels", e);
         }
@@ -480,15 +481,15 @@ public abstract class AbstractRedisClient {
     }
 
     private CompletableFuture<Void> closeClientResources(long quietPeriod, long timeout, TimeUnit timeUnit) {
-        List<CompletableFuture<Void>> groupCloseFutures = new ArrayList<>();
+        List<CompletionStage<?>> groupCloseFutures = new ArrayList<>();
         if (!sharedResources) {
             Future<?> groupCloseFuture = clientResources.shutdown(quietPeriod, timeout, timeUnit);
-            groupCloseFutures.add(toCompletableFuture(groupCloseFuture));
+            groupCloseFutures.add(Futures.toCompletionStage(groupCloseFuture));
         } else {
             for (EventLoopGroup eventExecutors : eventLoopGroups.values()) {
                 Future<?> groupCloseFuture = clientResources.eventLoopGroupProvider().release(eventExecutors, quietPeriod,
                         timeout, timeUnit);
-                groupCloseFutures.add(toCompletableFuture(groupCloseFuture));
+                groupCloseFutures.add(Futures.toCompletionStage(groupCloseFuture));
             }
         }
         return Futures.allOf(groupCloseFutures);
@@ -544,29 +545,5 @@ public abstract class AbstractRedisClient {
     protected void setOptions(ClientOptions clientOptions) {
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         this.clientOptions = clientOptions;
-    }
-
-    private static CompletableFuture<Void> toCompletableFuture(Future<?> future) {
-
-        CompletableFuture<Void> promise = new CompletableFuture<>();
-
-        if (future.isDone() || future.isCancelled()) {
-            if (future.isSuccess()) {
-                promise.complete(null);
-            } else {
-                promise.completeExceptionally(future.cause());
-            }
-            return promise;
-        }
-
-        future.addListener(f -> {
-            if (f.isSuccess()) {
-                promise.complete(null);
-            } else {
-                promise.completeExceptionally(f.cause());
-            }
-        });
-
-        return promise;
     }
 }

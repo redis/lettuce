@@ -34,7 +34,7 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
 
 /**
@@ -114,7 +114,7 @@ class CustomCommandIntegrationTests extends TestSupport {
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         getStandaloneConnection().dispatch(async);
 
-        assertThat(Futures.get(async.toCompletableFuture())).isEqualTo("PONG");
+        assertThat(TestFutures.getOrTimeout(async.toCompletableFuture())).isEqualTo("PONG");
     }
 
     @Test
@@ -134,9 +134,9 @@ class CustomCommandIntegrationTests extends TestSupport {
         AsyncCommand<String, String, String> async3 = new AsyncCommand<>(command3);
         getStandaloneConnection().dispatch(Arrays.asList(async1, async2, async3));
 
-        assertThat(Futures.get(async1.toCompletableFuture())).isEqualTo("OK");
-        assertThat(Futures.get(async2.toCompletableFuture())).isEqualTo("value");
-        assertThat(Futures.get(async3.toCompletableFuture())).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(async1.toCompletableFuture())).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(async2.toCompletableFuture())).isEqualTo("value");
+        assertThat(TestFutures.getOrTimeout(async3.toCompletableFuture())).isEqualTo("OK");
     }
 
     @Test

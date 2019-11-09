@@ -41,7 +41,7 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.KeysAndValues;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
@@ -86,7 +86,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
             RedisClusterAsyncCommands<String, String> nodeConnection = async.getConnection(redisClusterNode.getNodeId());
 
-            String myid = Futures.get(nodeConnection.clusterMyId());
+            String myid = TestFutures.getOrTimeout(nodeConnection.clusterMyId());
             assertThat(myid).isEqualTo(redisClusterNode.getNodeId());
         }
     }
@@ -228,7 +228,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
         Long result = sync.unlink(key);
 
         assertThat(result).isEqualTo(1);
-        assertThat(Futures.get(async.get(key))).isNull();
+        assertThat(TestFutures.getOrTimeout(async.get(key))).isNull();
     }
 
     @Test
@@ -495,7 +495,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         RedisAdvancedClusterAsyncCommands<String, String> async = connectionUnderTest.async();
         // preheat the first connection
-        Futures.await(async.get(key(0)));
+        TestFutures.awaitOrTimeout(async.get(key(0)));
 
         int iterations = 1000;
         async.setAutoFlushCommands(false);
@@ -510,7 +510,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         async.flushCommands();
 
-        boolean result = Futures.awaitAll(futures);
+        boolean result = TestFutures.awaitOrTimeout(futures);
         assertThat(result).isTrue();
 
         for (int i = 0; i < iterations; i++) {

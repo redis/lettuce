@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.test.LettuceExtension;
 
 /**
@@ -67,7 +68,7 @@ class PipeliningIntegrationTests extends TestSupport {
 
         connection.flushCommands();
 
-        LettuceFutures.awaitAll(5, TimeUnit.SECONDS, futures.toArray(new RedisFuture[futures.size()]));
+        Futures.awaitAll(5, TimeUnit.SECONDS, futures.toArray(new RedisFuture[futures.size()]));
 
         verifyExecuted(iterations);
 
@@ -96,7 +97,7 @@ class PipeliningIntegrationTests extends TestSupport {
         verifyNotExecuted(iterations);
 
         connection.flushCommands();
-        boolean result = LettuceFutures.awaitAll(5, TimeUnit.SECONDS, futures.toArray(new RedisFuture[futures.size()]));
+        boolean result = Futures.awaitAll(5, TimeUnit.SECONDS, futures.toArray(new RedisFuture[futures.size()]));
         assertThat(result).isTrue();
 
         connection.close();

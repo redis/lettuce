@@ -26,7 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.TestSupport;
@@ -37,8 +36,9 @@ import io.lettuce.core.dynamic.batch.BatchException;
 import io.lettuce.core.dynamic.batch.BatchExecutor;
 import io.lettuce.core.dynamic.batch.BatchSize;
 import io.lettuce.core.dynamic.batch.CommandBatching;
-import io.lettuce.test.Futures;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 
 /**
  * @author Mark Paluch
@@ -158,7 +158,7 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
         api.setAsync("k4", value);
 
         assertThat(redis.get("k1")).isNull();
-        assertThat(Futures.get(api.setAsync("k5", value))).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(api.setAsync("k5", value))).isEqualTo("OK");
 
         assertThat(redis.get("k1")).isEqualTo(value);
     }
@@ -184,7 +184,7 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
         assertThat(redis.get("k4")).isEqualTo(value);
 
         try {
-            LettuceFutures.awaitAll(1, TimeUnit.SECONDS, llen);
+            Futures.await(1, TimeUnit.SECONDS, llen);
             fail("Missing RedisCommandExecutionException");
         } catch (Exception e) {
             assertThat(e).isInstanceOf(RedisCommandExecutionException.class);

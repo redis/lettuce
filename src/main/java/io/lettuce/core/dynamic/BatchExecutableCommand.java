@@ -26,6 +26,7 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.dynamic.batch.BatchException;
 import io.lettuce.core.dynamic.batch.CommandBatching;
 import io.lettuce.core.dynamic.parameter.ExecutionSpecificParameters;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.RedisCommand;
 
@@ -90,7 +91,7 @@ class BatchExecutableCommand implements ExecutableCommand {
         for (RedisCommand<?, ?, ?> batchTask : batchTasks) {
 
             try {
-                LettuceFutures.awaitAll(timeout, (RedisFuture) batchTask);
+                Futures.await(timeout, (RedisFuture) batchTask);
             } catch (Exception e) {
                 if (exception == null) {
                     failures = new ArrayList<>();

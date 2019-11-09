@@ -42,7 +42,7 @@ import io.lettuce.core.cluster.pubsub.api.sync.NodeSelectionPubSubCommands;
 import io.lettuce.core.cluster.pubsub.api.sync.PubSubNodeSelection;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.support.PubSubTestListener;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
 
 /**
@@ -156,7 +156,8 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
 
-        StatefulRedisPubSubConnection<String, String> node = Futures.get(pubSubConnection.getConnectionAsync(partition
+        StatefulRedisPubSubConnection<String, String> node = TestFutures
+                .getOrTimeout(pubSubConnection.getConnectionAsync(partition
                 .getNodeId()));
 
         assertThat(node.sync().ping()).isEqualTo("PONG");
@@ -168,7 +169,8 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
 
         RedisURI uri = partition.getUri();
-        StatefulRedisPubSubConnection<String, String> node = Futures.get(pubSubConnection.getConnectionAsync(uri.getHost(),
+        StatefulRedisPubSubConnection<String, String> node = TestFutures
+                .getOrTimeout(pubSubConnection.getConnectionAsync(uri.getHost(),
                 uri.getPort()));
 
         assertThat(node.sync().ping()).isEqualTo("PONG");
@@ -230,7 +232,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         PubSubAsyncNodeSelection<String, String> masters = pubSubConnection.async().masters();
         NodeSelectionPubSubAsyncCommands<String, String> commands = masters.commands();
 
-        Futures.await(commands.psubscribe("chann*"));
+        TestFutures.awaitOrTimeout(commands.psubscribe("chann*"));
 
         pubSubConnection2.sync().publish("channel", "message");
 

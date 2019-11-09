@@ -16,10 +16,10 @@
 package io.lettuce.core;
 
 import java.time.Duration;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+
+import io.lettuce.core.internal.Futures;
 
 /**
  * Utility to {@link #awaitAll(long, TimeUnit, Future[])} futures until they are done and to synchronize future execution using
@@ -56,43 +56,7 @@ public class LettuceFutures {
      * @return {@literal true} if all futures complete in time, otherwise {@literal false}
      */
     public static boolean awaitAll(long timeout, TimeUnit unit, Future<?>... futures) {
-
-        try {
-            long nanos = unit.toNanos(timeout);
-            long time = System.nanoTime();
-
-            for (Future<?> f : futures) {
-
-                if (nanos < 0) {
-                    return false;
-                }
-
-                f.get(nanos, TimeUnit.NANOSECONDS);
-
-                long now = System.nanoTime();
-                nanos -= now - time;
-                time = now;
-            }
-
-            return true;
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (TimeoutException e) {
-            return false;
-        } catch (ExecutionException e) {
-
-            if (e.getCause() instanceof RedisCommandExecutionException) {
-                throw ExceptionFactory.createExecutionException(e.getCause().getMessage(), e.getCause());
-            }
-
-            throw new RedisException(e.getCause());
-        } catch (InterruptedException e) {
-
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
-        } catch (Exception e) {
-            throw ExceptionFactory.createExecutionException(null, e);
-        }
+        return Futures.awaitAll(timeout, unit, futures);
     }
 
     /**
@@ -107,33 +71,7 @@ public class LettuceFutures {
      * @return Result of the command.
      */
     public static <T> T awaitOrCancel(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
-
-        try {
-            if (!cmd.await(timeout, unit)) {
-                cmd.cancel(true);
-                throw ExceptionFactory.createTimeoutException(Duration.ofNanos(unit.toNanos(timeout)));
-            }
-            return cmd.get();
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (ExecutionException e) {
-
-            if (e.getCause() instanceof RedisCommandExecutionException) {
-                throw ExceptionFactory.createExecutionException(e.getCause().getMessage(), e.getCause());
-            }
-
-            if (e.getCause() instanceof RedisCommandTimeoutException) {
-                throw new RedisCommandTimeoutException(e.getCause());
-            }
-
-            throw new RedisException(e.getCause());
-        } catch (InterruptedException e) {
-
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
-        } catch (Exception e) {
-            throw ExceptionFactory.createExecutionException(null, e);
-        }
+        return Futures.awaitOrCancel(cmd, timeout, unit);
     }
 
 }

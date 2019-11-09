@@ -125,7 +125,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
 
-            assertThatThrownBy(() -> Futures.await(connection.info())).hasRootCauseInstanceOf(RedisException.class)
+            assertThatThrownBy(() -> TestFutures.awaitOrTimeout(connection.info())).hasRootCauseInstanceOf(RedisException.class)
                     .hasMessageContaining("Invalid first byte");
 
             connection.getStatefulConnection().close();
@@ -227,7 +227,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
             assertThatThrownBy(set1::get).isInstanceOf(CancellationException.class).hasNoCause();
             assertThatThrownBy(set2::get).isInstanceOf(CancellationException.class).hasNoCause();
 
-            assertThatThrownBy(() -> Futures.await(connection.info())).isInstanceOf(RedisException.class)
+            assertThatThrownBy(() -> TestFutures.awaitOrTimeout(connection.info())).isInstanceOf(RedisException.class)
                     .hasMessageContaining("Invalid first byte");
 
             connection.getStatefulConnection().close();

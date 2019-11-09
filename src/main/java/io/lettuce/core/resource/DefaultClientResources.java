@@ -15,8 +15,9 @@
  */
 package io.lettuce.core.resource;
 
-import static io.lettuce.core.resource.Futures.toBooleanPromise;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -27,6 +28,7 @@ import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.event.metrics.DefaultCommandLatencyEventPublisher;
 import io.lettuce.core.event.metrics.MetricEventPublisher;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.metrics.CommandLatencyCollector;
@@ -98,10 +100,8 @@ public class DefaultClientResources implements ClientResources {
 
     static {
 
-        int threads = Math.max(
-                1,
-                SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
-                        Math.max(MIN_IO_THREADS, Runtime.getRuntime().availableProcessors())));
+        int threads = Math.max(1, SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
+                Math.max(MIN_IO_THREADS, Runtime.getRuntime().availableProcessors())));
 
         DEFAULT_IO_THREADS = threads;
         DEFAULT_COMPUTATION_THREADS = threads;
@@ -601,22 +601,8 @@ public class DefaultClientResources implements ClientResources {
         logger.debug("Initiate shutdown ({}, {}, {})", quietPeriod, timeout, timeUnit);
 
         shutdownCalled = true;
-        DefaultPromise<Boolean> overall = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        DefaultPromise<Boolean> lastRelease = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
-                overall);
-
-        aggregator.expectMore(1);
-
-        if (!sharedEventLoopGroupProvider) {
-            aggregator.expectMore(1);
-        }
-
-        if (!sharedEventExecutor) {
-            aggregator.expectMore(1);
-        }
-
-        aggregator.arm();
+        DefaultPromise<Boolean> overall = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
+        List<CompletionStage<?>> stages = new ArrayList<>();
 
         if (metricEventPublisher != null) {
             metricEventPublisher.shutdown();
@@ -628,26 +614,28 @@ public class DefaultClientResources implements ClientResources {
 
         if (!sharedEventLoopGroupProvider) {
             Future<Boolean> shutdown = eventLoopGroupProvider.shutdown(quietPeriod, timeout, timeUnit);
-            if (shutdown instanceof Promise) {
-                aggregator.add((Promise<Boolean>) shutdown);
-            } else {
-                aggregator.add(toBooleanPromise(shutdown));
-            }
+            stages.add(Futures.toCompletionStage(shutdown));
         }
 
         if (!sharedEventExecutor) {
             Future<?> shutdown = eventExecutorGroup.shutdownGracefully(quietPeriod, timeout, timeUnit);
-            aggregator.add(toBooleanPromise(shutdown));
+            stages.add(Futures.toCompletionStage(shutdown));
         }
 
         if (!sharedCommandLatencyCollector) {
             commandLatencyCollector.shutdown();
         }
 
-        aggregator.add(lastRelease);
-        lastRelease.setSuccess(null);
+        Futures.allOf(stages).whenComplete((ignore, throwable) -> {
 
-        return toBooleanPromise(overall);
+            if (throwable != null) {
+                overall.setFailure(throwable);
+            } else {
+                overall.setSuccess(true);
+            }
+        });
+
+        return overall;
     }
 
     @Override

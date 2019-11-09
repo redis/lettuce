@@ -28,7 +28,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
@@ -119,7 +119,7 @@ class RedisClientIntegrationTests extends TestSupport {
         // then
         connectAndClose(redisClient2);
 
-        Futures.await(clientResources.shutdown(0, 0, TimeUnit.MILLISECONDS));
+        TestFutures.awaitOrTimeout(clientResources.shutdown(0, 0, TimeUnit.MILLISECONDS));
 
         assertThat(eventLoopGroups).isEmpty();
         assertThat(executor.isShuttingDown()).isTrue();
@@ -152,7 +152,7 @@ class RedisClientIntegrationTests extends TestSupport {
         assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isFalse();
 
         // cleanup
-        Futures.await(clientResources.shutdown(0, 0, TimeUnit.MILLISECONDS));
+        TestFutures.awaitOrTimeout(clientResources.shutdown(0, 0, TimeUnit.MILLISECONDS));
         assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isTrue();
     }
 

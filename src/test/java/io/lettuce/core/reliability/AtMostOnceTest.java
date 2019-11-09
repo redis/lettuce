@@ -41,7 +41,7 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.ConnectionTestUtil;
 import io.lettuce.test.Delay;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -297,7 +297,7 @@ class AtMostOnceTest extends AbstractRedisClientTest {
 
             connection.flushCommands();
 
-            Futures.await(incr);
+            TestFutures.awaitOrTimeout(incr);
 
         } catch (Exception e) {
             assertThat(e).hasRootCauseInstanceOf(RedisException.class).hasMessageContaining("Connection disconnected");

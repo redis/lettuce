@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -35,6 +34,7 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.DefaultMethods;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.TimeoutProvider;
 import io.lettuce.core.protocol.RedisCommand;
 
@@ -65,8 +65,8 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
     ClusterFutureSyncInvocationHandler(StatefulConnection<K, V> connection, Class<?> asyncCommandsInterface,
             Class<?> nodeSelectionInterface, Class<?> nodeSelectionCommandsInterface, Object asyncApi) {
         this.connection = connection;
-        this.timeoutProvider = new TimeoutProvider(() -> connection.getOptions().getTimeoutOptions(), () -> connection
-                .getTimeout().toNanos());
+        this.timeoutProvider = new TimeoutProvider(() -> connection.getOptions().getTimeoutOptions(),
+                () -> connection.getTimeout().toNanos());
         this.asyncCommandsInterface = asyncCommandsInterface;
         this.nodeSelectionInterface = nodeSelectionInterface;
         this.nodeSelectionCommandsInterface = nodeSelectionCommandsInterface;
@@ -120,7 +120,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
                         return null;
                     }
                 }
-                return LettuceFutures.awaitOrCancel(command, getTimeoutNs(command), TimeUnit.NANOSECONDS);
+                return Futures.awaitOrCancel(command, getTimeoutNs(command), TimeUnit.NANOSECONDS);
             }
 
             return result;
@@ -192,8 +192,8 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
                 asyncCommandsInterface, timeoutProvider);
-        return Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(), new Class<?>[] {
-                nodeSelectionCommandsInterface, nodeSelectionInterface }, h);
+        return Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(),
+                new Class<?>[] { nodeSelectionCommandsInterface, nodeSelectionInterface }, h);
     }
 
     private static MethodHandle lookupDefaultMethod(Method method) {

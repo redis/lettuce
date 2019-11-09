@@ -23,16 +23,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 
-import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.cluster.api.async.AsyncExecutions;
+import io.lettuce.core.internal.Futures;
 
 /**
  * Utility methods to synchronize and create futures.
  *
  * @author Mark Paluch
  */
-public class Futures {
+public class TestFutures {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
@@ -42,7 +42,7 @@ public class Futures {
      * @param futures
      * @return {@literal true} if all {@code futures} are {@link Future#isDone() completed}
      */
-    public static boolean areAllCompleted(Collection<? extends Future<?>> futures) {
+    public static boolean areAllDone(Collection<? extends Future<?>> futures) {
 
         for (Future<?> future : futures) {
             if (!future.isDone()) {
@@ -55,9 +55,9 @@ public class Futures {
     /**
      * Await completion for all {@link Future} guarded by the global {@link #TIMEOUT}.
      */
-    public static boolean await(Future<?> future) {
+    public static boolean awaitOrTimeout(Future<?> future) {
 
-        if (!LettuceFutures.awaitAll(TIMEOUT, future)) {
+        if (!Futures.awaitAll(TIMEOUT, future)) {
             throw new IllegalStateException("Future timeout");
         }
 
@@ -69,8 +69,8 @@ public class Futures {
      *
      * @param executions
      */
-    public static boolean await(AsyncExecutions<?> executions) {
-        return awaitAll(Arrays.asList(executions.futures()));
+    public static boolean awaitOrTimeout(AsyncExecutions<?> executions) {
+        return awaitOrTimeout(Arrays.asList(executions.futures()));
     }
 
     /**
@@ -78,9 +78,9 @@ public class Futures {
      *
      * @param futures
      */
-    public static boolean awaitAll(Collection<? extends Future<?>> futures) {
+    public static boolean awaitOrTimeout(Collection<? extends Future<?>> futures) {
 
-        if (!LettuceFutures.awaitAll(TIMEOUT, futures.toArray(new Future[0]))) {
+        if (!io.lettuce.core.internal.Futures.awaitAll(TIMEOUT, futures.toArray(new Future[0]))) {
             throw new IllegalStateException("Future timeout");
         }
 
@@ -93,9 +93,9 @@ public class Futures {
      * @param future
      * @param <T>
      */
-    public static <T> T get(Future<T> future) {
+    public static <T> T getOrTimeout(Future<T> future) {
 
-        if (!LettuceFutures.awaitAll(TIMEOUT, future)) {
+        if (!Futures.await(TIMEOUT, future)) {
             throw new IllegalStateException("Future timeout");
         }
 
@@ -112,8 +112,8 @@ public class Futures {
      * @param future
      * @param <T>
      */
-    public static <T> T get(CompletableFuture<T> future) {
-        return get((Future<T>) future);
+    public static <T> T getOrTimeout(CompletableFuture<T> future) {
+        return getOrTimeout((Future<T>) future);
     }
 
     /**
@@ -122,8 +122,8 @@ public class Futures {
      * @param completionStage
      * @param <T>
      */
-    public static <T> T get(CompletionStage<T> completionStage) {
-        return get(completionStage.toCompletableFuture());
+    public static <T> T getOrTimeout(CompletionStage<T> completionStage) {
+        return getOrTimeout(completionStage.toCompletableFuture());
     }
 
     /**
@@ -132,8 +132,8 @@ public class Futures {
      * @param future
      * @param <T>
      */
-    public static <T> T get(RedisFuture<T> future) {
-        return get(future.toCompletableFuture());
+    public static <T> T getOrTimeout(RedisFuture<T> future) {
+        return getOrTimeout(future.toCompletableFuture());
     }
 
 }

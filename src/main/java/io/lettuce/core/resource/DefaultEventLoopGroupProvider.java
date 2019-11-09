@@ -15,16 +15,20 @@
  */
 package io.lettuce.core.resource;
 
-import static io.lettuce.core.resource.Futures.toBooleanPromise;
+import static io.lettuce.core.resource.PromiseAdapter.toBooleanPromise;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.EpollProvider;
 import io.lettuce.core.KqueueProvider;
+import io.lettuce.core.internal.Futures;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.*;
@@ -164,7 +168,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         Class<?> key = getKey(release(eventLoopGroup));
 
         if ((key == null && eventLoopGroup.isShuttingDown()) || refCounter.containsKey(eventLoopGroup)) {
-            DefaultPromise<Boolean> promise = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
+            DefaultPromise<Boolean> promise = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
             promise.setSuccess(true);
             return promise;
         }
@@ -203,24 +207,26 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
         shutdownCalled = true;
 
-        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = new HashMap<>(eventLoopGroups);
-
+        List<EventExecutorGroup> copy = new ArrayList<>(eventLoopGroups.values());
         DefaultPromise<Boolean> overall = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-        DefaultPromise<Boolean> lastRelease = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<>(overall);
+        CompletableFuture[] futures = new CompletableFuture[copy.size()];
 
-        aggregator.expectMore(1 + copy.size());
+        for (int i = 0; i < copy.size(); i++) {
 
-        aggregator.arm();
-
-        for (EventExecutorGroup executorGroup : copy.values()) {
-            Promise<Boolean> shutdown = toBooleanPromise(release(executorGroup, quietPeriod, timeout, timeUnit));
-            aggregator.add(shutdown);
+            EventExecutorGroup executorGroup = copy.get(i);
+            futures[i] = Futures.toCompletionStage(release(executorGroup, quietPeriod, timeout, timeUnit))
+                    .toCompletableFuture();
         }
 
-        aggregator.add(lastRelease);
-        lastRelease.setSuccess(null);
+        CompletableFuture.allOf(futures).whenComplete((ignore, throwable) -> {
 
-        return toBooleanPromise(overall);
+            if (throwable != null) {
+                overall.setFailure(throwable);
+            } else {
+                overall.setSuccess(true);
+            }
+        });
+
+        return overall;
     }
 }

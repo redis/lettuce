@@ -25,6 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.internal.Futures;
+
 /**
  * @author Mark Paluch
  */
@@ -41,7 +43,7 @@ class LettuceFuturesUnitTests {
         CompletableFuture<String> f = new CompletableFuture<>();
         f.completeExceptionally(new RedisCommandExecutionException("error"));
 
-        assertThatThrownBy(() -> awaitAll(1, SECONDS, f)).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> Futures.await(1, SECONDS, f)).isInstanceOf(RedisCommandExecutionException.class);
     }
 
     @Test
@@ -50,7 +52,7 @@ class LettuceFuturesUnitTests {
         CompletableFuture<String> f = new CompletableFuture<>();
         Thread.currentThread().interrupt();
 
-        assertThatThrownBy(() -> awaitAll(1, SECONDS, f)).isInstanceOf(RedisCommandInterruptedException.class);
+        assertThatThrownBy(() -> Futures.await(1, SECONDS, f)).isInstanceOf(RedisCommandInterruptedException.class);
     }
 
     @Test
@@ -60,7 +62,7 @@ class LettuceFuturesUnitTests {
         Thread.currentThread().interrupt();
 
         try {
-            awaitAll(1, SECONDS, f);
+            Futures.await(1, SECONDS, f);
         } catch (Exception e) {
         }
 

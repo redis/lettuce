@@ -30,9 +30,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.test.Delay;
-import io.lettuce.test.Futures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 
 /**
  * @author Will Glozer
@@ -55,31 +56,31 @@ class AsyncConnectionIntegrationTests extends TestSupport {
 
     @Test
     void multi() {
-        assertThat(Futures.get(async.multi())).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(async.multi())).isEqualTo("OK");
         Future<String> set = async.set(key, value);
         Future<Long> rpush = async.rpush("list", "1", "2");
         Future<List<String>> lrange = async.lrange("list", 0, -1);
 
         assertThat(!set.isDone() && !rpush.isDone() && !rpush.isDone()).isTrue();
-        assertThat(Futures.get(async.exec())).contains("OK", 2L, list("1", "2"));
+        assertThat(TestFutures.getOrTimeout(async.exec())).contains("OK", 2L, list("1", "2"));
 
-        assertThat(Futures.get(set)).isEqualTo("OK");
-        assertThat(Futures.get(rpush)).isEqualTo(2L);
-        assertThat(Futures.get(lrange)).isEqualTo(list("1", "2"));
+        assertThat(TestFutures.getOrTimeout(set)).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(rpush)).isEqualTo(2L);
+        assertThat(TestFutures.getOrTimeout(lrange)).isEqualTo(list("1", "2"));
     }
 
     @Test
     void watch() {
-        assertThat(Futures.get(async.watch(key))).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(async.watch(key))).isEqualTo("OK");
 
         async.set(key, value + "X");
 
         async.multi();
         Future<String> set = async.set(key, value);
         Future<Long> append = async.append(key, "foo");
-        assertThat(Futures.get(async.exec())).isEmpty();
-        assertThat(Futures.get(set)).isNull();
-        assertThat(Futures.get(append)).isNull();
+        assertThat(TestFutures.getOrTimeout(async.exec())).isEmpty();
+        assertThat(TestFutures.getOrTimeout(set)).isNull();
+        assertThat(TestFutures.getOrTimeout(append)).isNull();
     }
 
     @Test
@@ -95,11 +96,11 @@ class AsyncConnectionIntegrationTests extends TestSupport {
             futures.add(async.lpush(key, "" + i));
         }
 
-        Futures.awaitAll(futures);
+        TestFutures.awaitOrTimeout(futures);
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
 
-        Long len = Futures.get(connection.llen(key));
+        Long len = TestFutures.getOrTimeout(connection.llen(key));
         assertThat(len.intValue()).isEqualTo(1000);
 
         RedisFuture<List<String>> sort = connection.sort(key);
@@ -107,7 +108,7 @@ class AsyncConnectionIntegrationTests extends TestSupport {
 
         sort.thenRun(listener);
 
-        Futures.await(sort);
+        TestFutures.awaitOrTimeout(sort);
         Delay.delay(Duration.ofMillis(100));
 
         assertThat(run).hasSize(1);
@@ -130,7 +131,7 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         RedisAsyncCommands<String, String> connection = client.connect().async();
 
         RedisFuture<String> set = connection.set(key, value);
-        Futures.await(set);
+        TestFutures.awaitOrTimeout(set);
 
         set.thenRun(listener);
 
@@ -144,7 +145,7 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         async.multi();
         Future<String> set = async.set(key, value);
         async.discard();
-        assertThat(Futures.get(set)).isNull();
+        assertThat(TestFutures.getOrTimeout(set)).isNull();
     }
 
     @Test
@@ -155,17 +156,17 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         Future<String> get2 = async.get(key);
         Future<Long> append = async.append(key, value);
 
-        assertThat(LettuceFutures.awaitAll(1, TimeUnit.SECONDS, get1, set, get2, append)).isTrue();
+        assertThat(Futures.awaitAll(1, TimeUnit.SECONDS, get1, set, get2, append)).isTrue();
 
-        assertThat(Futures.get(get1)).isNull();
-        assertThat(Futures.get(set)).isEqualTo("OK");
-        assertThat(Futures.get(get2)).isEqualTo(value);
-        assertThat(Futures.get(append).longValue()).isEqualTo(value.length() * 2);
+        assertThat(TestFutures.getOrTimeout(get1)).isNull();
+        assertThat(TestFutures.getOrTimeout(set)).isEqualTo("OK");
+        assertThat(TestFutures.getOrTimeout(get2)).isEqualTo(value);
+        assertThat(TestFutures.getOrTimeout(append).longValue()).isEqualTo(value.length() * 2);
     }
 
     @Test
     void awaitAllTimeout() {
         Future<KeyValue<String, String>> blpop = async.blpop(1, key);
-        assertThat(LettuceFutures.awaitAll(1, TimeUnit.NANOSECONDS, blpop)).isFalse();
+        assertThat(Futures.await(1, TimeUnit.NANOSECONDS, blpop)).isFalse();
     }
 }

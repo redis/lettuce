@@ -40,7 +40,7 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 
 /**
  * @author Mark Paluch
@@ -111,7 +111,7 @@ class ClusterNodeEndpointUnitTests {
 
         assertThat(command.isDone()).isTrue();
 
-        assertThatThrownBy(() -> Futures.await(command)).isInstanceOf(RedisException.class);
+        assertThatThrownBy(() -> TestFutures.awaitOrTimeout(command)).isInstanceOf(RedisException.class);
     }
 
     @Test
@@ -152,7 +152,7 @@ class ClusterNodeEndpointUnitTests {
 
         sut.close();
 
-        assertThatThrownBy(() -> Futures.await(command)).isInstanceOf(RedisException.class);
+        assertThatThrownBy(() -> TestFutures.awaitOrTimeout(command)).isInstanceOf(RedisException.class);
     }
 
     private void prepareNewEndpoint() {

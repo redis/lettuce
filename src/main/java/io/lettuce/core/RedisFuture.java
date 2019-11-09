@@ -30,8 +30,7 @@ import java.util.concurrent.TimeUnit;
 public interface RedisFuture<V> extends CompletionStage<V>, Future<V> {
 
     /**
-     *
-     * @return error text, if any error occured.
+     * @return error text, if any error occurred.
      */
     String getError();
 

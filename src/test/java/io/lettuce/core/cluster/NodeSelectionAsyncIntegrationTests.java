@@ -41,7 +41,7 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.test.Delay;
-import io.lettuce.test.Futures;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 
@@ -70,12 +70,12 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             expectation.add(key);
-            Futures.await(commands.set(key, value));
+            TestFutures.awaitOrTimeout(commands.set(key, value));
         }
 
         List<String> result = new Vector<>();
 
-        Futures.await(commands.masters().commands().keys(result::add, "*"));
+        TestFutures.awaitOrTimeout(commands.masters().commands().keys(result::add, "*"));
 
         assertThat(result).hasSize(expectation.size());
 
@@ -92,7 +92,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         for (char c = 'a'; c < 'z'; c++) {
             String key = new String(new char[] { c, c, c });
             expectation.add(key);
-            Futures.await(commands.set(key, value));
+            TestFutures.awaitOrTimeout(commands.set(key, value));
         }
 
         Collector<List<String>, List<String>, List<String>> collector = Collector.of(ArrayList::new, List::addAll, (a, b) -> a,
@@ -101,7 +101,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         CompletableFuture<List<String>> future = commands.masters().commands().keys("*").thenCollect(collector)
                 .toCompletableFuture();
 
-        Futures.await(future);
+        TestFutures.awaitOrTimeout(future);
         List<String> result = future.join();
 
         assertThat(result).hasSize(expectation.size());
@@ -118,7 +118,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         CompletableFuture<String> transformed = commands.masters().commands().ping()
                 .thenApply(it -> String.join(" ", it.toArray(new String[0]))).toCompletableFuture();
 
-        Futures.await(transformed);
+        TestFutures.awaitOrTimeout(transformed);
 
         assertThat(transformed.join()).isEqualTo("PONG PONG");
     }
@@ -185,7 +185,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         AsyncExecutions<String> ping = onlyMe.commands().ping();
         CompletionStage<String> completionStage = ping.get(onlyMe.node(0));
 
-        assertThat(Futures.get(completionStage)).isEqualTo("PONG");
+        assertThat(TestFutures.getOrTimeout(completionStage)).isEqualTo("PONG");
     }
 
     @Test
@@ -211,7 +211,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         RedisAdvancedClusterAsyncCommands<String, String> async2 = connection2.async();
 
         AsyncNodeSelection<String, String> masters = async2.masters();
-        Futures.await(masters.commands().configSet("lua-time-limit", "10"));
+        TestFutures.awaitOrTimeout(masters.commands().configSet("lua-time-limit", "10"));
 
         AsyncExecutions<Object> eval = masters.commands().eval("while true do end", STATUS, new String[0]);
 
@@ -222,13 +222,13 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         Delay.delay(Duration.ofMillis(200));
 
         AsyncExecutions<String> kill = commands.masters().commands().scriptKill();
-        Futures.await(kill);
+        TestFutures.awaitOrTimeout(kill);
 
         for (CompletionStage<String> execution : kill) {
-            assertThat(Futures.get(execution)).isEqualTo("OK");
+            assertThat(TestFutures.getOrTimeout(execution)).isEqualTo("OK");
         }
 
-        Futures.await(CompletableFuture.allOf(eval.futures()).exceptionally(throwable -> null));
+        TestFutures.awaitOrTimeout(CompletableFuture.allOf(eval.futures()).exceptionally(throwable -> null));
         for (CompletableFuture<Object> future : eval.futures()) {
             assertThat(future.isDone()).isTrue();
         }
@@ -244,7 +244,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
         assertThat(nodes.size()).isEqualTo(2);
 
-        Futures.await(commands.set(key, value));
+        TestFutures.awaitOrTimeout(commands.set(key, value));
 
         waitForReplication(key, ClusterTestSettings.port4);
 
@@ -257,7 +257,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
             });
         });
 
-        Futures.await(CompletableFuture.allOf(keys.futures()).exceptionally(throwable -> null));
+        TestFutures.awaitOrTimeout(CompletableFuture.allOf(keys.futures()).exceptionally(throwable -> null));
 
         assertThat(t.size()).isGreaterThan(0);
     }
@@ -270,7 +270,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
         assertThat(nodes.size()).isEqualTo(2);
 
-        Futures.await(commands.set(key, value));
+        TestFutures.awaitOrTimeout(commands.set(key, value));
         waitForReplication(key, ClusterTestSettings.port4);
 
         List<Throwable> t = new ArrayList<>();
@@ -284,7 +284,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
             lcs.thenAccept(strings::add);
         });
 
-        Futures.await(CompletableFuture.allOf(keys.futures()).exceptionally(throwable -> null));
+        TestFutures.awaitOrTimeout(CompletableFuture.allOf(keys.futures()).exceptionally(throwable -> null));
         Wait.untilEquals(1, t::size).waitOrTimeout();
 
         assertThat(t).hasSize(1);
@@ -303,9 +303,9 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         Wait.untilNotEquals(null, () -> {
             for (CompletableFuture<String> future : selection.commands().get(key).futures()) {
 
-                Futures.await(future);
+                TestFutures.awaitOrTimeout(future);
 
-                String result = Futures.get((Future<String>) future);
+                String result = TestFutures.getOrTimeout((Future<String>) future);
                 if (result != null) {
                     return result;
                 }
