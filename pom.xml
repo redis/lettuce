@@ -297,7 +297,7 @@
     <dependency>
       <groupId>jakarta.transaction</groupId>
       <artifactId>jakarta.transaction-api</artifactId>
-      <version>1.3.2</version>
+      <version>1.3.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
