@@ -17,14 +17,12 @@ package io.lettuce.core.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -47,8 +45,8 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.settings.TestSettings;
 import io.netty.channel.ConnectTimeoutException;
 
@@ -97,35 +95,6 @@ class AsyncConnectionProviderIntegrationTests {
     @AfterEach
     void after() throws Exception {
         serverSocket.close();
-    }
-
-    @Test
-    void shouldCreateConnection() throws IOException {
-
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
-                TestSettings.port());
-        StatefulRedisConnection<String, String> connection = TestFutures
-                .getOrTimeout(sut.getConnection(connectionKey).toCompletableFuture());
-
-        assertThat(TestFutures.getOrTimeout(sut.getConnection(connectionKey).toCompletableFuture())).isSameAs(connection);
-        sut.close();
-        serverSocket.accept();
-    }
-
-    @Test
-    void shouldMaintainConnectionCount() throws IOException {
-
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
-                TestSettings.port());
-
-        assertThat(sut.getConnectionCount()).isEqualTo(0);
-
-        TestFutures.awaitOrTimeout(sut.getConnection(connectionKey).toCompletableFuture());
-
-        assertThat(sut.getConnectionCount()).isEqualTo(1);
-        sut.close();
-
-        serverSocket.accept();
     }
 
     @Test
@@ -233,51 +202,6 @@ class AsyncConnectionProviderIntegrationTests {
         assertThat(stopWatch.getLastTaskTimeMillis()).isBetween(0L, 1300L);
 
         sut.close();
-        socket.close();
-    }
-
-    @Test
-    void shouldCloseAsync() throws Exception {
-
-        assumeThat(System.getProperty("os.name").toLowerCase()).contains("mac");
-
-        Socket socket = new Socket("localhost", serverSocket.getLocalPort());
-        CountDownLatch connectInitiated = new CountDownLatch(1);
-
-        ClusterClientOptions clientOptions = ClusterClientOptions.builder()
-                .socketOptions(SocketOptions.builder().connectTimeout(1, TimeUnit.SECONDS).build()).build();
-
-        client.setOptions(clientOptions);
-
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
-                TestSettings.port());
-
-        CompletableFuture<StatefulRedisConnection<String, String>> createdConnection = new CompletableFuture<>();
-        Thread t1 = new Thread(() -> {
-            try {
-                CompletableFuture<StatefulRedisConnection<String, String>> future = sut.getConnection(connectionKey)
-                        .toCompletableFuture();
-
-                connectInitiated.countDown();
-                StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(future);
-                createdConnection.complete(connection);
-            } catch (Exception e) {
-                createdConnection.completeExceptionally(e);
-            }
-        });
-
-        t1.start();
-
-        connectInitiated.await();
-
-        sut.close();
-
-        serverSocket.accept();
-
-        StatefulRedisConnection<String, String> connection = createdConnection.join();
-
-        assertThat(connection.isOpen()).isFalse();
-
         socket.close();
     }
 }

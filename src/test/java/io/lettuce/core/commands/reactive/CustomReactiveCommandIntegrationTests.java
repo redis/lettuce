@@ -44,6 +44,7 @@ class CustomReactiveCommandIntegrationTests extends TestSupport {
     @Inject
     CustomReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
+        this.redis.flushdb();
     }
 
     @Test

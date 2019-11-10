@@ -44,8 +44,8 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
-import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.settings.TestSettings;
@@ -55,7 +55,7 @@ import io.netty.channel.Channel;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-@RedisBug("HELLO AUTH currently not working")
+@RedisBug("Cannot unset requirepass")
 class ClientOptionsIntegrationTests extends TestSupport {
 
     private final RedisClient client;

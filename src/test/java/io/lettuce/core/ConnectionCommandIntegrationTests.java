@@ -23,7 +23,6 @@ import java.time.Duration;
 
 import javax.inject.Inject;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -32,7 +31,9 @@ import io.lettuce.RedisBug;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.*;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Will Glozer
@@ -100,11 +101,15 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         assertThatThrownBy(() -> redis.auth("")).isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Disabled("HELLO AUTH currently not working")
+    @Test
     void authReconnect() {
         WithPassword.run(client, () -> {
 
-            RedisCommands<String, String> connection = client.connect().sync();
+            RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(TestSettings.port()).withPassword(passwd)
+                    .build();
+
+            client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build());
+            RedisCommands<String, String> connection = client.connect(uri).sync();
             assertThat(connection.auth(passwd)).isEqualTo("OK");
             assertThat(connection.set(key, value)).isEqualTo("OK");
             connection.quit();
@@ -141,7 +146,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             TestFutures.awaitOrTimeout(async.auth("invalid"));
             fail("Authenticated with invalid password");
         } catch (RedisException e) {
-            assertThat(e.getMessage()).isEqualTo("ERR Client sent AUTH, but no password is set");
+            assertThat(e.getMessage()).startsWith("ERR").contains("AUTH");
             StatefulRedisConnection<String, String> statefulRedisCommands = async.getStatefulConnection();
             assertThat(ReflectionTestUtils.getField(statefulRedisCommands, "password")).isNull();
         } finally {

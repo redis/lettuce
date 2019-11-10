@@ -51,8 +51,8 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.test.Delay;
-import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
@@ -385,9 +385,6 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         time = sync.time();
         assertThat(time).hasSize(2);
-
-        char[] password = (char[]) ReflectionTestUtils.getField(connection, "password");
-        assertThat(new String(password)).isEqualTo("foobared");
 
         connection.close();
         FastShutdown.shutdown(clusterClient);

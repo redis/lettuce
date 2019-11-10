@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.RedisBug;
@@ -45,8 +44,7 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Mark Paluch
  */
-@RedisBug("HELLO AUTH currently not working")
-@Disabled("Redis Bug")
+@RedisBug("Cannot unset requirepass")
 class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
     private StatefulRedisMasterSlaveConnectionImpl<String, String> connection;
@@ -89,8 +87,8 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
         connectionToNode2.configSet("masterauth", passwd);
         connectionToNode2.auth(passwd);
 
-        node1.setPassword(passwd);
-        node2.setPassword(passwd);
+        master.setPassword(passwd);
+        replica.setPassword(passwd);
 
         connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
                 Arrays.asList(master, replica));
@@ -101,14 +99,16 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
     void after() throws Exception {
 
         if (connectionToNode1 != null) {
-            connectionToNode1.configSet("requirepass", "");
-            connectionToNode1.configSet("masterauth", "").get(1, TimeUnit.SECONDS);
+            connectionToNode1.configSet("requirepass", null);
+            connectionToNode1.configSet("masterauth", null).get(1, TimeUnit.SECONDS);
+            connectionToNode1.configRewrite();
             connectionToNode1.getStatefulConnection().close();
         }
 
         if (connectionToNode2 != null) {
-            connectionToNode2.configSet("requirepass", "");
-            connectionToNode2.configSet("masterauth", "").get(1, TimeUnit.SECONDS);
+            connectionToNode2.configSet("requirepass", null);
+            connectionToNode2.configSet("masterauth", null).get(1, TimeUnit.SECONDS);
+            connectionToNode2.configRewrite();
             connectionToNode2.getStatefulConnection().close();
         }
 

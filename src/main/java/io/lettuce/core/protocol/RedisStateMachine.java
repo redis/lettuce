@@ -88,7 +88,7 @@ public class RedisStateMachine {
              *
              * @since 6.0/RESP3
              */
-            VERBATIM,
+            VERBATIM, VERBATIM_STRING,
 
             /**
              * First byte: {@code (}.
@@ -316,7 +316,7 @@ public class RedisStateMachine {
                     if (length == NOT_FOUND) {
                         safeSet(output, null, command);
                     } else {
-                        state.type = BYTES;
+                        state.type = state.type == VERBATIM ? VERBATIM_STRING : BYTES;
                         state.count = length + TERMINATOR_LENGTH;
                         buffer.markReaderIndex();
                         continue loop;
@@ -374,6 +374,14 @@ public class RedisStateMachine {
 
                     continue loop;
 
+                case VERBATIM_STRING:
+                    if ((bytes = readBytes(buffer, state.count)) == null) {
+                        break loop;
+                    }
+                    // skip txt: and mkd:
+                    bytes.position(bytes.position() + 4);
+                    safeSet(output, bytes, command);
+                    break;
                 case BYTES:
                     if ((bytes = readBytes(buffer, state.count)) == null) {
                         break loop;

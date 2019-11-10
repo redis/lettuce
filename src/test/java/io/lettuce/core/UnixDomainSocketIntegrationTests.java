@@ -27,6 +27,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -93,6 +94,7 @@ class UnixDomainSocketIntegrationTests {
         FastShutdown.shutdown(redisClient);
     }
 
+    @Disabled("https://github.com/antirez/redis/issues/6160")
     @Test
     void sentinel_RedisClientWithSocket() throws Exception {
 
@@ -118,6 +120,7 @@ class UnixDomainSocketIntegrationTests {
         FastShutdown.shutdown(redisClient);
     }
 
+    @Disabled("https://github.com/antirez/redis/issues/6160")
     @Test
     void sentinel_ConnectToSocket() throws Exception {
 
@@ -143,6 +146,7 @@ class UnixDomainSocketIntegrationTests {
         FastShutdown.shutdown(redisClient);
     }
 
+    @Disabled("https://github.com/antirez/redis/issues/6160")
     @Test
     void sentinel_socket_and_inet() throws Exception {
 
