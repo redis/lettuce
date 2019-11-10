@@ -73,11 +73,11 @@ public class ConnectionEvents {
     /**
      * Internal event when a channel is activated.
      */
-    public static class PingBeforeActivate {
+    public static class HandshakeEvent {
 
         private final RedisCommand<?, ?, ?> command;
 
-        public PingBeforeActivate(RedisCommand<?, ?, ?> command) {
+        public HandshakeEvent(RedisCommand<?, ?, ?> command) {
             this.command = command;
         }
 

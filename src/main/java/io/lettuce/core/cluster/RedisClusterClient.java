@@ -541,8 +541,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, codec,
                 endpoint, getFirstUri(), socketAddressSupplier,
-                () -> new PubSubCommandHandler<>(clientOptions,
-                        clientResources, codec, endpoint));
+                () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
                 connection.close();
@@ -601,16 +600,14 @@ public class RedisClusterClient extends AbstractRedisClient {
                     .onErrorResume(t -> connect(socketAddressSupplier, codec, endpoint, connection, commandHandlerSupplier));
         }
 
-        return connectionMono
-                .flatMap(
-                        c -> c.reactive().command().collectList()
-                                //
-                                .map(CommandDetailParser::parse)
-                                //
-                                .doOnNext(detail -> c.setState(new RedisState(detail)))
-                                //
-                                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
-                                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
+        return connectionMono.flatMap(c -> c.reactive().command().collectList()
+                //
+                .map(CommandDetailParser::parse)
+                //
+                .doOnNext(detail -> c.setState(new RedisState(detail)))
+                //
+                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
+                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
                 .doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterConnection<K, V>) it).toFuture();
@@ -677,17 +674,13 @@ public class RedisClusterClient extends AbstractRedisClient {
                     .onErrorResume(t -> connect(socketAddressSupplier, codec, endpoint, connection, commandHandlerSupplier));
         }
 
-        return connectionMono
-                .flatMap(
-                        c -> c.reactive()
-                                .command()
-                                .collectList()
-                                //
-                                .map(CommandDetailParser::parse)
-                                //
-                                .doOnNext(detail -> c.setState(new RedisState(detail)))
-                                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
-                                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
+        return connectionMono.flatMap(c -> c.reactive().command().collectList()
+                //
+                .map(CommandDetailParser::parse)
+                //
+                .doOnNext(detail -> c.setState(new RedisState(detail)))
+                .doOnError(e -> c.setState(new RedisState(Collections.emptyList()))).then(Mono.just(c))
+                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
                 .doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterPubSubConnection<K, V>) it).toFuture();
@@ -757,20 +750,22 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2) {
 
-            if (hasPassword(connectionSettings)) {
+            connectionBuilder.pingBeforeConnect(clientOptions.isPingBeforeActivateConnection());
+
+            if (clientOptions.isPingBeforeActivateConnection() && hasPassword(connectionSettings)) {
                 connectionBuilder.auth(connectionSettings.getPassword());
                 connectionBuilder.handshakeAuthResp2();
             }
+
         } else if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP3) {
 
             if (hasPassword(connectionSettings)) {
                 if (LettuceStrings.isNotEmpty(connectionSettings.getUsername())) {
                     connectionBuilder.auth(connectionSettings.getUsername(), connectionSettings.getPassword());
-                    connectionBuilder.handshakeAuthResp3();
                 } else {
                     connectionBuilder.auth("default", connectionSettings.getPassword());
-                    connectionBuilder.handshakeAuthResp3();
                 }
+                connectionBuilder.handshakeAuthResp3();
             } else {
                 connectionBuilder.handshakeResp3();
             }

@@ -17,7 +17,7 @@ package io.lettuce.core;
 
 import static io.lettuce.core.ConnectionEventTrigger.local;
 import static io.lettuce.core.ConnectionEventTrigger.remote;
-import static io.lettuce.core.PlainChannelInitializer.pingBeforeActivate;
+import static io.lettuce.core.PlainChannelInitializer.sendHandshake;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -77,7 +77,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     @Override
     public RedisChannelInitializer build() {
 
-        return new SslChannelInitializer(getPingCommandSupplier(), this::buildHandlers, redisURI, clientResources(),
+        return new SslChannelInitializer(getHandshakeCommandSupplier(), this::buildHandlers, redisURI, clientResources(),
                 getTimeout(), clientOptions().getSslOptions());
     }
 
@@ -86,7 +86,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
      */
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
-        private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;
+        private final Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier;
         private final Supplier<List<ChannelHandler>> handlers;
         private final RedisURI redisURI;
         private final ClientResources clientResources;
@@ -95,11 +95,11 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
 
-        public SslChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier,
+        public SslChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier,
                 Supplier<List<ChannelHandler>> handlers, RedisURI redisURI, ClientResources clientResources, Duration timeout,
                 SslOptions sslOptions) {
 
-            this.pingCommandSupplier = pingCommandSupplier;
+            this.handshakeCommandSupplier = handshakeCommandSupplier;
             this.handlers = handlers;
             this.redisURI = redisURI;
             this.clientResources = clientResources;
@@ -151,7 +151,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             if (channel.pipeline().get("channelActivator") == null) {
                 channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
 
-                    private AsyncCommand<?, ?, ?> pingCommand;
+                    private AsyncCommand<?, ?, ?> handshakeCommand;
 
                     @Override
                     public CompletableFuture<Boolean> channelInitialized() {
@@ -167,7 +167,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                         }
 
                         initializedFuture = new CompletableFuture<>();
-                        pingCommand = null;
+                        handshakeCommand = null;
                         super.channelInactive(ctx);
                     }
 
@@ -184,9 +184,9 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
                             SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
                             if (event.isSuccess()) {
-                                if (pingCommandSupplier != PlainChannelInitializer.NO_PING) {
-                                    pingCommand = pingCommandSupplier.get();
-                                    pingBeforeActivate(pingCommand, initializedFuture, ctx, clientResources, timeout);
+                                if (ConnectionBuilder.isHandshakeEnabled(handshakeCommandSupplier)) {
+                                    handshakeCommand = handshakeCommandSupplier.get();
+                                    sendHandshake(handshakeCommand, initializedFuture, ctx, clientResources, timeout);
                                 } else {
                                     ctx.fireChannelActive();
                                 }

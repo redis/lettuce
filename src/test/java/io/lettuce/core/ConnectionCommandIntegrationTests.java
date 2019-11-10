@@ -33,7 +33,6 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.*;
-import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Will Glozer
@@ -105,11 +104,9 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     void authReconnect() {
         WithPassword.run(client, () -> {
 
-            RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(TestSettings.port()).withPassword(passwd)
-                    .build();
-
-            client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build());
-            RedisCommands<String, String> connection = client.connect(uri).sync();
+            client.setOptions(
+                    ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
+            RedisCommands<String, String> connection = client.connect().sync();
             assertThat(connection.auth(passwd)).isEqualTo("OK");
             assertThat(connection.set(key, value)).isEqualTo("OK");
             connection.quit();

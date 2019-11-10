@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import io.lettuce.core.ConnectionEvents.PingBeforeActivate;
+import io.lettuce.core.ConnectionEvents.HandshakeEvent;
 import io.lettuce.core.event.connection.ConnectedEvent;
 import io.lettuce.core.event.connection.ConnectionActivatedEvent;
 import io.lettuce.core.event.connection.DisconnectedEvent;
@@ -40,18 +40,16 @@ import io.netty.util.Timeout;
  */
 class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
-    static final Supplier<AsyncCommand<?, ?, ?>> NO_PING = () -> null;
-
     private final Supplier<List<ChannelHandler>> handlers;
-    private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;
+    private final Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier;
     private final ClientResources clientResources;
     private final Duration timeout;
 
     private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
 
-    PlainChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier, Supplier<List<ChannelHandler>> handlers,
+    PlainChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier, Supplier<List<ChannelHandler>> handlers,
             ClientResources clientResources, Duration timeout) {
-        this.pingCommandSupplier = pingCommandSupplier;
+        this.handshakeCommandSupplier = handshakeCommandSupplier;
         this.handlers = handlers;
         this.clientResources = clientResources;
         this.timeout = timeout;
@@ -68,7 +66,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
             channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
 
-                private AsyncCommand<?, ?, ?> pingCommand;
+                private AsyncCommand<?, ?, ?> handshakeCommand;
 
                 @Override
                 public CompletableFuture<Boolean> channelInitialized() {
@@ -85,7 +83,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                     }
 
                     initializedFuture = new CompletableFuture<>();
-                    pingCommand = null;
+                    handshakeCommand = null;
                     super.channelInactive(ctx);
                 }
 
@@ -106,9 +104,9 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
                     clientResources.eventBus().publish(new ConnectedEvent(local(ctx), remote(ctx)));
 
-                    if (pingCommandSupplier != NO_PING) {
-                        pingCommand = pingCommandSupplier.get();
-                        pingBeforeActivate(pingCommand, initializedFuture, ctx, clientResources, timeout);
+                    if (ConnectionBuilder.isHandshakeEnabled(handshakeCommandSupplier)) {
+                        handshakeCommand = handshakeCommandSupplier.get();
+                        sendHandshake(handshakeCommand, initializedFuture, ctx, clientResources, timeout);
                     } else {
                         super.channelActive(ctx);
                     }
@@ -131,10 +129,10 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
         clientResources.nettyCustomizer().afterChannelInitialized(channel);
     }
 
-    static void pingBeforeActivate(AsyncCommand<?, ?, ?> cmd, CompletableFuture<Boolean> initializedFuture,
+    static void sendHandshake(AsyncCommand<?, ?, ?> cmd, CompletableFuture<Boolean> initializedFuture,
             ChannelHandlerContext ctx, ClientResources clientResources, Duration timeout) throws Exception {
 
-        ctx.fireUserEventTriggered(new PingBeforeActivate(cmd));
+        ctx.fireUserEventTriggered(new HandshakeEvent(cmd));
 
         Runnable timeoutGuard = () -> {
 
@@ -143,7 +141,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
             }
 
             initializedFuture.completeExceptionally(
-                    ExceptionFactory.createTimeoutException("Cannot initialize channel (PING before activate)", timeout));
+                    ExceptionFactory.createTimeoutException(String.format("Cannot initialize channel (Handshake %s)", cmd.getType().name()), timeout));
         };
 
         Timeout timeoutHandle = clientResources.timer().newTimeout(t -> {
@@ -167,7 +165,6 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 initializedFuture.completeExceptionally(throwable);
             }
         });
-
     }
 
     @Override

@@ -43,8 +43,11 @@ public class ConnectionBuilder {
 
     private static final RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(
             StringCodec.UTF8);
-    private static final Supplier<AsyncCommand<?, ?, ?>> PING_COMMAND_SUPPLIER = () -> new AsyncCommand<>(
+
+    private static final Supplier<AsyncCommand<?, ?, ?>> PING = () -> new AsyncCommand<>(
             INITIALIZING_CMD_BUILDER.ping());
+
+    private static final Supplier<AsyncCommand<?, ?, ?>> NO_PING = () -> null;
 
     private Mono<SocketAddress> socketAddressSupplier;
     private ConnectionEvents connectionEvents;
@@ -62,10 +65,18 @@ public class ConnectionBuilder {
     private String clientName;
     private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
     private ConnectionWatchdog connectionWatchdog;
-    private Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier = ConnectionBuilder.PING_COMMAND_SUPPLIER;
+    private Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier = ConnectionBuilder.PING;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
+    }
+
+    /**
+     * @param handshakeCommandSupplier
+     * @return {@literal true} whether {@code PING}/{@code HELLO} handshake is enabled.
+     */
+    public static boolean isHandshakeEnabled(Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier) {
+        return handshakeCommandSupplier != NO_PING;
     }
 
     protected List<ChannelHandler> buildHandlers() {
@@ -93,18 +104,22 @@ public class ConnectionBuilder {
         return handlers;
     }
 
+    public void pingBeforeConnect(boolean state) {
+        handshakeCommandSupplier = state ? PING : NO_PING;
+    }
+
     public void handshakeAuthResp2() {
-        pingCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
+        handshakeCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
     }
 
     public void handshakeAuthResp3() {
-        pingCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.hello(3, this.username.getBytes(),
+        handshakeCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.hello(3, this.username.getBytes(),
                 encode(this.password), this.clientName != null ? this.clientName.getBytes() : null));
     }
 
     public void handshakeResp3() {
-        pingCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.hello(3, null, null,
-                this.clientName != null ? this.clientName.getBytes() : null));
+        handshakeCommandSupplier = () -> new AsyncCommand<>(
+                INITIALIZING_CMD_BUILDER.hello(3, null, null, this.clientName != null ? this.clientName.getBytes() : null));
     }
 
     protected ConnectionWatchdog createConnectionWatchdog() {
@@ -128,7 +143,7 @@ public class ConnectionBuilder {
     }
 
     public RedisChannelInitializer build() {
-        return new PlainChannelInitializer(pingCommandSupplier, this::buildHandlers, clientResources, timeout);
+        return new PlainChannelInitializer(handshakeCommandSupplier, this::buildHandlers, clientResources, timeout);
     }
 
     public ConnectionBuilder socketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
@@ -248,8 +263,8 @@ public class ConnectionBuilder {
         return endpoint;
     }
 
-    Supplier<AsyncCommand<?, ?, ?>> getPingCommandSupplier() {
-        return pingCommandSupplier;
+    Supplier<AsyncCommand<?, ?, ?>> getHandshakeCommandSupplier() {
+        return handshakeCommandSupplier;
     }
 
     static byte[] encode(char[] chars) {

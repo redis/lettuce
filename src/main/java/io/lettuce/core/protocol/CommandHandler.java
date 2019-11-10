@@ -16,7 +16,7 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.core.ConnectionEvents.Activated;
-import static io.lettuce.core.ConnectionEvents.PingBeforeActivate;
+import static io.lettuce.core.ConnectionEvents.HandshakeEvent;
 import static io.lettuce.core.ConnectionEvents.Reset;
 
 import java.io.IOException;
@@ -207,12 +207,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             channel.config().setAutoRead(true);
         } else if (evt instanceof Reset) {
             reset();
-        } else if (evt instanceof PingBeforeActivate) {
+        } else if (evt instanceof HandshakeEvent) {
 
-            PingBeforeActivate pba = (PingBeforeActivate) evt;
+            HandshakeEvent handshake = (HandshakeEvent) evt;
 
-            stack.addFirst(pba.getCommand());
-            ctx.writeAndFlush(pba.getCommand());
+            stack.addFirst(handshake.getCommand());
+            ctx.writeAndFlush(handshake.getCommand());
             return;
         }
 

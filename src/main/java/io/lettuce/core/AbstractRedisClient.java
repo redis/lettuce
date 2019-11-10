@@ -165,7 +165,9 @@ public abstract class AbstractRedisClient {
 
         if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2) {
 
-            if (hasPassword(redisURI)) {
+            connectionBuilder.pingBeforeConnect(clientOptions.isPingBeforeActivateConnection());
+
+            if (clientOptions.isPingBeforeActivateConnection() && hasPassword(redisURI)) {
                 connectionBuilder.auth(redisURI.getPassword());
                 connectionBuilder.handshakeAuthResp2();
             }
@@ -414,7 +416,6 @@ public abstract class AbstractRedisClient {
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
-
 
         try {
             shutdownAsync(quietPeriod, timeout, timeUnit).get();
