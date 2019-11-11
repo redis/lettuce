@@ -110,7 +110,7 @@
     <spring-batch.version>4.1.2.RELEASE</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
 
-    <junit.version>5.5.0</junit.version>
+    <junit.version>5.5.2</junit.version>
 
     <!-- Remove after parent 32 (support for jdk 13) -->
     <jacoco.version>0.8.4</jacoco.version>
