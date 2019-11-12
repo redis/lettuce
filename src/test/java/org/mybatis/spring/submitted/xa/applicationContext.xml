@@ -47,11 +47,11 @@
 	<bean id="transactionManager" class="com.atomikos.icatch.jta.UserTransactionManager"
 		init-method="init" destroy-method="close" depends-on="userTransactionService">
 
-		<!-- IMPORTANT: disable startup because the userTransactionService above 
+		<!-- IMPORTANT: disable startup because the userTransactionService above
 			does this -->
 		<property name="startupTransactionService" value="false" />
 
-		<!-- when close is called, should we force transactions to terminate or 
+		<!-- when close is called, should we force transactions to terminate or
 			not? -->
 		<property name="forceShutdown" value="false" />
 	</bean>
@@ -78,6 +78,7 @@
 		init-method="init" destroy-method="close">
 		<property name="uniqueResourceName" value="masterDBUniqueName" />
 		<property name="xaDataSourceClassName" value="org.apache.derby.jdbc.EmbeddedXADataSource" />
+		<property name="localTransactionMode" value="true"/>
 		<property name="minPoolSize">
 			<value>1</value>
 		</property>
@@ -96,6 +97,7 @@
 		init-method="init" destroy-method="close">
 		<property name="uniqueResourceName" value="slaveDBUniqueName" />
 		<property name="xaDataSourceClassName" value="org.apache.derby.jdbc.EmbeddedXADataSource" />
+		<property name="localTransactionMode" value="true"/>
 		<property name="minPoolSize">
 			<value>1</value>
 		</property>
@@ -146,4 +148,4 @@
 		<property name="mapperInterface" value="org.mybatis.spring.submitted.xa.UserMapper" />
 	</bean>
 
-</beans>	
+</beans>
