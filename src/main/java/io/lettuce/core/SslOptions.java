@@ -18,6 +18,7 @@ package io.lettuce.core;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.BufferUnderflowException;
 import java.util.Arrays;
 
 import io.lettuce.core.internal.LettuceAssert;
@@ -39,6 +40,8 @@ public class SslOptions {
     private final char[] keystorePassword;
     private final URL truststore;
     private final char[] truststorePassword;
+    private final String[] protocols;
+    private final String[] cipherSuites;
 
     protected SslOptions(Builder builder) {
         this.sslProvider = builder.sslProvider;
@@ -46,6 +49,8 @@ public class SslOptions {
         this.keystorePassword = builder.keystorePassword;
         this.truststore = builder.truststore;
         this.truststorePassword = builder.truststorePassword;
+        this.protocols = builder.protocols;
+        this.cipherSuites = builder.cipherSuites;
     }
 
     protected SslOptions(SslOptions original) {
@@ -54,6 +59,8 @@ public class SslOptions {
         this.keystorePassword = original.keystorePassword;
         this.truststore = original.getTruststore();
         this.truststorePassword = original.getTruststorePassword();
+        this.protocols = original.protocols;
+        this.cipherSuites = original.cipherSuites;
     }
 
     /**
@@ -94,6 +101,8 @@ public class SslOptions {
         private char[] keystorePassword = new char[0];
         private URL truststore;
         private char[] truststorePassword = new char[0];
+        private String[] protocols = null;
+        private String[] cipherSuites = null;
 
         private Builder() {
         }
@@ -277,6 +286,50 @@ public class SslOptions {
         }
 
         /**
+         * Sets the protocol used for the TCP connection established to Redis Server.
+         *
+         * @param String[] list of desired protocols to use.
+         * @return {@code this}
+         */
+        public Builder protocols(String[] protocols) {
+            this.protocols = protocols;
+            return this;
+        }
+
+        /**
+         * Sets only one protocol for the TCP connection
+         *
+         * @param String one protocol {"TLSv1.2", "TLSv1.1", "TLSv1"}
+         * @return [@code this}
+         */
+        public Builder protocols(String protocol) {
+            this.protocols = new String[]{protocol};
+            return this;
+        }
+
+        /**
+         * Sets the cipher suites for the TCP connection established to Redis Server.
+         *
+         * @param String[] list of desired cipher suites
+         * @return {@code this}
+         */
+        public Builder cipherSuites(String[] cipherSuites) {
+            this.cipherSuites = cipherSuites;
+            return this;
+        }
+
+        /**
+         * Sets only cipher suite for the TCP connection
+         *
+         * @param String one protocol
+         * @return [@code this}
+         */
+        public Builder cipherSuites(String cipherSuites) {
+            this.cipherSuites = new String[]{cipherSuites};
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link SslOptions}
          *
          * @return new instance of {@link SslOptions}
@@ -298,6 +351,20 @@ public class SslOptions {
      */
     public URL getKeystore() {
         return keystore;
+    }
+
+    /**
+     * @return the set of protocols
+     */
+    public String[] getProtocols() {
+        return protocols;
+    }
+
+    /**
+     * @return the set of cipher suites
+     */
+    public String[] getCipherSuites() {
+        return cipherSuites;
     }
 
     /**

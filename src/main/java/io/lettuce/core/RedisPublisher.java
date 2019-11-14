@@ -32,7 +32,7 @@ import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.util.context.Context;
-import sun.rmi.runtime.Log;
+
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -161,7 +161,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         final RedisCommand<?, ?, T> command;
         final boolean dissolve;
         private final Executor executor;
-        final ArrayBlockingQueue<Log> logs = new ArrayBlockingQueue<>(1024 * 4);
+        final ArrayBlockingQueue logs = new ArrayBlockingQueue<>(1024 * 4);
 
         // accessed via AtomicLongFieldUpdater
         @SuppressWarnings("unused")
