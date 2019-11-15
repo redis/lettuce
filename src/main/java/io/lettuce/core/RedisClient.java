@@ -838,7 +838,7 @@ public class RedisClient extends AbstractRedisClient {
         } else {
 
             if (isEmpty(redisURI.getSentinelMasterId())) {
-                throw new IllegalArgumentException("TRedisURI for Redis Sentinel requires a masterId");
+                throw new IllegalArgumentException("RedisURI for Redis Sentinel requires a masterId");
             }
 
             for (RedisURI sentinel : redisURI.getSentinels()) {
