@@ -76,7 +76,7 @@ public class CommandDetailParser {
             }
 
             Collection<?> collection = (Collection<?>) o;
-            if (collection.size() != COMMAND_INFO_SIZE) {
+            if (collection.size() < COMMAND_INFO_SIZE) {
                 continue;
             }
 
