@@ -50,7 +50,7 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
   }
 
   @Override
-  protected T doRead() {
+  protected T doRead() throws Exception {
     T next = null;
     if (cursorIterator.hasNext()) {
       next = cursorIterator.next();
@@ -59,7 +59,7 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
   }
 
   @Override
-  protected void doOpen() {
+  protected void doOpen() throws Exception {
     Map<String, Object> parameters = new HashMap<>();
     if (parameterValues != null) {
       parameters.putAll(parameterValues);

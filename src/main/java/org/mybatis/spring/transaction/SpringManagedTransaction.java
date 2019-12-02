@@ -111,7 +111,7 @@ public class SpringManagedTransaction implements Transaction {
    * {@inheritDoc}
    */
   @Override
-  public void close() {
+  public void close() throws SQLException {
     DataSourceUtils.releaseConnection(this.connection, this.dataSource);
   }
 
@@ -119,7 +119,7 @@ public class SpringManagedTransaction implements Transaction {
    * {@inheritDoc}
    */
   @Override
-  public Integer getTimeout() {
+  public Integer getTimeout() throws SQLException {
     ConnectionHolder holder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
     if (holder != null && holder.hasTimeout()) {
       return holder.getTimeToLiveInSeconds();
