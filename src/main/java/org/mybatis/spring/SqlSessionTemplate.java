@@ -389,7 +389,7 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
 
   /**
    * Allow gently dispose bean:
-   * 
+   *
    * <pre>
    * {@code
    *
@@ -407,7 +407,7 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
    * @see "org.springframework.beans.factory.support.DisposableBeanAdapter#CLOSE_METHOD_NAME"
    */
   @Override
-  public void destroy() {
+  public void destroy() throws Exception {
     // This method forces spring disposer to avoid call of SqlSessionTemplate.close() which gives
     // UnsupportedOperationException
   }
