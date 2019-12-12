@@ -28,6 +28,7 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.annotation.mapper.ds1.Ds1Mapper;
 import org.mybatis.spring.mapper.AnnotatedMapper;
+import org.mybatis.spring.mapper.AppConfigWithDefaultPackageScan;
 import org.mybatis.spring.mapper.MapperInterface;
 import org.mybatis.spring.mapper.MapperSubinterface;
 import org.mybatis.spring.mapper.child.MapperChildInterface;
@@ -88,6 +89,19 @@ class MapperScanTest {
     } finally {
       applicationContext.close();
     }
+  }
+
+  @Test
+  void testDefaultMapperScan() {
+    applicationContext.register(AppConfigWithDefaultPackageScan.class);
+
+    startContext();
+
+    // all interfaces with methods should be loaded
+    applicationContext.getBean("mapperInterface");
+    applicationContext.getBean("mapperSubinterface");
+    applicationContext.getBean("mapperChildInterface");
+    applicationContext.getBean("annotatedMapper");
   }
 
   @Test

@@ -70,11 +70,11 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
     AnnotationAttributes mapperScanAttrs = AnnotationAttributes
         .fromMap(importingClassMetadata.getAnnotationAttributes(MapperScan.class.getName()));
     if (mapperScanAttrs != null) {
-      registerBeanDefinitions(mapperScanAttrs, registry, generateBaseBeanName(importingClassMetadata, 0));
+      registerBeanDefinitions(mapperScanAttrs, registry, generateBaseBeanName(importingClassMetadata, 0), getDefaultBasePackage(importingClassMetadata));
     }
   }
 
-  void registerBeanDefinitions(AnnotationAttributes annoAttrs, BeanDefinitionRegistry registry, String beanName) {
+  void registerBeanDefinitions(AnnotationAttributes annoAttrs, BeanDefinitionRegistry registry, String beanName, String defaultBasePackage) {
 
     BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(MapperScannerConfigurer.class);
     builder.addPropertyValue("processPropertyPlaceHolders", true);
@@ -119,6 +119,10 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
     basePackages.addAll(Arrays.stream(annoAttrs.getClassArray("basePackageClasses")).map(ClassUtils::getPackageName)
         .collect(Collectors.toList()));
 
+    if (basePackages.isEmpty()) {
+      basePackages.add(defaultBasePackage);
+    }
+
     String lazyInitialization = annoAttrs.getString("lazyInitialization");
     if (StringUtils.hasText(lazyInitialization)) {
       builder.addPropertyValue("lazyInitialization", lazyInitialization);
@@ -132,6 +136,10 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
 
   private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata, int index) {
     return importingClassMetadata.getClassName() + "#" + MapperScannerRegistrar.class.getSimpleName() + "#" + index;
+  }
+
+  private static String getDefaultBasePackage(AnnotationMetadata importingClassMetadata) {
+    return ClassUtils.getPackageName(importingClassMetadata.getClassName());
   }
 
   /**
@@ -150,7 +158,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
       if (mapperScansAttrs != null) {
         AnnotationAttributes[] annotations = mapperScansAttrs.getAnnotationArray("value");
         for (int i = 0; i < annotations.length; i++) {
-          registerBeanDefinitions(annotations[i], registry, generateBaseBeanName(importingClassMetadata, i));
+          registerBeanDefinitions(annotations[i], registry, generateBaseBeanName(importingClassMetadata, i), getDefaultBasePackage(importingClassMetadata));
         }
       }
     }
