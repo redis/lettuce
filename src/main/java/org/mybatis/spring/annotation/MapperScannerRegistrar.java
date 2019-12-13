@@ -70,11 +70,11 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
     AnnotationAttributes mapperScanAttrs = AnnotationAttributes
         .fromMap(importingClassMetadata.getAnnotationAttributes(MapperScan.class.getName()));
     if (mapperScanAttrs != null) {
-      registerBeanDefinitions(mapperScanAttrs, registry, generateBaseBeanName(importingClassMetadata, 0), getDefaultBasePackage(importingClassMetadata));
+      registerBeanDefinitions(importingClassMetadata, mapperScanAttrs, registry, generateBaseBeanName(importingClassMetadata, 0));
     }
   }
 
-  void registerBeanDefinitions(AnnotationAttributes annoAttrs, BeanDefinitionRegistry registry, String beanName, String defaultBasePackage) {
+  void registerBeanDefinitions(AnnotationMetadata annoMeta, AnnotationAttributes annoAttrs, BeanDefinitionRegistry registry, String beanName) {
 
     BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(MapperScannerConfigurer.class);
     builder.addPropertyValue("processPropertyPlaceHolders", true);
@@ -120,7 +120,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
         .collect(Collectors.toList()));
 
     if (basePackages.isEmpty()) {
-      basePackages.add(defaultBasePackage);
+      basePackages.add(getDefaultBasePackage(annoMeta));
     }
 
     String lazyInitialization = annoAttrs.getString("lazyInitialization");
@@ -158,7 +158,7 @@ public class MapperScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
       if (mapperScansAttrs != null) {
         AnnotationAttributes[] annotations = mapperScansAttrs.getAnnotationArray("value");
         for (int i = 0; i < annotations.length; i++) {
-          registerBeanDefinitions(annotations[i], registry, generateBaseBeanName(importingClassMetadata, i), getDefaultBasePackage(importingClassMetadata));
+          registerBeanDefinitions(importingClassMetadata, annotations[i], registry, generateBaseBeanName(importingClassMetadata, i));
         }
       }
     }
