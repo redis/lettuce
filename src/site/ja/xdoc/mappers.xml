@@ -210,7 +210,11 @@ public class AppConfig {
     このアノテーションは前章で説明した <code>&lt;mybatis:scan/&gt;</code> と全く同じ要領で Mapper の検出を行います。
     引数 <code>markerInterface</code>, <code>annotationClass</code> を使えば検出対象のマーカーインターフェイスとアノテーションを指定することもできますし、<code>sqlSessionFactory</code>, <code>sqlSessionTemplate</code> で <code>SqlSessionFactory</code> や <code>SqlSessionTemplate</code> を指定することができます。
 	  </p>
-     
+
+    <p>
+      <span class="label important">NOTE</span> 2.0.4以降では、 <code>basePackageClasses</code> もしくは <code>basePackages</code> が指定されていない場合、このアノテーションが定義されているクラスのパッケージを基準にスキャンします。
+    </p>
+
       <h4>MapperScannerConfigurer</h4>
         
       <p>

@@ -191,7 +191,11 @@ public class AppConfig {
 	  <code>markerInterface</code> 와 <code>annotationClass</code> 프로퍼티를 사용해서 마커 인터페이스와 애노테이션 클래스를 명시하게 한다.
 	  <code>sqlSessionFactory</code> 와 <code>sqlSessionTemplate</code> 프로퍼티를 사용해서 
 	  <code>SqlSessionFactory</code> 나 <code>SqlSessionTemplate</code>을 제공할 수도 있다. </p>
-     
+
+    <p>
+      <span class="label important">NOTE</span> Since 2.0.4, If <code>basePackageClasses</code> or <code>basePackages</code> are not defined, scanning will occur from the package of the class that declares this annotation.
+    </p>
+
       <h4>MapperScannerConfigurer</h4>
         
       <p><code>MapperScannerConfigurer</code>는 평범한 빈처럼 XML애플리케이션 컨텍스트에 포함된 <code>BeanDefinitionRegistryPostProcessor</code> 이다.

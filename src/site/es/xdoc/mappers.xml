@@ -234,7 +234,11 @@ public class AppConfig {
 	   Tambien puedes indicar una <code>SqlSessionFactory</code> o un <code>SqlSessionTemplate</code> específicos
 	   mediante las propiedades <code>sqlSessionFactory</code> y <code>sqlSessionTemplate</code>.
 	  </p>
-     
+
+    <p>
+      <span class="label important">NOTE</span> Since 2.0.4, If <code>basePackageClasses</code> or <code>basePackages</code> are not defined, scanning will occur from the package of the class that declares this annotation.
+    </p>
+
       <h4>MapperScannerConfigurer</h4>
         
       <p>
