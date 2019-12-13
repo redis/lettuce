@@ -195,6 +195,10 @@ public class AppConfig {
           这个注解具有与之前见过的 <code>&lt;mybatis:scan/&gt;</code> 元素一样的工作方式。它也可以通过 <code>markerInterface</code> 和 <code>annotationClass</code> 属性设置标记接口或注解类。通过配置 <code>sqlSessionFactory</code> 和 <code>sqlSessionTemplate</code> 属性，你还能指定一个 <code>SqlSessionFactory</code> 或 <code>SqlSessionTemplate</code>。
         </p>
 
+    <p>
+      <span class="label important">NOTE</span> Since 2.0.4, If <code>basePackageClasses</code> or <code>basePackages</code> are not defined, scanning will occur from the package of the class that declares this annotation.
+    </p>
+
         <h4>MapperScannerConfigurer</h4>
 
         <p>
