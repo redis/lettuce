@@ -33,9 +33,9 @@ import org.springframework.context.annotation.Import;
  * {@link MapperScannerConfigurer} via {@link MapperScannerRegistrar}.
  * 
  * <p>Either {@link #basePackageClasses} or {@link #basePackages} (or its alias
- * {@link #value}) may be specified to define specific packages to scan. If specific
- * packages are not defined, scanning will occur from the package of the
- * class that declares this annotation.
+ * {@link #value}) may be specified to define specific packages to scan.
+ * Since 2.0.4, If specific packages are not defined, scanning will occur from
+ * the package of the class that declares this annotation.
  *
  * <p>
  * Configuration example:
