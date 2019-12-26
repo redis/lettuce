@@ -59,6 +59,10 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
 
     @Override
     protected void initChannel(Channel channel) throws Exception {
+        doInitialize(channel);
+    }
+
+    private void doInitialize(Channel channel) {
 
         if (channel.pipeline().get("channelActivator") == null) {
 
@@ -138,8 +142,8 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                 return;
             }
 
-            initializedFuture.completeExceptionally(ExceptionFactory.createTimeoutException(
-                    "Cannot initialize channel (PING before activate)", timeout));
+            initializedFuture.completeExceptionally(
+                    ExceptionFactory.createTimeoutException("Cannot initialize channel (PING before activate)", timeout));
         };
 
         Timeout timeoutHandle = clientResources.timer().newTimeout(t -> {

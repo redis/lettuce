@@ -61,6 +61,7 @@ class SslIntegrationTests extends TestSupport {
     private static final String KEYSTORE = "work/keystore.jks";
     private static final String TRUSTSTORE = "work/truststore.jks";
     private static final File TRUSTSTORE_FILE = new File(TRUSTSTORE);
+    private static final File CA_CERT_FILE = new File("work/ca/certs/ca.cert.pem");
     private static final int MASTER_SLAVE_BASE_PORT_OFFSET = 2000;
 
     private static final RedisURI URI_NO_VERIFY = sslURIBuilder(0) //
@@ -116,6 +117,17 @@ class SslIntegrationTests extends TestSupport {
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
                 .truststore(TRUSTSTORE_FILE) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyConnection(URI_VERIFY);
+    }
+
+    @Test
+    void standaloneWithPemCert() {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .trustManager(CA_CERT_FILE) //
                 .build();
         setOptions(sslOptions);
 
@@ -238,8 +250,8 @@ class SslIntegrationTests extends TestSupport {
     @Test
     void masterSlaveWithSsl() {
 
-        RedisCommands<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
-                MASTER_SLAVE_URIS_NO_VERIFY).sync();
+        RedisCommands<String, String> connection = MasterSlave
+                .connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_NO_VERIFY).sync();
         connection.set("key", "value");
         assertThat(connection.get("key")).isEqualTo("value");
         connection.getStatefulConnection().close();
@@ -278,8 +290,8 @@ class SslIntegrationTests extends TestSupport {
                 .build();
         setOptions(sslOptions);
 
-        assertThatThrownBy(() -> verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY)).isInstanceOf(
-                RedisConnectionException.class);
+        assertThatThrownBy(() -> verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY))
+                .isInstanceOf(RedisConnectionException.class);
     }
 
     @Test
@@ -290,8 +302,8 @@ class SslIntegrationTests extends TestSupport {
                 .build();
         setOptions(sslOptions);
 
-        assertThatThrownBy(() -> verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY)).isInstanceOf(
-                RedisConnectionException.class);
+        assertThatThrownBy(() -> verifyMasterSlaveConnection(MASTER_SLAVE_URIS_VERIFY))
+                .isInstanceOf(RedisConnectionException.class);
     }
 
     @Test
@@ -304,8 +316,8 @@ class SslIntegrationTests extends TestSupport {
 
     @Test
     void masterSlaveSslWithReconnect() {
-        RedisCommands<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
-                MASTER_SLAVE_URIS_NO_VERIFY).sync();
+        RedisCommands<String, String> connection = MasterSlave
+                .connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_NO_VERIFY).sync();
         connection.quit();
         Delay.delay(Duration.ofMillis(200));
         assertThat(connection.ping()).isEqualTo("PONG");
@@ -314,8 +326,8 @@ class SslIntegrationTests extends TestSupport {
 
     @Test
     void masterSlaveSslWithVerificationWillFail() {
-        assertThatThrownBy(() -> MasterSlave.connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_VERIFY)).isInstanceOf(
-                RedisConnectionException.class);
+        assertThatThrownBy(() -> MasterSlave.connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_VERIFY))
+                .isInstanceOf(RedisConnectionException.class);
     }
 
     @Test
@@ -339,8 +351,8 @@ class SslIntegrationTests extends TestSupport {
                 .build();
         setOptions(sslOptions);
 
-        assertThatThrownBy(() -> verifyMasterSlaveConnection(MASTER_SLAVE_URIS_WITH_ALL_INVALID)).isInstanceOf(
-                RedisConnectionException.class);
+        assertThatThrownBy(() -> verifyMasterSlaveConnection(MASTER_SLAVE_URIS_WITH_ALL_INVALID))
+                .isInstanceOf(RedisConnectionException.class);
     }
 
     @Test
@@ -429,7 +441,8 @@ class SslIntegrationTests extends TestSupport {
 
     private void verifyMasterSlaveConnection(List<RedisURI> redisUris) {
 
-        try (StatefulRedisConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8, redisUris)) {
+        try (StatefulRedisConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
+                redisUris)) {
             connection.sync().ping();
         }
     }
