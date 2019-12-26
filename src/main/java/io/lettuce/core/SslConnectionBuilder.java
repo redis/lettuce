@@ -113,6 +113,14 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             SSLParameters sslParams = new SSLParameters();
 
+            if (sslOptions.getProtocols() != null && sslOptions.getProtocols().length != 0) {
+                sslParams.setProtocols(sslOptions.getProtocols());
+            }
+
+            if (sslOptions.getCipherSuites() != null && sslOptions.getCipherSuites().length != 0) {
+                sslParams.setCipherSuites(sslOptions.getCipherSuites());
+            }
+
             SslContextBuilder sslContextBuilder = SslContextBuilder.forClient().sslProvider(sslOptions.getSslProvider());
             if (redisURI.isVerifyPeer()) {
                 sslParams.setEndpointIdentificationAlgorithm("HTTPS");
