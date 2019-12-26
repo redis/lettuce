@@ -41,8 +41,13 @@ public class CommonsPool2ConfigConverter {
 
         LettuceAssert.notNull(config, "GenericObjectPoolConfig must not be null");
 
-        return BoundedPoolConfig.builder().maxTotal(config.getMaxTotal()).maxIdle(config.getMaxIdle())
-                .minIdle(config.getMinIdle()).testOnAcquire(config.getTestOnBorrow()).testOnCreate(config.getTestOnCreate())
-                .testOnRelease(config.getTestOnReturn()).build();
+        return BoundedPoolConfig.builder() //
+                .maxTotal(config.getMaxTotal() > 0 ? config.getMaxTotal() : Integer.MAX_VALUE)
+                .maxIdle(config.getMaxIdle() > 0 ? config.getMaxIdle() : Integer.MAX_VALUE) //
+                .minIdle(config.getMinIdle()) //
+                .testOnAcquire(config.getTestOnBorrow()) //
+                .testOnCreate(config.getTestOnCreate()) //
+                .testOnRelease(config.getTestOnReturn()) //
+                .build();
     }
 }
