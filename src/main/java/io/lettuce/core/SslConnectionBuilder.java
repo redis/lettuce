@@ -20,18 +20,16 @@ import static io.lettuce.core.ConnectionEventTrigger.remote;
 import static io.lettuce.core.PlainChannelInitializer.pingBeforeActivate;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLParameters;
 
 import io.lettuce.core.event.connection.ConnectedEvent;
 import io.lettuce.core.event.connection.ConnectionActivatedEvent;
@@ -53,6 +51,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
  * Connection builder for SSL connections. This class is part of the internal API.
  *
  * @author Mark Paluch
+ * @author Amin Mohtashami
  */
 public class SslConnectionBuilder extends ConnectionBuilder {
 
@@ -110,36 +109,18 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         @Override
         protected void initChannel(Channel channel) throws Exception {
+            doInitialize(channel);
+        }
 
-            SSLParameters sslParams = new SSLParameters();
+        private void doInitialize(Channel channel) throws IOException, GeneralSecurityException {
 
-            if (sslOptions.getProtocols() != null && sslOptions.getProtocols().length != 0) {
-                sslParams.setProtocols(sslOptions.getProtocols());
-            }
+             SSLParameters sslParams = sslOptions.createSSLParameters();
+            SslContextBuilder sslContextBuilder = sslOptions.createSslContextBuilder();
 
-            if (sslOptions.getCipherSuites() != null && sslOptions.getCipherSuites().length != 0) {
-                sslParams.setCipherSuites(sslOptions.getCipherSuites());
-            }
-
-            SslContextBuilder sslContextBuilder = SslContextBuilder.forClient().sslProvider(sslOptions.getSslProvider());
             if (redisURI.isVerifyPeer()) {
                 sslParams.setEndpointIdentificationAlgorithm("HTTPS");
             } else {
                 sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
-            }
-
-            if (sslOptions.getKeystore() != null) {
-                try (InputStream is = sslOptions.getKeystore().openStream()) {
-                    sslContextBuilder.keyManager(createKeyManagerFactory(is,
-                            sslOptions.getKeystorePassword().length == 0 ? null : sslOptions.getKeystorePassword()));
-                }
-            }
-
-            if (sslOptions.getTruststore() != null) {
-                try (InputStream is = sslOptions.getTruststore().openStream()) {
-                    sslContextBuilder.trustManager(createTrustManagerFactory(is,
-                            sslOptions.getTruststorePassword().length == 0 ? null : sslOptions.getTruststorePassword()));
-                }
             }
 
             SslContext sslContext = sslContextBuilder.build();
@@ -181,8 +162,8 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
                         if (!initializedFuture.isDone()) {
-                            initializedFuture.completeExceptionally(new RedisConnectionException(
-                                    "Connection closed prematurely"));
+                            initializedFuture
+                                    .completeExceptionally(new RedisConnectionException("Connection closed prematurely"));
                         }
 
                         initializedFuture = new CompletableFuture<>();
@@ -244,41 +225,6 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         @Override
         public CompletableFuture<Boolean> channelInitialized() {
             return initializedFuture;
-        }
-
-        private static KeyManagerFactory createKeyManagerFactory(InputStream inputStream, char[] storePassword)
-                throws GeneralSecurityException, IOException {
-
-            KeyStore keyStore = getKeyStore(inputStream, storePassword);
-
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(keyStore, storePassword == null ? new char[0] : storePassword);
-
-            return keyManagerFactory;
-        }
-
-        private static KeyStore getKeyStore(InputStream inputStream, char[] storePassword) throws KeyStoreException,
-                IOException, NoSuchAlgorithmException, CertificateException {
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-
-            try {
-                keyStore.load(inputStream, storePassword);
-            } finally {
-                inputStream.close();
-            }
-            return keyStore;
-        }
-
-        private static TrustManagerFactory createTrustManagerFactory(InputStream inputStream, char[] storePassword)
-                throws GeneralSecurityException, IOException {
-
-            KeyStore trustStore = getKeyStore(inputStream, storePassword);
-
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory
-                    .getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(trustStore);
-
-            return trustManagerFactory;
         }
     }
 }
