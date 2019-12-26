@@ -231,7 +231,7 @@ public interface ClientResources {
      * Returns a builder to create new {@link ClientResources} whose settings are replicated from the current
      * {@link ClientResources}.
      *
-     * @return a a {@link ClientResources.Builder} to create new {@link ClientResources} whose settings are replicated from the
+     * @return a {@link ClientResources.Builder} to create new {@link ClientResources} whose settings are replicated from the
      *         current {@link ClientResources}
      *
      * @since 5.1
