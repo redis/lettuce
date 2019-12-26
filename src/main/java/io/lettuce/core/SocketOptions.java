@@ -165,6 +165,26 @@ public class SocketOptions {
     }
 
     /**
+     * Returns a builder to create new {@link SocketOptions} whose settings are replicated from the current
+     * {@link SocketOptions}.
+     *
+     * @return a {@link SocketOptions.Builder} to create new {@link SocketOptions} whose settings are replicated from the
+     *         current {@link SocketOptions}
+     *
+     * @since 5.3
+     */
+    public SocketOptions.Builder mutate() {
+
+        SocketOptions.Builder builder = builder();
+
+        builder.connectTimeout = this.getConnectTimeout();
+        builder.keepAlive = this.isKeepAlive();
+        builder.tcpNoDelay = this.isTcpNoDelay();
+
+        return builder;
+    }
+
+    /**
      * Returns the connection timeout.
      *
      * @return the connection timeout.
