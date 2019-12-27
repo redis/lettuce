@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import io.lettuce.RedisBug;
 import io.lettuce.core.*;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.sentinel.SentinelTestSettings;
@@ -40,6 +41,7 @@ import io.netty.channel.group.ChannelGroup;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
+@RedisBug("https://github.com/antirez/redis/issues/6160")
 class MasterSlaveSentinelIntegrationTests extends TestSupport {
 
     private final Pattern pattern = Pattern.compile("role:(\\w+)");

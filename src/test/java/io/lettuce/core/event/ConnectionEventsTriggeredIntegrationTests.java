@@ -28,6 +28,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.event.connection.ConnectionEvent;
+import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
 /**
@@ -49,6 +50,6 @@ class ConnectionEventsTriggeredIntegrationTests extends TestSupport {
             assertThat(event.toString()).contains("->");
         }).expectNextCount(3).thenCancel().verify(Duration.of(5, ChronoUnit.SECONDS));
 
-        client.shutdown();
+        FastShutdown.shutdown(client);
     }
 }

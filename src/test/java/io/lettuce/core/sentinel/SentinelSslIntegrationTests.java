@@ -22,6 +22,7 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.RedisBug;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
@@ -41,6 +42,7 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
+@RedisBug("https://github.com/antirez/redis/issues/6160")
 class SentinelSslIntegrationTests extends TestSupport {
 
     private final ClientResources clientResources;

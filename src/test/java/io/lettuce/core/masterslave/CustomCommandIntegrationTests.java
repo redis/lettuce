@@ -28,19 +28,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.RedisBug;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
-import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 
 /**
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
+@RedisBug("https://github.com/antirez/redis/issues/6160")
 class CustomCommandIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;

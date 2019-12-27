@@ -29,14 +29,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.RedisBug;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
-import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.settings.TestSettings;
 
@@ -44,6 +45,7 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
+@RedisBug("https://github.com/antirez/redis/issues/6160")
 public class SentinelConnectionIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;

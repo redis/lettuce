@@ -344,7 +344,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @RedisBug("-inf is suffixed with NULL byte")
+    @RedisBug("-inf is suffixed with NULL byte, https://github.com/antirez/redis/issues/6037")
     @SuppressWarnings({ "unchecked" })
     void zrangebyscoreWithScoresInfinity() {
 

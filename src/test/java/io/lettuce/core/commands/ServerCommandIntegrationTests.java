@@ -90,7 +90,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @RedisBug("RESP error")
+    @RedisBug("https://github.com/antirez/redis/issues/6036")
     void clientGetSetname() {
         assertThat(redis.clientGetname()).isNull();
         assertThat(redis.clientSetname("test")).isEqualTo("OK");

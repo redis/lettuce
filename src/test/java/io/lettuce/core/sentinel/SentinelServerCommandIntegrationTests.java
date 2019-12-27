@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.RedisBug;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -40,6 +41,7 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
+@RedisBug("https://github.com/antirez/redis/issues/6160")
 public class SentinelServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;
@@ -58,7 +60,8 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
         this.sentinel = getSyncConnection(this.connection);
     }
 
-    protected RedisSentinelCommands<String, String> getSyncConnection(StatefulRedisSentinelConnection<String, String> connection) {
+    protected RedisSentinelCommands<String, String> getSyncConnection(
+            StatefulRedisSentinelConnection<String, String> connection) {
         return connection.sync();
     }
 
