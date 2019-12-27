@@ -16,10 +16,13 @@
 package io.lettuce.test;
 
 import java.lang.reflect.UndeclaredThrowableException;
+import java.util.List;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.test.condition.RedisConditions;
 import io.lettuce.test.settings.TestSettings;
 
 /**
@@ -40,7 +43,7 @@ public class WithPassword {
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> commands = connection.sync();
         try {
-            commands.configSet("requirepass", TestSettings.password());
+            enableAuthentication(commands);
             commands.auth(TestSettings.password());
 
             try {
@@ -51,9 +54,35 @@ public class WithPassword {
                 throw new UndeclaredThrowableException(e);
             }
         } finally {
-
-            commands.configSet("requirepass", "");
+            disableAuthentication(commands);
             connection.close();
+        }
+    }
+
+    /**
+     * Enable password authentication via {@code requirepass}.
+     *
+     * @param commands
+     */
+    public static void enableAuthentication(RedisCommands<String, String> commands) {
+        commands.configSet("requirepass", TestSettings.password());
+    }
+
+    /**
+     * Disable password authentication via {@code requirepass} and optionally the {@code ACL} command.
+     *
+     * @param commands
+     */
+    public static void disableAuthentication(RedisCommands<String, String> commands) {
+
+        RedisConditions conditions = RedisConditions.of(commands);
+
+        commands.configSet("requirepass", "");
+
+        if (conditions.hasCommand("ACL")) {
+
+            Command<String, String, List<Object>> command = CliParser.parse("acl setuser default nopass");
+            commands.dispatch(command.getType(), command.getOutput(), command.getArgs());
         }
     }
 

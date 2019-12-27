@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.resource.DefaultRedisClient;
-import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
 /**
@@ -76,29 +75,6 @@ public abstract class AbstractRedisClientTest extends TestSupport {
     public void closeConnection() throws Exception {
         if (redis != null) {
             redis.getStatefulConnection().close();
-        }
-    }
-
-    public abstract class WithPasswordRequired {
-        protected abstract void run(RedisClient client) throws Exception;
-
-        protected WithPasswordRequired() {
-            try {
-                redis.configSet("requirepass", passwd);
-                redis.auth(passwd);
-
-                RedisClient client = newRedisClient();
-                try {
-                    run(client);
-                } catch (Exception e) {
-                    throw new IllegalStateException(e);
-                } finally {
-                    FastShutdown.shutdown(client);
-                }
-            } finally {
-
-                redis.configSet("requirepass", "");
-            }
         }
     }
 }

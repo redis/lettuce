@@ -27,7 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import io.lettuce.RedisBug;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -51,10 +50,11 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @RedisBug("HELLO AUTH currently not working")
     void auth() {
 
         WithPassword.run(client, () -> {
+            client.setOptions(
+                    ClientOptions.builder().pingBeforeActivateConnection(false).protocolVersion(ProtocolVersion.RESP2).build());
             RedisCommands<String, String> connection = client.connect().sync();
             try {
                 connection.ping();

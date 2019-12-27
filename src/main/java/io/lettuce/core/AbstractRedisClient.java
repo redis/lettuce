@@ -33,7 +33,6 @@ import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
-import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.netty.bootstrap.Bootstrap;
@@ -160,31 +159,7 @@ public abstract class AbstractRedisClient {
             redisBootstrap.option(ChannelOption.TCP_NODELAY, socketOptions.isTcpNoDelay());
         }
 
-        connectionBuilder.timeout(redisURI.getTimeout());
-        connectionBuilder.clientName(redisURI.getClientName());
-
-        if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2) {
-
-            connectionBuilder.pingBeforeConnect(clientOptions.isPingBeforeActivateConnection());
-
-            if (clientOptions.isPingBeforeActivateConnection() && hasPassword(redisURI)) {
-                connectionBuilder.auth(redisURI.getPassword());
-                connectionBuilder.handshakeAuthResp2();
-            }
-        } else if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP3) {
-
-            if (hasPassword(redisURI)) {
-                if (LettuceStrings.isNotEmpty(redisURI.getUsername())) {
-                    connectionBuilder.auth(redisURI.getUsername(), redisURI.getPassword());
-                } else {
-                    connectionBuilder.auth("default", redisURI.getPassword());
-                }
-                connectionBuilder.handshakeAuthResp3();
-
-            } else {
-                connectionBuilder.handshakeResp3();
-            }
-        }
+        connectionBuilder.apply(redisURI);
 
         connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);

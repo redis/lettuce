@@ -36,10 +36,12 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.*;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.internal.LettuceFactories;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.test.Delay;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
+import io.lettuce.test.WithPassword;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
@@ -82,44 +84,43 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
 
     @Test
     void auth() {
-        new WithPasswordRequired() {
-            @Override
-            protected void run(RedisClient client) throws Exception {
-                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-                connection.getStatefulConnection().addListener(PubSubCommandTest.this);
-                connection.auth(passwd);
+        WithPassword.run(client, () -> {
 
-                connection.subscribe(channel);
-                assertThat(channels.take()).isEqualTo(channel);
-            }
-        };
+            client.setOptions(
+                    ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
+            RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
+            connection.getStatefulConnection().addListener(PubSubCommandTest.this);
+            connection.auth(passwd);
+
+            connection.subscribe(channel);
+            assertThat(channels.take()).isEqualTo(channel);
+        });
     }
 
     @Test
     void authWithReconnect() {
 
-        new WithPasswordRequired() {
-            @Override
-            protected void run(RedisClient client) throws Exception {
+        WithPassword.run(client, () -> {
 
+            client.setOptions(
+                    ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
 
-                RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-                connection.getStatefulConnection().addListener(PubSubCommandTest.this);
-                connection.auth(passwd);
-                connection.clientSetname("authWithReconnect");
-                connection.subscribe(channel);
+            RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
+            connection.getStatefulConnection().addListener(PubSubCommandTest.this);
+            connection.auth(passwd);
+            connection.clientSetname("authWithReconnect");
+            connection.subscribe(channel);
 
-                assertThat(channels.take()).isEqualTo(channel);
+            assertThat(channels.take()).isEqualTo(channel);
 
-                long id = findNamedClient("authWithReconnect");
-                redis.clientKill(KillArgs.Builder.id(id));
+            long id = findNamedClient("authWithReconnect");
+            redis.clientKill(KillArgs.Builder.id(id));
 
-                Delay.delay(Duration.ofMillis(100));
-                Wait.untilTrue(connection::isOpen).waitOrTimeout();
+            Delay.delay(Duration.ofMillis(100));
+            Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
-                assertThat(channels.take()).isEqualTo(channel);
-            }
-        };
+            assertThat(channels.take()).isEqualTo(channel);
+        });
     }
 
     private long findNamedClient(String name) {
@@ -415,8 +416,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
         TestFutures.awaitOrTimeout(pubsub.subscribe(channel));
 
         assertThatThrownBy(() -> TestFutures.getOrTimeout(pubsub.ping())).isInstanceOf(RedisException.class)
-                .hasMessageContaining(
-                "not allowed");
+                .hasMessageContaining("not allowed");
         pubsub.unsubscribe(channel);
 
         Wait.untilTrue(() -> channels.size() == 2).waitOrTimeout();

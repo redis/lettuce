@@ -308,14 +308,23 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
         ConnectionFuture<?> sync = future;
 
-        if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2
-                && LettuceStrings.isNotEmpty(redisURI.getClientName())) {
-            sync = sync.thenApply(channelHandler -> {
-                connection.setClientName(redisURI.getClientName());
-                return channelHandler;
-            });
-        }
+        if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2) {
 
+            if (!clientOptions.isPingBeforeActivateConnection() && connectionBuilder.hasPassword(redisURI)) {
+                sync = sync.thenCompose(channelHandler -> {
+
+                    CommandArgs<K, V> args = new CommandArgs<>(codec).add(redisURI.getPassword());
+                    return connection.async().dispatch(CommandType.AUTH, new StatusOutput<>(codec), args);
+                });
+            }
+
+            if (LettuceStrings.isNotEmpty(redisURI.getClientName())) {
+                sync = sync.thenApply(channelHandler -> {
+                    connection.setClientName(redisURI.getClientName());
+                    return channelHandler;
+                });
+            }
+        }
         if (redisURI.getDatabase() != 0) {
 
             sync = sync.thenCompose(channelHandler -> {

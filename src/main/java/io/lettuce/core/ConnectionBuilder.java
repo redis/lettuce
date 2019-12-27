@@ -44,8 +44,7 @@ public class ConnectionBuilder {
     private static final RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(
             StringCodec.UTF8);
 
-    private static final Supplier<AsyncCommand<?, ?, ?>> PING = () -> new AsyncCommand<>(
-            INITIALIZING_CMD_BUILDER.ping());
+    private static final Supplier<AsyncCommand<?, ?, ?>> PING = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
 
     private static final Supplier<AsyncCommand<?, ?, ?>> NO_PING = () -> null;
 
@@ -75,8 +74,42 @@ public class ConnectionBuilder {
      * @param handshakeCommandSupplier
      * @return {@literal true} whether {@code PING}/{@code HELLO} handshake is enabled.
      */
-    public static boolean isHandshakeEnabled(Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier) {
+    static boolean isHandshakeEnabled(Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier) {
         return handshakeCommandSupplier != NO_PING;
+    }
+
+    /**
+     * Apply settings from {@link RedisURI}
+     *
+     * @param redisURI
+     */
+    public void apply(RedisURI redisURI) {
+
+        timeout(redisURI.getTimeout());
+        clientName(redisURI.getClientName());
+
+        if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2) {
+
+            pingBeforeConnect(clientOptions.isPingBeforeActivateConnection());
+
+            if (clientOptions.isPingBeforeActivateConnection() && hasPassword(redisURI)) {
+                auth(redisURI.getPassword());
+                handshakeAuthResp2();
+            }
+        } else if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP3) {
+
+            if (hasPassword(redisURI)) {
+                if (LettuceStrings.isNotEmpty(redisURI.getUsername())) {
+                    auth(redisURI.getUsername(), redisURI.getPassword());
+                } else {
+                    auth("default", redisURI.getPassword());
+                }
+                handshakeAuthResp3();
+
+            } else {
+                handshakeResp3();
+            }
+        }
     }
 
     protected List<ChannelHandler> buildHandlers() {
@@ -104,20 +137,20 @@ public class ConnectionBuilder {
         return handlers;
     }
 
-    public void pingBeforeConnect(boolean state) {
+    void pingBeforeConnect(boolean state) {
         handshakeCommandSupplier = state ? PING : NO_PING;
     }
 
-    public void handshakeAuthResp2() {
+    void handshakeAuthResp2() {
         handshakeCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
     }
 
-    public void handshakeAuthResp3() {
+    void handshakeAuthResp3() {
         handshakeCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.hello(3, this.username.getBytes(),
                 encode(this.password), this.clientName != null ? this.clientName.getBytes() : null));
     }
 
-    public void handshakeResp3() {
+    void handshakeResp3() {
         handshakeCommandSupplier = () -> new AsyncCommand<>(
                 INITIALIZING_CMD_BUILDER.hello(3, null, null, this.clientName != null ? this.clientName.getBytes() : null));
     }
@@ -220,6 +253,10 @@ public class ConnectionBuilder {
     public ConnectionBuilder clientName(String clientName) {
         this.clientName = clientName;
         return this;
+    }
+
+    boolean hasPassword(RedisURI connectionSettings) {
+        return connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0;
     }
 
     public ConnectionBuilder auth(String username, char[] password) {

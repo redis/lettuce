@@ -169,7 +169,7 @@ public class RedisConditions {
          * @param version must not be {@literal null} or empty.
          * @return
          */
-        static Version parse(String version) {
+        public static Version parse(String version) {
 
             Assert.hasText(version, "Version must not be null o empty!");
 
