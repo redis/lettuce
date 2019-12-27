@@ -18,11 +18,11 @@ package io.lettuce.core.cluster;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,18 +46,17 @@ class RoundRobinSocketAddressSupplierUnitTests {
     private static RedisURI hap2 = new RedisURI("127.0.0.1", 2, Duration.ofSeconds(1));
     private static RedisURI hap3 = new RedisURI("127.0.0.1", 3, Duration.ofSeconds(1));
     private static RedisURI hap4 = new RedisURI("127.0.0.1", 4, Duration.ofSeconds(1));
+
+    private static InetSocketAddress addr1 = new InetSocketAddress(hap1.getHost(), hap1.getPort());
+    private static InetSocketAddress addr2 = new InetSocketAddress(hap2.getHost(), hap2.getPort());
+    private static InetSocketAddress addr3 = new InetSocketAddress(hap3.getHost(), hap3.getPort());
+    private static InetSocketAddress addr4 = new InetSocketAddress(hap4.getHost(), hap4.getPort());
+
     private static Partitions partitions;
 
     @Mock
     private ClientResources clientResourcesMock;
 
-    @BeforeAll
-    static void beforeClass() {
-
-        hap1.getResolvedAddress();
-        hap2.getResolvedAddress();
-        hap3.getResolvedAddress();
-    }
 
     @BeforeEach
     void before() {
@@ -78,12 +77,12 @@ class RoundRobinSocketAddressSupplierUnitTests {
         RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);
 
-        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap3.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
+        assertThat(sut.get()).isEqualTo(addr1);
+        assertThat(sut.get()).isEqualTo(addr2);
+        assertThat(sut.get()).isEqualTo(addr3);
+        assertThat(sut.get()).isEqualTo(addr1);
 
-        assertThat(sut.get()).isNotEqualTo(hap3.getResolvedAddress());
+        assertThat(sut.get()).isNotEqualTo(addr3);
     }
 
     @Test
@@ -92,16 +91,16 @@ class RoundRobinSocketAddressSupplierUnitTests {
         RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);
 
-        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
+        assertThat(sut.get()).isEqualTo(addr1);
+        assertThat(sut.get()).isEqualTo(addr2);
 
         partitions.add(new RedisClusterNode(hap4, "4", true, "", 0, 0, 0, new ArrayList<>(), new HashSet<>()));
 
-        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap3.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap4.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
+        assertThat(sut.get()).isEqualTo(addr1);
+        assertThat(sut.get()).isEqualTo(addr2);
+        assertThat(sut.get()).isEqualTo(addr3);
+        assertThat(sut.get()).isEqualTo(addr4);
+        assertThat(sut.get()).isEqualTo(addr1);
     }
 
     @Test
@@ -110,13 +109,13 @@ class RoundRobinSocketAddressSupplierUnitTests {
         RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);
 
-        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
+        assertThat(sut.get()).isEqualTo(addr1);
+        assertThat(sut.get()).isEqualTo(addr2);
 
         partitions.remove(partitions.getPartition(2));
 
-        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
-        assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
+        assertThat(sut.get()).isEqualTo(addr1);
+        assertThat(sut.get()).isEqualTo(addr2);
+        assertThat(sut.get()).isEqualTo(addr1);
     }
 }

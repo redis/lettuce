@@ -20,8 +20,6 @@ import static io.lettuce.core.LettuceStrings.isNotEmpty;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -595,7 +593,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         return builder.build();
     }
 
-    private String getAuthority(final String scheme) {
+    private String getAuthority(String scheme) {
 
         String authority = null;
 
@@ -699,7 +697,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * URL encode the {@code str} without slash escaping {@code %2F}
+     * URL encode the {@code str} without slash escaping {@code %2F}.
      *
      * @param str the string to encode.
      * @return the URL-encoded string
@@ -710,24 +708,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    /**
-     *
-     * @return the resolved {@link SocketAddress} based either on host/port or the socket.
-     */
-    public SocketAddress getResolvedAddress() {
-
-        if (getSocket() != null) {
-
-            if (KqueueProvider.isAvailable()) {
-                return KqueueProvider.newSocketAddress(getSocket());
-            }
-
-            return EpollProvider.newSocketAddress(getSocket());
-        }
-
-        return new InetSocketAddress(host, port);
     }
 
     /**

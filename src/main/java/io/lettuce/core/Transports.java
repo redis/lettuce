@@ -16,6 +16,9 @@
 package io.lettuce.core;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.resource.EpollProvider;
+import io.lettuce.core.resource.EventLoopResources;
+import io.lettuce.core.resource.KqueueProvider;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -59,6 +62,9 @@ class Transports {
      */
     static class NativeTransports {
 
+        static EventLoopResources RESOURCES = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
+                : EpollProvider.getResources();
+
         /**
          * @return {@literal true} if a native transport is available.
          */
@@ -70,36 +76,21 @@ class Transports {
          * @return the native transport socket {@link Channel} class.
          */
         static Class<? extends Channel> socketChannelClass() {
-
-            if (KqueueProvider.isAvailable()) {
-                return KqueueProvider.socketChannelClass();
-            }
-
-            return EpollProvider.socketChannelClass();
+            return RESOURCES.socketChannelClass();
         }
 
         /**
          * @return the native transport domain socket {@link Channel} class.
          */
         static Class<? extends Channel> domainSocketChannelClass() {
-
-            if (KqueueProvider.isAvailable()) {
-                return KqueueProvider.domainSocketChannelClass();
-            }
-
-            return EpollProvider.domainSocketChannelClass();
+            return RESOURCES.domainSocketChannelClass();
         }
 
         /**
          * @return the native transport {@link EventLoopGroup} class.
          */
         static Class<? extends EventLoopGroup> eventLoopGroupClass() {
-
-            if (KqueueProvider.isAvailable()) {
-                return KqueueProvider.eventLoopGroupClass();
-            }
-
-            return EpollProvider.eventLoopGroupClass();
+            return RESOURCES.eventLoopGroupClass();
         }
 
         static void assertAvailable() {

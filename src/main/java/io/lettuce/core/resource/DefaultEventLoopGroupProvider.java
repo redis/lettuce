@@ -26,8 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.EpollProvider;
-import io.lettuce.core.KqueueProvider;
 import io.lettuce.core.internal.Futures;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -149,12 +147,22 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             return new NioEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-nioEventLoop", true));
         }
 
-        if (EpollProvider.isAvailable() && EpollProvider.isEventLoopGroup(type)) {
-            return EpollProvider.newEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-epollEventLoop", true));
+        if (EpollProvider.isAvailable()) {
+
+            EventLoopResources resources = EpollProvider.getResources();
+
+            if (resources.matches(type)) {
+                return resources.newEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-epollEventLoop", true));
+            }
         }
 
-        if (KqueueProvider.isAvailable() && KqueueProvider.isEventLoopGroup(type)) {
-            return KqueueProvider.newEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-kqueueEventLoop", true));
+        if (KqueueProvider.isAvailable()) {
+
+            EventLoopResources resources = KqueueProvider.getResources();
+
+            if (resources.matches(type)) {
+                return resources.newEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-kqueueEventLoop", true));
+            }
         }
 
         throw new IllegalArgumentException(String.format("Type %s not supported", type.getName()));

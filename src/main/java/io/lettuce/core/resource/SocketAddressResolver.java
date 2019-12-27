@@ -81,7 +81,7 @@ public class SocketAddressResolver {
     public static SocketAddress resolve(RedisURI redisURI, DnsResolver dnsResolver) {
 
         if (redisURI.getSocket() != null) {
-            return redisURI.getResolvedAddress();
+            return getDomainSocketAddress(redisURI);
         }
 
         try {
@@ -93,7 +93,19 @@ public class SocketAddressResolver {
 
             return new InetSocketAddress(inetAddress[0], redisURI.getPort());
         } catch (UnknownHostException e) {
-            return redisURI.getResolvedAddress();
+            return new InetSocketAddress(redisURI.getHost(), redisURI.getPort());
         }
+    }
+
+    static SocketAddress getDomainSocketAddress(RedisURI redisURI) {
+
+        if (KqueueProvider.isAvailable() || EpollProvider.isAvailable()) {
+            EventLoopResources resources = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
+                    : EpollProvider.getResources();
+            return resources.newSocketAddress(redisURI.getSocket());
+        }
+
+        throw new IllegalStateException(
+                "No native transport available. Make sure that either netty's epoll or kqueue library is on the class path and supported by your operating system.");
     }
 }

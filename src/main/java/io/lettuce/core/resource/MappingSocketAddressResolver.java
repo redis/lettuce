@@ -68,7 +68,7 @@ public class MappingSocketAddressResolver extends SocketAddressResolver {
     public SocketAddress resolve(RedisURI redisURI) {
 
         if (redisURI.getSocket() != null) {
-            return redisURI.getResolvedAddress();
+            return getDomainSocketAddress(redisURI);
         }
 
         HostAndPort hostAndPort = HostAndPort.of(redisURI.getHost(), redisURI.getPort());
@@ -81,7 +81,7 @@ public class MappingSocketAddressResolver extends SocketAddressResolver {
         try {
             return doResolve(mapped);
         } catch (UnknownHostException e) {
-            return redisURI.getResolvedAddress();
+            return new InetSocketAddress(redisURI.getHost(), redisURI.getPort());
         }
     }
 
