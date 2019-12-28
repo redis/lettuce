@@ -22,7 +22,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.internal.Futures;
+import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.ConnectionInitializer;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.channel.Channel;
 
 /**
@@ -36,9 +40,10 @@ public class ConnectionState implements ConnectionInitializer {
 
     private final RedisCommandBuilder<String, String> commandBuilder = new RedisCommandBuilder<>(StringCodec.UTF8);
 
-    private ProtocolVersion requested;
+    private ProtocolVersion requestedProtocolVersion;
     private boolean pingOnConnect;
 
+    private volatile ProtocolVersion negotiatedProtocolVersion;
     private volatile String username;
     private volatile char[] password;
     private volatile int db;
@@ -46,7 +51,7 @@ public class ConnectionState implements ConnectionInitializer {
     private volatile String clientName;
 
     public void setRequestedProtocolVersion(ProtocolVersion requested) {
-        this.requested = requested;
+        this.requestedProtocolVersion = requested;
     }
 
     public void setPingOnConnect(boolean pingOnConnect) {
@@ -77,51 +82,79 @@ public class ConnectionState implements ConnectionInitializer {
         this.clientName = clientName;
     }
 
+    /**
+     * @return the requested {@link ProtocolVersion}. May be {@literal null} if not configured.
+     */
+    public ProtocolVersion getRequestedProtocolVersion() {
+        return requestedProtocolVersion;
+    }
+
+    /**
+     * @return the negotiated {@link ProtocolVersion} once the handshake is done.
+     */
+    public ProtocolVersion getNegotiatedProtocolVersion() {
+        return negotiatedProtocolVersion;
+    }
+
     @Override
     public CompletionStage<Void> initialize(Channel channel) {
 
         CompletableFuture<?> handshake;
 
-        List<RedisCommand<?, ?, ?>> postHandshake = new ArrayList<>();
-
-        if (this.requested == ProtocolVersion.RESP2) {
-            handshake = initiateHandshakeResp2(channel);
-
-            if (this.clientName != null) {
-                postHandshake.add(this.commandBuilder.clientSetname(this.clientName));
-            }
-        } else if (this.requested == ProtocolVersion.RESP3) {
-            handshake = initiateHandshakeResp3(channel);
+        if (this.requestedProtocolVersion == ProtocolVersion.RESP2) {
+            handshake = initializeResp2(channel);
+            negotiatedProtocolVersion = ProtocolVersion.RESP2;
+        } else if (this.requestedProtocolVersion == ProtocolVersion.RESP3) {
+            handshake = initializeResp3(channel);
+        } else if (this.requestedProtocolVersion == null) {
+            handshake = tryHandshakeResp3(channel);
         } else {
-            handshake = new CompletableFuture<>();
-            handshake.completeExceptionally(
-                    new RedisConnectionException("Protocol version" + this.requested + " not supported"));
+            handshake = Futures.failed(
+                    new RedisConnectionException("Protocol version" + this.requestedProtocolVersion + " not supported"));
         }
 
-        if (this.db > 0) {
-            postHandshake.add(this.commandBuilder.select(this.db));
-        }
+        return handshake.thenCompose(ignore -> applyPostHandshake(channel, getNegotiatedProtocolVersion()));
+    }
 
-        if (this.readOnly) {
-            postHandshake.add(this.commandBuilder.readOnly());
-        }
+    private CompletableFuture<?> tryHandshakeResp3(Channel channel) {
 
-        if (!postHandshake.isEmpty()) {
+        CompletableFuture<?> handshake = new CompletableFuture<>();
+        AsyncCommand<String, String, Map<String, Object>> hello = initiateHandshakeResp3(channel);
 
-            List<AsyncCommand<?, ?, ?>> commands = new ArrayList<>();
+        hello.whenComplete((settings, throwable) -> {
 
-            for (RedisCommand<?, ?, ?> redisCommand : postHandshake) {
-
-                AsyncCommand<?, ?, ?> async = new AsyncCommand<>(redisCommand);
-                handshake = handshake.thenCompose(o -> async);
-                commands.add(async);
+            if (throwable != null) {
+                if (isUnknownCommand(hello.getError())) {
+                    fallbackToResp2(channel, handshake);
+                } else {
+                    handshake.completeExceptionally(throwable);
+                }
+            } else {
+                handshake.complete(null);
             }
-
-            channel.writeAndFlush(commands);
-        }
-
-        return handshake.thenRun(() -> {
         });
+
+        return handshake;
+    }
+
+    private void fallbackToResp2(Channel channel, CompletableFuture<?> handshake) {
+
+        initializeResp2(channel).whenComplete((o, nested) -> {
+
+            if (nested != null) {
+                handshake.completeExceptionally(nested);
+            } else {
+                handshake.complete(null);
+            }
+        });
+    }
+
+    private CompletableFuture<?> initializeResp2(Channel channel) {
+        return initiateHandshakeResp2(channel).thenRun(() -> negotiatedProtocolVersion = ProtocolVersion.RESP2);
+    }
+
+    private CompletableFuture<Void> initializeResp3(Channel channel) {
+        return initiateHandshakeResp3(channel).thenRun(() -> negotiatedProtocolVersion = ProtocolVersion.RESP3);
     }
 
     /**
@@ -147,7 +180,7 @@ public class ConnectionState implements ConnectionInitializer {
      * @param channel
      * @return
      */
-    private CompletableFuture<Map<String, Object>> initiateHandshakeResp3(Channel channel) {
+    private AsyncCommand<String, String, Map<String, Object>> initiateHandshakeResp3(Channel channel) {
 
         if (hasPassword()) {
 
@@ -156,6 +189,35 @@ public class ConnectionState implements ConnectionInitializer {
         }
 
         return dispatch(channel, this.commandBuilder.hello(3, null, null, this.clientName));
+    }
+
+    private CompletableFuture<Void> applyPostHandshake(Channel channel, ProtocolVersion negotiatedProtocolVersion) {
+
+        List<AsyncCommand<?, ?, ?>> postHandshake = new ArrayList<>();
+
+        if (this.clientName != null && negotiatedProtocolVersion == ProtocolVersion.RESP2) {
+            postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetname(this.clientName)));
+        }
+
+        if (this.db > 0) {
+            postHandshake.add(new AsyncCommand<>(this.commandBuilder.select(this.db)));
+        }
+
+        if (this.readOnly) {
+            postHandshake.add(new AsyncCommand<>(this.commandBuilder.readOnly()));
+        }
+
+        if (postHandshake.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return dispatch(channel, postHandshake);
+    }
+
+    private CompletableFuture<Void> dispatch(Channel channel, List<AsyncCommand<?, ?, ?>> commands) {
+
+        CompletionStage<Void> writeFuture = Futures.toCompletionStage(channel.writeAndFlush(commands));
+        return CompletableFuture.allOf(Futures.allOf(commands), writeFuture.toCompletableFuture());
     }
 
     private <T> AsyncCommand<String, String, T> dispatch(Channel channel, Command<String, String, T> command) {
@@ -168,6 +230,12 @@ public class ConnectionState implements ConnectionInitializer {
                 future.completeExceptionally(writeFuture.cause());
             }
         });
+
         return future;
     }
+
+    private static boolean isUnknownCommand(String error) {
+        return LettuceStrings.isNotEmpty(error) && error.startsWith("ERR unknown command");
+    }
+
 }

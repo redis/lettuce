@@ -73,7 +73,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(ClientOptions original) {
         this.pingBeforeActivateConnection = original.isPingBeforeActivateConnection();
-        this.protocolVersion = original.getProtocolVersion();
+        this.protocolVersion = original.getConfiguredProtocolVersion();
         this.autoReconnect = original.isAutoReconnect();
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.publishOnScheduler = original.isPublishOnScheduler();
@@ -120,7 +120,7 @@ public class ClientOptions implements Serializable {
     public static class Builder {
 
         private boolean pingBeforeActivateConnection = DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION;
-        private ProtocolVersion protocolVersion = DEFAULT_PROTOCOL_VERSION;
+        private ProtocolVersion protocolVersion;
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
         private boolean publishOnScheduler = DEFAULT_PUBLISH_ON_SCHEDULER;
@@ -160,7 +160,6 @@ public class ClientOptions implements Serializable {
          */
         public Builder protocolVersion(ProtocolVersion protocolVersion) {
 
-            LettuceAssert.notNull(protocolVersion, "ProtocolVersion must not be null");
             this.protocolVersion = protocolVersion;
             return this;
         }
@@ -336,7 +335,7 @@ public class ClientOptions implements Serializable {
         builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
-                .protocolVersion(getProtocolVersion()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
+                .protocolVersion(getConfiguredProtocolVersion()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
                 .requestQueueSize(getRequestQueueSize()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
 
@@ -363,6 +362,18 @@ public class ClientOptions implements Serializable {
      * @return the {@link ProtocolVersion} to use.
      */
     public ProtocolVersion getProtocolVersion() {
+
+        ProtocolVersion protocolVersion = getConfiguredProtocolVersion();
+        return protocolVersion == null ? DEFAULT_PROTOCOL_VERSION : protocolVersion;
+    }
+
+    /**
+     * Returns the configured {@link ProtocolVersion}. May return {@code null} if unconfigured.
+     *
+     * @return the {@link ProtocolVersion} to use. May be {@code null}.
+     * @since 6.0
+     */
+    public ProtocolVersion getConfiguredProtocolVersion() {
         return protocolVersion;
     }
 

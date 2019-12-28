@@ -745,7 +745,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             connectionBuilder = ConnectionBuilder.connectionBuilder();
         }
 
-        state.setRequestedProtocolVersion(clientOptions.getProtocolVersion());
+        state.setRequestedProtocolVersion(clientOptions.getConfiguredProtocolVersion());
         state.setPingOnConnect(clientOptions.isPingBeforeActivateConnection());
 
         state.setClientName(connectionSettings.getClientName());

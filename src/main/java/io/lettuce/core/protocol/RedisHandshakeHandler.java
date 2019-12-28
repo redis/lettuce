@@ -15,7 +15,6 @@
  */
 package io.lettuce.core.protocol;
 
-import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -24,10 +23,8 @@ import java.util.concurrent.TimeUnit;
 import io.lettuce.core.ExceptionFactory;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.resource.ClientResources;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.local.LocalAddress;
 import io.netty.util.Timeout;
 
 /**
@@ -140,18 +137,4 @@ public class RedisHandshakeHandler extends ChannelInboundHandlerAdapter {
         return handshakeFuture;
     }
 
-    static SocketAddress remote(ChannelHandlerContext ctx) {
-        if (ctx.channel() != null && ctx.channel().remoteAddress() != null) {
-            return ctx.channel().remoteAddress();
-        }
-        return new LocalAddress("unknown");
-    }
-
-    static SocketAddress local(ChannelHandlerContext ctx) {
-        Channel channel = ctx.channel();
-        if (channel != null && channel.localAddress() != null) {
-            return channel.localAddress();
-        }
-        return LocalAddress.ANY;
-    }
 }

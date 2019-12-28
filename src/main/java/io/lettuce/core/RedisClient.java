@@ -748,7 +748,7 @@ public class RedisClient extends AbstractRedisClient {
 
     private void initializeConnectionState(RedisURI redisURI, ConnectionState state) {
 
-        state.setRequestedProtocolVersion(clientOptions.getProtocolVersion());
+        state.setRequestedProtocolVersion(clientOptions.getConfiguredProtocolVersion());
         state.setPingOnConnect(clientOptions.isPingBeforeActivateConnection());
         state.setClientName(redisURI.getClientName());
         state.setUsername(redisURI.getUsername());

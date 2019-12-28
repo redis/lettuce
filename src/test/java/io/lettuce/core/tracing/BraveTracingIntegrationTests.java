@@ -42,6 +42,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.resource.FastShutdown;
 
 /**
@@ -50,6 +51,7 @@ import io.lettuce.test.resource.FastShutdown;
  * @author Mark Paluch
  * @author Daniel Albuquerque
  */
+@EnabledOnCommand("HELLO")
 class BraveTracingIntegrationTests extends TestSupport {
 
     private static ClientResources clientResources;
@@ -218,12 +220,9 @@ class BraveTracingIntegrationTests extends TestSupport {
         brave.Span trace = clientTracing.tracer().newTrace();
 
         StatefulRedisConnection<String, String> connect = client.connect();
-        connect.reactive()
-                .set("foo", "bar")
-                .then(connect.reactive().get("foo"))
-                .subscriberContext(
-                        io.lettuce.core.tracing.Tracing.withTraceContextProvider(() -> BraveTracing.BraveTraceContext
-                                .create(trace.context()))) //
+        connect.reactive().set("foo", "bar").then(connect.reactive().get("foo"))
+                .subscriberContext(io.lettuce.core.tracing.Tracing
+                        .withTraceContextProvider(() -> BraveTracing.BraveTraceContext.create(trace.context()))) //
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();
 

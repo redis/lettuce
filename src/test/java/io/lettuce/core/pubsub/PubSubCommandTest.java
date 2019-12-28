@@ -113,6 +113,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
 
             assertThat(channels.take()).isEqualTo(channel);
 
+            redis.auth(passwd);
             long id = findNamedClient("authWithReconnect");
             redis.clientKill(KillArgs.Builder.id(id));
 
