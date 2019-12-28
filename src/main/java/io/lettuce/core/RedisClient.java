@@ -300,8 +300,7 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         ConnectionState state = connection.getConnectionState();
-
-        initializeConnectionState(redisURI, state);
+        state.apply(redisURI);
         state.setDb(redisURI.getDatabase());
 
         connectionBuilder.connection(connection);
@@ -310,7 +309,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.commandHandler(commandHandlerSupplier).endpoint(endpoint);
 
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
-        connectionBuilder.connectionInitializer(state);
+        connectionBuilder.connectionInitializer(createHandshake(state));
         channelType(connectionBuilder, redisURI);
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
@@ -558,10 +557,10 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(writer, codec, timeout);
-        ConnectionState connectionState = connection.getConnectionState();
-        connectionBuilder.connectionInitializer(connectionState);
+        ConnectionState state = connection.getConnectionState();
 
-        initializeConnectionState(redisURI, connectionState);
+        state.apply(redisURI);
+        connectionBuilder.connectionInitializer(createHandshake(state));
 
         logger.debug("Connecting to Redis Sentinel, address: " + redisURI);
 
@@ -744,15 +743,6 @@ public class RedisClient extends AbstractRedisClient {
                     .flatMap(it -> Mono.fromCompletionStage(c::closeAsync) //
                             .thenReturn(it));
         });
-    }
-
-    private void initializeConnectionState(RedisURI redisURI, ConnectionState state) {
-
-        state.setRequestedProtocolVersion(clientOptions.getConfiguredProtocolVersion());
-        state.setPingOnConnect(clientOptions.isPingBeforeActivateConnection());
-        state.setClientName(redisURI.getClientName());
-        state.setUsername(redisURI.getUsername());
-        state.setPassword(redisURI.getPassword());
     }
 
     private static <T> ConnectionFuture<T> transformAsyncConnectionException(ConnectionFuture<T> future) {

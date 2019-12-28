@@ -63,7 +63,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
     protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
 
-    private final ConnectionState connectionState = new ConnectionState();
+    private final ClusterConnectionState connectionState = new ClusterConnectionState();
 
     private Partitions partitions;
     private volatile CommandSet commandSet;
@@ -259,5 +259,23 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     ConnectionState getConnectionState() {
         return connectionState;
+    }
+
+    static class ClusterConnectionState extends ConnectionState {
+
+        @Override
+        protected void setPassword(char[] password) {
+            super.setPassword(password);
+        }
+
+        @Override
+        protected void setDb(int db) {
+            super.setDb(db);
+        }
+
+        @Override
+        protected void setReadOnly(boolean readOnly) {
+            super.setReadOnly(readOnly);
+        }
     }
 }

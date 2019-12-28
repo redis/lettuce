@@ -548,4 +548,9 @@ public abstract class AbstractRedisClient {
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
         this.clientOptions = clientOptions;
     }
+
+    protected RedisHandshake createHandshake(ConnectionState state) {
+        return new RedisHandshake(clientOptions.getConfiguredProtocolVersion(), clientOptions.isPingBeforeActivateConnection(),
+                state);
+    }
 }

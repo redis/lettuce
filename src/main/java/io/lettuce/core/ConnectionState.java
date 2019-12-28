@@ -15,227 +15,168 @@
  */
 package io.lettuce.core;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
-import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.internal.Futures;
-import io.lettuce.core.protocol.AsyncCommand;
-import io.lettuce.core.protocol.Command;
-import io.lettuce.core.protocol.ConnectionInitializer;
 import io.lettuce.core.protocol.ProtocolVersion;
-import io.netty.channel.Channel;
 
 /**
- * Internal connection state representing the requested {@link ProtocolVersion} and other options for connection initialization
+ * Internal connection state representing the negotiated {@link ProtocolVersion} and other options for connection initialization
  * and connection state restoration. This class is part of the internal API.
  *
  * @author Mark Paluch
  * @since 6.0
  */
-public class ConnectionState implements ConnectionInitializer {
+public class ConnectionState {
 
-    private final RedisCommandBuilder<String, String> commandBuilder = new RedisCommandBuilder<>(StringCodec.UTF8);
+    private volatile HandshakeResponse handshakeResponse;
 
-    private ProtocolVersion requestedProtocolVersion;
-    private boolean pingOnConnect;
-
-    private volatile ProtocolVersion negotiatedProtocolVersion;
     private volatile String username;
     private volatile char[] password;
     private volatile int db;
     private volatile boolean readOnly;
     private volatile String clientName;
 
-    public void setRequestedProtocolVersion(ProtocolVersion requested) {
-        this.requestedProtocolVersion = requested;
+    /**
+     * Applies settings from {@link RedisURI}.
+     *
+     * @param redisURI the URI to apply the client name and authentication.
+     */
+    public void apply(RedisURI redisURI) {
+
+        setClientName(redisURI.getClientName());
+        setUsername(redisURI.getUsername());
+        setPassword(redisURI.getPassword());
     }
 
-    public void setPingOnConnect(boolean pingOnConnect) {
-        this.pingOnConnect = pingOnConnect;
+    /**
+     * Returns the negotiated {@link ProtocolVersion}.
+     *
+     * @return the negotiated {@link ProtocolVersion} once the connection is established.
+     */
+    public ProtocolVersion getNegotiatedProtocolVersion() {
+        return handshakeResponse != null ? handshakeResponse.getNegotiatedProtocolVersion() : null;
     }
 
-    public void setUsername(String username) {
+    /**
+     * Returns the client connection id. Only available when using {@link ProtocolVersion#RESP3}.
+     *
+     * @return the client connection id. Can be {@literal null} if Redis uses RESP2.
+     */
+    public Long getConnectionId() {
+        return handshakeResponse != null ? handshakeResponse.getConnectionId() : null;
+    }
+
+    /**
+     * Returns the Redis server version. Only available when using {@link ProtocolVersion#RESP3}.
+     *
+     * @return the Redis server version.
+     */
+    public String getRedisVersion() {
+        return handshakeResponse != null ? handshakeResponse.getRedisVersion() : null;
+    }
+
+    /**
+     * Returns the Redis server mode. Only available when using {@link ProtocolVersion#RESP3}.
+     *
+     * @return the Redis server mode.
+     */
+    public String getMode() {
+        return handshakeResponse != null ? handshakeResponse.getMode() : null;
+    }
+
+    /**
+     * Returns the Redis server role. Only available when using {@link ProtocolVersion#RESP3}.
+     *
+     * @return the Redis server role.
+     */
+    public String getRole() {
+        return handshakeResponse != null ? handshakeResponse.getRole() : null;
+    }
+
+    void setHandshakeResponse(HandshakeResponse handshakeResponse) {
+        this.handshakeResponse = handshakeResponse;
+    }
+
+    void setUsername(String username) {
         this.username = username;
     }
 
-    public void setPassword(char[] password) {
+    String getUsername() {
+        return username;
+    }
+
+    protected void setPassword(char[] password) {
         this.password = password;
     }
 
-    public void setDb(int db) {
-        this.db = db;
+    char[] getPassword() {
+        return password;
     }
 
-    private boolean hasPassword() {
+    boolean hasPassword() {
         return this.password != null && this.password.length > 0;
     }
 
-    public void setReadOnly(boolean readOnly) {
+    protected void setDb(int db) {
+        this.db = db;
+    }
+
+    int getDb() {
+        return db;
+    }
+
+    protected void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
     }
 
-    public void setClientName(String clientName) {
+    boolean isReadOnly() {
+        return readOnly;
+    }
+
+    protected void setClientName(String clientName) {
         this.clientName = clientName;
     }
 
-    /**
-     * @return the requested {@link ProtocolVersion}. May be {@literal null} if not configured.
-     */
-    public ProtocolVersion getRequestedProtocolVersion() {
-        return requestedProtocolVersion;
+    String getClientName() {
+        return clientName;
     }
 
     /**
-     * @return the negotiated {@link ProtocolVersion} once the handshake is done.
+     * HELLO Handshake response.
      */
-    public ProtocolVersion getNegotiatedProtocolVersion() {
-        return negotiatedProtocolVersion;
-    }
+    static class HandshakeResponse {
 
-    @Override
-    public CompletionStage<Void> initialize(Channel channel) {
+        private final ProtocolVersion negotiatedProtocolVersion;
+        private final Long connectionId;
+        private final String redisVersion;
+        private final String mode;
+        private final String role;
 
-        CompletableFuture<?> handshake;
-
-        if (this.requestedProtocolVersion == ProtocolVersion.RESP2) {
-            handshake = initializeResp2(channel);
-            negotiatedProtocolVersion = ProtocolVersion.RESP2;
-        } else if (this.requestedProtocolVersion == ProtocolVersion.RESP3) {
-            handshake = initializeResp3(channel);
-        } else if (this.requestedProtocolVersion == null) {
-            handshake = tryHandshakeResp3(channel);
-        } else {
-            handshake = Futures.failed(
-                    new RedisConnectionException("Protocol version" + this.requestedProtocolVersion + " not supported"));
+        public HandshakeResponse(ProtocolVersion negotiatedProtocolVersion, Long connectionId, String redisVersion, String mode,
+                String role) {
+            this.negotiatedProtocolVersion = negotiatedProtocolVersion;
+            this.connectionId = connectionId;
+            this.redisVersion = redisVersion;
+            this.role = role;
+            this.mode = mode;
         }
 
-        return handshake.thenCompose(ignore -> applyPostHandshake(channel, getNegotiatedProtocolVersion()));
-    }
-
-    private CompletableFuture<?> tryHandshakeResp3(Channel channel) {
-
-        CompletableFuture<?> handshake = new CompletableFuture<>();
-        AsyncCommand<String, String, Map<String, Object>> hello = initiateHandshakeResp3(channel);
-
-        hello.whenComplete((settings, throwable) -> {
-
-            if (throwable != null) {
-                if (isUnknownCommand(hello.getError())) {
-                    fallbackToResp2(channel, handshake);
-                } else {
-                    handshake.completeExceptionally(throwable);
-                }
-            } else {
-                handshake.complete(null);
-            }
-        });
-
-        return handshake;
-    }
-
-    private void fallbackToResp2(Channel channel, CompletableFuture<?> handshake) {
-
-        initializeResp2(channel).whenComplete((o, nested) -> {
-
-            if (nested != null) {
-                handshake.completeExceptionally(nested);
-            } else {
-                handshake.complete(null);
-            }
-        });
-    }
-
-    private CompletableFuture<?> initializeResp2(Channel channel) {
-        return initiateHandshakeResp2(channel).thenRun(() -> negotiatedProtocolVersion = ProtocolVersion.RESP2);
-    }
-
-    private CompletableFuture<Void> initializeResp3(Channel channel) {
-        return initiateHandshakeResp3(channel).thenRun(() -> negotiatedProtocolVersion = ProtocolVersion.RESP3);
-    }
-
-    /**
-     * Perform a RESP2 Handshake: Issue a {@code PING} or {@code AUTH}.
-     *
-     * @param channel
-     * @return
-     */
-    private CompletableFuture<?> initiateHandshakeResp2(Channel channel) {
-
-        if (hasPassword()) {
-            return dispatch(channel, this.commandBuilder.auth(this.password));
-        } else if (this.pingOnConnect) {
-            return dispatch(channel, this.commandBuilder.ping());
+        public ProtocolVersion getNegotiatedProtocolVersion() {
+            return negotiatedProtocolVersion;
         }
 
-        return CompletableFuture.completedFuture(null);
-    }
-
-    /**
-     * Perform a RESP3 Handshake: Issue a {@code HELLO}.
-     *
-     * @param channel
-     * @return
-     */
-    private AsyncCommand<String, String, Map<String, Object>> initiateHandshakeResp3(Channel channel) {
-
-        if (hasPassword()) {
-
-            return dispatch(channel, this.commandBuilder.hello(3,
-                    LettuceStrings.isNotEmpty(this.username) ? this.username : "default", this.password, this.clientName));
+        public Long getConnectionId() {
+            return connectionId;
         }
 
-        return dispatch(channel, this.commandBuilder.hello(3, null, null, this.clientName));
-    }
-
-    private CompletableFuture<Void> applyPostHandshake(Channel channel, ProtocolVersion negotiatedProtocolVersion) {
-
-        List<AsyncCommand<?, ?, ?>> postHandshake = new ArrayList<>();
-
-        if (this.clientName != null && negotiatedProtocolVersion == ProtocolVersion.RESP2) {
-            postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetname(this.clientName)));
+        public String getRedisVersion() {
+            return redisVersion;
         }
 
-        if (this.db > 0) {
-            postHandshake.add(new AsyncCommand<>(this.commandBuilder.select(this.db)));
+        public String getMode() {
+            return mode;
         }
 
-        if (this.readOnly) {
-            postHandshake.add(new AsyncCommand<>(this.commandBuilder.readOnly()));
+        public String getRole() {
+            return role;
         }
-
-        if (postHandshake.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
-        }
-
-        return dispatch(channel, postHandshake);
     }
-
-    private CompletableFuture<Void> dispatch(Channel channel, List<AsyncCommand<?, ?, ?>> commands) {
-
-        CompletionStage<Void> writeFuture = Futures.toCompletionStage(channel.writeAndFlush(commands));
-        return CompletableFuture.allOf(Futures.allOf(commands), writeFuture.toCompletableFuture());
-    }
-
-    private <T> AsyncCommand<String, String, T> dispatch(Channel channel, Command<String, String, T> command) {
-
-        AsyncCommand<String, String, T> future = new AsyncCommand<>(command);
-
-        channel.writeAndFlush(future).addListener(writeFuture -> {
-
-            if (!writeFuture.isSuccess()) {
-                future.completeExceptionally(writeFuture.cause());
-            }
-        });
-
-        return future;
-    }
-
-    private static boolean isUnknownCommand(String error) {
-        return LettuceStrings.isNotEmpty(error) && error.startsWith("ERR unknown command");
-    }
-
 }

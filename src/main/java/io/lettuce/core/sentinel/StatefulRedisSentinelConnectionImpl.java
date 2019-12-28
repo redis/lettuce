@@ -41,7 +41,7 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     protected final RedisSentinelAsyncCommands<K, V> async;
     protected final RedisSentinelReactiveCommands<K, V> reactive;
 
-    private final ConnectionState connectionState = new ConnectionState();
+    private final SentinelConnectionState connectionState = new SentinelConnectionState();
 
     public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
 
@@ -94,5 +94,12 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
 
     public ConnectionState getConnectionState() {
         return connectionState;
+    }
+
+    static class SentinelConnectionState extends ConnectionState {
+        @Override
+        protected void setClientName(String clientName) {
+            super.setClientName(clientName);
+        }
     }
 }

@@ -538,8 +538,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 timeout);
 
-        ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection,
-                endpoint, getFirstUri(), socketAddressSupplier,
+        ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
+                getFirstUri(), socketAddressSupplier,
                 () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
@@ -702,13 +702,13 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Initiates a channel connection considering {@link ClientOptions} initialization options, authentication and client name
      * options.
      */
+    @SuppressWarnings("unchecked")
     private <K, V, T extends StatefulRedisClusterConnectionImpl<K, V>, S> ConnectionFuture<S> connectStatefulAsync(T connection,
-            DefaultEndpoint endpoint, RedisURI connectionSettings,
-            Mono<SocketAddress> socketAddressSupplier, Supplier<CommandHandler> commandHandlerSupplier) {
+            DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
+            Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder = createConnectionBuilder(connection, connection.getConnectionState(), endpoint,
-                connectionSettings,
-                socketAddressSupplier, commandHandlerSupplier);
+                connectionSettings, socketAddressSupplier, commandHandlerSupplier);
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
@@ -719,6 +719,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * Initiates a channel connection considering {@link ClientOptions} initialization options, authentication and client name
      * options.
      */
+    @SuppressWarnings("unchecked")
     private <K, V, T extends StatefulRedisConnectionImpl<K, V>, S> ConnectionFuture<S> connectStatefulAsync(T connection,
             DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
@@ -732,8 +733,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     private <K, V> ConnectionBuilder createConnectionBuilder(RedisChannelHandler<K, V> connection, ConnectionState state,
-            DefaultEndpoint endpoint,
-            RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
+            DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
@@ -745,18 +745,13 @@ public class RedisClusterClient extends AbstractRedisClient {
             connectionBuilder = ConnectionBuilder.connectionBuilder();
         }
 
-        state.setRequestedProtocolVersion(clientOptions.getConfiguredProtocolVersion());
-        state.setPingOnConnect(clientOptions.isPingBeforeActivateConnection());
-
-        state.setClientName(connectionSettings.getClientName());
-        state.setUsername(connectionSettings.getUsername());
-        state.setPassword(connectionSettings.getPassword());
+        state.apply(connectionSettings);
+        connectionBuilder.connectionInitializer(createHandshake(state));
 
         connectionBuilder.reconnectionListener(new ReconnectEventListener(clusterTopologyRefreshScheduler));
         connectionBuilder.clientOptions(clientOptions);
         connectionBuilder.connection(connection);
         connectionBuilder.clientResources(clientResources);
-        connectionBuilder.connectionInitializer(state);
         connectionBuilder.endpoint(endpoint);
         connectionBuilder.commandHandler(commandHandlerSupplier);
         connectionBuilder(socketAddressSupplier, connectionBuilder, connectionSettings);
