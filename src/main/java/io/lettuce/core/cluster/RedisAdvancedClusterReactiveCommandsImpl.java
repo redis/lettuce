@@ -573,8 +573,8 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return Mono.error(new RedisException("No partition for slot " + slot));
     }
 
-    private RedisState getRedisState() {
-        return ((StatefulRedisClusterConnectionImpl<K, V>) super.getConnection()).getState();
+    private CommandSet getRedisState() {
+        return ((StatefulRedisClusterConnectionImpl<K, V>) super.getConnection()).getCommandSet();
     }
 
     private boolean hasRedisState() {

@@ -36,21 +36,20 @@ import io.lettuce.test.LettuceExtension;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-public class RedisStateIntegrationTests {
+public class CommandSetIntegrationTests {
 
     private final RedisCommands<String, String> redis;
 
     @Inject
-    RedisStateIntegrationTests(StatefulRedisConnection<String, String> connection) {
+    CommandSetIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
     }
 
     @Test
     void shouldDiscoverCommands() {
 
-
         List<CommandDetail> commandDetails = CommandDetailParser.parse(redis.command());
-        RedisState state = new RedisState(commandDetails);
+        CommandSet state = new CommandSet(commandDetails);
 
         assertThat(state.hasCommand(CommandType.GEOADD)).isTrue();
         assertThat(state.hasCommand(UnknownCommand.FOO)).isFalse();

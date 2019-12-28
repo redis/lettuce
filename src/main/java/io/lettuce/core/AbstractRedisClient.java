@@ -15,8 +15,6 @@
  */
 package io.lettuce.core;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.time.Duration;
@@ -33,6 +31,7 @@ import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
+import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.netty.bootstrap.Bootstrap;
@@ -164,10 +163,6 @@ public abstract class AbstractRedisClient {
         connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents).timer(timer);
         connectionBuilder.socketAddressSupplier(socketAddressSupplier);
-    }
-
-    private boolean hasPassword(RedisURI connectionSettings) {
-        return connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0;
     }
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
@@ -309,18 +304,16 @@ public abstract class AbstractRedisClient {
 
         Bootstrap redisBootstrap = connectionBuilder.bootstrap();
 
-        RedisChannelInitializer initializer = connectionBuilder.build();
+        ChannelInitializer<Channel> initializer = connectionBuilder.build();
         redisBootstrap.handler(initializer);
 
         clientResources.nettyCustomizer().afterBootstrapInitialized(redisBootstrap);
-        CompletableFuture<Boolean> initFuture = initializer.channelInitialized();
         ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
 
         channelReadyFuture.whenComplete((c, t) -> {
 
             if (t instanceof CancellationException) {
                 connectFuture.cancel(true);
-                initFuture.cancel(true);
             }
         });
 
@@ -334,7 +327,14 @@ public abstract class AbstractRedisClient {
                 return;
             }
 
-            initFuture.whenComplete((success, throwable) -> {
+            RedisHandshakeHandler handshakeHandler = connectFuture.channel().pipeline().get(RedisHandshakeHandler.class);
+
+            if (handshakeHandler == null) {
+                channelReadyFuture.completeExceptionally(new IllegalStateException("RedisHandshakeHandler not registered"));
+                return;
+            }
+
+            handshakeHandler.channelInitialized().whenComplete((success, throwable) -> {
 
                 if (throwable == null) {
 
@@ -432,7 +432,6 @@ public abstract class AbstractRedisClient {
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
      * @since 4.4
      */
-    @SuppressWarnings("rawtypes")
     public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         if (shutdown.compareAndSet(false, true)) {
@@ -441,7 +440,7 @@ public abstract class AbstractRedisClient {
             return closeResources().thenCompose((value) -> closeClientResources(quietPeriod, timeout, timeUnit));
         }
 
-        return completedFuture(null);
+        return CompletableFuture.completedFuture(null);
     }
 
     private CompletableFuture<Void> closeResources() {

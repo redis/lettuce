@@ -18,6 +18,7 @@ package io.lettuce.core.sentinel;
 import java.time.Duration;
 import java.util.Collection;
 
+import io.lettuce.core.ConnectionState;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.codec.RedisCodec;
@@ -32,15 +33,15 @@ import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 /**
  * @author Mark Paluch
  */
-public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
-        StatefulRedisSentinelConnection<K, V> {
+public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandler<K, V>
+        implements StatefulRedisSentinelConnection<K, V> {
 
     protected final RedisCodec<K, V> codec;
     protected final RedisSentinelCommands<K, V> sync;
     protected final RedisSentinelAsyncCommands<K, V> async;
     protected final RedisSentinelReactiveCommands<K, V> reactive;
 
-    private String clientName;
+    private final ConnectionState connectionState = new ConnectionState();
 
     public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
 
@@ -77,23 +78,21 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         return reactive;
     }
 
-    @Override
-    public void activated() {
-
-        super.activated();
-
-        if (clientName != null) {
-            setClientName(clientName);
-        }
-    }
-
+    /**
+     * @param clientName
+     * @deprecated since 6.0, use {@link RedisSentinelAsyncCommands#clientSetname(Object)}.
+     */
     public void setClientName(String clientName) {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
         AsyncCommand<String, String, String> async = new AsyncCommand<>(
                 new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
-        this.clientName = clientName;
+        connectionState.setClientName(clientName);
 
         dispatch((RedisCommand) async);
+    }
+
+    public ConnectionState getConnectionState() {
+        return connectionState;
     }
 }

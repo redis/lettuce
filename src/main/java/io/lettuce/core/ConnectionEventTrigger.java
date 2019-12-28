@@ -18,6 +18,7 @@ package io.lettuce.core;
 import java.net.SocketAddress;
 
 import io.lettuce.core.event.EventBus;
+import io.lettuce.core.event.connection.ConnectionActivatedEvent;
 import io.lettuce.core.event.connection.ConnectionDeactivatedEvent;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -43,6 +44,7 @@ class ConnectionEventTrigger extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         connectionEvents.fireEventRedisConnected(connection, ctx.channel().remoteAddress());
+        eventBus.publish(new ConnectionActivatedEvent(local(ctx), remote(ctx)));
         super.channelActive(ctx);
     }
 

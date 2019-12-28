@@ -35,7 +35,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -517,11 +516,11 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         TestFutures.awaitOrTimeout(connection.async().quit());
 
-        assertThat(ReflectionTestUtils.getField(connection, "readOnly")).isEqualTo(Boolean.TRUE);
+        assertThat(connection).extracting("connectionState").extracting("readOnly").isEqualTo(Boolean.TRUE);
 
         sync.readWrite();
 
-        assertThat(ReflectionTestUtils.getField(connection, "readOnly")).isEqualTo(Boolean.FALSE);
+        assertThat(connection).extracting("connectionState").extracting("readOnly").isEqualTo(Boolean.FALSE);
         RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(host, 40400).build());
         try {

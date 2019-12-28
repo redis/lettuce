@@ -649,8 +649,8 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return null;
     }
 
-    private RedisState getRedisState() {
-        return ((StatefulRedisClusterConnectionImpl<K, V>) super.getConnection()).getState();
+    private CommandSet getRedisState() {
+        return ((StatefulRedisClusterConnectionImpl<K, V>) super.getConnection()).getCommandSet();
     }
 
     private boolean hasRedisState() {

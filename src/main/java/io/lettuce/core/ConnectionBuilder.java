@@ -16,21 +16,19 @@
 package io.lettuce.core;
 
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
-import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.Timer;
 
@@ -40,13 +38,6 @@ import io.netty.util.Timer;
  * @author Mark Paluch
  */
 public class ConnectionBuilder {
-
-    private static final RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(
-            StringCodec.UTF8);
-
-    private static final Supplier<AsyncCommand<?, ?, ?>> PING = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.ping());
-
-    private static final Supplier<AsyncCommand<?, ?, ?>> NO_PING = () -> null;
 
     private Mono<SocketAddress> socketAddressSupplier;
     private ConnectionEvents connectionEvents;
@@ -59,23 +50,12 @@ public class ConnectionBuilder {
     private ClientOptions clientOptions;
     private Duration timeout;
     private ClientResources clientResources;
-    private String username;
-    private char[] password;
-    private String clientName;
+    private ConnectionInitializer connectionInitializer;
     private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
     private ConnectionWatchdog connectionWatchdog;
-    private Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier = ConnectionBuilder.PING;
 
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
-    }
-
-    /**
-     * @param handshakeCommandSupplier
-     * @return {@literal true} whether {@code PING}/{@code HELLO} handshake is enabled.
-     */
-    static boolean isHandshakeEnabled(Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier) {
-        return handshakeCommandSupplier != NO_PING;
     }
 
     /**
@@ -84,32 +64,7 @@ public class ConnectionBuilder {
      * @param redisURI
      */
     public void apply(RedisURI redisURI) {
-
         timeout(redisURI.getTimeout());
-        clientName(redisURI.getClientName());
-
-        if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP2) {
-
-            pingBeforeConnect(clientOptions.isPingBeforeActivateConnection());
-
-            if (clientOptions.isPingBeforeActivateConnection() && hasPassword(redisURI)) {
-                auth(redisURI.getPassword());
-                handshakeAuthResp2();
-            }
-        } else if (clientOptions.getProtocolVersion() == ProtocolVersion.RESP3) {
-
-            if (hasPassword(redisURI)) {
-                if (LettuceStrings.isNotEmpty(redisURI.getUsername())) {
-                    auth(redisURI.getUsername(), redisURI.getPassword());
-                } else {
-                    auth("default", redisURI.getPassword());
-                }
-                handshakeAuthResp3();
-
-            } else {
-                handshakeResp3();
-            }
-        }
     }
 
     protected List<ChannelHandler> buildHandlers() {
@@ -119,13 +74,15 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(connection != null, "Connection must be set");
         LettuceAssert.assertState(clientResources != null, "ClientResources must be set");
         LettuceAssert.assertState(endpoint != null, "Endpoint must be set");
+        LettuceAssert.assertState(connectionInitializer != null, "ConnectionInitializer must be set");
 
         List<ChannelHandler> handlers = new ArrayList<>();
 
         connection.setOptions(clientOptions);
 
-        handlers.add(new ChannelGroupListener(channelGroup));
+        handlers.add(new ChannelGroupListener(channelGroup, clientResources.eventBus()));
         handlers.add(new CommandEncoder());
+        handlers.add(getHandshakeHandler());
         handlers.add(commandHandlerSupplier.get());
 
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
@@ -137,22 +94,8 @@ public class ConnectionBuilder {
         return handlers;
     }
 
-    void pingBeforeConnect(boolean state) {
-        handshakeCommandSupplier = state ? PING : NO_PING;
-    }
-
-    void handshakeAuthResp2() {
-        handshakeCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.auth(new String(password)));
-    }
-
-    void handshakeAuthResp3() {
-        handshakeCommandSupplier = () -> new AsyncCommand<>(INITIALIZING_CMD_BUILDER.hello(3, this.username.getBytes(),
-                encode(this.password), this.clientName != null ? this.clientName.getBytes() : null));
-    }
-
-    void handshakeResp3() {
-        handshakeCommandSupplier = () -> new AsyncCommand<>(
-                INITIALIZING_CMD_BUILDER.hello(3, null, null, this.clientName != null ? this.clientName.getBytes() : null));
+    protected ChannelHandler getHandshakeHandler() {
+        return new RedisHandshakeHandler(connectionInitializer, clientResources, timeout);
     }
 
     protected ConnectionWatchdog createConnectionWatchdog() {
@@ -175,8 +118,8 @@ public class ConnectionBuilder {
         return watchdog;
     }
 
-    public RedisChannelInitializer build() {
-        return new PlainChannelInitializer(handshakeCommandSupplier, this::buildHandlers, clientResources, timeout);
+    public ChannelInitializer<Channel> build() {
+        return new PlainChannelInitializer(this::buildHandlers, clientResources);
     }
 
     public ConnectionBuilder socketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
@@ -250,29 +193,8 @@ public class ConnectionBuilder {
         return this;
     }
 
-    public ConnectionBuilder clientName(String clientName) {
-        this.clientName = clientName;
-        return this;
-    }
-
-    boolean hasPassword(RedisURI connectionSettings) {
-        return connectionSettings.getPassword() != null && connectionSettings.getPassword().length != 0;
-    }
-
-    public ConnectionBuilder auth(String username, char[] password) {
-        this.username = username;
-        this.password = password;
-        return this;
-    }
-
-    public ConnectionBuilder auth(char[] password) {
-        this.password = password;
-        return this;
-    }
-
-    @Deprecated
-    public ConnectionBuilder password(char[] password) {
-        this.password = password;
+    public ConnectionBuilder connectionInitializer(ConnectionInitializer connectionInitializer) {
+        this.connectionInitializer = connectionInitializer;
         return this;
     }
 
@@ -292,24 +214,32 @@ public class ConnectionBuilder {
         return clientResources;
     }
 
-    public char[] password() {
-        return password;
-    }
-
     public Endpoint endpoint() {
         return endpoint;
     }
 
-    Supplier<AsyncCommand<?, ?, ?>> getHandshakeCommandSupplier() {
-        return handshakeCommandSupplier;
-    }
+    static class PlainChannelInitializer extends ChannelInitializer<Channel> {
 
-    static byte[] encode(char[] chars) {
+        private final Supplier<List<ChannelHandler>> handlers;
+        private final ClientResources clientResources;
 
-        ByteBuffer encoded = Charset.defaultCharset().encode(CharBuffer.wrap(chars));
-        byte[] bytes = new byte[encoded.remaining()];
-        encoded.get(bytes);
+        PlainChannelInitializer(Supplier<List<ChannelHandler>> handlers, ClientResources clientResources) {
+            this.handlers = handlers;
+            this.clientResources = clientResources;
+        }
 
-        return bytes;
+        @Override
+        protected void initChannel(Channel channel) {
+            doInitialize(channel);
+        }
+
+        private void doInitialize(Channel channel) {
+
+            for (ChannelHandler handler : handlers.get()) {
+                channel.pipeline().addLast(handler);
+            }
+
+            clientResources.nettyCustomizer().afterChannelInitialized(channel);
+        }
     }
 }

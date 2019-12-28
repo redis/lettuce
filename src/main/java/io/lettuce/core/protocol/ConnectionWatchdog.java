@@ -128,19 +128,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         resetReconnectDelay();
     }
 
-    @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-
-        logger.debug("{} userEventTriggered(ctx, {})", logPrefix(), evt);
-
-        if (evt instanceof ConnectionEvents.Activated) {
-            attempts = 0;
-            resetReconnectDelay();
-        }
-
-        super.userEventTriggered(ctx, evt);
-    }
-
     void prepareClose() {
 
         setListenOnChannelInactive(false);
@@ -162,6 +149,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         reconnectScheduleTimeout = null;
         logPrefix = null;
         remoteAddress = channel.remoteAddress();
+        attempts = 0;
+        resetReconnectDelay();
         logPrefix = null;
         logger.debug("{} channelActive()", logPrefix());
 

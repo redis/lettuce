@@ -98,8 +98,8 @@ class BraveTracingIntegrationTests extends TestSupport {
 
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
-        assertThat(spans.get(0).name()).isEqualTo("ping");
-        assertThat(spans.get(1).name()).isEqualTo("foo");
+        assertThat(spans.get(0).name()).isEqualTo("hello");
+        assertThat(spans.get(1).name()).isEqualTo("ping");
     }
 
     @Test
@@ -114,17 +114,17 @@ class BraveTracingIntegrationTests extends TestSupport {
         } catch (Exception e) {
         }
 
-        Wait.untilEquals(2, spans::size).waitOrTimeout();
+        Wait.untilTrue(() -> spans.size() > 2).waitOrTimeout();
 
         foo.finish();
 
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
-        assertThat(spans.get(0).name()).isEqualTo("set");
-        assertThat(spans.get(1).name()).isEqualTo("hgetall");
-        assertThat(spans.get(1).tags()).containsEntry("error",
+        assertThat(spans.get(1).name()).isEqualTo("set");
+        assertThat(spans.get(2).name()).isEqualTo("hgetall");
+        assertThat(spans.get(2).tags()).containsEntry("error",
                 "WRONGTYPE Operation against a key holding the wrong kind of value");
-        assertThat(spans.get(2).name()).isEqualTo("foo");
+        assertThat(spans.get(3).name()).isEqualTo("foo");
     }
 
     @Test
@@ -140,17 +140,17 @@ class BraveTracingIntegrationTests extends TestSupport {
         connect.sync().set("foo", "bar");
         connect.sync().get("foo");
 
-        Wait.untilEquals(2, spans::size).waitOrTimeout();
+        Wait.untilTrue(() -> spans.size() > 2).waitOrTimeout();
 
         trace.finish();
 
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
-        assertThat(spans.get(0).name()).isEqualTo("set");
-        assertThat(spans.get(0).tags()).doesNotContainKey("redis.args");
-        assertThat(spans.get(1).name()).isEqualTo("get");
+        assertThat(spans.get(1).name()).isEqualTo("set");
         assertThat(spans.get(1).tags()).doesNotContainKey("redis.args");
-        assertThat(spans.get(2).name()).isEqualTo("foo");
+        assertThat(spans.get(2).name()).isEqualTo("get");
+        assertThat(spans.get(2).tags()).doesNotContainKey("redis.args");
+        assertThat(spans.get(3).name()).isEqualTo("foo");
 
         FastShutdown.shutdown(client);
         FastShutdown.shutdown(clientResources);
@@ -183,8 +183,8 @@ class BraveTracingIntegrationTests extends TestSupport {
 
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
-        assertThat(spans.get(0).name()).isEqualTo("ping");
-        assertThat(spans.get(1).name()).isEqualTo("foo");
+        assertThat(spans.get(1).name()).isEqualTo("ping");
+        assertThat(spans.get(2).name()).isEqualTo("foo");
     }
 
     @Test
@@ -199,17 +199,17 @@ class BraveTracingIntegrationTests extends TestSupport {
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();
 
-        Wait.untilEquals(2, spans::size).waitOrTimeout();
+        Wait.untilTrue(() -> spans.size() > 2).waitOrTimeout();
 
         trace.finish();
 
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
-        assertThat(spans.get(0).name()).isEqualTo("set");
-        assertThat(spans.get(0).tags()).containsEntry("redis.args", "key<foo> value<bar>");
-        assertThat(spans.get(1).name()).isEqualTo("get");
-        assertThat(spans.get(1).tags()).containsEntry("redis.args", "key<foo>");
-        assertThat(spans.get(2).name()).isEqualTo("foo");
+        assertThat(spans.get(1).name()).isEqualTo("set");
+        assertThat(spans.get(1).tags()).containsEntry("redis.args", "key<foo> value<bar>");
+        assertThat(spans.get(2).name()).isEqualTo("get");
+        assertThat(spans.get(2).tags()).containsEntry("redis.args", "key<foo>");
+        assertThat(spans.get(3).name()).isEqualTo("foo");
     }
 
     @Test
@@ -227,13 +227,13 @@ class BraveTracingIntegrationTests extends TestSupport {
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();
 
-        Wait.untilEquals(2, spans::size).waitOrTimeout();
+        Wait.untilTrue(() -> spans.size() > 2).waitOrTimeout();
 
         trace.finish();
 
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
-        assertThat(spans.get(0).name()).isEqualTo("set");
-        assertThat(spans.get(1).name()).isEqualTo("get");
+        assertThat(spans.get(1).name()).isEqualTo("set");
+        assertThat(spans.get(2).name()).isEqualTo("get");
     }
 }

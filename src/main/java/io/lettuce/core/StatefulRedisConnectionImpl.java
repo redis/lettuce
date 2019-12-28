@@ -50,12 +50,9 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     protected final RedisCommands<K, V> sync;
     protected final RedisAsyncCommandsImpl<K, V> async;
     protected final RedisReactiveCommandsImpl<K, V> reactive;
+    private final ConnectionState state = new ConnectionState();
 
     protected MultiOutput<K, V> multi;
-    private char[] password;
-    private int db;
-    private boolean readOnly;
-    private String clientName;
 
     /**
      * Initialize a new connection.
@@ -122,28 +119,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     @Override
-    public void activated() {
-
-        super.activated();
-        // do not block in here, since the channel flow will be interrupted.
-        if (password != null) {
-            async.auth(password);
-        }
-
-        if (db != 0) {
-            async.select(db);
-        }
-
-        if (clientName != null) {
-            setClientName(clientName);
-        }
-
-        if (readOnly) {
-            async.readOnly();
-        }
-    }
-
-    @Override
     public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
 
         RedisCommand<K, V, T> toSend = preProcessCommand(command);
@@ -185,12 +160,12 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
                     char[] password = CommandArgsAccessor.getFirstCharArray(command.getArgs());
 
                     if (password != null) {
-                        this.password = password;
+                        state.setPassword(password);
                     } else {
 
                         String stringPassword = CommandArgsAccessor.getFirstString(command.getArgs());
                         if (stringPassword != null) {
-                            this.password = stringPassword.toCharArray();
+                            state.setPassword(stringPassword.toCharArray());
                         }
                     }
                 }
@@ -202,7 +177,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
                 if ("OK".equals(status)) {
                     Long db = CommandArgsAccessor.getFirstInteger(command.getArgs());
                     if (db != null) {
-                        this.db = db.intValue();
+                        state.setDb(db.intValue());
                     }
                 }
             });
@@ -211,7 +186,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         if (local.getType().name().equals(READONLY.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
-                    this.readOnly = true;
+                    state.setReadOnly(true);
                 }
             });
         }
@@ -219,7 +194,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         if (local.getType().name().equals(READWRITE.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
-                    this.readOnly = false;
+                    state.setReadOnly(false);
                 }
             });
         }
@@ -256,13 +231,22 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return command;
     }
 
+    /**
+     * @param clientName
+     * @deprecated since 6.0, use {@link RedisAsyncCommands#clientSetname(Object)}.
+     */
+    @Deprecated
     public void setClientName(String clientName) {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
-        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.CLIENT, new StatusOutput<>(
-                StringCodec.UTF8), args));
-        this.clientName = clientName;
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(
+                new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
+        state.setClientName(clientName);
 
         dispatch((RedisCommand) async);
+    }
+
+    public ConnectionState getConnectionState() {
+        return state;
     }
 }

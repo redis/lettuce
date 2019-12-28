@@ -278,7 +278,7 @@ class PubSubCommandHandlerUnitTests {
         doAnswer((Answer<PubSubEndpoint<String, String>>) inv -> {
             PubSubOutput<String, String, String> out = inv.getArgument(0);
             if (out.type() == PubSubOutput.Type.message) {
-                throw new NullPointerException();
+                throw new NullPointerException("Expected exception");
             }
             return endpoint;
         }).when(endpoint).notifyMessage(any());

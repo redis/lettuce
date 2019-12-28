@@ -24,17 +24,17 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 /**
  * Value object representing the current Redis state regarding its commands.
  * <p>
- * {@link RedisState} caches command details and uses {@link CommandType}.
+ * {@link CommandSet} caches command details and uses {@link CommandType}.
  *
  * @author Mark Paluch
  * @since 4.4
  */
-class RedisState {
+class CommandSet {
 
     private final Map<String, CommandDetail> commands;
     private final EnumSet<CommandType> availableCommands = EnumSet.noneOf(CommandType.class);
 
-    public RedisState(Collection<CommandDetail> commands) {
+    public CommandSet(Collection<CommandDetail> commands) {
 
         Map<String, CommandDetail> map = new HashMap<>();
 

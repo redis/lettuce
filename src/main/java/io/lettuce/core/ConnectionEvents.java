@@ -19,8 +19,6 @@ import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.lettuce.core.protocol.RedisCommand;
-
 /**
  * Close Events Facility. Can register/unregister CloseListener and fire a closed event to all registered listeners. This class
  * is part of the internal API and may change without further notice.
@@ -62,28 +60,6 @@ public class ConnectionEvents {
      * Internal event when a channel is closed.
      */
     public static class Reset {
-    }
-
-    /**
-     * Internal event when a channel is activated.
-     */
-    public static class Activated {
-    }
-
-    /**
-     * Internal event when a channel is activated.
-     */
-    public static class HandshakeEvent {
-
-        private final RedisCommand<?, ?, ?> command;
-
-        public HandshakeEvent(RedisCommand<?, ?, ?> command) {
-            this.command = command;
-        }
-
-        public RedisCommand<?, ?, ?> getCommand() {
-            return command;
-        }
     }
 
     /**

@@ -15,6 +15,12 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.core.ConnectionEventTrigger.local;
+import static io.lettuce.core.ConnectionEventTrigger.remote;
+
+import io.lettuce.core.event.EventBus;
+import io.lettuce.core.event.connection.ConnectedEvent;
+import io.lettuce.core.event.connection.DisconnectedEvent;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -25,23 +31,28 @@ import io.netty.channel.group.ChannelGroup;
  * ChannelGroup.
  *
  * @author Will Glozer
+ * @author Mark Paluch
  */
 class ChannelGroupListener extends ChannelInboundHandlerAdapter {
 
-    private ChannelGroup channels;
+    private final ChannelGroup channels;
+    private final EventBus eventBus;
 
-    public ChannelGroupListener(ChannelGroup channels) {
+    public ChannelGroupListener(ChannelGroup channels, EventBus eventBus) {
         this.channels = channels;
+        this.eventBus = eventBus;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        eventBus.publish(new ConnectedEvent(local(ctx), remote(ctx)));
         channels.add(ctx.channel());
         super.channelActive(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        eventBus.publish(new DisconnectedEvent(local(ctx), remote(ctx)));
         channels.remove(ctx.channel());
         super.channelInactive(ctx);
     }

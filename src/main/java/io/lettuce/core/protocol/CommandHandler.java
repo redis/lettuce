@@ -15,8 +15,6 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.ConnectionEvents.Activated;
-import static io.lettuce.core.ConnectionEvents.HandshakeEvent;
 import static io.lettuce.core.ConnectionEvents.Reset;
 
 import java.io.IOException;
@@ -33,6 +31,7 @@ import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.TraceContext;
+import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracer;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.buffer.ByteBuf;
@@ -162,6 +161,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             logger.debug("{} channelRegistered()", logPrefix());
         }
 
+        tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
+        logPrefix = null;
+        pristine = true;
+        fallbackCommand = null;
+
         setState(LifecycleState.REGISTERED);
 
         buffer = ctx.alloc().directBuffer(8192 * 8);
@@ -207,13 +211,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             channel.config().setAutoRead(true);
         } else if (evt instanceof Reset) {
             reset();
-        } else if (evt instanceof HandshakeEvent) {
-
-            HandshakeEvent handshake = (HandshakeEvent) evt;
-
-            stack.addFirst(handshake.getCommand());
-            ctx.writeAndFlush(handshake.getCommand());
-            return;
         }
 
         super.userEventTriggered(ctx, evt);
@@ -265,11 +262,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
-        tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
-        logPrefix = null;
-        pristine = true;
-        fallbackCommand = null;
-
         if (debugEnabled) {
             logger.debug("{} channelActive()", logPrefix());
         }
@@ -277,12 +269,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         setState(LifecycleState.CONNECTED);
 
         endpoint.notifyChannelActive(ctx.channel());
-
         super.channelActive(ctx);
-
-        if (channel != null) {
-            channel.eventLoop().submit((Runnable) () -> channel.pipeline().fireUserEventTriggered(new Activated()));
-        }
 
         if (debugEnabled) {
             logger.debug("{} channelActive() done", logPrefix());
@@ -385,10 +372,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         if (tracingEnabled && command instanceof CompleteableCommand) {
 
-            TracedCommand<?, ?, ?> provider = CommandWrapper.unwrap(command, TracedCommand.class);
+            TracedCommand<?, ?, ?> traced = CommandWrapper.unwrap(command, TracedCommand.class);
+            TraceContextProvider provider = (traced == null ? clientResources.tracing().initialTraceContextProvider() : traced);
             Tracer tracer = clientResources.tracing().getTracerProvider().getTracer();
-            TraceContext context = (provider == null ? clientResources.tracing().initialTraceContextProvider() : provider)
-                    .getTraceContext();
+            TraceContext context = provider.getTraceContext();
 
             Tracer.Span span = tracer.nextSpan(context);
             span.name(command.getType().name());
@@ -399,7 +386,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             span.remoteEndpoint(tracedEndpoint);
             span.start();
-            provider.setSpan(span);
+
+            if (traced != null) {
+                traced.setSpan(span);
+            }
 
             CompleteableCommand<?> completeableCommand = (CompleteableCommand<?>) command;
             completeableCommand.onComplete((o, throwable) -> {

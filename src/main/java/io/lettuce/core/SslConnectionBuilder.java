@@ -15,36 +15,22 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.ConnectionEventTrigger.local;
-import static io.lettuce.core.ConnectionEventTrigger.remote;
-import static io.lettuce.core.PlainChannelInitializer.sendHandshake;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLParameters;
 
-import io.lettuce.core.event.connection.ConnectedEvent;
-import io.lettuce.core.event.connection.ConnectionActivatedEvent;
-import io.lettuce.core.event.connection.DisconnectedEvent;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 /**
@@ -75,35 +61,23 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     }
 
     @Override
-    public RedisChannelInitializer build() {
-
-        return new SslChannelInitializer(getHandshakeCommandSupplier(), this::buildHandlers, redisURI, clientResources(),
-                getTimeout(), clientOptions().getSslOptions());
+    public ChannelInitializer<Channel> build() {
+        return new SslChannelInitializer(this::buildHandlers, redisURI, clientResources(), clientOptions().getSslOptions());
     }
 
-    /**
-     * @author Mark Paluch
-     */
-    static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
+    static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
 
-        private final Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier;
         private final Supplier<List<ChannelHandler>> handlers;
         private final RedisURI redisURI;
         private final ClientResources clientResources;
-        private final Duration timeout;
         private final SslOptions sslOptions;
 
-        private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
+        public SslChannelInitializer(Supplier<List<ChannelHandler>> handlers, RedisURI redisURI,
+                ClientResources clientResources, SslOptions sslOptions) {
 
-        public SslChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> handshakeCommandSupplier,
-                Supplier<List<ChannelHandler>> handlers, RedisURI redisURI, ClientResources clientResources, Duration timeout,
-                SslOptions sslOptions) {
-
-            this.handshakeCommandSupplier = handshakeCommandSupplier;
             this.handlers = handlers;
             this.redisURI = redisURI;
             this.clientResources = clientResources;
-            this.timeout = timeout;
             this.sslOptions = sslOptions;
         }
 
@@ -114,7 +88,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         private void doInitialize(Channel channel) throws IOException, GeneralSecurityException {
 
-             SSLParameters sslParams = sslOptions.createSSLParameters();
+            SSLParameters sslParams = sslOptions.createSSLParameters();
             SslContextBuilder sslContextBuilder = sslOptions.createSslContextBuilder();
 
             if (redisURI.isVerifyPeer()) {
@@ -128,103 +102,14 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             SSLEngine sslEngine = sslContext.newEngine(channel.alloc(), redisURI.getHost(), redisURI.getPort());
             sslEngine.setSSLParameters(sslParams);
 
-            if (channel.pipeline().get("first") == null) {
-                channel.pipeline().addFirst("first", new ChannelDuplexHandler() {
-
-                    @Override
-                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                        clientResources.eventBus().publish(new ConnectedEvent(local(ctx), remote(ctx)));
-                        super.channelActive(ctx);
-                    }
-
-                    @Override
-                    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                        clientResources.eventBus().publish(new DisconnectedEvent(local(ctx), remote(ctx)));
-                        super.channelInactive(ctx);
-                    }
-                });
-            }
-
             SslHandler sslHandler = new SslHandler(sslEngine, redisURI.isStartTls());
             channel.pipeline().addLast(sslHandler);
-
-            if (channel.pipeline().get("channelActivator") == null) {
-                channel.pipeline().addLast("channelActivator", new RedisChannelInitializerImpl() {
-
-                    private AsyncCommand<?, ?, ?> handshakeCommand;
-
-                    @Override
-                    public CompletableFuture<Boolean> channelInitialized() {
-                        return initializedFuture;
-                    }
-
-                    @Override
-                    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-
-                        if (!initializedFuture.isDone()) {
-                            initializedFuture
-                                    .completeExceptionally(new RedisConnectionException("Connection closed prematurely"));
-                        }
-
-                        initializedFuture = new CompletableFuture<>();
-                        handshakeCommand = null;
-                        super.channelInactive(ctx);
-                    }
-
-                    @Override
-                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                        if (initializedFuture.isDone()) {
-                            super.channelActive(ctx);
-                        }
-                    }
-
-                    @Override
-                    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-                        if (evt instanceof SslHandshakeCompletionEvent && !initializedFuture.isDone()) {
-
-                            SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
-                            if (event.isSuccess()) {
-                                if (ConnectionBuilder.isHandshakeEnabled(handshakeCommandSupplier)) {
-                                    handshakeCommand = handshakeCommandSupplier.get();
-                                    sendHandshake(handshakeCommand, initializedFuture, ctx, clientResources, timeout);
-                                } else {
-                                    ctx.fireChannelActive();
-                                }
-                            } else {
-                                initializedFuture.completeExceptionally(event.cause());
-                            }
-                        }
-
-                        if (evt instanceof ConnectionEvents.Activated) {
-                            if (!initializedFuture.isDone()) {
-                                initializedFuture.complete(true);
-                                clientResources.eventBus().publish(new ConnectionActivatedEvent(local(ctx), remote(ctx)));
-                            }
-                        }
-
-                        super.userEventTriggered(ctx, evt);
-                    }
-
-                    @Override
-                    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                        if (cause instanceof SSLHandshakeException || cause.getCause() instanceof SSLException) {
-                            initializedFuture.completeExceptionally(cause);
-                        }
-                        super.exceptionCaught(ctx, cause);
-                    }
-                });
-            }
 
             for (ChannelHandler handler : handlers.get()) {
                 channel.pipeline().addLast(handler);
             }
 
             clientResources.nettyCustomizer().afterChannelInitialized(channel);
-        }
-
-        @Override
-        public CompletableFuture<Boolean> channelInitialized() {
-            return initializedFuture;
         }
     }
 }

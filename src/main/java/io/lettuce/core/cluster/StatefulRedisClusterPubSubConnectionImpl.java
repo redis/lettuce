@@ -49,7 +49,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
 
     private final PubSubClusterEndpoint<K, V> endpoint;
     private volatile Partitions partitions;
-    private volatile RedisState state;
+    private volatile CommandSet commandSet;
 
     /**
      * Initialize a new connection.
@@ -104,12 +104,12 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         return new RedisClusterPubSubReactiveCommandsImpl<K, V>(this, codec);
     }
 
-    RedisState getState() {
-        return state;
+    CommandSet getCommandSet() {
+        return commandSet;
     }
 
-    void setState(RedisState state) {
-        this.state = state;
+    void setCommandSet(CommandSet commandSet) {
+        this.commandSet = commandSet;
     }
 
     @Override

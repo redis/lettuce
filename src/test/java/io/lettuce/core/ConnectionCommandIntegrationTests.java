@@ -23,9 +23,9 @@ import java.time.Duration;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -49,6 +49,11 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         this.redis = connection.sync();
     }
 
+    @BeforeEach
+    void setUp() {
+        redis.flushall();
+    }
+
     @Test
     void auth() {
 
@@ -70,7 +75,6 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             authConnection.ping();
             authConnection.getStatefulConnection().close();
         });
-
     }
 
     @Test
@@ -144,8 +148,9 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             fail("Authenticated with invalid password");
         } catch (RedisException e) {
             assertThat(e.getMessage()).startsWith("ERR").contains("AUTH");
-            StatefulRedisConnection<String, String> statefulRedisCommands = async.getStatefulConnection();
-            assertThat(ReflectionTestUtils.getField(statefulRedisCommands, "password")).isNull();
+            StatefulRedisConnectionImpl<String, String> statefulRedisCommands = (StatefulRedisConnectionImpl) async
+                    .getStatefulConnection();
+            assertThat(statefulRedisCommands.getConnectionState()).extracting("password").isNull();
         } finally {
             async.getStatefulConnection().close();
         }
@@ -159,8 +164,9 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             fail("Selected invalid db index");
         } catch (RedisException e) {
             assertThat(e.getMessage()).startsWith("ERR");
-            StatefulRedisConnection<String, String> statefulRedisCommands = async.getStatefulConnection();
-            assertThat(ReflectionTestUtils.getField(statefulRedisCommands, "db")).isEqualTo(0);
+            StatefulRedisConnectionImpl<String, String> statefulRedisCommands = (StatefulRedisConnectionImpl) async
+                    .getStatefulConnection();
+            assertThat(statefulRedisCommands.getConnectionState()).extracting("db").isEqualTo(0);
         } finally {
             async.getStatefulConnection().close();
         }

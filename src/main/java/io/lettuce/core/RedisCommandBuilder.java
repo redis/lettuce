@@ -26,7 +26,6 @@ import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.*;
@@ -853,7 +852,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HDEL, new IntegerOutput<>(codec), args);
     }
 
-    Command<String, String, Map<String, Object>> hello(int protocolVersion, byte[] user, byte password[], byte[] name) {
+    Command<String, String, Map<String, Object>> hello(int protocolVersion, String user, char[] password, String name) {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.ASCII).add(protocolVersion);
 

@@ -63,7 +63,7 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
     @Override
     public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
 
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+        if (getStatefulConnection().getCommandSet().hasCommand(CommandType.GEORADIUS_RO)) {
             return super.georadius_ro(key, longitude, latitude, distance, unit);
         }
 
@@ -74,7 +74,7 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
     public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
 
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+        if (getStatefulConnection().getCommandSet().hasCommand(CommandType.GEORADIUS_RO)) {
             return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
         }
 
@@ -84,7 +84,7 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
     @Override
     public Flux<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
 
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+        if (getStatefulConnection().getCommandSet().hasCommand(CommandType.GEORADIUS_RO)) {
             return super.georadiusbymember_ro(key, member, distance, unit);
         }
 
@@ -94,7 +94,7 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
     @Override
     public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
 
-        if (getStatefulConnection().getState().hasCommand(CommandType.GEORADIUS_RO)) {
+        if (getStatefulConnection().getCommandSet().hasCommand(CommandType.GEORADIUS_RO)) {
             return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
         }
 

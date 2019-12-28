@@ -18,22 +18,21 @@ package io.lettuce.core.protocol;
 import java.net.ConnectException;
 import java.net.SocketAddress;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeoutException;
 
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.RedisChannelInitializer;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
-import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -51,12 +50,7 @@ class ReconnectionHandler {
     private final ClientOptions clientOptions;
     private final Bootstrap bootstrap;
     private final Mono<SocketAddress> socketAddressSupplier;
-    private final Timer timer;
-    private final ExecutorService reconnectWorkers;
     private final ConnectionFacade connectionFacade;
-
-    private TimeUnit timeoutUnit = TimeUnit.SECONDS;
-    private long timeout = 60;
 
     private volatile CompletableFuture<Channel> currentFuture;
     private volatile boolean reconnectSuspended;
@@ -73,8 +67,6 @@ class ReconnectionHandler {
         this.socketAddressSupplier = socketAddressSupplier;
         this.bootstrap = bootstrap;
         this.clientOptions = clientOptions;
-        this.timer = timer;
-        this.reconnectWorkers = reconnectWorkers;
         this.connectionFacade = connectionFacade;
     }
 
@@ -114,7 +106,6 @@ class ReconnectionHandler {
     private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {
 
         ChannelFuture connectFuture = bootstrap.connect(remoteAddress);
-        ChannelPromise initFuture = connectFuture.channel().newPromise();
 
         logger.debug("Reconnecting to Redis at {}", remoteAddress);
 
@@ -122,103 +113,57 @@ class ReconnectionHandler {
 
             if (t instanceof CancellationException) {
                 connectFuture.cancel(true);
-                initFuture.cancel(true);
             }
         });
 
-        initFuture.addListener((ChannelFuture it) -> {
+        connectFuture.addListener(future -> {
 
-            if (it.cause() != null) {
+            if (!future.isSuccess()) {
+                result.completeExceptionally(future.cause());
+                return;
+            }
 
-                connectFuture.cancel(true);
-                close(it.channel());
-                result.completeExceptionally(it.cause());
-            } else {
+            RedisHandshakeHandler handshakeHandler = connectFuture.channel().pipeline().get(RedisHandshakeHandler.class);
+
+            if (handshakeHandler == null) {
+                result.completeExceptionally(new IllegalStateException("RedisHandshakeHandler not registered"));
+                return;
+            }
+
+            handshakeHandler.channelInitialized().whenComplete((success, throwable) -> {
+
+                if (throwable != null) {
+
+                    if (isExecutionException(throwable)) {
+                        result.completeExceptionally(throwable);
+                        return;
+                    }
+
+                    if (clientOptions.isCancelCommandsOnReconnectFailure()) {
+                        connectionFacade.reset();
+                    }
+
+                    if (clientOptions.isSuspendReconnectOnProtocolFailure()) {
+
+                        logger.error("Disabling autoReconnect due to initialization failure", throwable);
+                        setReconnectSuspended(true);
+                    }
+
+                    result.completeExceptionally(throwable);
+                    return;
+                }
+
+                if (logger.isDebugEnabled()) {
+                    logger.info("Reconnected to {}, Channel {}", remoteAddress,
+                            ChannelLogDescriptor.logDescriptor(connectFuture.channel()));
+                } else {
+                    logger.info("Reconnected to {}", remoteAddress);
+                }
+
                 result.complete(connectFuture.channel());
-            }
+            });
+
         });
-
-        connectFuture.addListener((ChannelFuture it) -> {
-
-            if (it.cause() != null) {
-
-                initFuture.tryFailure(it.cause());
-                return;
-            }
-
-            ChannelPipeline pipeline = it.channel().pipeline();
-            RedisChannelInitializer channelInitializer = pipeline.get(RedisChannelInitializer.class);
-
-            if (channelInitializer == null) {
-
-                initFuture.tryFailure(new IllegalStateException(
-                        "Reconnection attempt without a RedisChannelInitializer in the channel pipeline"));
-                return;
-            }
-
-            channelInitializer.channelInitialized().whenComplete(
-                    (state, throwable) -> {
-
-                        if (throwable != null) {
-
-                            if (isExecutionException(throwable)) {
-                                initFuture.tryFailure(throwable);
-                                return;
-                            }
-
-                            if (clientOptions.isCancelCommandsOnReconnectFailure()) {
-                                connectionFacade.reset();
-                            }
-
-                            if (clientOptions.isSuspendReconnectOnProtocolFailure()) {
-
-                                logger.error("Disabling autoReconnect due to initialization failure", throwable);
-                                setReconnectSuspended(true);
-                            }
-
-                            initFuture.tryFailure(throwable);
-
-                            return;
-                        }
-
-                        if (logger.isDebugEnabled()) {
-                            logger.info("Reconnected to {}, Channel {}", remoteAddress,
-                                    ChannelLogDescriptor.logDescriptor(it.channel()));
-                        } else {
-                            logger.info("Reconnected to {}", remoteAddress);
-                        }
-
-                        initFuture.trySuccess();
-                    });
-        });
-
-        Runnable timeoutAction = () -> {
-            initFuture.tryFailure(new TimeoutException(String.format("Reconnection attempt exceeded timeout of %d %s ",
-                    timeout, timeoutUnit)));
-        };
-
-        Timeout timeoutHandle = timer.newTimeout(it -> {
-
-            if (connectFuture.isDone() && initFuture.isDone()) {
-                return;
-            }
-
-            if (reconnectWorkers.isShutdown()) {
-                timeoutAction.run();
-                return;
-            }
-
-            reconnectWorkers.submit(timeoutAction);
-
-        }, this.timeout, timeoutUnit);
-
-        initFuture.addListener(it -> timeoutHandle.cancel());
-    }
-
-    private void close(Channel channel) {
-        if (channel != null) {
-            channel.close();
-        }
     }
 
     boolean isReconnectSuspended() {
@@ -227,14 +172,6 @@ class ReconnectionHandler {
 
     void setReconnectSuspended(boolean reconnectSuspended) {
         this.reconnectSuspended = reconnectSuspended;
-    }
-
-    long getTimeout() {
-        return timeout;
-    }
-
-    void setTimeout(long timeout) {
-        this.timeout = timeout;
     }
 
     void prepareClose() {
