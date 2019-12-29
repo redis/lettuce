@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.lettuce.core.LettuceStrings;
 import io.lettuce.core.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -492,7 +493,7 @@ public class RedisStateMachine {
 
         buffer.skipBytes(valueLength + TERMINATOR_LENGTH);
 
-        return Double.parseDouble(value);
+        return LettuceStrings.toDouble(value);
     }
 
     private boolean readBoolean(ByteBuf buffer) {
