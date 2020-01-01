@@ -20,8 +20,9 @@ import java.util.*;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Parser for Redis <a href="http://redis.io/commands/command">COMMAND</a>/<a
- * href="http://redis.io/commands/command-info">COMMAND INFO</a> output.
+ * Parser for Redis
+ * <a href="http://redis.io/commands/command">COMMAND</a>/<a href="http://redis.io/commands/command-info">COMMAND INFO</a>
+ * output.
  *
  * @author Mark Paluch
  * @since 3.0
@@ -76,7 +77,7 @@ public class CommandDetailParser {
             }
 
             Collection<?> collection = (Collection<?>) o;
-            if (collection.size() != COMMAND_INFO_SIZE) {
+            if (COMMAND_INFO_SIZE > collection.size()) {
                 continue;
             }
 
