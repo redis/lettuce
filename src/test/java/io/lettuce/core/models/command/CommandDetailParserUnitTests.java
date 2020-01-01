@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.internal.LettuceLists;
 
 /**
+ * Unit tests for {@link CommandDetailParser}.
+ *
  * @author Mark Paluch
  */
 class CommandDetailParserUnitTests {
@@ -52,6 +54,21 @@ class CommandDetailParserUnitTests {
     @Test
     void testParse() {
         Object o = LettuceLists.newList("get", "1", LettuceLists.newList("fast", "loading"), 1L, 2L, 3L);
+        List<CommandDetail> result = CommandDetailParser.parse(LettuceLists.newList(o));
+        assertThat(result).hasSize(1);
+
+        CommandDetail commandDetail = result.get(0);
+        assertThat(commandDetail.getName()).isEqualTo("get");
+        assertThat(commandDetail.getArity()).isEqualTo(1);
+        assertThat(commandDetail.getFlags()).hasSize(2);
+        assertThat(commandDetail.getFirstKeyPosition()).isEqualTo(1);
+        assertThat(commandDetail.getLastKeyPosition()).isEqualTo(2);
+        assertThat(commandDetail.getKeyStepCount()).isEqualTo(3);
+    }
+
+    @Test
+    void testParseAdditional() {
+        Object o = LettuceLists.newList("get", "1", LettuceLists.newList("fast", "loading"), 1L, 2L, 3L, "additional");
         List<CommandDetail> result = CommandDetailParser.parse(LettuceLists.newList(o));
         assertThat(result).hasSize(1);
 
