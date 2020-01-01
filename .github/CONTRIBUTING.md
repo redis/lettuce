@@ -52,6 +52,6 @@ If you have a question, then check one of the following places first. Typically,
 
 ## License
 
-By contributing your code, you agree to license your contribution under the terms of [Apache License 2.0] (http://www.apache.org/licenses/LICENSE-2.0).
+By contributing your code, you agree to license your contribution under the terms of [Apache License 2.0] (https://www.apache.org/licenses/LICENSE-2.0).
 
 All files are released with the Apache 2.0 license.
