@@ -1,11 +1,11 @@
 /*
- * Copyright 2011-2019 the original author or authors.
+ * Copyright 2011-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,7 +36,7 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldParseAskTargetCorrectly() {
 
-        HostAndPort askTarget = ClusterDistributionChannelWriter.getAskTarget("ASK 1234 127.0.0.1:6381");
+        HostAndPort askTarget = ClusterDistributionChannelWriter.getAskTarget("ASK 1234-2020 127.0.0.1:6381");
 
         assertThat(askTarget.getHostText()).isEqualTo("127.0.0.1");
         assertThat(askTarget.getPort()).isEqualTo(6381);
@@ -45,7 +45,7 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldParseIPv6AskTargetCorrectly() {
 
-        HostAndPort askTarget = ClusterDistributionChannelWriter.getAskTarget("ASK 1234 1:2:3:4::6:6381");
+        HostAndPort askTarget = ClusterDistributionChannelWriter.getAskTarget("ASK 1234-2020 1:2:3:4::6:6381");
 
         assertThat(askTarget.getHostText()).isEqualTo("1:2:3:4::6");
         assertThat(askTarget.getPort()).isEqualTo(6381);
@@ -54,7 +54,7 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldParseMovedTargetCorrectly() {
 
-        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget("MOVED 1234 127.0.0.1:6381");
+        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget("MOVED 1234-2020 127.0.0.1:6381");
 
         assertThat(moveTarget.getHostText()).isEqualTo("127.0.0.1");
         assertThat(moveTarget.getPort()).isEqualTo(6381);
@@ -63,7 +63,7 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldParseIPv6MovedTargetCorrectly() {
 
-        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget("MOVED 1234 1:2:3:4::6:6381");
+        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget("MOVED 1234-2020 1:2:3:4::6:6381");
 
         assertThat(moveTarget.getHostText()).isEqualTo("1:2:3:4::6");
         assertThat(moveTarget.getPort()).isEqualTo(6381);

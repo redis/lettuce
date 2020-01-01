@@ -169,7 +169,7 @@ For bugs, questions and discussions please use the [GitHub Issues](https://githu
 License
 -------
 
-* [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+* [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 * Fork of https://github.com/wg/lettuce
 
 Contributing

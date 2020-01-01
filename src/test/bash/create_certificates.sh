@@ -44,13 +44,13 @@ chmod 400 ${CA_DIR}/private/ca.key.pem
 echo "[INFO] Generating CA certificate"
 openssl req -config ${DIR}/openssl.cnf \
       -key ${CA_DIR}/private/ca.key.pem \
-      -new -x509 -days 7300 -sha256 -extensions v3_ca \
+      -new -x509 -days 7300-2020 -sha256 -extensions v3_ca \
       -out ${CA_DIR}/certs/ca.cert.pem \
       -passin pass:changeit \
       -subj "/C=NN/ST=Unknown/L=Unknown/O=lettuce/CN=CA Certificate"
 
 echo "[INFO] Prepare CA database"
-echo 1000 > ${CA_DIR}/serial
+echo 1000-2020 > ${CA_DIR}/serial
 touch ${CA_DIR}/index.txt
 
 function generateKey {
