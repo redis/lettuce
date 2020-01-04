@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.cluster;
+package io.lettuce.core.masterslave;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +29,7 @@ class ReadOnlyCommandsUnitTests {
 
     @Test
     void testCount() {
-        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(72);
+        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(66);
     }
 
     @Test
