@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,7 +43,7 @@ import io.lettuce.test.settings.TestSettings;
  */
 class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
-    private StatefulRedisMasterSlaveConnectionImpl<String, String> connection;
+    private StatefulRedisMasterSlaveConnection<String, String> connection;
 
     private RedisURI master;
     private RedisURI replica;
@@ -88,8 +87,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
         master.setPassword(passwd);
         replica.setPassword(passwd);
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
-                Arrays.asList(master, replica));
+        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(master, replica));
         connection.setReadFrom(ReadFrom.REPLICA);
     }
 
@@ -143,8 +141,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
-                Arrays.asList(master));
+        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(master));
         connection.setReadFrom(ReadFrom.REPLICA);
 
         assertThatThrownBy(() -> slaveCall(connection)).isInstanceOf(RedisException.class);
@@ -155,8 +152,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
-                Arrays.asList(master));
+        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(master));
 
         connection.sync().set(key, value);
         assertThat(connection.sync().get(key)).isEqualTo("value");
@@ -167,8 +163,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
-                Arrays.asList(replica));
+        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(replica));
         connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
 
         assertThat(connection.sync().info()).isNotEmpty();
@@ -179,8 +174,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8,
-                Arrays.asList(replica));
+        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(replica));
 
         assertThatThrownBy(() -> connection.sync().set(key, value)).isInstanceOf(RedisException.class);
     }
@@ -195,37 +189,8 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
         connection.close();
     }
 
-    @Test
-    void testConnectionCount() {
-
-        MasterSlaveConnectionProvider connectionProvider = getConnectionProvider();
-
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(0);
-        slaveCall(connection);
-
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(1);
-
-        connection.sync().set(key, value);
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(2);
-    }
-
-    @Test
-    void testReconfigureTopology() {
-        MasterSlaveConnectionProvider connectionProvider = getConnectionProvider();
-
-        slaveCall(connection);
-
-        connectionProvider.setKnownNodes(Collections.emptyList());
-
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(0);
-    }
-
     static String slaveCall(StatefulRedisMasterSlaveConnection<String, String> connection) {
         return connection.sync().info("replication");
     }
 
-    MasterSlaveConnectionProvider getConnectionProvider() {
-        MasterSlaveChannelWriter writer = connection.getChannelWriter();
-        return writer.getMasterSlaveConnectionProvider();
-    }
 }

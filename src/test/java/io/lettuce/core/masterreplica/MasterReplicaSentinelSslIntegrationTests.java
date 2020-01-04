@@ -55,7 +55,7 @@ class MasterReplicaSentinelSslIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testMasterSlaveSentinelBasic() {
+    void testMasterReplicaSentinelBasic() {
 
         RedisClient client = RedisClient.create(clientResources);
         RedisURI redisURI = RedisURI.create("rediss-sentinel://" + TestSettings.host() + ":26379?sentinelMasterId=mymaster");

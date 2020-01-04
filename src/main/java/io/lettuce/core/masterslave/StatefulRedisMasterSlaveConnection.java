@@ -16,7 +16,7 @@
 package io.lettuce.core.masterslave;
 
 import io.lettuce.core.ReadFrom;
-import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 
 /**
  * Redis Master-Slave connection. The connection allows slave reads by setting {@link ReadFrom}.
@@ -29,7 +29,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
  *             {@link io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection}.
  */
 @Deprecated
-public interface StatefulRedisMasterSlaveConnection<K, V> extends StatefulRedisConnection<K, V> {
+public interface StatefulRedisMasterSlaveConnection<K, V> extends StatefulRedisMasterReplicaConnection<K, V> {
 
     /**
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the

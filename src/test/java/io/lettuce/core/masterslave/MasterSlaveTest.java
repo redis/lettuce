@@ -48,7 +48,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
     private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd)
             .withClientName("my-client").withDatabase(5).build();
 
-    private StatefulRedisMasterSlaveConnectionImpl<String, String> connection;
+    private StatefulRedisMasterSlaveConnection<String, String> connection;
 
     private RedisURI master;
     private RedisURI replica;
@@ -89,7 +89,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         this.connection2.auth(passwd);
         this.connection2.configSet("masterauth", passwd);
 
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8, masterURI);
+        connection = MasterSlave.connect(client, StringCodec.UTF8, masterURI);
         connection.setReadFrom(ReadFrom.REPLICA);
     }
 
@@ -155,7 +155,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         connection.close();
 
         RedisURI slaveUri = RedisURI.Builder.redis(host, TestSettings.port(4)).withPassword(passwd).build();
-        connection = (StatefulRedisMasterSlaveConnectionImpl) MasterSlave.connect(client, StringCodec.UTF8, slaveUri);
+        connection = MasterSlave.connect(client, StringCodec.UTF8, slaveUri);
 
         RedisCommands<String, String> sync = connection.sync();
         sync.set(key, value);
@@ -184,34 +184,8 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         connection.close();
     }
 
-    @Test
-    void testConnectionCount() {
-
-        MasterSlaveConnectionProvider connectionProvider = getConnectionProvider();
-
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(1);
-        slaveCall(connection);
-
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(2);
-    }
-
-    @Test
-    void testReconfigureTopology() {
-        MasterSlaveConnectionProvider connectionProvider = getConnectionProvider();
-
-        slaveCall(connection);
-
-        connectionProvider.setKnownNodes(Collections.emptyList());
-
-        assertThat(connectionProvider.getConnectionCount()).isEqualTo(0);
-    }
-
     static String slaveCall(StatefulRedisMasterSlaveConnection<String, String> connection) {
         return connection.sync().info("replication");
     }
 
-    MasterSlaveConnectionProvider getConnectionProvider() {
-        MasterSlaveChannelWriter writer = connection.getChannelWriter();
-        return writer.getMasterSlaveConnectionProvider();
-    }
 }
