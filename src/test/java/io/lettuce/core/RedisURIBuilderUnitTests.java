@@ -150,7 +150,7 @@ class RedisURIBuilderUnitTests {
 
         assertThat(result.getSentinels()).hasSize(1);
         assertThat(result.getHost()).isNull();
-        assertThat(result.getPort()).isEqualTo(0);
+        assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.getPassword()).isEqualTo("password".toCharArray());
         assertThat(result.getSentinelMasterId()).isEqualTo("master");
         assertThat(result.toString()).contains("master");
@@ -159,7 +159,7 @@ class RedisURIBuilderUnitTests {
 
         assertThat(result.getSentinels()).hasSize(3);
         assertThat(result.getHost()).isNull();
-        assertThat(result.getPort()).isEqualTo(0);
+        assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.getPassword()).isEqualTo("password".toCharArray());
         assertThat(result.getSentinelMasterId()).isEqualTo("master");
 
@@ -253,7 +253,7 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getSentinels()).isEmpty();
         assertThat(result.getPassword()).isNull();
         assertThat(result.getHost()).isNull();
-        assertThat(result.getPort()).isEqualTo(0);
+        assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.isSsl()).isFalse();
     }
 
@@ -267,7 +267,7 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getSentinels()).isEmpty();
         assertThat(result.getPassword()).isEqualTo("password".toCharArray());
         assertThat(result.getHost()).isNull();
-        assertThat(result.getPort()).isEqualTo(0);
+        assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.isSsl()).isFalse();
     }
 }
