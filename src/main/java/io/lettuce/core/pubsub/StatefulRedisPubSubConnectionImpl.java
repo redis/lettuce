@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 
 import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
@@ -29,6 +30,7 @@ import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * An thread-safe pub/sub connection to a Redis server. Multiple threads may share one {@link StatefulRedisPubSubConnectionImpl}
@@ -40,8 +42,8 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
  * @param <V> Value type.
  * @author Mark Paluch
  */
-public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnectionImpl<K, V> implements
-        StatefulRedisPubSubConnection<K, V> {
+public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnectionImpl<K, V>
+        implements StatefulRedisPubSubConnection<K, V> {
 
     private final PubSubEndpoint<K, V> endpoint;
 
@@ -141,6 +143,13 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     @Override
     public void activated() {
         super.activated();
-        resubscribe();
+        for (RedisFuture<Void> command : resubscribe()) {
+            command.exceptionally(throwable -> {
+                if (throwable instanceof RedisCommandExecutionException) {
+                    InternalLoggerFactory.getInstance(getClass()).warn("Re-subscribe failed: " + command.getError());
+                }
+                return null;
+            });
+        }
     }
 }

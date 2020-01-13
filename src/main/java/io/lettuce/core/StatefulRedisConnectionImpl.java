@@ -33,6 +33,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.MultiOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A thread-safe connection to a Redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
@@ -127,11 +128,19 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            async.authAsync(password);
+            AsyncCommand<K, V, String> command = async.authAsync(password);
+            command.exceptionally(throwable -> {
+                return logOnFailure(throwable, "AUTH failed: " + command.getError());
+            });
         }
 
-        if (db != 0) {
-            async.selectAsync(db);
+        if (db != 0)
+
+        {
+            AsyncCommand<K, V, String> command = async.selectAsync(db);
+            command.exceptionally(throwable -> {
+                return logOnFailure(throwable, "SELECT failed: " + command.getError());
+            });
         }
 
         if (clientName != null) {
@@ -139,8 +148,18 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         }
 
         if (readOnly) {
-            async.readOnly();
+            RedisFuture<String> command = async.readOnly();
+            command.exceptionally(throwable -> {
+                return logOnFailure(throwable, "READONLY failed: " + command.getError());
+            });
         }
+    }
+
+    private String logOnFailure(Throwable throwable, String message) {
+        if (throwable instanceof RedisCommandExecutionException) {
+            InternalLoggerFactory.getInstance(getClass()).warn(message);
+        }
+        return "";
     }
 
     @Override
@@ -259,8 +278,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public void setClientName(String clientName) {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
-        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.CLIENT, new StatusOutput<>(
-                StringCodec.UTF8), args));
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(
+                new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
         this.clientName = clientName;
 
         dispatch((RedisCommand) async);
