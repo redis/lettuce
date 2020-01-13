@@ -987,7 +987,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private String host;
         private String socket;
         private String sentinelMasterId;
-        private int port;
+        private int port = DEFAULT_REDIS_PORT;
         private int database;
         private String clientName;
         private char[] password;
