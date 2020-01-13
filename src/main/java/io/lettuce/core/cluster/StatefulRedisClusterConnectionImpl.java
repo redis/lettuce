@@ -44,6 +44,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A thread-safe connection to a Redis Cluster. Multiple threads may share one {@link StatefulRedisClusterConnectionImpl}
@@ -54,8 +55,8 @@ import io.lettuce.core.protocol.*;
  * @author Mark Paluch
  * @since 4.0
  */
-public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
-        StatefulRedisClusterConnection<K, V> {
+public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V>
+        implements StatefulRedisClusterConnection<K, V> {
 
     private Partitions partitions;
 
@@ -135,8 +136,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             throw new RedisException("NodeId " + nodeId + " does not belong to the cluster");
         }
 
-        return getClusterDistributionChannelWriter().getClusterConnectionProvider().getConnection(
-                ClusterConnectionProvider.Intent.WRITE, nodeId);
+        return getClusterDistributionChannelWriter().getClusterConnectionProvider()
+                .getConnection(ClusterConnectionProvider.Intent.WRITE, nodeId);
     }
 
     @Override
@@ -157,8 +158,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Override
     public StatefulRedisConnection<K, V> getConnection(String host, int port) {
 
-        return getClusterDistributionChannelWriter().getClusterConnectionProvider().getConnection(
-                ClusterConnectionProvider.Intent.WRITE, host, port);
+        return getClusterDistributionChannelWriter().getClusterConnectionProvider()
+                .getConnection(ClusterConnectionProvider.Intent.WRITE, host, port);
     }
 
     @Override
@@ -180,7 +181,10 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         super.activated();
         // do not block in here, since the channel flow will be interrupted.
         if (password != null) {
-            async.authAsync(password);
+            AsyncCommand<K, V, String> command = async.authAsync(password);
+            command.exceptionally(throwable -> {
+                return logOnFailure(throwable, "AUTH failed: " + command.getError());
+            });
         }
 
         if (clientName != null) {
@@ -188,15 +192,25 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         }
 
         if (readOnly) {
-            async.readOnly();
+            RedisFuture<String> command = async.readOnly();
+            command.exceptionally(throwable -> {
+                return logOnFailure(throwable, "READONLY failed: " + command.getError());
+            });
         }
+    }
+
+    private String logOnFailure(Throwable throwable, String message) {
+        if (throwable instanceof RedisCommandExecutionException) {
+            InternalLoggerFactory.getInstance(getClass()).warn(message);
+        }
+        return "";
     }
 
     void setClientName(String clientName) {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);
-        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.CLIENT, new StatusOutput<>(
-                StringCodec.UTF8), args));
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(
+                new Command<>(CommandType.CLIENT, new StatusOutput<>(StringCodec.UTF8), args));
         this.clientName = clientName;
 
         dispatch((RedisCommand) async);
