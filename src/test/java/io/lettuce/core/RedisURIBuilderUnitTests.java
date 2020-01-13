@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 /**
  * Unit tests for {@link RedisURI.Builder}.
@@ -241,6 +244,7 @@ class RedisURIBuilderUnitTests {
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS)
     void redisSocket() throws IOException {
         File file = new File("work/socket-6479").getCanonicalFile();
         RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://" + file.getCanonicalPath());
@@ -254,6 +258,7 @@ class RedisURIBuilderUnitTests {
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS)
     void redisSocketWithPassword() throws IOException {
         File file = new File("work/socket-6479").getCanonicalFile();
         RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS_SOCKET + "://password@" + file.getCanonicalPath());
