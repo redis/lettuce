@@ -136,7 +136,7 @@ Pub/Sub
 
 ```java
 RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
-connection.addListener(new RedisPubSubListener<String, String>() { ... })
+connection.getStatefulConnection().addListener(new RedisPubSubListener<String, String>() { ... })
 connection.subscribe("channel")
 ```
 
