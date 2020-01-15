@@ -15,7 +15,6 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.test.settings.TestSettings.host;
 import static io.lettuce.test.settings.TestSettings.sslPort;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,9 +23,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.GeneralSecurityException;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,16 +34,17 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.masterslave.MasterSlave;
-import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
-import io.lettuce.test.*;
-import io.netty.handler.codec.DecoderException;
+import io.lettuce.test.CanConnect;
+import io.lettuce.test.Delay;
+import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.Wait;
+import io.lettuce.test.settings.TestSettings;
 import io.netty.handler.ssl.OpenSsl;
 
 /**
@@ -64,12 +62,12 @@ class SslIntegrationTests extends TestSupport {
     private static final File CA_CERT_FILE = new File("work/ca/certs/ca.cert.pem");
     private static final int MASTER_SLAVE_BASE_PORT_OFFSET = 2000;
 
-    private static final RedisURI URI_NO_VERIFY = sslURIBuilder(0) //
-            .withVerifyPeer(false) //
+    private static final RedisURI URI_VERIFY = sslURIBuilder(0) //
+            .withVerifyPeer(true) //
             .build();
 
-    private static final RedisURI URI_VERIFY = sslURIBuilder(1) //
-            .withVerifyPeer(true) //
+    private static final RedisURI URI_NO_VERIFY = sslURIBuilder(1) //
+            .withVerifyPeer(false) //
             .build();
 
     private static final RedisURI URI_CLIENT_CERT_AUTH = sslURIBuilder(2) //
@@ -98,7 +96,7 @@ class SslIntegrationTests extends TestSupport {
     @BeforeAll
     static void beforeClass() {
 
-        assumeTrue(CanConnect.to(host(), sslPort()), "Assume that stunnel runs on port 6443");
+        assumeTrue(CanConnect.to(TestSettings.host(), sslPort()), "Assume that stunnel runs on port 6443");
         assertThat(TRUSTSTORE_FILE).exists();
     }
 
@@ -242,7 +240,7 @@ class SslIntegrationTests extends TestSupport {
     @Test
     void sslWithVerificationWillFail() {
 
-        RedisURI redisUri = RedisURI.create("rediss://" + host() + ":" + sslPort());
+        RedisURI redisUri = RedisURI.create("rediss://" + TestSettings.host() + ":" + sslPort());
 
         assertThatThrownBy(() -> redisClient.connect(redisUri).sync()).isInstanceOf(RedisConnectionException.class);
     }
@@ -377,50 +375,16 @@ class SslIntegrationTests extends TestSupport {
         connection2.getStatefulConnection().close();
     }
 
-    @Test
-    void pubSubSslAndBreakConnection() {
-
-        RedisURI redisURI = RedisURI.Builder.redis(host(), sslPort()).withSsl(true).withVerifyPeer(false).build();
-        redisClient.setOptions(ClientOptions.builder().suspendReconnectOnProtocolFailure(true).build());
-
-        RedisPubSubAsyncCommands<String, String> connection = redisClient.connectPubSub(redisURI).async();
-        RedisPubSubCommands<String, String> connection2 = redisClient.connectPubSub(redisURI).sync();
-
-        redisURI.setVerifyPeer(true);
-        connection.subscribe("c1");
-        connection.subscribe("c2");
-
-        Wait.untilTrue(() -> connection2.pubsubChannels().containsAll(Arrays.asList("c1", "c2"))).waitOrTimeout();
-
-        Futures.await(connection.quit());
-
-        List<String> future = connection2.pubsubChannels();
-        assertThat(future).doesNotContain("c1", "c2");
-
-        RedisChannelWriter channelWriter = ConnectionTestUtil.getChannelWriter(connection.getStatefulConnection());
-        Wait.untilNotEquals(null, () -> ReflectionTestUtils.getField(channelWriter, "connectionError")).waitOrTimeout();
-
-        RedisFuture<Void> defectFuture = connection.subscribe("foo");
-
-        assertThatThrownBy(() -> Futures.await(defectFuture)).hasCauseInstanceOf(DecoderException.class)
-                .hasRootCauseInstanceOf(GeneralSecurityException.class);
-
-        assertThat(defectFuture.toCompletableFuture()).isDone();
-
-        connection.getStatefulConnection().close();
-        connection2.getStatefulConnection().close();
-    }
-
     private static RedisURI.Builder sslURIBuilder(int portOffset) {
-        return RedisURI.Builder.redis(host(), sslPort(portOffset)).withSsl(true);
+        return RedisURI.Builder.redis(TestSettings.host(), sslPort(portOffset)).withSsl(true);
     }
 
     private static List<RedisURI> sslUris(IntStream masterSlaveOffsets,
             Function<RedisURI.Builder, RedisURI.Builder> builderCustomizer) {
 
         return masterSlaveOffsets.map(it -> it + MASTER_SLAVE_BASE_PORT_OFFSET)
-                .mapToObj(offset -> RedisURI.Builder.redis(host(), sslPort(offset)).withSsl(true)).map(builderCustomizer)
-                .map(RedisURI.Builder::build).collect(Collectors.toList());
+                .mapToObj(offset -> RedisURI.Builder.redis(TestSettings.host(), sslPort(offset)).withSsl(true))
+                .map(builderCustomizer).map(RedisURI.Builder::build).collect(Collectors.toList());
     }
 
     private URL truststoreURL() throws MalformedURLException {
