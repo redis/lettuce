@@ -130,6 +130,10 @@ public class ConnectionBuilder {
         return new PlainChannelInitializer(pingCommandSupplier, this::buildHandlers, clientResources, timeout);
     }
 
+    public RedisChannelInitializer build(SocketAddress redisAddress) {
+        return build();
+    }
+
     public ConnectionBuilder socketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
         this.socketAddressSupplier = socketAddressSupplier;
         return this;

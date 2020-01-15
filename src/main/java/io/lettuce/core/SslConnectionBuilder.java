@@ -20,6 +20,8 @@ import static io.lettuce.core.ConnectionEventTrigger.remote;
 import static io.lettuce.core.PlainChannelInitializer.pingBeforeActivate;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
@@ -34,6 +36,7 @@ import javax.net.ssl.SSLParameters;
 import io.lettuce.core.event.connection.ConnectedEvent;
 import io.lettuce.core.event.connection.ConnectionActivatedEvent;
 import io.lettuce.core.event.connection.DisconnectedEvent;
+import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -75,10 +78,41 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     }
 
     @Override
+    @Deprecated
     public RedisChannelInitializer build() {
 
-        return new SslChannelInitializer(getPingCommandSupplier(), this::buildHandlers, redisURI, clientResources(),
-                getTimeout(), clientOptions().getSslOptions());
+        return new SslChannelInitializer(getPingCommandSupplier(), this::buildHandlers, toHostAndPort(redisURI),
+                redisURI.isVerifyPeer(), redisURI.isStartTls(), clientResources(), getTimeout(),
+                clientOptions().getSslOptions());
+    }
+
+    @Override
+    public RedisChannelInitializer build(SocketAddress socketAddress) {
+
+        return new SslChannelInitializer(getPingCommandSupplier(), this::buildHandlers, toHostAndPort(socketAddress),
+                redisURI.isVerifyPeer(), redisURI.isStartTls(), clientResources(), getTimeout(),
+                clientOptions().getSslOptions());
+    }
+
+    static HostAndPort toHostAndPort(RedisURI redisURI) {
+
+        if (LettuceStrings.isNotEmpty(redisURI.getHost())) {
+            return HostAndPort.of(redisURI.getHost(), redisURI.getPort());
+        }
+
+        return null;
+    }
+
+    static HostAndPort toHostAndPort(SocketAddress socketAddress) {
+
+        if (socketAddress instanceof InetSocketAddress) {
+
+            InetSocketAddress isa = (InetSocketAddress) socketAddress;
+
+            return HostAndPort.of(isa.getHostString(), isa.getPort());
+        }
+
+        return null;
     }
 
     /**
@@ -88,7 +122,9 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;
         private final Supplier<List<ChannelHandler>> handlers;
-        private final RedisURI redisURI;
+        private final HostAndPort hostAndPort;
+        private final boolean verifyPeer;
+        private final boolean startTls;
         private final ClientResources clientResources;
         private final Duration timeout;
         private final SslOptions sslOptions;
@@ -96,12 +132,14 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
 
         public SslChannelInitializer(Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier,
-                Supplier<List<ChannelHandler>> handlers, RedisURI redisURI, ClientResources clientResources, Duration timeout,
-                SslOptions sslOptions) {
+                Supplier<List<ChannelHandler>> handlers, HostAndPort hostAndPort, boolean verifyPeer, boolean startTls,
+                ClientResources clientResources, Duration timeout, SslOptions sslOptions) {
 
             this.pingCommandSupplier = pingCommandSupplier;
             this.handlers = handlers;
-            this.redisURI = redisURI;
+            this.hostAndPort = hostAndPort;
+            this.verifyPeer = verifyPeer;
+            this.startTls = startTls;
             this.clientResources = clientResources;
             this.timeout = timeout;
             this.sslOptions = sslOptions;
@@ -114,10 +152,10 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         private void doInitialize(Channel channel) throws IOException, GeneralSecurityException {
 
-             SSLParameters sslParams = sslOptions.createSSLParameters();
+            SSLParameters sslParams = sslOptions.createSSLParameters();
             SslContextBuilder sslContextBuilder = sslOptions.createSslContextBuilder();
 
-            if (redisURI.isVerifyPeer()) {
+            if (verifyPeer) {
                 sslParams.setEndpointIdentificationAlgorithm("HTTPS");
             } else {
                 sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
@@ -125,7 +163,9 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             SslContext sslContext = sslContextBuilder.build();
 
-            SSLEngine sslEngine = sslContext.newEngine(channel.alloc(), redisURI.getHost(), redisURI.getPort());
+            SSLEngine sslEngine = hostAndPort != null
+                    ? sslContext.newEngine(channel.alloc(), hostAndPort.getHostText(), hostAndPort.getPort())
+                    : sslContext.newEngine(channel.alloc());
             sslEngine.setSSLParameters(sslParams);
 
             if (channel.pipeline().get("first") == null) {
@@ -145,7 +185,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                 });
             }
 
-            SslHandler sslHandler = new SslHandler(sslEngine, redisURI.isStartTls());
+            SslHandler sslHandler = new SslHandler(sslEngine, startTls);
             channel.pipeline().addLast(sslHandler);
 
             if (channel.pipeline().get("channelActivator") == null) {
