@@ -42,6 +42,7 @@ import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
@@ -149,35 +150,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         @Override
         protected void initChannel(Channel channel) throws Exception {
 
-            SSLParameters sslParams = new SSLParameters();
-
-            SslContextBuilder sslContextBuilder = SslContextBuilder.forClient().sslProvider(sslOptions.getSslProvider());
-            if (verifyPeer) {
-                sslParams.setEndpointIdentificationAlgorithm("HTTPS");
-            } else {
-                sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
-            }
-
-            if (sslOptions.getKeystore() != null) {
-                try (InputStream is = sslOptions.getKeystore().openStream()) {
-                    sslContextBuilder.keyManager(createKeyManagerFactory(is,
-                            sslOptions.getKeystorePassword().length == 0 ? null : sslOptions.getKeystorePassword()));
-                }
-            }
-
-            if (sslOptions.getTruststore() != null) {
-                try (InputStream is = sslOptions.getTruststore().openStream()) {
-                    sslContextBuilder.trustManager(createTrustManagerFactory(is,
-                            sslOptions.getTruststorePassword().length == 0 ? null : sslOptions.getTruststorePassword()));
-                }
-            }
-
-            SslContext sslContext = sslContextBuilder.build();
-
-            SSLEngine sslEngine = hostAndPort != null
-                    ? sslContext.newEngine(channel.alloc(), hostAndPort.getHostText(), hostAndPort.getPort())
-                    : sslContext.newEngine(channel.alloc());
-            sslEngine.setSSLParameters(sslParams);
+            SSLEngine sslEngine = initializeSSLEngine(channel.alloc());
 
             if (channel.pipeline().get("first") == null) {
                 channel.pipeline().addFirst("first", new ChannelDuplexHandler() {
@@ -271,6 +244,41 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             }
 
             clientResources.nettyCustomizer().afterChannelInitialized(channel);
+        }
+
+        private SSLEngine initializeSSLEngine(ByteBufAllocator alloc) throws IOException, GeneralSecurityException {
+
+            SSLParameters sslParams = new SSLParameters();
+
+            SslContextBuilder sslContextBuilder = SslContextBuilder.forClient().sslProvider(sslOptions.getSslProvider());
+            if (verifyPeer) {
+                sslParams.setEndpointIdentificationAlgorithm("HTTPS");
+            } else {
+                sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+            }
+
+            if (sslOptions.getKeystore() != null) {
+                try (InputStream is = sslOptions.getKeystore().openStream()) {
+                    sslContextBuilder.keyManager(createKeyManagerFactory(is,
+                            sslOptions.getKeystorePassword().length == 0 ? null : sslOptions.getKeystorePassword()));
+                }
+            }
+
+            if (sslOptions.getTruststore() != null) {
+                try (InputStream is = sslOptions.getTruststore().openStream()) {
+                    sslContextBuilder.trustManager(createTrustManagerFactory(is,
+                            sslOptions.getTruststorePassword().length == 0 ? null : sslOptions.getTruststorePassword()));
+                }
+            }
+
+            SslContext sslContext = sslContextBuilder.build();
+
+            SSLEngine sslEngine = hostAndPort != null
+                    ? sslContext.newEngine(alloc, hostAndPort.getHostText(), hostAndPort.getPort())
+                    : sslContext.newEngine(alloc);
+            sslEngine.setSSLParameters(sslParams);
+
+            return sslEngine;
         }
 
         @Override
