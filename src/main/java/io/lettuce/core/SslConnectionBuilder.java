@@ -16,6 +16,8 @@
 package io.lettuce.core;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.function.Supplier;
@@ -23,8 +25,10 @@ import java.util.function.Supplier;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 
+import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
@@ -61,48 +65,48 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     }
 
     @Override
-    public ChannelInitializer<Channel> build() {
-        return new SslChannelInitializer(this::buildHandlers, redisURI, clientResources(), clientOptions().getSslOptions());
+    public ChannelInitializer<Channel> build(SocketAddress socketAddress) {
+        return new SslChannelInitializer(this::buildHandlers, toHostAndPort(socketAddress), redisURI.isVerifyPeer(),
+                redisURI.isStartTls(), clientResources(), clientOptions().getSslOptions());
+    }
+
+    static HostAndPort toHostAndPort(SocketAddress socketAddress) {
+
+        if (socketAddress instanceof InetSocketAddress) {
+
+            InetSocketAddress isa = (InetSocketAddress) socketAddress;
+
+            return HostAndPort.of(isa.getHostString(), isa.getPort());
+        }
+
+        return null;
     }
 
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
 
         private final Supplier<List<ChannelHandler>> handlers;
-        private final RedisURI redisURI;
+        private final HostAndPort hostAndPort;
+        private final boolean verifyPeer;
+        private final boolean startTls;
         private final ClientResources clientResources;
         private final SslOptions sslOptions;
 
-        public SslChannelInitializer(Supplier<List<ChannelHandler>> handlers, RedisURI redisURI,
-                ClientResources clientResources, SslOptions sslOptions) {
+        public SslChannelInitializer(Supplier<List<ChannelHandler>> handlers, HostAndPort hostAndPort, boolean verifyPeer,
+                boolean startTls, ClientResources clientResources, SslOptions sslOptions) {
 
             this.handlers = handlers;
-            this.redisURI = redisURI;
+            this.hostAndPort = hostAndPort;
+            this.verifyPeer = verifyPeer;
+            this.startTls = startTls;
             this.clientResources = clientResources;
             this.sslOptions = sslOptions;
         }
 
         @Override
         protected void initChannel(Channel channel) throws Exception {
-            doInitialize(channel);
-        }
 
-        private void doInitialize(Channel channel) throws IOException, GeneralSecurityException {
-
-            SSLParameters sslParams = sslOptions.createSSLParameters();
-            SslContextBuilder sslContextBuilder = sslOptions.createSslContextBuilder();
-
-            if (redisURI.isVerifyPeer()) {
-                sslParams.setEndpointIdentificationAlgorithm("HTTPS");
-            } else {
-                sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
-            }
-
-            SslContext sslContext = sslContextBuilder.build();
-
-            SSLEngine sslEngine = sslContext.newEngine(channel.alloc(), redisURI.getHost(), redisURI.getPort());
-            sslEngine.setSSLParameters(sslParams);
-
-            SslHandler sslHandler = new SslHandler(sslEngine, redisURI.isStartTls());
+            SSLEngine sslEngine = initializeSSLEngine(channel.alloc());
+            SslHandler sslHandler = new SslHandler(sslEngine, startTls);
             channel.pipeline().addLast(sslHandler);
 
             for (ChannelHandler handler : handlers.get()) {
@@ -110,6 +114,27 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             }
 
             clientResources.nettyCustomizer().afterChannelInitialized(channel);
+        }
+
+        private SSLEngine initializeSSLEngine(ByteBufAllocator alloc) throws IOException, GeneralSecurityException {
+
+            SSLParameters sslParams = sslOptions.createSSLParameters();
+            SslContextBuilder sslContextBuilder = sslOptions.createSslContextBuilder();
+
+            if (verifyPeer) {
+                sslParams.setEndpointIdentificationAlgorithm("HTTPS");
+            } else {
+                sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+            }
+
+            SslContext sslContext = sslContextBuilder.build();
+
+            SSLEngine sslEngine = hostAndPort != null
+                    ? sslContext.newEngine(alloc, hostAndPort.getHostText(), hostAndPort.getPort())
+                    : sslContext.newEngine(alloc);
+            sslEngine.setSSLParameters(sslParams);
+
+            return sslEngine;
         }
     }
 }

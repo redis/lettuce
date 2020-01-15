@@ -304,7 +304,7 @@ public abstract class AbstractRedisClient {
 
         Bootstrap redisBootstrap = connectionBuilder.bootstrap();
 
-        ChannelInitializer<Channel> initializer = connectionBuilder.build();
+        ChannelInitializer<Channel> initializer = connectionBuilder.build(redisAddress);
         redisBootstrap.handler(initializer);
 
         clientResources.nettyCustomizer().afterBootstrapInitialized(redisBootstrap);

@@ -56,6 +56,7 @@ touch ${CA_DIR}/index.txt
 function generateKey {
 
     host=$1
+    ip=$2
 
     echo "[INFO] Generating server private key"
     openssl genrsa -aes256 \
@@ -70,7 +71,9 @@ function generateKey {
     chmod 400 ${CA_DIR}/private/${host}.decrypted.key.pem
 
     echo "[INFO] Generating server certificate request"
-    openssl req -config ${DIR}/openssl.cnf \
+    openssl req -config <(cat ${DIR}/openssl.cnf \
+        <(printf "\n[SAN]\nsubjectAltName=DNS:${host},IP:${ip}")) \
+          -reqexts SAN \
           -key ${CA_DIR}/private/${host}.key.pem \
           -passin pass:changeit \
           -new -sha256 -out ${CA_DIR}/csr/${host}.csr.pem \
@@ -85,8 +88,8 @@ function generateKey {
           -out ${CA_DIR}/certs/${host}.cert.pem
 }
 
-generateKey "localhost"
-generateKey "foo-host"
+generateKey "localhost" "127.0.0.1"
+generateKey "foo-host" "1.2.3.4"
 
 echo "[INFO] Generating client auth private key"
 openssl genrsa -aes256 \

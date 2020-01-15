@@ -118,7 +118,7 @@ public class ConnectionBuilder {
         return watchdog;
     }
 
-    public ChannelInitializer<Channel> build() {
+    public ChannelInitializer<Channel> build(SocketAddress socketAddress) {
         return new PlainChannelInitializer(this::buildHandlers, clientResources);
     }
 
