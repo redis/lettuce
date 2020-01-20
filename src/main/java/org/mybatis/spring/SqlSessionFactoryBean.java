@@ -479,7 +479,7 @@ public class SqlSessionFactoryBean
    * Build a {@code SqlSessionFactory} instance.
    *
    * The default implementation uses the standard MyBatis {@code XMLConfigBuilder} API to build a
-   * {@code SqlSessionFactory} instance based on an Reader. Since 1.3.0, it can be specified a {@link Configuration}
+   * {@code SqlSessionFactory} instance based on a Reader. Since 1.3.0, it can be specified a {@link Configuration}
    * instance directly(without config file).
    *
    * @return SqlSessionFactory
