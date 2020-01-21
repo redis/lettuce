@@ -20,9 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.netty.channel.local.LocalAddress;
 
 /**
+ * Unit tests for {@link CommandLatencyId}.
+ *
  * @author Mark Paluch
  */
 class CommandLatencyIdUnitTests {
@@ -38,5 +41,36 @@ class CommandLatencyIdUnitTests {
     void testValues() {
         assertThat(sut.localAddress()).isEqualTo(LocalAddress.ANY);
         assertThat(sut.remoteAddress()).isEqualTo(new LocalAddress("me"));
+    }
+
+    @Test
+    void testEquality() {
+        assertThat(sut).isEqualTo(CommandLatencyId.create(LocalAddress.ANY, new LocalAddress("me"), new MyCommand("ADDR")));
+        assertThat(sut).isNotEqualTo(CommandLatencyId.create(LocalAddress.ANY, new LocalAddress("me"), new MyCommand("FOO")));
+    }
+
+    @Test
+    void testHashCode() {
+        assertThat(sut)
+                .hasSameHashCodeAs(CommandLatencyId.create(LocalAddress.ANY, new LocalAddress("me"), new MyCommand("ADDR")));
+    }
+
+    static class MyCommand implements ProtocolKeyword {
+
+        final String name;
+
+        public MyCommand(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public byte[] getBytes() {
+            return name.getBytes();
+        }
+
+        @Override
+        public String name() {
+            return name;
+        }
     }
 }
