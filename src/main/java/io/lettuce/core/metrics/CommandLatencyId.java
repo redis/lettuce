@@ -33,6 +33,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
     private final SocketAddress localAddress;
     private final SocketAddress remoteAddress;
     private final ProtocolKeyword commandType;
+    private final String commandName;
 
     protected CommandLatencyId(SocketAddress localAddress, SocketAddress remoteAddress, ProtocolKeyword commandType) {
         LettuceAssert.notNull(localAddress, "LocalAddress must not be null");
@@ -42,6 +43,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
         this.localAddress = localAddress;
         this.remoteAddress = remoteAddress;
         this.commandType = commandType;
+        this.commandName = commandType.name();
     }
 
     /**
@@ -96,14 +98,14 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
             return false;
         if (!remoteAddress.equals(that.remoteAddress))
             return false;
-        return commandType.equals(that.commandType);
+        return commandName.equals(that.commandName);
     }
 
     @Override
     public int hashCode() {
         int result = localAddress.hashCode();
         result = 31 * result + remoteAddress.hashCode();
-        result = 31 * result + commandType.hashCode();
+        result = 31 * result + commandName.hashCode();
         return result;
     }
 
@@ -124,7 +126,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
             return localResult;
         }
 
-        return commandType.toString().compareTo(o.commandType.toString());
+        return commandName.compareTo(o.commandName);
     }
 
     @Override
