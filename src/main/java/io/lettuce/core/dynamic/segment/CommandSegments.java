@@ -43,8 +43,8 @@ public class CommandSegments implements Iterable<CommandSegment> {
 
         LettuceAssert.isTrue(!segments.isEmpty(), "Command segments must not be empty");
 
-        this.segments = segments.size() > 1 ? Collections.unmodifiableList(segments.subList(1, segments.size())) : Collections
-                .emptyList();
+        this.segments = segments.size() > 1 ? Collections.unmodifiableList(segments.subList(1, segments.size()))
+                : Collections.emptyList();
         this.commandType = potentiallyResolveCommand(segments.get(0).asString());
     }
 
@@ -101,6 +101,23 @@ public class CommandSegments implements Iterable<CommandSegment> {
         @Override
         public String toString() {
             return name();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof StringCommandType))
+                return false;
+
+            StringCommandType that = (StringCommandType) o;
+
+            return commandType.equals(that.commandType);
+        }
+
+        @Override
+        public int hashCode() {
+            return commandType.hashCode();
         }
     }
 
