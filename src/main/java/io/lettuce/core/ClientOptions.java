@@ -135,10 +135,7 @@ public class ClientOptions implements Serializable {
          *
          * @param pingBeforeActivateConnection true/false
          * @return {@code this}
-         * @deprecated since 5.2. PING during connection handshake becomes mandatory with RESP3. This method will be removed
-         *             with Lettuce 6.
          */
-        @Deprecated
         public Builder pingBeforeActivateConnection(boolean pingBeforeActivateConnection) {
             this.pingBeforeActivateConnection = pingBeforeActivateConnection;
             return this;
@@ -328,10 +325,7 @@ public class ClientOptions implements Serializable {
      * activated and enabled for use. If the check fails, the connect/reconnect is treated as failure.
      *
      * @return {@literal true} if {@literal PING} barrier is enabled.
-     * @deprecated since 5.2. PING during connection handshake becomes mandatory with RESP3. This method will be removed with
-     *             Lettuce 6.
      */
-    @Deprecated
     public boolean isPingBeforeActivateConnection() {
         return pingBeforeActivateConnection;
     }
