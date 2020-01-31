@@ -425,14 +425,14 @@ public abstract class AbstractRedisClient {
     /**
      * Shutdown this client and close all open connections asynchronously. Once all connections are closed, the associated
      * {@link ClientResources} are shut down/released gracefully considering quiet time and the shutdown timeout. The client
-     * should be discarded after calling shutdown. The shutdown has 2 {@link TimeUnit#SECONDS} quiet time and a timeout of 15
+     * should be discarded after calling shutdown. The shutdown is executed without quiet time and a timeout of 2
      * {@link TimeUnit#SECONDS}.
      *
      * @since 4.4
      * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
     public CompletableFuture<Void> shutdownAsync() {
-        return shutdownAsync(2, 15, TimeUnit.SECONDS);
+        return shutdownAsync(0, 2, TimeUnit.SECONDS);
     }
 
     /**
