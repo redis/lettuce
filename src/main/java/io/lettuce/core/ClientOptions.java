@@ -142,9 +142,7 @@ public class ClientOptions implements Serializable {
          *
          * @param pingBeforeActivateConnection true/false
          * @return {@code this}
-         * @deprecated since 5.2. PING during connection handshake is mandatory with RESP3.
          */
-        @Deprecated
         public Builder pingBeforeActivateConnection(boolean pingBeforeActivateConnection) {
             this.pingBeforeActivateConnection = pingBeforeActivateConnection;
             return this;
@@ -335,7 +333,7 @@ public class ClientOptions implements Serializable {
         builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
-                .protocolVersion(getConfiguredProtocolVersion()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
                 .requestQueueSize(getRequestQueueSize()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
 
@@ -349,9 +347,7 @@ public class ClientOptions implements Serializable {
      * unless forcing to use the RESP 2 protocol version.
      *
      * @return {@literal true} if {@literal PING} barrier is enabled.
-     * @deprecated since 5.2. PING during connection handshake is mandatory with RESP3.
      */
-    @Deprecated
     public boolean isPingBeforeActivateConnection() {
         return pingBeforeActivateConnection;
     }

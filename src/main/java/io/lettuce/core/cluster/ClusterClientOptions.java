@@ -178,6 +178,12 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         @Override
+        public Builder pingBeforeActivateConnection(boolean pingBeforeActivateConnection) {
+            super.pingBeforeActivateConnection(pingBeforeActivateConnection);
+            return this;
+        }
+
+        @Override
         public Builder protocolVersion(ProtocolVersion protocolVersion) {
             super.protocolVersion(protocolVersion);
             return this;
@@ -269,8 +275,8 @@ public class ClusterClientOptions extends ClientOptions {
         builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
-                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
-                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
+                .requestQueueSize(getRequestQueueSize()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
                 .validateClusterNodeMembership(isValidateClusterNodeMembership()).maxRedirects(getMaxRedirects())
                 .topologyRefreshOptions(getTopologyRefreshOptions());
