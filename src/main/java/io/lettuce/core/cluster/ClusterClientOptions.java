@@ -177,7 +177,6 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         @Override
-        @Deprecated
         public Builder pingBeforeActivateConnection(boolean pingBeforeActivateConnection) {
             super.pingBeforeActivateConnection(pingBeforeActivateConnection);
             return this;
