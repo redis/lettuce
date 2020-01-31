@@ -359,32 +359,42 @@ public abstract class AbstractRedisClient {
     }
 
     /**
-     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown. The shutdown
-     * has no quiet time and a timeout of 2 seconds.
+     * Shutdown this client and close all open connections once this method is called. Once all connections are closed, the
+     * associated {@link ClientResources} are shut down/released gracefully considering quiet time and the shutdown timeout. The
+     * client should be discarded after calling shutdown. The shutdown is executed without quiet time and a timeout of 2
+     * {@link TimeUnit#SECONDS}.
+     *
+     * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
     public void shutdown() {
         shutdown(0, 2, TimeUnit.SECONDS);
     }
 
     /**
-     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
+     * Shutdown this client and close all open connections once this method is called. Once all connections are closed, the
+     * associated {@link ClientResources} are shut down/released gracefully considering quiet time and the shutdown timeout. The
+     * client should be discarded after calling shutdown.
      *
-     * @param quietPeriod the quiet period as described in the documentation
-     * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
-     *        during the quiet period
+     * @param quietPeriod the quiet period to allow the executor gracefully shut down.
+     * @param timeout the maximum amount of time to wait until the backing executor is shutdown regardless if a task was
+     *        submitted during the quiet period.
      * @since 5.0
+     * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
     public void shutdown(Duration quietPeriod, Duration timeout) {
         shutdown(quietPeriod.toNanos(), timeout.toNanos(), TimeUnit.NANOSECONDS);
     }
 
     /**
-     * Shutdown this client and close all open connections. The client should be discarded after calling shutdown.
+     * Shutdown this client and close all open connections once this method is called. Once all connections are closed, the
+     * associated {@link ClientResources} are shut down/released gracefully considering quiet time and the shutdown timeout. The
+     * client should be discarded after calling shutdown.
      *
-     * @param quietPeriod the quiet period as described in the documentation
-     * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
-     *        during the quiet period
-     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
+     * @param quietPeriod the quiet period to allow the executor gracefully shut down.
+     * @param timeout the maximum amount of time to wait until the backing executor is shutdown regardless if a task was
+     *        submitted during the quiet period.
+     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}.
+     * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
@@ -409,24 +419,29 @@ public abstract class AbstractRedisClient {
     }
 
     /**
-     * Shutdown this client and close all open connections asynchronously. The client should be discarded after calling
-     * shutdown. The shutdown has 2 secs quiet time and a timeout of 15 secs.
+     * Shutdown this client and close all open connections asynchronously. Once all connections are closed, the associated
+     * {@link ClientResources} are shut down/released gracefully considering quiet time and the shutdown timeout. The client
+     * should be discarded after calling shutdown. The shutdown has 2 {@link TimeUnit#SECONDS} quiet time and a timeout of 15
+     * {@link TimeUnit#SECONDS}.
      *
      * @since 4.4
+     * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
     public CompletableFuture<Void> shutdownAsync() {
         return shutdownAsync(2, 15, TimeUnit.SECONDS);
     }
 
     /**
-     * Shutdown this client and close all open connections asynchronously. The client should be discarded after calling
-     * shutdown.
+     * Shutdown this client and close all open connections asynchronously. Once all connections are closed, the associated
+     * {@link ClientResources} are shut down/released gracefully considering quiet time and the shutdown timeout. The client
+     * should be discarded after calling shutdown.
      *
-     * @param quietPeriod the quiet period as described in the documentation
-     * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
-     *        during the quiet period
-     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
+     * @param quietPeriod the quiet period to allow the executor gracefully shut down.
+     * @param timeout the maximum amount of time to wait until the backing executor is shutdown regardless if a task was
+     *        submitted during the quiet period.
+     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}.
      * @since 4.4
+     * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
     @SuppressWarnings("rawtypes")
     public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
