@@ -224,6 +224,18 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hsetMap() {
+        Map<String, String> hash = new LinkedHashMap<>();
+        hash.put("two", "2");
+        hash.put("three", "3");
+        assertThat(redis.hset(key, hash)).isEqualTo(2);
+
+        hash.put("two", "second");
+        assertThat(redis.hset(key, hash)).isEqualTo(0);
+        assertThat(redis.hget(key, "two")).isEqualTo("second");
+    }
+
+    @Test
     void hsetnx() {
         redis.hset(key, "one", "1");
         assertThat(redis.hsetnx(key, "one", "2")).isFalse();

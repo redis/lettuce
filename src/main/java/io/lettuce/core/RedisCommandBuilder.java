@@ -1033,6 +1033,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HSET, new BooleanOutput<>(codec), args);
     }
 
+    Command<K, V, Long> hset(K key, Map<K, V> map) {
+        notNullKey(key);
+        LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!map.isEmpty(), "Map " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(map);
+        return createCommand(HSET, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Boolean> hsetnx(K key, K field, V value) {
         notNullKey(key);
         LettuceAssert.notNull(field, "Field " + MUST_NOT_BE_NULL);

@@ -772,6 +772,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<Long> hset(K key, Map<K, V> map) {
+        return dispatch(commandBuilder.hset(key, map));
+    }
+
+    @Override
     public RedisFuture<Boolean> hsetnx(K key, K field, V value) {
         return dispatch(commandBuilder.hsetnx(key, field, value));
     }
