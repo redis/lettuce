@@ -838,6 +838,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> hset(K key, Map<K, V> map) {
+        return createMono(() -> commandBuilder.hset(key, map));
+    }
+
+    @Override
     public Mono<Boolean> hsetnx(K key, K field, V value) {
         return createMono(() -> commandBuilder.hsetnx(key, field, value));
     }
