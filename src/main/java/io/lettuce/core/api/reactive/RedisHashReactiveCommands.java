@@ -256,6 +256,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key of the hash
      * @param map the field/value pairs to update
      * @return Long integer-reply: the number of fields that were added.
+     * @since 5.3
      */
     Mono<Long> hset(K key, Map<K, V> map);
 
