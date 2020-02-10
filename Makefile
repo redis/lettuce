@@ -6,7 +6,7 @@ BREW_BIN := $(shell which brew)
 YUM_BIN := $(shell which yum)
 APT_BIN := $(shell which apt-get)
 PROFILE ?= ci
-REDIS ?= unstable
+REDIS ?= 5.0
 
 define REDIS_CLUSTER_CONFIG1
 c2043458aa5646cee429fdd5e3c18220dddf2ce5 127.0.0.1:7380 master - 1434887920102 1434887920002 0 connected 12000-16383

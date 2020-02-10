@@ -4,11 +4,10 @@ language: java
 
 env:
   matrix:
-    - REDIS=unstable
-    - PROFILE=jmh
     - REDIS=5.0
-    - REDIS=4.0.11
-    - REDIS=3.2.11
+    - PROFILE=jmh
+    - REDIS=4.0.13
+    - REDIS=3.2.13
 
 sudo: false
 
