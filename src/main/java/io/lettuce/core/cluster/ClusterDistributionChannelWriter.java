@@ -26,10 +26,12 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.*;
+import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -126,8 +128,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
                 if (isSuccessfullyCompleted(connectFuture)) {
                     writeCommand(commandToSend, false, connectFuture.join(), null);
                 } else {
-                    connectFuture.whenComplete((connection, throwable) -> writeCommand(commandToSend, false, connection,
-                            throwable));
+                    connectFuture
+                            .whenComplete((connection, throwable) -> writeCommand(commandToSend, false, connection, throwable));
                 }
 
                 return commandToSend;
@@ -165,7 +167,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         try {
 
             if (asking) { // set asking bit
-                connection.async().asking();
+                writeCommands(Arrays.asList(asking(), command), ((RedisChannelHandler<K, V>) connection).getChannelWriter());
             }
 
             writeCommand(command, ((RedisChannelHandler<K, V>) connection).getChannelWriter());
@@ -174,12 +176,25 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         }
     }
 
+    private static <V, K> RedisCommand<K, V, ?> asking() {
+        return new Command(CommandType.ASKING, new StatusOutput<>(StringCodec.ASCII), new CommandArgs<>(StringCodec.ASCII));
+    }
+
     private static <K, V> void writeCommand(RedisCommand<K, V, ?> command, RedisChannelWriter writer) {
 
         try {
             getWriterToUse(writer).write(command);
         } catch (Exception e) {
             command.completeExceptionally(e);
+        }
+    }
+
+    private static <K, V> void writeCommands(Collection<RedisCommand<K, V, ?>> commands, RedisChannelWriter writer) {
+
+        try {
+            getWriterToUse(writer).write(commands);
+        } catch (Exception e) {
+            commands.forEach(command -> command.completeExceptionally(e));
         }
     }
 
@@ -237,8 +252,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         for (Map.Entry<SlotIntent, List<ClusterCommand<K, V, ?>>> entry : partitions.entrySet()) {
 
             SlotIntent slotIntent = entry.getKey();
-            RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider.getConnection(
-                    slotIntent.intent, slotIntent.slotHash);
+            RedisChannelHandler<K, V> connection = (RedisChannelHandler<K, V>) clusterConnectionProvider
+                    .getConnection(slotIntent.intent, slotIntent.slotHash);
 
             RedisChannelWriter channelWriter = connection.getChannelWriter();
             if (channelWriter instanceof ClusterDistributionChannelWriter) {
@@ -302,8 +317,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     static HostAndPort getMoveTarget(String errorMessage) {
 
         LettuceAssert.notEmpty(errorMessage, "ErrorMessage must not be empty");
-        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.MOVED.name()), "ErrorMessage must start with "
-                + CommandKeyword.MOVED);
+        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.MOVED.name()),
+                "ErrorMessage must start with " + CommandKeyword.MOVED);
 
         String[] movedMessageParts = errorMessage.split(" ");
         LettuceAssert.isTrue(movedMessageParts.length >= 3, "ErrorMessage must consist of 3 tokens (" + errorMessage + ")");
@@ -314,8 +329,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     static HostAndPort getAskTarget(String errorMessage) {
 
         LettuceAssert.notEmpty(errorMessage, "ErrorMessage must not be empty");
-        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.ASK.name()), "ErrorMessage must start with "
-                + CommandKeyword.ASK);
+        LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.ASK.name()),
+                "ErrorMessage must start with " + CommandKeyword.ASK);
 
         String[] movedMessageParts = errorMessage.split(" ");
         LettuceAssert.isTrue(movedMessageParts.length >= 3, "ErrorMessage must consist of 3 tokens (" + errorMessage + ")");
