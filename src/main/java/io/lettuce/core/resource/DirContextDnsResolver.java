@@ -37,7 +37,7 @@ import io.lettuce.core.LettuceStrings;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * DNS Resolver based on Java's {@link com.sun.jndi.dns.DnsContextFactory}. This resolver resolves hostnames to IPv4 and IPv6
+ * DNS Resolver based on Java's {@code com.sun.jndi.dns.DnsContextFactory}. This resolver resolves hostnames to IPv4 and IPv6
  * addresses using {@code A}, {@code AAAA} and {@code CNAME} records. Java IP stack preferences are read from system properties
  * and taken into account when resolving names.
  * <p>
@@ -152,7 +152,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
      * Perform hostname to address resolution.
      *
      * @param host the hostname, must not be empty or {@literal null}.
-     * @return array of one or more {@link InetAddress adresses}
+     * @return array of one or more {@link InetAddress addresses}
      * @throws UnknownHostException
      */
     @Override

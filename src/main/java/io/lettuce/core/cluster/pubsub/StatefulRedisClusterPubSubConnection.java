@@ -37,10 +37,10 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
  * subscription.
  *
  * <pre class="code">
- *  StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub();
+ *  StatefulRedisClusterPubSubConnection&lt;String, String&gt; connection = clusterClient.connectPubSub();
  *  connection.addListener(…);
  *
- *  RedisClusterPubSubCommands<String, String> sync = connection.sync();
+ *  RedisClusterPubSubCommands&lt;String, String&gt; sync = connection.sync();
  *  sync.subscribe("channel");
  *  sync.publish("channel", "message");
  * </pre>
@@ -59,10 +59,10 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
  *
  * <pre>
  *     <code>
- *  StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub();
+ *  StatefulRedisClusterPubSubConnection&lt;String, String&gt; connection = clusterClient.connectPubSub();
  *  connection.addListener(…);
  *
- *  RedisClusterPubSubCommands<String, String> sync = connection.sync();
+ *  RedisClusterPubSubCommands&lt;String, String&gt; sync = connection.sync();
  *  sync.replicas().commands().psubscribe("__key*__:*");
  *     </code>
  * </pre>
