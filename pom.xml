@@ -58,16 +58,16 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <assertj-core.version>3.13.2</assertj-core.version>
-        <brave-version>5.7.0</brave-version>
-        <junit-version>5.5.2</junit-version>
-        <log4j2-version>2.11.2</log4j2-version>
-        <mockito.version>3.0.0</mockito.version>
-        <netty-version>4.1.43.Final</netty-version>
-        <reactor-version>3.3.0.RELEASE</reactor-version>
+        <assertj-core.version>3.15.0</assertj-core.version>
+        <brave-version>5.9.4</brave-version>
+        <junit-version>5.6.0</junit-version>
+        <log4j2-version>2.13.0</log4j2-version>
+        <mockito.version>3.2.4</mockito.version>
+        <netty-version>4.1.45.Final</netty-version>
+        <reactor-version>3.3.2.RELEASE</reactor-version>
         <reactive-streams-tck.version>1.0.3</reactive-streams-tck.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <spring-version>4.3.20.RELEASE</spring-version>
+        <spring-version>4.3.26.RELEASE</spring-version>
 
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipITs>true</skipITs>
