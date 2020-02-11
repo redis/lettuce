@@ -84,7 +84,6 @@ public abstract class Futures {
      * Adapt Netty's {@link ChannelFuture} emitting a {@link Void} result into a {@link CompletableFuture}.
      *
      * @param future
-     * @return the {@link CompletableFuture}.
      */
     public static void adapt(ChannelFuture future, CompletableFuture<Void> target) {
 

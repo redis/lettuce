@@ -68,20 +68,21 @@ import io.lettuce.core.protocol.LettuceCharsets;
  *
  * <b>Redis Standalone</b> <blockquote> <i>redis</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :} </b>
  * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&database=database</i>] [<i>&clientName=clientName</i>]] </blockquote>
+ * <i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]] </blockquote>
  *
  * <b>Redis Standalone (SSL)</b> <blockquote> <i>rediss</i><b>{@code ://}</b>[<i>password@</i>]<i>host</i> [<b>{@code :} </b>
  * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&database=database</i>] [<i>&clientName=clientName</i>]] </blockquote>
+ * <i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]] </blockquote>
  *
  * Redis Standalone (Unix Domain Sockets)</b> <blockquote> <i>redis-socket</i><b>{@code ://} </b>[<i>password@</i>]<i>path</i>[
- * <b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&database=database</i>] [<i>&clientName=clientName</i>]]
- * </blockquote>
+ * <b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&amp;database=database</i>]
+ * [<i>&amp;clientName=clientName</i>]] </blockquote>
  *
  * <b>Redis Sentinel</b> <blockquote> <i>redis-sentinel</i><b>{@code ://}</b>[<i>password@</i>]<i>host1</i> [<b>{@code :} </b>
  * <i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /} </b>
  * <i>database</i>][<b>{@code ?} </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&sentinelMasterId=sentinelMasterId</i>] [<i>&database=database</i>] [<i>&clientName=clientName</i>]] </blockquote>
+ * <i>&amp;sentinelMasterId=sentinelMasterId</i>] [<i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]]
+ * </blockquote>
  *
  * <p>
  * <b>Schemes</b>
