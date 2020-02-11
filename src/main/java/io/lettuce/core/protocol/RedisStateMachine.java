@@ -55,7 +55,7 @@ public class RedisStateMachine {
     private final State[] stack = new State[32];
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final LongProcessor longProcessor = new LongProcessor();
-    private final ByteBuf responseElementBuffer = PooledByteBufAllocator.DEFAULT.directBuffer(1024);
+    private final ByteBuf responseElementBuffer = PooledByteBufAllocator.DEFAULT.buffer(1024);
     private final AtomicBoolean closed = new AtomicBoolean();
 
     private int stackElements;

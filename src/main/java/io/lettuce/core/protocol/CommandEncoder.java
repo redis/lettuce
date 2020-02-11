@@ -24,6 +24,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.util.internal.PlatformDependent;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -40,7 +41,7 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
     private final boolean debugEnabled = logger.isDebugEnabled();
 
     public CommandEncoder() {
-        this(true);
+        this(PlatformDependent.directBufferPreferred());
     }
 
     public CommandEncoder(boolean preferDirect) {

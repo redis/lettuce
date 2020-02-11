@@ -164,7 +164,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         setState(LifecycleState.REGISTERED);
 
-        buffer = ctx.alloc().directBuffer(8192 * 8);
+        buffer = ctx.alloc().buffer(8192 * 8);
         ctx.fireChannelRegistered();
     }
 
