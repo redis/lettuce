@@ -47,7 +47,7 @@ public class GeoCoordinates {
      *
      * @param x the longitude, must not be {@literal null}.
      * @param y the latitude, must not be {@literal null}.
-     * @return {@literal {@link GeoCoordinates}.
+     * @return {@link GeoCoordinates}.
      */
     public static GeoCoordinates create(Number x, Number y) {
         return new GeoCoordinates(x, y);

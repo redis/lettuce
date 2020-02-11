@@ -368,7 +368,7 @@ public class ClusterTopologyRefreshOptions {
      * to {@literal false}, only the initial seed nodes will be used as sources for topology discovery and the number of clients
      * will be obtained only for the initial seed nodes. This can be useful when using Redis Cluster with many nodes.
      *
-     * @return {@link true} if dynamic refresh sources are enabled
+     * @return {@literal true} if dynamic refresh sources are enabled
      */
     public boolean useDynamicRefreshSources() {
         return dynamicRefreshSources;
