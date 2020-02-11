@@ -185,7 +185,7 @@ public class RedisStateMachine {
      * Initialize a new instance.
      */
     public RedisStateMachine(ByteBufAllocator alloc) {
-        this.responseElementBuffer = alloc.directBuffer(1024);
+        this.responseElementBuffer = alloc.buffer(1024);
     }
 
     public boolean isDiscoverProtocol() {
