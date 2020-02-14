@@ -234,6 +234,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, Long> clientId() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(ID);
+        return createCommand(CLIENT, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, String> clientPause(long timeout) {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(PAUSE).add(timeout);
         return createCommand(CLIENT, new StatusOutput<>(codec), args);

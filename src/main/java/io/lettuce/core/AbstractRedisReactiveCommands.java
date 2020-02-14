@@ -206,6 +206,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> clientId() {
+        return createMono(commandBuilder::clientId);
+    }
+
+    @Override
     public Mono<String> clientPause(long timeout) {
         return createMono(() -> commandBuilder.clientPause(timeout));
     }
