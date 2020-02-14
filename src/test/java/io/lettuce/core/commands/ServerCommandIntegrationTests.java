@@ -168,6 +168,11 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void clientId() {
+        assertThat(redis.clientId()).isNotNull();
+    }
+
+    @Test
     void commandCount() {
         assertThat(redis.commandCount()).isGreaterThan(100);
     }

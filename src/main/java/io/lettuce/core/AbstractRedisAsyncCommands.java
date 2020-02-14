@@ -183,6 +183,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<Long> clientId() {
+        return dispatch(commandBuilder.clientId());
+    }
+
+    @Override
     public RedisFuture<String> clientPause(long timeout) {
         return dispatch(commandBuilder.clientPause(timeout));
     }

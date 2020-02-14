@@ -106,6 +106,13 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<String> clientList();
 
     /**
+     * Get the id of the current connection.
+     *
+     * @return Long The command just returns the ID of the current connection. Every connection ID has certain guarantees
+     */
+    Executions<Long> clientId();
+
+    /**
      * Returns an array reply of details about all Redis commands.
      *
      * @return List&lt;Object&gt; array-reply
