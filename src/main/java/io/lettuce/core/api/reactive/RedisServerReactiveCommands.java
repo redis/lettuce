@@ -107,6 +107,13 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<String> clientList();
 
     /**
+     * Get the id of the current connection.
+     *
+     * @return Long The command just returns the ID of the current connection. Every connection ID has certain guarantees
+     */
+    Mono<Long> clientId();
+
+    /**
      * Returns an array reply of details about all Redis commands.
      *
      * @return Object array-reply
