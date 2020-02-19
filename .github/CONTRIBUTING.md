@@ -1,10 +1,25 @@
 # Contributing to Lettuce
 
+Lettuce is released under the Apache 2.0 license. If you would like to contribute something, or simply want to hack on the code this document should help you get started.
+
+## Code of Conduct
+
+This project adheres to the Contributor Covenant [code of
+conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to lettuce-redis-client-users@googlegroups.com.
+
+## Using GitHub Issues
+
+We use GitHub issues to track bugs and enhancements. If you have a general usage question please ask on [Stack Overflow](https://stackoverflow.com). 
+The Lettuce team and the broader community monitor the [`lettuce`](https://stackoverflow.com/tags/lettuce) tag.
+
+If you are reporting a bug, please help to speed up problem diagnosis by providing as much information as possible. 
+Ideally, that would include a small sample project that reproduces the problem.
+
 ## Quickstart
  
- For the impatient, if you want to submit a quick pull request:
+For the impatient, if you want to submit a quick pull request:
 
-* Don't create a pull request upfront. Create a feature request ticket first so we can discuss your idea.
+* Don't create a pull request upfront. Create a feature request ticket first, so we can discuss your idea.
 * Upon agreeing the feature is a good fit for Lettuce, please:
   * Make sure there is a ticket in GitHub issues.
   * Make sure you use the code formatters provided here and have them applied to your changes. Don’t submit any formatting related changes.
@@ -36,7 +51,7 @@ If you want to request a feature, please ensure to specify the following:
 
 ## Questions
 
-If you have a question, then check one of the following places first. Typically, forums, chats, and mailing lists are the best place to ask your question as you can expect to get an answer faster there:
+If you have a question, then check one of the following places first as GitHub issues are for bugs and feature requests. Typically, forums, chats, and mailing lists are the best place to ask your question as you can expect to get an answer faster there:
 
 **Checkout the docs**
 
@@ -50,8 +65,18 @@ If you have a question, then check one of the following places first. Typically,
 * Stack Overflow (Questions): [Questions about Lettuce](https://stackoverflow.com/questions/tagged/lettuce)
 * Gitter (General discussion): [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## License
+### Building from Source
 
-By contributing your code, you agree to license your contribution under the terms of [Apache License 2.0] (https://www.apache.org/licenses/LICENSE-2.0).
+Lettuce source can be built from the command line using Maven on JDK 1.8 or above.
 
-All files are released with the Apache 2.0 license.
+The project can be built from the root directory using the standard Maven command:
+
+```bash
+	$ mvn clean test
+```
+
+You can run a full build including integration tests using the `make` command:
+
+```bash
+	$ make test
+```
