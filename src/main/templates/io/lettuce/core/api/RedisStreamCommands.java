@@ -18,7 +18,10 @@ package io.lettuce.core.api;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.*;
+import io.lettuce.core.Limit;
+import io.lettuce.core.Range;
+import io.lettuce.core.StreamMessage;
+import io.lettuce.core.XClaimArgs;
 import io.lettuce.core.XReadArgs.StreamOffset;
 
 /**
@@ -92,6 +95,9 @@ public interface RedisStreamCommands<K, V> {
 
     /**
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
+     * <p>
+     * Note that setting the {@code JUSTID} flag (calling this method with {@link XClaimArgs#justid()}) suppresses the message
+     * bode and {@link StreamMessage#getBody()} is {@code null}.
      *
      * @param key the stream key.
      * @param consumer consumer identified by group name and consumer key.

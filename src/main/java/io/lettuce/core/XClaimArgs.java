@@ -40,6 +40,7 @@ public class XClaimArgs {
     private Long time;
     private Long retrycount;
     private boolean force;
+    private boolean justid;
 
     /**
      * Builder entry points for {@link XAddArgs}.
@@ -50,6 +51,18 @@ public class XClaimArgs {
          * Utility constructor.
          */
         private Builder() {
+        }
+
+        /**
+         * Creates new {@link XClaimArgs} and set the {@code JUSTID} flag to return just the message id and do not increment the
+         * retry counter. The message body is not returned when calling {@code XCLAIM}.
+         *
+         * @return new {@link XClaimArgs} with min idle time set.
+         * @see XClaimArgs#justid()
+         * @since 5.3
+         */
+        public static XClaimArgs justid() {
+            return new XClaimArgs().justid();
         }
 
         public static XClaimArgs minIdleTime(long milliseconds) {
@@ -68,6 +81,19 @@ public class XClaimArgs {
 
             return minIdleTime(minIdleTime.toMillis());
         }
+    }
+
+    /**
+     * Set the {@code JUSTID} flag to return just the message id and do not increment the retry counter. The message body is not
+     * returned when calling {@code XCLAIM}.
+     *
+     * @return {@code this}.
+     * @since 5.3
+     */
+    public XClaimArgs justid() {
+
+        this.justid = true;
+        return this;
     }
 
     /**
@@ -205,6 +231,10 @@ public class XClaimArgs {
 
         if (force) {
             args.add(CommandKeyword.FORCE);
+        }
+
+        if (justid) {
+            args.add(CommandKeyword.JUSTID);
         }
     }
 }
