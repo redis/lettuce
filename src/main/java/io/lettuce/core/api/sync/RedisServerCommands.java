@@ -108,7 +108,8 @@ public interface RedisServerCommands<K, V> {
     /**
      * Get the id of the current connection.
      *
-     * @return Long The command just returns the ID of the current connection. Every connection ID has certain guarantees
+     * @return Long The command just returns the ID of the current connection.
+     * @since 5.3
      */
     Long clientId();
 
