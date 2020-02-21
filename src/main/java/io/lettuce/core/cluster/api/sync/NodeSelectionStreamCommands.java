@@ -93,6 +93,9 @@ public interface NodeSelectionStreamCommands<K, V> {
 
     /**
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
+     * <p>
+     * Note that setting the {@code JUSTID} flag (calling this method with {@link XClaimArgs#justid()}) suppresses the message
+     * bode and {@link StreamMessage#getBody()} is {@code null}.
      *
      * @param key the stream key.
      * @param consumer consumer identified by group name and consumer key.

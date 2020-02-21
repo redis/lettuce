@@ -407,6 +407,28 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void xclaimJustId() {
+
+        String id1 = redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(StreamOffset.latest(key), "group");
+        String id2 = redis.xadd(key, Collections.singletonMap("key", "value"));
+        String id3 = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        List<StreamMessage<String, String>> claimedMessages = redis.xclaim(key, Consumer.from("group", "consumer2"),
+                XClaimArgs.Builder.justid(), id1, id2, id3);
+
+        assertThat(claimedMessages).hasSize(2);
+
+        StreamMessage<String, String> message = claimedMessages.get(0);
+
+        assertThat(message.getBody()).isNull();
+        assertThat(message.getStream()).isEqualTo("key");
+        assertThat(message.getId()).isEqualTo(id2);
+    }
+
+    @Test
     void xgroupDestroy() {
 
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());

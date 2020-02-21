@@ -52,6 +52,9 @@ public class StreamMessage<K, V> {
         return id;
     }
 
+    /**
+     * @return the message body. Can be {@literal null} for commands that do not return the message body.
+     */
     public Map<K, V> getBody() {
         return body;
     }
