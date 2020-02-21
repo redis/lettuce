@@ -33,6 +33,7 @@ public class SetArgs implements CompositeArgument {
     private Long px;
     private boolean nx = false;
     private boolean xx = false;
+    private boolean keepttl = false;
 
     /**
      * Builder entry points for {@link SetArgs}.
@@ -86,6 +87,17 @@ public class SetArgs implements CompositeArgument {
         public static SetArgs xx() {
             return new SetArgs().xx();
         }
+
+        /**
+         * Creates new {@link SetArgs} and enabling {@literal KEEPTTL}.
+         *
+         * @return new {@link SetArgs} with {@literal KEEPTTL} enabled.
+         * @see SetArgs#keepttl()
+         * @since 5.3
+         */
+        public static SetArgs keepttl() {
+            return new SetArgs().keepttl();
+        }
     }
 
     /**
@@ -124,6 +136,18 @@ public class SetArgs implements CompositeArgument {
     }
 
     /**
+     * Set the value and retain the existing TTL.
+     *
+     * @return {@code this} {@link SetArgs}.
+     * @since 5.3
+     */
+    public SetArgs keepttl() {
+
+        this.keepttl = true;
+        return this;
+    }
+
+    /**
      * Only set the key if it already exists.
      *
      * @return {@code this} {@link SetArgs}.
@@ -150,6 +174,10 @@ public class SetArgs implements CompositeArgument {
 
         if (xx) {
             args.add("XX");
+        }
+
+        if (keepttl) {
+            args.add("KEEPTTL");
         }
     }
 }
