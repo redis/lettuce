@@ -17,12 +17,16 @@ package io.lettuce.core.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
+
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
+ * Unit tests for {@link ClusterClientOptions}.
+ *
  * @author Mark Paluch
  */
 class ClusterClientOptionsUnitTests {
@@ -46,6 +50,7 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.isCancelCommandsOnReconnectFailure()).isEqualTo(options.isCancelCommandsOnReconnectFailure());
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
+        assertThat(copy.getScriptCharset()).isEqualTo(StandardCharsets.UTF_8);
     }
 
     @Test
@@ -61,11 +66,12 @@ class ClusterClientOptionsUnitTests {
         assertThat(clusterClientOptions.getRequestQueueSize()).isEqualTo(clusterClientOptions.getRequestQueueSize());
         assertThat(clusterClientOptions.isAutoReconnect()).isEqualTo(clusterClientOptions.isAutoReconnect());
         assertThat(clusterClientOptions.isCloseStaleConnections()).isEqualTo(clusterClientOptions.isCloseStaleConnections());
-        assertThat(clusterClientOptions.isCancelCommandsOnReconnectFailure()).isEqualTo(
-                clusterClientOptions.isCancelCommandsOnReconnectFailure());
+        assertThat(clusterClientOptions.isCancelCommandsOnReconnectFailure())
+                .isEqualTo(clusterClientOptions.isCancelCommandsOnReconnectFailure());
         assertThat(clusterClientOptions.isPublishOnScheduler()).isEqualTo(clusterClientOptions.isPublishOnScheduler());
-        assertThat(clusterClientOptions.isSuspendReconnectOnProtocolFailure()).isEqualTo(
-                clusterClientOptions.isSuspendReconnectOnProtocolFailure());
+        assertThat(clusterClientOptions.isSuspendReconnectOnProtocolFailure())
+                .isEqualTo(clusterClientOptions.isSuspendReconnectOnProtocolFailure());
+        assertThat(clusterClientOptions.getScriptCharset()).isEqualTo(clusterClientOptions.getScriptCharset());
         assertThat(clusterClientOptions.mutate()).isNotNull();
     }
 
@@ -73,7 +79,7 @@ class ClusterClientOptionsUnitTests {
     void builderFromClusterClientOptions() {
 
         ClusterClientOptions options = ClusterClientOptions.builder().maxRedirects(1234).validateClusterNodeMembership(false)
-                .build();
+                .scriptCharset(StandardCharsets.US_ASCII).build();
 
         ClusterClientOptions copy = ClusterClientOptions.builder(options).build();
 
@@ -86,6 +92,7 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.isCancelCommandsOnReconnectFailure()).isEqualTo(options.isCancelCommandsOnReconnectFailure());
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
+        assertThat(copy.getScriptCharset()).isEqualTo(options.getScriptCharset());
         assertThat(options.mutate()).isNotSameAs(copy.mutate());
     }
 }

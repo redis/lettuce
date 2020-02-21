@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
+import java.nio.charset.Charset;
 import java.time.Duration;
 
 import io.lettuce.core.ClientOptions;
@@ -109,7 +110,7 @@ public class ClusterClientOptions extends ClientOptions {
         Builder builder = new Builder();
         builder.autoReconnect(clientOptions.isAutoReconnect()).bufferUsageRatio(clientOptions.getBufferUsageRatio())
                 .cancelCommandsOnReconnectFailure(clientOptions.isCancelCommandsOnReconnectFailure())
-                .disconnectedBehavior(clientOptions.getDisconnectedBehavior())
+                .disconnectedBehavior(clientOptions.getDisconnectedBehavior()).scriptCharset(clientOptions.getScriptCharset())
                 .publishOnScheduler(clientOptions.isPublishOnScheduler())
                 .protocolVersion(clientOptions.getConfiguredProtocolVersion())
                 .requestQueueSize(clientOptions.getRequestQueueSize()).socketOptions(clientOptions.getSocketOptions())
@@ -226,6 +227,12 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         @Override
+        public Builder scriptCharset(Charset scriptCharset) {
+            super.scriptCharset(scriptCharset);
+            return this;
+        }
+
+        @Override
         public Builder socketOptions(SocketOptions socketOptions) {
             super.socketOptions(socketOptions);
             return this;
@@ -274,9 +281,10 @@ public class ClusterClientOptions extends ClientOptions {
 
         builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
-                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
-                .requestQueueSize(getRequestQueueSize()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .disconnectedBehavior(getDisconnectedBehavior()).scriptCharset(getScriptCharset())
+                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
+                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
+                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
                 .validateClusterNodeMembership(isValidateClusterNodeMembership()).maxRedirects(getMaxRedirects())
                 .topologyRefreshOptions(getTopologyRefreshOptions());

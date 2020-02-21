@@ -573,27 +573,25 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ECHO, new ValueOutput<>(codec), args);
     }
 
-    <T> Command<K, V, T> eval(String script, ScriptOutputType type, K... keys) {
+    <T> Command<K, V, T> eval(byte[] script, ScriptOutputType type, K... keys) {
         LettuceAssert.notNull(script, "Script " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(script, "Script " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(script.getBytes()).add(keys.length).addKeys(keys);
+        args.add(script).add(keys.length).addKeys(keys);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
         return createCommand(EVAL, output, args);
     }
 
-    <T> Command<K, V, T> eval(String script, ScriptOutputType type, K[] keys, V... values) {
+    <T> Command<K, V, T> eval(byte[] script, ScriptOutputType type, K[] keys, V... values) {
         LettuceAssert.notNull(script, "Script " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(script, "Script " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(script.getBytes()).add(keys.length).addKeys(keys).addValues(values);
+        args.add(script).add(keys.length).addKeys(keys).addValues(values);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
         return createCommand(EVAL, output, args);
     }
@@ -1675,10 +1673,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SCRIPT, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, String> scriptLoad(V script) {
+    Command<K, V, String> scriptLoad(byte[] script) {
         LettuceAssert.notNull(script, "Script " + MUST_NOT_BE_NULL);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(LOAD).addValue(script);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(LOAD).add(script);
         return createCommand(SCRIPT, new StatusOutput<>(codec), args);
     }
 

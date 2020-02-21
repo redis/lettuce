@@ -421,7 +421,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<String> scriptLoad(V script) {
+    public RedisFuture<String> scriptLoad(byte[] script) {
 
         Map<String, CompletableFuture<String>> executions = executeOnNodes(cmd -> cmd.scriptLoad(script),
                 redisClusterNode -> true);

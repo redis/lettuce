@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import static io.lettuce.core.protocol.CommandType.*;
 
+import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
@@ -49,7 +50,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
-    private final RedisCodec<K, V> codec;
     private final RedisCommandBuilder<K, V> commandBuilder;
 
     /**
@@ -60,7 +60,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
      */
     public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
-        this.codec = codec;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
     }
 
@@ -432,8 +431,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public String digest(V script) {
-        return LettuceStrings.digest(codec.encodeValue(script));
+    public String digest(String script) {
+        return digest(encodeScript(script));
+    }
+
+    @Override
+    public String digest(byte[] script) {
+        return LettuceStrings.digest(script);
     }
 
     @Override
@@ -490,12 +494,22 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     @SuppressWarnings("unchecked")
     public <T> RedisFuture<T> eval(String script, ScriptOutputType type, K... keys) {
+        return eval(encodeScript(script), type, keys);
+    }
+
+    @Override
+    public <T> RedisFuture<T> eval(byte[] script, ScriptOutputType type, K... keys) {
         return (RedisFuture<T>) dispatch(commandBuilder.eval(script, type, keys));
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> RedisFuture<T> eval(String script, ScriptOutputType type, K[] keys, V... values) {
+        return eval(encodeScript(script), type, keys, values);
+    }
+
+    @Override
+    public <T> RedisFuture<T> eval(byte[] script, ScriptOutputType type, K[] keys, V... values) {
         return (RedisFuture<T>) dispatch(commandBuilder.eval(script, type, keys, values));
     }
 
@@ -1186,7 +1200,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<String> scriptLoad(V script) {
+    public RedisFuture<String> scriptLoad(String script) {
+        return scriptLoad(encodeScript(script));
+    }
+
+    @Override
+    public RedisFuture<String> scriptLoad(byte[] script) {
         return dispatch(commandBuilder.scriptLoad(script));
     }
 
@@ -2177,5 +2196,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return dispatch(commandBuilder.zunionstore(destination, storeArgs, keys));
+    }
+
+    private byte[] encodeScript(String script) {
+        LettuceAssert.notNull(script, "Lua script must not be null");
+        LettuceAssert.notEmpty(script, "Lua script must not be empty");
+        return script.getBytes(getConnection().getOptions().getScriptCharset());
     }
 }

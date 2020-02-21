@@ -21,7 +21,8 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.ScriptOutputType;
 
 /**
- * Asynchronous executed commands for Scripting.
+ * Asynchronous executed commands for Scripting. {@link java.lang.String Lua scripts} are encoded by using the configured
+ * {@link io.lettuce.core.ClientOptions#getScriptCharset() charset}.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -46,6 +47,18 @@ public interface RedisScriptingAsyncCommands<K, V> {
      * Execute a Lua script server side.
      *
      * @param script Lua 5.1 script.
+     * @param type output type
+     * @param keys key names
+     * @param <T> expected return type
+     * @return script result
+     * @since 6.0
+     */
+    <T> RedisFuture<T> eval(byte[] script, ScriptOutputType type, K... keys);
+
+    /**
+     * Execute a Lua script server side.
+     *
+     * @param script Lua 5.1 script.
      * @param type the type
      * @param keys the keys
      * @param values the values
@@ -53,6 +66,19 @@ public interface RedisScriptingAsyncCommands<K, V> {
      * @return script result
      */
     <T> RedisFuture<T> eval(String script, ScriptOutputType type, K[] keys, V... values);
+
+    /**
+     * Execute a Lua script server side.
+     *
+     * @param script Lua 5.1 script.
+     * @param type the type
+     * @param keys the keys
+     * @param values the values
+     * @param <T> expected return type
+     * @return script result
+     * @since 6.0
+     */
+    <T> RedisFuture<T> eval(byte[] script, ScriptOutputType type, K[] keys, V... values);
 
     /**
      * Evaluates a script cached on the server side by its SHA1 digest
@@ -106,14 +132,34 @@ public interface RedisScriptingAsyncCommands<K, V> {
      *
      * @param script script content
      * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @since 6.0
      */
-    RedisFuture<String> scriptLoad(V script);
+    RedisFuture<String> scriptLoad(String script);
+
+    /**
+     * Load the specified Lua script into the script cache.
+     *
+     * @param script script content
+     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @since 6.0
+     */
+    RedisFuture<String> scriptLoad(byte[] script);
 
     /**
      * Create a SHA1 digest from a Lua script.
      *
      * @param script script content
      * @return the SHA1 value
+     * @since 6.0
      */
-    String digest(V script);
+    String digest(String script);
+
+    /**
+     * Create a SHA1 digest from a Lua script.
+     *
+     * @param script script content
+     * @return the SHA1 value
+     * @since 6.0
+     */
+    String digest(byte[] script);
 }

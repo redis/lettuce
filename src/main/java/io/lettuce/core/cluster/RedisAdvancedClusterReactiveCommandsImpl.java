@@ -369,7 +369,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<String> scriptLoad(V script) {
+    public Mono<String> scriptLoad(byte[] script) {
         Map<String, Publisher<String>> publishers = executeOnNodes((commands) -> commands.scriptLoad(script), ALL_NODES);
         return Flux.merge(publishers.values()).last();
     }

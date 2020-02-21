@@ -298,8 +298,18 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *
      * @param script script content
      * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @since 6.0
      */
-    RedisFuture<String> scriptLoad(V script);
+    RedisFuture<String> scriptLoad(String script);
+
+    /**
+     * Load the specified Lua script into the script cache on all cluster nodes.
+     *
+     * @param script script content
+     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @since 6.0
+     */
+    RedisFuture<String> scriptLoad(byte[] script);
 
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.

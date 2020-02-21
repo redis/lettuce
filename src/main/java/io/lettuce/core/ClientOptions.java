@@ -16,6 +16,8 @@
 package io.lettuce.core;
 
 import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ProtocolVersion;
@@ -38,6 +40,7 @@ public class ClientOptions implements Serializable {
     public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
     public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
     public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
+    public static final Charset DEFAULT_SCRIPT_CHARSET = StandardCharsets.UTF_8;
     public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
     public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
@@ -51,6 +54,7 @@ public class ClientOptions implements Serializable {
     private final boolean suspendReconnectOnProtocolFailure;
     private final int requestQueueSize;
     private final DisconnectedBehavior disconnectedBehavior;
+    private final Charset scriptCharset;
     private final SocketOptions socketOptions;
     private final SslOptions sslOptions;
     private final TimeoutOptions timeoutOptions;
@@ -65,6 +69,7 @@ public class ClientOptions implements Serializable {
         this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         this.requestQueueSize = builder.requestQueueSize;
         this.disconnectedBehavior = builder.disconnectedBehavior;
+        this.scriptCharset = builder.scriptCharset;
         this.socketOptions = builder.socketOptions;
         this.sslOptions = builder.sslOptions;
         this.timeoutOptions = builder.timeoutOptions;
@@ -80,6 +85,7 @@ public class ClientOptions implements Serializable {
         this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
         this.requestQueueSize = original.getRequestQueueSize();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
+        this.scriptCharset = original.getScriptCharset();
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
         this.timeoutOptions = original.getTimeoutOptions();
@@ -127,6 +133,7 @@ public class ClientOptions implements Serializable {
         private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
         private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
+        private Charset scriptCharset = DEFAULT_SCRIPT_CHARSET;
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
         private SslOptions sslOptions = DEFAULT_SSL_OPTIONS;
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
@@ -248,6 +255,21 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Sets the Lua script {@link Charset} to use to encode {@link String scripts} to {@code byte[]}. Defaults to
+         * {@link StandardCharsets#UTF_8}. See {@link #DEFAULT_SCRIPT_CHARSET}.
+         *
+         * @param scriptCharset must not be {@literal null}.
+         * @return {@code this}
+         * @since 6.0
+         */
+        public Builder scriptCharset(Charset scriptCharset) {
+
+            LettuceAssert.notNull(scriptCharset, "ScriptCharset must not be null");
+            this.scriptCharset = scriptCharset;
+            return this;
+        }
+
+        /**
          * Sets the low-level {@link SocketOptions} for the connections kept to Redis servers. See
          * {@link #DEFAULT_SOCKET_OPTIONS}.
          *
@@ -332,9 +354,10 @@ public class ClientOptions implements Serializable {
 
         builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .disconnectedBehavior(getDisconnectedBehavior()).publishOnScheduler(isPublishOnScheduler())
-                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
-                .requestQueueSize(getRequestQueueSize()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .disconnectedBehavior(getDisconnectedBehavior()).scriptCharset(getScriptCharset())
+                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
+                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
+                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
 
         return builder;
@@ -441,6 +464,16 @@ public class ClientOptions implements Serializable {
      */
     public DisconnectedBehavior getDisconnectedBehavior() {
         return disconnectedBehavior;
+    }
+
+    /**
+     * Returns the Lua script {@link Charset}.
+     *
+     * @return the script {@link Charset}.
+     * @since 6.0
+     */
+    public Charset getScriptCharset() {
+        return scriptCharset;
     }
 
     /**

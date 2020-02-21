@@ -21,7 +21,11 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.protocol.ProtocolVersion;
 
+import java.nio.charset.StandardCharsets;
+
 /**
+ * Unit tests for {@link ClientOptions}.
+ *
  * @author Mark Paluch
  */
 class ClientOptionsUnitTests {
@@ -33,16 +37,20 @@ class ClientOptionsUnitTests {
 
     @Test
     void testBuilder() {
-        checkAssertions(ClientOptions.builder().build());
+        ClientOptions options = ClientOptions.builder().scriptCharset(StandardCharsets.US_ASCII).build();
+        checkAssertions(options);
+        assertThat(options.getScriptCharset()).isEqualTo(StandardCharsets.US_ASCII);
     }
 
     @Test
     void testCopy() {
 
-        ClientOptions original = ClientOptions.builder().build();
+        ClientOptions original = ClientOptions.builder().scriptCharset(StandardCharsets.US_ASCII).build();
         ClientOptions copy = ClientOptions.copyOf(original);
 
         checkAssertions(copy);
+        assertThat(copy.getScriptCharset()).isEqualTo(StandardCharsets.US_ASCII);
+        assertThat(copy.mutate().build().getScriptCharset()).isEqualTo(StandardCharsets.US_ASCII);
 
         assertThat(original.mutate()).isNotSameAs(copy.mutate());
     }
