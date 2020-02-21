@@ -51,6 +51,8 @@ import io.lettuce.test.settings.TestSettings;
 import io.netty.channel.Channel;
 
 /**
+ * Integration tests for effects configured via {@link ClientOptions}.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
@@ -87,25 +89,22 @@ class ClientOptionsIntegrationTests extends TestSupport {
 
         client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
 
-        RedisAsyncCommands<String, String> connection = client.connect().async();
-        getConnectionWatchdog(connection.getStatefulConnection()).setListenOnChannelInactive(false);
+        StatefulRedisConnection<String, String> connection = client.connect();
+        getConnectionWatchdog(connection).setListenOnChannelInactive(false);
 
-        connection.quit();
+        connection.async().quit();
 
-        Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
+        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
         for (int i = 0; i < 10; i++) {
-            connection.ping();
+            connection.async().ping();
         }
 
-        try {
-            connection.ping();
-            fail("missing RedisException");
-        } catch (RedisException e) {
-            assertThat(e).hasMessageContaining("Request queue size exceeded");
-        }
+        assertThatThrownBy(() -> connection.async().ping().toCompletableFuture().join())
+                .hasMessageContaining("Request queue size exceeded");
+        assertThatThrownBy(() -> connection.sync().ping()).hasMessageContaining("Request queue size exceeded");
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test

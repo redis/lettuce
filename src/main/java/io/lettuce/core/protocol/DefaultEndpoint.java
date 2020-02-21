@@ -51,11 +51,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEndpoint.class);
     private static final AtomicLong ENDPOINT_COUNTER = new AtomicLong();
-    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater.newUpdater(
-            DefaultEndpoint.class, "queueSize");
+    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater
+            .newUpdater(DefaultEndpoint.class, "queueSize");
 
-    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> STATUS = AtomicIntegerFieldUpdater.newUpdater(
-            DefaultEndpoint.class, "status");
+    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> STATUS = AtomicIntegerFieldUpdater
+            .newUpdater(DefaultEndpoint.class, "status");
 
     private static final int ST_OPEN = 0;
     private static final int ST_CLOSED = 1;
@@ -131,10 +131,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
         LettuceAssert.notNull(command, "Command must not be null");
 
+        RedisException validation = validateWrite(1);
+        if (validation != null) {
+            command.completeExceptionally(validation);
+            return command;
+        }
+
         try {
             sharedLock.incrementWriters();
-
-            validateWrite(1);
 
             if (autoFlushCommands) {
 
@@ -163,10 +167,15 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
         LettuceAssert.notNull(commands, "Commands must not be null");
 
+        RedisException validation = validateWrite(commands.size());
+
+        if (validation != null) {
+            commands.forEach(it -> it.completeExceptionally(validation));
+            return (Collection<RedisCommand<K, V, ?>>) commands;
+        }
+
         try {
             sharedLock.incrementWriters();
-
-            validateWrite(commands.size());
 
             if (autoFlushCommands) {
 
@@ -189,10 +198,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         return (Collection<RedisCommand<K, V, ?>>) commands;
     }
 
-    private void validateWrite(int commands) {
+    private RedisException validateWrite(int commands) {
 
         if (isClosed()) {
-            throw new RedisException("Connection is closed");
+            return new RedisException("Connection is closed");
         }
 
         if (usesBoundedQueues()) {
@@ -200,24 +209,26 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             boolean connected = isConnected();
 
             if (QUEUE_SIZE.get(this) + commands > clientOptions.getRequestQueueSize()) {
-                throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
+                return new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the queue size drops.");
             }
 
             if (!connected && disconnectedBuffer.size() + commands > clientOptions.getRequestQueueSize()) {
-                throw new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
+                return new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the queue size drops.");
             }
 
             if (connected && commandBuffer.size() + commands > clientOptions.getRequestQueueSize()) {
-                throw new RedisException("Command buffer size exceeded: " + clientOptions.getRequestQueueSize()
+                return new RedisException("Command buffer size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the queue size drops.");
             }
         }
 
         if (!isConnected() && rejectCommandsWhileDisconnected) {
-            throw new RedisException("Currently not connected. Commands are rejected.");
+            return new RedisException("Currently not connected. Commands are rejected.");
         }
+
+        return null;
     }
 
     private boolean usesBoundedQueues() {
@@ -576,7 +587,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         } else if (reliability == Reliability.AT_MOST_ONCE && rejectCommandsWhileDisconnected) {
 
             RedisException disconnected = new RedisException("Connection disconnected");
-            cancelCommands(disconnected.getMessage(), queuedCommands.drainQueue(), it -> it.completeExceptionally(disconnected));
+            cancelCommands(disconnected.getMessage(), queuedCommands.drainQueue(),
+                    it -> it.completeExceptionally(disconnected));
             cancelCommands(disconnected.getMessage(), drainCommands(), it -> it.completeExceptionally(disconnected));
             return;
         }

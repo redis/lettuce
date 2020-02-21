@@ -30,8 +30,8 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.*;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -70,7 +70,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         LettuceAssert.notNull(command, "Command must not be null");
 
         if (closed) {
-            throw new RedisException("Connection is closed");
+            command.completeExceptionally(new RedisException("Connection is closed"));
+            return command;
         }
 
         return doWrite(command);
@@ -215,7 +216,9 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         LettuceAssert.notNull(commands, "Commands must not be null");
 
         if (closed) {
-            throw new RedisException("Connection is closed");
+
+            commands.forEach(it -> it.completeExceptionally(new RedisException("Connection is closed")));
+            return (Collection<RedisCommand<K, V, ?>>) commands;
         }
 
         List<ClusterCommand<K, V, ?>> clusterCommands = new ArrayList<>(commands.size());

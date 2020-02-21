@@ -16,7 +16,6 @@
 package io.lettuce.core.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -224,7 +223,6 @@ class DefaultEndpointUnitTests {
 
         verify(channel).write(command);
         verify(channel).flush();
-
     }
 
     @Test
@@ -260,12 +258,8 @@ class DefaultEndpointUnitTests {
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS) //
                 .build(), clientResources);
 
-        try {
-            sut.write(command);
-            fail("Missing RedisException");
-        } catch (RedisException e) {
-            assertThat(e).hasMessageContaining("Commands are rejected");
-        }
+        sut.write(command);
+        assertThat(command.exception).hasMessageContaining("Commands are rejected");
     }
 
     @Test
@@ -273,12 +267,8 @@ class DefaultEndpointUnitTests {
 
         sut.close();
 
-        try {
-            sut.write(command);
-            fail("Missing RedisException");
-        } catch (RedisException e) {
-            assertThat(e).hasMessageContaining("Connection is closed");
-        }
+        sut.write(command);
+        assertThat(command.exception).hasMessageContaining("Connection is closed");
     }
 
     @Test
@@ -289,12 +279,8 @@ class DefaultEndpointUnitTests {
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.DEFAULT) //
                 .build(), clientResources);
 
-        try {
-            sut.write(command);
-            fail("Missing RedisException");
-        } catch (RedisException e) {
-            assertThat(e).hasMessageContaining("Commands are rejected");
-        }
+        sut.write(command);
+        assertThat(command.exception).hasMessageContaining("Commands are rejected");
     }
 
     @Test

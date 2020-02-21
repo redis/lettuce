@@ -119,8 +119,9 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     @Override
     public <K1, V1, T> RedisCommand<K1, V1, T> write(RedisCommand<K1, V1, T> command) {
 
-        if (isSubscribed()) {
-            validateCommandAllowed(command);
+        if (isSubscribed() && !isAllowed(command)) {
+            rejectCommand(command);
+            return command;
         }
 
         if (!subscribeWritten && SUBSCRIBE_COMMANDS.contains(command.getType().name())) {
@@ -134,11 +135,15 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     public <K1, V1> Collection<RedisCommand<K1, V1, ?>> write(Collection<? extends RedisCommand<K1, V1, ?>> redisCommands) {
 
         if (isSubscribed()) {
-            redisCommands.forEach(PubSubEndpoint::validateCommandAllowed);
+
+            if (containsViolatingCommands(redisCommands)) {
+                rejectCommands(redisCommands);
+                return (Collection<RedisCommand<K1, V1, ?>>) redisCommands;
+            }
         }
 
         if (!subscribeWritten) {
-            for (RedisCommand<K1, V1, ?> redisCommand : redisCommands) {
+            for (RedisCommand<?, ?, ?> redisCommand : redisCommands) {
                 if (SUBSCRIBE_COMMANDS.contains(redisCommand.getType().name())) {
                     subscribeWritten = true;
                     break;
@@ -149,13 +154,34 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         return super.write(redisCommands);
     }
 
-    private static void validateCommandAllowed(RedisCommand<?, ?, ?> command) {
+    protected void rejectCommand(RedisCommand<?, ?, ?> command) {
+        command.completeExceptionally(
+                new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
+                        command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED)));
+    }
 
-        if (!ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name())) {
-
-            throw new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s", command
-                    .getType().name(), ALLOWED_COMMANDS_SUBSCRIBED));
+    protected void rejectCommands(Collection<? extends RedisCommand<?, ?, ?>> redisCommands) {
+        for (RedisCommand<?, ?, ?> command : redisCommands) {
+            command.completeExceptionally(
+                    new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
+                            command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED)));
         }
+    }
+
+    protected boolean containsViolatingCommands(Collection<? extends RedisCommand<?, ?, ?>> redisCommands) {
+
+        for (RedisCommand<?, ?, ?> redisCommand : redisCommands) {
+
+            if (!isAllowed(redisCommand)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean isAllowed(RedisCommand<?, ?, ?> command) {
+        return ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name());
     }
 
     private boolean isSubscribed() {
