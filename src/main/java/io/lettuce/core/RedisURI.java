@@ -83,6 +83,11 @@ import io.lettuce.core.internal.LettuceSets;
  * </blockquote>
  *
  * <p>
+ * Note: When using Redis Sentinel, the password from the URI applies to the data nodes only. Sentinel authentication must be
+ * configured for each {@link #getSentinels() sentinel node}.
+ * </p>
+ *
+ * <p>
  * <b>Schemes</b>
  * </p>
  * <ul>
