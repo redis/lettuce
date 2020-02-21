@@ -15,10 +15,7 @@
  */
 package io.lettuce.core.commands;
 
-import static io.lettuce.core.SetArgs.Builder.ex;
-import static io.lettuce.core.SetArgs.Builder.nx;
-import static io.lettuce.core.SetArgs.Builder.px;
-import static io.lettuce.core.SetArgs.Builder.xx;
+import static io.lettuce.core.SetArgs.Builder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -39,6 +36,7 @@ import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Will Glozer
@@ -168,6 +166,17 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.set(key, value, px(20000).nx())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key) >= 19).isTrue();
+    }
+
+    @Test
+    @EnabledOnCommand("ACL") // Redis 6.0 guard
+    void setKeepTTL() {
+
+        redis.set(key, value, ex(10));
+
+        assertThat(redis.set(key, "value2", keepttl())).isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo("value2");
+        assertThat(redis.ttl(key) >= 1).isTrue();
     }
 
     @Test
