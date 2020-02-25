@@ -47,6 +47,11 @@ import io.lettuce.core.internal.LettuceClassUtils;
  * @see io.reactivex.Observable
  * @see io.reactivex.Completable
  * @see io.reactivex.Flowable
+ * @see io.reactivex.rxjava3.core.Single
+ * @see io.reactivex.rxjava3.core.Maybe
+ * @see io.reactivex.rxjava3.core.Observable
+ * @see io.reactivex.rxjava3.core.Completable
+ * @see io.reactivex.rxjava3.core.Flowable
  * @see Mono
  * @see Flux
  */
@@ -55,6 +60,7 @@ class ReactiveTypes {
     private static final boolean PROJECT_REACTOR_PRESENT = LettuceClassUtils.isPresent("reactor.core.publisher.Mono");
     private static final boolean RXJAVA1_PRESENT = LettuceClassUtils.isPresent("rx.Completable");
     private static final boolean RXJAVA2_PRESENT = LettuceClassUtils.isPresent("io.reactivex.Flowable");
+    private static final boolean RXJAVA3_PRESENT = LettuceClassUtils.isPresent("io.reactivex.rxjava3.core.Flowable");
 
     private static final Map<Class<?>, Descriptor> REACTIVE_WRAPPERS;
 
@@ -78,6 +84,15 @@ class ReactiveTypes {
             reactiveWrappers.put(io.reactivex.Observable.class, new Descriptor(true, true, false));
         }
 
+        if (RXJAVA3_PRESENT) {
+
+            reactiveWrappers.put(io.reactivex.rxjava3.core.Single.class, new Descriptor(false, true, false));
+            reactiveWrappers.put(io.reactivex.rxjava3.core.Maybe.class, new Descriptor(false, true, false));
+            reactiveWrappers.put(io.reactivex.rxjava3.core.Completable.class, new Descriptor(false, true, true));
+            reactiveWrappers.put(io.reactivex.rxjava3.core.Flowable.class, new Descriptor(true, true, false));
+            reactiveWrappers.put(io.reactivex.rxjava3.core.Observable.class, new Descriptor(true, true, false));
+        }
+
         if (PROJECT_REACTOR_PRESENT) {
 
             reactiveWrappers.put(Mono.class, new Descriptor(false, true, false));
@@ -96,7 +111,7 @@ class ReactiveTypes {
      */
     public static boolean isAvailable() {
         return isAvailable(ReactiveLibrary.PROJECT_REACTOR) || isAvailable(ReactiveLibrary.RXJAVA1)
-                || isAvailable(ReactiveLibrary.RXJAVA2);
+                || isAvailable(ReactiveLibrary.RXJAVA2) || isAvailable(ReactiveLibrary.RXJAVA3);
     }
 
     /**
@@ -116,6 +131,8 @@ class ReactiveTypes {
                 return RXJAVA1_PRESENT;
             case RXJAVA2:
                 return RXJAVA2_PRESENT;
+            case RXJAVA3:
+                return RXJAVA3_PRESENT;
         }
 
         throw new IllegalArgumentException(String.format("ReactiveLibrary %s not supported", reactiveLibrary));
@@ -222,7 +239,7 @@ class ReactiveTypes {
      * @author Mark Paluch
      */
     enum ReactiveLibrary {
-        PROJECT_REACTOR, RXJAVA1, RXJAVA2;
+        PROJECT_REACTOR, RXJAVA1, RXJAVA2, RXJAVA3;
     }
 
     public static class Descriptor {
