@@ -41,6 +41,7 @@ class ReactiveTypeAdaptionIntegrationTests extends TestSupport {
 
     private final RxJava1Types rxjava1;
     private final RxJava2Types rxjava2;
+    private final RxJava3Types rxjava3;
 
     @Inject
     ReactiveTypeAdaptionIntegrationTests(StatefulRedisConnection<String, String> connection) {
@@ -50,6 +51,7 @@ class ReactiveTypeAdaptionIntegrationTests extends TestSupport {
         RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
         this.rxjava1 = factory.getCommands(RxJava1Types.class);
         this.rxjava2 = factory.getCommands(RxJava2Types.class);
+        this.rxjava3 = factory.getCommands(RxJava3Types.class);
     }
 
     @BeforeEach
@@ -99,6 +101,34 @@ class ReactiveTypeAdaptionIntegrationTests extends TestSupport {
         flowable.test().await().assertResult(value).assertComplete();
     }
 
+    @Test
+    void rxJava3Single() throws InterruptedException {
+
+        io.reactivex.rxjava3.core.Single<String> single = rxjava3.getRxJava3Single(key);
+        single.test().await().assertResult(value).assertComplete();
+    }
+
+    @Test
+    void rxJava3Maybe() throws InterruptedException {
+
+        io.reactivex.rxjava3.core.Maybe<String> maybe = rxjava3.getRxJava3Maybe(key);
+        maybe.test().await().assertResult(value).assertComplete();
+    }
+
+    @Test
+    void rxJava3Observable() throws InterruptedException {
+
+        io.reactivex.rxjava3.core.Observable<String> observable = rxjava3.getRxJava3Observable(key);
+        observable.test().await().assertResult(value).assertComplete();
+    }
+
+    @Test
+    void rxJava3Flowable() throws InterruptedException {
+
+        io.reactivex.rxjava3.core.Flowable<String> flowable = rxjava3.getRxJava3Flowable(key);
+        flowable.test().await().assertResult(value).assertComplete();
+    }
+
     static interface RxJava1Types extends Commands {
 
         @Command("GET")
@@ -121,5 +151,20 @@ class ReactiveTypeAdaptionIntegrationTests extends TestSupport {
 
         @Command("GET")
         io.reactivex.Flowable<String> getRxJava2Flowable(String key);
+    }
+
+    static interface RxJava3Types extends Commands {
+
+        @Command("GET")
+        io.reactivex.rxjava3.core.Single<String> getRxJava3Single(String key);
+
+        @Command("GET")
+        io.reactivex.rxjava3.core.Maybe<String> getRxJava3Maybe(String key);
+
+        @Command("GET")
+        io.reactivex.rxjava3.core.Observable<String> getRxJava3Observable(String key);
+
+        @Command("GET")
+        io.reactivex.rxjava3.core.Flowable<String> getRxJava3Flowable(String key);
     }
 }

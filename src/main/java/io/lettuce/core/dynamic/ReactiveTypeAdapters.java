@@ -91,6 +91,31 @@ class ReactiveTypeAdapters {
                 conversionService.addConverter(RxJava2MaybeToFluxAdapter.INSTANCE);
             }
 
+            if (ReactiveTypes.isAvailable(ReactiveLibrary.RXJAVA3)) {
+
+                conversionService.addConverter(PublisherToRxJava3CompletableAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3CompletableToPublisherAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3CompletableToMonoAdapter.INSTANCE);
+
+                conversionService.addConverter(PublisherToRxJava3SingleAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3SingleToPublisherAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3SingleToMonoAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3SingleToFluxAdapter.INSTANCE);
+
+                conversionService.addConverter(PublisherToRxJava3ObservableAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3ObservableToPublisherAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3ObservableToMonoAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3ObservableToFluxAdapter.INSTANCE);
+
+                conversionService.addConverter(PublisherToRxJava3FlowableAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3FlowableToPublisherAdapter.INSTANCE);
+
+                conversionService.addConverter(PublisherToRxJava3MaybeAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3MaybeToPublisherAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3MaybeToMonoAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3MaybeToFluxAdapter.INSTANCE);
+            }
+
             conversionService.addConverter(PublisherToMonoAdapter.INSTANCE);
             conversionService.addConverter(PublisherToFluxAdapter.INSTANCE);
 
@@ -103,6 +128,12 @@ class ReactiveTypeAdapters {
                 conversionService.addConverter(RxJava2SingleToObservableAdapter.INSTANCE);
                 conversionService.addConverter(RxJava2ObservableToSingleAdapter.INSTANCE);
                 conversionService.addConverter(RxJava2ObservableToMaybeAdapter.INSTANCE);
+            }
+
+            if (ReactiveTypes.isAvailable(ReactiveLibrary.RXJAVA3)) {
+                conversionService.addConverter(RxJava3SingleToObservableAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3ObservableToSingleAdapter.INSTANCE);
+                conversionService.addConverter(RxJava3ObservableToMaybeAdapter.INSTANCE);
             }
         }
     }
@@ -570,6 +601,273 @@ class ReactiveTypeAdapters {
 
         @Override
         public io.reactivex.Observable<?> apply(io.reactivex.Single<?> source) {
+            return source.toObservable();
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // RxJava 3 adapters
+    // -------------------------------------------------------------------------
+
+    /**
+     * An adapter {@link Function} to adopt a {@link Publisher} to {@link io.reactivex.Single}.
+     */
+    public enum PublisherToRxJava3SingleAdapter implements Function<Publisher<?>, io.reactivex.rxjava3.core.Single<?>> {
+
+        INSTANCE;
+
+        @Override
+        public io.reactivex.rxjava3.core.Single<?> apply(Publisher<?> source) {
+            return io.reactivex.rxjava3.core.Single.fromPublisher(source);
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link Publisher} to {@link io.reactivex.Completable}.
+     */
+    public enum PublisherToRxJava3CompletableAdapter implements Function<Publisher<?>, io.reactivex.rxjava3.core.Completable> {
+
+        INSTANCE;
+
+        @Override
+        public io.reactivex.rxjava3.core.Completable apply(Publisher<?> source) {
+            return io.reactivex.rxjava3.core.Completable.fromPublisher(source);
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link Publisher} to {@link io.reactivex.rxjava3.core.Observable}.
+     */
+    public enum PublisherToRxJava3ObservableAdapter implements Function<Publisher<?>, io.reactivex.rxjava3.core.Observable<?>> {
+
+        INSTANCE;
+
+        @Override
+        public io.reactivex.rxjava3.core.Observable<?> apply(Publisher<?> source) {
+            return io.reactivex.rxjava3.core.Observable.fromPublisher(source);
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Single} to {@link Publisher}.
+     */
+    public enum RxJava3SingleToPublisherAdapter implements Function<io.reactivex.rxjava3.core.Single<?>, Publisher<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Publisher<?> apply(io.reactivex.rxjava3.core.Single<?> source) {
+            return source.toFlowable();
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Single} to {@link Mono}.
+     */
+    public enum RxJava3SingleToMonoAdapter implements Function<io.reactivex.rxjava3.core.Single<?>, Mono<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Mono<?> apply(io.reactivex.rxjava3.core.Single<?> source) {
+            return Mono.from(source.toFlowable());
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Single} to {@link Publisher}.
+     */
+    public enum RxJava3SingleToFluxAdapter implements Function<io.reactivex.rxjava3.core.Single<?>, Flux<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Flux<?> apply(io.reactivex.rxjava3.core.Single<?> source) {
+            return Flux.from(source.toFlowable());
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Completable} to {@link Publisher}.
+     */
+    public enum RxJava3CompletableToPublisherAdapter implements Function<io.reactivex.rxjava3.core.Completable, Publisher<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Publisher<?> apply(io.reactivex.rxjava3.core.Completable source) {
+            return source.toFlowable();
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Completable} to {@link Mono}.
+     */
+    public enum RxJava3CompletableToMonoAdapter implements Function<io.reactivex.rxjava3.core.Completable, Mono<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Mono<?> apply(io.reactivex.rxjava3.core.Completable source) {
+            return Mono.from(RxJava3CompletableToPublisherAdapter.INSTANCE.apply(source));
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt an {@link io.reactivex.rxjava3.core.Observable} to {@link Publisher}.
+     */
+    public enum RxJava3ObservableToPublisherAdapter implements Function<io.reactivex.rxjava3.core.Observable<?>, Publisher<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Publisher<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
+            return source.toFlowable(io.reactivex.rxjava3.core.BackpressureStrategy.BUFFER);
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Observable} to {@link Mono}.
+     */
+    public enum RxJava3ObservableToMonoAdapter implements Function<io.reactivex.rxjava3.core.Observable<?>, Mono<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Mono<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
+            return Mono.from(source.toFlowable(io.reactivex.rxjava3.core.BackpressureStrategy.BUFFER));
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Observable} to {@link Flux}.
+     */
+    public enum RxJava3ObservableToFluxAdapter implements Function<io.reactivex.rxjava3.core.Observable<?>, Flux<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Flux<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
+            return Flux.from(source.toFlowable(io.reactivex.rxjava3.core.BackpressureStrategy.BUFFER));
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link Publisher} to {@link io.reactivex.rxjava3.core.Flowable}.
+     */
+    public enum PublisherToRxJava3FlowableAdapter implements Function<Publisher<?>, io.reactivex.rxjava3.core.Flowable<?>> {
+
+        INSTANCE;
+
+        @Override
+        public io.reactivex.rxjava3.core.Flowable<?> apply(Publisher<?> source) {
+            return io.reactivex.rxjava3.core.Flowable.fromPublisher(source);
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Flowable} to {@link Publisher}.
+     */
+    public enum RxJava3FlowableToPublisherAdapter implements Function<io.reactivex.rxjava3.core.Flowable<?>, Publisher<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Publisher<?> apply(io.reactivex.rxjava3.core.Flowable<?> source) {
+            return source;
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link Publisher} to {@link io.reactivex.rxjava3.core.Flowable}.
+     */
+    public enum PublisherToRxJava3MaybeAdapter implements Function<Publisher<?>, io.reactivex.rxjava3.core.Maybe<?>> {
+
+        INSTANCE;
+
+        @Override
+        public io.reactivex.rxjava3.core.Maybe<?> apply(Publisher<?> source) {
+            return io.reactivex.rxjava3.core.Flowable.fromPublisher(source).singleElement();
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Maybe} to {@link Publisher}.
+     */
+    public enum RxJava3MaybeToPublisherAdapter implements Function<io.reactivex.rxjava3.core.Maybe<?>, Publisher<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Publisher<?> apply(io.reactivex.rxjava3.core.Maybe<?> source) {
+            return source.toFlowable();
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Maybe} to {@link Mono}.
+     */
+    public enum RxJava3MaybeToMonoAdapter implements Function<io.reactivex.rxjava3.core.Maybe<?>, Mono<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Mono<?> apply(io.reactivex.rxjava3.core.Maybe<?> source) {
+            return Mono.from(source.toFlowable());
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link io.reactivex.rxjava3.core.Maybe} to {@link Flux}.
+     */
+    public enum RxJava3MaybeToFluxAdapter implements Function<io.reactivex.rxjava3.core.Maybe<?>, Flux<?>> {
+
+        INSTANCE;
+
+        @Override
+        public Flux<?> apply(io.reactivex.rxjava3.core.Maybe<?> source) {
+            return Flux.from(source.toFlowable());
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link Observable} to {@link Single}.
+     */
+    public enum RxJava3ObservableToSingleAdapter
+            implements Function<io.reactivex.rxjava3.core.Observable<?>, io.reactivex.rxjava3.core.Single<?>> {
+
+        INSTANCE;
+
+        @Override
+        public io.reactivex.rxjava3.core.Single<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
+            return source.singleOrError();
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link Observable} to {@link Maybe}.
+     */
+    public enum RxJava3ObservableToMaybeAdapter
+            implements Function<io.reactivex.rxjava3.core.Observable<?>, io.reactivex.rxjava3.core.Maybe<?>> {
+
+        INSTANCE;
+
+        @Override
+        public io.reactivex.rxjava3.core.Maybe<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
+            return source.singleElement();
+        }
+    }
+
+    /**
+     * An adapter {@link Function} to adopt a {@link Single} to {@link Single}.
+     */
+    public enum RxJava3SingleToObservableAdapter
+            implements Function<io.reactivex.rxjava3.core.Single<?>, io.reactivex.rxjava3.core.Observable<?>> {
+
+        INSTANCE;
+
+        @Override
+        public io.reactivex.rxjava3.core.Observable<?> apply(io.reactivex.rxjava3.core.Single<?> source) {
             return source.toObservable();
         }
     }
