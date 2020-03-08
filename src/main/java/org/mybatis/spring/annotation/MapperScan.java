@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,10 @@ import org.springframework.context.annotation.Import;
  * Use this annotation to register MyBatis mapper interfaces when using Java Config. It performs when same work as
  * {@link MapperScannerConfigurer} via {@link MapperScannerRegistrar}.
  * 
- * <p>Either {@link #basePackageClasses} or {@link #basePackages} (or its alias
- * {@link #value}) may be specified to define specific packages to scan.
- * Since 2.0.4, If specific packages are not defined, scanning will occur from
- * the package of the class that declares this annotation.
+ * <p>
+ * Either {@link #basePackageClasses} or {@link #basePackages} (or its alias {@link #value}) may be specified to define
+ * specific packages to scan. Since 2.0.4, If specific packages are not defined, scanning will occur from the package of
+ * the class that declares this annotation.
  *
  * <p>
  * Configuration example:
