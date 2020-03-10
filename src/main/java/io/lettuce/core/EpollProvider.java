@@ -61,11 +61,11 @@ public class EpollProvider {
         EPOLL_AVAILABLE = availability;
 
         if (EPOLL_AVAILABLE) {
-            logger.info("Starting with epoll library");
+            logger.debug("Starting with epoll library");
             epollResources = AvailableEpollResources.INSTANCE;
 
         } else {
-            logger.info("Starting without optional epoll library");
+            logger.debug("Starting without optional epoll library");
             epollResources = UnavailableEpollResources.INSTANCE;
         }
     }
