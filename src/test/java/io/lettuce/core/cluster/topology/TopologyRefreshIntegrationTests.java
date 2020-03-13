@@ -95,36 +95,6 @@ class TopologyRefreshIntegrationTests extends TestSupport {
     }
 
     @Test
-    void shouldUnsubscribeTopologyRefresh() {
-
-        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
-                .enablePeriodicRefresh(true) //
-                .build();
-        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
-
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
-
-        AtomicBoolean clusterTopologyRefreshActivated = (AtomicBoolean) ReflectionTestUtils.getField(clusterClient,
-                "clusterTopologyRefreshActivated");
-
-        AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = (AtomicReference) ReflectionTestUtils.getField(
-                clusterClient, "clusterTopologyRefreshFuture");
-
-        assertThat(clusterTopologyRefreshActivated.get()).isTrue();
-        assertThat((Future) clusterTopologyRefreshFuture.get()).isNotNull();
-
-        ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
-
-        clusterConnection.getStatefulConnection().close();
-
-        FastShutdown.shutdown(clusterClient);
-
-        assertThat(clusterTopologyRefreshActivated.get()).isFalse();
-        assertThat((Future) clusterTopologyRefreshFuture.get()).isNull();
-        assertThat(scheduledFuture.isCancelled()).isTrue();
-    }
-
-    @Test
     void changeTopologyWhileOperations() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()

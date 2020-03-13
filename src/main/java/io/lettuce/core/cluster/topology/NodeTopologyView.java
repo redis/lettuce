@@ -15,7 +15,6 @@
  */
 package io.lettuce.core.cluster.topology;
 
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,24 +65,23 @@ class NodeTopologyView {
         this.latency = latency;
     }
 
-    static NodeTopologyView from(RedisURI redisURI, Requests clusterNodesRequests, Requests clientListRequests)
-            throws ExecutionException, InterruptedException {
+    static NodeTopologyView from(RedisURI redisURI, Requests clusterNodesRequests, Requests clientListRequests) {
 
         TimedAsyncCommand<String, String, String> nodes = clusterNodesRequests.getRequest(redisURI);
         TimedAsyncCommand<String, String, String> clients = clientListRequests.getRequest(redisURI);
 
         if (resultAvailable(nodes) && resultAvailable(clients)) {
-            return new NodeTopologyView(redisURI, nodes.get(), optionallyGet(clients), nodes.duration());
+            return new NodeTopologyView(redisURI, nodes.join(), optionallyGet(clients), nodes.duration());
         }
         return new NodeTopologyView(redisURI);
     }
 
-    private static <T> T optionallyGet(TimedAsyncCommand<?, ?, T> command) throws ExecutionException, InterruptedException {
+    private static <T> T optionallyGet(TimedAsyncCommand<?, ?, T> command) {
 
         if (command.isCompletedExceptionally()) {
             return null;
         }
-        return command.get();
+        return command.join();
     }
 
     private static boolean resultAvailable(RedisFuture<?> redisFuture) {

@@ -16,16 +16,24 @@
 package io.lettuce.core.cluster;
 
 import java.time.Duration;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
+ * Scheduler utility to schedule and initiate cluster topology refresh.
+ *
  * @author Mark Paluch
  */
 class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener {
@@ -33,16 +41,58 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterTopologyRefreshScheduler.class);
     private static final ClusterTopologyRefreshOptions FALLBACK_OPTIONS = ClusterTopologyRefreshOptions.create();
 
-    private final RedisClusterClient redisClusterClient;
+    private final Supplier<ClusterClientOptions> clientOptions;
+    private final Supplier<Partitions> partitions;
     private final ClientResources clientResources;
     private final ClusterTopologyRefreshTask clusterTopologyRefreshTask;
     private final AtomicReference<Timeout> timeoutRef = new AtomicReference<>();
 
-    ClusterTopologyRefreshScheduler(RedisClusterClient redisClusterClient, ClientResources clientResources) {
+    private final AtomicBoolean clusterTopologyRefreshActivated = new AtomicBoolean(false);
+    private final AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = new AtomicReference<>();
+    private final EventExecutorGroup genericWorkerPool;
 
-        this.redisClusterClient = redisClusterClient;
+    ClusterTopologyRefreshScheduler(Supplier<ClusterClientOptions> clientOptions, Supplier<Partitions> partitions,
+            Supplier<CompletionStage<?>> refreshTopology, ClientResources clientResources) {
+
+        this.clientOptions = clientOptions;
+        this.partitions = partitions;
         this.clientResources = clientResources;
-        this.clusterTopologyRefreshTask = new ClusterTopologyRefreshTask(redisClusterClient);
+        this.genericWorkerPool = this.clientResources.eventExecutorGroup();
+        this.clusterTopologyRefreshTask = new ClusterTopologyRefreshTask(refreshTopology);
+    }
+
+    protected void activateTopologyRefreshIfNeeded() {
+
+        ClusterClientOptions options = clientOptions.get();
+        ClusterTopologyRefreshOptions topologyRefreshOptions = options.getTopologyRefreshOptions();
+
+        if (!topologyRefreshOptions.isPeriodicRefreshEnabled() || clusterTopologyRefreshActivated.get()) {
+            return;
+        }
+
+        if (clusterTopologyRefreshActivated.compareAndSet(false, true)) {
+            ScheduledFuture<?> scheduledFuture = genericWorkerPool.scheduleAtFixedRate(this,
+                    options.getRefreshPeriod().toNanos(), options.getRefreshPeriod().toNanos(), TimeUnit.NANOSECONDS);
+            clusterTopologyRefreshFuture.set(scheduledFuture);
+        }
+    }
+
+    /**
+     * Disable periodic topology refresh.
+     */
+    public void shutdown() {
+
+        if (clusterTopologyRefreshActivated.compareAndSet(true, false)) {
+
+            ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
+
+            try {
+                scheduledFuture.cancel(false);
+                clusterTopologyRefreshFuture.set(null);
+            } catch (Exception e) {
+                logger.debug("Could not cancel Cluster topology refresh", e);
+            }
+        }
     }
 
     @Override
@@ -50,8 +100,9 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         logger.debug("ClusterTopologyRefreshScheduler.run()");
 
-        if (isEventLoopActive() && redisClusterClient.getClusterClientOptions() != null) {
-            if (!redisClusterClient.getClusterClientOptions().isRefreshClusterView()) {
+        if (isEventLoopActive()) {
+
+            if (!clientOptions.get().isRefreshClusterView()) {
                 logger.debug("Periodic ClusterTopologyRefresh is disabled");
                 return;
             }
@@ -61,63 +112,6 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         }
 
         clientResources.eventExecutorGroup().submit(clusterTopologyRefreshTask);
-    }
-
-    private boolean indicateTopologyRefreshSignal() {
-
-        logger.debug("ClusterTopologyRefreshScheduler.indicateTopologyRefreshSignal()");
-
-        if (!acquireTimeout()) {
-            return false;
-        }
-
-        return scheduleRefresh();
-    }
-
-    private boolean scheduleRefresh() {
-
-        if (isEventLoopActive() && redisClusterClient.getClusterClientOptions() != null) {
-            clientResources.eventExecutorGroup().submit(clusterTopologyRefreshTask);
-            return true;
-        }
-
-        logger.debug("ClusterTopologyRefresh is disabled");
-        return false;
-    }
-
-    /**
-     * Check if the {@link EventExecutorGroup} is active
-     *
-     * @return false if the worker pool is terminating, shutdown or terminated
-     */
-    private boolean isEventLoopActive() {
-
-        EventExecutorGroup eventExecutors = clientResources.eventExecutorGroup();
-        if (eventExecutors.isShuttingDown() || eventExecutors.isShutdown() || eventExecutors.isTerminated()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private boolean acquireTimeout() {
-
-        Timeout existingTimeout = timeoutRef.get();
-
-        if (existingTimeout != null) {
-            if (!existingTimeout.isExpired()) {
-                return false;
-            }
-        }
-
-        ClusterTopologyRefreshOptions refreshOptions = getClusterTopologyRefreshOptions();
-        Timeout timeout = new Timeout(refreshOptions.getAdaptiveRefreshTimeout());
-
-        if (timeoutRef.compareAndSet(existingTimeout, timeout)) {
-            return true;
-        }
-
-        return false;
     }
 
     @Override
@@ -171,18 +165,74 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
     private void emitAdaptiveRefreshScheduledEvent() {
 
-        AdaptiveRefreshTriggeredEvent event = new AdaptiveRefreshTriggeredEvent(redisClusterClient::getPartitions,
-                this::scheduleRefresh);
+        AdaptiveRefreshTriggeredEvent event = new AdaptiveRefreshTriggeredEvent(partitions, this::scheduleRefresh);
 
         clientResources.eventBus().publish(event);
     }
 
+    private boolean indicateTopologyRefreshSignal() {
+
+        logger.debug("ClusterTopologyRefreshScheduler.indicateTopologyRefreshSignal()");
+
+        if (!acquireTimeout()) {
+            return false;
+        }
+
+        return scheduleRefresh();
+    }
+
+    private boolean scheduleRefresh() {
+
+        if (isEventLoopActive()) {
+            clientResources.eventExecutorGroup().submit(clusterTopologyRefreshTask);
+            return true;
+        }
+
+        logger.debug("ClusterTopologyRefresh is disabled");
+        return false;
+    }
+
+    /**
+     * Check if the {@link EventExecutorGroup} is active
+     *
+     * @return false if the worker pool is terminating, shutdown or terminated
+     */
+    private boolean isEventLoopActive() {
+
+        EventExecutorGroup eventExecutors = clientResources.eventExecutorGroup();
+        if (eventExecutors.isShuttingDown() || eventExecutors.isShutdown() || eventExecutors.isTerminated()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean acquireTimeout() {
+
+        Timeout existingTimeout = timeoutRef.get();
+
+        if (existingTimeout != null) {
+            if (!existingTimeout.isExpired()) {
+                return false;
+            }
+        }
+
+        ClusterTopologyRefreshOptions refreshOptions = getClusterTopologyRefreshOptions();
+        Timeout timeout = new Timeout(refreshOptions.getAdaptiveRefreshTimeout());
+
+        if (timeoutRef.compareAndSet(existingTimeout, timeout)) {
+            return true;
+        }
+
+        return false;
+    }
+
     private ClusterTopologyRefreshOptions getClusterTopologyRefreshOptions() {
 
-        ClusterClientOptions clusterClientOptions = redisClusterClient.getClusterClientOptions();
+        ClientOptions clientOptions = this.clientOptions.get();
 
-        if (clusterClientOptions != null) {
-            return clusterClientOptions.getTopologyRefreshOptions();
+        if (clientOptions instanceof ClusterClientOptions) {
+            return ((ClusterClientOptions) clientOptions).getTopologyRefreshOptions();
         }
 
         return FALLBACK_OPTIONS;
@@ -220,24 +270,19 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         }
     }
 
-    private static class ClusterTopologyRefreshTask implements Runnable {
+    private static class ClusterTopologyRefreshTask extends AtomicBoolean implements Runnable {
 
-        private final RedisClusterClient redisClusterClient;
-        private final AtomicBoolean unique = new AtomicBoolean();
+        private static final long serialVersionUID = -1337731371220365694L;
+        private final Supplier<CompletionStage<?>> reloadTopologyAsync;
 
-        ClusterTopologyRefreshTask(RedisClusterClient redisClusterClient) {
-            this.redisClusterClient = redisClusterClient;
+        ClusterTopologyRefreshTask(Supplier<CompletionStage<?>> reloadTopologyAsync) {
+            this.reloadTopologyAsync = reloadTopologyAsync;
         }
 
         public void run() {
 
-            if (unique.compareAndSet(false, true)) {
-                try {
-                    doRun();
-                } finally {
-                    unique.set(false);
-                }
-
+            if (compareAndSet(false, true)) {
+                doRun();
                 return;
             }
 
@@ -249,11 +294,17 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         void doRun() {
 
             if (logger.isDebugEnabled()) {
-                logger.debug("ClusterTopologyRefreshTask requesting partitions from {}",
-                        redisClusterClient.getTopologyRefreshSource());
+                logger.debug("ClusterTopologyRefreshTask requesting partitions");
             }
             try {
-                redisClusterClient.reloadPartitions();
+                reloadTopologyAsync.get().whenComplete((ignore, throwable) -> {
+
+                    if (throwable != null) {
+                        logger.warn("Cannot refresh Redis Cluster topology", throwable);
+                    }
+
+                    set(false);
+                });
             } catch (Exception e) {
                 logger.warn("Cannot refresh Redis Cluster topology", e);
             }

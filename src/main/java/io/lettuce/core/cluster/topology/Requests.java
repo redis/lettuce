@@ -18,7 +18,7 @@ package io.lettuce.core.cluster.topology;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.RedisURI;
 
@@ -43,8 +43,15 @@ class Requests {
         rawViews.put(redisURI, command);
     }
 
-    protected long await(long timeout, TimeUnit timeUnit) throws InterruptedException {
-        return RefreshFutures.awaitAll(timeout, timeUnit, rawViews.values());
+    /**
+     * Returns a marker future that completes when all of the futures in this {@link Requests} complete. The marker never fails
+     * exceptionally but signals completion only.
+     *
+     * @return
+     */
+    public CompletableFuture<Void> allCompleted() {
+        return CompletableFuture.allOf(rawViews.values().stream().map(it -> it.exceptionally(throwable -> "ignore"))
+                .toArray(CompletableFuture[]::new));
     }
 
     protected Set<RedisURI> nodes() {

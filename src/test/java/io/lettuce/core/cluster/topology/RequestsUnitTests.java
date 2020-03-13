@@ -75,33 +75,6 @@ class RequestsUnitTests {
         assertThat(nodeTopologyView.getClusterNodes()).isNull();
     }
 
-    @Test
-    void awaitShouldReturnAwaitedTime() throws Exception {
-
-        RedisURI redisURI = RedisURI.create("localhost", 6379);
-        Requests requests = new Requests();
-        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(StringCodec.UTF8));
-        TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
-
-        requests.addRequest(redisURI, timedAsyncCommand);
-
-        assertThat(requests.await(100, TimeUnit.MILLISECONDS)).isGreaterThan(TimeUnit.MILLISECONDS.toNanos(90));
-    }
-
-    @Test
-    void awaitShouldReturnAwaitedTimeIfNegative() throws Exception {
-
-        RedisURI redisURI = RedisURI.create("localhost", 6379);
-        Requests requests = new Requests();
-        Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(StringCodec.UTF8));
-        TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);
-
-        requests.addRequest(redisURI, timedAsyncCommand);
-
-        assertThat(requests.await(-1, TimeUnit.MILLISECONDS)).isEqualTo(0);
-
-    }
-
     private TimedAsyncCommand getCommand(String response) {
         Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(StringCodec.UTF8));
         TimedAsyncCommand timedAsyncCommand = new TimedAsyncCommand(command);

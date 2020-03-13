@@ -27,10 +27,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.RedisException;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.TestSupport;
+import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.Executions;
@@ -51,8 +48,8 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
     private static final String SLOT_1_KEY = "8HMdi";
     private static final String SLOT_16352_KEY = "UyAa4KqoWgPGKa";
 
-    private static RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared")
-            .withSsl(true).withVerifyPeer(false).build();
+    private static RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared").withSsl(true)
+            .withVerifyPeer(false).build();
     private static RedisClusterClient redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
     @BeforeEach
@@ -142,7 +139,7 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
         try {
             redisClusterClient.reloadPartitions();
         } catch (RedisException e) {
-            assertThat(e).hasMessageContaining("Cannot retrieve initial cluster");
+            assertThat(e).hasMessageContaining("Cannot reload Redis Cluster topology");
         } finally {
             FastShutdown.shutdown(redisClusterClient);
         }
@@ -156,8 +153,8 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
         try {
             redisClusterClient.connect();
-        } catch (RedisException e) {
-            assertThat(e).hasMessageContaining("Cannot retrieve initial cluster");
+        } catch (RedisConnectionException e) {
+            assertThat(e).hasMessageContaining("Unable to establish a connection to Redis Cluster");
         } finally {
             FastShutdown.shutdown(redisClusterClient);
         }

@@ -63,7 +63,7 @@ public abstract class ExceptionFactory {
                 String.format("%s. Command timed out after %s", message, formatTimeout(timeout)));
     }
 
-    static String formatTimeout(Duration duration) {
+    public static String formatTimeout(Duration duration) {
 
         if (duration.isZero()) {
             return "no timeout";
