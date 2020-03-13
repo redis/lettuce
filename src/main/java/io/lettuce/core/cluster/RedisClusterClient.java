@@ -296,6 +296,52 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
+     * Set the {@link ClusterClientOptions} for the client.
+     *
+     * @param clientOptions client options for the client and connections that are created after setting the options
+     */
+    public void setOptions(ClusterClientOptions clientOptions) {
+        super.setOptions(clientOptions);
+    }
+
+    /**
+     * Retrieve the cluster view. Partitions are shared amongst all connections opened by this client instance.
+     *
+     * @return the partitions.
+     */
+    public Partitions getPartitions() {
+        if (partitions == null) {
+            get(initializePartitions(), e -> new RedisException("Cannot obtain initial Redis Cluster topology", e));
+        }
+        return partitions;
+    }
+
+    /**
+     * Returns the seed {@link RedisURI} for the topology refreshing. This method is called before each topology refresh to
+     * provide an {@link Iterable} of {@link RedisURI} that is used to perform the next topology refresh.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override that method.
+     *
+     * @return {@link Iterable} of {@link RedisURI} for the next topology refresh.
+     */
+    protected Iterable<RedisURI> getTopologyRefreshSource() {
+
+        boolean initialSeedNodes = !useDynamicRefreshSources();
+
+        Iterable<RedisURI> seed;
+        if (initialSeedNodes || partitions == null || partitions.isEmpty()) {
+            seed = this.initialUris;
+        } else {
+            List<RedisURI> uris = new ArrayList<>();
+            for (RedisClusterNode partition : TopologyComparators.sortByUri(partitions)) {
+                uris.add(partition.getUri());
+            }
+            seed = uris;
+        }
+        return seed;
+    }
+
+    /**
      * Connect to a Redis Cluster and treat keys and values as UTF-8 strings.
      * <p>
      * What to expect from this connection:
@@ -472,18 +518,19 @@ public class RedisClusterClient extends AbstractRedisClient {
         assertNotEmpty(initialUris);
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
-        ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(clientOptions, getResources(), clusterWriter);
+        ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(getClusterClientOptions(), getResources(), clusterWriter);
 
         RedisChannelWriter writer = endpoint;
 
-        if (CommandExpiryWriter.isSupported(clientOptions)) {
-            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
+            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
-        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(writer, codec, timeout);
+        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(writer, codec, getDefaultTimeout());
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
-                getFirstUri(), socketAddressSupplier, () -> new CommandHandler(clientOptions, clientResources, endpoint));
+                getFirstUri(), socketAddressSupplier,
+                () -> new CommandHandler(getClusterClientOptions(), getResources(), endpoint));
 
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
@@ -512,20 +559,20 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         logger.debug("connectPubSubToNode(" + nodeId + ")");
 
-        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions, clientResources);
+        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(getClusterClientOptions(), getResources());
 
         RedisChannelWriter writer = endpoint;
 
-        if (CommandExpiryWriter.isSupported(clientOptions)) {
-            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
+            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
-                timeout);
+                getDefaultTimeout());
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
-                () -> new PubSubCommandHandler<>(clientOptions, clientResources, codec, endpoint));
+                () -> new PubSubCommandHandler<>(getClusterClientOptions(), getResources(), codec, endpoint));
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
                 connection.close();
@@ -554,14 +601,14 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions, clientResources);
+        DefaultEndpoint endpoint = new DefaultEndpoint(getClusterClientOptions(), getResources());
         RedisChannelWriter writer = endpoint;
 
-        if (CommandExpiryWriter.isSupported(clientOptions)) {
-            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
+            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
-        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, writer,
+        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(getClusterClientOptions(), writer,
                 topologyRefreshScheduler);
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<>(this,
                 clusterWriter, codec, topologyRefreshScheduler);
@@ -569,12 +616,13 @@ public class RedisClusterClient extends AbstractRedisClient {
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
         StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl<>(clusterWriter, codec,
-                timeout);
+                getDefaultTimeout());
 
         connection.setReadFrom(ReadFrom.MASTER);
         connection.setPartitions(partitions);
 
-        Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(clientOptions, clientResources, endpoint);
+        Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(getClusterClientOptions(), getResources(),
+                endpoint);
 
         Mono<StatefulRedisClusterConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
@@ -637,18 +685,18 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
 
-        PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<>(clientOptions, clientResources);
+        PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<>(getClusterClientOptions(), getResources());
         RedisChannelWriter writer = endpoint;
 
-        if (CommandExpiryWriter.isSupported(clientOptions)) {
-            writer = new CommandExpiryWriter(writer, clientOptions, clientResources);
+        if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
+            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
-        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(clientOptions, writer,
+        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(getClusterClientOptions(), writer,
                 topologyRefreshScheduler);
 
         StatefulRedisClusterPubSubConnectionImpl<K, V> connection = new StatefulRedisClusterPubSubConnectionImpl<>(endpoint,
-                clusterWriter, codec, timeout);
+                clusterWriter, codec, getDefaultTimeout());
 
         ClusterPubSubConnectionProvider<K, V> pooledClusterConnectionProvider = new ClusterPubSubConnectionProvider<>(this,
                 clusterWriter, codec, connection.getUpstreamListener(), topologyRefreshScheduler);
@@ -656,8 +704,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
         connection.setPartitions(partitions);
 
-        Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(clientOptions, clientResources,
-                codec, endpoint);
+        Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
+                getResources(), codec, endpoint);
 
         Mono<StatefulRedisClusterPubSubConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
@@ -734,9 +782,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.connectionInitializer(createHandshake(state));
 
         connectionBuilder.reconnectionListener(new ReconnectEventListener(topologyRefreshScheduler));
-        connectionBuilder.clientOptions(clientOptions);
+        connectionBuilder.clientOptions(getClusterClientOptions());
         connectionBuilder.connection(connection);
-        connectionBuilder.clientResources(clientResources);
+        connectionBuilder.clientResources(getResources());
         connectionBuilder.endpoint(endpoint);
         connectionBuilder.commandHandler(commandHandlerSupplier);
         connectionBuilder(socketAddressSupplier, connectionBuilder, connectionSettings);
@@ -816,18 +864,6 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Retrieve the cluster view. Partitions are shared amongst all connections opened by this client instance.
-     *
-     * @return the partitions.
-     */
-    public Partitions getPartitions() {
-        if (partitions == null) {
-            get(initializePartitions(), e -> new RedisException("Cannot obtain initial Redis Cluster topology", e));
-        }
-        return partitions;
-    }
-
-    /**
      * Retrieve partitions. Nodes within {@link Partitions} are ordered by latency. Lower latency nodes come first.
      *
      * @return Partitions
@@ -892,17 +928,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         return future;
     }
 
-    private static Throwable unwrap(Throwable throwable) {
-
-        Throwable ex = throwable;
-
-        while (ex instanceof CompletionException || ex instanceof ExecutionException) {
-            ex = ex.getCause();
-        }
-
-        return ex;
-    }
-
     private CompletionStage<Partitions> fetchPartitions(Iterable<RedisURI> topologyRefreshSource) {
 
         CompletionStage<Map<RedisURI, Partitions>> topology = refresh.loadViews(topologyRefreshSource,
@@ -932,24 +957,6 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Resolve a {@link RedisURI} from a map of cluster views by {@link Partitions} as key
-     *
-     * @param map the map
-     * @param partitions the key
-     * @return a {@link RedisURI} or null
-     */
-    private static RedisURI getViewedBy(Map<RedisURI, Partitions> map, Partitions partitions) {
-
-        for (Map.Entry<RedisURI, Partitions> entry : map.entrySet()) {
-            if (entry.getValue() == partitions) {
-                return entry.getKey();
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Determines a {@link Partitions topology view} based on the current and the obtain topology views.
      *
      * @param current the current topology view. May be {@literal null} if {@link RedisClusterClient} has no topology view yet.
@@ -975,15 +982,6 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Returns the {@link ClientResources} which are used with that client.
-     *
-     * @return the {@link ClientResources} for this client
-     */
-    public ClientResources getResources() {
-        return clientResources;
-    }
-
-    /**
      * Shutdown this client and close all open connections asynchronously. The client should be discarded after calling
      * shutdown.
      *
@@ -999,15 +997,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         topologyRefreshScheduler.shutdown();
 
         return super.shutdownAsync(quietPeriod, timeout, timeUnit);
-    }
-
-    /**
-     * Set the {@link ClusterClientOptions} for the client.
-     *
-     * @param clientOptions client options for the client and connections that are created after setting the options
-     */
-    public void setOptions(ClusterClientOptions clientOptions) {
-        super.setOptions(clientOptions);
     }
 
     // -------------------------------------------------------------------------
@@ -1037,13 +1026,13 @@ public class RedisClusterClient extends AbstractRedisClient {
         LettuceAssert.notNull(sortFunction, "Sort function must not be null");
 
         final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions,
-                sortFunction, clientResources);
+                sortFunction, getResources());
 
         return Mono.defer(() -> {
 
             if (partitions.isEmpty()) {
                 return Mono.fromCallable(() -> {
-                    SocketAddress socketAddress = clientResources.socketAddressResolver().resolve(getFirstUri());
+                    SocketAddress socketAddress = getResources().socketAddressResolver().resolve(getFirstUri());
                     logger.debug("Resolved SocketAddress {} using {}", socketAddress, getFirstUri());
                     return socketAddress;
                 });
@@ -1096,31 +1085,6 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Returns the seed {@link RedisURI} for the topology refreshing. This method is called before each topology refresh to
-     * provide an {@link Iterable} of {@link RedisURI} that is used to perform the next topology refresh.
-     * <p>
-     * Subclasses of {@link RedisClusterClient} may override that method.
-     *
-     * @return {@link Iterable} of {@link RedisURI} for the next topology refresh.
-     */
-    protected Iterable<RedisURI> getTopologyRefreshSource() {
-
-        boolean initialSeedNodes = !useDynamicRefreshSources();
-
-        Iterable<RedisURI> seed;
-        if (initialSeedNodes || partitions == null || partitions.isEmpty()) {
-            seed = this.initialUris;
-        } else {
-            List<RedisURI> uris = new ArrayList<>();
-            for (RedisClusterNode partition : TopologyComparators.sortByUri(partitions)) {
-                uris.add(partition.getUri());
-            }
-            seed = uris;
-        }
-        return seed;
-    }
-
-    /**
      * Returns {@literal true} if {@link ClusterTopologyRefreshOptions#useDynamicRefreshSources() dynamic refresh sources} are
      * enabled.
      * <p>
@@ -1144,6 +1108,35 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     protected RedisCodec<String, String> newStringStringCodec() {
         return StringCodec.UTF8;
+    }
+
+    /**
+     * Resolve a {@link RedisURI} from a map of cluster views by {@link Partitions} as key
+     *
+     * @param map the map
+     * @param partitions the key
+     * @return a {@link RedisURI} or null
+     */
+    private static RedisURI getViewedBy(Map<RedisURI, Partitions> map, Partitions partitions) {
+
+        for (Map.Entry<RedisURI, Partitions> entry : map.entrySet()) {
+            if (entry.getValue() == partitions) {
+                return entry.getKey();
+            }
+        }
+
+        return null;
+    }
+
+    private static Throwable unwrap(Throwable throwable) {
+
+        Throwable ex = throwable;
+
+        while (ex instanceof CompletionException || ex instanceof ExecutionException) {
+            ex = ex.getCause();
+        }
+
+        return ex;
     }
 
     ClusterClientOptions getClusterClientOptions() {

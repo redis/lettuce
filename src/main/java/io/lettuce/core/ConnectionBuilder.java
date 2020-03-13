@@ -45,7 +45,6 @@ public class ConnectionBuilder {
     private Endpoint endpoint;
     private Supplier<CommandHandler> commandHandlerSupplier;
     private ChannelGroup channelGroup;
-    private Timer timer;
     private Bootstrap bootstrap;
     private ClientOptions clientOptions;
     private Duration timeout;
@@ -105,10 +104,10 @@ public class ConnectionBuilder {
         }
 
         LettuceAssert.assertState(bootstrap != null, "Bootstrap must be set for autoReconnect=true");
-        LettuceAssert.assertState(timer != null, "Timer must be set for autoReconnect=true");
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
 
-        ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap, timer,
+        ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
+                clientResources.timer(),
                 clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener, connection,
                 clientResources.eventBus());
 
@@ -170,11 +169,6 @@ public class ConnectionBuilder {
 
     public ConnectionBuilder commandHandler(Supplier<CommandHandler> supplier) {
         this.commandHandlerSupplier = supplier;
-        return this;
-    }
-
-    public ConnectionBuilder timer(Timer timer) {
-        this.timer = timer;
         return this;
     }
 
