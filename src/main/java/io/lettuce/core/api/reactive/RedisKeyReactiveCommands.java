@@ -236,9 +236,9 @@ public interface RedisKeyReactiveCommands<K, V> {
     /**
      * Return a random key from the keyspace.
      *
-     * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
      */
-    Mono<V> randomkey();
+    Mono<K> randomkey();
 
     /**
      * Rename a key.

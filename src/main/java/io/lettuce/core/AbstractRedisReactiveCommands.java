@@ -1132,7 +1132,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<V> randomkey() {
+    public Mono<K> randomkey() {
         return createMono(commandBuilder::randomkey);
     }
 

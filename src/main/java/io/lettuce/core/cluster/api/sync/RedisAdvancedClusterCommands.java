@@ -93,8 +93,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      */
     @Deprecated
     default NodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
-        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+        return readonly(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
     }
 
     /**
@@ -115,8 +115,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @since 5.2
      */
     default NodeSelection<K, V> replicas(Predicate<RedisClusterNode> predicate) {
-        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
+        return readonly(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -270,10 +270,10 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Return a random key from the keyspace on a random master.
      *
-     * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
      * @see RedisKeyCommands#randomkey()
      */
-    V randomkey();
+    K randomkey();
 
     /**
      * Remove all the scripts from the script cache on all cluster nodes.

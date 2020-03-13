@@ -235,9 +235,9 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Return a random key from the keyspace.
      *
-     * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
      */
-    AsyncExecutions<V> randomkey();
+    AsyncExecutions<K> randomkey();
 
     /**
      * Rename a key.

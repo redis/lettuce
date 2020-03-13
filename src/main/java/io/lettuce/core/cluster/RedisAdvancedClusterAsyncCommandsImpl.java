@@ -392,13 +392,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<V> randomkey() {
+    public RedisFuture<K> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();
         int index = ThreadLocalRandom.current().nextInt(partitions.size());
         RedisClusterNode partition = partitions.getPartition(index);
 
-        CompletableFuture<V> future = getConnectionAsync(partition.getUri().getHost(), partition.getUri().getPort())
+        CompletableFuture<K> future = getConnectionAsync(partition.getUri().getHost(), partition.getUri().getPort())
                 .thenCompose(RedisKeyAsyncCommands::randomkey);
 
         return new PipelinedRedisFuture<>(future);

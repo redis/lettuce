@@ -1050,7 +1050,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<V> randomkey() {
+    public RedisFuture<K> randomkey() {
         return dispatch(commandBuilder.randomkey());
     }
 
