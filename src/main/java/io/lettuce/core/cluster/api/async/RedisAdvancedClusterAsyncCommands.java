@@ -272,10 +272,10 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Return a random key from the keyspace on a random master.
      *
-     * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
      * @see RedisKeyAsyncCommands#randomkey()
      */
-    RedisFuture<V> randomkey();
+    RedisFuture<K> randomkey();
 
     /**
      * Remove all the scripts from the script cache on all cluster nodes.

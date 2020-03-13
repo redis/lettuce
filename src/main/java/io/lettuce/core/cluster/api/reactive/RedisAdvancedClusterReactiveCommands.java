@@ -178,10 +178,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     /**
      * Return a random key from the keyspace on a random master.
      *
-     * @return V bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or a {@link Mono} that completes empty when the database is empty.
      * @see RedisKeyReactiveCommands#randomkey()
      */
-    Mono<V> randomkey();
+    Mono<K> randomkey();
 
     /**
      * Remove all the scripts from the script cache on all cluster nodes.

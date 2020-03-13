@@ -1494,8 +1494,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(QUIT, new StatusOutput<>(codec));
     }
 
-    Command<K, V, V> randomkey() {
-        return createCommand(RANDOMKEY, new ValueOutput<>(codec));
+    Command<K, V, K> randomkey() {
+        return createCommand(RANDOMKEY, new KeyOutput<>(codec));
     }
 
     Command<K, V, String> readOnly() {

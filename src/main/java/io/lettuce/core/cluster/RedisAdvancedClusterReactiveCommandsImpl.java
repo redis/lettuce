@@ -347,7 +347,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<V> randomkey() {
+    public Mono<K> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();
         int index = ThreadLocalRandom.current().nextInt(partitions.size());
