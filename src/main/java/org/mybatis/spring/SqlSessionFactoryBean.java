@@ -120,6 +120,9 @@ public class SqlSessionFactoryBean
 
   private String typeHandlersPackage;
 
+  @SuppressWarnings("rawtypes")
+  private Class<? extends TypeHandler> defaultEnumTypeHandler;
+
   private Class<?>[] typeAliases;
 
   private String typeAliasesPackage;
@@ -291,6 +294,18 @@ public class SqlSessionFactoryBean
    */
   public void setTypeHandlers(TypeHandler<?>... typeHandlers) {
     this.typeHandlers = typeHandlers;
+  }
+
+  /**
+   * Set the default type handler class for enum.
+   *
+   * @since 2.0.5
+   * @param defaultEnumTypeHandler
+   *          The default type handler class for enum
+   */
+  public void setDefaultEnumTypeHandler(
+      @SuppressWarnings("rawtypes") Class<? extends TypeHandler> defaultEnumTypeHandler) {
+    this.defaultEnumTypeHandler = defaultEnumTypeHandler;
   }
 
   /**
@@ -544,6 +559,8 @@ public class SqlSessionFactoryBean
         LOGGER.debug(() -> "Registered type handler: '" + typeHandler + "'");
       });
     }
+
+    targetConfiguration.setDefaultEnumTypeHandler(defaultEnumTypeHandler);
 
     if (!isEmpty(this.scriptingLanguageDrivers)) {
       Stream.of(this.scriptingLanguageDrivers).forEach(languageDriver -> {

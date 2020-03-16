@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.wrapper.DefaultObjectWrapperFactory;
 import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
-import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.scripting.LanguageDriverRegistry;
 import org.apache.ibatis.scripting.defaults.RawLanguageDriver;
 import org.apache.ibatis.scripting.xmltags.XMLLanguageDriver;
@@ -40,9 +39,9 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
+import org.apache.ibatis.type.EnumOrdinalTypeHandler;
 import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeException;
-import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.junit.jupiter.api.Test;
 import org.mybatis.core.jdk.type.AtomicNumberTypeHandler;
@@ -52,7 +51,6 @@ import org.mybatis.spring.type.DummyTypeHandler;
 import org.mybatis.spring.type.SuperType;
 import org.mybatis.spring.type.TypeHandlerFactory;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 
 import com.mockrunner.mock.jdbc.MockDataSource;
 
@@ -424,6 +422,15 @@ class SqlSessionFactoryBeanTest {
   }
 
   @Test
+  void testDefaultEnumTypeHandler() throws Exception {
+    setupFactoryBean();
+    factoryBean.setDefaultEnumTypeHandler(EnumOrdinalTypeHandler.class);
+
+    TypeHandlerRegistry typeHandlerRegistry = factoryBean.getObject().getConfiguration().getTypeHandlerRegistry();
+    assertThat(typeHandlerRegistry.getTypeHandler(MyEnum.class)).isInstanceOf(EnumOrdinalTypeHandler.class);
+  }
+
+  @Test
   void testSetObjectFactory() throws Exception {
     setupFactoryBean();
     factoryBean.setObjectFactory(new TestObjectFactory());
@@ -513,6 +520,9 @@ class SqlSessionFactoryBeanTest {
   }
 
   private static class MyLanguageDriver2 extends RawLanguageDriver {
+  }
+
+  private static enum MyEnum {
   }
 
 }
