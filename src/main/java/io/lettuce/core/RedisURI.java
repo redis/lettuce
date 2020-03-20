@@ -567,17 +567,23 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         if (isNotEmpty(userInfo)) {
             String password = userInfo;
+            String username = null;
             if (password.startsWith(":")) {
                 password = password.substring(1);
             } else {
 
                 int index = password.indexOf(':');
                 if (index > 0) {
+                    username = password.substring(0, index);
                     password = password.substring(index + 1);
                 }
             }
             if (LettuceStrings.isNotEmpty(password)) {
-                builder.withPassword(password);
+                if(username == null) { 
+                  builder.withPassword(password);
+                } else {
+                  builder.withAuthentication(username, password);
+                }
             }
         }
 
@@ -653,6 +659,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         if (password != null && password.length != 0) {
             authority = urlEncode(new String(password)) + "@" + authority;
+        }
+        if (username != null) {
+            authority = urlEncode(username) + ":" + authority;
         }
         return authority;
     }
