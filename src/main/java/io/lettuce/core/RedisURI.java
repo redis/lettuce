@@ -118,6 +118,7 @@ import io.lettuce.core.internal.LettuceSets;
  * RedisURI supports Redis Standalone, Redis Sentinel and Redis Cluster with plain, SSL, TLS and unix domain socket connections.
  *
  * @author Mark Paluch
+ * @author Guy Korland
  * @since 3.0
  */
 @SuppressWarnings("serial")
@@ -579,10 +580,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 }
             }
             if (LettuceStrings.isNotEmpty(password)) {
-                if(username == null) { 
-                  builder.withPassword(password);
+                if (username == null) {
+                    builder.withPassword(password);
                 } else {
-                  builder.withAuthentication(username, password);
+                    builder.withAuthentication(username, password);
                 }
             }
         }

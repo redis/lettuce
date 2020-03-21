@@ -31,6 +31,7 @@ import org.junit.jupiter.api.condition.OS;
  * Unit tests for {@link RedisURI.Builder}.
  *
  * @author Mark Paluch
+ * @author Guy Korland
  */
 class RedisURIBuilderUnitTests {
 
