@@ -63,7 +63,7 @@
         <junit-version>5.6.0</junit-version>
         <log4j2-version>2.11.2</log4j2-version>
         <mockito.version>3.2.4</mockito.version>
-        <netty-version>4.1.45.Final</netty-version>
+        <netty-version>4.1.47.Final</netty-version>
         <reactor-version>3.3.2.RELEASE</reactor-version>
         <reactive-streams-tck.version>1.0.3</reactive-streams-tck.version>
         <slf4j.version>1.7.25</slf4j.version>
