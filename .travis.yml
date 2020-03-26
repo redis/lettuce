@@ -13,19 +13,23 @@ jobs:
     - jdk: openjdk8
       env:
         - JDK='OpenJDK 8'
-        - REDIS=jmh
+        - PROFILE=jmh
     - jdk: openjdk8
       env:
         - JDK='OpenJDK 8'
-        - REDIS=5.0.8
+        - REDIS=6.0
     - jdk: openjdk8
       env:
         - JDK='OpenJDK 8'
-        - REDIS=4.0.14
+        - REDIS=5.0
     - jdk: openjdk8
       env:
         - JDK='OpenJDK 8'
-        - REDIS=3.2.13
+        - REDIS=4.0
+    - jdk: openjdk8
+      env:
+        - JDK='OpenJDK 8'
+        - REDIS=3.2
     - jdk: openjdk11
       env: JDK='OpenJDK 11'
     - env: JDK='OpenJDK 12'
@@ -39,13 +43,12 @@ jobs:
   allow_failures:
     - env: JDK='OpenJDK EA'
 
-before_install:
-  - if [[ ! -f downloads/stunnel-5.54.tar.gz ]]; then wget -O downloads/stunnel-5.54.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.54.tar.gz; fi
-  - if [[ ! -f ./stunnel-5.54/configure ]]; then tar -xzf downloads/stunnel-5.54.tar.gz; fi
-  - if [[ ! -f ./stunnel-5.54/src/stunnel ]]; then cd ./stunnel-5.54; ./configure; make; cd ..; fi
-  - export PATH="$PATH:$(pwd)/stunnel-5.54/src"
-
-install: make prepare ssl-keys
+install:
+  - if [[ ! -f downloads/stunnel-5.56.tar.gz ]]; then wget -O downloads/stunnel-5.56.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.56.tar.gz; fi
+  - if [[ ! -f ./stunnel-5.56/configure ]]; then tar -xzf downloads/stunnel-5.56.tar.gz; fi
+  - if [[ ! -f ./stunnel-5.56/src/stunnel ]]; then cd ./stunnel-5.56; ./configure; make; cd ..; fi
+  - export PATH="$PATH:$(pwd)/stunnel-5.56/src"
+  - make prepare ssl-keys
 
 script: make test-coverage PROFILE=${PROFILE:-ci}
 
@@ -56,7 +59,7 @@ cache:
   directories:
     - '$HOME/.m2/repository'
     - 'downloads'
-    - 'stunnel-5.54'
+    - 'stunnel-5.56'
 
 notifications:
   webhooks:
