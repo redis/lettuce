@@ -42,6 +42,15 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
     Mono<String> auth(CharSequence password);
 
     /**
+     * Authenticate to the server.
+     *
+     * @param username the username
+     * @param password the password
+     * @return String simple-string-reply
+     */
+    Mono<String> auth(String username, CharSequence password);
+
+    /**
      * Change the selected database for the current connection.
      *
      * @param db the database number

@@ -98,6 +98,21 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
     }
 
     @Test
+    void authWithUsername() {
+        WithPassword.run(client, () -> {
+
+            client.setOptions(
+                    ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
+            RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
+            connection.getStatefulConnection().addListener(PubSubCommandTest.this);
+            connection.auth(username,passwd);
+
+            connection.subscribe(channel);
+            assertThat(channels.take()).isEqualTo(channel);
+        });
+    }
+
+    @Test
     void authWithReconnect() {
 
         WithPassword.run(client, () -> {
@@ -113,7 +128,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
 
             assertThat(channels.take()).isEqualTo(channel);
 
-            redis.auth(passwd);
+            redis.auth(username, passwd);
             long id = findNamedClient("authWithReconnect");
             redis.clientKill(KillArgs.Builder.id(id));
 

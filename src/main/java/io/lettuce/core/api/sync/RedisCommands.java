@@ -33,6 +33,15 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisClust
         RedisStreamCommands<K, V>, RedisStringCommands<K, V>, RedisTransactionalCommands<K, V> {
 
     /**
+     * Authenticate to the server with username and password.
+     *
+     * @param username the username
+     * @param password the password
+     * @return String simple-string-reply
+     */
+    String auth(String username, CharSequence password);
+
+    /**
      * Authenticate to the server.
      *
      * @param password the password

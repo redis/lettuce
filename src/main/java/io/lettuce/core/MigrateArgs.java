@@ -112,6 +112,7 @@ public class MigrateArgs<K> implements CompositeArgument {
          * @see MigrateArgs#auth(CharSequence)
          */
         public static <K> MigrateArgs<K> auth(CharSequence password) {
+            // TODO : implement auth(username,password) when https://github.com/antirez/redis/pull/7035 is fixed
             return new MigrateArgs<K>().auth(password);
         }
 

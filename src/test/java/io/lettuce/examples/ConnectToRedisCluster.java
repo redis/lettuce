@@ -26,6 +26,7 @@ public class ConnectToRedisCluster {
     public static void main(String[] args) {
 
         // Syntax: redis://[password@]host[:port]
+        // Syntax: redis://[username:password@]host[:port]
         RedisClusterClient redisClient = RedisClusterClient.create("redis://password@localhost:7379");
 
         StatefulRedisClusterConnection<String, String> connection = redisClient.connect();

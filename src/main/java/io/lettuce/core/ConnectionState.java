@@ -115,6 +115,10 @@ public class ConnectionState {
         return this.password != null && this.password.length > 0;
     }
 
+    boolean hasUsername() {
+        return this.username != null && !this.username.isEmpty();
+    }
+
     protected void setDb(int db) {
         this.db = db;
     }
