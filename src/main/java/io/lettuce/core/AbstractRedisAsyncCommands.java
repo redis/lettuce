@@ -87,6 +87,19 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<String> auth(String username, CharSequence password) {
+        LettuceAssert.notNull(username, "Username must not be null");
+        LettuceAssert.notNull(password, "Password must not be null");
+        return dispatch(commandBuilder.auth(username, password));
+    }
+
+    public RedisFuture<String> auth(String username, char[] password) {
+        LettuceAssert.notNull(username, "Username must not be null");
+        LettuceAssert.notNull(password, "Password must not be null");
+        return dispatch(commandBuilder.auth(username, password));
+    }
+
+    @Override
     public RedisFuture<String> bgrewriteaof() {
         return dispatch(commandBuilder.bgrewriteaof());
     }

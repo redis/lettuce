@@ -131,6 +131,20 @@ class ClientOptionsIntegrationTests extends TestSupport {
     }
 
     @Test
+    void testHitRequestQueueLimitReconnectWithAuthUsernamePasswordCommand() {
+
+        WithPassword.run(client, () -> {
+
+            client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false)
+                    .requestQueueSize(10).build());
+
+            RedisAsyncCommands<String, String> connection = client.connect().async();
+            connection.auth(username, passwd);
+            testHitRequestQueueLimit(connection);
+        });
+    }
+
+    @Test
     void testHitRequestQueueLimitReconnectWithUriAuth() {
 
         WithPassword.run(client, () -> {

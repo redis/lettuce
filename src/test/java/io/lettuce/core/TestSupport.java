@@ -29,7 +29,11 @@ public abstract class TestSupport {
 
     public static final String host = TestSettings.hostAddr();
     public static final int port = TestSettings.port();
+    public static final String username = TestSettings.username();
     public static final String passwd = TestSettings.password();
+
+    public static final String sampleUsername = TestSettings.sampleUsername();
+    public static final String samplePasswd = TestSettings.samplePassword();
 
     public static final String key = "key";
     public static final String value = "value";

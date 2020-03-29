@@ -75,6 +75,15 @@ public class TestSettings {
         }
     }
 
+
+    /**
+     *
+     * @return default username of your redis instance.
+     */
+    public static String username() {
+        return "default";
+    }
+
     /**
      *
      * @return password of your redis instance. Defaults to {@literal passwd}. Can be overridden with
@@ -82,6 +91,24 @@ public class TestSettings {
      */
     public static String password() {
         return System.getProperty("password", "passwd");
+    }
+
+    /**
+     *
+     * @return password of a second user your redis instance. Defaults to {@literal lettuceTest}. Can be overridden with
+     *         {@code --Dsample.username=SampleUsername}
+     */
+    public static String sampleUsername() {
+        return System.getProperty("sample.username", "lettuceTest");
+    }
+
+    /**
+     *
+     * @return password of a second user of your redis instance. Defaults to {@literal lettuceTestPasswd}. Can be overridden with
+     *         {@code -Dsample.password=SamplePassword}
+     */
+    public static String samplePassword() {
+        return System.getProperty("sample.password", "lettuceTestPasswd");
     }
 
     /**

@@ -151,8 +151,9 @@ class RedisHandshake implements ConnectionInitializer {
      * @return
      */
     private CompletableFuture<?> initiateHandshakeResp2(Channel channel) {
-
-        if (connectionState.hasPassword()) {
+        if (connectionState.hasUsername()) {
+            return dispatch(channel, this.commandBuilder.auth(connectionState.getUsername() ,connectionState.getPassword()));
+        } else if (connectionState.hasPassword()) {
             return dispatch(channel, this.commandBuilder.auth(connectionState.getPassword()));
         } else if (this.pingOnConnect) {
             return dispatch(channel, this.commandBuilder.ping());

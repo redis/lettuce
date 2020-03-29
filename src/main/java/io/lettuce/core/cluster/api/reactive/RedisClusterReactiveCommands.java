@@ -55,6 +55,15 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
     Mono<String> auth(CharSequence password);
 
     /**
+     * Authenticate to the server.
+     *
+     * @param username the username
+     * @param password the password
+     * @return String simple-string-reply
+     */
+    Mono<String> auth(String username, CharSequence password);
+
+    /**
      * Generate a new config epoch, incrementing the current epoch, assign the new epoch to this node, WITHOUT any consensus and
      * persist the configuration on disk before sending packets with the new configuration.
      *

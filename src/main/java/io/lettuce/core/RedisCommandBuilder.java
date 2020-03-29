@@ -81,6 +81,29 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(AUTH, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, String> auth(String username, CharSequence password) {
+        LettuceAssert.notNull(username, "Username " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!username.isEmpty(), "Username " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(password, "Password " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(password, "Password " + MUST_NOT_BE_EMPTY);
+
+        char[] chars = new char[password.length()];
+        for (int i = 0; i < password.length(); i++) {
+            chars[i] = password.charAt(i);
+        }
+        return auth(username,chars);
+    }
+
+    Command<K, V, String> auth(String username, char[] password) {
+        LettuceAssert.notNull(username, "Username " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!username.isEmpty(), "Username " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(password, "Password " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(password.length > 0, "Password " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(username).add(password);
+        return createCommand(AUTH, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, String> bgrewriteaof() {
         return createCommand(BGREWRITEAOF, new StatusOutput<>(codec));
     }

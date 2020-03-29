@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import javax.enterprise.inject.New;
 import javax.inject.Inject;
 
+import io.lettuce.test.WithPassword;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -203,6 +204,16 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
     @Test
     void auth() {
         StepVerifier.create(reactive.auth("error")).expectError().verify();
+        StepVerifier.create(reactive.auth(username, "error")).expectNext("OK").verifyComplete();
+
+        WithPassword.enableAuthentication(  this.connection.sync());
+
+        StepVerifier.create(reactive.auth(username, "error")).expectError().verify();
+
+        StepVerifier.create(reactive.auth(sampleUsername,  samplePasswd)).expectNext("OK").verifyComplete();
+        StepVerifier.create(reactive.auth(sampleUsername,  "error")).expectError().verify();
+
+        WithPassword.disableAuthentication(  this.connection.sync());
     }
 
     @Test

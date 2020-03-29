@@ -17,11 +17,18 @@ package io.lettuce.test;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.test.condition.RedisConditions;
 import io.lettuce.test.settings.TestSettings;
 
@@ -31,6 +38,9 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  */
 public class WithPassword {
+
+    private boolean hasACLCommand = false;
+
 
     /**
      * Run a {@link ThrowingCallable callback function} while Redis is configured with a password.
@@ -65,7 +75,17 @@ public class WithPassword {
      * @param commands
      */
     public static void enableAuthentication(RedisCommands<String, String> commands) {
+
+        RedisConditions conditions = RedisConditions.of(commands);
+
         commands.configSet("requirepass", TestSettings.password());
+
+        // If ACL is supported let's create a test user
+        if (conditions.hasCommand("ACL")) {
+            Command<String, String, List<Object>> command = CliParser.parse(
+                    "ACL SETUSER "+ TestSettings.sampleUsername() +" on >"+ TestSettings.samplePassword() +" ~cached:* +@all");
+            commands.dispatch(command.getType(), command.getOutput(), command.getArgs());
+        }
     }
 
     /**
@@ -76,12 +96,14 @@ public class WithPassword {
     public static void disableAuthentication(RedisCommands<String, String> commands) {
 
         RedisConditions conditions = RedisConditions.of(commands);
-
+        commands.auth(TestSettings.password()); // reauthenticate as default user before disabling it
         commands.configSet("requirepass", "");
 
         if (conditions.hasCommand("ACL")) {
+            Command<String, String, List<Object>> command = CliParser.parse("ACL DELUSER "+ TestSettings.sampleUsername());
+            commands.dispatch(command.getType(), command.getOutput(), command.getArgs());
 
-            Command<String, String, List<Object>> command = CliParser.parse("acl setuser default nopass");
+            command = CliParser.parse("acl setuser default nopass");
             commands.dispatch(command.getType(), command.getOutput(), command.getArgs());
         }
     }

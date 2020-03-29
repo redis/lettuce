@@ -110,6 +110,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<String> auth(String username, CharSequence password) {
+        return createMono(() -> commandBuilder.auth(username, password));
+    }
+
+    @Override
     public Mono<String> bgrewriteaof() {
         return createMono(commandBuilder::bgrewriteaof);
     }
