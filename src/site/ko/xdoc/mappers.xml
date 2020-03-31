@@ -29,7 +29,7 @@
 
   <body>
     <section name="매퍼 주입">
-      <p>데이터 접근 객체인 DAO를 만든것보다 직접 <code>SqlSessionDaoSupport</code> 나 <code>SqlSessionTemplate</code> 를 사용하자.
+      <p><code>SqlSessionDaoSupport</code> 나 <code>SqlSessionTemplate</code> 를 직접적으로 사용하는 데이터 접근 객체(DAO)를 생성하기 보다,
        마이바티스 스프링 연동모듈은 다른 빈에 직접 주입할 수 있는 쓰레드에 안전한 매퍼를 생성할 수 있다. </p>
 
       <source><![CDATA[<bean id="fooService" class="org.mybatis.spring.sample.service.FooServiceImpl">
