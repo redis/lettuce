@@ -42,11 +42,12 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
     Mono<String> auth(CharSequence password);
 
     /**
-     * Authenticate to the server.
+     * Authenticate to the server with username and password. Requires Redis 6 or newer.
      *
      * @param username the username
      * @param password the password
      * @return String simple-string-reply
+     * @since 6.0
      */
     Mono<String> auth(String username, CharSequence password);
 

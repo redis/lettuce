@@ -24,6 +24,7 @@ import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Mark Paluch
+ * @author Tugdual Grall
  */
 public abstract class TestSupport {
 
@@ -32,8 +33,8 @@ public abstract class TestSupport {
     public static final String username = TestSettings.username();
     public static final String passwd = TestSettings.password();
 
-    public static final String sampleUsername = TestSettings.sampleUsername();
-    public static final String samplePasswd = TestSettings.samplePassword();
+    public static final String aclUsername = TestSettings.aclUsername();
+    public static final String aclPasswd = TestSettings.aclPassword();
 
     public static final String key = "key";
     public static final String value = "value";

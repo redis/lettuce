@@ -20,6 +20,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 
 /**
  * @author Mark Paluch
+ * @author Tugdual Grall
  */
 public class ConnectToRedisCluster {
 

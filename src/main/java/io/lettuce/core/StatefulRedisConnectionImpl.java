@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -157,16 +158,14 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
 
-                    char[] password = CommandArgsAccessor.getFirstCharArray(command.getArgs());
+                    List<char[]> args = CommandArgsAccessor.getCharArrayArguments(command.getArgs());
 
-                    if (password != null) {
-                        state.setPassword(password);
+                    if (!args.isEmpty()) {
+                        state.setUserNamePassword(args);
                     } else {
 
-                        String stringPassword = CommandArgsAccessor.getFirstString(command.getArgs());
-                        if (stringPassword != null) {
-                            state.setPassword(stringPassword.toCharArray());
-                        }
+                        List<String> strings = CommandArgsAccessor.getStringArguments(command.getArgs());
+                        state.setUserNamePassword(strings.stream().map(String::toCharArray).collect(Collectors.toList()));
                     }
                 }
             });

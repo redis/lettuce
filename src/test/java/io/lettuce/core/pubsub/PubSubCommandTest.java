@@ -42,12 +42,14 @@ import io.lettuce.test.Delay;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.WithPassword;
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Tugdual Grall
  */
 class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
@@ -98,6 +100,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
     }
 
     @Test
+    @EnabledOnCommand("ACL")
     void authWithUsername() {
         WithPassword.run(client, () -> {
 
@@ -105,7 +108,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
             RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
             connection.getStatefulConnection().addListener(PubSubCommandTest.this);
-            connection.auth(username,passwd);
+            connection.auth(username, passwd);
 
             connection.subscribe(channel);
             assertThat(channels.take()).isEqualTo(channel);
@@ -123,13 +126,42 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
             RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
             connection.getStatefulConnection().addListener(PubSubCommandTest.this);
             connection.auth(passwd);
+
             connection.clientSetname("authWithReconnect");
-            connection.subscribe(channel);
+            connection.subscribe(channel).get();
 
             assertThat(channels.take()).isEqualTo(channel);
 
-            redis.auth(username, passwd);
             long id = findNamedClient("authWithReconnect");
+            redis.auth(passwd);
+            redis.clientKill(KillArgs.Builder.id(id));
+
+            Delay.delay(Duration.ofMillis(100));
+            Wait.untilTrue(connection::isOpen).waitOrTimeout();
+
+            assertThat(channels.take()).isEqualTo(channel);
+        });
+    }
+
+    @Test
+    @EnabledOnCommand("ACL")
+    void authWithUsernameAndReconnect() {
+
+        WithPassword.run(client, () -> {
+
+            client.setOptions(
+                    ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
+
+            RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
+            connection.getStatefulConnection().addListener(PubSubCommandTest.this);
+            connection.auth(username, passwd);
+            connection.clientSetname("authWithReconnect");
+            connection.subscribe(channel).get();
+
+            assertThat(channels.take()).isEqualTo(channel);
+
+            long id = findNamedClient("authWithReconnect");
+            redis.auth(username, passwd);
             redis.clientKill(KillArgs.Builder.id(id));
 
             Delay.delay(Duration.ofMillis(100));

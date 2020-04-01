@@ -34,6 +34,7 @@ import io.netty.channel.Channel;
  * connection state restoration. This class is part of the internal API.
  *
  * @author Mark Paluch
+ * @author Tugdual Grall
  * @since 6.0
  */
 class RedisHandshake implements ConnectionInitializer {
@@ -151,8 +152,9 @@ class RedisHandshake implements ConnectionInitializer {
      * @return
      */
     private CompletableFuture<?> initiateHandshakeResp2(Channel channel) {
+
         if (connectionState.hasUsername()) {
-            return dispatch(channel, this.commandBuilder.auth(connectionState.getUsername() ,connectionState.getPassword()));
+            return dispatch(channel, this.commandBuilder.auth(connectionState.getUsername(), connectionState.getPassword()));
         } else if (connectionState.hasPassword()) {
             return dispatch(channel, this.commandBuilder.auth(connectionState.getPassword()));
         } else if (this.pingOnConnect) {

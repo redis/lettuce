@@ -16,6 +16,8 @@
 package io.lettuce.core.protocol;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.lettuce.core.protocol.CommandArgs.CharArrayArgument;
 import io.lettuce.core.protocol.CommandArgs.SingularArgument;
@@ -69,7 +71,7 @@ public class CommandArgsAccessor {
     }
 
     /**
-     * Get the first {@link char}-array argument.
+     * Get the first {@code char[]}-array argument.
      *
      * @param commandArgs must not be null.
      * @return the first {@link String} argument or {@literal null}.
@@ -85,6 +87,52 @@ public class CommandArgsAccessor {
         }
 
         return null;
+    }
+
+    /**
+     * Get the all {@link String} arguments.
+     *
+     * @param commandArgs must not be null.
+     * @return the first {@link String} argument or {@literal null}.
+     * @since 6.0
+     */
+    public static <K, V> List<String> getStringArguments(CommandArgs<K, V> commandArgs) {
+
+        List<String> args = new ArrayList<>();
+
+        for (SingularArgument singularArgument : commandArgs.singularArguments) {
+
+            if (singularArgument instanceof StringArgument) {
+                args.add(((StringArgument) singularArgument).val);
+            }
+        }
+
+        return args;
+    }
+
+    /**
+     * Get the all {@code char[]} arguments.
+     *
+     * @param commandArgs must not be null.
+     * @return the first {@link String} argument or {@literal null}.
+     * @since 6.0
+     */
+    public static <K, V> List<char[]> getCharArrayArguments(CommandArgs<K, V> commandArgs) {
+
+        List<char[]> args = new ArrayList<>();
+
+        for (SingularArgument singularArgument : commandArgs.singularArguments) {
+
+            if (singularArgument instanceof CharArrayArgument) {
+                args.add(((CharArrayArgument) singularArgument).val);
+            }
+
+            if (singularArgument instanceof StringArgument) {
+                args.add(((StringArgument) singularArgument).val.toCharArray());
+            }
+        }
+
+        return args;
     }
 
     /**

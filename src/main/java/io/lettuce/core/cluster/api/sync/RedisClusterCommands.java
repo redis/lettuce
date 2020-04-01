@@ -51,11 +51,12 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
     String auth(CharSequence password);
 
     /**
-     * Authenticate to the server.
+     * Authenticate to the server with username and password. Requires Redis 6 or newer.
      *
      * @param username the username
      * @param password the password
      * @return String simple-string-reply
+     * @since 6.0
      */
     String auth(String username, CharSequence password);
 

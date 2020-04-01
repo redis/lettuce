@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -195,16 +196,15 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         if (local.getType().name().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
                 if (status.equals("OK")) {
-                    char[] password = CommandArgsAccessor.getFirstCharArray(command.getArgs());
+                    List<char[]> args = CommandArgsAccessor.getCharArrayArguments(command.getArgs());
 
-                    if (password != null) {
-                        this.connectionState.setPassword(password);
+                    if (!args.isEmpty()) {
+                        this.connectionState.setUserNamePassword(args);
                     } else {
 
-                        String stringPassword = CommandArgsAccessor.getFirstString(command.getArgs());
-                        if (stringPassword != null) {
-                            this.connectionState.setPassword(stringPassword.toCharArray());
-                        }
+                        List<String> stringArgs = CommandArgsAccessor.getStringArguments(command.getArgs());
+                        this.connectionState
+                                .setUserNamePassword(stringArgs.stream().map(String::toCharArray).collect(Collectors.toList()));
                     }
                 }
             });
@@ -264,8 +264,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     static class ClusterConnectionState extends ConnectionState {
 
         @Override
-        protected void setPassword(char[] password) {
-            super.setPassword(password);
+        protected void setUserNamePassword(List<char[]> args) {
+            super.setUserNamePassword(args);
         }
 
         @Override

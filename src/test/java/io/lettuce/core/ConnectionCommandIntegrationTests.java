@@ -25,7 +25,6 @@ import java.util.concurrent.Future;
 
 import javax.inject.Inject;
 
-import io.lettuce.core.protocol.RedisCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,10 +34,12 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.*;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Tugdual Grall
  */
 @ExtendWith(LettuceExtension.class)
 class ConnectionCommandIntegrationTests extends TestSupport {
@@ -64,25 +65,12 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             client.setOptions(
                     ClientOptions.builder().pingBeforeActivateConnection(false).protocolVersion(ProtocolVersion.RESP2).build());
             RedisCommands<String, String> connection = client.connect().sync();
-            try {
-                connection.ping();
-                fail("Server doesn't require authentication");
-            } catch (RedisException e) {
-                assertThat(e.getMessage()).isEqualTo("NOAUTH Authentication required.");
-                assertThat(connection.auth(passwd)).isEqualTo("OK");
-                assertThat(connection.set(key, value)).isEqualTo("OK");
 
-                // Aut with the same user & password (default)
-                assertThat(connection.auth(username, passwd)).isEqualTo("OK");
-                assertThat(connection.set(key, value)).isEqualTo("OK");
+            assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class)
+                    .hasMessageContaining("NOAUTH Authentication required");
 
-                // Switch to another user
-                assertThat(connection.auth(sampleUsername, samplePasswd)).isEqualTo("OK");
-                assertThat(connection.set("cached:demo", value)).isEqualTo("OK");
-                assertThatThrownBy(() -> connection.get(key)).isInstanceOf(RedisCommandExecutionException.class);
-                assertThat(connection.del("cached:demo")).isEqualTo(1);
-
-            }
+            assertThat(connection.auth(passwd)).isEqualTo("OK");
+            assertThat(connection.set(key, value)).isEqualTo("OK");
 
             RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
             RedisCommands<String, String> authConnection = client.connect(redisURI).sync();
@@ -92,12 +80,47 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ACL")
+    void authWithUsername() {
+
+        WithPassword.run(client, () -> {
+            client.setOptions(
+                    ClientOptions.builder().pingBeforeActivateConnection(false).protocolVersion(ProtocolVersion.RESP2).build());
+            RedisCommands<String, String> connection = client.connect().sync();
+
+            assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class)
+                    .hasMessageContaining("NOAUTH Authentication required");
+
+            assertThat(connection.auth(passwd)).isEqualTo("OK");
+            assertThat(connection.set(key, value)).isEqualTo("OK");
+
+            // Aut with the same user & password (default)
+            assertThat(connection.auth(username, passwd)).isEqualTo("OK");
+            assertThat(connection.set(key, value)).isEqualTo("OK");
+
+            // Switch to another user
+            assertThat(connection.auth(aclUsername, aclPasswd)).isEqualTo("OK");
+            assertThat(connection.set("cached:demo", value)).isEqualTo("OK");
+            assertThatThrownBy(() -> connection.get(key)).isInstanceOf(RedisCommandExecutionException.class);
+            assertThat(connection.del("cached:demo")).isEqualTo(1);
+
+            RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
+            RedisCommands<String, String> authConnection = client.connect(redisURI).sync();
+            authConnection.ping();
+            authConnection.getStatefulConnection().close();
+        });
+    }
+
+    @Test
+    @EnabledOnCommand("ACL")
     void resp2HandShakeWithUsernamePassword() {
-        RedisURI redisURI = RedisURI.Builder.redis(host, port).withAuthentication(username,passwd).build();
+
+        RedisURI redisURI = RedisURI.Builder.redis(host, port).withAuthentication(username, passwd).build();
         RedisClient clientResp2 = RedisClient.create(redisURI);
         clientResp2.setOptions(
                 ClientOptions.builder().pingBeforeActivateConnection(false).protocolVersion(ProtocolVersion.RESP2).build());
         RedisCommands<String, String> connTestResp2 = null;
+
         try {
             connTestResp2 = clientResp2.connect().sync();
             assertThat(redis.ping()).isEqualTo("PONG");
@@ -131,17 +154,36 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     @Test
     void authNull() {
         assertThatThrownBy(() -> redis.auth(null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> redis.auth(null,"x")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.auth(null, "x")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void authEmpty() {
         assertThatThrownBy(() -> redis.auth("")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> redis.auth("","x")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.auth("", "x")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void authReconnect() {
+        WithPassword.run(client, () -> {
+
+            client.setOptions(
+                    ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
+            RedisCommands<String, String> connection = client.connect().sync();
+            assertThat(connection.auth(passwd)).isEqualTo("OK");
+            assertThat(connection.set(key, value)).isEqualTo("OK");
+            connection.quit();
+
+            Delay.delay(Duration.ofMillis(100));
+            assertThat(connection.get(key)).isEqualTo(value);
+
+            connection.getStatefulConnection().close();
+        });
+    }
+
+    @Test
+    @EnabledOnCommand("ACL")
+    void authReconnectRedis6() {
         WithPassword.run(client, () -> {
 
             client.setOptions(
@@ -201,22 +243,30 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ACL")
     void authInvalidUsernamePassword() {
 
         WithPassword.run(client, () -> {
             client.setOptions(
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
             RedisCommands<String, String> connection = client.connect().sync();
-            assertThat(connection.auth(username, passwd)).isEqualTo("OK");
-            assertThatThrownBy(() -> connection.auth( username,"invalid")).hasMessage("WRONGPASS invalid username-password pair");
-            assertThat(connection.auth(sampleUsername, samplePasswd)).isEqualTo("OK");
-            assertThatThrownBy(() -> connection.auth( sampleUsername,"invalid")).hasMessage("WRONGPASS invalid username-password pair");
-            connection.getStatefulConnection().close();
 
+            assertThat(connection.auth(username, passwd)).isEqualTo("OK");
+
+            assertThatThrownBy(() -> connection.auth(username, "invalid"))
+                    .hasMessage("WRONGPASS invalid username-password pair");
+
+            assertThat(connection.auth(aclUsername, aclPasswd)).isEqualTo("OK");
+
+            assertThatThrownBy(() -> connection.auth(aclUsername, "invalid"))
+                    .hasMessage("WRONGPASS invalid username-password pair");
+
+            connection.getStatefulConnection().close();
         });
     }
 
     @Test
+    @EnabledOnCommand("ACL")
     void authInvalidDefaultPasswordNoACL() {
         RedisAsyncCommands<String, String> async = client.connect().async();
         // When the database is not secured the AUTH default invalid command returns OK

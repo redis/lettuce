@@ -41,6 +41,7 @@ import io.lettuce.core.protocol.*;
  * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Tugdual Grall
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,

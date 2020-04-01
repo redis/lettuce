@@ -20,6 +20,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 
 /**
  * @author Mark Paluch
+ * @author Tugdual Grall
  */
 public class ConnectToRedis {
 

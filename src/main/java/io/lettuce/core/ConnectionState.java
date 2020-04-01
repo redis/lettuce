@@ -15,6 +15,8 @@
  */
 package io.lettuce.core;
 
+import java.util.List;
+
 import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
@@ -95,7 +97,27 @@ public class ConnectionState {
         this.handshakeResponse = handshakeResponse;
     }
 
-    void setUsername(String username) {
+    /**
+     * Sets username/password state based on the argument count from an {@code AUTH} command.
+     *
+     * @param args
+     */
+    protected void setUserNamePassword(List<char[]> args) {
+
+        if (args.isEmpty()) {
+            return;
+        }
+
+        if (args.size() > 1) {
+            setUsername(new String(args.get(0)));
+            setPassword(args.get(1));
+        } else {
+            setUsername(null);
+            setPassword(args.get(0));
+        }
+    }
+
+    protected void setUsername(String username) {
         this.username = username;
     }
 

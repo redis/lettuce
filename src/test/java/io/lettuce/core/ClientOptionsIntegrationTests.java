@@ -35,6 +35,7 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.test.condition.EnabledOnCommand;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -131,6 +132,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ACL")
     void testHitRequestQueueLimitReconnectWithAuthUsernamePasswordCommand() {
 
         WithPassword.run(client, () -> {
