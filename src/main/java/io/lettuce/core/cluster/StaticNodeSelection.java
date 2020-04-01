@@ -48,7 +48,7 @@ class StaticNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD
         this.intent = intent;
         this.apiExtractor = apiExtractor;
 
-        this.redisClusterNodes = writer.getPartitions().getPartitions().stream().filter(selector).collect(Collectors.toList());
+        this.redisClusterNodes = writer.getPartitions().stream().filter(selector).collect(Collectors.toList());
     }
 
     @Override

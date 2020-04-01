@@ -131,7 +131,7 @@ public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncC
         public StaticPubSubAsyncNodeSelection(StatefulRedisClusterPubSubConnection<K, V> globalConnection,
                 Predicate<RedisClusterNode> selector) {
 
-            this.redisClusterNodes = globalConnection.getPartitions().getPartitions().stream().filter(selector)
+            this.redisClusterNodes = globalConnection.getPartitions().stream().filter(selector)
                     .collect(Collectors.toList());
             writer = ((StatefulRedisClusterPubSubConnectionImpl) globalConnection).getClusterDistributionChannelWriter();
         }
