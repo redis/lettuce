@@ -66,6 +66,6 @@ class DynamicNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CM
 
     @Override
     protected List<RedisClusterNode> nodes() {
-        return writer.getPartitions().getPartitions().stream().filter(selector).collect(Collectors.toList());
+        return writer.getPartitions().stream().filter(selector).collect(Collectors.toList());
     }
 }
