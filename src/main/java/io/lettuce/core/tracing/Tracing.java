@@ -51,12 +51,15 @@ public interface Tracing {
     boolean isEnabled();
 
     /**
+     * Set it as a default method can  avoid java.lang.AbstractMethodError caused by version upgrade.
      * Returns {@literal true} if tags for {@link Tracer.Span}s should include the command arguments.
      *
      * @return {@literal true} if tags for {@link Tracer.Span}s should include the command arguments.
      * @since 5.2
      */
-    boolean includeCommandArgsInSpanTags();
+    default boolean includeCommandArgsInSpanTags(){
+        return false;
+    }
 
     /**
      * Create an {@link Endpoint} given {@link SocketAddress}.
