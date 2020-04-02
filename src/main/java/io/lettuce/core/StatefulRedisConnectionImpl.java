@@ -134,9 +134,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             });
         }
 
-        if (db != 0)
-
-        {
+        if (db != 0) {
             AsyncCommand<K, V, String> command = async.selectAsync(db);
             command.exceptionally(throwable -> {
                 return logOnFailure(throwable, "SELECT failed: " + command.getError());
