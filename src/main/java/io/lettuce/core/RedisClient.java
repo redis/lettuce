@@ -737,7 +737,14 @@ public class RedisClient extends AbstractRedisClient {
 
                 return it;
             }).timeout(timeout) //
-                    .flatMap(it -> Mono.fromCompletionStage(c::closeAsync) //
+                    .onErrorResume(e -> {
+
+                        RedisCommandTimeoutException ex = ExceptionFactory
+                                .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
+                        ex.addSuppressed(e);
+
+                        return Mono.fromCompletionStage(c::closeAsync).then(Mono.error(ex));
+                    }).flatMap(it -> Mono.fromCompletionStage(c::closeAsync) //
                             .thenReturn(it));
         });
     }
