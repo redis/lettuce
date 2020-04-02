@@ -1,13 +1,15 @@
-Lettuce 5.2.1 RELEASE NOTES
+Lettuce 5.3.0 RELEASE NOTES
 ===========================
 
-The Lettuce team is pleased to announce the Lettuce 5.2.1 release! 
-This release ships with mostly bug fixes and dependency upgrades addressing 9 tickets in total.
+The Lettuce team is pleased to announce the Lettuce 5.3.0 release! 
+We decided to add another release before Lettuce goes 6.0. Our wiki explains [which versions are supported](https://github.com/lettuce-io/lettuce-core/wiki/Lettuce-Versions).
+This release ships with 27 tickets fixed and contains a couple API revisions. Most notable is the revised SSL configuration API for PEM-encoded certificate support and TLS protocol selection.
+Note that this release ships also a change in the `randomkey()` method signature fixing the return type.
  
 Find the full changelog at the end of this document.
 
-Thanks to all contributors who made Lettuce 5.2.1.RELEASE possible.
-Lettuce requires a minimum of Java 8 to build and run and is compatible with Java 13. It is tested continuously against the latest Redis source-build.
+Thanks to all contributors who made Lettuce 5.3.0.RELEASE possible.
+Lettuce requires a minimum of Java 8 to build and run and is compatible with Java 14. It is tested continuously against the latest Redis source-build.
 
 If you need any support, meet Lettuce at
 
@@ -16,20 +18,45 @@ or lettuce-redis-client-users@googlegroups.com
 * Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
 * Join the chat at https://gitter.im/lettuce-io/Lobby for general discussion
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/5.2.1.RELEASE/reference/
-* Javadoc: https://lettuce.io/core/5.2.1.RELEASE/api/
+* Documentation: https://lettuce.io/core/5.3.0.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/5.3.0.RELEASE/api/
+
+Enhancements
+------------
+* Allow client to pick a specific TLS version and introduce PEM-based configuration #1167 (Thanks to @amohtashami12307)
+* Add mutate() to SocketOptions #1193
+* Add CLIENT ID command #1197
+* Relax field count check in CommandDetailParser #1200
+* Lettuce not able to reconnect automatically to SSL+authenticated ElastiCache node #1201 (Thanks to @chadlwilson)
+* HMSET deprecated in version 4.0.0 #1217 (Thanks to @hodur)
+* Allow selection of Heap or Direct buffers for CommandHandler.buffer #1223 (Thanks to @dantheperson)
+* Support JUSTID flag of XCLAIM command #1233 (Thanks to @christophstrobl)
+* Add support for KEEPTTL with SET #1234
 
 Fixes
 -----
-* StackOverflowError in RedisPublisher #1140 (Thanks to @csunwold)
-* Incorrect access on io.lettuce.core.ReadFrom.isOrderSensitive() #1145 (Thanks to @orclev)
-* Consider ReadFrom.isOrderSensitive() in cluster scan command #1146
-* Improve log message for nodes that cannot be reached during reconnect/topology refresh #1152 (Thanks to @drewcsillag)
+* BoundedAsyncPool doesn't work with a negative maxTotal #1181 (Thanks to @sguillope)
+* Issuing `GEORADIUS_RO` on a replica fails when no masters are available. #1198 (Thanks to @leif-erikson)
+* TLS setup fails to a master reported by sentinel #1209 (Thanks to @ae6rt)
+* Lettuce metrics creates lots of long arrays, and gives out of memory error.  #1210 (Thanks to @omjego)
+* CommandSegments.StringCommandType does not implement hashCode()/equals() #1211
+* Unclear documentation about quiet time for RedisClient#shutdown  #1212 (Thanks to @LychakGalina)
+* Write race condition while migrating/importing a slot #1218 (Thanks to @phyok)
+* randomkey return V not K #1240 (Thanks to @bandheight)
+* ConcurrentModificationException iterating over partitions #1252 (Thanks to @johnny-costanzo)
+* Replayed activation commands may fail because of their execution sequence #1255 (Thanks to @robertvazan)
 
 Other
 -----
-* Simplify condition to invoke "resolveCodec" method in AnnotationRedisCodecResolver #1149 (Thanks to @machi1990)
-* Upgrade to netty 4.1.43.Final #1161
-* Upgrade to RxJava 2.2.13 #1162
-* Add ByteBuf.touch(…) to aid buffer leak investigation #1164
-* Add warning log if MasterReplica(…, Iterable<RedisURI>) contains multiple Sentinel URIs #1165
+* Disable RedisURIBuilderUnitTests failing on Windows OS #1204 (Thanks to @kshchepanovskyi)
+* Provide a default port(DEFAULT_REDIS_PORT) to RedisURI's Builder inst… #1205 (Thanks to @hepin1989)
+* Un-deprecate ClientOptions.pingBeforeActivateConnection #1208
+* Upgrade dependencies #1224
+* Upgrade dependencies #1225
+* RedisURI class does not parse password when using redis-sentinel #1232 (Thanks to @kyrogue)
+* Reduce log level to DEBUG for native library logging #1238 (Thanks to @DevJoey)
+* upgrade netty to 4.1.47.Final #1239 (Thanks to @m1ngyuan)
+* Upgrade to stunnel 5.56 #1246
+* Add build profiles for multiple Java versions #1247
+* Replace outdated Sonatype parent POM with plugin definitions #1258
+* Upgrade dependencies #1259
