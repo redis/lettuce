@@ -1,7 +1,6 @@
 target/
 *.rdb
 *.aof
-
 -
 atlassian-ide-plugin.xml
 *.iml
@@ -14,8 +13,4 @@ work/
 .settings
 dependency-reduced-pom.xml
 .idea
-.vagrant
-Vagrantfile
-CluTest.java
-
-CluTest.java
+.flattened-pom.xml
