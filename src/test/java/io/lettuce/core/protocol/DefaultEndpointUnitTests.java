@@ -17,13 +17,11 @@ package io.lettuce.core.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.nio.channels.ClosedChannelException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -355,6 +353,68 @@ class DefaultEndpointUnitTests {
         listener.operationComplete(promise);
 
         verify(channel, never()).writeAndFlush(command);
+    }
+
+    @Test
+    void shouldWrapActivationCommands() {
+
+        when(channel.isActive()).thenReturn(true);
+        doAnswer(i -> {
+
+            sut.write(new Command<>(CommandType.AUTH, new StatusOutput<>(StringCodec.UTF8)));
+            sut.write(Collections.singletonList(new Command<>(CommandType.SELECT, new StatusOutput<>(StringCodec.UTF8))));
+            return null;
+        }).when(connectionFacade).activated();
+
+        sut.notifyChannelActive(channel);
+
+        DefaultChannelPromise promise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+
+        when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
+            if (invocation.getArguments()[0] instanceof RedisCommand) {
+                queue.add((RedisCommand) invocation.getArguments()[0]);
+            }
+
+            if (invocation.getArguments()[0] instanceof Collection) {
+                queue.addAll((Collection) invocation.getArguments()[0]);
+            }
+            return promise;
+        });
+
+        assertThat(queue).hasSize(2).hasOnlyElementsOfTypes(DefaultEndpoint.ActivationCommand.class);
+    }
+
+    @Test
+    void shouldNotReplayActivationCommands() {
+
+        when(channel.isActive()).thenReturn(true);
+        ConnectionTestUtil.getDisconnectedBuffer(sut).add(new DefaultEndpoint.ActivationCommand<>(
+                new Command<>(CommandType.SELECT, new StatusOutput<>(StringCodec.UTF8))));
+        ConnectionTestUtil.getDisconnectedBuffer(sut).add(new LatencyMeteredCommand<>(new DefaultEndpoint.ActivationCommand<>(
+                new Command<>(CommandType.SUBSCRIBE, new StatusOutput<>(StringCodec.UTF8)))));
+
+        doAnswer(i -> {
+
+            sut.write(new Command<>(CommandType.AUTH, new StatusOutput<>(StringCodec.UTF8)));
+            return null;
+        }).when(connectionFacade).activated();
+
+        sut.notifyChannelActive(channel);
+
+        DefaultChannelPromise promise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+
+        when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
+            if (invocation.getArguments()[0] instanceof RedisCommand) {
+                queue.add((RedisCommand) invocation.getArguments()[0]);
+            }
+
+            if (invocation.getArguments()[0] instanceof Collection) {
+                queue.addAll((Collection) invocation.getArguments()[0]);
+            }
+            return promise;
+        });
+
+        assertThat(queue).hasSize(1).extracting(RedisCommand::getType).containsOnly(CommandType.AUTH);
     }
 
     @Test
