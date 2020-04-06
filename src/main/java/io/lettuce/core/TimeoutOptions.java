@@ -240,7 +240,8 @@ public class TimeoutOptions implements Serializable {
          * required but a connect did not finish yet.
          *
          * @param command can be {@literal null}.
-         * @return the timeout value. Values less or equal to zero do not timeout the command.
+         * @return the timeout value. Zero disables the timeout. A value of {@code -1} applies the default timeout configured on
+         *         the connection.
          */
         public abstract long getTimeout(RedisCommand<?, ?, ?> command);
 

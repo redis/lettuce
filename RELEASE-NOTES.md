@@ -3,8 +3,11 @@ Lettuce 5.3.0 RELEASE NOTES
 
 The Lettuce team is pleased to announce the Lettuce 5.3.0 release! 
 We decided to add another release before Lettuce goes 6.0. Our wiki explains [which versions are supported](https://github.com/lettuce-io/lettuce-core/wiki/Lettuce-Versions).
-This release ships with 27 tickets fixed and contains a couple API revisions. Most notable is the revised SSL configuration API for PEM-encoded certificate support and TLS protocol selection.
+This release ships with 28 tickets fixed and contains a couple API revisions. Most notable is the revised SSL configuration API for PEM-encoded certificate support and TLS protocol selection.
 Note that this release ships also a change in the `randomkey()` method signature fixing the return type.
+
+Please also note carefully if you're using zero-timeouts. With this release, zero timeouts map to infinite command timeouts. 
+While the documentation was already correct about that issue, the implementation didn't consider zero-timeouts.
  
 Find the full changelog at the end of this document.
 
@@ -45,6 +48,7 @@ Fixes
 * randomkey return V not K #1240 (Thanks to @bandheight)
 * ConcurrentModificationException iterating over partitions #1252 (Thanks to @johnny-costanzo)
 * Replayed activation commands may fail because of their execution sequence #1255 (Thanks to @robertvazan)
+* Fix infinite command timeout #1260
 
 Other
 -----

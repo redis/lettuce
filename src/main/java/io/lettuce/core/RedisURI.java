@@ -395,7 +395,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Sets the command timeout for synchronous command execution.
+     * Sets the command timeout for synchronous command execution. A zero timeout value indicates to not time out.
      *
      * @param timeout the command timeout for synchronous command execution.
      * @since 5.0

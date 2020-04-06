@@ -39,7 +39,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
         RedisStringReactiveCommands<K, V> {
 
     /**
-     * Set the default timeout for operations.
+     * Set the default timeout for operations. A zero timeout value indicates to not time out.
      *
      * @param timeout the timeout value
      * @since 5.0
@@ -47,7 +47,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
     void setTimeout(Duration timeout);
 
     /**
-     * Set the default timeout for operations.
+     * Set the default timeout for operations. A zero timeout value indicates to not time out.
      *
      * @param timeout the timeout value
      * @param unit the unit of the timeout value

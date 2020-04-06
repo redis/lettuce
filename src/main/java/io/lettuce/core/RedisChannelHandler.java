@@ -102,7 +102,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     * Set the command timeout for this connection.
+     * Set the command timeout for this connection. A zero timeout value indicates to not time out.
      *
      * @param timeout Command timeout.
      * @param unit Unit of time for the timeout.
