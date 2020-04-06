@@ -29,13 +29,13 @@ import io.lettuce.core.api.sync.*;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, RedisGeoCommands<K, V>, RedisHashCommands<K, V>,
-        RedisHLLCommands<K, V>, RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>,
-        RedisServerCommands<K, V>, RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>,
-        RedisStringCommands<K, V> {
+public interface RedisClusterCommands<K, V>
+        extends BaseRedisCommands<K, V>, RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>,
+        RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
+        RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V> {
 
     /**
-     * Set the default timeout for operations.
+     * Set the default timeout for operations. A zero timeout value indicates to not time out.
      *
      * @param timeout the timeout value
      * @since 5.0
@@ -284,8 +284,8 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
     String clusterFlushslots();
 
     /**
-     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running write
-     * queries.
+     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running
+     * write queries.
      *
      * @return String simple-string-reply
      */

@@ -73,5 +73,4 @@ public class LettuceFutures {
     public static <T> T awaitOrCancel(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
         return Futures.awaitOrCancel(cmd, timeout, unit);
     }
-
 }

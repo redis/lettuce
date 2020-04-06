@@ -123,8 +123,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
                     try {
 
-                        Object resultValue = targetMethod.invoke(
-                                executionModel == ExecutionModel.REACTIVE ? it.reactive() : it.async(), args);
+                        Object resultValue = targetMethod
+                                .invoke(executionModel == ExecutionModel.REACTIVE ? it.reactive() : it.async(), args);
 
                         if (timeoutProvider != null && resultValue instanceof RedisCommand && timeout.get() == 0) {
                             timeout.set(timeoutProvider.getTimeoutNs((RedisCommand) resultValue));
@@ -158,8 +158,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private Object getExecutions(Map<RedisClusterNode, Object> executions, long timeoutNs) throws ExecutionException,
-            InterruptedException {
+    private Object getExecutions(Map<RedisClusterNode, Object> executions, long timeoutNs)
+            throws ExecutionException, InterruptedException {
 
         if (executionModel == ExecutionModel.REACTIVE) {
             Map<RedisClusterNode, CompletionStage<? extends Publisher<?>>> reactiveExecutions = (Map) executions;
@@ -170,7 +170,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
         if (executionModel == ExecutionModel.SYNC) {
 
-            long timeoutToUse = timeoutNs > 0 ? timeoutNs : timeoutProvider.getTimeoutNs(null);
+            long timeoutToUse = timeoutNs >= 0 ? timeoutNs : timeoutProvider.getTimeoutNs(null);
 
             if (!awaitAll(timeoutToUse, TimeUnit.NANOSECONDS, asyncExecutions.values())) {
                 throw createTimeoutException(asyncExecutions, Duration.ofNanos(timeoutToUse));
@@ -195,19 +195,23 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             long time = System.nanoTime();
 
             for (CompletionStage<?> f : futures) {
-                if (nanos < 0) {
-                    return false;
-                }
-                try {
-                    f.toCompletableFuture().get(nanos, TimeUnit.NANOSECONDS);
-                } catch (ExecutionException e) {
-                    // ignore
-                }
-                long now = System.nanoTime();
-                nanos -= now - time;
-                time = now;
-            }
 
+                if (nanos == 0) {
+                    f.toCompletableFuture().get();
+                } else {
+                    if (nanos < 0) {
+                        return false;
+                    }
+                    try {
+                        f.toCompletableFuture().get(nanos, TimeUnit.NANOSECONDS);
+                    } catch (ExecutionException e) {
+                        // ignore
+                    }
+                    long now = System.nanoTime();
+                    nanos -= now - time;
+                    time = now;
+                }
+            }
             complete = true;
         } catch (TimeoutException e) {
             complete = false;

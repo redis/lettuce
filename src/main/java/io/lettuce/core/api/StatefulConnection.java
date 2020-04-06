@@ -36,7 +36,7 @@ import io.lettuce.core.resource.ClientResources;
 public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable {
 
     /**
-     * Set the default command timeout for this connection.
+     * Set the default command timeout for this connection. A zero timeout value indicates to not time out.
      *
      * @param timeout Command timeout.
      * @since 5.0

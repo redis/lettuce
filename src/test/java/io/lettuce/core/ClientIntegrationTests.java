@@ -83,9 +83,8 @@ class ClientIntegrationTests extends TestSupport {
     @Test
     void timeout() {
 
-        redis.setTimeout(Duration.ZERO);
-        assertThatThrownBy(() -> redis.eval(" os.execute(\"sleep \" .. tonumber(1))", ScriptOutputType.STATUS)).isInstanceOf(
-                RedisCommandTimeoutException.class);
+        redis.setTimeout(Duration.ofNanos(100));
+        assertThatThrownBy(() -> redis.blpop(1, "unknown")).isInstanceOf(RedisCommandTimeoutException.class);
 
         redis.setTimeout(Duration.ofSeconds(60));
     }
@@ -123,8 +122,8 @@ class ClientIntegrationTests extends TestSupport {
 
         RedisClient client = RedisClient.create(clientResources, "redis://invalid");
 
-        assertThatThrownBy(client::connect).isInstanceOf(RedisConnectionException.class).hasMessageContaining(
-                "Unable to connect");
+        assertThatThrownBy(client::connect).isInstanceOf(RedisConnectionException.class)
+                .hasMessageContaining("Unable to connect");
 
         FastShutdown.shutdown(client);
     }
@@ -135,8 +134,8 @@ class ClientIntegrationTests extends TestSupport {
 
         RedisClient client = RedisClient.create(clientResources, "redis://invalid");
 
-        assertThatThrownBy(client::connectPubSub).isInstanceOf(RedisConnectionException.class).hasMessageContaining(
-                "Unable to connect");
+        assertThatThrownBy(client::connectPubSub).isInstanceOf(RedisConnectionException.class)
+                .hasMessageContaining("Unable to connect");
         FastShutdown.shutdown(client);
     }
 

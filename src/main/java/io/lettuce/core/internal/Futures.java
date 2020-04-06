@@ -162,7 +162,11 @@ public abstract class Futures {
                 return false;
             }
 
-            future.get(nanos, TimeUnit.NANOSECONDS);
+            if (nanos == 0) {
+                future.get();
+            } else {
+                future.get(nanos, TimeUnit.NANOSECONDS);
+            }
 
             return true;
         } catch (TimeoutException e) {
@@ -200,18 +204,24 @@ public abstract class Futures {
 
             for (Future<?> f : futures) {
 
-                if (nanos < 0) {
-                    return false;
+                if (timeout <= 0) {
+                    f.get();
+                } else {
+                    if (nanos < 0) {
+                        return false;
+                    }
+
+                    f.get(nanos, TimeUnit.NANOSECONDS);
+
+                    long now = System.nanoTime();
+                    nanos -= now - time;
+                    time = now;
                 }
-
-                f.get(nanos, TimeUnit.NANOSECONDS);
-
-                long now = System.nanoTime();
-                nanos -= now - time;
-                time = now;
             }
 
             return true;
+        } catch (TimeoutException e) {
+            return false;
         } catch (Exception e) {
             return handleException(e);
         }
@@ -231,7 +241,7 @@ public abstract class Futures {
     public static <T> T awaitOrCancel(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
 
         try {
-            if (!cmd.await(timeout, unit)) {
+            if (timeout > 0 && !cmd.await(timeout, unit)) {
                 cmd.cancel(true);
                 throw ExceptionFactory.createTimeoutException(Duration.ofNanos(unit.toNanos(timeout)));
             }
