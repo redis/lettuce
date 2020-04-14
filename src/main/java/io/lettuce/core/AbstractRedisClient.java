@@ -194,8 +194,8 @@ public abstract class AbstractRedisClient {
             Class<? extends EventLoopGroup> eventLoopGroupClass = NativeTransports.eventLoopGroupClass();
 
             if (!eventLoopGroups.containsKey(NativeTransports.eventLoopGroupClass())) {
-                eventLoopGroups
-                        .put(eventLoopGroupClass, clientResources.eventLoopGroupProvider().allocate(eventLoopGroupClass));
+                eventLoopGroups.put(eventLoopGroupClass,
+                        clientResources.eventLoopGroupProvider().allocate(eventLoopGroupClass));
             }
         }
 
@@ -294,8 +294,8 @@ public abstract class AbstractRedisClient {
                     initializeChannelAsync0(connectionBuilder, channelReadyFuture, redisAddress);
                 }, channelReadyFuture::completeExceptionally);
 
-        return new DefaultConnectionFuture<>(socketAddressFuture, channelReadyFuture.thenApply(channel -> (T) connectionBuilder
-                .connection()));
+        return new DefaultConnectionFuture<>(socketAddressFuture,
+                channelReadyFuture.thenApply(channel -> (T) connectionBuilder.connection()));
     }
 
     private void initializeChannelAsync0(ConnectionBuilder connectionBuilder, CompletableFuture<Channel> channelReadyFuture,
@@ -309,14 +309,27 @@ public abstract class AbstractRedisClient {
         redisBootstrap.handler(initializer);
 
         clientResources.nettyCustomizer().afterBootstrapInitialized(redisBootstrap);
-        CompletableFuture<Boolean> initFuture = initializer.channelInitialized();
+        CompletableFuture<Boolean> channelInitialized = initializer.channelInitialized();
         ChannelFuture connectFuture = redisBootstrap.connect(redisAddress);
+
+        ChannelPromise initFuture = connectFuture.channel().newPromise();
 
         channelReadyFuture.whenComplete((c, t) -> {
 
             if (t instanceof CancellationException) {
                 connectFuture.cancel(true);
-                initFuture.cancel(true);
+                channelInitialized.cancel(true);
+            }
+        });
+
+        initFuture.addListener((ChannelFuture it) -> {
+
+            if (!initFuture.isSuccess()) {
+                connectFuture.channel().close();
+
+                channelReadyFuture.completeExceptionally(it.cause());
+            } else {
+                channelReadyFuture.complete(it.channel());
             }
         });
 
@@ -326,18 +339,19 @@ public abstract class AbstractRedisClient {
 
                 logger.debug("Connecting to Redis at {}: {}", redisAddress, future.cause());
                 connectionBuilder.endpoint().initialState();
-                channelReadyFuture.completeExceptionally(future.cause());
+
+                initFuture.tryFailure(future.cause());
                 return;
             }
 
-            initFuture.whenComplete((success, throwable) -> {
+            channelInitialized.whenComplete((success, throwable) -> {
 
                 if (throwable == null) {
 
                     logger.debug("Connecting to Redis at {}: Success", redisAddress);
                     RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
                     connection.registerCloseables(closeableResources, connection);
-                    channelReadyFuture.complete(connectFuture.channel());
+                    initFuture.trySuccess();
                     return;
                 }
 
@@ -348,12 +362,13 @@ public abstract class AbstractRedisClient {
                 if (throwable instanceof RedisConnectionException) {
                     failure = throwable;
                 } else if (throwable instanceof TimeoutException) {
-                    failure = new RedisConnectionException("Could not initialize channel within "
-                            + connectionBuilder.getTimeout(), throwable);
+                    failure = new RedisConnectionException(
+                            "Could not initialize channel within " + connectionBuilder.getTimeout(), throwable);
                 } else {
                     failure = throwable;
                 }
-                channelReadyFuture.completeExceptionally(failure);
+
+                initFuture.tryFailure(failure);
             });
         });
     }
