@@ -500,7 +500,7 @@ public class RedisClient extends AbstractRedisClient {
         logger.debug("Trying to get a Redis Sentinel connection for one of: " + redisURI.getSentinels());
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
-            return doConnectSentinelAsync(codec, redisURI, timeout).toCompletableFuture();
+            return doConnectSentinelAsync(codec, redisURI, timeout, redisURI.getClientName()).toCompletableFuture();
         }
 
         List<RedisURI> sentinels = redisURI.getSentinels();
@@ -512,7 +512,7 @@ public class RedisClient extends AbstractRedisClient {
         for (RedisURI uri : sentinels) {
 
             Mono<StatefulRedisSentinelConnection<K, V>> connectionMono = Mono
-                    .fromCompletionStage(() -> doConnectSentinelAsync(codec, uri, timeout))
+                    .fromCompletionStage(() -> doConnectSentinelAsync(codec, uri, timeout, redisURI.getClientName()))
                     .onErrorMap(CompletionException.class, Throwable::getCause)
                     .onErrorMap(e -> new RedisConnectionException("Cannot connect Redis Sentinel at " + uri, e))
                     .doOnError(exceptionCollector::add);
@@ -547,9 +547,16 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private <K, V> ConnectionFuture<StatefulRedisSentinelConnection<K, V>> doConnectSentinelAsync(RedisCodec<K, V> codec,
-            RedisURI redisURI, Duration timeout) {
+            RedisURI redisURI, Duration timeout, String clientName) {
 
-        ConnectionBuilder connectionBuilder = ConnectionBuilder.connectionBuilder();
+        ConnectionBuilder connectionBuilder;
+        if (redisURI.isSsl()) {
+            SslConnectionBuilder sslConnectionBuilder = SslConnectionBuilder.sslConnectionBuilder();
+            sslConnectionBuilder.ssl(redisURI);
+            connectionBuilder = sslConnectionBuilder;
+        } else {
+            connectionBuilder = ConnectionBuilder.connectionBuilder();
+        }
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
         connectionBuilder.clientResources(getResources());
 
@@ -564,6 +571,10 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionState state = connection.getConnectionState();
 
         state.apply(redisURI);
+        if (LettuceStrings.isEmpty(state.getClientName())) {
+            state.setClientName(clientName);
+        }
+
         connectionBuilder.connectionInitializer(createHandshake(state));
 
         logger.debug("Connecting to Redis Sentinel, address: " + redisURI);
