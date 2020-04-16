@@ -3,21 +3,16 @@
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%-5p] [%t] %m (%c{1}:%L)%n"/>
-            <ThresholdFilter level="FATAL"/>
         </Console>
 
         <File name="File" fileName="target/lettuce.log" bufferedIO="true">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%-5p] [%t] %m (%c{1}:%L)%n"/>
-            <ThresholdFilter level="FATAL"/>
         </File>
     </Appenders>
 
     <Loggers>
-        <Logger name="io.netty" level="INFO"/>
-        <Logger name="io.lettuce.core" level="INFO"/>
-        <Logger name="io.lettuce.core.cluster" level="INFO"/>
-        <Logger name="io.lettuce.core.protocol" level="INFO"/>
-        <Root level="INFO">
+        <Logger name="io.lettuce.core.protocol" level="FATAL"/>
+        <Root level="FATAL">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Root>

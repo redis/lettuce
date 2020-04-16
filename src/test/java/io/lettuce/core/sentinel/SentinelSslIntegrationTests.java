@@ -46,7 +46,6 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-@RedisBug("https://github.com/antirez/redis/issues/6160")
 class SentinelSslIntegrationTests extends TestSupport {
 
     private static final File TRUSTSTORE_FILE = new File("work/truststore.jks");

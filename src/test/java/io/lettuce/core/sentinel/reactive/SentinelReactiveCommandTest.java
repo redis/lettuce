@@ -27,7 +27,6 @@ import io.lettuce.test.ReactiveSyncInvocationHandler;
 /**
  * @author Mark Paluch
  */
-@RedisBug("https://github.com/antirez/redis/issues/6160")
 public class SentinelReactiveCommandTest extends SentinelCommandIntegrationTests {
 
     @Inject

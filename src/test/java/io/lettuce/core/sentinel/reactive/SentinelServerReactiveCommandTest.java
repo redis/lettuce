@@ -17,7 +17,6 @@ package io.lettuce.core.sentinel.reactive;
 
 import javax.inject.Inject;
 
-import io.lettuce.RedisBug;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.sentinel.SentinelServerCommandIntegrationTests;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
@@ -27,7 +26,6 @@ import io.lettuce.test.ReactiveSyncInvocationHandler;
 /**
  * @author Mark Paluch
  */
-@RedisBug("https://github.com/antirez/redis/issues/6160")
 public class SentinelServerReactiveCommandTest extends SentinelServerCommandIntegrationTests {
 
     @Inject

@@ -47,7 +47,6 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-@RedisBug("https://github.com/antirez/redis/issues/6160")
 public class SentinelCommandIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;

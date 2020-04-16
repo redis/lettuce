@@ -40,7 +40,6 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-@RedisBug("https://github.com/antirez/redis/issues/6160")
 class MasterReplicaSentinelSslIntegrationTests extends TestSupport {
 
     private final ClientResources clientResources;

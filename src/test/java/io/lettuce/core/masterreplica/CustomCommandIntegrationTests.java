@@ -43,7 +43,6 @@ import io.lettuce.test.TestFutures;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-@RedisBug("https://github.com/antirez/redis/issues/6160")
 class CustomCommandIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;

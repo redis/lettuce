@@ -43,7 +43,6 @@ import io.netty.channel.group.ChannelGroup;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-@RedisBug("https://github.com/antirez/redis/issues/6160")
 class MasterSlaveSentinelIntegrationTests extends TestSupport {
 
     private final Pattern pattern = Pattern.compile("role:(\\w+)");

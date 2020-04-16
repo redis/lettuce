@@ -94,7 +94,6 @@ class UnixDomainSocketIntegrationTests {
         FastShutdown.shutdown(redisClient);
     }
 
-    @Disabled("https://github.com/antirez/redis/issues/6160")
     @Test
     void sentinel_RedisClientWithSocket() throws Exception {
 
@@ -120,7 +119,6 @@ class UnixDomainSocketIntegrationTests {
         FastShutdown.shutdown(redisClient);
     }
 
-    @Disabled("https://github.com/antirez/redis/issues/6160")
     @Test
     void sentinel_ConnectToSocket() throws Exception {
 
@@ -146,7 +144,6 @@ class UnixDomainSocketIntegrationTests {
         FastShutdown.shutdown(redisClient);
     }
 
-    @Disabled("https://github.com/antirez/redis/issues/6160")
     @Test
     void sentinel_socket_and_inet() throws Exception {
 
