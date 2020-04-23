@@ -29,7 +29,7 @@ class ReadOnlyCommandsUnitTests {
 
     @Test
     void testCount() {
-        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(66);
+        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(72);
     }
 
     @Test
