@@ -21,15 +21,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.*;
+import io.netty.util.concurrent.Future;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -47,6 +46,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     private final Map<ExecutorService, Long> refCounter = new ConcurrentHashMap<>(2);
 
     private final int numberOfThreads;
+    private final ThreadFactoryProvider threadFactoryProvider;
 
     private volatile boolean shutdownCalled = false;
 
@@ -56,7 +56,23 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * @param numberOfThreads number of threads (pool size)
      */
     public DefaultEventLoopGroupProvider(int numberOfThreads) {
+        this(numberOfThreads, DefaultThreadFactoryProvider.INSTANCE);
+    }
+
+    /**
+     * Creates a new instance of {@link DefaultEventLoopGroupProvider}.
+     *
+     * @param numberOfThreads number of threads (pool size)
+     * @param threadFactoryProvider provides access to {@link ThreadFactory}.
+     * @since 6.0
+     */
+    public DefaultEventLoopGroupProvider(int numberOfThreads, ThreadFactoryProvider threadFactoryProvider) {
+
+        LettuceAssert.isTrue(numberOfThreads > 0, "Number of threads must be greater than zero");
+        LettuceAssert.notNull(threadFactoryProvider, "ThreadFactoryProvider must not be null");
+
         this.numberOfThreads = numberOfThreads;
+        this.threadFactoryProvider = threadFactoryProvider;
     }
 
     @Override
@@ -115,18 +131,19 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         }
 
         if (!eventLoopGroups.containsKey(type)) {
-            eventLoopGroups.put(type, createEventLoopGroup(type, numberOfThreads));
+            eventLoopGroups.put(type, createEventLoopGroup(type, numberOfThreads, threadFactoryProvider));
         }
 
         return (T) eventLoopGroups.get(type);
     }
 
     /**
-     * Create an instance of a {@link EventExecutorGroup}. Supported types are:
+     * Create an instance of a {@link EventExecutorGroup} using the default {@link ThreadFactoryProvider}. Supported types are:
      * <ul>
      * <li>DefaultEventExecutorGroup</li>
      * <li>NioEventLoopGroup</li>
      * <li>EpollEventLoopGroup</li>
+     * <li>KqueueEventLoopGroup</li>
      * </ul>
      *
      * @param type the type
@@ -136,15 +153,37 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * @throws IllegalArgumentException if the {@code type} is not supported.
      */
     public static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads) {
+        return createEventLoopGroup(type, numberOfThreads, DefaultThreadFactoryProvider.INSTANCE);
+    }
+
+    /**
+     * Create an instance of a {@link EventExecutorGroup}. Supported types are:
+     * <ul>
+     * <li>DefaultEventExecutorGroup</li>
+     * <li>NioEventLoopGroup</li>
+     * <li>EpollEventLoopGroup</li>
+     * <li>KqueueEventLoopGroup</li>
+     * </ul>
+     *
+     * @param type the type
+     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}
+     * @param <T> type parameter
+     * @return a new instance of a {@link EventExecutorGroup}
+     * @throws IllegalArgumentException if the {@code type} is not supported.
+     * @since 5.3
+     */
+    private static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads,
+            ThreadFactoryProvider factoryProvider) {
 
         logger.debug("Creating executor {}", type.getName());
 
         if (DefaultEventExecutorGroup.class.equals(type)) {
-            return new DefaultEventExecutorGroup(numberOfThreads, new DefaultThreadFactory("lettuce-eventExecutorLoop", true));
+            return new DefaultEventExecutorGroup(numberOfThreads,
+                    factoryProvider.getThreadFactory("lettuce-eventExecutorLoop"));
         }
 
         if (NioEventLoopGroup.class.equals(type)) {
-            return new NioEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-nioEventLoop", true));
+            return new NioEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory("lettuce-nioEventLoop"));
         }
 
         if (EpollProvider.isAvailable()) {
@@ -152,7 +191,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             EventLoopResources resources = EpollProvider.getResources();
 
             if (resources.matches(type)) {
-                return resources.newEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-epollEventLoop", true));
+                return resources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory("lettuce-epollEventLoop"));
             }
         }
 
@@ -161,7 +200,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             EventLoopResources resources = KqueueProvider.getResources();
 
             if (resources.matches(type)) {
-                return resources.newEventLoopGroup(numberOfThreads, new DefaultThreadFactory("lettuce-kqueueEventLoop", true));
+                return resources.newEventLoopGroup(numberOfThreads,
+                        factoryProvider.getThreadFactory("lettuce-kqueueEventLoop"));
             }
         }
 
@@ -236,5 +276,32 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         });
 
         return overall;
+    }
+
+    /**
+     * Interface to provide a custom {@link java.util.concurrent.ThreadFactory}. Implementations are asked through
+     * {@link #getThreadFactory(String)} to provide a thread factory for a given pool name.
+     * 
+     * @since 6.0
+     */
+    public interface ThreadFactoryProvider {
+
+        /**
+         * Return a {@link ThreadFactory} for the given {@code poolName}.
+         * 
+         * @param poolName a descriptive pool name. Typically used as prefix for thread names.
+         * @return the {@link ThreadFactory}.
+         */
+        ThreadFactory getThreadFactory(String poolName);
+    }
+
+    enum DefaultThreadFactoryProvider implements ThreadFactoryProvider {
+
+        INSTANCE;
+
+        @Override
+        public ThreadFactory getThreadFactory(String poolName) {
+            return new DefaultThreadFactory(poolName, true);
+        }
     }
 }
