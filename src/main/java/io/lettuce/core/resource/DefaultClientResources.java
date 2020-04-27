@@ -76,12 +76,12 @@ public class DefaultClientResources implements ClientResources {
     /**
      * Minimum number of I/O threads.
      */
-    public static final int MIN_IO_THREADS = 3;
+    public static final int MIN_IO_THREADS = 2;
 
     /**
      * Minimum number of computation threads.
      */
-    public static final int MIN_COMPUTATION_THREADS = 3;
+    public static final int MIN_COMPUTATION_THREADS = 2;
 
     public static final int DEFAULT_IO_THREADS;
     public static final int DEFAULT_COMPUTATION_THREADS;
@@ -98,10 +98,8 @@ public class DefaultClientResources implements ClientResources {
 
     static {
 
-        int threads = Math.max(
-                1,
-                SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
-                        Math.max(MIN_IO_THREADS, Runtime.getRuntime().availableProcessors())));
+        int threads = Math.max(1, SystemPropertyUtil.getInt("io.netty.eventLoopThreads",
+                Math.max(MIN_IO_THREADS, Runtime.getRuntime().availableProcessors())));
 
         DEFAULT_IO_THREADS = threads;
         DEFAULT_COMPUTATION_THREADS = threads;

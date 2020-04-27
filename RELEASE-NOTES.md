@@ -67,3 +67,4 @@ Other
 * Replace outdated Sonatype parent POM with plugin definitions #1258
 * Upgrade dependencies #1259
 * Upgrade to RxJava 3.0.2 #1261
+* Reduce min thread count to 2 #1278

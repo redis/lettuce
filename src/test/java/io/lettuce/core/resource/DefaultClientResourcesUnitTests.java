@@ -164,9 +164,9 @@ class DefaultClientResourcesUnitTests {
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
         NioEventLoopGroup eventLoopGroup = sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
 
-        assertThat(eventExecutors).hasSize(3);
-        assertThat(eventLoopGroup.executorCount()).isEqualTo(3);
-        assertThat(sut.ioThreadPoolSize()).isEqualTo(3);
+        assertThat(eventExecutors).hasSize(2);
+        assertThat(eventLoopGroup.executorCount()).isEqualTo(2);
+        assertThat(sut.ioThreadPoolSize()).isEqualTo(2);
 
         assertThat(Futures.get(sut.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
     }
