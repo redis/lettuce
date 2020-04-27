@@ -46,12 +46,11 @@ Redis 6 ships with support for a new protocol version. RESP3 brings support for 
 * Big number: a large number non-representable by the Number type
 
 Lettuce supports all response types except attributes. Push messages are only supported for Pub/Sub messages.
-Newly established connections default to RESP2 to avoid issues with Redis parts that do not properly support RESP3 yet (such as Redis Sentinel). These are known issues and to be addressed by future Redis releases.
 
-The protocol version can be changed through `ClientOptions`:
+The protocol version can be changed through `ClientOptions` which disables protocol discovery:
 
 ```java
-ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build();
+ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build();
 ```
 
 Future versions are going to discover the protocol version as part of the connection handshake and use the newest available protocol version.
@@ -109,6 +108,7 @@ Enhancements
 * Add support for KEEPTTL with SET #1234
 * Add support for RxJava 3 #1235
 * Retrieve username from URI when RedisURI is built from URL #1242 (Thanks to @gkorland)
+* Introduce ThreadFactoryProvider to DefaultEventLoopGroupProvider for easier customization #1243 (Thanks to @apilling6317)
 
 Fixes
 -----
@@ -128,7 +128,9 @@ Fixes
 * ConcurrentModificationException iterating over partitions #1252 (Thanks to @johnny-costanzo)
 * Replayed activation commands may fail because of their execution sequence #1255 (Thanks to @robertvazan)
 * Fix infinite command timeout #1260
-* Connection leak using pingBeforeActivateConnection when PING fails? #1262 (Thanks to @johnny-costanzo)
+* Connection leak using pingBeforeActivateConnection when PING fails #1262 (Thanks to @johnny-costanzo)
+* Lettuce blocked when connecting to Redis #1269 (Thanks to @jbyjby1)
+* Stream commands are not considered for ReadOnly routing #1271 (Thanks to @redviper)
 
 Other
 -----
@@ -146,7 +148,7 @@ Other
 * Adapt GEOHASH tests to 10 chars #1196
 * Migrate Master/Replica support to the appropriate package #1199
 * Disable RedisURIBuilderUnitTests failing on Windows OS #1204 (Thanks to @kshchepanovskyi)
-* Provide a default port(DEFAULT_REDIS_PORT) to RedisURI's Builder inst… #1205 (Thanks to @hepin1989)
+* Provide a default port(DEFAULT_REDIS_PORT) to RedisURI's Builder #1205 (Thanks to @hepin1989)
 * Update code for pub/sub to listen on the stateful connection object. #1207 (Thanks to @judepereira)
 * Un-deprecate ClientOptions.pingBeforeActivateConnection #1208
 * Use consistently a shutdown timeout of 2 seconds in all AbstractRedisClient.shutdown methods #1214
@@ -158,5 +160,6 @@ Other
 * Add build profiles for multiple Java versions #1247
 * Replace outdated Sonatype parent POM with plugin definitions #1258
 * Upgrade to RxJava 3.0.2 #1261
-* Upgrade to Reactor Core 3.3.5 #1276
+* Enable Sentinel tests after Redis fixes RESP3 handshake #1266
+* Consolidate exception translation and bubbling #1275
 * Reduce min thread count to 2 #1278
