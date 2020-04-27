@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import io.lettuce.core.ExceptionFactory;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;

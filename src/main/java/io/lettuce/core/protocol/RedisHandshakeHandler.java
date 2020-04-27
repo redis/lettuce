@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.ExceptionFactory;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.ChannelHandlerContext;

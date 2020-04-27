@@ -32,6 +32,8 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.topology.TopologyComparators.SortAction;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.ExceptionFactory;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.Timeout;
@@ -315,10 +317,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
 
                     if (throwable != null) {
 
-                        Throwable throwableToUse = throwable;
-                        if (throwable instanceof CompletionException) {
-                            throwableToUse = throwableToUse.getCause();
-                        }
+                        Throwable throwableToUse = Exceptions.unwrap(throwable);
 
                         String message = String.format("Unable to connect to [%s]: %s", socketAddress,
                                 throwableToUse.getMessage() != null ? throwableToUse.getMessage() : throwableToUse.toString());
@@ -395,10 +394,8 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
 
         try {
             future.get();
-        } catch (InterruptedException e) {
-            throw new RedisCommandInterruptedException(e);
-        } catch (ExecutionException e) {
-            return e.getCause();
+        } catch (Exception e) {
+            return Exceptions.bubble(e);
         }
 
         return null;

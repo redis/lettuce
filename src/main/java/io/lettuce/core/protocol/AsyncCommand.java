@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import io.lettuce.core.ExceptionFactory;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.RedisCommandInterruptedException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.internal.LettuceAssert;

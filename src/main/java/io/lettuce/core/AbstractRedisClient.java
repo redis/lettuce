@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.Transports.NativeTransports;
 import io.lettuce.core.internal.AsyncCloseable;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
@@ -291,12 +292,7 @@ public abstract class AbstractRedisClient {
             Thread.currentThread().interrupt();
             throw RedisConnectionException.create(connectionFuture.getRemoteAddress(), e);
         } catch (Exception e) {
-
-            if (e instanceof ExecutionException) {
-                throw RedisConnectionException.create(connectionFuture.getRemoteAddress(), e.getCause());
-            }
-
-            throw RedisConnectionException.create(connectionFuture.getRemoteAddress(), e);
+            throw RedisConnectionException.create(connectionFuture.getRemoteAddress(), Exceptions.unwrap(e));
         }
     }
 
@@ -318,12 +314,7 @@ public abstract class AbstractRedisClient {
             Thread.currentThread().interrupt();
             throw RedisConnectionException.create(e);
         } catch (Exception e) {
-
-            if (e instanceof ExecutionException) {
-                throw RedisConnectionException.create(e.getCause());
-            }
-
-            throw RedisConnectionException.create(e);
+            throw RedisConnectionException.create(Exceptions.unwrap(e));
         }
     }
 
@@ -467,21 +458,8 @@ public abstract class AbstractRedisClient {
 
         try {
             shutdownAsync(quietPeriod, timeout, timeUnit).get();
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (ExecutionException e) {
-
-            if (e.getCause() instanceof RedisCommandExecutionException) {
-                throw ExceptionFactory.createExecutionException(e.getCause().getMessage(), e.getCause());
-            }
-
-            throw new RedisException(e.getCause());
-        } catch (InterruptedException e) {
-
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
         } catch (Exception e) {
-            throw ExceptionFactory.createExecutionException(null, e);
+            throw Exceptions.bubble(e);
         }
     }
 

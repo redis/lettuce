@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.lettuce.core.internal.Exceptions;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;

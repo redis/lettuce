@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.internal.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.RedisClient;

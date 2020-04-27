@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
-import io.lettuce.core.ExceptionFactory;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.TransactionResult;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceFactories;

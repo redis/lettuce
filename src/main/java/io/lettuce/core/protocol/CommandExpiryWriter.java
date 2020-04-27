@@ -25,7 +25,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.ExceptionFactory;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.LettuceAssert;

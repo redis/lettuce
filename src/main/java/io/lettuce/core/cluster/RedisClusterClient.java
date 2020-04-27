@@ -19,7 +19,10 @@ import java.io.Closeable;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -41,6 +44,7 @@ import io.lettuce.core.cluster.topology.NodeConnectionFactory;
 import io.lettuce.core.cluster.topology.TopologyComparators;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
@@ -881,10 +885,9 @@ public class RedisClusterClient extends AbstractRedisClient {
                 throw mapper.apply((RedisException) e.getCause());
             }
 
-            throw new RedisException(e.getCause());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
+            throw Exceptions.bubble(e);
+        } catch (Exception e) {
+            throw Exceptions.bubble(e);
         }
     }
 
@@ -912,8 +915,8 @@ public class RedisClusterClient extends AbstractRedisClient {
                 fetchPartitions(initialUris).whenComplete((nextNodes, nextThrowable) -> {
 
                     if (nextThrowable != null) {
-                        Throwable exception = unwrap(nextThrowable);
-                        exception.addSuppressed(unwrap(throwable));
+                        Throwable exception = Exceptions.unwrap(nextThrowable);
+                        exception.addSuppressed(Exceptions.unwrap(throwable));
 
                         future.completeExceptionally(exception);
                     } else {
@@ -921,7 +924,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                     }
                 });
             } else {
-                future.completeExceptionally(unwrap(throwable));
+                future.completeExceptionally(Exceptions.unwrap(throwable));
             }
         });
 
@@ -1126,17 +1129,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         return null;
-    }
-
-    private static Throwable unwrap(Throwable throwable) {
-
-        Throwable ex = throwable;
-
-        while (ex instanceof CompletionException || ex instanceof ExecutionException) {
-            ex = ex.getCause();
-        }
-
-        return ex;
     }
 
     ClusterClientOptions getClusterClientOptions() {

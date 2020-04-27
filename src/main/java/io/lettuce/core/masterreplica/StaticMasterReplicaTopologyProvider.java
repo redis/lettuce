@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.internal.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisClient;

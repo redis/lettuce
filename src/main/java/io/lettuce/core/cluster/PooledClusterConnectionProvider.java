@@ -33,10 +33,7 @@ import io.lettuce.core.cluster.ClusterNodeConnectionFactory.ConnectionKey;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.AsyncConnectionProvider;
-import io.lettuce.core.internal.Futures;
-import io.lettuce.core.internal.HostAndPort;
-import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.*;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.netty.util.internal.logging.InternalLogger;
@@ -87,15 +84,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         try {
             return getConnectionAsync(intent, slot).get();
-        } catch (RedisException e) {
-            throw e;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
-        } catch (ExecutionException e) {
-            throw new RedisException(e.getCause());
-        } catch (RuntimeException e) {
-            throw new RedisException(e);
+        } catch (Exception e) {
+            throw Exceptions.bubble(e);
         }
     }
 
@@ -381,7 +371,8 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
             if (throwable != null) {
 
-                result.completeExceptionally(RedisConnectionException.create(connectionFuture.getRemoteAddress(), throwable));
+                result.completeExceptionally(
+                        RedisConnectionException.create(connectionFuture.getRemoteAddress(), Exceptions.bubble(throwable)));
             } else {
                 result.complete(connection);
             }

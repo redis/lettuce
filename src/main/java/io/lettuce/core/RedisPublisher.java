@@ -28,6 +28,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
+import io.lettuce.core.internal.ExceptionFactory;
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.util.context.Context;

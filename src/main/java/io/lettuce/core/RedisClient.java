@@ -29,6 +29,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
+import io.lettuce.core.internal.ExceptionFactory;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;

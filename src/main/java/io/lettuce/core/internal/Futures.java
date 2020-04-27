@@ -19,7 +19,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.*;
 
-import io.lettuce.core.*;
+import io.lettuce.core.RedisFuture;
 import io.netty.channel.ChannelFuture;
 
 /**
@@ -172,7 +172,7 @@ public abstract class Futures {
         } catch (TimeoutException e) {
             return false;
         } catch (Exception e) {
-            return handleException(e);
+            throw Exceptions.fromSynchronization(e);
         }
     }
 
@@ -223,7 +223,7 @@ public abstract class Futures {
         } catch (TimeoutException e) {
             return false;
         } catch (Exception e) {
-            return handleException(e);
+            throw Exceptions.fromSynchronization(e);
         }
     }
 
@@ -247,33 +247,7 @@ public abstract class Futures {
             }
             return cmd.get();
         } catch (Exception e) {
-            return handleException(e);
+            throw Exceptions.bubble(e);
         }
-    }
-
-    private static <T> T handleException(Exception e) {
-
-        if (e instanceof RuntimeException) {
-            throw (RuntimeException) e;
-        }
-
-        if (e instanceof ExecutionException) {
-            if (e.getCause() instanceof RedisCommandExecutionException) {
-                throw ExceptionFactory.createExecutionException(e.getCause().getMessage(), e.getCause());
-            }
-
-            if (e.getCause() instanceof RedisCommandTimeoutException) {
-                throw new RedisCommandTimeoutException(e.getCause());
-            }
-
-            throw new RedisException(e.getCause());
-        }
-
-        if (e instanceof InterruptedException) {
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
-        }
-
-        throw ExceptionFactory.createExecutionException(null, e);
     }
 }

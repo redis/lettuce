@@ -15,6 +15,8 @@
  */
 package io.lettuce.core;
 
+import io.lettuce.core.internal.ExceptionFactory;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
