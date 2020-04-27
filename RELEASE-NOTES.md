@@ -140,7 +140,6 @@ Other
 * Remove LettuceCharsets #1156
 * Move SocketAddress resolution from RedisURI to SocketAddressResolver #1157
 * Remove deprecated timeout methods accepting TimeUnit #1158
-* Upgrade to netty 4.1.43.Final #1161
 * Upgrade to RxJava 2.2.13 #1162
 * Add ByteBuf.touch(…) to aid buffer leak investigation #1164
 * Add warning log if MasterReplica(…, Iterable<RedisURI>) contains multiple Sentinel URIs #1165
@@ -151,17 +150,13 @@ Other
 * Update code for pub/sub to listen on the stateful connection object. #1207 (Thanks to @judepereira)
 * Un-deprecate ClientOptions.pingBeforeActivateConnection #1208
 * Use consistently a shutdown timeout of 2 seconds in all AbstractRedisClient.shutdown methods #1214
-* Release Lettuce 5.2.2.RELEASE #1222
-* Upgrade dependencies #1224
-* Upgrade dependencies #1225
+* Upgrade dependencies (netty to 4.1.49.Final) #1161, #1224, #1225, #1239, #1259
 * RedisURI class does not parse password when using redis-sentinel #1232 (Thanks to @kyrogue)
 * Reduce log level to DEBUG for native library logging #1238 (Thanks to @DevJoey)
-* upgrade netty to 4.1.47.Final #1239 (Thanks to @m1ngyuan)
 * Reduce visibility of fields in AbstractRedisClient #1241
 * Upgrade to stunnel 5.56 #1246
 * Add build profiles for multiple Java versions #1247
 * Replace outdated Sonatype parent POM with plugin definitions #1258
-* Upgrade dependencies #1259
 * Upgrade to RxJava 3.0.2 #1261
 * Upgrade to Reactor Core 3.3.5 #1276
 * Reduce min thread count to 2 #1278
