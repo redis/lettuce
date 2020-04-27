@@ -36,6 +36,7 @@ Enhancements
 * Support JUSTID flag of XCLAIM command #1233 (Thanks to @christophstrobl)
 * Add support for KEEPTTL with SET #1234
 * Add support for RxJava 3 #1235
+* Introduce ThreadFactoryProvider to DefaultEventLoopGroupProvider for easier customization #1243
 
 Fixes
 -----
