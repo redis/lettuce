@@ -78,12 +78,12 @@ public class DefaultClientResources implements ClientResources {
     /**
      * Minimum number of I/O threads.
      */
-    public static final int MIN_IO_THREADS = 3;
+    public static final int MIN_IO_THREADS = 2;
 
     /**
      * Minimum number of computation threads.
      */
-    public static final int MIN_COMPUTATION_THREADS = 3;
+    public static final int MIN_COMPUTATION_THREADS = 2;
 
     public static final int DEFAULT_IO_THREADS;
     public static final int DEFAULT_COMPUTATION_THREADS;
