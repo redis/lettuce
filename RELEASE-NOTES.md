@@ -35,6 +35,7 @@ Enhancements
 * Allow selection of Heap or Direct buffers for CommandHandler.buffer #1223 (Thanks to @dantheperson)
 * Support JUSTID flag of XCLAIM command #1233 (Thanks to @christophstrobl)
 * Add support for KEEPTTL with SET #1234
+* Add support for RxJava 3 #1235
 
 Fixes
 -----
@@ -45,22 +46,24 @@ Fixes
 * CommandSegments.StringCommandType does not implement hashCode()/equals() #1211
 * Unclear documentation about quiet time for RedisClient#shutdown  #1212 (Thanks to @LychakGalina)
 * Write race condition while migrating/importing a slot #1218 (Thanks to @phyok)
-* randomkey return V not K #1240 (Thanks to @bandheight)
+* randomkey return V not K #1240 (Thanks to @hosunrise)
 * ConcurrentModificationException iterating over partitions #1252 (Thanks to @johnny-costanzo)
 * Replayed activation commands may fail because of their execution sequence #1255 (Thanks to @robertvazan)
 * Fix infinite command timeout #1260
+* Connection leak using pingBeforeActivateConnection when PING fails #1262 (Thanks to @johnny-costanzo)
+* Lettuce blocked when connecting to Redis #1269 (Thanks to @jbyjby1)
+* Stream commands are not considered for ReadOnly routing  #1271 (Thanks to @redviper)
 
 Other
 -----
 * Disable RedisURIBuilderUnitTests failing on Windows OS #1204 (Thanks to @kshchepanovskyi)
-* Provide a default port(DEFAULT_REDIS_PORT) to RedisURI's Builder inst… #1205 (Thanks to @hepin1989)
+* Provide a default port(DEFAULT_REDIS_PORT) to RedisURI's Builder #1205 (Thanks to @hepin1989)
 * Un-deprecate ClientOptions.pingBeforeActivateConnection #1208
-* Upgrade dependencies #1224
-* Upgrade dependencies #1225
+* Upgrade dependencies (netty to 4.1.49.Final) #1224, #1225, #1277, #1239
 * RedisURI class does not parse password when using redis-sentinel #1232 (Thanks to @kyrogue)
 * Reduce log level to DEBUG for native library logging #1238 (Thanks to @DevJoey)
-* upgrade netty to 4.1.47.Final #1239 (Thanks to @m1ngyuan)
 * Upgrade to stunnel 5.56 #1246
 * Add build profiles for multiple Java versions #1247
 * Replace outdated Sonatype parent POM with plugin definitions #1258
 * Upgrade dependencies #1259
+* Upgrade to RxJava 3.0.2 #1261
