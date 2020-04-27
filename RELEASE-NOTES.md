@@ -1,5 +1,5 @@
 Lettuce 6.0.0 M1 RELEASE NOTES
-===========================
+==============================
 
 The Lettuce team is delighted to announce the availability of the first Lettuce 6 milestone.
 

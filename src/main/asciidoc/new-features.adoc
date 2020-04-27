@@ -1,13 +1,35 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.6-0-0]]
+== What's new in Lettuce 6.0
+
+* Support for RESP3 usage with Redis 6 along with RESP2/RESP3 handshake and protocol version discovery.
+* ACL authentication using username and password or password-only authentication.
+* Cluster topology refresh is now non-blocking.
+* RxJava 3 support.
+* Refined Scripting API accepting the Lua script either as `byte[]` or `String`.
+* Connection and Queue failures now no longer throw an exception but properly associate the failure with the Future handle.
+* Removal of deprecated API including timeout methods accepting `TimeUnit`.
+Use methods accepting `Duration` instead.
+* Lots of internal refinements.
+
+[[new-features.5-3-0]]
+== What's new in Lettuce 5.3
+
+* Improved SSL configuration supporting Cipher suite selection and PEM-encoded certificates.
+* Fixed method signature for `randomkey()`.
+* Un-deprecated `ClientOptions.pingBeforeActivateConnection` to allow connection verification during connection handshake.
+
 [[new-features.5-2-0]]
 == What's new in Lettuce 5.2
-* Allow randomization of read candidates using Redis Cluster
-* SSL support for Redis Sentinel
+
+* Allow randomization of read candidates using Redis Cluster.
+* SSL support for Redis Sentinel.
 
 [[new-features.5-1-0]]
 == What's new in Lettuce 5.1
+
 * Add support for `ZPOPMIN`, `ZPOPMAX`, `BZPOPMIN`, `BZPOPMAX` commands.
 * Add support for Redis Command Tracing through Brave, see <<client-resources>>.
 * Add support for https://redis.io/topics/streams-intro[Redis Streams].
@@ -23,6 +45,7 @@
 
 [[new-features.5-0-0]]
 == What's new in Lettuce 5.0
+
 * New artifact coordinates: `io.lettuce:lettuce-core` and packages moved from `com.lambdaworks.redis` to `io.lettuce.core`.
 * <<reactive-api,Reactive API>> now Reactive Streams-based using https://projectreactor.io/[Project Reactor].
 * <<redis-command-interfaces,Redis Command Interfaces>> supporting dynamic command invocation and Redis Modules.
