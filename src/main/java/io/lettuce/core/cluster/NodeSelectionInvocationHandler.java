@@ -25,10 +25,7 @@ import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
 
-import io.lettuce.core.ExceptionFactory;
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.RedisCommandInterruptedException;
-import io.lettuce.core.RedisCommandTimeoutException;
+import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -215,6 +212,11 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             complete = true;
         } catch (TimeoutException e) {
             complete = false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RedisCommandInterruptedException(e);
+        } catch (ExecutionException e) {
+            throw new RedisException(e.getCause());
         } catch (Exception e) {
             throw new RedisCommandInterruptedException(e);
         }

@@ -77,6 +77,7 @@ class RefreshFutures {
         try {
             future.get();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RedisCommandInterruptedException(e);
         } catch (ExecutionException e) {
             return e.getCause();
