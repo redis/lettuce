@@ -3,7 +3,7 @@ Lettuce 5.3.0 RELEASE NOTES
 
 The Lettuce team is pleased to announce the Lettuce 5.3.0 release! 
 We decided to add another release before Lettuce goes 6.0. Our wiki explains [which versions are supported](https://github.com/lettuce-io/lettuce-core/wiki/Lettuce-Versions).
-This release ships with 28 tickets fixed and contains a couple API revisions. Most notable is the revised SSL configuration API for PEM-encoded certificate support and TLS protocol selection.
+This release ships with 37 tickets fixed and contains a couple API revisions. Most notable is the revised SSL configuration API for PEM-encoded certificate support and TLS protocol selection.
 Note that this release ships also a change in the `randomkey()` method signature fixing the return type.
 
 Please also note carefully if you're using zero-timeouts. With this release, zero timeouts map to infinite command timeouts. 
