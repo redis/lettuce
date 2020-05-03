@@ -44,7 +44,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // String
 
-    APPEND, GET, GETRANGE, GETSET, MGET, MSET, MSETNX, SET, SETEX, PSETEX, SETNX, SETRANGE, STRLEN,
+    APPEND, GET, GETRANGE, GETSET, MGET, MSET, MSETNX, SET, SETEX, PSETEX, SETNX, SETRANGE, STRLEN, STRALGO,
 
     // Numeric
 

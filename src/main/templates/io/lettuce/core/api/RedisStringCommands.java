@@ -374,4 +374,13 @@ public interface RedisStringCommands<K, V> {
      * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */
     Long strlen(K key);
+
+    /**
+     * The STRALGO implements complex algorithms that operate on strings.
+     *
+     * Right now the only algorithm implemented is the LCS algorithm (longest common substring).
+     * @param strAlgoArgs
+     * @return StringMatchResult
+     */
+    StringMatchResult stralgo(StrAlgoArgs strAlgoArgs);
 }

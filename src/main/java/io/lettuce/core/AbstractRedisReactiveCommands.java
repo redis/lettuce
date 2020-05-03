@@ -1526,6 +1526,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<StringMatchResult> stralgo(StrAlgoArgs strAlgoArgs) {
+        return createMono(() -> commandBuilder.stralgo(strAlgoArgs));
+    }
+
+    @Override
     public Flux<V> sunion(K... keys) {
         return createDissolvingFlux(() -> commandBuilder.sunion(keys));
     }
