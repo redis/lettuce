@@ -34,6 +34,9 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.StrAlgoArgs;
+import io.lettuce.core.StringMatchResult;
+import static io.lettuce.core.StringMatchResult.Position;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -237,5 +240,48 @@ public class StringCommandIntegrationTests extends TestSupport {
 
         Long.parseLong(time.get(0));
         Long.parseLong(time.get(1));
+    }
+
+    @Test
+    void strAlgo() {
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("ohmytext", "mynewtext"));
+        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+
+        // STRALGO LCS STRINGS a b
+        matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("a", "b").minMatchLen(4).withIdx().withMatchLen());
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getLen()).isEqualTo(0);
+    }
+
+    @Test
+    void strAlgoJustLen() {
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("ohmytext", "mynewtext").justLen());
+        assertThat(matchResult.getLen()).isEqualTo(6);
+    }
+
+    @Test
+    void strAlgoWithMinMatchLen() {
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("ohmytext", "mynewtext").minMatchLen(4));
+        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+    }
+
+    @Test
+    void strAlgoWithIdx() {
+        // STRALGO LCS STRINGS ohmytext mynewtext IDX MINMATCHLEN 4 WITHMATCHLEN
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("ohmytext", "mynewtext").minMatchLen(4).withIdx().withMatchLen());
+        assertThat(matchResult.getMatches()).hasSize(1);
+        assertThat(matchResult.getMatches().get(0).getMatchLen()).isEqualTo(4);
+        Position a = matchResult.getMatches().get(0).getA();
+        Position b = matchResult.getMatches().get(0).getB();
+        assertThat(a.getStart()).isEqualTo(4);
+        assertThat(a.getEnd()).isEqualTo(7);
+        assertThat(b.getStart()).isEqualTo(5);
+        assertThat(b.getEnd()).isEqualTo(8);
+        assertThat(matchResult.getLen()).isEqualTo(6);
     }
 }

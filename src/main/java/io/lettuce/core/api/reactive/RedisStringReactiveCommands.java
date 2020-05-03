@@ -24,6 +24,8 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.Value;
 import io.lettuce.core.output.KeyValueStreamingChannel;
+import io.lettuce.core.StrAlgoArgs;
+import io.lettuce.core.StringMatchResult;
 
 /**
  * Reactive executed commands for Strings.
@@ -375,4 +377,13 @@ public interface RedisStringReactiveCommands<K, V> {
      * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */
     Mono<Long> strlen(K key);
+
+    /**
+     * The STRALGO implements complex algorithms that operate on strings.
+     *
+     * Right now the only algorithm implemented is the LCS algorithm (longest common substring).
+     * @param strAlgoArgs
+     * @return StringMatchResult
+     */
+    Mono<StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs);
 }

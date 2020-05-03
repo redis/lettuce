@@ -2031,6 +2031,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(STRLEN, new IntegerOutput<>(codec), key);
     }
 
+    Command<K, V, StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs) {
+        LettuceAssert.notNull(strAlgoArgs, "StrAlgoArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        strAlgoArgs.build(args);
+        return createCommand(STRALGO, new StringMatchResultOutput<>(codec, strAlgoArgs.isWithIdx()), args);
+    }
+
     Command<K, V, Set<V>> sunion(K... keys) {
         notEmpty(keys);
 

@@ -1468,6 +1468,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<StringMatchResult> stralgoLcs(StrAlgoArgs args) {
+        return dispatch(commandBuilder.stralgoLcs(args));
+    }
+
+    @Override
     public RedisFuture<Set<V>> sunion(K... keys) {
         return dispatch(commandBuilder.sunion(keys));
     }
