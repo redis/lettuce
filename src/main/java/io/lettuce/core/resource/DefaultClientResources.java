@@ -15,9 +15,6 @@
  */
 package io.lettuce.core.resource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -28,7 +25,6 @@ import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.event.metrics.DefaultCommandLatencyEventPublisher;
 import io.lettuce.core.event.metrics.MetricEventPublisher;
-import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.metrics.CommandLatencyCollector;
@@ -601,8 +597,8 @@ public class DefaultClientResources implements ClientResources {
         logger.debug("Initiate shutdown ({}, {}, {})", quietPeriod, timeout, timeUnit);
 
         shutdownCalled = true;
-        DefaultPromise<Boolean> overall = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-        List<CompletionStage<?>> stages = new ArrayList<>();
+        DefaultPromise<Void> voidPromise = new DefaultPromise<>(ImmediateEventExecutor.INSTANCE);
+        PromiseCombiner aggregator = new PromiseCombiner(ImmediateEventExecutor.INSTANCE);
 
         if (metricEventPublisher != null) {
             metricEventPublisher.shutdown();
@@ -614,28 +610,21 @@ public class DefaultClientResources implements ClientResources {
 
         if (!sharedEventLoopGroupProvider) {
             Future<Boolean> shutdown = eventLoopGroupProvider.shutdown(quietPeriod, timeout, timeUnit);
-            stages.add(Futures.toCompletionStage(shutdown));
+            aggregator.add(shutdown);
         }
 
         if (!sharedEventExecutor) {
             Future<?> shutdown = eventExecutorGroup.shutdownGracefully(quietPeriod, timeout, timeUnit);
-            stages.add(Futures.toCompletionStage(shutdown));
+            aggregator.add(shutdown);
         }
 
         if (!sharedCommandLatencyCollector) {
             commandLatencyCollector.shutdown();
         }
 
-        Futures.allOf(stages).whenComplete((ignore, throwable) -> {
+        aggregator.finish(voidPromise);
 
-            if (throwable != null) {
-                overall.setFailure(throwable);
-            } else {
-                overall.setSuccess(true);
-            }
-        });
-
-        return overall;
+        return PromiseAdapter.toBooleanPromise(voidPromise);
     }
 
     @Override

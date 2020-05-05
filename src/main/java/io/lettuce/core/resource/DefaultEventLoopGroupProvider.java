@@ -17,18 +17,17 @@ package io.lettuce.core.resource;
 
 import static io.lettuce.core.resource.PromiseAdapter.toBooleanPromise;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.*;
-import io.netty.util.concurrent.Future;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -210,23 +209,24 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     @Override
     public Promise<Boolean> release(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit) {
+        return toBooleanPromise(doRelease(eventLoopGroup, quietPeriod, timeout, unit));
+    }
+
+    private Future<?> doRelease(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit) {
 
         logger.debug("Release executor {}", eventLoopGroup);
 
         Class<?> key = getKey(release(eventLoopGroup));
 
         if ((key == null && eventLoopGroup.isShuttingDown()) || refCounter.containsKey(eventLoopGroup)) {
-            DefaultPromise<Boolean> promise = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-            promise.setSuccess(true);
-            return promise;
+            return new SucceededFuture<>(ImmediateEventExecutor.INSTANCE, true);
         }
 
         if (key != null) {
             eventLoopGroups.remove(key);
         }
 
-        Future<?> shutdownFuture = eventLoopGroup.shutdownGracefully(quietPeriod, timeout, unit);
-        return toBooleanPromise(shutdownFuture);
+        return eventLoopGroup.shutdownGracefully(quietPeriod, timeout, unit);
     }
 
     private Class<?> getKey(EventExecutorGroup eventLoopGroup) {
@@ -248,34 +248,24 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         logger.debug("Initiate shutdown ({}, {}, {})", quietPeriod, timeout, timeUnit);
 
         shutdownCalled = true;
 
-        List<EventExecutorGroup> copy = new ArrayList<>(eventLoopGroups.values());
-        DefaultPromise<Boolean> overall = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-        CompletableFuture[] futures = new CompletableFuture[copy.size()];
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = new HashMap<>(eventLoopGroups);
 
-        for (int i = 0; i < copy.size(); i++) {
+        DefaultPromise<Void> overall = new DefaultPromise<>(ImmediateEventExecutor.INSTANCE);
+        PromiseCombiner combiner = new PromiseCombiner(ImmediateEventExecutor.INSTANCE);
 
-            EventExecutorGroup executorGroup = copy.get(i);
-            futures[i] = Futures.toCompletionStage(release(executorGroup, quietPeriod, timeout, timeUnit))
-                    .toCompletableFuture();
+        for (EventExecutorGroup executorGroup : copy.values()) {
+            combiner.add(doRelease(executorGroup, quietPeriod, timeout, timeUnit));
         }
 
-        CompletableFuture.allOf(futures).whenComplete((ignore, throwable) -> {
+        combiner.finish(overall);
 
-            if (throwable != null) {
-                overall.setFailure(throwable);
-            } else {
-                overall.setSuccess(true);
-            }
-        });
-
-        return overall;
+        return PromiseAdapter.toBooleanPromise(overall);
     }
 
     /**
