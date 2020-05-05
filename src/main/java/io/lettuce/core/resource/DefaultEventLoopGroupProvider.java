@@ -201,23 +201,24 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     @Override
     public Promise<Boolean> release(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit) {
+        return toBooleanPromise(doRelease(eventLoopGroup, quietPeriod, timeout, unit));
+    }
+
+    private Future<?> doRelease(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit) {
 
         logger.debug("Release executor {}", eventLoopGroup);
 
         Class<?> key = getKey(release(eventLoopGroup));
 
         if ((key == null && eventLoopGroup.isShuttingDown()) || refCounter.containsKey(eventLoopGroup)) {
-            DefaultPromise<Boolean> promise = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-            promise.setSuccess(true);
-            return promise;
+            return new SucceededFuture<>(ImmediateEventExecutor.INSTANCE, true);
         }
 
         if (key != null) {
             eventLoopGroups.remove(key);
         }
 
-        Future<?> shutdownFuture = eventLoopGroup.shutdownGracefully(quietPeriod, timeout, unit);
-        return toBooleanPromise(shutdownFuture);
+        return eventLoopGroup.shutdownGracefully(quietPeriod, timeout, unit);
     }
 
     private Class<?> getKey(EventExecutorGroup eventLoopGroup) {
@@ -248,21 +249,14 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
         Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> copy = new HashMap<>(eventLoopGroups);
 
-        DefaultPromise<Boolean> overall = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-        DefaultPromise<Boolean> lastRelease = new DefaultPromise<>(GlobalEventExecutor.INSTANCE);
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<>(overall);
-
-        aggregator.expectMore(1 + copy.size());
-
-        aggregator.arm();
+        DefaultPromise<Void> overall = new DefaultPromise<>(ImmediateEventExecutor.INSTANCE);
+        PromiseCombiner combiner = new PromiseCombiner(ImmediateEventExecutor.INSTANCE);
 
         for (EventExecutorGroup executorGroup : copy.values()) {
-            Promise<Boolean> shutdown = toBooleanPromise(release(executorGroup, quietPeriod, timeout, timeUnit));
-            aggregator.add(shutdown);
+            combiner.add(doRelease(executorGroup, quietPeriod, timeout, timeUnit));
         }
 
-        aggregator.add(lastRelease);
-        lastRelease.setSuccess(null);
+        combiner.finish(overall);
 
         return toBooleanPromise(overall);
     }

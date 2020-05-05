@@ -358,6 +358,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         assertThat(initial.isOpen()).isFalse();
 
         Channel reconnect = ref.take();
+        Wait.untilTrue(() -> !reconnect.isOpen()).waitOrTimeout();
         assertThat(reconnect.isOpen()).isFalse();
 
         FastShutdown.shutdown(client);

@@ -599,22 +599,8 @@ public class DefaultClientResources implements ClientResources {
         logger.debug("Initiate shutdown ({}, {}, {})", quietPeriod, timeout, timeUnit);
 
         shutdownCalled = true;
-        DefaultPromise<Boolean> overall = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        DefaultPromise<Boolean> lastRelease = new DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE);
-        Futures.PromiseAggregator<Boolean, Promise<Boolean>> aggregator = new Futures.PromiseAggregator<Boolean, Promise<Boolean>>(
-                overall);
-
-        aggregator.expectMore(1);
-
-        if (!sharedEventLoopGroupProvider) {
-            aggregator.expectMore(1);
-        }
-
-        if (!sharedEventExecutor) {
-            aggregator.expectMore(1);
-        }
-
-        aggregator.arm();
+        DefaultPromise<Void> voidPromise = new DefaultPromise<>(ImmediateEventExecutor.INSTANCE);
+        PromiseCombiner aggregator = new PromiseCombiner(ImmediateEventExecutor.INSTANCE);
 
         if (metricEventPublisher != null) {
             metricEventPublisher.shutdown();
@@ -626,26 +612,21 @@ public class DefaultClientResources implements ClientResources {
 
         if (!sharedEventLoopGroupProvider) {
             Future<Boolean> shutdown = eventLoopGroupProvider.shutdown(quietPeriod, timeout, timeUnit);
-            if (shutdown instanceof Promise) {
-                aggregator.add((Promise<Boolean>) shutdown);
-            } else {
-                aggregator.add(toBooleanPromise(shutdown));
-            }
+            aggregator.add(shutdown);
         }
 
         if (!sharedEventExecutor) {
             Future<?> shutdown = eventExecutorGroup.shutdownGracefully(quietPeriod, timeout, timeUnit);
-            aggregator.add(toBooleanPromise(shutdown));
+            aggregator.add(shutdown);
         }
 
         if (!sharedCommandLatencyCollector) {
             commandLatencyCollector.shutdown();
         }
 
-        aggregator.add(lastRelease);
-        lastRelease.setSuccess(null);
+        aggregator.finish(voidPromise);
 
-        return toBooleanPromise(overall);
+        return toBooleanPromise(voidPromise);
     }
 
     @Override
