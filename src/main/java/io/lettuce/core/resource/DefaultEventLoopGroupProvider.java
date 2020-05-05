@@ -130,10 +130,25 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         }
 
         if (!eventLoopGroups.containsKey(type)) {
-            eventLoopGroups.put(type, createEventLoopGroup(type, numberOfThreads, threadFactoryProvider));
+            eventLoopGroups.put(type, doCreateEventLoopGroup(type, numberOfThreads, threadFactoryProvider));
         }
 
         return (T) eventLoopGroups.get(type);
+    }
+
+    /**
+     * Customization hook for {@link EventLoopGroup} creation.
+     * 
+     * @param <T>
+     * @param type requested event loop group type.
+     * @param numberOfThreads number of threads to create.
+     * @param threadFactoryProvider provider for {@link ThreadFactory}.
+     * @return
+     * @since 6.0
+     */
+    protected <T extends EventLoopGroup> EventExecutorGroup doCreateEventLoopGroup(Class<T> type, int numberOfThreads,
+            ThreadFactoryProvider threadFactoryProvider) {
+        return createEventLoopGroup(type, numberOfThreads, threadFactoryProvider);
     }
 
     /**
