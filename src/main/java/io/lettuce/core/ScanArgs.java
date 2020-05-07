@@ -19,6 +19,7 @@ import static io.lettuce.core.protocol.CommandKeyword.COUNT;
 import static io.lettuce.core.protocol.CommandKeyword.MATCH;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.codec.StringCodec;
@@ -39,6 +40,7 @@ public class ScanArgs implements CompositeArgument {
 
     private Long count;
     private String match;
+    private Charset charset;
 
     /**
      * Builder entry points for {@link ScanArgs}.
@@ -89,6 +91,22 @@ public class ScanArgs implements CompositeArgument {
     }
 
     /**
+     * Set the match filter.
+     *
+     * @param match the filter, must not be {@literal null}.
+     * @param charset the charset for match, must not be {@literal null}.
+     * @return {@literal this} {@link ScanArgs}.
+     */
+    public ScanArgs match(String match, Charset charset) {
+
+        LettuceAssert.notNull(match, "Match must not be null");
+        LettuceAssert.notNull(charset, "Charset must not be null");
+        this.match = match;
+        this.charset = charset;
+        return this;
+    }
+
+    /**
      * Limit the scan by count
      *
      * @param count number of elements to scan
@@ -103,7 +121,11 @@ public class ScanArgs implements CompositeArgument {
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (match != null) {
-            args.add(MATCH).add(match.getBytes(StandardCharsets.UTF_8));
+            if(charset==null) {
+                args.add(MATCH).add(match.getBytes(StandardCharsets.UTF_8));
+            } else {
+                args.add(MATCH).add(match.getBytes(charset));
+            }
         }
 
         if (count != null) {
