@@ -9,6 +9,7 @@ jdk:
 
 jobs:
   allow_failures:
+    # Fail maven-bundle-plugin on JDK 15 (https://issues.apache.org/jira/browse/FELIX-6259,https://github.com/mybatis/parent/issues/160)
     - jdk: openjdk-ea
 
 script:
