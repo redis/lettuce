@@ -168,9 +168,9 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
             if (asking) { // set asking bit
                 writeCommands(Arrays.asList(asking(), command), ((RedisChannelHandler<K, V>) connection).getChannelWriter());
+            } else {
+                writeCommand(command, ((RedisChannelHandler<K, V>) connection).getChannelWriter());
             }
-
-            writeCommand(command, ((RedisChannelHandler<K, V>) connection).getChannelWriter());
         } catch (Exception e) {
             command.completeExceptionally(e);
         }

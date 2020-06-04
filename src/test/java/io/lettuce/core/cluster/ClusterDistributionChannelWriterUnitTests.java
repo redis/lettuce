@@ -16,22 +16,69 @@
 package io.lettuce.core.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.StatefulRedisConnectionImpl;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.HostAndPort;
+import io.lettuce.core.output.ValueOutput;
+import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * @author Mark Paluch
  */
+@ExtendWith(MockitoExtension.class)
 class ClusterDistributionChannelWriterUnitTests {
+
+    @Mock
+    private ClientOptions clientOptions;
+
+    @Mock
+    private RedisChannelWriter defaultWriter;
+
+    @Mock
+    private ClusterEventListener clusterEventListener;
+
+    @Mock
+    private StatefulRedisConnectionImpl<String, String> connection;
+
+    @Mock
+    private ClusterNodeEndpoint clusterNodeEndpoint;
+
+    @Mock
+    private CompletableFuture<StatefulRedisConnection<String, String>> connectFuture;
+
+    @Mock
+    private PooledClusterConnectionProvider pooledClusterConnectionProvider;
+
+    @InjectMocks
+    private ClusterDistributionChannelWriter clusterDistributionChannelWriter;
 
     @Test
     void shouldParseAskTargetCorrectly() {
@@ -106,5 +153,51 @@ class ClusterDistributionChannelWriterUnitTests {
         assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(set, mget))).isEqualTo(Intent.WRITE);
 
         assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(Intent.WRITE);
+    }
+
+    @Test
+    void shouldWriteCommandListWhenAsking() {
+        verifyWriteCommandCountWhenRedirecting(false);
+    }
+
+    @Test
+    void shouldWriteOneCommandWhenMoved() {
+        verifyWriteCommandCountWhenRedirecting(true);
+    }
+
+    private void verifyWriteCommandCountWhenRedirecting(boolean isMoved) {
+        final String outputError;
+        if (isMoved) {
+            // MOVED
+            outputError = "MOVED 1234 127.0.0.1:6379";
+        } else {
+            // ASK
+            outputError = "ASK 1234 127.0.0.1:6379";
+        }
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8).addKey("KEY");
+        ValueOutput<String, String> valueOutput = new ValueOutput<>(StringCodec.UTF8);
+        Command<String, String, String> command = new Command<>(CommandType.GET, valueOutput, commandArgs);
+        AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
+        ClusterCommand<String, String, String> clusterCommand = new ClusterCommand<>(asyncCommand,
+            defaultWriter, 2);
+        clusterCommand.getOutput().setError(outputError);
+        clusterDistributionChannelWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
+
+        when(connectFuture.isDone()).thenReturn(true);
+        when(connectFuture.isCompletedExceptionally()).thenReturn(false);
+        when(connectFuture.join()).thenReturn(connection);
+        when(pooledClusterConnectionProvider.getConnectionAsync(any(Intent.class), anyString(), anyInt()))
+            .thenReturn(connectFuture);
+        when(connection.getChannelWriter()).thenReturn(clusterNodeEndpoint);
+
+        clusterDistributionChannelWriter.write(clusterCommand);
+        if (isMoved) {
+            verify(clusterNodeEndpoint, never()).write(anyList());
+            verify(clusterNodeEndpoint, times(1)).write(ArgumentMatchers.<RedisCommand<String, String, String>>any());
+        } else {
+            verify(clusterNodeEndpoint, times(1)).write(anyList());
+            verify(clusterNodeEndpoint, never()).write(ArgumentMatchers.<RedisCommand<String, String, String>>any());
+        }
     }
 }
