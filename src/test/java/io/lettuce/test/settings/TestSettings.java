@@ -36,7 +36,7 @@ public class TestSettings {
      *         {@code -Dhost=YourHostName}
      */
     public static String host() {
-        return System.getProperty("host", "localhost");
+        return System.getProperty("host", "192.168.50.16");
     }
 
     /**
@@ -116,7 +116,7 @@ public class TestSettings {
      * @return port of your redis instance. Defaults to {@literal 6479}. Can be overriden with {@code -Dport=1234}
      */
     public static int port() {
-        return Integer.parseInt(System.getProperty("port", "6479"));
+        return Integer.parseInt(System.getProperty("port", "6379"));
     }
 
     /**

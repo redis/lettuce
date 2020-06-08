@@ -383,5 +383,5 @@ public interface NodeSelectionStringCommands<K, V> {
      * @param strAlgoArgs
      * @return StringMatchResult
      */
-    Executions<StringMatchResult> stralgo(StrAlgoArgs strAlgoArgs);
+    Executions<StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs);
 }

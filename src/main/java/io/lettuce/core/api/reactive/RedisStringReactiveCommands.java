@@ -385,5 +385,5 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param strAlgoArgs
      * @return StringMatchResult
      */
-    Mono<StringMatchResult> stralgo(StrAlgoArgs strAlgoArgs);
+    Mono<StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs);
 }

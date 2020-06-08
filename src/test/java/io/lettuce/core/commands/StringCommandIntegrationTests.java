@@ -244,21 +244,35 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     void strAlgo() {
-        StringMatchResult matchResult = redis.stralgo(StrAlgoArgs.Builder
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
                 .strings("ohmytext", "mynewtext"));
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
 
-        // justLen
-        matchResult = redis.stralgo(StrAlgoArgs.Builder
+        // STRALGO LCS STRINGS a b
+        matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("a", "b").minMatchLen(4).withIdx().withMatchLen());
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getLen()).isEqualTo(0);
+    }
+
+    @Test
+    void strAlgoJustLen() {
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
                 .strings("ohmytext", "mynewtext").justLen());
         assertThat(matchResult.getLen()).isEqualTo(6);
+    }
 
-        matchResult = redis.stralgo(StrAlgoArgs.Builder
+    @Test
+    void strAlgoWithMinMatchLen() {
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
                 .strings("ohmytext", "mynewtext").minMatchLen(4));
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+    }
 
+    @Test
+    void strAlgoWithIdx() {
         // STRALGO LCS STRINGS ohmytext mynewtext IDX MINMATCHLEN 4 WITHMATCHLEN
-        matchResult = redis.stralgo(StrAlgoArgs.Builder
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
                 .strings("ohmytext", "mynewtext").minMatchLen(4).withIdx().withMatchLen());
         assertThat(matchResult.getMatches()).hasSize(1);
         assertThat(matchResult.getMatches().get(0).getMatchLen()).isEqualTo(4);
@@ -269,11 +283,5 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(b.getStart()).isEqualTo(5);
         assertThat(b.getEnd()).isEqualTo(8);
         assertThat(matchResult.getLen()).isEqualTo(6);
-
-        // STRALGO LCS STRINGS a b
-        matchResult = redis.stralgo(StrAlgoArgs.Builder
-                .strings("a", "b").minMatchLen(4).withIdx().withMatchLen());
-        assertThat(matchResult.getMatchString()).isNullOrEmpty();
-        assertThat(matchResult.getLen()).isEqualTo(0);
     }
 }

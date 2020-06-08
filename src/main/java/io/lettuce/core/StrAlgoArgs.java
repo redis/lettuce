@@ -17,7 +17,6 @@ package io.lettuce.core;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.StringAlgorithm;
 
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/stralgo">STRALGO</a> command.
@@ -34,7 +33,6 @@ public class StrAlgoArgs implements CompositeArgument {
     private int minMatchLen;
     private boolean withMatchLen;
     private boolean withIdx;
-    private StringAlgorithm algorithm = StringAlgorithm.LCS;
     private By by = By.STRINGS;
     private String[] keys;
 
@@ -124,7 +122,7 @@ public class StrAlgoArgs implements CompositeArgument {
     public <K, V> void build(CommandArgs<K, V> args) {
         LettuceAssert.notEmpty(keys, "strings or keys must be not empty");
 
-        args.add(algorithm.name());
+        args.add("LCS");
         args.add(by.name());
         for (String key : keys) {
             args.add(key);

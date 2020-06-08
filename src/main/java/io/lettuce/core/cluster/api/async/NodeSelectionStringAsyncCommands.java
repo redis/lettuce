@@ -383,5 +383,5 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * @param strAlgoArgs
      * @return StringMatchResult
      */
-    AsyncExecutions<StringMatchResult> stralgo(StrAlgoArgs strAlgoArgs);
+    AsyncExecutions<StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs);
 }

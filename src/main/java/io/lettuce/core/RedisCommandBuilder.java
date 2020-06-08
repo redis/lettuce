@@ -2013,7 +2013,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(STRLEN, new IntegerOutput<>(codec), key);
     }
 
-    Command<K, V, StringMatchResult> stralgo(StrAlgoArgs strAlgoArgs) {
+    Command<K, V, StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs) {
         LettuceAssert.notNull(strAlgoArgs, "StrAlgoArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);

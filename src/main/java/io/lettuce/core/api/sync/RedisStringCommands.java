@@ -383,5 +383,5 @@ public interface RedisStringCommands<K, V> {
      * @param strAlgoArgs
      * @return StringMatchResult
      */
-    StringMatchResult stralgo(StrAlgoArgs strAlgoArgs);
+    StringMatchResult stralgoLcs(StrAlgoArgs strAlgoArgs);
 }

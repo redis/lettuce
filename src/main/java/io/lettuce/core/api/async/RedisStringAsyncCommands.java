@@ -384,5 +384,5 @@ public interface RedisStringAsyncCommands<K, V> {
      * @param strAlgoArgs
      * @return StringMatchResult
      */
-    RedisFuture<StringMatchResult> stralgo(StrAlgoArgs strAlgoArgs);
+    RedisFuture<StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs);
 }
