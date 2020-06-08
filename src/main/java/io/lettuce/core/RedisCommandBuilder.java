@@ -26,7 +26,6 @@ import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.*;
@@ -2262,16 +2261,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(consumer.group);
 
-        if (limit.isLimited() || !range.getLower().equals(Boundary.unbounded())
-                || !range.getUpper().equals(Boundary.unbounded())) {
-            args.add(getLowerValue(range)).add(getUpperValue(range));
+        args.add(getLowerValue(range)).add(getUpperValue(range));
 
-            if (!limit.isLimited()) {
-                throw new IllegalArgumentException("Limit must be set using Range queries with XPENDING");
-            }
-            args.add(limit.getCount());
-        }
-
+        args.add(limit.isLimited() ? limit.getCount() : Long.MAX_VALUE);
         args.addKey(consumer.name);
 
         return createCommand(XPENDING, new NestedMultiOutput<>(codec), args);
