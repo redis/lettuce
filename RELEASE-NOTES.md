@@ -2,7 +2,7 @@ Lettuce 5.3.1 RELEASE NOTES
 ===========================
 
 The Lettuce team is pleased to announce the Lettuce 5.3.1 service release! 
-This release ships with 9 tickets fixed along of dependency upgrades.
+This release ships with 10 tickets fixed along of dependency upgrades.
 Most notable changes are fixes around `PauseDetector` acquisition which may cause infinite loops during metrics logging and therefore command timeouts.
  
 Find the full changelog at the end of this document.
@@ -36,3 +36,4 @@ Other
 -----
 * Replace io.lettuce.core.resource.Futures utility with Netty's PromiseCombiner #1283
 * Upgrade dependencies #1305
+* Add FAQ section to reference docs #1307

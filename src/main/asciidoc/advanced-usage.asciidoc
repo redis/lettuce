@@ -1,6 +1,6 @@
 :auto-reconnect-link: <<client-options,auto-reconnection>>
-:client-options-link: <<client-resources>>
-:client-resources-link: <<client-options>>
+:client-options-link: <<client-options>>
+:client-resources-link: <<client-resources>>
 
 :custom-commands-command-output-link: <<custom-commands.outputs>>
 :custom-commands-command-exec-model-link: <<custom-commands.synchronous-asynchronous-and-reactive,Custom commands>>
