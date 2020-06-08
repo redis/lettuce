@@ -52,6 +52,7 @@ public interface RedisClusterPubSubAsyncCommands<K, V> extends RedisPubSubAsyncC
      * @return API with asynchronous executed commands on a selection of replica cluster nodes.
      * @deprecated since 5.2, use {@link #replicas()}
      */
+    @Deprecated
     default PubSubAsyncNodeSelection<K, V> slaves() {
         return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
     }

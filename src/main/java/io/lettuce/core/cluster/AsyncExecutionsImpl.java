@@ -106,6 +106,7 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
         return stage;
     }
 
+    @SuppressWarnings("rawtypes")
     private CompletableFuture<List<T>> createPublicStage(Map<RedisClusterNode, CompletableFuture<T>> map) {
 
         return CompletableFuture.allOf(map.values().toArray(new CompletableFuture[0])).thenApply(ignore -> {
