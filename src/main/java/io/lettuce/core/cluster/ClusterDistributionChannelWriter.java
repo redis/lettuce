@@ -30,8 +30,8 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.*;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
 
 /**

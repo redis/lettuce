@@ -36,7 +36,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -44,20 +43,16 @@ import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.output.ValueOutput;
-import io.lettuce.core.protocol.AsyncCommand;
-import io.lettuce.core.protocol.Command;
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.protocol.*;
 
 /**
+ * Unit tests for {@link ClusterDistributionChannelWriter}.
+ *
  * @author Mark Paluch
+ * @author koisyu
  */
 @ExtendWith(MockitoExtension.class)
 class ClusterDistributionChannelWriterUnitTests {
-
-    @Mock
-    private ClientOptions clientOptions;
 
     @Mock
     private RedisChannelWriter defaultWriter;
@@ -166,21 +161,14 @@ class ClusterDistributionChannelWriterUnitTests {
     }
 
     private void verifyWriteCommandCountWhenRedirecting(boolean isMoved) {
-        final String outputError;
-        if (isMoved) {
-            // MOVED
-            outputError = "MOVED 1234 127.0.0.1:6379";
-        } else {
-            // ASK
-            outputError = "ASK 1234 127.0.0.1:6379";
-        }
+
+        String outputError = isMoved ? "MOVED 1234 127.0.0.1:6379" : "ASK 1234 127.0.0.1:6379";
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8).addKey("KEY");
         ValueOutput<String, String> valueOutput = new ValueOutput<>(StringCodec.UTF8);
         Command<String, String, String> command = new Command<>(CommandType.GET, valueOutput, commandArgs);
         AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
-        ClusterCommand<String, String, String> clusterCommand = new ClusterCommand<>(asyncCommand,
-            defaultWriter, 2);
+        ClusterCommand<String, String, String> clusterCommand = new ClusterCommand<>(asyncCommand, defaultWriter, 2);
         clusterCommand.getOutput().setError(outputError);
         clusterDistributionChannelWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
@@ -188,16 +176,17 @@ class ClusterDistributionChannelWriterUnitTests {
         when(connectFuture.isCompletedExceptionally()).thenReturn(false);
         when(connectFuture.join()).thenReturn(connection);
         when(pooledClusterConnectionProvider.getConnectionAsync(any(Intent.class), anyString(), anyInt()))
-            .thenReturn(connectFuture);
+                .thenReturn(connectFuture);
         when(connection.getChannelWriter()).thenReturn(clusterNodeEndpoint);
 
         clusterDistributionChannelWriter.write(clusterCommand);
+
         if (isMoved) {
             verify(clusterNodeEndpoint, never()).write(anyList());
-            verify(clusterNodeEndpoint, times(1)).write(ArgumentMatchers.<RedisCommand<String, String, String>>any());
+            verify(clusterNodeEndpoint, times(1)).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
         } else {
             verify(clusterNodeEndpoint, times(1)).write(anyList());
-            verify(clusterNodeEndpoint, never()).write(ArgumentMatchers.<RedisCommand<String, String, String>>any());
+            verify(clusterNodeEndpoint, never()).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
         }
     }
 }
