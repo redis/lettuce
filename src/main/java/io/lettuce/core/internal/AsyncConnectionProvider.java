@@ -187,7 +187,14 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
      * @param action the action.
      */
     public void forEach(Consumer<? super T> action) {
-        connections.values().forEach(sync -> sync.doWithConnection(action));
+
+        LettuceAssert.notNull(action, "Action must not be null!");
+
+        connections.values().forEach(sync -> {
+            if (sync != null) {
+                sync.doWithConnection(action);
+            }
+        });
     }
 
     /**
