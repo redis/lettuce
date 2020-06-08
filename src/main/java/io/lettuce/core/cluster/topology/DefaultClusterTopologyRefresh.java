@@ -409,6 +409,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
             connections.put(uri, future);
         }
 
+        @SuppressWarnings("rawtypes")
         public CompletableFuture<Void> close() {
 
             CompletableFuture[] futures = connections.values().stream()
@@ -466,6 +467,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         }
     }
 
+    @SuppressWarnings("serial")
     static class CannotRetrieveClusterPartitions extends RedisException {
 
         private final Map<RedisURI, String> failure;

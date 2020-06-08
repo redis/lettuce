@@ -82,6 +82,7 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
      * @param clientName
      * @deprecated since 6.0, use {@link RedisSentinelAsyncCommands#clientSetname(Object)}.
      */
+    @Deprecated
     public void setClientName(String clientName) {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandKeyword.SETNAME).addValue(clientName);

@@ -408,6 +408,7 @@ public abstract class ScanStream {
         private static final AtomicReferenceFieldUpdater<ScanSubscriber, ScanCursor> CURSOR = AtomicReferenceFieldUpdater
                 .newUpdater(ScanSubscriber.class, ScanCursor.class, "cursor");
 
+        @SuppressWarnings("rawtypes")
         private static final AtomicLongFieldUpdater<ScanSubscriber> EMITTED = AtomicLongFieldUpdater.newUpdater(
                 ScanSubscriber.class, "emitted");
 

@@ -23,6 +23,7 @@ package io.lettuce.core;
  * @since 4.4
  * @deprecated since 6.0, use {@link io.lettuce.core.resource.KqueueProvider} instead.
  */
+@Deprecated
 public class KqueueProvider {
 
     /**
