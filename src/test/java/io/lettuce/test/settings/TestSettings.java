@@ -36,7 +36,7 @@ public class TestSettings {
      *         {@code -Dhost=YourHostName}
      */
     public static String host() {
-        return System.getProperty("host", "192.168.50.16");
+        return System.getProperty("host", "localhost");
     }
 
     /**
