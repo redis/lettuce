@@ -33,6 +33,7 @@ import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.PendingMessage;
+import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.models.stream.PendingParser;
 import io.lettuce.core.output.NestedMultiOutput;
 import io.lettuce.core.protocol.CommandArgs;
@@ -339,6 +340,26 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
         List<Object> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
+
+        List<PendingMessage> pendingMessages = PendingParser.parseRange(pendingEntries);
+        assertThat(pendingMessages).hasSize(1);
+
+        PendingMessage message = pendingMessages.get(0);
+        assertThat(message.getId()).isEqualTo(id);
+        assertThat(message.getConsumer()).isEqualTo("consumer1");
+        assertThat(message.getRedeliveryCount()).isEqualTo(1);
+    }
+
+    @Test
+    void xpendingUnlimited() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        List<Object> pendingEntries = redis.xpending(key, Consumer.from("group", "consumer1"), Range.unbounded(),
+                Limit.unlimited());
 
         List<PendingMessage> pendingMessages = PendingParser.parseRange(pendingEntries);
         assertThat(pendingMessages).hasSize(1);
