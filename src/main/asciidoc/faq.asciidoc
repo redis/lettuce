@@ -1,0 +1,5 @@
+:client-options-link: <<client-options>>
+
+[[faq]]
+== Frequently Asked Questions
+include::{ext-doc}/Frequently-Asked-Questions.asciidoc[leveloffset=+1]

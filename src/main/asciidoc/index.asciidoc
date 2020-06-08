@@ -30,3 +30,4 @@ include::advanced-usage.asciidoc[]
 
 include::integration-extension.asciidoc[]
 
+include::faq.asciidoc[]
