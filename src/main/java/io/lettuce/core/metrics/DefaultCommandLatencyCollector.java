@@ -91,20 +91,25 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             return;
         }
 
-        if (PAUSE_DETECTOR_UPDATER.get(this) == null) {
-            if (PAUSE_DETECTOR_UPDATER.compareAndSet(this, null, GLOBAL_PAUSE_DETECTOR)) {
-                PAUSE_DETECTOR_UPDATER.get(this).retain();
-            }
-        }
-        PauseDetector pauseDetector = ((DefaultPauseDetectorWrapper) PAUSE_DETECTOR_UPDATER.get(this)).getPauseDetector();
+        PauseDetector pauseDetector;
 
+        do {
+            if (PAUSE_DETECTOR_UPDATER.get(this) == null) {
+                if (PAUSE_DETECTOR_UPDATER.compareAndSet(this, null, GLOBAL_PAUSE_DETECTOR)) {
+                    PAUSE_DETECTOR_UPDATER.get(this).retain();
+                }
+            }
+            pauseDetector = ((DefaultPauseDetectorWrapper) PAUSE_DETECTOR_UPDATER.get(this)).getPauseDetector();
+        } while (pauseDetector == null);
+
+        PauseDetector pauseDetectorToUse = pauseDetector;
         Latencies latencies = latencyMetricsRef.get().computeIfAbsent(createId(local, remote, commandType), id -> {
 
             if (options.resetLatenciesAfterEvent()) {
-                return new Latencies(pauseDetector);
+                return new Latencies(pauseDetectorToUse);
             }
 
-            return new CummulativeLatencies(pauseDetector);
+            return new CummulativeLatencies(pauseDetectorToUse);
         });
 
         latencies.firstResponse.recordLatency(rangify(firstResponseLatency));
@@ -352,18 +357,10 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
         /**
          * Obtain the current {@link PauseDetector}. Requires a call to {@link #retain()} first.
-         * 
+         *
          * @return
          */
         public PauseDetector getPauseDetector() {
-
-            for (;;) {
-
-                if (pauseDetector != null) {
-                    break;
-                }
-            }
-
             return pauseDetector;
         }
 
