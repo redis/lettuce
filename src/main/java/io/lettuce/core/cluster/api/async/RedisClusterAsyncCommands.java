@@ -83,7 +83,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
     RedisFuture<String> clusterMeet(String ip, int port);
 
     /**
-     * Blacklist and remove the cluster node from the cluster.
+     * Disallow connections and remove the cluster node from the cluster.
      *
      * @param nodeId the node Id
      * @return String simple-string-reply
@@ -91,7 +91,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
     RedisFuture<String> clusterForget(String nodeId);
 
     /**
-     * Adds slots to the cluster node. The current node will become the master for the specified slots.
+     * Adds slots to the cluster node. The current node will become the upstream for the specified slots.
      *
      * @param slots one or more slots from {@literal 0} to {@literal 16384}
      * @return String simple-string-reply

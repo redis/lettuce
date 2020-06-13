@@ -84,7 +84,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
     Mono<String> clusterMeet(String ip, int port);
 
     /**
-     * Blacklist and remove the cluster node from the cluster.
+     * Disallow connections and remove the cluster node from the cluster.
      *
      * @param nodeId the node Id
      * @return String simple-string-reply

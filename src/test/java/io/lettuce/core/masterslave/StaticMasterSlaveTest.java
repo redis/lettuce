@@ -45,7 +45,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
     private StatefulRedisMasterSlaveConnection<String, String> connection;
 
-    private RedisURI master;
+    private RedisURI upstream;
     private RedisURI replica;
 
     private RedisCommands<String, String> connection1;
@@ -63,12 +63,11 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
         RedisInstance node1Instance = RoleParser.parse(this.connection1.role());
         RedisInstance node2Instance = RoleParser.parse(this.connection2.role());
 
-        if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
-            master = node1;
+        if (node1Instance.getRole().isUpstream() && node2Instance.getRole().isReplica()) {
+            upstream = node1;
             replica = node2;
-        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
-                && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
-            master = node2;
+        } else if (node2Instance.getRole().isUpstream() && node1Instance.getRole().isReplica()) {
+            upstream = node2;
             replica = node1;
         } else {
             assumeTrue(false,
@@ -84,10 +83,10 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
         this.connection2.auth(passwd);
         this.connection2.configSet("masterauth", passwd);
 
-        master.setPassword(passwd);
+        upstream.setPassword(passwd);
         replica.setPassword(passwd);
 
-        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(master, replica));
+        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(upstream, replica));
         connection.setReadFrom(ReadFrom.REPLICA);
     }
 
@@ -141,7 +140,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(master));
+        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(upstream));
         connection.setReadFrom(ReadFrom.REPLICA);
 
         assertThatThrownBy(() -> slaveCall(connection)).isInstanceOf(RedisException.class);
@@ -152,7 +151,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(master));
+        connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(upstream));
 
         connection.sync().set(key, value);
         assertThat(connection.sync().get(key)).isEqualTo("value");
@@ -164,7 +163,7 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
         connection.close();
 
         connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(replica));
-        connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
+        connection.setReadFrom(ReadFrom.UPSTREAM_PREFERRED);
 
         assertThat(connection.sync().info()).isNotEmpty();
     }

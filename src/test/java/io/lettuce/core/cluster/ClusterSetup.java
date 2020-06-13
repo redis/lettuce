@@ -78,7 +78,7 @@ class ClusterSetup {
             clusterRule.getClusterClient().reloadPartitions();
 
             return partitionStream(clusterRule)
-                    .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER)).count();
+                    .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM)).count();
         }).waitOrTimeout();
 
         connection.getStatefulConnection().close();
@@ -119,12 +119,13 @@ class ClusterSetup {
         Wait.untilEquals(1L, () -> {
             clusterRule.getClusterClient().reloadPartitions();
             return partitionStream(clusterRule)
-                    .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER)).count();
+                    .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM)).count();
         }).waitOrTimeout();
 
         Wait.untilEquals(1L, () -> {
             clusterRule.getClusterClient().reloadPartitions();
-            return partitionStream(clusterRule).filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE))
+            return partitionStream(clusterRule)
+                    .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA))
                     .count();
         }).waitOrTimeout();
 

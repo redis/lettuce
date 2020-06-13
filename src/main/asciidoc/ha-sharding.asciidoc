@@ -1,5 +1,5 @@
 :redis-sentinel-link: <<redis-sentinel>>
-:master-replica-api-link: <<master-slave>>
+:upstream-replica-api-link: <<upstream-replica>>
 :cco-up-to-5-times: <<clientoptions.cluster-specific-options,up to 5 times>>
 :cco-link: <<clientoptions.cluster-specific-options,Cluster-specific Client options>>
 :cco-periodic-link: <<clientoptions.cluster-specific-options,Periodic updates>>
@@ -10,11 +10,14 @@
 
 [[master-slave]]
 [[master-replica]]
-=== Master/Replica
-include::{ext-doc}/Master-Replica.asciidoc[leveloffset=+2]
+[[upstream-replica]]
+=== Upstream/Replica
+
+include::{ext-doc}/Upstream-Replica.asciidoc[leveloffset=+2]
 
 [[redis-sentinel]]
 === Redis Sentinel
+
 include::{ext-doc}/Redis-Sentinel.asciidoc[leveloffset=+2]
 
 [[redis-cluster]]

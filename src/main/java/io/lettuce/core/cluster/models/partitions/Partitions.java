@@ -34,8 +34,8 @@ import io.lettuce.core.internal.LettuceAssert;
  * Topology changes are:
  *
  * <ul>
- * <li>Changes in {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#MASTER}/
- * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#SLAVE} state</li>
+ * <li>Changes in {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#UPSTREAM}/
+ * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#REPLICA} state</li>
  * <li>Newly added or removed nodes to/from the Redis Cluster</li>
  * <li>Changes in {@link RedisClusterNode#getSlots()} responsibility</li>
  * <li>Changes to the {@link RedisClusterNode#getSlaveOf() replication source} (the master of a replica)</li>

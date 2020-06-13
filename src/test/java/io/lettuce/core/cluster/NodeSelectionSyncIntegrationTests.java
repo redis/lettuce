@@ -114,18 +114,18 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
 
         Partitions partitions = commands.getStatefulConnection().getPartitions();
         partitions.forEach(
-                redisClusterNode -> redisClusterNode.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER)));
+                redisClusterNode -> redisClusterNode.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.UPSTREAM)));
 
         NodeSelection<String, String> selection = commands
                 .nodes(redisClusterNode -> redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF), true);
 
         assertThat(selection.asMap()).hasSize(0);
         partitions.getPartition(0)
-                .setFlags(LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
+                .setFlags(LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.UPSTREAM));
         assertThat(selection.asMap()).hasSize(1);
 
         partitions.getPartition(1)
-                .setFlags(LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
+                .setFlags(LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.UPSTREAM));
         assertThat(selection.asMap()).hasSize(2);
 
         clusterClient.reloadPartitions();
@@ -206,14 +206,14 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testSlavesWithReadOnly() {
+    void testReplicasWithReadOnly() {
 
         int slot = SlotHash.getSlot(key);
         Optional<RedisClusterNode> master = clusterClient.getPartitions().getPartitions().stream()
                 .filter(redisClusterNode -> redisClusterNode.hasSlot(slot)).findFirst();
 
         NodeSelection<String, String> nodes = commands
-                .slaves(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)
+                .slaves(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA)
                         && redisClusterNode.getSlaveOf().equals(master.get().getNodeId()));
 
         assertThat(nodes.size()).isEqualTo(1);

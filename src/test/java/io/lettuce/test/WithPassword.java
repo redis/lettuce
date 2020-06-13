@@ -86,7 +86,10 @@ public class WithPassword {
      */
     public static void disableAuthentication(RedisCommands<String, String> commands) {
 
-        commands.auth(TestSettings.password()); // reauthenticate as default user before disabling it
+        try {
+            commands.auth(TestSettings.password()); // reauthenticate as default user before disabling it
+        } catch (Exception e) {
+        }
 
         RedisConditions conditions = RedisConditions.of(commands);
         commands.configSet("requirepass", "");

@@ -23,7 +23,7 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.masterreplica.MasterReplicaConnectionProvider.Intent;
+import io.lettuce.core.masterreplica.UpstreamReplicaConnectionProvider.Intent;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
@@ -34,17 +34,17 @@ import io.lettuce.core.resource.ClientResources;
  *
  * @author Mark Paluch
  */
-class MasterReplicaChannelWriter implements RedisChannelWriter {
+class UpstreamReplicaChannelWriter implements RedisChannelWriter {
 
-    private MasterReplicaConnectionProvider<?, ?> masterReplicaConnectionProvider;
+    private UpstreamReplicaConnectionProvider<?, ?> upstreamReplicaConnectionProvider;
     private final ClientResources clientResources;
 
     private boolean closed = false;
     private boolean inTransaction;
 
-    MasterReplicaChannelWriter(MasterReplicaConnectionProvider<?, ?> masterReplicaConnectionProvider,
+    UpstreamReplicaChannelWriter(UpstreamReplicaConnectionProvider<?, ?> upstreamReplicaConnectionProvider,
             ClientResources clientResources) {
-        this.masterReplicaConnectionProvider = masterReplicaConnectionProvider;
+        this.upstreamReplicaConnectionProvider = upstreamReplicaConnectionProvider;
         this.clientResources = clientResources;
     }
 
@@ -63,7 +63,7 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         }
 
         Intent intent = inTransaction ? Intent.WRITE : getIntent(command.getType());
-        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterReplicaConnectionProvider
+        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) upstreamReplicaConnectionProvider
                 .getConnectionAsync(intent);
 
         if (isEndTransaction(command.getType())) {
@@ -116,7 +116,7 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         // Currently: Retain order
         Intent intent = inTransaction ? Intent.WRITE : getIntent(commands);
 
-        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterReplicaConnectionProvider
+        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) upstreamReplicaConnectionProvider
                 .getConnectionAsync(intent);
 
         for (RedisCommand<K, V, ?> command : commands) {
@@ -205,9 +205,9 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
 
         CompletableFuture<Void> future = null;
 
-        if (masterReplicaConnectionProvider != null) {
-            future = masterReplicaConnectionProvider.closeAsync();
-            masterReplicaConnectionProvider = null;
+        if (upstreamReplicaConnectionProvider != null) {
+            future = upstreamReplicaConnectionProvider.closeAsync();
+            upstreamReplicaConnectionProvider = null;
         }
 
         if (future == null) {
@@ -217,8 +217,8 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         return future;
     }
 
-    MasterReplicaConnectionProvider<?, ?> getMasterReplicaConnectionProvider() {
-        return masterReplicaConnectionProvider;
+    UpstreamReplicaConnectionProvider<?, ?> getUpstreamReplicaConnectionProvider() {
+        return upstreamReplicaConnectionProvider;
     }
 
     @Override
@@ -232,17 +232,17 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
 
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
-        masterReplicaConnectionProvider.setAutoFlushCommands(autoFlush);
+        upstreamReplicaConnectionProvider.setAutoFlushCommands(autoFlush);
     }
 
     @Override
     public void flushCommands() {
-        masterReplicaConnectionProvider.flushCommands();
+        upstreamReplicaConnectionProvider.flushCommands();
     }
 
     @Override
     public void reset() {
-        masterReplicaConnectionProvider.reset();
+        upstreamReplicaConnectionProvider.reset();
     }
 
     /**
@@ -252,16 +252,16 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
      * @param readFrom the read from setting, must not be {@literal null}
      */
     public void setReadFrom(ReadFrom readFrom) {
-        masterReplicaConnectionProvider.setReadFrom(readFrom);
+        upstreamReplicaConnectionProvider.setReadFrom(readFrom);
     }
 
     /**
-     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
+     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#UPSTREAM} if not set.
      *
      * @return the read from setting
      */
     public ReadFrom getReadFrom() {
-        return masterReplicaConnectionProvider.getReadFrom();
+        return upstreamReplicaConnectionProvider.getReadFrom();
     }
 
     private static boolean isSuccessfullyCompleted(CompletableFuture<?> connectFuture) {

@@ -37,8 +37,7 @@ class RoleParserUnitTests {
 
     @Test
     void testMappings() {
-        assertThat(RoleParser.ROLE_MAPPING).hasSameSizeAs(RedisInstance.Role.values());
-        assertThat(RoleParser.SLAVE_STATE_MAPPING).hasSameSizeAs(RedisSlaveInstance.State.values());
+        assertThat(RoleParser.REPLICA_STATE_MAPPING).hasSameSizeAs(RedisSlaveInstance.State.values());
     }
 
     @Test
@@ -58,7 +57,7 @@ class RoleParserUnitTests {
     }
 
     @Test
-    void master() {
+    void upstream() {
 
         List<List<String>> slaves = LettuceLists.newList(LettuceLists.newList(LOCALHOST, "9001", "" + REPLICATION_OFFSET_2),
                 LettuceLists.newList(LOCALHOST, "9002", "3129543"));
@@ -67,7 +66,7 @@ class RoleParserUnitTests {
 
         RedisInstance result = RoleParser.parse(input);
 
-        assertThat(result.getRole()).isEqualTo(RedisInstance.Role.MASTER);
+        assertThat(result.getRole().isUpstream()).isTrue();
         assertThat(result instanceof RedisMasterInstance).isTrue();
 
         RedisMasterInstance instance = (RedisMasterInstance) result;
@@ -75,32 +74,31 @@ class RoleParserUnitTests {
         assertThat(instance.getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_1);
         assertThat(instance.getSlaves()).hasSize(2);
 
-        ReplicationPartner slave1 = instance.getSlaves().get(0);
-        assertThat(slave1.getHost().getHostText()).isEqualTo(LOCALHOST);
-        assertThat(slave1.getHost().getPort()).isEqualTo(9001);
-        assertThat(slave1.getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_2);
+        ReplicationPartner replica1 = instance.getSlaves().get(0);
+        assertThat(replica1.getHost().getHostText()).isEqualTo(LOCALHOST);
+        assertThat(replica1.getHost().getPort()).isEqualTo(9001);
+        assertThat(replica1.getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_2);
 
         assertThat(instance.toString()).startsWith(RedisMasterInstance.class.getSimpleName());
-        assertThat(slave1.toString()).startsWith(ReplicationPartner.class.getSimpleName());
-
+        assertThat(replica1.toString()).startsWith(ReplicationPartner.class.getSimpleName());
     }
 
     @Test
-    void slave() {
+    void replica() {
 
         List<?> input = LettuceLists.newList("slave", LOCALHOST, 9000L, "connected", REPLICATION_OFFSET_1);
 
         RedisInstance result = RoleParser.parse(input);
 
-        assertThat(result.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
-        assertThat(result instanceof RedisSlaveInstance).isTrue();
+        assertThat(result.getRole().isReplica()).isTrue();
+        assertThat(result instanceof RedisReplicaInstance).isTrue();
 
-        RedisSlaveInstance instance = (RedisSlaveInstance) result;
+        RedisReplicaInstance instance = (RedisReplicaInstance) result;
 
-        assertThat(instance.getMaster().getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_1);
-        assertThat(instance.getState()).isEqualTo(RedisSlaveInstance.State.CONNECTED);
+        assertThat(instance.getUpstream().getReplicationOffset()).isEqualTo(REPLICATION_OFFSET_1);
+        assertThat(instance.getState()).isEqualTo(RedisReplicaInstance.State.CONNECTED);
 
-        assertThat(instance.toString()).startsWith(RedisSlaveInstance.class.getSimpleName());
+        assertThat(instance.toString()).startsWith(RedisReplicaInstance.class.getSimpleName());
 
     }
 

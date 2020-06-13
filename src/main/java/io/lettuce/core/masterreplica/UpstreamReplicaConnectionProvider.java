@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static io.lettuce.core.masterreplica.MasterReplicaUtils.findNodeByHostAndPort;
+import static io.lettuce.core.masterreplica.ReplicaUtils.findNodeByHostAndPort;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +33,6 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
 import io.lettuce.core.internal.Exceptions;
-import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -44,9 +43,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @since 4.1
  */
-class MasterReplicaConnectionProvider<K, V> {
+class UpstreamReplicaConnectionProvider<K, V> {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterReplicaConnectionProvider.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(UpstreamReplicaConnectionProvider.class);
     private final boolean debugEnabled = logger.isDebugEnabled();
 
     private final RedisURI initialRedisUri;
@@ -58,7 +57,7 @@ class MasterReplicaConnectionProvider<K, V> {
     private final Object stateLock = new Object();
     private ReadFrom readFrom;
 
-    MasterReplicaConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
+    UpstreamReplicaConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
             Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections) {
 
         this.initialRedisUri = initialRedisUri;
@@ -74,9 +73,9 @@ class MasterReplicaConnectionProvider<K, V> {
     }
 
     /**
-     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link MasterReplicaConnectionProvider.Intent#WRITE} intentions
-     * use the master connection, {@link MasterReplicaConnectionProvider.Intent#READ} intentions lookup one or more read
-     * candidates using the {@link ReadFrom} setting.
+     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link UpstreamReplicaConnectionProvider.Intent#WRITE}
+     * intentions use the master connection, {@link UpstreamReplicaConnectionProvider.Intent#READ} intentions lookup one or more
+     * read candidates using the {@link ReadFrom} setting.
      *
      * @param intent command intent
      * @return the connection.
@@ -95,9 +94,9 @@ class MasterReplicaConnectionProvider<K, V> {
     }
 
     /**
-     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link MasterReplicaConnectionProvider.Intent#WRITE} intentions
-     * use the master connection, {@link MasterReplicaConnectionProvider.Intent#READ} intentions lookup one or more read
-     * candidates using the {@link ReadFrom} setting.
+     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link UpstreamReplicaConnectionProvider.Intent#WRITE}
+     * intentions use the master connection, {@link UpstreamReplicaConnectionProvider.Intent#READ} intentions lookup one or more
+     * read candidates using the {@link ReadFrom} setting.
      *
      * @param intent command intent
      * @return the connection.
@@ -295,7 +294,7 @@ class MasterReplicaConnectionProvider<K, V> {
     public RedisNodeDescription getMaster() {
 
         for (RedisNodeDescription knownNode : knownNodes) {
-            if (knownNode.getRole() == RedisInstance.Role.MASTER) {
+            if (knownNode.getRole().isUpstream()) {
                 return knownNode;
             }
         }

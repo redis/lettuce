@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import io.lettuce.core.internal.LettuceLists;
-import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
@@ -32,20 +31,20 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  */
 class ReadFromImpl {
 
-    private static final Predicate<RedisNodeDescription> IS_MASTER = node -> node.getRole() == RedisInstance.Role.MASTER;
+    private static final Predicate<RedisNodeDescription> IS_UPSTREAM = node -> node.getRole().isUpstream();
 
-    private static final Predicate<RedisNodeDescription> IS_REPLICA = node -> node.getRole() == RedisInstance.Role.SLAVE;
+    private static final Predicate<RedisNodeDescription> IS_REPLICA = node -> node.getRole().isReplica();
 
     /**
-     * Read from master only.
+     * Read from upstream only.
      */
-    static final class ReadFromMaster extends ReadFrom {
+    static final class ReadFromUpstream extends ReadFrom {
 
         @Override
         public List<RedisNodeDescription> select(Nodes nodes) {
 
             for (RedisNodeDescription node : nodes) {
-                if (node.getRole() == RedisInstance.Role.MASTER) {
+                if (node.getRole().isUpstream()) {
                     return LettuceLists.newList(node);
                 }
             }
@@ -55,12 +54,12 @@ class ReadFromImpl {
     }
 
     /**
-     * Read from master and replicas. Prefer master reads and fall back to replicas if the master is not available.
+     * Read from upstream and replicas. Prefer upstream reads and fall back to replicas if the upstream is not available.
      */
-    static final class ReadFromMasterPreferred extends OrderedPredicateReadFromAdapter {
+    static final class ReadFromUpstreamPreferred extends OrderedPredicateReadFromAdapter {
 
-        ReadFromMasterPreferred() {
-            super(IS_MASTER, IS_REPLICA);
+        ReadFromUpstreamPreferred() {
+            super(IS_UPSTREAM, IS_REPLICA);
         }
     }
 
@@ -75,12 +74,12 @@ class ReadFromImpl {
     }
 
     /**
-     * Read from master and replicas. Prefer replica reads and fall back to master if the no replica is not available.
+     * Read from upstream and replicas. Prefer replica reads and fall back to upstream if the no replica is not available.
      */
     static final class ReadFromReplicaPreferred extends OrderedPredicateReadFromAdapter {
 
         ReadFromReplicaPreferred() {
-            super(IS_REPLICA, IS_MASTER);
+            super(IS_REPLICA, IS_UPSTREAM);
         }
     }
 

@@ -56,7 +56,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
     @BeforeEach
     void setUp() {
         this.redis.flushall();
-        this.connection.setReadFrom(ReadFrom.MASTER);
+        this.connection.setReadFrom(ReadFrom.UPSTREAM);
     }
 
     @Test

@@ -32,27 +32,27 @@ class RoundRobin<V> {
     protected volatile V offset;
 
     /**
-     * Return whether this {@link RoundRobin} is still consistent and contains all items from the master {@link Collection} and
+     * Return whether this {@link RoundRobin} is still consistent and contains all items from the leader {@link Collection} and
      * vice versa.
      *
-     * @param master the master collection containing source elements for this {@link RoundRobin}.
-     * @return {@literal true} if this {@link RoundRobin} is consistent with the master {@link Collection}.
+     * @param leader the leader collection containing source elements for this {@link RoundRobin}.
+     * @return {@literal true} if this {@link RoundRobin} is consistent with the leader {@link Collection}.
      */
-    public boolean isConsistent(Collection<? extends V> master) {
+    public boolean isConsistent(Collection<? extends V> leader) {
 
         Collection<? extends V> collection = this.collection;
 
-        return collection.containsAll(master) && master.containsAll(collection);
+        return collection.containsAll(leader) && leader.containsAll(collection);
     }
 
     /**
-     * Rebuild the {@link RoundRobin} from the master {@link Collection}.
+     * Rebuild the {@link RoundRobin} from the leader {@link Collection}.
      *
-     * @param master the master collection containing source elements for this {@link RoundRobin}.
+     * @param leader the leader collection containing source elements for this {@link RoundRobin}.
      */
-    public void rebuild(Collection<? extends V> master) {
+    public void rebuild(Collection<? extends V> leader) {
 
-        this.collection = new ArrayList<>(master);
+        this.collection = new ArrayList<>(leader);
         this.offset = null;
     }
 

@@ -44,9 +44,9 @@ class ReadFromUnitTests {
     @BeforeEach
     void before() {
 
-        master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
-        nearest.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
-        replica.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
+        master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.UPSTREAM));
+        nearest.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.REPLICA));
+        replica.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.REPLICA));
 
         sut.addPartition(nearest);
         sut.addPartition(master);
@@ -55,13 +55,13 @@ class ReadFromUnitTests {
 
     @Test
     void master() {
-        List<RedisNodeDescription> result = ReadFrom.MASTER.select(getNodes());
+        List<RedisNodeDescription> result = ReadFrom.UPSTREAM.select(getNodes());
         assertThat(result).hasSize(1).containsOnly(master);
     }
 
     @Test
     void masterPreferred() {
-        List<RedisNodeDescription> result = ReadFrom.MASTER_PREFERRED.select(getNodes());
+        List<RedisNodeDescription> result = ReadFrom.UPSTREAM_PREFERRED.select(getNodes());
         assertThat(result).hasSize(3).containsExactly(master, nearest, replica);
     }
 
@@ -100,12 +100,12 @@ class ReadFromUnitTests {
 
     @Test
     void valueOfMaster() {
-        assertThat(ReadFrom.valueOf("master")).isEqualTo(ReadFrom.MASTER);
+        assertThat(ReadFrom.valueOf("master")).isEqualTo(ReadFrom.UPSTREAM);
     }
 
     @Test
     void valueOfMasterPreferred() {
-        assertThat(ReadFrom.valueOf("masterPreferred")).isEqualTo(ReadFrom.MASTER_PREFERRED);
+        assertThat(ReadFrom.valueOf("masterPreferred")).isEqualTo(ReadFrom.UPSTREAM_PREFERRED);
     }
 
     @Test

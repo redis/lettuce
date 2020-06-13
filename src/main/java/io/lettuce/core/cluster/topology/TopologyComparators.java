@@ -117,7 +117,7 @@ public class TopologyComparators {
      *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
+     * @return {@literal true} if {@code UPSTREAM} or {@code REPLICA} flags changed or the responsible slots changed.
      */
     public static boolean isChanged(Partitions o1, Partitions o2) {
 
@@ -135,11 +135,11 @@ public class TopologyComparators {
     }
 
     /**
-     * Check for {@code MASTER} or {@code SLAVE} flags and whether the responsible slots changed.
+     * Check for {@code UPSTREAM} or {@code REPLICA} flags and whether the responsible slots changed.
      *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
+     * @return {@literal true} if {@code UPSTREAM} or {@code REPLICA} flags changed or the responsible slots changed.
      */
     static boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
 
@@ -147,11 +147,11 @@ public class TopologyComparators {
             return false;
         }
 
-        if (!sameFlags(o1, o2, RedisClusterNode.NodeFlag.MASTER)) {
+        if (!sameFlags(o1, o2, RedisClusterNode.NodeFlag.UPSTREAM)) {
             return false;
         }
 
-        if (!sameFlags(o1, o2, RedisClusterNode.NodeFlag.SLAVE)) {
+        if (!sameFlags(o1, o2, RedisClusterNode.NodeFlag.REPLICA)) {
             return false;
         }
 
@@ -164,11 +164,11 @@ public class TopologyComparators {
 
     private static boolean sameFlags(RedisClusterNode base, RedisClusterNode other, RedisClusterNode.NodeFlag flag) {
 
-        if (base.getFlags().contains(flag)) {
-            return other.getFlags().contains(flag);
+        if (base.is(flag)) {
+            return other.is(flag);
         }
 
-        return !other.getFlags().contains(flag);
+        return !other.is(flag);
     }
 
     static class PredefinedRedisClusterNodeComparator implements Comparator<RedisClusterNode> {

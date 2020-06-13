@@ -102,7 +102,7 @@ class ClusterReactiveCommandIntegrationTests {
     @Test
     void clusterSlaves() {
 
-        RedisClusterNode master = clusterClient.getPartitions().stream().filter(it -> it.is(RedisClusterNode.NodeFlag.MASTER))
+        RedisClusterNode master = clusterClient.getPartitions().stream().filter(it -> it.is(RedisClusterNode.NodeFlag.UPSTREAM))
                 .findFirst().get();
 
         List<String> result = reactive.clusterSlaves(master.getNodeId()).collectList().block();

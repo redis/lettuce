@@ -30,6 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
 import io.lettuce.core.internal.ExceptionFactory;
+import io.lettuce.core.masterreplica.MasterReplica;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
@@ -60,12 +61,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>Redis Standalone</li>
  * <li>Redis Pub/Sub</li>
  * <li>Redis Sentinel, Sentinel connections</li>
- * <li>Redis Sentinel, Master connections</li>
+ * <li>Redis Sentinel, Upstream connections</li>
  * </ul>
  *
- * Redis Cluster is used through {@link io.lettuce.core.cluster.RedisClusterClient}. Master/Replica connections through
- * {@link io.lettuce.core.masterreplica.MasterReplica} provide connections to Redis Master/Replica setups which run either in a
- * static Master/Replica setup or are managed by Redis Sentinel.
+ * Redis Cluster is used through {@link io.lettuce.core.cluster.RedisClusterClient}. Upstream/Replica connections through
+ * {@link MasterReplica} provide connections to Redis Upstream/Replica ("Master/Slave") setups which run either in a static
+ * Upstream/Replica setup or are managed by Redis Sentinel.
  * <p>
  * {@link RedisClient} is an expensive resource. It holds a set of netty's {@link io.netty.channel.EventLoopGroup}'s that use
  * multiple threads. Reuse this instance as much as possible or share a {@link ClientResources} instance amongst multiple client
@@ -81,7 +82,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @see RedisCodec
  * @see ClientOptions
  * @see ClientResources
- * @see io.lettuce.core.masterreplica.MasterReplica
+ * @see MasterReplica
  * @see io.lettuce.core.cluster.RedisClusterClient
  */
 public class RedisClient extends AbstractRedisClient {

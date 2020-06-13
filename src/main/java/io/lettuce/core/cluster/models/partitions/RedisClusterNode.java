@@ -277,8 +277,8 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Sets the list of slots for which this {@link RedisClusterNode} is the
-     * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#MASTER}. The list is empty if this node is not
-     * a master or the node is not responsible for any slots at all.
+     * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#UPSTREAM}. The list is empty if this node is
+     * not a upstream or the node is not responsible for any slots at all.
      *
      * @param slots list of slots, must not be {@literal null} but may be empty
      */
@@ -350,6 +350,15 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @return true if the {@linkplain NodeFlag} is contained within the flags.
      */
     public boolean is(NodeFlag nodeFlag) {
+
+        if (nodeFlag == NodeFlag.MASTER || nodeFlag == NodeFlag.UPSTREAM) {
+            return getFlags().contains(NodeFlag.MASTER) || getFlags().contains(NodeFlag.UPSTREAM);
+        }
+
+        if (nodeFlag == NodeFlag.SLAVE || nodeFlag == NodeFlag.REPLICA) {
+            return getFlags().contains(NodeFlag.SLAVE) || getFlags().contains(NodeFlag.REPLICA);
+        }
+
         return getFlags().contains(nodeFlag);
     }
 
@@ -383,7 +392,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      */
     @Override
     public Role getRole() {
-        return is(NodeFlag.MASTER) ? Role.MASTER : Role.SLAVE;
+        return is(NodeFlag.UPSTREAM) ? Role.UPSTREAM : Role.REPLICA;
     }
 
     @Override
@@ -433,6 +442,21 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * Redis Cluster node flags.
      */
     public enum NodeFlag {
-        NOFLAGS, MYSELF, SLAVE, REPLICA, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
+        NOFLAGS, MYSELF, //
+
+        /**
+         * Synonym for {@link #REPLICA}.
+         */
+        @Deprecated
+        SLAVE,
+
+        REPLICA, //
+
+        /**
+         * Synonym for {@link #UPSTREAM}.
+         */
+        @Deprecated
+        MASTER, UPSTREAM, //
+        EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }
 }

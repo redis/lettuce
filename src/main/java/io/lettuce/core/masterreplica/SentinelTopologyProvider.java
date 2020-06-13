@@ -107,9 +107,9 @@ class SentinelTopologyProvider implements TopologyProvider {
 
             List<RedisNodeDescription> result = new ArrayList<>();
 
-            result.add(toNode(tuple.getT1(), RedisInstance.Role.MASTER));
+            result.add(toNode(tuple.getT1(), RedisInstance.Role.UPSTREAM));
             result.addAll(tuple.getT2().stream().filter(SentinelTopologyProvider::isAvailable)
-                    .map(map -> toNode(map, RedisInstance.Role.SLAVE)).collect(Collectors.toList()));
+                    .map(map -> toNode(map, RedisInstance.Role.REPLICA)).collect(Collectors.toList()));
 
             return result;
         });
@@ -130,7 +130,7 @@ class SentinelTopologyProvider implements TopologyProvider {
 
         String ip = map.get("ip");
         String port = map.get("port");
-        return new RedisMasterReplicaNode(ip, Integer.parseInt(port), sentinelUri, role);
+        return new RedisUpstreamReplicaNode(ip, Integer.parseInt(port), sentinelUri, role);
     }
 
 }

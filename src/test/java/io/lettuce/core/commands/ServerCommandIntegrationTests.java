@@ -372,7 +372,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
         assertThat(objects.get(1).getClass()).isEqualTo(Long.class);
 
         RedisInstance redisInstance = RoleParser.parse(objects);
-        assertThat(redisInstance.getRole()).isEqualTo(RedisInstance.Role.MASTER);
+        assertThat(redisInstance.getRole().isUpstream()).isTrue();
     }
 
     @Test

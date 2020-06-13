@@ -21,11 +21,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.lettuce.core.internal.Exceptions;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -39,7 +39,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @since 4.1
  */
-class MasterReplicaTopologyProvider implements TopologyProvider {
+class ReplicaTopologyProvider implements TopologyProvider {
 
     public static final Pattern ROLE_PATTERN = Pattern.compile("^role\\:([a-z]+)$", Pattern.MULTILINE);
     public static final Pattern SLAVE_PATTERN = Pattern.compile("^slave(\\d+)\\:([a-zA-Z\\,\\=\\d\\.\\:]+)$",
@@ -50,18 +50,18 @@ class MasterReplicaTopologyProvider implements TopologyProvider {
     public static final Pattern IP_PATTERN = Pattern.compile("ip\\=([a-zA-Z\\d\\.\\:]+)");
     public static final Pattern PORT_PATTERN = Pattern.compile("port\\=([\\d]+)");
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterReplicaTopologyProvider.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(ReplicaTopologyProvider.class);
 
     private final StatefulRedisConnection<?, ?> connection;
     private final RedisURI redisURI;
 
     /**
-     * Creates a new {@link MasterReplicaTopologyProvider}.
+     * Creates a new {@link ReplicaTopologyProvider}.
      *
      * @param connection must not be {@literal null}
      * @param redisURI must not be {@literal null}
      */
-    public MasterReplicaTopologyProvider(StatefulRedisConnection<?, ?> connection, RedisURI redisURI) {
+    public ReplicaTopologyProvider(StatefulRedisConnection<?, ?> connection, RedisURI redisURI) {
 
         LettuceAssert.notNull(connection, "Redis Connection must not be null");
         LettuceAssert.notNull(redisURI, "RedisURI must not be null");
@@ -105,7 +105,7 @@ class MasterReplicaTopologyProvider implements TopologyProvider {
 
         result.add(currentNodeDescription);
 
-        if (currentNodeDescription.getRole() == RedisInstance.Role.MASTER) {
+        if (currentNodeDescription.getRole().isUpstream()) {
             result.addAll(getReplicasFromInfo(info));
         } else {
             result.add(getMasterFromInfo(info));
@@ -136,7 +136,7 @@ class MasterReplicaTopologyProvider implements TopologyProvider {
             String ip = getNested(IP_PATTERN, group, 1);
             String port = getNested(PORT_PATTERN, group, 1);
 
-            replicas.add(new RedisMasterReplicaNode(ip, Integer.parseInt(port), redisURI, RedisInstance.Role.SLAVE));
+            replicas.add(new RedisUpstreamReplicaNode(ip, Integer.parseInt(port), redisURI, RedisInstance.Role.SLAVE));
         }
 
         return replicas;
@@ -157,7 +157,7 @@ class MasterReplicaTopologyProvider implements TopologyProvider {
         String host = masterHostMatcher.group(1);
         int port = Integer.parseInt(masterPortMatcher.group(1));
 
-        return new RedisMasterReplicaNode(host, port, redisURI, RedisInstance.Role.MASTER);
+        return new RedisUpstreamReplicaNode(host, port, redisURI, RedisInstance.Role.UPSTREAM);
     }
 
     private String getNested(Pattern pattern, String string, int group) {
@@ -177,19 +177,20 @@ class MasterReplicaTopologyProvider implements TopologyProvider {
         RedisInstance.Role role = null;
 
         if (RedisInstance.Role.MASTER.name().equalsIgnoreCase(roleString)) {
-            role = RedisInstance.Role.MASTER;
+            role = RedisInstance.Role.UPSTREAM;
         }
 
-        if (RedisInstance.Role.SLAVE.name().equalsIgnoreCase(roleString)) {
-            role = RedisInstance.Role.SLAVE;
+        if (RedisInstance.Role.SLAVE.name().equalsIgnoreCase(roleString)
+                | RedisInstance.Role.REPLICA.name().equalsIgnoreCase(roleString)) {
+            role = RedisInstance.Role.REPLICA;
         }
 
         if (role == null) {
-            throw new IllegalStateException("Cannot resolve role " + roleString + " to " + RedisInstance.Role.MASTER + " or "
-                    + RedisInstance.Role.SLAVE);
+            throw new IllegalStateException("Cannot resolve role " + roleString + " to " + RedisInstance.Role.UPSTREAM + " or "
+                    + RedisInstance.Role.REPLICA);
         }
 
-        return new RedisMasterReplicaNode(redisURI.getHost(), redisURI.getPort(), redisURI, role);
+        return new RedisUpstreamReplicaNode(redisURI.getHost(), redisURI.getPort(), redisURI, role);
     }
 
 }

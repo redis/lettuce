@@ -55,7 +55,7 @@ class ClusterSlotsParserUnitTests {
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).hasSize(1);
 
-        assertThat(result.get(0).getMasterNode()).isNotNull();
+        assertThat(result.get(0).getUpstream()).isNotNull();
     }
 
     @Test
@@ -66,15 +66,15 @@ class ClusterSlotsParserUnitTests {
         assertThat(result).hasSize(1);
         ClusterSlotRange clusterSlotRange = result.get(0);
 
-        RedisClusterNode masterNode = clusterSlotRange.getMasterNode();
-        assertThat(masterNode).isNotNull();
-        assertThat(masterNode.getNodeId()).isEqualTo("nodeId1");
-        assertThat(masterNode.getUri().getHost()).isEqualTo("1");
-        assertThat(masterNode.getUri().getPort()).isEqualTo(2);
-        assertThat(masterNode.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
-        assertThat(masterNode.getSlots()).contains(100, 101, 199, 200);
-        assertThat(masterNode.getSlots()).doesNotContain(99, 201);
-        assertThat(masterNode.getSlots()).hasSize(101);
+        RedisClusterNode upstreamNode = clusterSlotRange.getUpstream();
+        assertThat(upstreamNode).isNotNull();
+        assertThat(upstreamNode.getNodeId()).isEqualTo("nodeId1");
+        assertThat(upstreamNode.getUri().getHost()).isEqualTo("1");
+        assertThat(upstreamNode.getUri().getPort()).isEqualTo(2);
+        assertThat(upstreamNode.is(RedisClusterNode.NodeFlag.MASTER)).isTrue();
+        assertThat(upstreamNode.getSlots()).contains(100, 101, 199, 200);
+        assertThat(upstreamNode.getSlots()).doesNotContain(99, 201);
+        assertThat(upstreamNode.getSlots()).hasSize(101);
 
         assertThat(clusterSlotRange.getSlaveNodes()).hasSize(1);
 
@@ -82,7 +82,7 @@ class ClusterSlotsParserUnitTests {
 
         assertThat(replica.getNodeId()).isEqualTo("nodeId2");
         assertThat(replica.getSlaveOf()).isEqualTo("nodeId1");
-        assertThat(replica.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
+        assertThat(replica.is(RedisClusterNode.NodeFlag.SLAVE)).isTrue();
     }
 
     @Test
@@ -96,28 +96,28 @@ class ClusterSlotsParserUnitTests {
         List<ClusterSlotRange> result = ClusterSlotsParser.parse(list);
         assertThat(result).hasSize(2);
 
-        assertThat(result.get(0).getMasterNode()).isSameAs(result.get(1).getMasterNode());
+        assertThat(result.get(0).getUpstream()).isSameAs(result.get(1).getUpstream());
 
-        RedisClusterNode masterNode = result.get(0).getMasterNode();
-        assertThat(masterNode).isNotNull();
-        assertThat(masterNode.getNodeId()).isEqualTo("nodeId1");
-        assertThat(masterNode.getUri().getHost()).isEqualTo("1");
-        assertThat(masterNode.getUri().getPort()).isEqualTo(2);
-        assertThat(masterNode.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
-        assertThat(masterNode.getSlots()).contains(100, 101, 199, 200, 203);
-        assertThat(masterNode.getSlots()).doesNotContain(99, 301);
-        assertThat(masterNode.getSlots()).hasSize(201);
+        RedisClusterNode upstreamNode = result.get(0).getUpstream();
+        assertThat(upstreamNode).isNotNull();
+        assertThat(upstreamNode.getNodeId()).isEqualTo("nodeId1");
+        assertThat(upstreamNode.getUri().getHost()).isEqualTo("1");
+        assertThat(upstreamNode.getUri().getPort()).isEqualTo(2);
+        assertThat(upstreamNode.is(RedisClusterNode.NodeFlag.MASTER)).isTrue();
+        assertThat(upstreamNode.getSlots()).contains(100, 101, 199, 200, 203);
+        assertThat(upstreamNode.getSlots()).doesNotContain(99, 301);
+        assertThat(upstreamNode.getSlots()).hasSize(201);
     }
 
     @Test
-    void testParseInvalidMaster() {
+    void testParseInvalidUpstream() {
 
         List<?> list = Arrays.asList(LettuceLists.newList("0", "1", LettuceLists.newList("1")));
         assertThatThrownBy(() -> ClusterSlotsParser.parse(list)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void testParseInvalidMaster2() {
+    void testParseInvalidUpstream2() {
         List<?> list = Arrays.asList(LettuceLists.newList("0", "1", ""));
         assertThatThrownBy(() -> ClusterSlotsParser.parse(list)).isInstanceOf(IllegalArgumentException.class);
     }

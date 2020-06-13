@@ -76,29 +76,29 @@ public class ClusterSlotsParser {
 
         int from = Math.toIntExact(getLongFromIterator(iterator, 0));
         int to = Math.toIntExact(getLongFromIterator(iterator, 0));
-        RedisClusterNode master = null;
+        RedisClusterNode upstream = null;
 
         List<RedisClusterNode> replicas = new ArrayList<>();
         if (iterator.hasNext()) {
-            master = getRedisClusterNode(iterator, nodeCache);
-            if (master != null) {
-                master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
-                Set<Integer> slots = new TreeSet<>(master.getSlots());
+            upstream = getRedisClusterNode(iterator, nodeCache);
+            if (upstream != null) {
+                upstream.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.UPSTREAM));
+                Set<Integer> slots = new TreeSet<>(upstream.getSlots());
                 slots.addAll(createSlots(from, to));
-                master.setSlots(new ArrayList<>(slots));
+                upstream.setSlots(new ArrayList<>(slots));
             }
         }
 
         while (iterator.hasNext()) {
             RedisClusterNode replica = getRedisClusterNode(iterator, nodeCache);
-            if (replica != null && master != null) {
-                replica.setSlaveOf(master.getNodeId());
-                replica.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
+            if (replica != null && upstream != null) {
+                replica.setSlaveOf(upstream.getNodeId());
+                replica.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.REPLICA));
                 replicas.add(replica);
             }
         }
 
-        return new ClusterSlotRange(from, to, master, Collections.unmodifiableList(replicas));
+        return new ClusterSlotRange(from, to, upstream, Collections.unmodifiableList(replicas));
     }
 
     private static List<Integer> createSlots(int from, int to) {

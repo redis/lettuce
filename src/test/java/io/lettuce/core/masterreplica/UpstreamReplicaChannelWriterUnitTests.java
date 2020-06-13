@@ -46,10 +46,10 @@ import io.lettuce.core.resource.ClientResources;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class MasterReplicaChannelWriterUnitTests {
+class UpstreamReplicaChannelWriterUnitTests {
 
     @Mock
-    private MasterReplicaConnectionProvider<String, String> connectionProvider;
+    private UpstreamReplicaConnectionProvider<String, String> connectionProvider;
 
     @Mock
     private ClientResources clientResources;
@@ -63,18 +63,18 @@ class MasterReplicaChannelWriterUnitTests {
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mset = new Command<>(CommandType.MSET, null);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Arrays.asList(set, mset)))
-                .isEqualTo(MasterReplicaConnectionProvider.Intent.WRITE);
+        assertThat(UpstreamReplicaChannelWriter.getIntent(Arrays.asList(set, mset)))
+                .isEqualTo(UpstreamReplicaConnectionProvider.Intent.WRITE);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Collections.singletonList(set)))
-                .isEqualTo(MasterReplicaConnectionProvider.Intent.WRITE);
+        assertThat(UpstreamReplicaChannelWriter.getIntent(Collections.singletonList(set)))
+                .isEqualTo(UpstreamReplicaConnectionProvider.Intent.WRITE);
     }
 
     @Test
     void shouldReturnDefaultIntentForNoCommands() {
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Collections.emptyList()))
-                .isEqualTo(MasterReplicaConnectionProvider.Intent.WRITE);
+        assertThat(UpstreamReplicaChannelWriter.getIntent(Collections.emptyList()))
+                .isEqualTo(UpstreamReplicaConnectionProvider.Intent.WRITE);
     }
 
     @Test
@@ -83,11 +83,11 @@ class MasterReplicaChannelWriterUnitTests {
         RedisCommand<String, String, String> get = new Command<>(CommandType.GET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Arrays.asList(get, mget)))
-                .isEqualTo(MasterReplicaConnectionProvider.Intent.READ);
+        assertThat(UpstreamReplicaChannelWriter.getIntent(Arrays.asList(get, mget)))
+                .isEqualTo(UpstreamReplicaConnectionProvider.Intent.READ);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Collections.singletonList(get)))
-                .isEqualTo(MasterReplicaConnectionProvider.Intent.READ);
+        assertThat(UpstreamReplicaChannelWriter.getIntent(Collections.singletonList(get)))
+                .isEqualTo(UpstreamReplicaConnectionProvider.Intent.READ);
     }
 
     @Test
@@ -96,34 +96,34 @@ class MasterReplicaChannelWriterUnitTests {
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Arrays.asList(set, mget)))
-                .isEqualTo(MasterReplicaConnectionProvider.Intent.WRITE);
+        assertThat(UpstreamReplicaChannelWriter.getIntent(Arrays.asList(set, mget)))
+                .isEqualTo(UpstreamReplicaConnectionProvider.Intent.WRITE);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Collections.singletonList(set)))
-                .isEqualTo(MasterReplicaConnectionProvider.Intent.WRITE);
+        assertThat(UpstreamReplicaChannelWriter.getIntent(Collections.singletonList(set)))
+                .isEqualTo(UpstreamReplicaConnectionProvider.Intent.WRITE);
     }
 
     @Test
     void shouldBindTransactionsToMaster() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        UpstreamReplicaChannelWriter writer = new UpstreamReplicaChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterReplicaConnectionProvider.Intent.class)))
+        when(connectionProvider.getConnectionAsync(any(UpstreamReplicaConnectionProvider.Intent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
 
         writer.write(mockCommand(CommandType.MULTI));
         writer.write(mockCommand(CommandType.GET));
         writer.write(mockCommand(CommandType.EXEC));
 
-        verify(connectionProvider, times(3)).getConnectionAsync(MasterReplicaConnectionProvider.Intent.WRITE);
+        verify(connectionProvider, times(3)).getConnectionAsync(UpstreamReplicaConnectionProvider.Intent.WRITE);
     }
 
     @Test
     void shouldBindTransactionsToMasterInBatch() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        UpstreamReplicaChannelWriter writer = new UpstreamReplicaChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterReplicaConnectionProvider.Intent.class)))
+        when(connectionProvider.getConnectionAsync(any(UpstreamReplicaConnectionProvider.Intent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
 
         List<Command<String, String, String>> commands = Arrays.asList(mockCommand(CommandType.MULTI),
@@ -131,47 +131,47 @@ class MasterReplicaChannelWriterUnitTests {
 
         writer.write(commands);
 
-        verify(connectionProvider).getConnectionAsync(MasterReplicaConnectionProvider.Intent.WRITE);
+        verify(connectionProvider).getConnectionAsync(UpstreamReplicaConnectionProvider.Intent.WRITE);
     }
 
     @Test
     void shouldDeriveIntentFromCommandTypeAfterTransaction() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        UpstreamReplicaChannelWriter writer = new UpstreamReplicaChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterReplicaConnectionProvider.Intent.class)))
+        when(connectionProvider.getConnectionAsync(any(UpstreamReplicaConnectionProvider.Intent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
 
         writer.write(mockCommand(CommandType.MULTI));
         writer.write(mockCommand(CommandType.EXEC));
         writer.write(mockCommand(CommandType.GET));
 
-        verify(connectionProvider, times(2)).getConnectionAsync(MasterReplicaConnectionProvider.Intent.WRITE);
-        verify(connectionProvider).getConnectionAsync(MasterReplicaConnectionProvider.Intent.READ);
+        verify(connectionProvider, times(2)).getConnectionAsync(UpstreamReplicaConnectionProvider.Intent.WRITE);
+        verify(connectionProvider).getConnectionAsync(UpstreamReplicaConnectionProvider.Intent.READ);
     }
 
     @Test
     void shouldDeriveIntentFromCommandTypeAfterDiscardedTransaction() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        UpstreamReplicaChannelWriter writer = new UpstreamReplicaChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterReplicaConnectionProvider.Intent.class)))
+        when(connectionProvider.getConnectionAsync(any(UpstreamReplicaConnectionProvider.Intent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
 
         writer.write(mockCommand(CommandType.MULTI));
         writer.write(mockCommand(CommandType.DISCARD));
         writer.write(mockCommand(CommandType.GET));
 
-        verify(connectionProvider, times(2)).getConnectionAsync(MasterReplicaConnectionProvider.Intent.WRITE);
-        verify(connectionProvider).getConnectionAsync(MasterReplicaConnectionProvider.Intent.READ);
+        verify(connectionProvider, times(2)).getConnectionAsync(UpstreamReplicaConnectionProvider.Intent.WRITE);
+        verify(connectionProvider).getConnectionAsync(UpstreamReplicaConnectionProvider.Intent.READ);
     }
 
     @Test
     void shouldDeriveIntentFromCommandBatchTypeAfterDiscardedTransaction() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        UpstreamReplicaChannelWriter writer = new UpstreamReplicaChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterReplicaConnectionProvider.Intent.class)))
+        when(connectionProvider.getConnectionAsync(any(UpstreamReplicaConnectionProvider.Intent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
 
         List<Command<String, String, String>> commands = Arrays.asList(mockCommand(CommandType.MULTI),
@@ -180,8 +180,8 @@ class MasterReplicaChannelWriterUnitTests {
         writer.write(commands);
         writer.write(Collections.singletonList(mockCommand(CommandType.GET)));
 
-        verify(connectionProvider).getConnectionAsync(MasterReplicaConnectionProvider.Intent.WRITE);
-        verify(connectionProvider).getConnectionAsync(MasterReplicaConnectionProvider.Intent.READ);
+        verify(connectionProvider).getConnectionAsync(UpstreamReplicaConnectionProvider.Intent.WRITE);
+        verify(connectionProvider).getConnectionAsync(UpstreamReplicaConnectionProvider.Intent.READ);
     }
 
     private static Command<String, String, String> mockCommand(CommandType multi) {

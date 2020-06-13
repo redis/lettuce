@@ -38,18 +38,29 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
     StatefulRedisClusterPubSubConnection<K, V> getStatefulConnection();
 
     /**
-     * Select all masters.
+     * Select all upstream nodes.
      *
-     * @return API with asynchronous executed commands on a selection of master cluster nodes.
+     * @return API with reactive executed commands on a selection of upstream cluster nodes.
+     * @deprecated since 6.0 in favor of {@link #upstream()}.
      */
+    @Deprecated
     default PubSubReactiveNodeSelection<K, V> masters() {
-        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER));
+        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
+    }
+
+    /**
+     * Select all upstream nodes.
+     *
+     * @return API with reactive executed commands on a selection of upstream cluster nodes.
+     */
+    default PubSubReactiveNodeSelection<K, V> upstream() {
+        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
     }
 
     /**
      * Select all replicas.
      *
-     * @return API with asynchronous executed commands on a selection of replica cluster nodes.
+     * @return API with reactive executed commands on a selection of replica cluster nodes.
      * @deprecated since 5.2, use {@link #replicas()}.
      */
     @Deprecated
@@ -61,7 +72,7 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
      * Select all replicas.
      *
      * @param predicate Predicate to filter nodes
-     * @return API with asynchronous executed commands on a selection of replica cluster nodes.
+     * @return API with reactive executed commands on a selection of replica cluster nodes.
      * @deprecated since 5.2, use {@link #replicas()}.
      */
     @Deprecated
@@ -73,7 +84,7 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
     /**
      * Select all replicas.
      *
-     * @return API with asynchronous executed commands on a selection of replica cluster nodes.
+     * @return API with reactive executed commands on a selection of replica cluster nodes.
      * @since 5.2
      */
     default PubSubReactiveNodeSelection<K, V> replicas() {
@@ -84,7 +95,7 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
      * Select all replicas.
      *
      * @param predicate Predicate to filter nodes
-     * @return API with asynchronous executed commands on a selection of replica cluster nodes.
+     * @return API with reactive executed commands on a selection of replica cluster nodes.
      * @since 5.2
      */
     default PubSubReactiveNodeSelection<K, V> replicas(Predicate<RedisClusterNode> predicate) {
@@ -95,7 +106,7 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
     /**
      * Select all known cluster nodes.
      *
-     * @return API with asynchronous executed commands on a selection of all cluster nodes.
+     * @return API with reactive executed commands on a selection of all cluster nodes.
      */
     default PubSubReactiveNodeSelection<K, V> all() {
         return nodes(redisClusterNode -> true);
@@ -105,7 +116,7 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
      * Select nodes by a predicate.
      *
      * @param predicate Predicate to filter nodes
-     * @return API with asynchronous executed commands on a selection of cluster nodes matching {@code predicate}
+     * @return API with reactive executed commands on a selection of cluster nodes matching {@code predicate}
      */
     PubSubReactiveNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate);
 }

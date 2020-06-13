@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,7 +33,6 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.*;
-import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -96,7 +94,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             logger.debug("getConnection(" + intent + ", " + slot + ")");
         }
 
-        if (intent == Intent.READ && readFrom != null && readFrom != ReadFrom.MASTER) {
+        if (intent == Intent.READ && readFrom != null && readFrom != ReadFrom.UPSTREAM) {
             return getReadConnection(slot);
         }
 
@@ -152,14 +150,14 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
 
         if (readerCandidates == null) {
 
-            RedisClusterNode master = partitions.getPartitionBySlot(slot);
-            if (master == null) {
+            RedisClusterNode upstream = partitions.getPartitionBySlot(slot);
+            if (upstream == null) {
                 clusterEventListener.onUncoveredSlot(slot);
                 return Futures.failed(new PartitionSelectorException(String.format(
                         "Cannot determine a partition to read for slot %d.", slot), partitions.clone()));
             }
 
-            List<RedisNodeDescription> candidates = getReadCandidates(master);
+            List<RedisNodeDescription> candidates = getReadCandidates(upstream);
             List<RedisNodeDescription> selection = readFrom.select(new ReadFrom.Nodes() {
                 @Override
                 public List<RedisNodeDescription> getNodes() {
@@ -322,7 +320,7 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             RedisNodeDescription redisClusterNode = selection.get(i);
 
             RedisURI uri = redisClusterNode.getUri();
-            ConnectionKey key = new ConnectionKey(redisClusterNode.getRole() == RedisInstance.Role.MASTER ? Intent.WRITE
+            ConnectionKey key = new ConnectionKey(redisClusterNode.getRole().isUpstream() ? Intent.WRITE
                     : Intent.READ, uri.getHost(), uri.getPort());
 
             readerCandidates[i] = getConnectionAsync(key).toCompletableFuture();
@@ -331,15 +329,15 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         return readerCandidates;
     }
 
-    private List<RedisNodeDescription> getReadCandidates(RedisClusterNode master) {
+    private List<RedisNodeDescription> getReadCandidates(RedisClusterNode upstream) {
 
         return partitions.stream() //
-                .filter(partition -> isReadCandidate(master, partition)) //
+                .filter(partition -> isReadCandidate(upstream, partition)) //
                 .collect(Collectors.toList());
     }
 
-    private boolean isReadCandidate(RedisClusterNode master, RedisClusterNode partition) {
-        return master.getNodeId().equals(partition.getNodeId()) || master.getNodeId().equals(partition.getSlaveOf());
+    private boolean isReadCandidate(RedisClusterNode upstream, RedisClusterNode partition) {
+        return upstream.getNodeId().equals(partition.getNodeId()) || upstream.getNodeId().equals(partition.getSlaveOf());
     }
 
     @Override

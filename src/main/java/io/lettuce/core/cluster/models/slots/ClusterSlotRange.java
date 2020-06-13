@@ -38,7 +38,7 @@ public class ClusterSlotRange implements Serializable {
     private int from;
     private int to;
 
-    private RedisClusterNode masterNode;
+    private RedisClusterNode upstream;
     private List<RedisClusterNode> replicaNodes = Collections.emptyList();
 
     public ClusterSlotRange() {
@@ -49,17 +49,17 @@ public class ClusterSlotRange implements Serializable {
      *
      * @param from from slot
      * @param to to slot
-     * @param masterNode master for the slots, may be {@literal null}
+     * @param upstream master for the slots, may be {@literal null}
      * @param replicaNodes list of replicas must not be {@literal null} but may be empty
      */
-    public ClusterSlotRange(int from, int to, RedisClusterNode masterNode, List<RedisClusterNode> replicaNodes) {
+    public ClusterSlotRange(int from, int to, RedisClusterNode upstream, List<RedisClusterNode> replicaNodes) {
 
-        LettuceAssert.notNull(masterNode, "MasterNode must not be null");
+        LettuceAssert.notNull(upstream, "Upstream must not be null");
         LettuceAssert.notNull(replicaNodes, "ReplicaNodes must not be null");
 
         this.from = from;
         this.to = to;
-        this.masterNode = masterNode;
+        this.upstream = upstream;
         this.replicaNodes = replicaNodes;
     }
 
@@ -90,12 +90,12 @@ public class ClusterSlotRange implements Serializable {
         return to;
     }
 
-    public RedisClusterNode getMasterNode() {
-        return masterNode;
+    public RedisClusterNode getUpstream() {
+        return upstream;
     }
 
-    public void setMasterNode(RedisClusterNode masterNode) {
-        this.masterNode = masterNode;
+    public void setUpstream(RedisClusterNode upstream) {
+        this.upstream = upstream;
     }
 
     @Deprecated
@@ -130,7 +130,7 @@ public class ClusterSlotRange implements Serializable {
         sb.append(getClass().getSimpleName());
         sb.append(" [from=").append(from);
         sb.append(", to=").append(to);
-        sb.append(", masterNode=").append(masterNode);
+        sb.append(", masterNode=").append(upstream);
         sb.append(", replicaNodes=").append(replicaNodes);
         sb.append(']');
         return sb.toString();

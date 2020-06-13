@@ -18,7 +18,7 @@ package io.lettuce.core.cluster;
 import static io.lettuce.core.cluster.ClusterScanSupport.asyncClusterKeyScanCursorMapper;
 import static io.lettuce.core.cluster.ClusterScanSupport.asyncClusterStreamScanCursorMapper;
 import static io.lettuce.core.cluster.NodeSelectionInvocationHandler.ExecutionModel.ASYNC;
-import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
+import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.UPSTREAM;
 
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -153,7 +153,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Long> dbsize() {
-        return MultiNodeExecution.aggregateAsync(executeOnMasters(RedisServerAsyncCommands::dbsize));
+        return MultiNodeExecution.aggregateAsync(executeOnUpstream(RedisServerAsyncCommands::dbsize));
     }
 
     @Override
@@ -205,12 +205,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<String> flushall() {
-        return MultiNodeExecution.firstOfAsync(executeOnMasters(RedisServerAsyncCommands::flushall));
+        return MultiNodeExecution.firstOfAsync(executeOnUpstream(RedisServerAsyncCommands::flushall));
     }
 
     @Override
     public RedisFuture<String> flushdb() {
-        return MultiNodeExecution.firstOfAsync(executeOnMasters(RedisServerAsyncCommands::flushdb));
+        return MultiNodeExecution.firstOfAsync(executeOnUpstream(RedisServerAsyncCommands::flushdb));
     }
 
     @Override
@@ -258,7 +258,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<List<K>> keys(K pattern) {
 
-        Map<String, CompletableFuture<List<K>>> executions = executeOnMasters(commands -> commands.keys(pattern));
+        Map<String, CompletableFuture<List<K>>> executions = executeOnUpstream(commands -> commands.keys(pattern));
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             List<K> result = new ArrayList<>();
@@ -272,7 +272,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
 
-        Map<String, CompletableFuture<Long>> executions = executeOnMasters(commands -> commands.keys(channel, pattern));
+        Map<String, CompletableFuture<Long>> executions = executeOnUpstream(commands -> commands.keys(channel, pattern));
         return MultiNodeExecution.aggregateAsync(executions);
     }
 
@@ -608,9 +608,9 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * @param <T> result type
      * @return map of a key (counter) and commands.
      */
-    protected <T> Map<String, CompletableFuture<T>> executeOnMasters(
+    protected <T> Map<String, CompletableFuture<T>> executeOnUpstream(
             Function<RedisClusterAsyncCommands<K, V>, RedisFuture<T>> function) {
-        return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(MASTER));
+        return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(UPSTREAM));
     }
 
     /**

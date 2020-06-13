@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static io.lettuce.core.masterreplica.MasterReplicaUtils.findNodeByUri;
+import static io.lettuce.core.masterreplica.ReplicaUtils.findNodeByUri;
 import static io.lettuce.core.masterreplica.TopologyComparators.LatencyComparator;
 
 import java.util.*;
@@ -35,7 +35,7 @@ class Requests extends
         CompletableEventLatchSupport<Tuple2<RedisURI, TimedAsyncCommand<String, String, String>>, List<RedisNodeDescription>> {
 
     private final Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = new TreeMap<>(
-            MasterReplicaUtils.RedisURIComparator.INSTANCE);
+            ReplicaUtils.RedisURIComparator.INSTANCE);
     private final List<RedisNodeDescription> nodes;
 
     public Requests(int expectedCount, List<RedisNodeDescription> nodes) {

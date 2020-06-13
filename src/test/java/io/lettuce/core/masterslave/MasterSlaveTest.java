@@ -34,6 +34,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.models.role.RoleParser;
@@ -45,12 +46,12 @@ import io.lettuce.test.settings.TestSettings;
  */
 class MasterSlaveTest extends AbstractRedisClientTest {
 
-    private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd)
+    private RedisURI upstreamURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd)
             .withClientName("my-client").withDatabase(5).build();
 
     private StatefulRedisMasterSlaveConnection<String, String> connection;
 
-    private RedisURI master;
+    private RedisURI upstream;
     private RedisURI replica;
 
     private RedisCommands<String, String> connection1;
@@ -68,12 +69,11 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         RedisInstance node1Instance = RoleParser.parse(this.connection1.role());
         RedisInstance node2Instance = RoleParser.parse(this.connection2.role());
 
-        if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
-            master = node1;
+        if (node1Instance.getRole().isUpstream() && node2Instance.getRole().isReplica()) {
+            upstream = node1;
             replica = node2;
-        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
-                && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
-            master = node2;
+        } else if (node2Instance.getRole().isUpstream() && node1Instance.getRole().isReplica()) {
+            upstream = node2;
             replica = node1;
         } else {
             assumeTrue(false,
@@ -89,7 +89,7 @@ class MasterSlaveTest extends AbstractRedisClientTest {
         this.connection2.auth(passwd);
         this.connection2.configSet("masterauth", passwd);
 
-        connection = MasterSlave.connect(client, StringCodec.UTF8, masterURI);
+        connection = MasterSlave.connect(client, StringCodec.UTF8, upstreamURI);
         connection.setReadFrom(ReadFrom.REPLICA);
     }
 
@@ -116,14 +116,14 @@ class MasterSlaveTest extends AbstractRedisClientTest {
     @Test
     void testMasterSlaveReadFromMaster() {
 
-        connection.setReadFrom(ReadFrom.MASTER);
+        connection.setReadFrom(ReadFrom.UPSTREAM);
         String server = connection.sync().info("server");
 
         Pattern pattern = Pattern.compile("tcp_port:(\\d+)");
         Matcher matcher = pattern.matcher(server);
 
         assertThat(matcher.find()).isTrue();
-        assertThat(matcher.group(1)).isEqualTo("" + master.getPort());
+        assertThat(matcher.group(1)).isEqualTo("" + upstream.getPort());
     }
 
     @Test
@@ -177,14 +177,14 @@ class MasterSlaveTest extends AbstractRedisClientTest {
     @Test
     void masterSlaveConnectionShouldSetClientName() {
 
-        assertThat(connection.sync().clientGetname()).isEqualTo(masterURI.getClientName());
+        assertThat(connection.sync().clientGetname()).isEqualTo(upstreamURI.getClientName());
         connection.sync().quit();
-        assertThat(connection.sync().clientGetname()).isEqualTo(masterURI.getClientName());
+        assertThat(connection.sync().clientGetname()).isEqualTo(upstreamURI.getClientName());
 
         connection.close();
     }
 
-    static String slaveCall(StatefulRedisMasterSlaveConnection<String, String> connection) {
+    static String slaveCall(StatefulRedisMasterReplicaConnection<String, String> connection) {
         return connection.sync().info("replication");
     }
 

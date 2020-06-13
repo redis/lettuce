@@ -24,7 +24,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 /**
  * @author Mark Paluch
  */
-class MasterReplicaUtils {
+class ReplicaUtils {
 
     /**
      * Check if properties changed.

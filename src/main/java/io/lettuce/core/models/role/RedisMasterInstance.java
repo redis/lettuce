@@ -15,23 +15,18 @@
  */
 package io.lettuce.core.models.role;
 
-import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 
-import io.lettuce.core.internal.LettuceAssert;
-
 /**
- * Represents a master instance.
+ * Represents a upstream (master) instance.
  *
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated since 6.0 in favor of {@link RedisUpstreamInstance}
  */
 @SuppressWarnings("serial")
-public class RedisMasterInstance implements RedisInstance, Serializable {
-
-    private long replicationOffset;
-    private List<ReplicationPartner> replicas = Collections.emptyList();
+@Deprecated
+public class RedisMasterInstance extends RedisUpstreamInstance {
 
     public RedisMasterInstance() {
     }
@@ -43,13 +38,10 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
      * @param replicas list of replicas, must not be {@literal null} but may be empty
      */
     public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> replicas) {
-        LettuceAssert.notNull(replicas, "Replicas must not be null");
-        this.replicationOffset = replicationOffset;
-        this.replicas = replicas;
+        super(replicationOffset, replicas);
     }
 
     /**
-     *
      * @return always {@link io.lettuce.core.models.role.RedisInstance.Role#MASTER}
      */
     @Override
@@ -57,40 +49,4 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
         return Role.MASTER;
     }
 
-    public long getReplicationOffset() {
-        return replicationOffset;
-    }
-
-    @Deprecated
-    public List<ReplicationPartner> getSlaves() {
-        return getReplicas();
-    }
-
-    public List<ReplicationPartner> getReplicas() {
-        return replicas;
-    }
-
-    public void setReplicationOffset(long replicationOffset) {
-        this.replicationOffset = replicationOffset;
-    }
-
-    @Deprecated
-    public void setSlaves(List<ReplicationPartner> replicas) {
-        setReplicas(replicas);
-    }
-
-    public void setReplicas(List<ReplicationPartner> replicas) {
-        LettuceAssert.notNull(replicas, "Replicas must not be null");
-        this.replicas = replicas;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName());
-        sb.append(" [replicationOffset=").append(replicationOffset);
-        sb.append(", replicas=").append(replicas);
-        sb.append(']');
-        return sb.toString();
-    }
 }

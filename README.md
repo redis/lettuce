@@ -1,7 +1,7 @@
 <img src="https://avatars2.githubusercontent.com/u/25752188?v=4" width="50" height="50"> Lettuce - Advanced Java Redis client
 ===============================
 
-[![Build Status](https://travis-ci.org/lettuce-io/lettuce-core.svg)](https://travis-ci.org/lettuce-io/lettuce-core) [![codecov](https://codecov.io/gh/lettuce-io/lettuce-core/branch/master/graph/badge.svg)](https://codecov.io/gh/lettuce-io/lettuce-core)
+[![Build Status](https://travis-ci.org/lettuce-io/lettuce-core.svg)](https://travis-ci.org/lettuce-io/lettuce-core) [![codecov](https://codecov.io/gh/lettuce-io/lettuce-core/branch/main/graph/badge.svg)](https://codecov.io/gh/lettuce-io/lettuce-core)
  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core)
 
 Lettuce is a scalable thread-safe Redis client for synchronous,
@@ -176,4 +176,4 @@ Contributing
 -------
 
 Github is for social coding: if you want to write code, I encourage contributions through pull requests from forks of this repository. 
-Create Github tickets for bugs and new features and comment on the ones that you are interested in and take a look into [CONTRIBUTING.md](https://github.com/lettuce-io/lettuce-core/blob/master/.github/CONTRIBUTING.md)
+Create Github tickets for bugs and new features and comment on the ones that you are interested in and take a look into [CONTRIBUTING.md](https://github.com/lettuce-io/lettuce-core/blob/main/.github/CONTRIBUTING.md)

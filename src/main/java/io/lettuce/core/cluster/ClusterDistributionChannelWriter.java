@@ -434,7 +434,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     }
 
     /**
-     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
+     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#UPSTREAM} if not set.
      *
      * @return the read from setting
      */

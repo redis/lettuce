@@ -31,17 +31,16 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
- * {@link MasterReplicaConnector} to connect unmanaged Redis Master/Replica with auto-discovering master and replica nodes from
- * a single {@link RedisURI}.
+ * {@link UpstreamReplicaConnector} to connect unmanaged Redis Master/Replica with auto-discovering master and replica nodes
+ * from a single {@link RedisURI}.
  *
  * @author Mark Paluch
  * @since 5.1
  */
-class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
+class AutodiscoveryConnector<K, V> implements UpstreamReplicaConnector<K, V> {
 
     private final RedisClient redisClient;
     private final RedisCodec<K, V> codec;
@@ -66,7 +65,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
                             initialConnections.put(redisURI, nodeConnection);
 
-                            TopologyProvider topologyProvider = new MasterReplicaTopologyProvider(nodeConnection, redisURI);
+                            TopologyProvider topologyProvider = new ReplicaTopologyProvider(nodeConnection, redisURI);
 
                             return Mono.fromCompletionStage(topologyProvider.getNodesAsync()).flatMap(
                                     nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
@@ -92,7 +91,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
         RedisNodeDescription node = getConnectedNode(redisURI, nodes);
 
-        if (node.getRole() != RedisInstance.Role.MASTER) {
+        if (!node.getRole().isUpstream()) {
 
             RedisNodeDescription master = lookupMaster(nodes);
             ConnectionFuture<StatefulRedisConnection<K, V>> masterConnection = redisClient.connectAsync(codec, master.getUri());
@@ -110,11 +109,11 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     private Mono<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec,
             Tuple2<RedisURI, StatefulRedisConnection<K, V>> connectionAndUri) {
 
-        MasterReplicaTopologyProvider topologyProvider = new MasterReplicaTopologyProvider(connectionAndUri.getT2(),
+        ReplicaTopologyProvider topologyProvider = new ReplicaTopologyProvider(connectionAndUri.getT2(),
                 connectionAndUri.getT1());
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
-        MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
+        UpstreamReplicaTopologyRefresh refresh = new UpstreamReplicaTopologyRefresh(redisClient, topologyProvider);
+        UpstreamReplicaConnectionProvider<K, V> connectionProvider = new UpstreamReplicaConnectionProvider<>(redisClient, codec,
                 redisURI, (Map) initialConnections);
 
         Mono<List<RedisNodeDescription>> refreshFuture = refresh.getNodes(redisURI);
@@ -123,11 +122,11 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
             connectionProvider.setKnownNodes(nodes);
 
-            MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
+            UpstreamReplicaChannelWriter channelWriter = new UpstreamReplicaChannelWriter(connectionProvider,
                     redisClient
                     .getResources());
 
-            StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
+            StatefulRedisUpstreamReplicaConnectionImpl<K, V> connection = new StatefulRedisUpstreamReplicaConnectionImpl<>(
                     channelWriter, codec, redisURI.getTimeout());
 
             connection.setOptions(redisClient.getOptions());
@@ -138,7 +137,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
     private static RedisNodeDescription lookupMaster(List<RedisNodeDescription> nodes) {
 
-        Optional<RedisNodeDescription> first = findFirst(nodes, n -> n.getRole() == RedisInstance.Role.MASTER);
+        Optional<RedisNodeDescription> first = findFirst(nodes, n -> n.getRole().isUpstream());
         return first.orElseThrow(() -> new IllegalStateException("Cannot lookup master from " + nodes));
     }
 

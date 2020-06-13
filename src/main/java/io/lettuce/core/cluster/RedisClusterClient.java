@@ -103,10 +103,10 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <ul>
  * <li>{@link RedisAdvancedClusterAsyncCommands#clientSetname(Object)} Executes {@code CLIENT SET} on all connections and
  * initializes new connections with the {@code clientName}.</li>
- * <li>{@link RedisAdvancedClusterAsyncCommands#flushall()} Run {@code FLUSHALL} on all master nodes.</li>
- * <li>{@link RedisAdvancedClusterAsyncCommands#flushdb()} Executes {@code FLUSHDB} on all master nodes.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#flushall()} Run {@code FLUSHALL} on all upstream nodes.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#flushdb()} Executes {@code FLUSHDB} on all upstream nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#keys(Object)} Executes {@code KEYS} on all.</li>
- * <li>{@link RedisAdvancedClusterAsyncCommands#randomkey()} Returns a random key from a random master node.</li>
+ * <li>{@link RedisAdvancedClusterAsyncCommands#randomkey()} Returns a random key from a random upstream node.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#scriptFlush()} Executes {@code SCRIPT FLUSH} on all nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#scriptKill()} Executes {@code SCRIPT KILL} on all nodes.</li>
  * <li>{@link RedisAdvancedClusterAsyncCommands#shutdown(boolean)} Executes {@code SHUTDOWN} on all nodes.</li>
@@ -119,7 +119,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * selected using a {@link java.util.function.Predicate} and commands can be issued to the node selection
  *
  * <pre class="code">
- * AsyncExecutions&lt;String&gt; ping = commands.masters().commands().ping();
+ * AsyncExecutions&lt;String&gt; ping = commands.upstream().commands().ping();
  * Collection&lt;RedisClusterNode&gt; nodes = ping.nodes();
  * nodes.stream().forEach(redisClusterNode -&gt; ping.get(redisClusterNode));
  * </pre>
@@ -622,7 +622,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl<>(clusterWriter, codec,
                 getDefaultTimeout());
 
-        connection.setReadFrom(ReadFrom.MASTER);
+        connection.setReadFrom(ReadFrom.UPSTREAM);
         connection.setPartitions(partitions);
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(getClusterClientOptions(), getResources(),

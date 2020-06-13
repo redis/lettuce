@@ -27,7 +27,7 @@ For the impatient, if you want to submit a quick pull request:
   * Try to reuse existing test sample code (domain classes). Try not to amend existing test cases but create new ones dedicated to the changes you’re making to the codebase. Try to test as locally as possible but potentially also add integration tests.
 
 When submitting code, please make every effort to follow existing conventions and style in order to keep the code as readable as possible. Formatting changes create a lot of noise and reduce the likelyhood of merging the pull request.
-Formatting settings are provided for Eclipse in https://github.com/lettuce-io/lettuce-core/blob/master/formatting.xml
+Formatting settings are provided for Eclipse in https://github.com/lettuce-io/lettuce-core/blob/main/formatting.xml
 
 ## Bugreports
 

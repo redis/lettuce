@@ -51,7 +51,7 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
         implements AsyncCloseable {
 
     private final Map<RedisURI, StatefulRedisConnection<String, String>> connections = new TreeMap<>(
-            MasterReplicaUtils.RedisURIComparator.INSTANCE);
+            ReplicaUtils.RedisURIComparator.INSTANCE);
 
     private final List<Throwable> exceptions = new CopyOnWriteArrayList<>();
     private final List<RedisNodeDescription> nodes;

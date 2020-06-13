@@ -44,8 +44,8 @@ import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.masterslave.MasterSlave;
-import io.lettuce.core.masterslave.StatefulRedisMasterSlaveConnection;
+import io.lettuce.core.masterreplica.MasterReplica;
+import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
@@ -206,14 +206,14 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void wrappedMasterSlaveConnectionShouldUseWrappers() throws Exception {
 
-        GenericObjectPool<StatefulRedisMasterSlaveConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> MasterSlave.connect(client, new StringCodec(), RedisURI.create(host, port)),
+        GenericObjectPool<StatefulRedisMasterReplicaConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> MasterReplica.connect(client, new StringCodec(), RedisURI.create(host, port)),
                         new GenericObjectPoolConfig<>());
 
-        StatefulRedisMasterSlaveConnection<String, String> connection = pool.borrowObject();
+        StatefulRedisMasterReplicaConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
 
-        assertThat(connection).isInstanceOf(StatefulRedisMasterSlaveConnection.class);
+        assertThat(connection).isInstanceOf(StatefulRedisMasterReplicaConnection.class);
         assertThat(Proxy.isProxyClass(connection.getClass())).isTrue();
 
         assertThat(sync).isInstanceOf(RedisCommands.class);

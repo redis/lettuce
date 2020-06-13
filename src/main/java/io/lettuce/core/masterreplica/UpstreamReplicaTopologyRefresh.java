@@ -37,20 +37,20 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  */
-class MasterReplicaTopologyRefresh {
+class UpstreamReplicaTopologyRefresh {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterReplicaTopologyRefresh.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(UpstreamReplicaTopologyRefresh.class);
     private static final StringCodec CODEC = StringCodec.UTF8;
 
     private final NodeConnectionFactory nodeConnectionFactory;
     private final TopologyProvider topologyProvider;
     private ScheduledExecutorService eventExecutors;
 
-    MasterReplicaTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
+    UpstreamReplicaTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
         this(new RedisClientNodeConnectionFactory(client), client.getResources().eventExecutorGroup(), topologyProvider);
     }
 
-    MasterReplicaTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, ScheduledExecutorService eventExecutors,
+    UpstreamReplicaTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, ScheduledExecutorService eventExecutors,
             TopologyProvider topologyProvider) {
 
         this.nodeConnectionFactory = nodeConnectionFactory;

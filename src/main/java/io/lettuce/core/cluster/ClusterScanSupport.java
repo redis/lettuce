@@ -140,7 +140,7 @@ class ClusterScanSupport {
         List<String> nodeIds = new ArrayList<>();
 
         PartitionAccessor partitionAccessor = new PartitionAccessor(connection.getPartitions());
-        for (RedisClusterNode redisClusterNode : partitionAccessor.getMasters()) {
+        for (RedisClusterNode redisClusterNode : partitionAccessor.getUpstream()) {
 
             if (connection.getReadFrom() != null) {
 

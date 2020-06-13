@@ -67,12 +67,23 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     StatefulRedisClusterConnection<K, V> getStatefulConnection();
 
     /**
-     * Select all masters.
+     * Select all upstream nodes.
      *
-     * @return API with asynchronous executed commands on a selection of master cluster nodes.
+     * @return API with asynchronous executed commands on a selection of upstream cluster nodes.
+     * @deprecated since 6.0 in favor of {@link #upstream()}.
      */
     default AsyncNodeSelection<K, V> masters() {
-        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER));
+        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
+    }
+
+    /**
+     * Select all upstream nodes.
+     *
+     * @return API with asynchronous executed commands on a selection of upstream cluster nodes.
+     * @since 6.0
+     */
+    default AsyncNodeSelection<K, V> upstream() {
+        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
     }
 
     /**
@@ -96,7 +107,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     @Deprecated
     default AsyncNodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
         return readonly(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -227,7 +238,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<String> clientSetname(K name);
 
     /**
-     * Remove all keys from all databases on all cluster masters with pipelining.
+     * Remove all keys from all databases on all cluster upstream nodes with pipelining.
      *
      * @return String simple-string-reply
      * @see RedisServerAsyncCommands#flushall()
@@ -235,7 +246,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<String> flushall();
 
     /**
-     * Remove all keys from the current database on all cluster masters with pipelining.
+     * Remove all keys from the current database on all cluster upstream nodes with pipelining.
      *
      * @return String simple-string-reply
      * @see RedisServerAsyncCommands#flushdb()
@@ -243,7 +254,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<String> flushdb();
 
     /**
-     * Return the number of keys in the selected database on all cluster masters.
+     * Return the number of keys in the selected database on all cluster upstream nodes.
      *
      * @return Long integer-reply
      * @see RedisServerAsyncCommands#dbsize()
@@ -251,7 +262,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<Long> dbsize();
 
     /**
-     * Find all keys matching the given pattern on all cluster masters.
+     * Find all keys matching the given pattern on all cluster upstream nodes.
      *
      * @param pattern the pattern type: patternkey (pattern)
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
@@ -260,7 +271,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<List<K>> keys(K pattern);
 
     /**
-     * Find all keys matching the given pattern on all cluster masters.
+     * Find all keys matching the given pattern on all cluster upstream nodes.
      *
      * @param channel the channel
      * @param pattern the pattern

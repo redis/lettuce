@@ -28,12 +28,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.RedisBug;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.masterslave.MasterSlave;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.lettuce.test.LettuceExtension;

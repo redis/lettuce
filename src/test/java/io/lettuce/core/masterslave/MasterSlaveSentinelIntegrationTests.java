@@ -29,11 +29,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import io.lettuce.RedisBug;
 import io.lettuce.core.*;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.masterslave.MasterSlave;
-import io.lettuce.core.masterslave.StatefulRedisMasterSlaveConnection;
 import io.lettuce.core.sentinel.SentinelTestSettings;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.settings.TestSettings;
@@ -60,7 +57,7 @@ class MasterSlaveSentinelIntegrationTests extends TestSupport {
                 "redis-sentinel://127.0.0.1:21379,127.0.0.1:22379,127.0.0.1:26379?sentinelMasterId=mymaster&timeout=5s");
         StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8, uri);
 
-        connection.setReadFrom(ReadFrom.MASTER);
+        connection.setReadFrom(ReadFrom.UPSTREAM);
         String server = slaveCall(connection);
         assertThatServerIs(server, "master");
 
@@ -90,7 +87,7 @@ class MasterSlaveSentinelIntegrationTests extends TestSupport {
                 "redis-sentinel://127.0.0.1:21379,127.0.0.1:22379,127.0.0.1:26379?sentinelMasterId=mymaster&timeout=5s");
         StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8, uri);
 
-        connection.setReadFrom(ReadFrom.MASTER);
+        connection.setReadFrom(ReadFrom.UPSTREAM);
         String server = connection.sync().info("replication");
         assertThatServerIs(server, "master");
 

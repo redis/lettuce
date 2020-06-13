@@ -595,7 +595,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     void testReadFrom() {
         StatefulRedisClusterConnection<String, String> statefulConnection = connection;
 
-        assertThat(statefulConnection.getReadFrom()).isEqualTo(ReadFrom.MASTER);
+        assertThat(statefulConnection.getReadFrom()).isEqualTo(ReadFrom.UPSTREAM);
 
         statefulConnection.setReadFrom(ReadFrom.NEAREST);
         assertThat(statefulConnection.getReadFrom()).isEqualTo(ReadFrom.NEAREST);

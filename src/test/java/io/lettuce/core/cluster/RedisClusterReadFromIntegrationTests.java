@@ -59,13 +59,13 @@ class RedisClusterReadFromIntegrationTests extends TestSupport {
 
     @Test
     void defaultTest() {
-        assertThat(connection.getReadFrom()).isEqualTo(ReadFrom.MASTER);
+        assertThat(connection.getReadFrom()).isEqualTo(ReadFrom.UPSTREAM);
     }
 
     @Test
     void readWriteMaster() {
 
-        connection.setReadFrom(ReadFrom.MASTER);
+        connection.setReadFrom(ReadFrom.UPSTREAM);
 
         sync.set(key, value);
         assertThat(sync.get(key)).isEqualTo(value);
@@ -74,7 +74,7 @@ class RedisClusterReadFromIntegrationTests extends TestSupport {
     @Test
     void readWriteMasterPreferred() {
 
-        connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
+        connection.setReadFrom(ReadFrom.UPSTREAM_PREFERRED);
 
         sync.set(key, value);
         assertThat(sync.get(key)).isEqualTo(value);

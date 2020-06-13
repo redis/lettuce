@@ -47,9 +47,9 @@ import io.lettuce.core.models.role.RedisInstance;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class MasterReplicaConnectionProviderUnitTests {
+class UpstreamReplicaConnectionProviderUnitTests {
 
-    private MasterReplicaConnectionProvider<String, String> sut;
+    private UpstreamReplicaConnectionProvider<String, String> sut;
 
     @Mock
     RedisClient clientMock;
@@ -66,11 +66,10 @@ class MasterReplicaConnectionProviderUnitTests {
     void before() {
 
         nodeConnectionMock = (StatefulRedisConnection) channelHandlerMock;
-        sut = new MasterReplicaConnectionProvider<>(clientMock, StringCodec.UTF8, RedisURI.create("localhost", 1),
+        sut = new UpstreamReplicaConnectionProvider<>(clientMock, StringCodec.UTF8, RedisURI.create("localhost", 1),
                 Collections.emptyMap());
         sut.setKnownNodes(Arrays.asList(
-                new RedisMasterReplicaNode("localhost", 1, RedisURI.create("localhost", 1),
-                RedisInstance.Role.MASTER)));
+                new RedisUpstreamReplicaNode("localhost", 1, RedisURI.create("localhost", 1), RedisInstance.Role.UPSTREAM)));
     }
 
     @Test
@@ -81,7 +80,7 @@ class MasterReplicaConnectionProviderUnitTests {
         when(clientMock.connectAsync(eq(StringCodec.UTF8), any()))
                 .thenReturn(ConnectionFuture.completed(null, nodeConnectionMock));
 
-        StatefulRedisConnection<String, String> connection = sut.getConnection(MasterReplicaConnectionProvider.Intent.READ);
+        StatefulRedisConnection<String, String> connection = sut.getConnection(UpstreamReplicaConnectionProvider.Intent.READ);
         assertThat(connection).isNotNull();
 
         sut.close();

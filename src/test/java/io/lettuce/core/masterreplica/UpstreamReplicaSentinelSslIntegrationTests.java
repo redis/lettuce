@@ -20,7 +20,6 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.RedisBug;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -40,12 +39,12 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-class MasterReplicaSentinelSslIntegrationTests extends TestSupport {
+class UpstreamReplicaSentinelSslIntegrationTests extends TestSupport {
 
     private final ClientResources clientResources;
 
     @Inject
-    MasterReplicaSentinelSslIntegrationTests(ClientResources clientResources) {
+    UpstreamReplicaSentinelSslIntegrationTests(ClientResources clientResources) {
         this.clientResources = clientResources.mutate()
                 .socketAddressResolver(MappingSocketAddressResolver.create(DnsResolver.jvmDefault(), hostAndPort -> {
 

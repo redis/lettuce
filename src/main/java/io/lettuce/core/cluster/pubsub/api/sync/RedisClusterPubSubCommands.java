@@ -38,12 +38,24 @@ public interface RedisClusterPubSubCommands<K, V> extends RedisPubSubCommands<K,
     StatefulRedisClusterPubSubConnection<K, V> getStatefulConnection();
 
     /**
-     * Select all masters.
+     * Select all upstream nodes.
      *
-     * @return API with asynchronous executed commands on a selection of master cluster nodes.
+     * @return API with asynchronous executed commands on a selection of upstream cluster nodes.
+     * @deprecated since 6.0 in favor of {@link #upstream()}.
      */
+    @Deprecated
     default PubSubNodeSelection<K, V> masters() {
-        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER));
+        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
+    }
+
+    /**
+     * Select all upstream nodes.
+     *
+     * @return API with asynchronous executed commands on a selection of upstream cluster nodes.
+     * @since 6.0
+     */
+    default PubSubNodeSelection<K, V> upstream() {
+        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
     }
 
     /**
@@ -67,7 +79,7 @@ public interface RedisClusterPubSubCommands<K, V> extends RedisPubSubCommands<K,
     @Deprecated
     default PubSubNodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
         return nodes(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**

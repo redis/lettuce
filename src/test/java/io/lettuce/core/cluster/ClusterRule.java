@@ -106,6 +106,7 @@ public class ClusterRule implements TestRule {
                     return false;
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 // nothing to do
             }
         }
