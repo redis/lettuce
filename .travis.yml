@@ -8,7 +8,7 @@ jdk:
 
 script:
   - ./mvnw clean verify
-  - ./mvnw clean verify -Dspring.version=5.1.15.RELEASE -Dspring-batch.version=4.1.4.RELEASE
+  - ./mvnw clean verify -Dspring.version=$(./travis/get_latest_version.sh spring-core 5.1) -Dspring-batch.version=$(./travis/get_latest_version.sh batch/spring-batch-core 4.1)
 
 after_success:
   - chmod -R 777 ./travis/after_success.sh
