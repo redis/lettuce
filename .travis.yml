@@ -6,11 +6,6 @@ jdk:
   - openjdk11
   - openjdk8
 
-jobs:
-  allow_failures:
-    # Fail maven-bundle-plugin on JDK 15 (https://issues.apache.org/jira/browse/FELIX-6259,https://github.com/mybatis/parent/issues/160)
-    - jdk: openjdk-ea
-
 script:
   - ./mvnw clean verify
   - ./mvnw clean verify -Dspring.version=5.1.15.RELEASE -Dspring-batch.version=4.1.4.RELEASE
