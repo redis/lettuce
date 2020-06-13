@@ -3,7 +3,6 @@ language: java
 jdk:
   - openjdk-ea
   - openjdk14
-  - openjdk13
   - openjdk11
   - openjdk8
 
