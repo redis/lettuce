@@ -115,9 +115,9 @@ class PubSubEndpointUnitTests {
         assertThat(notified).hasValue(1);
     }
 
-    private static <K, V> PubSubOutput<K, V, V> createMessage(String action, String channel, RedisCodec<K, V> codec) {
+    private static <K, V> PubSubOutput<K, V> createMessage(String action, String channel, RedisCodec<K, V> codec) {
 
-        PubSubOutput<K, V, V> output = new PubSubOutput<>(codec);
+        PubSubOutput<K, V> output = new PubSubOutput<>(codec);
 
         output.set(ByteBuffer.wrap(action.getBytes()));
         output.set(ByteBuffer.wrap(channel.getBytes()));

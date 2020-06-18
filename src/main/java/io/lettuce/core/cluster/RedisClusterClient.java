@@ -530,7 +530,8 @@ public class RedisClusterClient extends AbstractRedisClient {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
-        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(writer, codec, getDefaultTimeout());
+        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(writer, endpoint, codec,
+                getDefaultTimeout());
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
@@ -619,7 +620,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
-        StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl<>(clusterWriter, codec,
+        StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl<>(clusterWriter,
+                pooledClusterConnectionProvider, codec,
                 getDefaultTimeout());
 
         connection.setReadFrom(ReadFrom.UPSTREAM);
@@ -699,11 +701,14 @@ public class RedisClusterClient extends AbstractRedisClient {
         ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(getClusterClientOptions(), writer,
                 topologyRefreshScheduler);
 
+        ClusterPubSubConnectionProvider<K, V> pooledClusterConnectionProvider = new ClusterPubSubConnectionProvider<>(this,
+                clusterWriter, codec, endpoint.getUpstreamListener(), topologyRefreshScheduler);
+
         StatefulRedisClusterPubSubConnectionImpl<K, V> connection = new StatefulRedisClusterPubSubConnectionImpl<>(endpoint,
+                pooledClusterConnectionProvider,
                 clusterWriter, codec, getDefaultTimeout());
 
-        ClusterPubSubConnectionProvider<K, V> pooledClusterConnectionProvider = new ClusterPubSubConnectionProvider<>(this,
-                clusterWriter, codec, connection.getUpstreamListener(), topologyRefreshScheduler);
+
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
         connection.setPartitions(partitions);

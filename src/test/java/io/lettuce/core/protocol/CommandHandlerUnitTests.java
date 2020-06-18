@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.*;
 
@@ -46,6 +47,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.api.push.PushListener;
+import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.output.StatusOutput;
@@ -96,6 +99,9 @@ class CommandHandlerUnitTests {
     private Endpoint endpoint;
 
     @Mock
+    private PushListener listener;
+
+    @Mock
     private ChannelPromise promise;
 
     @Mock
@@ -136,6 +142,7 @@ class CommandHandlerUnitTests {
         when(latencyCollector.isEnabled()).thenReturn(true);
         when(clientResources.commandLatencyCollector()).thenReturn(latencyCollector);
         when(clientResources.tracing()).thenReturn(Tracing.disabled());
+        when(endpoint.getPushListeners()).thenReturn(Collections.singleton(listener));
 
         sut = new CommandHandler(ClientOptions.create(), clientResources, endpoint);
         stack = (Queue) ReflectionTestUtils.getField(sut, "stack");
@@ -420,6 +427,26 @@ class CommandHandlerUnitTests {
         sut.channelRead(context, byteBufMock);
 
         verify(byteBufMock, never()).release();
+    }
+
+    @Test
+    void shouldNotifyPushListener() throws Exception {
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        channelPromise.setSuccess();
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        sut.channelRead(context, Unpooled.wrappedBuffer(">2\r\n+caching\r\n+foo\r\n".getBytes()));
+
+        ArgumentCaptor<PushMessage> messageCaptor = ArgumentCaptor.forClass(PushMessage.class);
+        verify(listener).onPushMessage(messageCaptor.capture());
+
+        PushMessage message = messageCaptor.getValue();
+        assertThat(message.getType()).isEqualTo("caching");
+        assertThat(message.getContent()).containsExactly(ByteBuffer.wrap("caching".getBytes()),
+                ByteBuffer.wrap("foo".getBytes()));
     }
 
     @Test

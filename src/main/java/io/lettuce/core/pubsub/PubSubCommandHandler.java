@@ -20,6 +20,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.CommandOutput;
@@ -36,7 +37,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * A netty {@link ChannelHandler} responsible for writing Redis Pub/Sub commands and reading the response stream from the
  * server. {@link PubSubCommandHandler} accounts for Pub/Sub message notification calling back
- * {@link PubSubEndpoint#notifyMessage(PubSubOutput)}. Redis responses can be interleaved in the sense that a response contains
+ * {@link PubSubEndpoint#notifyMessage(PubSubMessage)}. Redis responses can be interleaved in the sense that a response contains
  * a Pub/Sub message first, then a command response. Possible interleave is introspected via {@link ResponseHeaderReplayOutput}
  * and decoding hooks.
  *
@@ -54,7 +55,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
     private final Deque<ReplayOutput<K, V>> queue = new ArrayDeque<>();
 
     private ResponseHeaderReplayOutput<K, V> replay;
-    private PubSubOutput<K, V, V> output;
+    private PubSubOutput<K, V> output;
 
     /**
      * Initialize a new instance.
@@ -99,7 +100,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
             output = new PubSubOutput<>(codec);
         }
 
-        if (!getStack().isEmpty()) {
+        if (!getStack().isEmpty() || isPushDecode(buffer)) {
             super.decode(ctx, buffer);
         }
 
@@ -133,7 +134,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
     @Override
     protected boolean canComplete(RedisCommand<?, ?, ?> command) {
 
-        if (isPubSubMessage(replay)) {
+        if (isResp2PubSubMessage(replay)) {
 
             queue.add(replay);
             replay = null;
@@ -165,7 +166,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
      * @param replay
      * @return
      */
-    private static boolean isPubSubMessage(ResponseHeaderReplayOutput<?, ?> replay) {
+    private static boolean isResp2PubSubMessage(ResponseHeaderReplayOutput<?, ?> replay) {
 
         if (replay == null) {
             return false;
@@ -200,6 +201,73 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
         return replay;
     }
 
+    protected void notifyPushListeners(PushMessage notification) {
+
+        if (PubSubOutput.Type.isPubSubType(notification.getType())) {
+
+            PubSubOutput.Type type = PubSubOutput.Type.valueOf(notification.getType());
+            RedisCommand<?, ?, ?> command = getStack().peek();
+
+            if (command != null && shouldCompleteCommand(type, command)) {
+                completeCommand(notification, command);
+            }
+
+            doNotifyMessage(toPubSubMessage(notification));
+        }
+
+        super.notifyPushListeners(notification);
+    }
+
+    private boolean shouldCompleteCommand(PubSubOutput.Type type, RedisCommand<?, ?, ?> command) {
+
+        String commandType = command.getType().name();
+        switch (type) {
+            case subscribe:
+                return commandType.equalsIgnoreCase("SUBSCRIBE");
+
+            case psubscribe:
+                return commandType.equalsIgnoreCase("PSUBSCRIBE");
+
+            case unsubscribe:
+                return commandType.equalsIgnoreCase("UNSUBSCRIBE");
+
+            case punsubscribe:
+                return commandType.equalsIgnoreCase("PUNSUBSCRIBE");
+        }
+
+        return false;
+    }
+
+    private void completeCommand(PushMessage notification, RedisCommand<?, ?, ?> command) {
+        CommandOutput<?, ?, ?> output = command.getOutput();
+        for (Object value : notification.getContent()) {
+
+            if (value instanceof Long) {
+                output.set((Long) value);
+            } else {
+                output.set((ByteBuffer) value);
+            }
+        }
+
+        getStack().poll().complete();
+    }
+
+    private PubSubMessage<K, V> toPubSubMessage(PushMessage notification) {
+
+        PubSubOutput<K, V> output = new PubSubOutput<>(codec);
+
+        for (Object argument : notification.getContent()) {
+
+            if (argument instanceof Long) {
+                output.set((Long) argument);
+            } else {
+                output.set((ByteBuffer) argument);
+            }
+        }
+
+        return output;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     protected void afterDecode(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
@@ -209,9 +277,9 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
         }
     }
 
-    private void doNotifyMessage(PubSubOutput<K, V, V> output) {
+    private void doNotifyMessage(PubSubMessage<K, V> message) {
         try {
-            endpoint.notifyMessage(output);
+            endpoint.notifyMessage(message);
         } catch (Exception e) {
             logger.error("Unexpected error occurred in PubSubEndpoint.notifyMessage", e);
         }
@@ -251,4 +319,5 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
             super.multi(count);
         }
     }
+
 }

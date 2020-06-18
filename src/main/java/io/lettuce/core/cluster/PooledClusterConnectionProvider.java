@@ -15,12 +15,10 @@
  */
 package io.lettuce.core.cluster;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,7 +26,9 @@ import java.util.stream.Collectors;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.cluster.ClusterNodeConnectionFactory.ConnectionKey;
+import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
@@ -46,13 +46,15 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 3.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider, AsyncClusterConnectionProvider {
+class PooledClusterConnectionProvider<K, V>
+        implements ClusterConnectionProvider, AsyncClusterConnectionProvider, ClusterPushHandler {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
 
     // Contains NodeId-identified and HostAndPort-identified connections.
     private final Object stateLock = new Object();
     private final boolean debugEnabled = logger.isDebugEnabled();
+    private final List<RedisClusterPushListener> pushListeners = new CopyOnWriteArrayList<>();
     private final CompletableFuture<StatefulRedisConnection<K, V>> writers[] = new CompletableFuture[SlotHash.SLOT_COUNT];
     private final CompletableFuture<StatefulRedisConnection<K, V>> readers[][] = new CompletableFuture[SlotHash.SLOT_COUNT][];
     private final RedisClusterClient redisClusterClient;
@@ -75,6 +77,21 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         this.clusterEventListener = clusterEventListener;
         this.connectionFactory = new NodeConnectionPostProcessor(getConnectionFactory(redisClusterClient));
         this.connectionProvider = new AsyncConnectionProvider<>(this.connectionFactory);
+    }
+
+    @Override
+    public void addListener(RedisClusterPushListener listener) {
+        this.pushListeners.add(listener);
+    }
+
+    @Override
+    public void removeListener(RedisClusterPushListener listener) {
+        this.pushListeners.remove(listener);
+    }
+
+    @Override
+    public Collection<RedisClusterPushListener> getPushListeners() {
+        return this.pushListeners;
     }
 
     @Override
@@ -598,6 +615,10 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         return new DefaultClusterNodeConnectionFactory<>(redisClusterClient, redisCodec, clusterWriter);
     }
 
+    protected void onPushMessage(RedisClusterNode node, PushMessage message) {
+        pushListeners.forEach(listener -> listener.onPushMessage(node, message));
+    }
+
     class NodeConnectionPostProcessor implements ClusterNodeConnectionFactory<K, V> {
         private final ClusterNodeConnectionFactory<K, V> delegate;
 
@@ -613,12 +634,13 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
         @Override
         public ConnectionFuture<StatefulRedisConnection<K, V>> apply(ConnectionKey key) {
 
-            if (key.nodeId != null && getPartitions().getPartitionByNodeId(key.nodeId) == null) {
+            RedisClusterNode targetNode = null;
+            if (key.nodeId != null && (targetNode = getPartitions().getPartitionByNodeId(key.nodeId)) == null) {
                 clusterEventListener.onUnknownNode();
                 throw connectionAttemptRejected("node id " + key.nodeId);
             }
 
-            if (key.host != null && partitions.getPartition(key.host, key.port) == null) {
+            if (key.host != null && (targetNode = partitions.getPartition(key.host, key.port)) == null) {
                 clusterEventListener.onUnknownNode();
                 if (validateClusterNodeMembership()) {
                     throw connectionAttemptRejected(key.host + ":" + key.port);
@@ -642,9 +664,11 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
                 });
             }
 
+            RedisClusterNode actualNode = targetNode;
             connection = connection.thenApply(c -> {
                 synchronized (stateLock) {
                     c.setAutoFlushCommands(autoFlushCommands);
+                    c.addListener(message -> onPushMessage(actualNode, message));
                 }
                 return c;
             });

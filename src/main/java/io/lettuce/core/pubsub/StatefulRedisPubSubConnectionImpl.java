@@ -58,7 +58,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     public StatefulRedisPubSubConnectionImpl(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec,
             Duration timeout) {
 
-        super(writer, codec, timeout);
+        super(writer, endpoint, codec, timeout);
 
         this.endpoint = endpoint;
     }

@@ -41,6 +41,7 @@ import org.mockito.quality.Strictness;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -53,6 +54,8 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.resource.ClientResources;
 
 /**
+ * Unit tests for {@link PooledClusterConnectionProvider}.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(MockitoExtension.class)
@@ -120,6 +123,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         assertThat(connection).isSameAs(nodeConnectionMock);
         verify(connection).setAutoFlushCommands(true);
+        verify(connection).addListener(any(PushListener.class));
         verifyNoMoreInteractions(connection);
     }
 
@@ -136,6 +140,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         assertThat(connection).isSameAs(nodeConnectionMock);
         verify(connection).setAutoFlushCommands(true);
+        verify(connection).addListener(any(PushListener.class));
         verifyNoMoreInteractions(connection);
     }
 

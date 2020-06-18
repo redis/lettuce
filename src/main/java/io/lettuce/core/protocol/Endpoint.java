@@ -23,7 +23,7 @@ import io.netty.channel.Channel;
  *
  * @author Mark Paluch
  */
-public interface Endpoint {
+public interface Endpoint extends PushHandler {
 
     /**
      * Reset this endpoint to its initial state, clear all buffers and potentially close the bound channel.

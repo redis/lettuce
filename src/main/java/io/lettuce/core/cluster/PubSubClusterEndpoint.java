@@ -23,7 +23,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubAdapter;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
 import io.lettuce.core.pubsub.PubSubEndpoint;
-import io.lettuce.core.pubsub.PubSubOutput;
+import io.lettuce.core.pubsub.PubSubMessage;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -78,14 +78,15 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
         this.clusterNode = clusterNode;
     }
 
-    protected void notifyListeners(PubSubOutput<K, V, V> output) {
+    @Override
+    protected void notifyListeners(PubSubMessage<K, V> output) {
         // update listeners
         switch (output.type()) {
             case message:
-                multicast.message(clusterNode, output.channel(), output.get());
+                multicast.message(clusterNode, output.channel(), output.body());
                 break;
             case pmessage:
-                multicast.message(clusterNode, output.pattern(), output.channel(), output.get());
+                multicast.message(clusterNode, output.pattern(), output.channel(), output.body());
                 break;
             case psubscribe:
                 multicast.psubscribed(clusterNode, output.pattern(), output.count());

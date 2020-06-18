@@ -66,7 +66,7 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
     void addListener(RedisPubSubListener<K, V> listener);
 
     /**
-     * Remove an existing {@link RedisPubSubListener listener}..
+     * Remove an existing {@link RedisPubSubListener listener}.
      *
      * @param listener the listener, must not be {@literal null}.
      */

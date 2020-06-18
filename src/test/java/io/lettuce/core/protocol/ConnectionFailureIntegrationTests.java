@@ -315,7 +315,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
             fail("Missing Exception");
         } catch (Exception e) {
             assertThat(ref.get().isOpen()).isFalse();
-            assertThat(ref.get().isRegistered()).isFalse();
+            Wait.untilEquals(false, () -> ref.get().isRegistered()).waitOrTimeout();
         } finally {
             FastShutdown.shutdown(client);
             FastShutdown.shutdown(clientResources);

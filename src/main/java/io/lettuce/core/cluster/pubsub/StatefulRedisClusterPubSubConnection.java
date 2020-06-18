@@ -20,6 +20,7 @@ import java.util.function.Predicate;
 
 import io.lettuce.core.RedisException;
 import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.api.sync.NodeSelection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
@@ -187,4 +188,20 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * @param listener the listener, must not be {@literal null}.
      */
     void removeListener(RedisClusterPubSubListener<K, V> listener);
+
+    /**
+     * Add a new {@link RedisClusterPushListener listener} to consume push messages.
+     *
+     * @param listener the listener, must not be {@literal null}.
+     * @since 6.0
+     */
+    void addListener(RedisClusterPushListener listener);
+
+    /**
+     * Remove an existing {@link RedisClusterPushListener listener}.
+     *
+     * @param listener the listener, must not be {@literal null}.
+     * @since 6.0
+     */
+    void removeListener(RedisClusterPushListener listener);
 }

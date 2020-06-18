@@ -19,6 +19,7 @@ import static io.lettuce.core.ConnectionEvents.Reset;
 
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,9 +27,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.api.push.PushListener;
+import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.output.PushOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
@@ -86,6 +90,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private RedisStateMachine rsm;
     private Channel channel;
     private ByteBuf buffer;
+    private PushOutput<ByteBuffer, ByteBuffer> pushOutput;
     private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
     private String logPrefix;
     private PristineFallbackCommand fallbackCommand;
@@ -561,58 +566,99 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
 
-        if (pristine && stack.isEmpty() && buffer.isReadable()) {
+        if (pristine) {
 
-            if (debugEnabled) {
-                logger.debug("{} Received response without a command context (empty stack)", logPrefix());
+            if (stack.isEmpty() && buffer.isReadable() && !isPushDecode(buffer)) {
+
+                if (debugEnabled) {
+                    logger.debug("{} Received response without a command context (empty stack)", logPrefix());
+                }
+
+                if (consumeResponse(buffer)) {
+                    pristine = false;
+                }
+
+                return;
             }
-
-            if (consumeResponse(buffer)) {
-                pristine = false;
-            }
-
-            return;
         }
 
         while (canDecode(buffer)) {
 
-            RedisCommand<?, ?, ?> command = stack.peek();
-            if (debugEnabled) {
-                logger.debug("{} Stack contains: {} commands", logPrefix(), stack.size());
-            }
+            if (isPushDecode(buffer)) {
 
-            pristine = false;
-
-            try {
-                if (!decode(ctx, buffer, command)) {
-                    discardReadBytesIfNecessary(buffer);
-                    return;
+                if (pushOutput == null) {
+                    pushOutput = new PushOutput<>(ByteBufferCopyCodec.INSTANCE);
                 }
-            } catch (Exception e) {
 
-                ctx.close();
-                throw e;
-            }
+                try {
+                    if (!decode(ctx, buffer, pushOutput)) {
+                        discardReadBytesIfNecessary(buffer);
+                        return;
+                    }
 
-            if (isProtectedMode(command)) {
-                onProtectedMode(command.getOutput().getError());
+                } catch (Exception e) {
+
+                    ctx.close();
+                    throw e;
+                }
+
+                PushOutput<ByteBuffer, ByteBuffer> output = pushOutput;
+                pushOutput = null;
+                notifyPushListeners(output);
+
             } else {
 
-                if (canComplete(command)) {
-                    stack.poll();
+                RedisCommand<?, ?, ?> command = stack.peek();
+                if (debugEnabled) {
+                    logger.debug("{} Stack contains: {} commands", logPrefix(), stack.size());
+                }
 
-                    try {
-                        complete(command);
-                    } catch (Exception e) {
-                        logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                pristine = false;
+
+                try {
+                    if (!decode(ctx, buffer, command)) {
+                        discardReadBytesIfNecessary(buffer);
+                        return;
+                    }
+                } catch (Exception e) {
+
+                    ctx.close();
+                    throw e;
+                }
+
+                if (isProtectedMode(command)) {
+                    onProtectedMode(command.getOutput().getError());
+                } else {
+
+                    if (canComplete(command)) {
+                        stack.poll();
+
+                        try {
+                            complete(command);
+                        } catch (Exception e) {
+                            logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                        }
                     }
                 }
+                afterDecode(ctx, command);
             }
 
-            afterDecode(ctx, command);
         }
 
         discardReadBytesIfNecessary(buffer);
+    }
+
+    protected void notifyPushListeners(PushMessage notification) {
+
+        Collection<PushListener> pushListeners = endpoint.getPushListeners();
+
+        try {
+            pushListeners.forEach(pushListener -> {
+                pushListener.onPushMessage(notification);
+            });
+        } catch (Exception e) {
+            logger.warn("PushListener.onPushMessage failed with " + e.toString(), e);
+        }
     }
 
     /**
@@ -622,7 +668,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * @return
      */
     protected boolean canDecode(ByteBuf buffer) {
-        return !stack.isEmpty() && buffer.isReadable();
+        return buffer.isReadable() && (isMessageDecode() || isPushDecode(buffer));
+    }
+
+    private boolean isPushMessage(ByteBuf buffer) {
+        return buffer.getByte(buffer.readerIndex()) == RedisStateMachine.State.Type.PUSH.marker;
+    }
+
+    protected boolean isPushDecode(ByteBuf buffer) {
+        return isPushMessage(buffer) || pushOutput != null;
+    }
+
+    private boolean isMessageDecode() {
+        return !stack.isEmpty();
     }
 
     /**
@@ -645,6 +703,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         command.complete();
     }
 
+    /**
+     * Decode a command.
+     *
+     * @param ctx
+     * @param buffer
+     * @param command
+     * @return
+     */
     private boolean decode(ChannelHandlerContext ctx, ByteBuf buffer, RedisCommand<?, ?, ?> command) {
 
         if (latencyMetricsEnabled && command instanceof WithLatency) {
@@ -666,6 +732,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         return decode0(ctx, buffer, command);
     }
 
+    /**
+     * Decode to a {@link CommandOutput}.
+     *
+     * @param ctx
+     * @param buffer
+     * @param output
+     * @return
+     */
+    private boolean decode(ChannelHandlerContext ctx, ByteBuf buffer, CommandOutput<?, ?, ?> output) {
+        return decode0(ctx, buffer, output);
+    }
+
     private boolean decode0(ChannelHandlerContext ctx, ByteBuf buffer, RedisCommand<?, ?, ?> command) {
 
         if (!decode(buffer, command, getCommandOutput(command))) {
@@ -678,6 +756,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 ctx.channel().config().setAutoRead(sink.hasDemand());
             }
 
+            return false;
+        }
+
+        if (!ctx.channel().config().isAutoRead()) {
+            ctx.channel().config().setAutoRead(true);
+        }
+
+        return true;
+    }
+
+    private boolean decode0(ChannelHandlerContext ctx, ByteBuf buffer, CommandOutput<?, ?, ?> pushOutput) {
+
+        if (!rsm.decode(buffer, pushOutput, ctx::fireExceptionCaught)) {
             return false;
         }
 
@@ -704,7 +795,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     protected boolean decode(ByteBuf buffer, RedisCommand<?, ?, ?> command, CommandOutput<?, ?, ?> output) {
-        return rsm.decode(buffer, command, output);
+        return rsm.decode(buffer, output, command::completeExceptionally);
     }
 
     /**

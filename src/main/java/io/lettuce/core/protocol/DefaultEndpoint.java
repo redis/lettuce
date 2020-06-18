@@ -21,12 +21,14 @@ import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import io.lettuce.core.*;
+import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
@@ -47,7 +49,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  */
-public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
+public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandler {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEndpoint.class);
     private static final AtomicLong ENDPOINT_COUNTER = new AtomicLong();
@@ -71,6 +73,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     private final boolean rejectCommandsWhileDisconnected;
 
     private final long endpointId = ENDPOINT_COUNTER.incrementAndGet();
+    private final List<PushListener> pushListeners = new CopyOnWriteArrayList<>();
     private final SharedLock sharedLock = new SharedLock();
     private final boolean debugEnabled = logger.isDebugEnabled();
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
@@ -125,6 +128,21 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
         this.autoFlushCommands = autoFlush;
+    }
+
+    @Override
+    public void addListener(PushListener listener) {
+        pushListeners.add(listener);
+    }
+
+    @Override
+    public void removeListener(PushListener listener) {
+        pushListeners.remove(listener);
+    }
+
+    @Override
+    public List<PushListener> getPushListeners() {
+        return pushListeners;
     }
 
     @Override

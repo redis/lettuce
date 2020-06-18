@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import io.lettuce.core.LettuceStrings;
 import io.lettuce.core.output.CommandOutput;
@@ -51,52 +52,52 @@ public class RedisStateMachine {
             /**
              * First byte: {@code +}.
              */
-            SINGLE,
+            SINGLE('+'),
 
             /**
-             * First byte: {@code +}.
+             * First byte: {@code -}.
              */
-            ERROR,
+            ERROR('-'),
 
             /**
              * First byte: {@code :}.
              */
-            INTEGER,
+            INTEGER(':'),
 
             /**
              * First byte: {@code ,}.
              *
              * @since 6.0/RESP3
              */
-            FLOAT,
+            FLOAT(','),
 
             /**
              * First byte: {@code #}.
              *
              * @since 6.0/RESP3
              */
-            BOOLEAN,
+            BOOLEAN('#'),
 
             /**
              * First byte: {@code !}.
              *
              * @since 6.0/RESP3
              */
-            BULK_ERROR,
+            BULK_ERROR('!'),
 
             /**
              * First byte: {@code =}.
              *
              * @since 6.0/RESP3
              */
-            VERBATIM, VERBATIM_STRING,
+            VERBATIM('='), VERBATIM_STRING('='),
 
             /**
              * First byte: {@code (}.
              *
              * @since 6.0/RESP3
              */
-            BIG_NUMBER,
+            BIG_NUMBER('('),
 
             /**
              * First byte: {@code %}.
@@ -104,7 +105,7 @@ public class RedisStateMachine {
              * @see #HELLO_V3
              * @since 6.0/RESP3
              */
-            MAP,
+            MAP('%'),
 
             /**
              * First byte: {@code ~}.
@@ -112,14 +113,14 @@ public class RedisStateMachine {
              * @see #MULTI
              * @since 6.0/RESP3
              */
-            SET,
+            SET('~'),
 
             /**
              * First byte: {@code |}.
              *
              * @since 6.0/RESP3
              */
-            ATTRIBUTE,
+            ATTRIBUTE('|'),
 
             /**
              * First byte: {@code >}.
@@ -127,7 +128,7 @@ public class RedisStateMachine {
              * @see #MULTI
              * @since 6.0/RESP3
              */
-            PUSH,
+            PUSH('>'),
 
             /**
              * First byte: {@code @}.
@@ -135,19 +136,19 @@ public class RedisStateMachine {
              * @see #MAP
              * @since 6.0/RESP3
              */
-            HELLO_V3,
+            HELLO_V3('@'),
 
             /**
              * First byte: {@code _}.
              *
              * @since 6.0/RESP3
              */
-            NULL,
+            NULL('_'),
 
             /**
              * First byte: {@code $}.
              */
-            BULK,
+            BULK('$'),
 
             /**
              * First byte: {@code *}.
@@ -155,7 +156,13 @@ public class RedisStateMachine {
              * @see #SET
              * @see #MAP
              */
-            MULTI, BYTES
+            MULTI('*'), BYTES('*');
+
+            final byte marker;
+
+            Type(char marker) {
+                this.marker = (byte) marker;
+            }
         }
 
         Type type = null;
@@ -208,26 +215,24 @@ public class RedisStateMachine {
      * @return true if a complete response was read.
      */
     public boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output) {
-        return decode(buffer, null, output);
+        return decode(buffer, output, ex -> {
+        });
     }
 
     /**
      * Attempt to decode a redis response and return a flag indicating whether a complete response was read.
      *
      * @param buffer Buffer containing data from the server.
-     * @param command the command itself TODO: Change to Consumer<Throwable>
      * @param output Current command output.
+     * @param errorHandler the error handler
      * @return true if a complete response was read.
      */
-    public boolean decode(ByteBuf buffer, RedisCommand<?, ?, ?> command, CommandOutput<?, ?, ?> output) {
+    public boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
 
         int length, end;
         ByteBuffer bytes;
 
         buffer.touch("RedisStateMachine.decode(…)");
-        if (debugEnabled) {
-            logger.debug("Decode {}", command);
-        }
 
         if (isEmpty(stack)) {
             add(stack, new State());
@@ -264,7 +269,7 @@ public class RedisStateMachine {
                     }
 
                     if (!QUEUED.equals(bytes)) {
-                        safeSetSingle(output, bytes, command);
+                        safeSetSingle(output, bytes, errorHandler);
                     }
                     break;
 
@@ -273,40 +278,40 @@ public class RedisStateMachine {
                         break loop;
                     }
 
-                    safeSetBigNumber(output, bytes, command);
+                    safeSetBigNumber(output, bytes, errorHandler);
                     break;
                 case ERROR:
                     if ((bytes = readLine(buffer)) == null) {
                         break loop;
                     }
-                    safeSetError(output, bytes, command);
+                    safeSetError(output, bytes, errorHandler);
                     break;
                 case NULL:
                     if ((bytes = readLine(buffer)) == null) {
                         break loop;
                     }
-                    safeSet(output, null, command);
+                    safeSet(output, null, errorHandler);
                     break;
                 case INTEGER:
                     if ((end = findLineEnd(buffer)) == NOT_FOUND) {
                         break loop;
                     }
                     long integer = readLong(buffer, buffer.readerIndex(), end);
-                    safeSet(output, integer, command);
+                    safeSet(output, integer, errorHandler);
                     break;
                 case BOOLEAN:
                     if ((end = findLineEnd(buffer)) == NOT_FOUND) {
                         break loop;
                     }
                     boolean value = readBoolean(buffer);
-                    safeSet(output, value, command);
+                    safeSet(output, value, errorHandler);
                     break;
                 case FLOAT:
                     if ((end = findLineEnd(buffer)) == NOT_FOUND) {
                         break loop;
                     }
                     double f = readFloat(buffer, buffer.readerIndex(), end);
-                    safeSet(output, f, command);
+                    safeSet(output, f, errorHandler);
                     break;
                 case BULK:
                 case VERBATIM:
@@ -315,7 +320,7 @@ public class RedisStateMachine {
                     }
                     length = (int) readLong(buffer, buffer.readerIndex(), end);
                     if (length == NOT_FOUND) {
-                        safeSet(output, null, command);
+                        safeSet(output, null, errorHandler);
                     } else {
                         state.type = state.type == VERBATIM ? VERBATIM_STRING : BYTES;
                         state.count = length + TERMINATOR_LENGTH;
@@ -329,7 +334,7 @@ public class RedisStateMachine {
                     }
                     length = (int) readLong(buffer, buffer.readerIndex(), end);
                     if (length == NOT_FOUND) {
-                        safeSetError(output, null, command);
+                        safeSetError(output, null, errorHandler);
                     } else {
                         state.type = BYTES;
                         state.count = length + TERMINATOR_LENGTH;
@@ -354,14 +359,14 @@ public class RedisStateMachine {
                         switch (state.type) {
                             case MULTI:
                             case PUSH:
-                                safeMultiArray(output, state.count, command);
+                                safeMultiArray(output, state.count, errorHandler);
                                 break;
                             case MAP:
-                                safeMultiMap(output, state.count, command);
+                                safeMultiMap(output, state.count, errorHandler);
                                 state.count = length * 2;
                                 break;
                             case SET:
-                                safeMultiSet(output, state.count, command);
+                                safeMultiSet(output, state.count, errorHandler);
                                 break;
                         }
                     }
@@ -381,13 +386,13 @@ public class RedisStateMachine {
                     }
                     // skip txt: and mkd:
                     bytes.position(bytes.position() + 4);
-                    safeSet(output, bytes, command);
+                    safeSet(output, bytes, errorHandler);
                     break;
                 case BYTES:
                     if ((bytes = readBytes(buffer, state.count)) == null) {
                         break loop;
                     }
-                    safeSet(output, bytes, command);
+                    safeSet(output, bytes, errorHandler);
                     break;
                 case ATTRIBUTE:
                     throw new RedisProtocolException("Not implemented");
@@ -402,7 +407,7 @@ public class RedisStateMachine {
         }
 
         if (debugEnabled) {
-            logger.debug("Decoded {}, empty stack: {}", command, isEmpty(stack));
+            logger.debug("Decoded {}, empty stack: {}", errorHandler, isEmpty(stack));
         }
 
         if (isDiscoverProtocol()) {
@@ -619,178 +624,178 @@ public class RedisStateMachine {
     }
 
     /**
-     * Safely sets {@link CommandOutput#set(boolean)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#set(boolean)}. Completes a errorHandler exceptionally in case an exception occurs.
      *
      * @param output
      * @param value
-     * @param command
+     * @param errorHandler
      */
-    protected void safeSet(CommandOutput<?, ?, ?> output, boolean value, RedisCommand<?, ?, ?> command) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, boolean value, Consumer<Exception> errorHandler) {
 
         try {
             output.set(value);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#set(long)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#set(long)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param number
-     * @param command
+     * @param errorHandler
      */
-    protected void safeSet(CommandOutput<?, ?, ?> output, long number, RedisCommand<?, ?, ?> command) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, long number, Consumer<Exception> errorHandler) {
 
         try {
             output.set(number);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#set(double)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#set(double)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param number
-     * @param command
+     * @param errorHandler
      */
-    protected void safeSet(CommandOutput<?, ?, ?> output, double number, RedisCommand<?, ?, ?> command) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, double number, Consumer<Exception> errorHandler) {
 
         try {
             output.set(number);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#set(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#set(ByteBuffer)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param bytes
-     * @param command
+     * @param errorHandler
      */
-    protected void safeSet(CommandOutput<?, ?, ?> output, ByteBuffer bytes, RedisCommand<?, ?, ?> command) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Exception> errorHandler) {
 
         try {
             output.set(bytes);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#set(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#set(ByteBuffer)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param bytes
-     * @param command
+     * @param errorHandler
      */
-    protected void safeSetSingle(CommandOutput<?, ?, ?> output, ByteBuffer bytes, RedisCommand<?, ?, ?> command) {
+    protected void safeSetSingle(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Exception> errorHandler) {
 
         try {
             output.set(bytes);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#set(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#set(ByteBuffer)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param bytes
-     * @param command
+     * @param errorHandler
      */
-    protected void safeSetBigNumber(CommandOutput<?, ?, ?> output, ByteBuffer bytes, RedisCommand<?, ?, ?> command) {
+    protected void safeSetBigNumber(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Exception> errorHandler) {
 
         try {
             output.setBigNumber(bytes);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#multiArray(int)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#multiArray(int)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param count
-     * @param command
+     * @param errorHandler
      */
-    protected void safeMultiArray(CommandOutput<?, ?, ?> output, int count, RedisCommand<?, ?, ?> command) {
+    protected void safeMultiArray(CommandOutput<?, ?, ?> output, int count, Consumer<Exception> errorHandler) {
 
         try {
             output.multiArray(count);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#multiPush(int)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#multiPush(int)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param count
-     * @param command
+     * @param errorHandler
      */
-    protected void safeMultiPush(CommandOutput<?, ?, ?> output, int count, RedisCommand<?, ?, ?> command) {
+    protected void safeMultiPush(CommandOutput<?, ?, ?> output, int count, Consumer<Exception> errorHandler) {
 
         try {
             output.multiPush(count);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#multiSet(int)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#multiSet(int)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param count
-     * @param command
+     * @param errorHandler
      */
-    protected void safeMultiSet(CommandOutput<?, ?, ?> output, int count, RedisCommand<?, ?, ?> command) {
+    protected void safeMultiSet(CommandOutput<?, ?, ?> output, int count, Consumer<Exception> errorHandler) {
 
         try {
             output.multiSet(count);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#multiMap(int)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#multiMap(int)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param count
-     * @param command
+     * @param errorHandler
      */
-    protected void safeMultiMap(CommandOutput<?, ?, ?> output, int count, RedisCommand<?, ?, ?> command) {
+    protected void safeMultiMap(CommandOutput<?, ?, ?> output, int count, Consumer<Exception> errorHandler) {
 
         try {
             output.multiMap(count);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 
     /**
-     * Safely sets {@link CommandOutput#setError(ByteBuffer)}. Completes a command exceptionally in case an exception occurs.
+     * Safely sets {@link CommandOutput#setError(ByteBuffer)}. Notifies the {@code errorHandler} if an exception occurs.
      *
      * @param output
      * @param bytes
-     * @param command
+     * @param errorHandler
      */
-    protected void safeSetError(CommandOutput<?, ?, ?> output, ByteBuffer bytes, RedisCommand<?, ?, ?> command) {
+    protected void safeSetError(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Exception> errorHandler) {
 
         try {
             output.setError(bytes);
         } catch (Exception e) {
-            command.completeExceptionally(e);
+            errorHandler.accept(e);
         }
     }
 

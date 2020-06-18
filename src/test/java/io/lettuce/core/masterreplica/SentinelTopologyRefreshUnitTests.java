@@ -49,6 +49,7 @@ import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
+import io.lettuce.core.pubsub.RedisPubSubListener;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.resource.ClientResources;
@@ -211,7 +212,7 @@ class SentinelTopologyRefreshUnitTests {
         sut.bind(refreshRunnable);
         sut.close();
 
-        verify(connection).removeListener(any());
+        verify(connection).removeListener(any(RedisPubSubListener.class));
         verify(connection).closeAsync();
     }
 

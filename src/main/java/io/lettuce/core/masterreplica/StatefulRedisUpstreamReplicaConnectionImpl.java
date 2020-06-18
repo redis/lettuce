@@ -35,7 +35,7 @@ class StatefulRedisUpstreamReplicaConnectionImpl<K, V> extends StatefulRedisConn
      * @param timeout Maximum time to wait for a response.
      */
     StatefulRedisUpstreamReplicaConnectionImpl(UpstreamReplicaChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
-        super(writer, codec, timeout);
+        super(writer, NoOpPushHandler.INSTANCE, codec, timeout);
     }
 
     @Override

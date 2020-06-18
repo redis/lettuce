@@ -35,12 +35,10 @@ import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.CommandExpiryWriter;
-import io.lettuce.core.protocol.CommandHandler;
-import io.lettuce.core.protocol.DefaultEndpoint;
-import io.lettuce.core.protocol.Endpoint;
+import io.lettuce.core.protocol.*;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -278,7 +276,7 @@ public class RedisClient extends AbstractRedisClient {
             writer = new CommandExpiryWriter(writer, getOptions(), getResources());
         }
 
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, codec, timeout);
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout);
         ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
                 () -> new CommandHandler(getOptions(), getResources(), endpoint));
 
@@ -653,6 +651,7 @@ public class RedisClient extends AbstractRedisClient {
      * Subclasses of {@link RedisClient} may override that method.
      *
      * @param channelWriter the channel writer
+     * @param pushHandler the handler for push notifications
      * @param codec codec
      * @param timeout default timeout
      * @param <K> Key-Type
@@ -660,8 +659,9 @@ public class RedisClient extends AbstractRedisClient {
      * @return new instance of StatefulRedisConnectionImpl
      */
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
+            PushHandler pushHandler,
             RedisCodec<K, V> codec, Duration timeout) {
-        return new StatefulRedisConnectionImpl<>(channelWriter, codec, timeout);
+        return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout);
     }
 
     /**

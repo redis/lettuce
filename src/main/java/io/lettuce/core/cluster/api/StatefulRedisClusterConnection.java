@@ -24,6 +24,7 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -157,4 +158,20 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * @return the underlying {@link RedisChannelWriter}.
      */
     RedisChannelWriter getChannelWriter();
+
+    /**
+     * Add a new {@link RedisClusterPushListener listener} to consume push messages.
+     *
+     * @param listener the listener, must not be {@literal null}.
+     * @since 6.0
+     */
+    void addListener(RedisClusterPushListener listener);
+
+    /**
+     * Remove an existing {@link RedisClusterPushListener listener}.
+     *
+     * @param listener the listener, must not be {@literal null}.
+     * @since 6.0
+     */
+    void removeListener(RedisClusterPushListener listener);
 }

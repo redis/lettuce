@@ -67,26 +67,26 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SafeVarargs
-    final Command<K, V, K> psubscribe(K... patterns) {
+    final Command<K, V, V> psubscribe(K... patterns) {
         LettuceAssert.notEmpty(patterns, "patterns " + MUST_NOT_BE_EMPTY);
 
         return pubSubCommand(PSUBSCRIBE, new PubSubOutput<>(codec), patterns);
     }
 
     @SafeVarargs
-    final Command<K, V, K> punsubscribe(K... patterns) {
+    final Command<K, V, V> punsubscribe(K... patterns) {
         return pubSubCommand(PUNSUBSCRIBE, new PubSubOutput<>(codec), patterns);
     }
 
     @SafeVarargs
-    final Command<K, V, K> subscribe(K... channels) {
+    final Command<K, V, V> subscribe(K... channels) {
         LettuceAssert.notEmpty(channels, "channels " + MUST_NOT_BE_EMPTY);
 
         return pubSubCommand(SUBSCRIBE, new PubSubOutput<>(codec), channels);
     }
 
     @SafeVarargs
-    final Command<K, V, K> unsubscribe(K... channels) {
+    final Command<K, V, V> unsubscribe(K... channels) {
         return pubSubCommand(UNSUBSCRIBE, new PubSubOutput<>(codec), channels);
     }
 
