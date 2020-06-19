@@ -18,6 +18,9 @@ package io.lettuce.core;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/stralgo">STRALGO</a> command.
  * Static import the methods from {@link StrAlgoArgs.Builder} and call the methods: {@code block(…)} .
@@ -35,6 +38,7 @@ public class StrAlgoArgs implements CompositeArgument {
     private boolean withIdx;
     private By by = By.STRINGS;
     private String[] keys;
+    private Charset charset = StandardCharsets.UTF_8;
 
     /**
      * Builder entry points for {@link StrAlgoArgs}.
@@ -63,6 +67,15 @@ public class StrAlgoArgs implements CompositeArgument {
          */
         public static StrAlgoArgs strings(String... strings) {
             return new StrAlgoArgs().by(By.STRINGS, strings);
+        }
+
+        /**
+         * Creates new {@link StrAlgoArgs} by strings and charset.
+         *
+         * @return new {@link StrAlgoArgs} with {@literal By STRINGS} set.
+         */
+        public static StrAlgoArgs strings(Charset charset, String... strings) {
+            return new StrAlgoArgs().by(By.STRINGS, strings).charset(charset);
         }
     }
     /**
@@ -115,6 +128,11 @@ public class StrAlgoArgs implements CompositeArgument {
         return withIdx;
     }
 
+    public StrAlgoArgs charset(Charset charset) {
+        this.charset = charset;
+        return this;
+    }
+
     public enum By {
         STRINGS, KEYS
     }
@@ -125,7 +143,11 @@ public class StrAlgoArgs implements CompositeArgument {
         args.add("LCS");
         args.add(by.name());
         for (String key : keys) {
-            args.add(key);
+            if (by == By.STRINGS) {
+                args.add(key.getBytes(charset));
+            } else {
+                args.add(key);
+            }
         }
         if (justLen) {
             args.add("LEN");
