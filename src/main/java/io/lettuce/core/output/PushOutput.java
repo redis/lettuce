@@ -16,13 +16,13 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Output for push notifications. The response output is always {@code List&lt;Object&gt;} as push notifications may contain
@@ -82,5 +82,69 @@ public class PushOutput<K, V> extends NestedMultiOutput<K, V> implements PushMes
         }
 
         return Collections.unmodifiableList(copy);
+    }
+
+    @Override
+    public List<Object> getContent(Function<ByteBuffer, Object> decodeFunction) {
+
+        LettuceAssert.notNull(decodeFunction, "Decode function must not be null");
+
+        List<Object> copy = new ArrayList<>();
+
+        for (Object o : get()) {
+            copy.add(decode(o, decodeFunction));
+        }
+
+        return Collections.unmodifiableList(copy);
+    }
+
+    private Object decode(Object toDecode, Function<ByteBuffer, Object> decodeFunction) {
+
+        if (toDecode instanceof List) {
+
+            List<Object> copy = new ArrayList<>(((List<?>) toDecode).size());
+
+            for (Object o : (List<?>) toDecode) {
+                copy.add(decode(o, decodeFunction));
+            }
+
+            return copy;
+        }
+
+        if (toDecode instanceof Set) {
+
+            Set<Object> copy = new LinkedHashSet<>(((Set<?>) toDecode).size());
+
+            for (Object o : (Set<?>) toDecode) {
+                copy.add(decode(o, decodeFunction));
+            }
+
+            return copy;
+
+        }
+
+        if (toDecode instanceof Map) {
+
+            Map<Object, Object> copy = new LinkedHashMap<>(((Map<?, ?>) toDecode).size());
+
+            ((Map<?, ?>) toDecode).forEach((k, v) -> {
+                copy.put(decode(k, decodeFunction), decode(v, decodeFunction));
+            });
+
+            return copy;
+        }
+
+        if (toDecode instanceof ByteBuffer) {
+
+            ByteBuffer buffer = (ByteBuffer) toDecode;
+            try {
+                buffer.mark();
+                return decodeFunction.apply(buffer);
+            } finally {
+                buffer.reset();
+            }
+        }
+
+        return toDecode;
     }
 }

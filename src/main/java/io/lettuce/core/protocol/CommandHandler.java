@@ -634,6 +634,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                         stack.poll();
 
                         try {
+                            if (debugEnabled) {
+                                logger.debug("{} Completing command {}", logPrefix(), command);
+                            }
                             complete(command);
                         } catch (Exception e) {
                             logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);

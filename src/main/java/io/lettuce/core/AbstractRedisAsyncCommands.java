@@ -176,8 +176,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<String> clientCaching(boolean enabled) {
+        return dispatch(commandBuilder.clientCaching(enabled));
+    }
+
+    @Override
     public RedisFuture<K> clientGetname() {
         return dispatch(commandBuilder.clientGetname());
+    }
+
+    @Override
+    public RedisFuture<Long> clientGetredir() {
+        return dispatch(commandBuilder.clientGetredir());
     }
 
     @Override
@@ -208,6 +218,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<String> clientSetname(K name) {
         return dispatch(commandBuilder.clientSetname(name));
+    }
+
+    @Override
+    public RedisFuture<String> clientTracking(TrackingArgs args) {
+        return dispatch(commandBuilder.clientTracking(args));
     }
 
     @Override

@@ -235,9 +235,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BRPOPLPUSH, new ValueOutput<>(codec), args);
     }
 
+    Command<K, V, String> clientCaching(boolean enabled) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CACHING).add(enabled ? YES : NO);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, K> clientGetname() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(GETNAME);
         return createCommand(CLIENT, new KeyOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> clientGetredir() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(GETREDIR);
+        return createCommand(CLIENT, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, String> clientKill(String addr) {
@@ -275,6 +285,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(name, "Name " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(SETNAME).addKey(name);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> clientTracking(TrackingArgs trackingArgs) {
+        LettuceAssert.notNull(trackingArgs, "TrackingArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(TRACKING);
+        trackingArgs.build(args);
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
@@ -2302,9 +2320,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(consumer.group);
 
-        args.add(getLowerValue(range)).add(getUpperValue(range));
+        if (limit.isLimited() || !range.getLower().equals(Boundary.unbounded())
+                || !range.getUpper().equals(Boundary.unbounded())) {
+            args.add(getLowerValue(range)).add(getUpperValue(range));
 
-        args.add(limit.isLimited() ? limit.getCount() : Long.MAX_VALUE);
+            if (!limit.isLimited()) {
+                throw new IllegalArgumentException("Limit must be set using Range queries with XPENDING");
+            }
+            args.add(limit.getCount());
+        }
+
         args.addKey(consumer.name);
 
         return createCommand(XPENDING, new NestedMultiOutput<>(codec), args);

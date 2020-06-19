@@ -407,7 +407,7 @@ public class RedisStateMachine {
         }
 
         if (debugEnabled) {
-            logger.debug("Decoded {}, empty stack: {}", errorHandler, isEmpty(stack));
+            logger.debug("Decode done, empty stack: {}", isEmpty(stack));
         }
 
         if (isDiscoverProtocol()) {

@@ -191,8 +191,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<String> clientCaching(boolean enabled) {
+        return createMono(() -> commandBuilder.clientCaching(enabled));
+    }
+
+    @Override
     public Mono<K> clientGetname() {
         return createMono(commandBuilder::clientGetname);
+    }
+
+    @Override
+    public Mono<Long> clientGetredir() {
+        return createMono(commandBuilder::clientGetredir);
     }
 
     @Override
@@ -223,6 +233,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<String> clientSetname(K name) {
         return createMono(() -> commandBuilder.clientSetname(name));
+    }
+
+    @Override
+    public Mono<String> clientTracking(TrackingArgs args) {
+        return createMono(() -> commandBuilder.clientTracking(args));
     }
 
     @Override

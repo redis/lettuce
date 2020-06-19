@@ -18,11 +18,11 @@ package io.lettuce.core.api.async;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-
 import io.lettuce.core.KillArgs;
-import io.lettuce.core.RedisFuture;
+import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.RedisFuture;
 
 /**
  * Asynchronous executed commands for Server Control.
@@ -50,6 +50,15 @@ public interface RedisServerAsyncCommands<K, V> {
     RedisFuture<String> bgsave();
 
     /**
+     * Control tracking of keys in the context of server-assisted client cache invalidation.
+     *
+     * @param enabled {@code true} to enable key tracking.
+     * @return String simple-string-reply {@code OK}
+     * @since 6.0
+     */
+    RedisFuture<String> clientCaching(boolean enabled);
+
+    /**
      * Get the current connection name.
      *
      * @return K bulk-string-reply The connection name, or a null bulk reply if no name is set.
@@ -57,12 +66,21 @@ public interface RedisServerAsyncCommands<K, V> {
     RedisFuture<K> clientGetname();
 
     /**
-     * Set the current connection name.
+     * Returns the client ID we are redirecting our tracking notifications to
      *
-     * @param name the client name
-     * @return simple-string-reply {@code OK} if the connection name was successfully set.
+     * @return the ID of the client we are redirecting the notifications to. The command returns -1 if client tracking is not
+     *         enabled, or 0 if client tracking is enabled but we are not redirecting the notifications to any client.
+     * @since 6.0
      */
-    RedisFuture<String> clientSetname(K name);
+    RedisFuture<Long> clientGetredir();
+
+    /**
+     * Get the id of the current connection.
+     *
+     * @return Long The command just returns the ID of the current connection.
+     * @since 5.3
+     */
+    RedisFuture<Long> clientId();
 
     /**
      * Kill the connection of a client identified by ip:port.
@@ -81,14 +99,12 @@ public interface RedisServerAsyncCommands<K, V> {
     RedisFuture<Long> clientKill(KillArgs killArgs);
 
     /**
-     * Unblock the specified blocked client.
+     * Get the list of client connections.
      *
-     * @param id the client id.
-     * @param type unblock type.
-     * @return Long integer-reply number of unblocked connections.
-     * @since 5.1
+     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
+     *         each line is composed of a succession of property=value fields separated by a space character.
      */
-    RedisFuture<Long> clientUnblock(long id, UnblockType type);
+    RedisFuture<String> clientList();
 
     /**
      * Stop processing commands from clients for some time.
@@ -99,20 +115,32 @@ public interface RedisServerAsyncCommands<K, V> {
     RedisFuture<String> clientPause(long timeout);
 
     /**
-     * Get the list of client connections.
+     * Set the current connection name.
      *
-     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
-     *         each line is composed of a succession of property=value fields separated by a space character.
+     * @param name the client name
+     * @return simple-string-reply {@code OK} if the connection name was successfully set.
      */
-    RedisFuture<String> clientList();
+    RedisFuture<String> clientSetname(K name);
 
     /**
-     * Get the id of the current connection.
+     * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
+     * are either available when using the RESP3 protocol or through Pub/Sub notification when using RESP2.
      *
-     * @return Long The command just returns the ID of the current connection.
-     * @since 5.3
+     * @param args for the CLIENT TRACKING operation
+     * @return String simple-string-reply {@code OK}
+     * @since 6.0
      */
-    RedisFuture<Long> clientId();
+    RedisFuture<String> clientTracking(TrackingArgs args);
+
+    /**
+     * Unblock the specified blocked client.
+     *
+     * @param id the client id.
+     * @param type unblock type.
+     * @return Long integer-reply number of unblocked connections.
+     * @since 5.1
+     */
+    RedisFuture<Long> clientUnblock(long id, UnblockType type);
 
     /**
      * Returns an array reply of details about all Redis commands.
@@ -120,6 +148,13 @@ public interface RedisServerAsyncCommands<K, V> {
      * @return List&lt;Object&gt; array-reply
      */
     RedisFuture<List<Object>> command();
+
+    /**
+     * Get total number of Redis commands.
+     *
+     * @return Long integer-reply of number of total commands in this Redis server.
+     */
+    RedisFuture<Long> commandCount();
 
     /**
      * Returns an array reply of details about the requested commands.
@@ -136,13 +171,6 @@ public interface RedisServerAsyncCommands<K, V> {
      * @return List&lt;Object&gt; array-reply
      */
     RedisFuture<List<Object>> commandInfo(CommandType... commands);
-
-    /**
-     * Get total number of Redis commands.
-     *
-     * @return Long integer-reply of number of total commands in this Redis server.
-     */
-    RedisFuture<Long> commandCount();
 
     /**
      * Get the value of a configuration parameter.
@@ -209,13 +237,10 @@ public interface RedisServerAsyncCommands<K, V> {
 
     /**
      * Make the server crash: Out of memory.
+     *
+     * @return nothing, because the server crashes before returning.
      */
     void debugOom();
-
-    /**
-     * Make the server crash: Invalid pointer access.
-     */
-    void debugSegfault();
 
     /**
      * Save RDB, clear the database and reload RDB.
@@ -239,6 +264,13 @@ public interface RedisServerAsyncCommands<K, V> {
      * @return String simple-string-reply
      */
     RedisFuture<String> debugSdslen(K key);
+
+    /**
+     * Make the server crash: Invalid pointer access.
+     *
+     * @return nothing, because the server crashes before returning.
+     */
+    void debugSegfault();
 
     /**
      * Remove all keys from all databases.

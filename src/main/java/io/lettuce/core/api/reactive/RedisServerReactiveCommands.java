@@ -21,6 +21,7 @@ import java.util.Map;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KillArgs;
+import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
 
@@ -50,6 +51,15 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<String> bgsave();
 
     /**
+     * Control tracking of keys in the context of server-assisted client cache invalidation.
+     *
+     * @param enabled {@code true} to enable key tracking.
+     * @return String simple-string-reply {@code OK}
+     * @since 6.0
+     */
+    Mono<String> clientCaching(boolean enabled);
+
+    /**
      * Get the current connection name.
      *
      * @return K bulk-string-reply The connection name, or a null bulk reply if no name is set.
@@ -57,12 +67,21 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<K> clientGetname();
 
     /**
-     * Set the current connection name.
+     * Returns the client ID we are redirecting our tracking notifications to
      *
-     * @param name the client name
-     * @return simple-string-reply {@code OK} if the connection name was successfully set.
+     * @return the ID of the client we are redirecting the notifications to. The command returns -1 if client tracking is not
+     *         enabled, or 0 if client tracking is enabled but we are not redirecting the notifications to any client.
+     * @since 6.0
      */
-    Mono<String> clientSetname(K name);
+    Mono<Long> clientGetredir();
+
+    /**
+     * Get the id of the current connection.
+     *
+     * @return Long The command just returns the ID of the current connection.
+     * @since 5.3
+     */
+    Mono<Long> clientId();
 
     /**
      * Kill the connection of a client identified by ip:port.
@@ -81,14 +100,12 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<Long> clientKill(KillArgs killArgs);
 
     /**
-     * Unblock the specified blocked client.
+     * Get the list of client connections.
      *
-     * @param id the client id.
-     * @param type unblock type.
-     * @return Long integer-reply number of unblocked connections.
-     * @since 5.1
+     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
+     *         each line is composed of a succession of property=value fields separated by a space character.
      */
-    Mono<Long> clientUnblock(long id, UnblockType type);
+    Mono<String> clientList();
 
     /**
      * Stop processing commands from clients for some time.
@@ -99,20 +116,32 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<String> clientPause(long timeout);
 
     /**
-     * Get the list of client connections.
+     * Set the current connection name.
      *
-     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
-     *         each line is composed of a succession of property=value fields separated by a space character.
+     * @param name the client name
+     * @return simple-string-reply {@code OK} if the connection name was successfully set.
      */
-    Mono<String> clientList();
+    Mono<String> clientSetname(K name);
 
     /**
-     * Get the id of the current connection.
+     * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
+     * are either available when using the RESP3 protocol or through Pub/Sub notification when using RESP2.
      *
-     * @return Long The command just returns the ID of the current connection.
-     * @since 5.3
+     * @param args for the CLIENT TRACKING operation
+     * @return String simple-string-reply {@code OK}
+     * @since 6.0
      */
-    Mono<Long> clientId();
+    Mono<String> clientTracking(TrackingArgs args);
+
+    /**
+     * Unblock the specified blocked client.
+     *
+     * @param id the client id.
+     * @param type unblock type.
+     * @return Long integer-reply number of unblocked connections.
+     * @since 5.1
+     */
+    Mono<Long> clientUnblock(long id, UnblockType type);
 
     /**
      * Returns an array reply of details about all Redis commands.
@@ -120,6 +149,13 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return Object array-reply
      */
     Flux<Object> command();
+
+    /**
+     * Get total number of Redis commands.
+     *
+     * @return Long integer-reply of number of total commands in this Redis server.
+     */
+    Mono<Long> commandCount();
 
     /**
      * Returns an array reply of details about the requested commands.
@@ -136,13 +172,6 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return Object array-reply
      */
     Flux<Object> commandInfo(CommandType... commands);
-
-    /**
-     * Get total number of Redis commands.
-     *
-     * @return Long integer-reply of number of total commands in this Redis server.
-     */
-    Mono<Long> commandCount();
 
     /**
      * Get the value of a configuration parameter.
@@ -215,13 +244,6 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<Void> debugOom();
 
     /**
-     * Make the server crash: Invalid pointer access.
-     *
-     * @return nothing, because the server crashes before returning.
-     */
-    Mono<Void> debugSegfault();
-
-    /**
      * Save RDB, clear the database and reload RDB.
      *
      * @return String simple-string-reply The commands returns OK on success.
@@ -243,6 +265,13 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String simple-string-reply
      */
     Mono<String> debugSdslen(K key);
+
+    /**
+     * Make the server crash: Invalid pointer access.
+     *
+     * @return nothing, because the server crashes before returning.
+     */
+    Mono<Void> debugSegfault();
 
     /**
      * Remove all keys from all databases.
