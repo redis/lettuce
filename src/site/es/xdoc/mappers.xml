@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
     <section name="Inyectar mappers">
       <p>
         En lugar de codificar DAOs (data access objects) manualmente usando la clase
-        <code>SqlSessionDaoSupport</code> o <code>SqlSessionTemplate</code>, Mybatis-Spring 
+        <code>SqlSessionDaoSupport</code> o <code>SqlSessionTemplate</code>, Mybatis-Spring
 		puede crear un mapper thread-safe que puedes inyectar directamente en otros beans.
       </p>
 
@@ -54,18 +54,18 @@
   }
 }]]></source>
        <p>
-         Observa que no se usa la <code>SqlSession</code> ni ninguna otra referencia a MyBatis en este código. 
+         Observa que no se usa la <code>SqlSession</code> ni ninguna otra referencia a MyBatis en este código.
          No es necesario ni siquiera crear o cerrar la sesión, MyBatis-Spring se encarga de ello.
        </p>
 
 	<subsection name="Registrar un mapper" id="register">
 
 	  <p>
-	    La forma de registrar un mapper varía según si quieres usar la configuración XML clásica o la nueva Java Config de Spring 3.0+ 
+	    La forma de registrar un mapper varía según si quieres usar la configuración XML clásica o la nueva Java Config de Spring 3.0+
 	    (También conocida como @Configuration).</p>
-	
+
       <h4>Con confiugración XML</h4>
-      
+
       <p>
         Un mapper se registra en Spring incluyendo un <code>MapperFactoryBean</code> en tu fichero de configuración XML, de la siguiente forma:
       </p>
@@ -73,10 +73,10 @@
   <property name="mapperInterface" value="org.mybatis.spring.sample.mapper.UserMapper" />
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
 </bean>]]></source>
-   
+
       <p>
-        Si el mapper UserMapper tiene un fichero XML de mapeo asociado el <code>MapperFactoryBean</code> 
-        lo cargará automáticamente. Por lo tanto no es necesario especificar dicho mapper en el fichero 
+        Si el mapper UserMapper tiene un fichero XML de mapeo asociado el <code>MapperFactoryBean</code>
+        lo cargará automáticamente. Por lo tanto no es necesario especificar dicho mapper en el fichero
         de configuración de MyBatis a no ser que los ficheros XML estén en una lugar distinto del classpath.
         Ver la sección de <code>SqlSessionFactoryBean</code> y la propiedad
         <code><a href="factorybean.html">configLocation</a></code>
@@ -84,7 +84,7 @@
       </p>
 
       <p>
-        El <code>MapperFactoryBean</code> requiere o un 
+        El <code>MapperFactoryBean</code> requiere o un
         <code>SqlSessionFactory</code> o un <code>SqlSessionTemplate</code>.
         Ambos se pueden informar usando sendas propiedades <code>sqlSessionFactory</code> y
         <code>sqlSessionTemplate</code>.
@@ -92,7 +92,7 @@
         Dado que un <code>SqlSessionTemplate</code> debe tener un session factory
         dicho factory se usará por el <code>MapperFactoryBean</code>.
       </p>
-      
+
        <h4>Con Java Config</h4>
 
     <source><![CDATA[
@@ -107,10 +107,10 @@ public MapperFactoryBean<UserMapper> userMapper() throws Exception {
 
     <subsection name="Escanear mappers" id="scan">
       <p>
-        No es necesario registrar los mappers uno por uno en el fichero XML de Spring. 
+        No es necesario registrar los mappers uno por uno en el fichero XML de Spring.
         En lugar de esto, puede dejar que MyBatis-Spring los busque en tu classpath.
       </p>
-      
+
       <p>
         Hay tres formas distintas de hacerlo:
       </p>
@@ -119,7 +119,7 @@ public MapperFactoryBean<UserMapper> userMapper() throws Exception {
         <li>Usando la anotación <code>@MapperScan</code></li>
         <li>Usando un fichero clásico XML de configuración de Spring y añadiendo el bean <code>MapperScannerConfigurer</code></li>
       </ul>
-      
+
       <p>Tango <code>&lt;mybatis:scan/&gt;</code> como <code>@MapperScan</code> son características añadidas en MyBatis-Spring 1.2.0.
       <code>@MapperScan</code> requiere Spring 3.1+.</p>
 
@@ -151,13 +151,22 @@ public interface GoodsMapper {
   // ...
 }]]></source>
 
+      <p>
+        Since 2.0.6, the develop become can specified scope of mapper using mapper scanning feature option(<code>default-scope</code>)
+        and scope annotation(<code>@Scope</code>, <code>@RefreshScope</code>, etc ...).
+        The motivation for adding this option is supporting the <code>refresh</code> scope provided by the Spring Cloud.
+        The default of this option is empty (= equiv to specify the <code>singleton</code> scope).
+        The <code>default-scope</code> apply to the mapper bean(<code>MapperFactoryBean</code>) when scope of scanned bean definition
+        is <code>singleton</code>(default scope) and create a scoped proxy bean for scanned mapper when final scope is not <code>singleton</code>.
+      </p>
+
       <h4>&lt;mybatis:scan/&gt;</h4>
-      
+
       <p>
         El elemento XML <code>&lt;mybatis:scan/&gt;</code> busca mappers de una forma muy similar a cómo
         <code>&lt;context:component-scan/&gt;</code> busca beans.
       </p>
-      
+
       <p>A continuación se muestra un fichero XML de configuración:</p>
 
         <source><![CDATA[<beans xmlns="http://www.springframework.org/schema/beans"
@@ -166,7 +175,7 @@ public interface GoodsMapper {
   xsi:schemaLocation="
   http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
   http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring.xsd">
- 
+
   <mybatis:scan base-package="org.mybatis.spring.sample.mapper" />
 
   <!-- ... -->
@@ -182,15 +191,15 @@ public interface GoodsMapper {
       <p>
         Fíjate que no es necesario indicar una <code>SqlSessionFactory</code> o
         <code>SqlSessionTemplate</code> porque el <code>&lt;mybatis:scan/&gt;</code>
-        creará <code>MapperFactoryBean</code>s que pueden ser autowired. Pero si usas más de un <code>DataSource</code> 
+        creará <code>MapperFactoryBean</code>s que pueden ser autowired. Pero si usas más de un <code>DataSource</code>
         el autowire puede que no te funcione. En este caso puedes usar las propiedades <code>factory-ref</code> or
         <code>template-ref</code> para indicar los beans correctos a utilizar.
       </p>
-   
+
       <p>
         <code>&lt;mybatis:scan/&gt;</code> soporta el filtrado de mappers mediante una interfaz marcador o una anotación.
         La propiedad <code>annotation</code> especifica la anotación que se debe buscar.
-        La propiedad <code>marker-interface</code> especifica la interfaz a buscar. 
+        La propiedad <code>marker-interface</code> especifica la interfaz a buscar.
         Si se indican ambas se añadirán todos los mappers que cumplan <strong>cualquier</strong> criterio.
         Por defecto ambas propiedades son null asi que todos los interfaces de los paquetes base serán cargados como mappers.
       </p>
@@ -206,31 +215,31 @@ public interface GoodsMapper {
       </p>
 
       <p>
-        <span class="label important">NOTE</span> <code>&lt;context:component-scan/&gt;</code> 
+        <span class="label important">NOTE</span> <code>&lt;context:component-scan/&gt;</code>
         no puede encontrar y registrar mappers. Los mappers son interfaces y, para poderlos registrar en Spring,
         el scanner deben conocer cómo crear un <code>MapperFactoryBean</code> para cada interfaz encontrado.
       </p>
 
       <h4>@MapperScan</h4>
-      
+
       <p>
-        Si usas la Java Configuration de Spring (@Configuration) posiblemente prefieras usar 
-        <code>@MapperScan</code> en lugar de <code>&lt;mybatis:scan/&gt;</code>.  
+        Si usas la Java Configuration de Spring (@Configuration) posiblemente prefieras usar
+        <code>@MapperScan</code> en lugar de <code>&lt;mybatis:scan/&gt;</code>.
       </p>
-      
+
       <p>La anotación <code>@MapperScan</code> se usa de la siguiente forma:</p>
-   
+
    <source><![CDATA[@Configuration
 @MapperScan("org.mybatis.spring.sample.mapper")
 public class AppConfig {
   // ...
 }
 ]]></source>
-	
+
 	  <p>
 	   La anotación fucniona exactamente igual que <code>&lt;mybatis:scan/&gt;</code> que hemos visto en la sección anterior.
-	   También te permite especificar un interfaz marcador o una anotación mediante sus propiedades 
-	   <code>markerInterface</code> y <code>annotationClass</code>. 
+	   También te permite especificar un interfaz marcador o una anotación mediante sus propiedades
+	   <code>markerInterface</code> y <code>annotationClass</code>.
 	   Tambien puedes indicar una <code>SqlSessionFactory</code> o un <code>SqlSessionTemplate</code> específicos
 	   mediante las propiedades <code>sqlSessionFactory</code> y <code>sqlSessionTemplate</code>.
 	  </p>
@@ -240,9 +249,9 @@ public class AppConfig {
     </p>
 
       <h4>MapperScannerConfigurer</h4>
-        
+
       <p>
-        <code>MapperScannerConfigurer</code> es un <code>BeanDefinitionRegistryPostProcessor</code> 
+        <code>MapperScannerConfigurer</code> es un <code>BeanDefinitionRegistryPostProcessor</code>
         que se puede incluir como un bean normal en el fichero clásico XML de configuración de Spring.
         Para configurar un <code>MapperScannerConfigurer</code> añade lo siguiente al fichero de configuración de Spring:
       </p>
@@ -256,7 +265,7 @@ public class AppConfig {
         por ello se usa el atributo <code>value</code> en lugar del habitual <code>ref</code>:
       </p>
       <source><![CDATA[<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />]]></source>
-    
+
       </subsection>
     </section>
   </body>

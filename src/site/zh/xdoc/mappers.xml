@@ -135,6 +135,15 @@ public interface GoodsMapper {
   // ...
 }]]></source>
 
+        <p>
+          Since 2.0.6, the develop become can specified scope of mapper using mapper scanning feature option(<code>default-scope</code>)
+          and scope annotation(<code>@Scope</code>, <code>@RefreshScope</code>, etc ...).
+          The motivation for adding this option is supporting the <code>refresh</code> scope provided by the Spring Cloud.
+          The default of this option is empty (= equiv to specify the <code>singleton</code> scope).
+          The <code>default-scope</code> apply to the mapper bean(<code>MapperFactoryBean</code>) when scope of scanned bean definition
+          is <code>singleton</code>(default scope) and create a scoped proxy bean for scanned mapper when final scope is not <code>singleton</code>.
+        </p>
+
         <h4>&lt;mybatis:scan/&gt;</h4>
 
         <p>
