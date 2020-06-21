@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,17 @@
  */
 package org.mybatis.spring.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import com.mockrunner.mock.jdbc.MockDataSource;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +34,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.AnnotatedMapper;
 import org.mybatis.spring.mapper.MapperInterface;
 import org.mybatis.spring.mapper.MapperSubinterface;
+import org.mybatis.spring.mapper.ScopedProxyMapper;
 import org.mybatis.spring.mapper.child.MapperChildInterface;
 import org.mybatis.spring.type.DummyMapperFactoryBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -34,12 +46,6 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
-
-import com.mockrunner.mock.jdbc.MockDataSource;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test for the MapperScannerRegistrar.
@@ -218,6 +224,44 @@ class NamespaceTest {
     applicationContext.getBean("annotatedMapper");
 
     assertEquals(4, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+  }
+
+  @Test
+  void testDefaultScope() {
+    applicationContext = new ClassPathXmlApplicationContext(
+      new String[] { "org/mybatis/spring/config/default-scope.xml" }, false, setupSqlSessionTemplate());
+
+    startContext();
+
+    List<String> scopedProxyTargetBeans = Stream.of(applicationContext.getBeanDefinitionNames())
+      .filter(x -> x.startsWith("scopedTarget")).collect(Collectors.toList());
+    assertThat(scopedProxyTargetBeans).hasSize(6).contains("scopedTarget.scopedProxyMapper",
+      "scopedTarget.annotatedMapper", "scopedTarget.annotatedMapperZeroMethods", "scopedTarget.mapperInterface",
+      "scopedTarget.mapperSubinterface", "scopedTarget.mapperChildInterface");
+
+    for (String scopedProxyTargetBean : scopedProxyTargetBeans) {
+      {
+        BeanDefinition definition = applicationContext.getBeanFactory().getBeanDefinition(scopedProxyTargetBean);
+        assertThat(definition.getBeanClassName()).isEqualTo("org.mybatis.spring.mapper.MapperFactoryBean");
+        assertThat(definition.getScope()).isEqualTo("thread");
+      }
+      {
+        BeanDefinition definition = applicationContext.getBeanFactory().getBeanDefinition(scopedProxyTargetBean.substring(13));
+        assertThat(definition.getBeanClassName()).isEqualTo("org.springframework.aop.scope.ScopedProxyFactoryBean");
+        assertThat(definition.getScope()).isEqualTo("");
+      }
+    }
+    {
+      ScopedProxyMapper mapper = applicationContext.getBean(ScopedProxyMapper.class);
+      assertThat(mapper.test()).isEqualTo("test");
+    }
+    {
+      AnnotatedMapper mapper = applicationContext.getBean(AnnotatedMapper.class);
+      assertThat(mapper.test()).isEqualTo("main");
+    }
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(2, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
   }
 
   private GenericApplicationContext setupSqlSessionTemplate() {

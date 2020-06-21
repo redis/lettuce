@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.util.Properties;
+import com.mockrunner.mock.jdbc.MockDataSource;
 
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.AfterEach;
@@ -39,9 +45,8 @@ import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.support.SimpleThreadScope;
 import org.springframework.stereotype.Component;
-
-import com.mockrunner.mock.jdbc.MockDataSource;
 
 class MapperScannerConfigurerTest {
   private GenericApplicationContext applicationContext;
@@ -57,6 +62,7 @@ class MapperScannerConfigurerTest {
     definition.setBeanClass(MapperScannerConfigurer.class);
     definition.getPropertyValues().add("basePackage", "org.mybatis.spring.mapper");
     applicationContext.registerBeanDefinition("mapperScanner", definition);
+    applicationContext.getBeanFactory().registerScope("thread", new SimpleThreadScope());
 
     setupSqlSessionFactory("sqlSessionFactory");
 
@@ -99,6 +105,12 @@ class MapperScannerConfigurerTest {
     applicationContext.getBean("mapperSubinterface");
     applicationContext.getBean("mapperChildInterface");
     applicationContext.getBean("annotatedMapper");
+    applicationContext.getBean("scopedProxyMapper");
+    applicationContext.getBean("scopedTarget.scopedProxyMapper");
+
+    assertThat(Stream.of(applicationContext.getBeanDefinitionNames()).filter(x -> x.startsWith("scopedTarget")))
+        .hasSize(1);
+
   }
 
   @Test
@@ -162,6 +174,75 @@ class MapperScannerConfigurerTest {
     applicationContext.getBean("mapperChildInterface");
 
     assertBeanNotLoaded("mapperInterface");
+  }
+
+  @Test
+  void testScopedProxyMapperScan() {
+    applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add("annotationClass", Mapper.class);
+
+    startContext();
+    {
+      BeanDefinition definition = applicationContext.getBeanDefinition("scopedProxyMapper");
+      assertThat(definition.getBeanClassName()).isEqualTo("org.springframework.aop.scope.ScopedProxyFactoryBean");
+      assertThat(definition.getScope()).isEqualTo("");
+    }
+    {
+      BeanDefinition definition = applicationContext.getBeanDefinition("scopedTarget.scopedProxyMapper");
+      assertThat(definition.getBeanClassName()).isEqualTo("org.mybatis.spring.mapper.MapperFactoryBean");
+      assertThat(definition.getScope()).isEqualTo("thread");
+    }
+    {
+      ScopedProxyMapper mapper = applicationContext.getBean(ScopedProxyMapper.class);
+      assertThat(mapper.test()).isEqualTo("test");
+    }
+    {
+      ScopedProxyMapper mapper = applicationContext.getBean("scopedTarget.scopedProxyMapper", ScopedProxyMapper.class);
+      assertThat(mapper.test()).isEqualTo("test");
+    }
+    {
+      ScopedProxyMapper mapper = applicationContext.getBean("scopedProxyMapper", ScopedProxyMapper.class);
+      assertThat(mapper.test()).isEqualTo("test");
+    }
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(1, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+  }
+
+  @Test
+  void testScopedProxyMapperScanByDefault() {
+    applicationContext.getBeanDefinition("mapperScanner").getPropertyValues().add("defaultScope", "thread");
+
+    startContext();
+
+    List<String> scopedProxyTargetBeans = Stream.of(applicationContext.getBeanDefinitionNames())
+        .filter(x -> x.startsWith("scopedTarget")).collect(Collectors.toList());
+    assertThat(scopedProxyTargetBeans).hasSize(6).contains("scopedTarget.scopedProxyMapper",
+        "scopedTarget.annotatedMapper", "scopedTarget.annotatedMapperZeroMethods", "scopedTarget.mapperInterface",
+        "scopedTarget.mapperSubinterface", "scopedTarget.mapperChildInterface");
+
+    for (String scopedProxyTargetBean : scopedProxyTargetBeans) {
+      {
+        BeanDefinition definition = applicationContext.getBeanDefinition(scopedProxyTargetBean);
+        assertThat(definition.getBeanClassName()).isEqualTo("org.mybatis.spring.mapper.MapperFactoryBean");
+        assertThat(definition.getScope()).isEqualTo("thread");
+      }
+      {
+        BeanDefinition definition = applicationContext.getBeanDefinition(scopedProxyTargetBean.substring(13));
+        assertThat(definition.getBeanClassName()).isEqualTo("org.springframework.aop.scope.ScopedProxyFactoryBean");
+        assertThat(definition.getScope()).isEqualTo("");
+      }
+    }
+    {
+      ScopedProxyMapper mapper = applicationContext.getBean(ScopedProxyMapper.class);
+      assertThat(mapper.test()).isEqualTo("test");
+    }
+    {
+      AnnotatedMapper mapper = applicationContext.getBean(AnnotatedMapper.class);
+      assertThat(mapper.test()).isEqualTo("main");
+    }
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(2, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
   }
 
   @Test
