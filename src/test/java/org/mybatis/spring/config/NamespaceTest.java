@@ -229,15 +229,15 @@ class NamespaceTest {
   @Test
   void testDefaultScope() {
     applicationContext = new ClassPathXmlApplicationContext(
-      new String[] { "org/mybatis/spring/config/default-scope.xml" }, false, setupSqlSessionTemplate());
+        new String[] { "org/mybatis/spring/config/default-scope.xml" }, false, setupSqlSessionTemplate());
 
     startContext();
 
     List<String> scopedProxyTargetBeans = Stream.of(applicationContext.getBeanDefinitionNames())
-      .filter(x -> x.startsWith("scopedTarget")).collect(Collectors.toList());
+        .filter(x -> x.startsWith("scopedTarget")).collect(Collectors.toList());
     assertThat(scopedProxyTargetBeans).hasSize(6).contains("scopedTarget.scopedProxyMapper",
-      "scopedTarget.annotatedMapper", "scopedTarget.annotatedMapperZeroMethods", "scopedTarget.mapperInterface",
-      "scopedTarget.mapperSubinterface", "scopedTarget.mapperChildInterface");
+        "scopedTarget.annotatedMapper", "scopedTarget.annotatedMapperZeroMethods", "scopedTarget.mapperInterface",
+        "scopedTarget.mapperSubinterface", "scopedTarget.mapperChildInterface");
 
     for (String scopedProxyTargetBean : scopedProxyTargetBeans) {
       {
@@ -246,7 +246,8 @@ class NamespaceTest {
         assertThat(definition.getScope()).isEqualTo("thread");
       }
       {
-        BeanDefinition definition = applicationContext.getBeanFactory().getBeanDefinition(scopedProxyTargetBean.substring(13));
+        BeanDefinition definition = applicationContext.getBeanFactory()
+            .getBeanDefinition(scopedProxyTargetBean.substring(13));
         assertThat(definition.getBeanClassName()).isEqualTo("org.springframework.aop.scope.ScopedProxyFactoryBean");
         assertThat(definition.getScope()).isEqualTo("");
       }

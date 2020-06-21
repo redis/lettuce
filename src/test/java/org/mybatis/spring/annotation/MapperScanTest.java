@@ -358,7 +358,7 @@ class MapperScanTest {
     startContext();
 
     List<String> scopedProxyTargetBeans = Stream.of(applicationContext.getBeanDefinitionNames())
-      .filter(x -> x.startsWith("scopedTarget")).collect(Collectors.toList());
+        .filter(x -> x.startsWith("scopedTarget")).collect(Collectors.toList());
     assertThat(scopedProxyTargetBeans).hasSize(1).contains("scopedTarget.ds1Mapper");
 
     for (String scopedProxyTargetBean : scopedProxyTargetBeans) {
@@ -460,7 +460,8 @@ class MapperScanTest {
 
   }
 
-  @MapperScan(basePackages = {"org.mybatis.spring.annotation.mapper.ds1", "org.mybatis.spring.annotation.mapper.ds2"}, defaultScope = "${mybatis.default-scope:thread}")
+  @MapperScan(basePackages = { "org.mybatis.spring.annotation.mapper.ds1",
+      "org.mybatis.spring.annotation.mapper.ds2" }, defaultScope = "${mybatis.default-scope:thread}")
   public static class ScopedProxy {
 
   }

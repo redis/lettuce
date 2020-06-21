@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@
 
   <body>
     <section name="SqlSessionFactoryBean">
-      <p>마이바티스만 사용하면, <code>SqlSessionFactory</code>는 <code>SqlSessionFactoryBuilder</code>를 사용해서 생성한다. 
+      <p>마이바티스만 사용하면, <code>SqlSessionFactory</code>는 <code>SqlSessionFactoryBuilder</code>를 사용해서 생성한다.
       마이바티스 스프링 연동모듈에서는, <code>SqlSessionFactoryBean</code>가 대신 사용된다. </p>
-      
+
     <subsection name="설정">
       <p>팩토리 빈을 생성하기 위해, 스프링 XML설정파일에 다음설정을 추가하자. </p>
         <source><![CDATA[
@@ -39,7 +39,7 @@
 </bean>]]></source>
 	  <p><code>SqlSessionFactoryBean</code> 은 스프링의 <code>FactoryBean</code> 인터페이스를 구현(see <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-extension-factorybean">the Spring documentation(Core Technologies -Customizing instantiation logic with a FactoryBean-)</a>)한다는 점을 알아야 한다.
 	   이 설정은 스프링이 <code>SqlSessionFactoryBean</code> 자체를 생성하는 것이 <b>아니라</b> 팩토리에서 <code>getObject()</code> 메서드를 호출한 결과를 리턴한다는 것을 의미한다.
-	   이 경우, 스프링은 애플리케이션 시작 시점에 <code>SqlSessionFactory</code>를 빌드하고 <code>sqlSessionFactory</code> 라는 이름으로 저장한다. 
+	   이 경우, 스프링은 애플리케이션 시작 시점에 <code>SqlSessionFactory</code>를 빌드하고 <code>sqlSessionFactory</code> 라는 이름으로 저장한다.
 	   자바에서 코드로 표현하면 아래와 같다. </p>
 
       <source><![CDATA[
@@ -60,23 +60,23 @@ public SqlSessionFactory sqlSessionFactory() {
       어떤 <code>DataSource</code>라도 상관없고 다른 스프링 데이터베이스 연결처럼 설정되어야만 한다. </p>
 
       <p>하나의 공통적인 프로퍼티는 마이바티스 XML설정파일의 위치를 지정하기 위해 사용되는 <code>configLocation</code>이다.
-      이 프로퍼티를 설정하는 것은 디폴트 설정을 가진 마이바티스 설정을 변경해야 할 경우 뿐이다. 
+      이 프로퍼티를 설정하는 것은 디폴트 설정을 가진 마이바티스 설정을 변경해야 할 경우 뿐이다.
       대개는 <code>&lt;settings&gt;</code>과 <code>&lt;typeAliases&gt;</code> 섹션을 변경하는 경우이다. </p>
 
-      <p>설정파일이 마이바티스 설정을 완전히 다룰 필요는 없다. 
+      <p>설정파일이 마이바티스 설정을 완전히 다룰 필요는 없다.
       어떤 환경, 어떤 데이터소스 그리고 마이바티스 트랜잭션 관리자가 <b>무시</b>될수도 있다.
       <code>SqlSessionFactoryBean</code> 는 필요에 따라 이 값들을 설정하여 자체적인 MyBatis <code>Environment</code> 를 만든다. </p>
 
-      <p>설정파일이 필요한 다른 이유는 마이바티스 XML파일이 매퍼 클래스와 동일한 클래스패스에 있지 않은 경우이다.  
-      이 설정을 사용하면 두가지 옵션이 있다. 
-      첫번째는 마이바티스 설정파일에 <code>&lt;mappers&gt;</code> 섹션을 사용해서 XML파일의 클래스패스를 지정하는 것이다. 
+      <p>설정파일이 필요한 다른 이유는 마이바티스 XML파일이 매퍼 클래스와 동일한 클래스패스에 있지 않은 경우이다.
+      이 설정을 사용하면 두가지 옵션이 있다.
+      첫번째는 마이바티스 설정파일에 <code>&lt;mappers&gt;</code> 섹션을 사용해서 XML파일의 클래스패스를 지정하는 것이다.
       두번째는 팩토리 빈의 <code>mapperLocations</code> 프로퍼티를 사용하는 것이다. </p>
 
-      <p><code>mapperLocations</code> 프로퍼티는 매퍼에 관련된 자원의 위치를 나열한다. 
+      <p><code>mapperLocations</code> 프로퍼티는 매퍼에 관련된 자원의 위치를 나열한다.
       이 프로퍼티는 마이바티스의 XML매퍼 파일들의 위치를 지정하기 위해 사용될 수 있다.
-      디렉터리 아래 모든 파일을 로드하기 위해 앤트(Ant) 스타일의 패턴을 사용할수도 있고 가장 상위 위치를 지정하는 것으로 재귀적으로 하위 경로를 찾도록 할수도 있다. 
+      디렉터리 아래 모든 파일을 로드하기 위해 앤트(Ant) 스타일의 패턴을 사용할수도 있고 가장 상위 위치를 지정하는 것으로 재귀적으로 하위 경로를 찾도록 할수도 있다.
       예를 들어보면 다음과 같다. </p>
-      
+
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
@@ -85,7 +85,7 @@ public SqlSessionFactory sqlSessionFactory() {
 
       <p>이 설정은 sample.config.mappers 패키지 아래와 그 하위 패키지를 모두 검색해서 마이바티스 매퍼 XML파일을 모두 로드할 것이다. </p>
 
-      <p>컨테이너 관리 트랜잭션을 사용하는 환경에서 필요한 하나의 프로퍼티는 <code>transactionFactoryClass</code> 이다. 
+      <p>컨테이너 관리 트랜잭션을 사용하는 환경에서 필요한 하나의 프로퍼티는 <code>transactionFactoryClass</code> 이다.
       이에 관련해서는 트랜잭션을 다루는 장에서 볼수 있다. </p>
 
       <p>

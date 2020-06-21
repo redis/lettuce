@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class FooService {
 }
 ]]></source>
 			<p>
-				It is a transactional bean, so when the method is called, the transaction is started 
+				It is a transactional bean, so when the method is called, the transaction is started
 				and the transaction is committed when the method ends without throwing an uncaught exception.
 				Notice that transactional behaviour is configured with the
 				<code>@Transactional</code>
@@ -80,8 +80,8 @@ public interface UserMapper {
   User getUser(String userId);
 
 }
-]]></source>			
-			<p> 
+]]></source>
+			<p>
 			    Note that, for the sake of simplicity we used the interface <code>UserMapper.java</code> for the DAO scenario
 			    where a DAO is built with an interface and a implementation though in this case it would have been more
 			    adequate to use an interface called <code>UserDao.java</code> instead.
@@ -138,7 +138,7 @@ public interface UserMapper {
 							<code>SampleNamespaceTest</code>
 						</td>
 						<td>
-							Shows how to use the custom MyBatis XML namespace. 
+							Shows how to use the custom MyBatis XML namespace.
 						</td>
 					</tr>
           <tr>

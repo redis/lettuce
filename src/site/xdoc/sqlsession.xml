@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ public void insertUsers(List<User> users) {
     sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
   }
 }]]></source>
-  
+
       <p>
         Note that this configuration style only needs to be used if the desired
         execution method differs from the default set for the

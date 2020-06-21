@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,11 +28,11 @@
   <body>
     <section name="SqlSessionFactoryBean">
       <p>
-        En MyBatis una <code>SqlSessionFactory</code> se crea mediante la clase 
+        En MyBatis una <code>SqlSessionFactory</code> se crea mediante la clase
         <code>SqlSessionFactoryBuilder</code>. En MyBatis-Spring se usa la clase
         <code>SqlSessionFactoryBean</code> en su lugar.
       </p>
-      
+
     <subsection name="Configuración">
       <p>
         Para crear un factory bean, pon lo siguiente en el fichero XML de configuración de Spring:
@@ -45,7 +45,7 @@
         La clase <code>SqlSessionFactoryBean</code> implementa el interfaz <code>FactoryBean</code>
         (see <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-extension-factorybean">the Spring documentation(Core Technologies -Customizing instantiation logic with a FactoryBean-)</a>).
         Lo cual significa que el bean que crea Spring
-        en última instancia <b>no</b> es un <code>SqlSessionFactoryBean</code> en si mismo, sino el 
+        en última instancia <b>no</b> es un <code>SqlSessionFactoryBean</code> en si mismo, sino el
         objeto que la factoria devuelve como resultado de la llamada al método
         <code>getObject()</code>. En este caso, Spring creará un bean
         <code>SqlSessionFactory</code> durante el arranque de la aplicación y lo guardará bajo el nombre
@@ -77,7 +77,7 @@ public SqlSessionFactory sqlSessionFactory() {
 
       <p>
         Una propiedad muy común es la <code>configLocation</code> que se utiliza para indicar la localización del fichero de configuración
-        XML de MyBatis. Normalmente solo es necesario dicho fichero si se requiere cambiar los valores por defecto de las secciones 
+        XML de MyBatis. Normalmente solo es necesario dicho fichero si se requiere cambiar los valores por defecto de las secciones
         <code>&lt;settings&gt;</code> o <code>&lt;typeAliases&gt;</code>.
       </p>
 
@@ -88,7 +88,7 @@ public SqlSessionFactory sqlSessionFactory() {
       </p>
 
       <p>
-        Otro motivo para necesitar un fichero de configuración es que los ficheros de mapeo XML no estén en el mismo lugar del classpath 
+        Otro motivo para necesitar un fichero de configuración es que los ficheros de mapeo XML no estén en el mismo lugar del classpath
         que los mapper interfaces. En este caso hay dos opciones. La primera es especificar manualmente el classpath de los ficheros XML
         usando la sección <code>&lt;mappers&gt;</code> del fichero de configuración de MyBatis. La segunda opción es usar la propiedad
         <code>mapperLocations</code> del factory bean.
@@ -96,10 +96,10 @@ public SqlSessionFactory sqlSessionFactory() {
 
       <p>
         La propiedad <code>mapperLocations</code> recibe una lista de localizaciones de recursos. Se utiliza para indicar la ubicación de los
-        ficheros de mapeo XML de MyBatis. El valor puede contener un patron tipo Ant para cargar todos los ficheros de un directorio o 
+        ficheros de mapeo XML de MyBatis. El valor puede contener un patron tipo Ant para cargar todos los ficheros de un directorio o
         buscar de forma recursiva en todos los paths desde una localización base. Por ejemplo:
       </p>
-      
+
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
@@ -111,13 +111,13 @@ public SqlSessionFactory sqlSessionFactory() {
       </p>
 
       <p>
-        Otra propiedad que puede ser necesaria en un entorno con transacciones gestionadas por contenedor es la 
+        Otra propiedad que puede ser necesaria en un entorno con transacciones gestionadas por contenedor es la
         <code>transactionFactoryClass</code>. Lee la sección de transacciones para obtener más detalles.
       </p>
-      
+
       <p>
-         En caso de usar la característica multi-db necesitarás informar la propiedad <code>databaseIdProvider</code> 
-         de la siguiente forma:  
+         En caso de usar la característica multi-db necesitarás informar la propiedad <code>databaseIdProvider</code>
+         de la siguiente forma:
       </p>
 
       <source><![CDATA[

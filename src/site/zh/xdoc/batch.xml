@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,20 +30,20 @@
       <p>
         MyBatis-Spring 1.1.0 发布以后，提供了三个 bean 以供构建 Spring Batch 应用程序：<code>MyBatisPagingItemReader</code>、<code>MyBatisCursorItemReader</code> 和 <code>MyBatisBatchItemWriter</code>。而在 2.0.0 中，还提供了三个建造器（builder）类来对 Java 配置提供支持：<code>MyBatisPagingItemReaderBuilder</code>、<code>MyBatisCursorItemReaderBuilder</code> 和 <code>MyBatisBatchItemWriterBuilder</code>。
       </p>
-      
+
       <p>
         <span class="label important">提示</span> 本章是关于 <a href="http://static.springsource.org/spring-batch/">Spring Batch</a> 的，而不是关于 MyBatis 的批量 SqlSession。要查找关于批量 session 的更多信息，请参考 <a href="sqlsession.html">使用 SqlSession</a> 一章。
       </p>
-      
+
       <subsection name="MyBatisPagingItemReader">
         <p>
           这个 bean 是一个 <code>ItemReader</code>，能够从数据库中分页地读取记录。
         </p>
-        
+
         <p>
           它执行 <code>setQueryId</code> 属性指定的查询来获取请求的数据。这个查询使用 <code>setPageSize</code> 属性指定了分页请求的大小，并被执行。其它的页面将在必要时被请求（例如调用 <code>read()</code> 方法时），返回对应位置上的对象。
         </p>
-        
+
         <p>
           reader 还提供了一些标准的请求参数。在命名查询的 SQL 中，必须使用部分或全部的参数（视乎 SQL 方言而定）来构造指定大小的结果集。这些参数是：
         </p>
@@ -60,7 +60,7 @@
 </select>]]></source>
 
         <p>配合如下的配置样例：</p>
-        
+
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
@@ -124,7 +124,7 @@ public Map<String, Object> datesParameters(
         <p>
           上面的样例使用了几个东西：
         </p>
-        
+
         <ul>
           <li><code>sqlSessionFactory</code>：可以为 reader 指定你自定义的 sessionFactory，当你想从多个数据库中读取数据时尤其有用</li>
           <li><code>queryId</code>：指定在检索记录时要执行的查询的 ID，可以指定短的 ID 或是带命名空间的完整 ID。一般来说，你的应用可能从多个表或数据库中读取数据，因此会配置多个查询，可能会使用到在不同命名空间中的不同映射器。因此最好提供映射器文件的命名空间以便准确指定你想使用的查询 ID。</li>
@@ -142,11 +142,11 @@ public Map<String, Object> datesParameters(
         <p>
           <span class="label important">提示</span> 为了使用这个 bean，你需要使用 MyBatis 3.4.0 或更新的版本。
         </p>
-        
+
         <p>
           它执行 <code>setQueryId</code> 属性指定的查询来获取请求的数据（通过 <code>selectCursor()</code>方法）。每次调用 <code>read()</code> 方法时，将会返回游标指向的下个元素，直到没有剩余的元素了。
         </p>
-        
+
         <p>
           这个 reader 将会使用一个单独的数据库连接，因此 select 语句将不会参与到 step 处理中创建的任何事务。
         </p>
@@ -157,7 +157,7 @@ public Map<String, Object> datesParameters(
 </select>]]></source>
 
         <p>搭配以下的配置样例：</p>
-        
+
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
@@ -175,7 +175,7 @@ public MyBatisCursorItemReader<Employee> reader() {
       </subsection>
 
       <subsection name="MyBatisBatchItemWriter">
-      
+
         <p>
           这是一个 <code>ItemWriter</code>，通过利用 <code>SqlSessionTemplate</code>
           中的批量处理功能来对给定的所有记录执行多个语句。<code>SqlSessionFactory</code>
@@ -187,9 +187,9 @@ public MyBatisCursorItemReader<Employee> reader() {
           属性中指定的映射语句。一般情况下，<code>write()</code>
           应该在一个事务中进行调用。<br/>
         </p>
- 
+
         <p>下面是一个配置样例：</p>
-        
+
         <source><![CDATA[<bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="statementId" value="com.my.name.space.batch.EmployeeMapper.updateEmployee" />

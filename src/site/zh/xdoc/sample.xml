@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -72,8 +72,8 @@ public interface UserMapper {
   User getUser(String userId);
 
 }
-]]></source>			
-			<p> 
+]]></source>
+			<p>
 			  注意，为了简单起见，我们使用了接口 <code>UserMapper.java</code>。在使用 DAO 的场景中，一个 DAO 类应该分为一个接口和一个实现类。回到这个例子里，准确来说，这个接口应该叫 <code>UserDao.java</code> 。
 			</p>
 			<p>
@@ -125,7 +125,7 @@ public interface UserMapper {
 							<code>SampleNamespaceTest</code>
 						</td>
 						<td>
-							演示如何使用自定义 MyBatis XML 命名空间. 
+							演示如何使用自定义 MyBatis XML 命名空间.
 						</td>
 					</tr>
           <tr>

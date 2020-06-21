@@ -18,6 +18,8 @@ package org.mybatis.spring;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.mockrunner.mock.jdbc.MockDataSource;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Properties;
@@ -51,8 +53,6 @@ import org.mybatis.spring.type.DummyTypeHandler;
 import org.mybatis.spring.type.SuperType;
 import org.mybatis.spring.type.TypeHandlerFactory;
 import org.springframework.core.io.ClassPathResource;
-
-import com.mockrunner.mock.jdbc.MockDataSource;
 
 class SqlSessionFactoryBeanTest {
 

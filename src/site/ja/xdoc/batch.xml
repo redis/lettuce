@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -33,16 +33,16 @@
         また、2.0.0 以降では、Java Configuration をサポートするための Builder クラスとして <code>MyBatisPagingItemReaderBuilder</code> 、
         <code>MyBatisCursorItemReaderBuilder</code> 、 <code>MyBatisBatchItemWriterBuilder</code> が用意されています。
       </p>
-      
+
       <p>
         <span class="label important">NOTE</span> ここで扱うのは <a href="http://static.springsource.org/spring-batch/">Spring Batch</a> を使ったバッチ処理で、MyBatis の <a href="sqlsession.html">SqlSession</a> を利用したバッチ処理ではありません。
       </p>
-      
+
       <subsection name="MyBatisPagingItemReader">
         <p>
           この Bean は、MyBatis を利用してデータベースからページ単位でレコードを読み出す <code>ItemReader</code> です。
         </p>
-        
+
         <p>
           結果を取得する際は <code>setQueryId</code> プロパティで指定したクエリが実行されます。
           1ページあたりの件数は <code>setPageSize</code> プロパティで指定することができます。
@@ -63,7 +63,7 @@
 </select>]]></source>
 
         <p>設定例：</p>
-        
+
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
@@ -127,7 +127,7 @@ public Map<String, Object> datesParameters(
         <p>
           The previous example makes use of a few different things:
         </p>
-        
+
         <ul>
           <li><code>sqlSessionFactory</code>: あなた自身の sessionFactory を reader に指定することができます。複数のデータベースから読み取る場合は有用かも知れません。</li>
           <li><code>queryId</code>: レコード取得時に実行されるクエリの ID を指定します。異なるネームスペースに属するクエリを指定する場合はネームスペースの指定を忘れないようにしてください。</li>
@@ -148,16 +148,16 @@ public Map<String, Object> datesParameters(
         <p>
           <span class="label important">NOTE</span> To use this bean you need at least MyBatis 3.4.0 or a newer version.
         </p>
-        
+
         <p>
           It executes the query specified as the <code>setQueryId</code> property to retrieve requested data
           by using the method <code>selectCursor()</code>.
           Each time a <code>read()</code> method is called it will return the next element of the cursor until no more
           elements are left.
         </p>
-        
+
         <p>
-          The reader will use a separate connection so the select statement does no participate in any transactions created 
+          The reader will use a separate connection so the select statement does no participate in any transactions created
           as part of the step processing.
         </p>
 
@@ -167,7 +167,7 @@ public Map<String, Object> datesParameters(
 </select>]]></source>
 
         <p>Follows below a sample configuration snippet:</p>
-        
+
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
@@ -185,19 +185,19 @@ public MyBatisCursorItemReader<Employee> reader() {
       </subsection>
 
       <subsection name="MyBatisBatchItemWriter">
-      
+
       <p>
         <code>SqlSessionTemplate</code> のバッチ機能を使って渡された一連のアイテムを処理する <code>ItemWriter</code> です。
         <code>SqlSessionFactory</code> は <code>ExecutorType.BATCH</code> を使って設定する必要があります。
       </p>
- 
+
       <p>
         <code>write()</code> の呼び出し時に実行するステートメントの ID を指定しておく必要があります。
         <code>write()</code> はトランザクション内で呼び出されることを前提としています。
       </p>
- 
+
         <p>設定例：</p>
-        
+
         <source><![CDATA[<bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="statementId" value="com.my.name.space.batch.EmployeeMapper.updateEmployee" />

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -39,10 +39,10 @@
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <constructor-arg ref="dataSource" />
     </bean>
-    
+
     <!-- enable transaction demarcation with annotations -->
     <tx:annotation-driven />
-    
+
     <!-- simplest possible SqlSessionFactory configuration -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource" />
@@ -57,7 +57,7 @@
          -->
         <property name="mapperLocations" value="classpath:org/mybatis/spring/sample/mapper/*.xml" />
     </bean>
-    
+
     <!-- simple transactional service layer bean; MyBatis-Spring will create a proxy for the userMapper bean -->
     <bean id="fooService" class="org.mybatis.spring.sample.service.FooService">
         <constructor-arg ref="userMapper" />

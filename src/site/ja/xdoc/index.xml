@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
     <title>MyBatis-Spring | イントロダクション</title>
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
-    <author email="harawata@gmail.com">Iwao AVE!</author>    
+    <author email="harawata@gmail.com">Iwao AVE!</author>
   </properties>
 
  <body>
@@ -110,7 +110,7 @@
 
   <subsection name="謝辞">
     <p>
-      このプロジェクトの実現にご協力頂いた次の方々に感謝します（アルファベット順）: 
+      このプロジェクトの実現にご協力頂いた次の方々に感謝します（アルファベット順）:
       Eduardo Macarron, Hunter Presnall, Putthiphong Boonphong（コーディング、テスト、ドキュメント作成）;
       Andrius Juozapaitis, Giovanni Cuccu, Mike Lanyon, Raj Nagappan, Tomas Pinos（コントリビューション）;
       Simone Tripodi（メンバーを集め、MyBatis のサブプロジェクトとしてまとめてくれました）<br />

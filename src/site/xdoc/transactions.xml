@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
   </properties>
-                             
+
   <body>
     <section name="Transactions">
       <p>
@@ -47,7 +47,7 @@
         MyBatis-Spring will transparently manage transactions once they are set up.
         There is no need for additional code in your DAO classes.
       </p>
-  
+
     <subsection name="Standard Configuration" id="configuration">
       <p>
         To enable Spring transaction processing, simply create a
@@ -114,7 +114,7 @@ public JtaTransactionManager transactionManager() {
   <property name="dataSource" ref="dataSource" />
   <property name="transactionFactory">
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
-  </property>  
+  </property>
 </bean>]]></source>
 
       <source><![CDATA[

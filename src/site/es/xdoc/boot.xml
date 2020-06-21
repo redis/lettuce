@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@
     <title>MyBatis-Spring | Spring Boot</title>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
   </properties>
-                             
+
   <body>
     <section name="Using Spring Boot">
       <p>
-        Please see the <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-starter</a> 
+        Please see the <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-starter</a>
         subproject docs for details.
       </p>
     </section>

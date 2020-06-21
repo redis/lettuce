@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
  */
 package org.mybatis.spring.batch;
 
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.batch.item.database.AbstractPagingItemReader;
+import static org.springframework.util.Assert.notNull;
+import static org.springframework.util.ClassUtils.getShortName;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.springframework.util.Assert.notNull;
-import static org.springframework.util.ClassUtils.getShortName;
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.batch.item.database.AbstractPagingItemReader;
 
 /**
  * {@code org.springframework.batch.item.ItemReader} for reading database records using MyBatis in a paging fashion.
@@ -34,7 +34,7 @@ import static org.springframework.util.ClassUtils.getShortName;
  * Provided to facilitate the migration from Spring-Batch iBATIS 2 page item readers to MyBatis 3.
  *
  * @author Eduardo Macarron
- * 
+ *
  * @since 1.1.0
  */
 public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
@@ -83,7 +83,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
 
   /**
    * Check mandatory properties.
-   * 
+   *
    * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
    */
   @Override

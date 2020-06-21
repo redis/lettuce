@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@
     <title>MyBatis-Spring | Spring Boot</title>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
   </properties>
-                             
+
   <body>
     <section name="스프링 부트 사용하기">
       <p>
-        자세한 내용은 <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-starter</a> 
+        자세한 내용은 <a href="http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure">MyBatis Spring-boot-starter</a>
         하위 프로젝트 문서를 참조하십시오.
       </p>
     </section>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@
       在基础的 MyBatis 用法中，是通过 <code>SqlSessionFactoryBuilder</code> 来创建 <code>SqlSessionFactory</code> 的。
       而在 MyBatis-Spring 中，则使用 <code>SqlSessionFactoryBean</code> 来创建。
       </p>
-      
+
     <subsection name="设置">
       <p>
       要创建工厂 bean，将下面的代码放到 Spring 的 XML 配置文件中：
@@ -83,7 +83,7 @@ public SqlSessionFactory sqlSessionFactory() {
       <p>
         <code>mapperLocations</code> 属性接受多个资源位置。这个属性可以用来指定 MyBatis 的映射器 XML 配置文件的位置。属性的值是一个 Ant 风格的字符串，可以指定加载一个目录中的所有文件，或者从一个目录开始递归搜索所有目录。比如:
       </p>
-      
+
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />

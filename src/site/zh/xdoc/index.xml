@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@
       特别感谢那些使本项目变为现实的人们（按字母顺序排序）： Eduardo Macarron, Hunter Presnall 和 Putthiphong Boonphong 负责本项目的代码实现，测试和编写文档工作；Andrius Juozapaitis, Giovanni Cuccu, Raj Nagappan 和 Tomas Pinos 的贡献；而 Simone Tripodi 发现了这些人并邀请他们参与到这一个 MyBatis 子项目之中。没有他们的努力，这个项目只能沦为空谈。
     </p>
   </subsection>
-  
+
 	<subsection name="帮助改进文档...">
 		<p>
 			如果你发现文档有任何的缺失，或者缺少某一个功能点的说明，最好的解决办法是先自己学习，并且为缺失的部份补上相应的文档。

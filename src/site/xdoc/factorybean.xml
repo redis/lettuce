@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@
         <code>SqlSessionFactoryBuilder</code>. In MyBatis-Spring,
         <code>SqlSessionFactoryBean</code> is used instead.
       </p>
-      
+
     <subsection name="Setup">
       <p>
         To create the factory bean, put the following in the Spring XML
@@ -157,7 +157,7 @@ public SqlSessionFactory sqlSessionFactory() {
         recursively search all paths from a base
         location. For example:
       </p>
-      
+
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
@@ -178,11 +178,11 @@ public SqlSessionFactory sqlSessionFactory() {
         Please see the relevant section in the
         Transactions chapter.
       </p>
-      
+
       <p>
-        In case you are using the multi-db feature you will need to set the <code>databaseIdProvider</code> property:  
+        In case you are using the multi-db feature you will need to set the <code>databaseIdProvider</code> property:
       </p>
-      
+
 <source><![CDATA[
 <bean id="databaseIdProvider" class="org.apache.ibatis.mapping.VendorDatabaseIdProvider">
   <property name="properties">

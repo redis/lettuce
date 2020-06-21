@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,15 +19,15 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
 						http://www.springframework.org/schema/beans/spring-beans.xsd
        					http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd"
 	default-lazy-init="false">
-	
+
 <!-- 	<bean id="dataSource" class="org.hsqldb.jdbc.JDBCDataSource"> -->
 <!-- 		<property name="url" value="jdbc:hsqldb:mem:autowire"/> -->
 <!-- 	</bean> -->
-	
+
 	 <jdbc:embedded-database id="dataSourceFoo">
         <jdbc:script location="classpath:org/mybatis/spring/submitted/autowire/database-schema-foo.sql"/>
     </jdbc:embedded-database>
@@ -35,16 +35,16 @@
 	 <jdbc:embedded-database id="dataSourceBar">
         <jdbc:script location="classpath:org/mybatis/spring/submitted/autowire/database-schema-bar.sql"/>
     </jdbc:embedded-database>
-	
-	
+
+
 	<bean id="sqlSessionFactoryFoo" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSourceFoo" />
 	</bean>
-	
+
 	<bean id="sqlSessionFactoryBar" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSourceBar" />
 	</bean>
-	
+
 	<!-- If we simply comment out this bean, then the test runs -->
 	<bean id="sqlSessionTemplateFoo" class="org.mybatis.spring.SqlSessionTemplate">
 		<constructor-arg index="0" ref="sqlSessionFactoryFoo"/>

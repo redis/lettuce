@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
   </properties>
-                             
+
   <body>
     <section name="Transacciones">
       <p>
@@ -35,15 +35,15 @@
       </p>
       <p>
         Una vez que has configurado un TransactionManager in Spring puedes configurar tus transacciones en Spring como siempre.
-        Tanto las anotaciones <code>@Transactional</code> como las configuraciones de tipo AOP se soportan. 
-        Se creará una sola instancia de <code>SqlSession</code> para toda la transacción. 
+        Tanto las anotaciones <code>@Transactional</code> como las configuraciones de tipo AOP se soportan.
+        Se creará una sola instancia de <code>SqlSession</code> para toda la transacción.
         Se hará commit o rollback de esta sesión cuando la transacción finalice.
       </p>
       <p>
         MyBatis-Spring se encargará de gestionar las transacciones de forma transparente una vez se hayan configurado. No es necesario
         incluir código adicional en tus clases.
       </p>
-  
+
     <subsection name="Configuration Estándar" id="configuration">
       <p>
         Para habilitar las transacciones Spring, simplemente crea un <code>DataSourceTransactionManager</code> en tu fichero de configuración:
@@ -71,7 +71,7 @@ public DataSourceTransactionManager transactionManager() {
 
     <subsection name="Container Managed Transactions" id="container">
       <p>
-        Si estás usando un contenedor JEE y quiere que spring participe en las transacciones gestionadas por contenedor (CMT), entonces debes 
+        Si estás usando un contenedor JEE y quiere que spring participe en las transacciones gestionadas por contenedor (CMT), entonces debes
         configurar un <code>JtaTransactionManager</code> en Spring o alguna de sus clases específicas de cada contenedor.
         Lo más sencillo es utilizar el namespace tx de Spring or the <code>JtaTransactionManagerFactoryBean</code>:
       </p>
@@ -85,12 +85,12 @@ public JtaTransactionManager transactionManager() {
 
       <p>
         Con esta configuración, MyBatis se comportará como cualquier otro recurso configurado con CMT.
-        Spring utilizará cualquier transacción CMT existente y asociará la <code>SqlSession</code> a ella. 
-        Si no no hay ninguna transacción previa pero se necesita una en base a la configuración de la transacción, Spring creará 
+        Spring utilizará cualquier transacción CMT existente y asociará la <code>SqlSession</code> a ella.
+        Si no no hay ninguna transacción previa pero se necesita una en base a la configuración de la transacción, Spring creará
         una transacción gestionada por contenedor nueva.
       </p>
       <p>
-        Fijate que si quieres usar transacciones CMT pero <strong>no</strong> quieres utilizar la gestión de transacciones de Spring 
+        Fijate que si quieres usar transacciones CMT pero <strong>no</strong> quieres utilizar la gestión de transacciones de Spring
         <strong>no debes</strong> configurar ningun transaction manager en Spring y <strong>debes</strong>
         configurar el <code>SqlSessionFactoryBean</code> para que use la clase <code>ManagedTransactionFactory</code> de MyBatis de la siguiente forma:
       </p>
@@ -98,7 +98,7 @@ public JtaTransactionManager transactionManager() {
   <property name="dataSource" ref="dataSource" />
   <property name="transactionFactory">
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
-  </property>  
+  </property>
 </bean>]]></source>
 
       <source><![CDATA[
@@ -111,7 +111,7 @@ public SqlSessionFactory sqlSessionFactory() {
 }]]></source>
 
     </subsection>
-  
+
     <subsection name="Ǵestión programática de transacción" id="programmatic">
       <p>
         La interfaz <code>SqlSession</code> proporciona métodos especificos para gestionar la transacción.
@@ -121,7 +121,7 @@ public SqlSessionFactory sqlSessionFactory() {
       <p>
         No puedes llamar a los métodos <code>SqlSession.commit()</code>, <code>SqlSession.rollback()</code>
         o <code>SqlSession.close()</code> en una <code>SqlSession</code> gestionada por Spring.
-        Si lo intentas obtendrás una excepción <code>UnsupportedOperationException</code>. 
+        Si lo intentas obtendrás una excepción <code>UnsupportedOperationException</code>.
         Además, estos métodos no se exponen en los mapper interfaces.
       </p>
       <p>

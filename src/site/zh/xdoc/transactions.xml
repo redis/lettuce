@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
     <author email="nanlei1987@gmail.com">Nan Lei</author>
   </properties>
-                             
+
   <body>
     <section name="事务">
       <p>
@@ -38,7 +38,7 @@
       <p>
         事务配置好了以后，MyBatis-Spring 将会透明地管理事务。这样在你的 DAO 类中就不需要额外的代码了。
       </p>
-  
+
     <subsection name="标准配置" id="configuration">
       <p>
         要开启 Spring 的事务处理功能，在 Spring 的配置文件中创建一个 <code>DataSourceTransactionManager</code> 对象：
@@ -84,7 +84,7 @@ public JtaTransactionManager transactionManager() {
   <property name="dataSource" ref="dataSource" />
   <property name="transactionFactory">
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
-  </property>  
+  </property>
 </bean>]]></source>
 
       <source><![CDATA[
@@ -97,7 +97,7 @@ public SqlSessionFactory sqlSessionFactory() {
 }]]></source>
 
     </subsection>
-  
+
     <subsection name="编程式事务管理" id="programmatic">
       <p>
         MyBatis 的 <code>SqlSession</code> 提供几个方法来在代码中处理事务。但是当使用 MyBatis-Spring 时，你的 bean 将会注入由 Spring 管理的 <code>SqlSession</code> 或映射器。也就是说，Spring 总是为你处理了事务。

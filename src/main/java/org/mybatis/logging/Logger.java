@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package org.mybatis.logging;
 
-import org.apache.ibatis.logging.Log;
-
 import java.util.function.Supplier;
+
+import org.apache.ibatis.logging.Log;
 
 /**
  * Wrapper of {@link Log}, allow log with lambda expressions.

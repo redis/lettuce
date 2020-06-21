@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -33,23 +33,23 @@
         Also, As of version 2.0.0 provides three builder classes for supporting the Java Configuration: the <code>MyBatisPagingItemReaderBuilder</code>,
         the <code>MyBatisCursorItemReaderBuilder</code> and the <code>MyBatisBatchItemWriterBuilder</code>.
       </p>
-      
+
       <p>
         <span class="label important">NOTE</span> This is about <a href="http://static.springsource.org/spring-batch/">Spring Batch</a> and not
         about MyBatis batch SqlSessions. For information about batch sessions go to section <a href="sqlsession.html">Using an SqlSession</a>.
       </p>
-      
+
       <subsection name="MyBatisPagingItemReader">
         <p>
           This bean is an <code>ItemReader</code> that reads records from a database in a paging fashion.
         </p>
-        
+
         <p>
           It executes the query specified as the <code>setQueryId</code> property to retrieve requested data.
           The query is executed using paged requests of a size specified in <code>setPageSize</code> property.
           Additional pages are requested when needed as <code>read()</code> method is called, returning an object corresponding
-          to current position. 
-          
+          to current position.
+
           Some standard query parameters are provided by the reader and the SQL in the named query must use some or all of these parameters
           (depending on the SQL variant) to construct a result set of the required size. The parameters are:
         </p>
@@ -67,7 +67,7 @@
 </select>]]></source>
 
         <p>Follows below a sample configuration snippet:</p>
-        
+
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
@@ -130,7 +130,7 @@ public Map<String, Object> datesParameters(
         <p>
           The previous example makes use of a few different things:
         </p>
-        
+
         <ul>
           <li><code>sqlSessionFactory</code>: You can specify your own sessionFactory to the reader, it might be
             useful if you want to read from several databases.</li>
@@ -159,16 +159,16 @@ public Map<String, Object> datesParameters(
         <p>
           <span class="label important">NOTE</span> To use this bean you need at least MyBatis 3.4.0 or a newer version.
         </p>
-        
+
         <p>
           It executes the query specified as the <code>setQueryId</code> property to retrieve requested data
           by using the method <code>selectCursor()</code>.
           Each time a <code>read()</code> method is called it will return the next element of the cursor until no more
           elements are left.
         </p>
-        
+
         <p>
-          The reader will use a separate connection so the select statement does no participate in any transactions created 
+          The reader will use a separate connection so the select statement does no participate in any transactions created
           as part of the step processing.
         </p>
 
@@ -178,7 +178,7 @@ public Map<String, Object> datesParameters(
 </select>]]></source>
 
         <p>Follows below a sample configuration snippet:</p>
-        
+
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
@@ -196,7 +196,7 @@ public MyBatisCursorItemReader<Employee> reader() {
       </subsection>
 
       <subsection name="MyBatisBatchItemWriter">
-      
+
         <p>
           It is an <code>ItemWriter</code> that uses the batching features from <code>SqlSessionTemplate</code>
           to execute a batch of statements for all items provided.
@@ -204,12 +204,12 @@ public MyBatisCursorItemReader<Employee> reader() {
         </p>
 
         <p>
-          When <code>write()</code> is called it executes the mapped statement indicated in the property <code>statementId</code>. 
+          When <code>write()</code> is called it executes the mapped statement indicated in the property <code>statementId</code>.
           It is expected that <code>write()</code> is called inside a transaction.<br/>
         </p>
- 
+
         <p>Follows below a sample configuration snippet:</p>
-        
+
         <source><![CDATA[<bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="statementId" value="com.my.name.space.batch.EmployeeMapper.updateEmployee" />

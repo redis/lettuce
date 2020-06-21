@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@
       <p>
       MyBatis-Spring integrates MyBatis seamlessly with Spring.
       This library allows MyBatis to participate in Spring transactions, takes care of
-      building MyBatis mappers and <code>SqlSession</code>s and inject them into other beans, 
-      translates MyBatis exceptions into Spring <code>DataAccessException</code>s, 
-      and finally, it lets you build your application code free of 
+      building MyBatis mappers and <code>SqlSession</code>s and inject them into other beans,
+      translates MyBatis exceptions into Spring <code>DataAccessException</code>s,
+      and finally, it lets you build your application code free of
       dependencies on MyBatis, Spring or MyBatis-Spring.
       </p>
   </subsection>
@@ -42,13 +42,13 @@
   <subsection name="Motivation">
       <p>
       Spring version 2 only supports iBATIS version 2. An attempt was made to
-      add MyBatis 3 support into Spring 3 (see the Spring Jira 
+      add MyBatis 3 support into Spring 3 (see the Spring Jira
       <a href="https://jira.springsource.org/browse/SPR-5991">issue</a>).
       Unfortunately, Spring 3 development ended before MyBatis 3 was
       officially released. Because the Spring team did not want to release with
       code based on a non-released version of MyBatis, official Spring support
-      would have to wait. Given the interest in Spring support for MyBatis, 
-      the MyBatis community decided it was time to reunite the interested contributors 
+      would have to wait. Given the interest in Spring support for MyBatis,
+      the MyBatis community decided it was time to reunite the interested contributors
       and add Spring integration as a community sub-project of MyBatis instead.
       </p>
   </subsection>
@@ -125,9 +125,9 @@
   <subsection name="Acknowledgements">
     <p>
       A special thanks goes to all the special people who made this project
-      a reality (in alphabetical order): Eduardo Macarron, Hunter Presnall 
+      a reality (in alphabetical order): Eduardo Macarron, Hunter Presnall
       and Putthiphong Boonphong for the coding, testing and documentation;
-      Andrius Juozapaitis, Giovanni Cuccu, Mike Lanyon, Raj Nagappan and Tomas Pinos 
+      Andrius Juozapaitis, Giovanni Cuccu, Mike Lanyon, Raj Nagappan and Tomas Pinos
       for their contributions; and Simone Tripodi for finding everyone and
       bringing them all back to the project under MyBatis ;) Without them,
       this project wouldn't exist.

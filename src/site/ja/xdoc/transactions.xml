@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
     <title>MyBatis-Spring | トランザクション</title>
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
-    <author email="harawata@gmail.com">Iwao AVE!</author>    
+    <author email="harawata@gmail.com">Iwao AVE!</author>
   </properties>
 
   <body>
@@ -42,7 +42,7 @@
       <p>
         MyBatis-Spring ではトランザクションは透過的に管理されるので、あなたの DAO クラスにコードを追加する必要はありません。
       </p>
-  
+
     <subsection name="標準的な設定" id="configuration">
       <p>
         Spring の 設定ファイルで <code>DataSourceTransactionManager</code> を生成するだけで、Spring のトランザクション処理が有効となります。
@@ -92,7 +92,7 @@ public JtaTransactionManager transactionManager() {
   <property name="dataSource" ref="dataSource" />
   <property name="transactionFactory">
     <bean class="org.apache.ibatis.transaction.managed.ManagedTransactionFactory" />
-  </property>  
+  </property>
 </bean>]]></source>
 
       <source><![CDATA[
@@ -105,7 +105,7 @@ public SqlSessionFactory sqlSessionFactory() {
 }]]></source>
 
     </subsection>
-  
+
     <subsection name="トランザクションをプログラム的に制御する" id="programmatic">
       <p>
         MyBatis の <code>SqlSession</code> では、トランザクションをプログラム的に制御するためのメソッドが用意されています。

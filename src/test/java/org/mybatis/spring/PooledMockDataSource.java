@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.mybatis.spring;
 
+import com.mockrunner.mock.jdbc.MockDataSource;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.LinkedList;
-
-import com.mockrunner.mock.jdbc.MockDataSource;
 
 final class PooledMockDataSource extends MockDataSource {
 

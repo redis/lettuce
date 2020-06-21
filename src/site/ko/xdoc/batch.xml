@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
   <properties>
     <title>마이바티스 스프링 연동모듈 | 스프링 배치</title>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
-    <author email="brice.dutheil@gmail.com">Brice Dutheil</author>    
+    <author email="brice.dutheil@gmail.com">Brice Dutheil</author>
     <author email="fromm0@gmail.com">이동국(한국어 번역)</author>
   </properties>
 
@@ -31,17 +31,17 @@
       <p>
         마이바티스 스프링 연동모듈의 1.1.0버전에서는 스프링 배치 애플리케이션을 만들기 위해 두개의 빈을 제공한다.
         두개의 빈은 <code>MyBatisPagingItemReader</code> 와 <code>MyBatisCursorItemReader</code> 와 <code>MyBatisBatchItemWriter</code>이다.
-        
-        또한 2.0.0 버전에서는 Java Configuration 을 지원하는 다음의 세 가지 Builder class 를 제공한다. 
+
+        또한 2.0.0 버전에서는 Java Configuration 을 지원하는 다음의 세 가지 Builder class 를 제공한다.
         <code>MyBatisPagingItemReaderBuilder</code>, <code>MyBatisCursorItemReaderBuilder</code> 그리고 <code>MyBatisBatchItemWriterBuilder</code> 이다.
       </p>
-      
-      <p><span class="label important">중요</span> 이 문서는 <a href="http://static.springsource.org/spring-batch/">스프링 배치</a>에 대한 것으로 
+
+      <p><span class="label important">중요</span> 이 문서는 <a href="http://static.springsource.org/spring-batch/">스프링 배치</a>에 대한 것으로
        마이바티스 배치 SqlSession을 다루지는 않는다. 배치 세션에 대해서는 <a href="sqlsession.html">SqlSession 사용</a>에서 좀더 다루었다. </p>
-      
+
       <subsection name="MyBatisPagingItemReader">
         <p>이 빈은 마이바티스로 페이지를 처리하는 형태로 데이터베이스 데이터를 읽어오는 <code>ItemReader</code>이다. </p>
-        
+
         <p>요청된 데이터를 가져오기 위해 <code>setQueryId</code> 프로퍼티에 명시된 쿼리를 실행한다.
          쿼리는 <code>setPageSize</code> 프로퍼티에 명시된 크기만큼 데이터를 가져오도록 실행된다.
         <code>read()</code> 메서드를 사용하면 필요할 때 현재 위치에서 정해진 수 만큼 더 추가 데이터를 가져온다.
@@ -60,7 +60,7 @@
 </select>]]></source>
 
         <p>다음의 코드는 샘플 설정이다. </p>
-        
+
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisPagingItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
@@ -122,14 +122,14 @@ public Map<String, Object> datesParameters(
 }]]></source>
 
         <p>앞의 예제와는 몇가지 차이점이 있다. </p>
-        
+
         <ul>
-          <li><code>sqlSessionFactory</code>: reader에 별도로 구현한 sessionFactory를 지정할 수 있다. 
+          <li><code>sqlSessionFactory</code>: reader에 별도로 구현한 sessionFactory를 지정할 수 있다.
           이 옵션은 다양한 데이터베이스에서 데이터를 읽을때 유용하다. </li>
           <li><code>queryId</code>: 여러개의 테이블에서 데이터를 읽어야 하고 서로 다른 쿼리를 사용한다면
            서로다른 네임스페이스를 가진 매퍼 파일을 사용하는게 좋을수 있다.
            쿼리를 알아볼때, 매퍼 파일의 네임스페이스를 잊지 말아야 한다.</li>
-          <li><code>parameterValues</code>: 이 맵을 사용해서 추가로 파라미터를 전달할 수 있다. 
+          <li><code>parameterValues</code>: 이 맵을 사용해서 추가로 파라미터를 전달할 수 있다.
            위 예제는 <code>jobExecutionContext</code>에서 값들을 가져오는 SpEL표현식을 사용하는 맵을 사용하고 있다.
            맵의 키는 매퍼파일에서 마이바티스가 사용할 것이다. (예: <em>yesterday</em> 는 <code>#{yesterday,jdbcType=TIMESTAMP}</code> 로 사용될수 있다.).
            맵과 reader 모두 <code>jobExecutionContext</code>에서 SpEL표현식을 사용하기 위해 <code>step</code> 스코프를 사용한다.
@@ -147,12 +147,12 @@ public Map<String, Object> datesParameters(
         <p>
           <span class="label important">중요</span> 이 빈을 사용하려면 최소한 MyBatis 3.4.0 이나 그 이상이어야 한다.
         </p>
-        
+
         <p>
           <code>setQueryId</code> 속성으로 지정된 쿼리를 실행하여 <code>selectCursor()</code> 메서드를 사용하여 요청 된 데이터를 검색한다.
           <code>read()</code> 메서드가 호출 될 때마다 요소가 더 이상 남아 있지 않을 때까지 cursor 의 다음 요소를 반환한다.
         </p>
-        
+
         <p>
           reader 는 별도의 connection 을 사용하므로 select 문은 step processing 일부로 생성된 트랜잭션에 속하지 않는다.
         </p>
@@ -163,7 +163,7 @@ public Map<String, Object> datesParameters(
 </select>]]></source>
 
         <p>아래는 샘플 설정이다.</p>
-        
+
         <source><![CDATA[<bean id="reader" class="org.mybatis.spring.batch.MyBatisCursorItemReader">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="queryId" value="com.my.name.space.batch.EmployeeMapper.getEmployee" />
@@ -181,15 +181,15 @@ public MyBatisCursorItemReader<Employee> reader() {
       </subsection>
 
       <subsection name="MyBatisBatchItemWriter">
-      
+
         <p>모든 아이템을 배치로 구문을 일괄실행하기 위해 <code>SqlSessionTemplate</code>에서 배치로 작업을 처리하는 <code>ItemWriter</code>이다.
         <code>SqlSessionFactory</code>는 <code>BATCH</code> 실행자로 설정할 필요가 있다. </p>
 
-        <p>사용자는 <code>write()</code> 메서드가 호출될때 실행될 매핑구문 아이디를 제공해야 한다. 
+        <p>사용자는 <code>write()</code> 메서드가 호출될때 실행될 매핑구문 아이디를 제공해야 한다.
         <code>write()</code> 메서드는 트랜잭션내에서 호출되는 것으로 예상된다. <br/></p>
- 
+
         <p>다음의 코드는 샘플설정이다. </p>
-        
+
         <source><![CDATA[<bean id="writer" class="org.mybatis.spring.batch.MyBatisBatchItemWriter">
   <property name="sqlSessionFactory" ref="sqlSessionFactory" />
   <property name="statementId" value="com.my.name.space.batch.EmployeeMapper.updateEmployee" />
@@ -272,16 +272,16 @@ public MyBatisBatchItemWriter<Person> writer() throws Exception {
 
         <p><strong>여러개의 테이블에 데이터를 쓰려면 한꺼번에 처리할 수 있도록 만든 writer(몇가지 규칙을 가지고)를 사용하자. </strong></p>
 
-        <p>이 기능은 마이바티스 3.2이상에서만 사용할 수 있다. 이전의 버전에서는 예상과 다르게 동작하는데 그 내용은 
+        <p>이 기능은 마이바티스 3.2이상에서만 사용할 수 있다. 이전의 버전에서는 예상과 다르게 동작하는데 그 내용은
         <a href="http://code.google.com/p/mybatis/issues/detail?id=741">이슈</a>를 참고하면 된다. </p>
 
-        <p>배치가 관계를 가지는 데이터나 여러개의 데이터베이스를 다루는 것처럼 복잡한 데이터를 작성할때 필요하다면 
+        <p>배치가 관계를 가지는 데이터나 여러개의 데이터베이스를 다루는 것처럼 복잡한 데이터를 작성할때 필요하다면
         insert구문이 한개에 테이블에만 데이터를 넣을수 있다는 사실만 피하면 가능하기도 하다.
-         이런 복잡한 데이터를 처리하기 위해 writer가 작성하는 <em>아이템(Item)</em>을 준비해야 한다. 
+         이런 복잡한 데이터를 처리하기 위해 writer가 작성하는 <em>아이템(Item)</em>을 준비해야 한다.
          다음의 기술을 사용하면 단순한 관계를 가진 데이터나 관계가 없는 테이블을 처리하는 아이템에서 사용할 수 있다. </p>
 
         <p>이러한 방법으로 스프링 배치 아이템은 모든 레코드를 <em>다룰것이다</em>.
-         여기에는 1:1 <em>관계</em>를 가지는 <em>InteractionMetadata</em>, 
+         여기에는 1:1 <em>관계</em>를 가지는 <em>InteractionMetadata</em>,
          관계가 없는 두개의 로우는 <em>VisitorInteraction</em> 와 <em>CustomerInteraction</em>이 있다.
          이 각각의 객체는 다음과 같이 볼수 있다. </p>
 
@@ -296,7 +296,7 @@ public class Interaction {
   private final InteractionMetadata interactionMetadata;
 }]]></source>
 
-        <p>그리고 스프링 설정에는 각각의 레코드를 처리하기위해 특별히 설정된 
+        <p>그리고 스프링 설정에는 각각의 레코드를 처리하기위해 특별히 설정된
          전용(delegates) writer를 사용하는 <code>CompositeItemWriter</code>가 있다. </p>
 
         <source><![CDATA[<bean id="interactionsItemWriter" class="org.springframework.batch.item.support.CompositeItemWriter">
@@ -359,13 +359,13 @@ public CompositeItemWriter<?> interactionsItemWriter() {
   -->
 </insert>]]></source>
 
-        <p>먼저 <code>insertInteractionMetadata</code>가 호출될것이고 
+        <p>먼저 <code>insertInteractionMetadata</code>가 호출될것이고
         update구문은 jdbc드라이버에 의해(<code>keyProperty</code> 와 <code>keyColumn</code>) 생성된 아이디들을 리턴하기 위해 설정되었다.
-        <code>InteractionMetadata</code> 객체가 이 쿼리에 의해 업데이트되면 다음의 쿼리는 
+        <code>InteractionMetadata</code> 객체가 이 쿼리에 의해 업데이트되면 다음의 쿼리는
         <code>insertInteraction</code>를 통해 상위객체인 <code>Interaction</code>를 작성하기 위해 사용될수 있다. </p>
 
-        <p><strong><em>방금 언급한 내용에 관련하여 JDBC드라이버가 똑같이 동작하지 않을수 있다. 
-         이 글을 쓰는 시점에 H2 드라이버 1.3.168버전(org.h2.jdbc.JdbcStatement#getGeneratedKeys를 보라)만 배치모드에서 마지막 인덱스를 리턴한다. 
+        <p><strong><em>방금 언급한 내용에 관련하여 JDBC드라이버가 똑같이 동작하지 않을수 있다.
+         이 글을 쓰는 시점에 H2 드라이버 1.3.168버전(org.h2.jdbc.JdbcStatement#getGeneratedKeys를 보라)만 배치모드에서 마지막 인덱스를 리턴한다.
          반면에 MySQL 드라이버는 기대한 것과 동일하게 동작하고 모든 아이디를 리턴한다. </em></strong></p>
       </subsection>
     </section>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,15 +29,15 @@
 
   <body>
     <section name="SqlSession 사용">
-      <p>마이바티스에서는 <code>SqlSession</code>를 생성하기 위해 <code>SqlSessionFactory</code>를 사용한다. 
-      세션을 한번 생성하면 매핑구문을 실행하거나 커밋 또는 롤백을 하기 위해 세션을 사용할수 있다. 
-      마지막으로 더 이상 필요하지 않은 상태가 되면 세션을 닫는다. 
+      <p>마이바티스에서는 <code>SqlSession</code>를 생성하기 위해 <code>SqlSessionFactory</code>를 사용한다.
+      세션을 한번 생성하면 매핑구문을 실행하거나 커밋 또는 롤백을 하기 위해 세션을 사용할수 있다.
+      마지막으로 더 이상 필요하지 않은 상태가 되면 세션을 닫는다.
       마이바티스 스프링 연동모듈을 사용하면 <code>SqlSessionFactory</code>를 직접 사용할 필요가 없다.
       왜냐하면, 스프링 트랜잭션 설정에 따라 자동으로 커밋 혹은 롤백을 수행하고 닫혀지는, 쓰레드에 안전한 <code>SqlSession</code> 개체가 스프링 빈에 주입될 수 있기 때문이다.</p>
 
     <subsection name="SqlSessionTemplate">
-      <p><code>SqlSessionTemplate</code>은 마이바티스 스프링 연동모듈의 핵심이다. 
-      <code>SqlSessionTemplate</code>은 <code>SqlSession</code>을 구현하고 코드에서 <code>SqlSession</code>를 대체하는 역할을 한다. 
+      <p><code>SqlSessionTemplate</code>은 마이바티스 스프링 연동모듈의 핵심이다.
+      <code>SqlSessionTemplate</code>은 <code>SqlSession</code>을 구현하고 코드에서 <code>SqlSession</code>를 대체하는 역할을 한다.
       <code>SqlSessionTemplate</code> 은 쓰레드에 안전하고 여러개의 DAO나 매퍼에서 공유할수 있다. </p>
 
       <p><code>getMapper()</code>에 의해 리턴된 매퍼가 가진 메서드를 포함해서 SQL을 처리하는 마이바티스 메서드를 호출할때
@@ -73,12 +73,12 @@ public SqlSessionTemplate sqlSession() throws Exception {
     return sqlSession.selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
-      <p>그리고 다음처럼 <code>SqlSessionTemplate</code> 를 주입하자. </p>      
+      <p>그리고 다음처럼 <code>SqlSessionTemplate</code> 를 주입하자. </p>
       <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSession" ref="sqlSession" />
 </bean>]]></source>
-      
-      <p><code>SqlSessionTemplate</code>은 인자로 <code>ExecutorType</code>를 가지는 생성자를 가지고 있다. 
+
+      <p><code>SqlSessionTemplate</code>은 인자로 <code>ExecutorType</code>를 가지는 생성자를 가지고 있다.
       이 인자는 예를들면 스프링 설정 XML을 다음처럼 설정해서 배치형태의 <code>SqlSession</code>를 만들수도 있다. </p>
         <source><![CDATA[<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
   <constructor-arg index="0" ref="sqlSessionFactory" />
@@ -98,10 +98,10 @@ public void insertUsers(List<User> users) {
     sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
   }
 }]]></source>
-  
+
       <p>이러한 설정형태는 <code>SqlSessionFactory</code>의 디폴트 형태가 아닌 다른형태로 메서드를 실행해야 할때만 사용할 필요가 있다. </p>
 
-      <p>이러한 형태에 대해 굳이 경로를 하자면 메서드를 호출할때 ExecutorType이 다르면 이미 시작된 트랜잭션을 사용하지 <strong>못할</strong>것이다.      
+      <p>이러한 형태에 대해 굳이 경로를 하자면 메서드를 호출할때 ExecutorType이 다르면 이미 시작된 트랜잭션을 사용하지 <strong>못할</strong>것이다.
        다른 실행자(executor) 타입을 사용할때는 <code>SqlSessionTemplate</code>의 메서드를 구분된 트랜잭션(PROPAGATION_REQUIRES_NEW를 사용하는)이나 트랜잭션 외부에서 호출하는지 확실히해야 한다. </p>
     </subsection>
 
@@ -113,10 +113,10 @@ public void insertUsers(List<User> users) {
     return getSqlSession().selectOne("org.mybatis.spring.sample.mapper.UserMapper.getUser", userId);
   }
 }]]></source>
-      <p>대개 <code>MapperFactoryBean</code>은 추가적인 코드가 필요없기 때문에 이 클래스를 선호한다. 
+      <p>대개 <code>MapperFactoryBean</code>은 추가적인 코드가 필요없기 때문에 이 클래스를 선호한다.
       하지만 DAO에서 마이바티스가 필요하지 않고 구현된 클래스가 필요하지 않을때만 유용하다. </p>
 
-      <p><code>SqlSessionDaoSupport</code>는 <code>sqlSessionFactory</code> 와 <code>sqlSessionTemplate</code> 프로퍼티를 셋팅할 필요가 있다. 
+      <p><code>SqlSessionDaoSupport</code>는 <code>sqlSessionFactory</code> 와 <code>sqlSessionTemplate</code> 프로퍼티를 셋팅할 필요가 있다.
       두개의 프로퍼티를 모두 셋팅하면 <code>sqlSessionFactory</code>는 무시된다. </p>
 
       <p><code>SqlSessionDaoSupport</code>의 하위클래스인 <code>UserDaoImpl</code>가 있다고 하면 스프링에서는 다음처럼 설정될 수 있다. </p>

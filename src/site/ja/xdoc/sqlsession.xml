@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
     <title>MyBatis-Spring | Using an SqlSession</title>
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
-    <author email="harawata@gmail.com">Iwao AVE!</author>    
+    <author email="harawata@gmail.com">Iwao AVE!</author>
   </properties>
 
   <body>
@@ -33,7 +33,7 @@
         MyBatis では <code>SqlSessionFactory</code> を使って <code>SqlSession</code> を生成しました。
         そして取得したセッションを使って Mapped Statement を実行し、接続をコミットあるいはロールバックした後、最終的に不要となったセッションをクローズする、というのが一連の流れでした。
         MyBatis-Spring では、SPring のトランザクション設定に基づいて自動的にコミット、ロールバック、クローズされるスレッドセーフな <code>SqlSession</code> が注入されるので、直接 <code>SqlSessionFactory</code> を使う必要はありません。
-      </p>  
+      </p>
 
     <subsection name="SqlSessionTemplate">
       <p>
@@ -84,11 +84,11 @@ public SqlSessionTemplate sqlSession() throws Exception {
 }]]></source>
       <p>
         そして、以下のようにして <code>SqlSessionTemplate</code> を注入します。
-      </p>      
+      </p>
       <source><![CDATA[<bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl">
   <property name="sqlSession" ref="sqlSession" />
 </bean>]]></source>
-      
+
       <p>
         <code>SqlSessionTemplate</code> には、<code>ExecutorType</code> を引数に取るコンストラクタも定義されています。
         このコンストラクタを使うと、例えばバッチ処理を行う <code>SqlSession</code> を取得することができます。
@@ -114,7 +114,7 @@ public void insertUsers(List<User> users) {
     sqlSession.insert("org.mybatis.spring.sample.mapper.UserMapper.insertUser", user);
   }
 }]]></source>
-  
+
       <p>
         デフォルト以外の <code>ExecutorType</code> を使用する場合にのみ <code>SqlSessionFactory</code> の Bean を定義する際に２つの引数を指定する必要があります。
       </p>

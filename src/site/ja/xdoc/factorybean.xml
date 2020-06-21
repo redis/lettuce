@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2019 the original author or authors.
+    Copyright 2010-2020 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
     <title>MyBatis-Spring | SqlSessionFactoryBean</title>
     <author email="hpresnall@gmail.com">Hunter Presnall</author>
     <author email="eduardo.macarron@gmail.com">Eduardo Macarron</author>
-    <author email="harawata@gmail.com">Iwao AVE!</author>    
+    <author email="harawata@gmail.com">Iwao AVE!</author>
   </properties>
 
   <body>
@@ -31,7 +31,7 @@
       <p>
         基となる MyBatis では、<code>SqlSessionFactory</code> をビルドする際 <code>SqlSessionFactoryBuilder</code> を使いましたが、MyBatis-Spring では、<code>SqlSessionFactoryBean</code> を使います。
       </p>
-      
+
     <subsection name="設定">
       <p>
         Spring の XML 設定ファイルに次の Bean を定義することで Factory Bean を生成することができます。
@@ -91,7 +91,7 @@ public SqlSessionFactory sqlSessionFactory() {
         <code>mapperLocations</code> プロパティは Resource Location のリストを取り、ここで MyBatis の XML Mapper ファイルの場所を指定することができます。
         Ant スタイルのパターン文字列を使って特定のディレクトリ内の全ファイルを指定したり、内包するディレクトリを再帰的に検索対象にすることもできます。次の例を見てください。
       </p>
-      
+
         <source><![CDATA[
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
   <property name="dataSource" ref="dataSource" />
