@@ -1,5 +1,5 @@
 /**
- * Copyright 2010-2019 the original author or authors.
+ * Copyright 2010-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,5 +15,11 @@
  */
 package org.mybatis.spring.annotation.mapper.ds2;
 
+import org.springframework.context.annotation.Scope;
+
+@Scope
 public interface Ds2Mapper {
+  default String test() {
+    return "ds2";
+  }
 }

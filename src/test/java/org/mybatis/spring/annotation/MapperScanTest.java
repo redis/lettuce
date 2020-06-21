@@ -20,6 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.mockrunner.mock.jdbc.MockDataSource;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +35,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.annotation.mapper.ds1.AppConfigWithDefaultMapperScanAndRepeat;
 import org.mybatis.spring.annotation.mapper.ds1.AppConfigWithDefaultMapperScans;
 import org.mybatis.spring.annotation.mapper.ds1.Ds1Mapper;
+import org.mybatis.spring.annotation.mapper.ds2.Ds2Mapper;
 import org.mybatis.spring.mapper.AnnotatedMapper;
 import org.mybatis.spring.mapper.AppConfigWithDefaultPackageScan;
 import org.mybatis.spring.mapper.MapperInterface;
@@ -47,10 +54,9 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.context.support.SimpleThreadScope;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
-
-import com.mockrunner.mock.jdbc.MockDataSource;
 
 /**
  * Test for the MapperScannerRegistrar.
@@ -63,6 +69,7 @@ class MapperScanTest {
   @BeforeEach
   void setupContext() {
     applicationContext = new AnnotationConfigApplicationContext();
+    applicationContext.getBeanFactory().registerScope("thread", new SimpleThreadScope());
 
     setupSqlSessionFactory();
 
@@ -344,6 +351,40 @@ class MapperScanTest {
 
   }
 
+  @Test
+  void testScopedProxyMapperScanByDefaultScope() {
+    applicationContext.register(ScopedProxy.class);
+
+    startContext();
+
+    List<String> scopedProxyTargetBeans = Stream.of(applicationContext.getBeanDefinitionNames())
+      .filter(x -> x.startsWith("scopedTarget")).collect(Collectors.toList());
+    assertThat(scopedProxyTargetBeans).hasSize(1).contains("scopedTarget.ds1Mapper");
+
+    for (String scopedProxyTargetBean : scopedProxyTargetBeans) {
+      {
+        BeanDefinition definition = applicationContext.getBeanDefinition(scopedProxyTargetBean);
+        assertThat(definition.getBeanClassName()).isEqualTo("org.mybatis.spring.mapper.MapperFactoryBean");
+        assertThat(definition.getScope()).isEqualTo("thread");
+      }
+      {
+        BeanDefinition definition = applicationContext.getBeanDefinition(scopedProxyTargetBean.substring(13));
+        assertThat(definition.getBeanClassName()).isEqualTo("org.springframework.aop.scope.ScopedProxyFactoryBean");
+        assertThat(definition.getScope()).isEqualTo("");
+      }
+    }
+    {
+      Ds1Mapper mapper = applicationContext.getBean(Ds1Mapper.class);
+      assertThat(mapper.test()).isEqualTo("ds1");
+    }
+    {
+      Ds2Mapper mapper = applicationContext.getBean(Ds2Mapper.class);
+      assertThat(mapper.test()).isEqualTo("ds2");
+    }
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(2, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+  }
+
   @Configuration
   @MapperScan("org.mybatis.spring.mapper")
   public static class AppConfigWithPackageScan {
@@ -416,6 +457,11 @@ class MapperScanTest {
   @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1", lazyInitialization = "${mybatis.lazy-initialization:false}")
   @PropertySource("classpath:/org/mybatis/spring/annotation/scan.properties")
   public static class LazyConfigWithPropertySource {
+
+  }
+
+  @MapperScan(basePackages = {"org.mybatis.spring.annotation.mapper.ds1", "org.mybatis.spring.annotation.mapper.ds2"}, defaultScope = "${mybatis.default-scope:thread}")
+  public static class ScopedProxy {
 
   }
 

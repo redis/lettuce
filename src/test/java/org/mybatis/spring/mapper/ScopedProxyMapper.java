@@ -15,16 +15,14 @@
  */
 package org.mybatis.spring.mapper;
 
-import org.springframework.stereotype.Component;
+import org.apache.ibatis.annotations.Mapper;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 
-// annotated interface for MapperScannerPostProcessor tests
-// ensures annotated classes are loaded
-@Component
-public interface AnnotatedMapper {
-  void method();
-
+@Mapper
+@Scope(scopeName = "thread", proxyMode = ScopedProxyMode.TARGET_CLASS)
+public interface ScopedProxyMapper {
   default String test() {
-    return Thread.currentThread().getName();
+    return "test";
   }
-
 }

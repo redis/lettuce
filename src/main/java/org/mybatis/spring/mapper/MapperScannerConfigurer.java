@@ -119,6 +119,8 @@ public class MapperScannerConfigurer
 
   private BeanNameGenerator nameGenerator;
 
+  private String defaultScope;
+
   /**
    * This property lets you set the base package for your mapper interface files.
    * <p>
@@ -312,6 +314,20 @@ public class MapperScannerConfigurer
   }
 
   /**
+   * Sets the default scope of scanned mappers.
+   * <p>
+   * Default is {@code null} (equiv to singleton).
+   * </p>
+   *
+   * @param defaultScope
+   *          the default scope
+   * @since 2.0.6
+   */
+  public void setDefaultScope(String defaultScope) {
+    this.defaultScope = defaultScope;
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -352,6 +368,9 @@ public class MapperScannerConfigurer
     if (StringUtils.hasText(lazyInitialization)) {
       scanner.setLazyInitialization(Boolean.valueOf(lazyInitialization));
     }
+    if (StringUtils.hasText(defaultScope)) {
+      scanner.setDefaultScope(defaultScope);
+    }
     scanner.registerFilters();
     scanner.scan(
         StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
@@ -387,6 +406,7 @@ public class MapperScannerConfigurer
       this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName", values);
       this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName", values);
       this.lazyInitialization = updatePropertyValue("lazyInitialization", values);
+      this.defaultScope = updatePropertyValue("defaultScope", values);
     }
     this.basePackage = Optional.ofNullable(this.basePackage).map(getEnvironment()::resolvePlaceholders).orElse(null);
     this.sqlSessionFactoryBeanName = Optional.ofNullable(this.sqlSessionFactoryBeanName)
@@ -395,6 +415,7 @@ public class MapperScannerConfigurer
         .map(getEnvironment()::resolvePlaceholders).orElse(null);
     this.lazyInitialization = Optional.ofNullable(this.lazyInitialization).map(getEnvironment()::resolvePlaceholders)
         .orElse(null);
+    this.defaultScope = Optional.ofNullable(this.defaultScope).map(getEnvironment()::resolvePlaceholders).orElse(null);
   }
 
   private Environment getEnvironment() {
