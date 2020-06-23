@@ -402,11 +402,11 @@ public class MapperScannerConfigurer
 
       PropertyValues values = mapperScannerBean.getPropertyValues();
 
-      this.basePackage = updatePropertyValue("basePackage", values);
-      this.sqlSessionFactoryBeanName = updatePropertyValue("sqlSessionFactoryBeanName", values);
-      this.sqlSessionTemplateBeanName = updatePropertyValue("sqlSessionTemplateBeanName", values);
-      this.lazyInitialization = updatePropertyValue("lazyInitialization", values);
-      this.defaultScope = updatePropertyValue("defaultScope", values);
+      this.basePackage = getPropertyValue("basePackage", values);
+      this.sqlSessionFactoryBeanName = getPropertyValue("sqlSessionFactoryBeanName", values);
+      this.sqlSessionTemplateBeanName = getPropertyValue("sqlSessionTemplateBeanName", values);
+      this.lazyInitialization = getPropertyValue("lazyInitialization", values);
+      this.defaultScope = getPropertyValue("defaultScope", values);
     }
     this.basePackage = Optional.ofNullable(this.basePackage).map(getEnvironment()::resolvePlaceholders).orElse(null);
     this.sqlSessionFactoryBeanName = Optional.ofNullable(this.sqlSessionFactoryBeanName)
@@ -422,7 +422,7 @@ public class MapperScannerConfigurer
     return this.applicationContext.getEnvironment();
   }
 
-  private String updatePropertyValue(String propertyName, PropertyValues values) {
+  private String getPropertyValue(String propertyName, PropertyValues values) {
     PropertyValue property = values.getPropertyValue(propertyName);
 
     if (property == null) {
