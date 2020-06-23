@@ -1,0 +1,145 @@
+[
+  {
+    "name": "io.lettuce.core.AbstractRedisAsyncCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.ChannelGroupListener",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.ConnectionEventTrigger",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.PlainChannelInitializer$1",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.RedisAsyncCommandsImpl",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.RedisClient",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.BaseRedisCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisGeoCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisHLLCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisHashCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisKeyCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisListCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisScriptingCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisServerCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisSetCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisSortedSetCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisStreamCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisStringCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.api.sync.RedisTransactionalCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.cluster.api.sync.RedisClusterCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.cluster.RedisAdvancedClusterAsyncCommandsImpl",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.protocol.CommandHandler",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.pubsub.PubSubCommandHandler",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.SslConnectionBuilder$SslChannelInitializer",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.protocol.ConnectionWatchdog",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "reactor.core.publisher.Mono"
+  }
+]
