@@ -330,6 +330,8 @@
         <artifactId>maven-site-plugin</artifactId>
         <configuration>
           <locales>en,es,zh_CN,ja,ko</locales>
+          <!-- Build using files that replace a placeholder using project properties -->
+          <siteDirectory>${project.build.directory}/site-src</siteDirectory>
         </configuration>
       </plugin>
     </plugins>
@@ -345,6 +347,12 @@
       </resource>
       <resource>
         <directory>${project.basedir}/src/main/resources</directory>
+      </resource>
+      <!-- Copy for replacing a placeholder using project properties -->
+      <resource>
+        <directory>${project.basedir}/src/site</directory>
+        <targetPath>${project.build.directory}/site-src</targetPath>
+        <filtering>true</filtering>
       </resource>
     </resources>
     <testResources>
