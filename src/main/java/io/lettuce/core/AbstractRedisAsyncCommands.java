@@ -867,6 +867,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<Long> lpos(K key, V value) {
+        return lpos(key, value, null);
+    }
+
+    @Override
+    public RedisFuture<Long> lpos(K key, V value, LPosArgs args) {
+        return dispatch(commandBuilder.lpos(key, value, args));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> lpos(K key, V value, int count) {
+        return lpos(key, value, count, null);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> lpos(K key, V value, int count, LPosArgs args) {
+        return dispatch(commandBuilder.lpos(key, value, count, args));
+    }
+
+    @Override
     public RedisFuture<Long> lpush(K key, V... values) {
         return dispatch(commandBuilder.lpush(key, values));
     }

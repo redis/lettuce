@@ -1150,6 +1150,30 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(LPOP, new ValueOutput<>(codec), key);
     }
 
+    Command<K, V, Long> lpos(K key, V value, LPosArgs lposArgs) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+
+        if (lposArgs != null) {
+            lposArgs.build(args);
+        }
+
+        return createCommand(LPOS, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> lpos(K key, V value, long count, LPosArgs lposArgs) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value).add(COUNT).add(count);
+
+        if (lposArgs != null) {
+            lposArgs.build(args);
+        }
+
+        return createCommand(LPOS, new IntegerListOutput<>(codec), args);
+    }
+
     Command<K, V, Long> lpush(K key, V... values) {
         notNullKey(key);
         notEmptyValues(values);
