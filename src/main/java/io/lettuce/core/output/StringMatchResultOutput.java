@@ -15,41 +15,46 @@
  */
 package io.lettuce.core.output;
 
-import io.lettuce.core.StringMatchResult;
 import static io.lettuce.core.StringMatchResult.MatchedPosition;
 import static io.lettuce.core.StringMatchResult.Position;
-import io.lettuce.core.codec.RedisCodec;
+
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import io.lettuce.core.StringMatchResult;
+import io.lettuce.core.codec.RedisCodec;
 
 /**
- * {@link StringMatchResult}.
+ * Command output for {@code STRALGO} returning {@link StringMatchResult}.
  *
  * @author dengliming
- * @since 6.0.0
+ * @since 5.3.2
  */
 public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMatchResult> {
 
-    private boolean withIdx;
+    private final boolean withIdx;
     private String matchString;
     private int len;
     private List<Long> positions;
+    private final List<MatchedPosition> matchedPositions = new ArrayList<>();
 
     public StringMatchResultOutput(RedisCodec<K, V> codec, boolean withIdx) {
-        super(codec, new StringMatchResult());
+        super(codec, null);
         this.withIdx = withIdx;
     }
 
     @Override
     public void set(ByteBuffer bytes) {
+
         if (!withIdx && matchString == null) {
             matchString = (String) codec.decodeKey(bytes);
-            output.matchString(matchString);
         }
     }
 
     @Override
     public void set(long integer) {
+
         this.len = (int) integer;
 
         if (positions == null) {
@@ -59,32 +64,28 @@ public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMat
     }
 
     @Override
-    public void multi(int count) {
-    }
-
-    @Override
     public void complete(int depth) {
+
         if (depth == 2) {
-            output.addMatch(buildMatchedString(positions));
+            matchedPositions.add(buildMatchedString(positions));
             positions = null;
         }
+
         if (depth == 0) {
-            output.len(len);
+            output = new StringMatchResult(matchString, matchedPositions, len);
         }
     }
 
-    private MatchedPosition buildMatchedString(List<Long> positions) {
+    private static MatchedPosition buildMatchedString(List<Long> positions) {
+
         if (positions == null) {
-            return null;
+            throw new IllegalStateException("No matched positions");
         }
 
         int size = positions.size();
         // not WITHMATCHLEN
         long matchLen = size % 2 == 0 ? 0L : positions.get(size - 1);
-        return new MatchedPosition(
-                new Position(positions.get(0), positions.get(1)),
-                new Position(positions.get(2), positions.get(3)),
-                matchLen
-        );
+        return new MatchedPosition(new Position(positions.get(0), positions.get(1)),
+                new Position(positions.get(2), positions.get(3)), matchLen);
     }
 }

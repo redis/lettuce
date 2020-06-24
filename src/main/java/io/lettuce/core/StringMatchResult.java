@@ -15,33 +15,33 @@
  */
 package io.lettuce.core;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Result for STRALGO command
+ * Result for STRALGO command.
  *
  * @author dengliming
+ * @author Mark Paluch
+ * @since 5.3.2
  */
 public class StringMatchResult {
 
-    private String matchString;
-    private List<MatchedPosition> matches = new ArrayList<>();
-    private long len;
+    private final String matchString;
+    private final List<MatchedPosition> matches;
+    private final long len;
 
-    public StringMatchResult matchString(String matchString) {
+    /**
+     * Creates new {@link StringMatchResult}.
+     *
+     * @param matchString
+     * @param matches
+     * @param len
+     */
+    public StringMatchResult(String matchString, List<MatchedPosition> matches, long len) {
         this.matchString = matchString;
-        return this;
-    }
-
-    public StringMatchResult addMatch(MatchedPosition match) {
-        this.matches.add(match);
-        return this;
-    }
-
-    public StringMatchResult len(long len) {
+        this.matches = Collections.unmodifiableList(matches);
         this.len = len;
-        return this;
     }
 
     public String getMatchString() {
@@ -57,12 +57,13 @@ public class StringMatchResult {
     }
 
     /**
-     * match position in each strings
+     * Match position in each string.
      */
     public static class MatchedPosition {
-        private Position a;
-        private Position b;
-        private long matchLen;
+
+        private final Position a;
+        private final Position b;
+        private final long matchLen;
 
         public MatchedPosition(Position a, Position b, long matchLen) {
             this.a = a;
@@ -74,31 +75,22 @@ public class StringMatchResult {
             return a;
         }
 
-        public void setA(Position a) {
-            this.a = a;
-        }
 
         public Position getB() {
             return b;
         }
 
-        public void setB(Position b) {
-            this.b = b;
-        }
 
         public long getMatchLen() {
             return matchLen;
         }
-
-        public void setMatchLen(long matchLen) {
-            this.matchLen = matchLen;
-        }
     }
 
     /**
-     * position range
+     * Position range.
      */
     public static class Position {
+
         private final long start;
         private final long end;
 

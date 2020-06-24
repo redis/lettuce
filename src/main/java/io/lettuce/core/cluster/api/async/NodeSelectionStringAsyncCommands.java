@@ -18,12 +18,8 @@ package io.lettuce.core.cluster.api.async;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.BitFieldArgs;
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.SetArgs;
+import io.lettuce.core.*;
 import io.lettuce.core.output.KeyValueStreamingChannel;
-import io.lettuce.core.StrAlgoArgs;
-import io.lettuce.core.StringMatchResult;
 
 /**
  * Asynchronous executed commands on a node selection for Strings.
@@ -369,19 +365,29 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
     AsyncExecutions<Long> setrange(K key, long offset, V value);
 
     /**
+     * The STRALGO command implements complex algorithms that operate on strings. This method uses the LCS algorithm (longest
+     * common substring).
+     *
+     * <ul>
+     * <li>Without modifiers the string representing the longest common substring is returned.</li>
+     * <li>When {@link StrAlgoArgs#justLen() LEN} is given the command returns the length of the longest common substring.</li>
+     * <li>When {@link StrAlgoArgs#withIdx() IDX} is given the command returns an array with the LCS length and all the ranges
+     * in both the strings, start and end offset for each string, where there are matches. When
+     * {@link StrAlgoArgs#withMatchLen() WITHMATCHLEN} is given each array representing a match will also have the length of the
+     * match.</li>
+     * </ul>
+     *
+     * @param strAlgoArgs command arguments.
+     * @return StringMatchResult
+     * @since 5.3.2
+     */
+    AsyncExecutions<StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs);
+
+    /**
      * Get the length of the value stored in a key.
      *
      * @param key the key
      * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */
     AsyncExecutions<Long> strlen(K key);
-
-    /**
-     * The STRALGO implements complex algorithms that operate on strings.
-     *
-     * Right now the only algorithm implemented is the LCS algorithm (longest common substring).
-     * @param strAlgoArgs
-     * @return StringMatchResult
-     */
-    AsyncExecutions<StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs);
 }
