@@ -35,7 +35,7 @@ MyBatis-Spring requires following versions:
 
 만약에 어떤 방법으로든 이 문서의 취약점이 발견되거나 기능에 대한 문서화가 빠진 부분이 보인다면, 가장 좋은 방법은 먼저 공부해서 자신만의 문서를 작성하는 것이다.
 
-이 문서의 원본은 xdoc포맷이며 [프로젝트의 Git](https://github.com/mybatis/spring/tree/master/src/site)에서 찾을 수 있다. repository 를 fork 하고, 업데이트하고 pull request 를 보내주십시오.
+이 문서의 원본은 markdown 포맷이며 [프로젝트의 Git](https://github.com/mybatis/spring/tree/master/src/site)에서 찾을 수 있다. repository 를 fork 하고, 업데이트하고 pull request 를 보내주십시오.
 
 당신처럼 이 문서를 읽는 사람들에게 이 문서의 최고의 저자가 될수 있다!
 
