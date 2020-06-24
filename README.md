@@ -20,4 +20,5 @@ Supported Versions
 Essentials
 ----------
 
-* [See the docs](http://mybatis.github.io/spring/)
+* [See the published docs](http://mybatis.github.io/spring/)
+* [See the snapshot docs](src/site/markdown) (Note: may contain explanation of unreleased features)
