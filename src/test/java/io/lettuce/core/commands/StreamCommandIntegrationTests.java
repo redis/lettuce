@@ -33,7 +33,6 @@ import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.PendingMessage;
-import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.models.stream.PendingParser;
 import io.lettuce.core.output.NestedMultiOutput;
 import io.lettuce.core.protocol.CommandArgs;
@@ -41,6 +40,8 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisStreamCommands}.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)

@@ -15,15 +15,15 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.CommandArgs;
-
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandArgs;
+
 /**
- * Argument list builder for the Redis <a href="http://redis.io/commands/stralgo">STRALGO</a> command.
- * Static import the methods from {@link StrAlgoArgs.Builder} and call the methods: {@code block(…)} .
+ * Argument list builder for the Redis <a href="http://redis.io/commands/stralgo">STRALGO</a> command. Static import the methods
+ * from {@link StrAlgoArgs.Builder} and call the methods: {@code keys(…)} .
  * <p>
  * {@link StrAlgoArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
@@ -119,6 +119,9 @@ public class StrAlgoArgs implements CompositeArgument {
     }
 
     public StrAlgoArgs by(By by, String... keys) {
+        LettuceAssert.notNull(by, "By-selector must not be null");
+        LettuceAssert.notEmpty(keys, "Keys must not be empty");
+
         this.by = by;
         this.keys = keys;
         return this;
@@ -129,6 +132,8 @@ public class StrAlgoArgs implements CompositeArgument {
     }
 
     public StrAlgoArgs charset(Charset charset) {
+        LettuceAssert.notNull(charset, "Charset must not be null");
+
         this.charset = charset;
         return this;
     }
@@ -137,8 +142,8 @@ public class StrAlgoArgs implements CompositeArgument {
         STRINGS, KEYS
     }
 
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
-        LettuceAssert.notEmpty(keys, "strings or keys must be not empty");
 
         args.add("LCS");
         args.add(by.name());

@@ -16,6 +16,7 @@
 package io.lettuce.core.commands;
 
 import static io.lettuce.core.SetArgs.Builder.*;
+import static io.lettuce.core.StringMatchResult.Position;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -30,20 +31,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisException;
-import io.lettuce.core.TestSupport;
+import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.StrAlgoArgs;
-import io.lettuce.core.StringMatchResult;
-import static io.lettuce.core.StringMatchResult.Position;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisStringCommands}.
+ *
  * @author Will Glozer
  * @author Mark Paluch
+ * @author dengliming
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -243,7 +242,9 @@ public class StringCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("STRALGO")
     void strAlgo() {
+
         StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
                 .strings("ohmytext", "mynewtext"));
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
@@ -256,28 +257,55 @@ public class StringCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("STRALGO")
+    void strAlgoUsingKeys() {
+
+        redis.set("key1{k}", "ohmytext");
+        redis.set("key2{k}", "mynewtext");
+
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.keys("key1{k}", "key2{k}"));
+        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+
+        // STRALGO LCS STRINGS a b
+        matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.strings("a", "b").minMatchLen(4).withIdx().withMatchLen());
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getLen()).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("STRALGO")
     void strAlgoJustLen() {
+
         StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
                 .strings("ohmytext", "mynewtext").justLen());
+
         assertThat(matchResult.getLen()).isEqualTo(6);
     }
 
     @Test
+    @EnabledOnCommand("STRALGO")
     void strAlgoWithMinMatchLen() {
+
         StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
                 .strings("ohmytext", "mynewtext").minMatchLen(4));
+
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
     }
 
     @Test
+    @EnabledOnCommand("STRALGO")
     void strAlgoWithIdx() {
+
         // STRALGO LCS STRINGS ohmytext mynewtext IDX MINMATCHLEN 4 WITHMATCHLEN
         StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
                 .strings("ohmytext", "mynewtext").minMatchLen(4).withIdx().withMatchLen());
+
         assertThat(matchResult.getMatches()).hasSize(1);
         assertThat(matchResult.getMatches().get(0).getMatchLen()).isEqualTo(4);
+
         Position a = matchResult.getMatches().get(0).getA();
         Position b = matchResult.getMatches().get(0).getB();
+
         assertThat(a.getStart()).isEqualTo(4);
         assertThat(a.getEnd()).isEqualTo(7);
         assertThat(b.getStart()).isEqualTo(5);
