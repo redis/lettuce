@@ -24,14 +24,14 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
  * Tests for {@link ReadOnlyCommands}.
- * 
+ *
  * @author Mark Paluch
  */
 class ReadOnlyCommandsUnitTests {
 
     @Test
     void testCount() {
-        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(78);
+        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(79);
     }
 
     @Test

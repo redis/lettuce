@@ -969,6 +969,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> lpos(K key, V value) {
+        return lpos(key, value, null);
+    }
+
+    @Override
+    public Mono<Long> lpos(K key, V value, LPosArgs args) {
+        return createMono(() -> commandBuilder.lpos(key, value, args));
+    }
+
+    @Override
+    public Flux<Long> lpos(K key, V value, int count) {
+        return lpos(key, value, count, null);
+    }
+
+    @Override
+    public Flux<Long> lpos(K key, V value, int count, LPosArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.lpos(key, value, count, args));
+    }
+
+    @Override
     public Mono<Long> lpush(K key, V... values) {
         return createMono(() -> commandBuilder.lpush(key, values));
     }

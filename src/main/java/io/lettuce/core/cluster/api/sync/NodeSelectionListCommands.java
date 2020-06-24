@@ -16,8 +16,8 @@
 package io.lettuce.core.cluster.api.sync;
 
 import java.util.List;
-
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.LPosArgs;
 import io.lettuce.core.output.ValueStreamingChannel;
 
 /**
@@ -104,6 +104,64 @@ public interface NodeSelectionListCommands<K, V> {
      * @return V bulk-string-reply the value of the first element, or {@literal null} when {@code key} does not exist.
      */
     Executions<V> lpop(K key);
+
+    /**
+     * Return the index of matching elements inside a Redis list. By default, when no options are given, it will scan the list
+     * from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
+     * in the list) is returned. Otherwise, if no match is found, {@literal null} is returned. The returned elements indexes are
+     * always referring to what {@link #lindex(java.lang.Object, long)} would return. So first element from head is {@code 0},
+     * and so forth.
+     *
+     * @param key the key
+     * @param value the element to search for
+     * @return V integer-reply representing the matching element, or null if there is no match.
+     * @since 5.3.2
+     */
+    Executions<Long> lpos(K key, V value);
+
+    /**
+     * Return the index of matching elements inside a Redis list. By default, when no options are given, it will scan the list
+     * from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
+     * in the list) is returned. Otherwise, if no match is found, {@literal null} is returned. The returned elements indexes are
+     * always referring to what {@link #lindex(java.lang.Object, long)} would return. So first element from head is {@code 0},
+     * and so forth.
+     *
+     * @param key the key
+     * @param value the element to search for
+     * @param args command arguments to configure{@code FIRST} and {@code MAXLEN} options
+     * @return V integer-reply representing the matching element, or null if there is no match.
+     * @since 5.3.2
+     */
+    Executions<Long> lpos(K key, V value, LPosArgs args);
+
+    /**
+     * Return the index of matching elements inside a Redis list using the {@code COUNT} option. By default, when no options are
+     * given, it will scan the list from head to tail, looking for the first match of "element". The returned elements indexes
+     * are always referring to what {@link #lindex(java.lang.Object, long)} would return. So first element from head is
+     * {@code 0}, and so forth.
+     *
+     * @param key the key
+     * @param value the element to search for
+     * @param count limit the number of matches
+     * @return V integer-reply representing the matching elements, or empty if there is no match.
+     * @since 5.3.2
+     */
+    Executions<List<Long>> lpos(K key, V value, int count);
+
+    /**
+     * Return the index of matching elements inside a Redis list using the {@code COUNT} option. By default, when no options are
+     * given, it will scan the list from head to tail, looking for the first match of "element". The returned elements indexes
+     * are always referring to what {@link #lindex(java.lang.Object, long)} would return. So first element from head is
+     * {@code 0}, and so forth.
+     *
+     * @param key the key
+     * @param value the element to search for
+     * @param count limit the number of matches
+     * @param args command arguments to configure{@code FIRST} and {@code MAXLEN} options
+     * @return V integer-reply representing the matching elements, or empty if there is no match.
+     * @since 5.3.2
+     */
+    Executions<List<Long>> lpos(K key, V value, int count, LPosArgs args);
 
     /**
      * Prepend one or multiple values to a list.

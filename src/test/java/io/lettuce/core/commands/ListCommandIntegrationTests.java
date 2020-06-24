@@ -29,13 +29,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.LPosArgs;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisListCommands}.
+ *
  * @author Will Glozer
  * @author Mark Paluch
  */
@@ -111,6 +115,22 @@ public class ListCommandIntegrationTests extends TestSupport {
         redis.rpush(key, "one", "two");
         assertThat(redis.lpop(key)).isEqualTo("one");
         assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("two"));
+    }
+
+    @Test
+    @EnabledOnCommand("LPOS")
+    void lpos() {
+
+        redis.rpush(key, "a", "b", "c", "1", "2", "3", "c", "c");
+
+        assertThat(redis.lpos(key, "a")).isEqualTo(0);
+        assertThat(redis.lpos(key, "c")).isEqualTo(2);
+        assertThat(redis.lpos(key, "c", LPosArgs.Builder.first(1))).isEqualTo(2);
+        assertThat(redis.lpos(key, "c", LPosArgs.Builder.first(2))).isEqualTo(6);
+        assertThat(redis.lpos(key, "c", LPosArgs.Builder.first(4))).isNull();
+
+        assertThat(redis.lpos(key, "c", 0)).contains(2L, 6L, 7L);
+        assertThat(redis.lpos(key, "c", 0, LPosArgs.Builder.maxlen(1))).isEmpty();
     }
 
     @Test
