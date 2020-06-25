@@ -54,7 +54,8 @@ public interface AsyncObjectFactory<T> {
      *
      * @param object a {@code PooledObject} wrapping the instance to be validated
      *
-     * @return {@literal false} if {@code object} is not valid and should be dropped from the pool, {@literal true} otherwise.
+     * @return {@code false} if {@code object} is not valid and should be dropped from the pool, {@code true} otherwise.
      */
     CompletableFuture<Boolean> validate(T object);
+
 }

@@ -43,4 +43,5 @@ public class RedisNoScriptException extends RedisCommandExecutionException {
     public RedisNoScriptException(String msg, Throwable cause) {
         super(msg, cause);
     }
+
 }

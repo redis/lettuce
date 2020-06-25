@@ -28,4 +28,5 @@ public interface InvocationTargetProvider {
      * @return the invocation target.
      */
     Object getInvocationTarget();
+
 }

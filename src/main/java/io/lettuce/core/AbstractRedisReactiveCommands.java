@@ -57,9 +57,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
 
     private final Object mutex = new Object();
+
     private final StatefulConnection<K, V> connection;
+
     private final RedisCommandBuilder<K, V> commandBuilder;
+
     private final ClientResources clientResources;
+
     private final boolean tracingEnabled;
 
     private EventExecutorGroup scheduler;
@@ -2321,4 +2325,5 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         LettuceAssert.notEmpty(script, "Lua script must not be empty");
         return script.getBytes(getConnection().getOptions().getScriptCharset());
     }
+
 }

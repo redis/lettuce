@@ -48,8 +48,9 @@ public interface ClusterTopologyRefresh {
      *
      * @param seed collection of {@link RedisURI}s
      * @param connectTimeout connect timeout
-     * @param discovery {@literal true} to discover additional nodes
+     * @param discovery {@code true} to discover additional nodes
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
     CompletionStage<Map<RedisURI, Partitions>> loadViews(Iterable<RedisURI> seed, Duration connectTimeout, boolean discovery);
+
 }

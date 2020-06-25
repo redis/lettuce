@@ -254,7 +254,7 @@ public interface RedisClusterCommands<K, V>
     /**
      * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
      *
-     * @param force do not coordinate with master if {@literal true}
+     * @param force do not coordinate with master if {@code true}
      * @return String simple-string-reply
      */
     String clusterFailover(boolean force);
@@ -271,7 +271,7 @@ public interface RedisClusterCommands<K, V>
      * <li>If the node was a replica, the whole data set is flushed away</li>
      * </ul>
      *
-     * @param hard {@literal true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
+     * @param hard {@code true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
      * @return String simple-string-reply
      */
     String clusterReset(boolean hard);
@@ -297,4 +297,5 @@ public interface RedisClusterCommands<K, V>
      * @return String simple-string-reply
      */
     String readWrite();
+
 }

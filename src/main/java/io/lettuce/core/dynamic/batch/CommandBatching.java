@@ -81,6 +81,7 @@ public abstract class CommandBatching {
         public static CommandBatching instance() {
             return INSTANCE;
         }
+
     }
 
     /**
@@ -99,5 +100,7 @@ public abstract class CommandBatching {
         public static QueueCommands instance() {
             return INSTANCE;
         }
+
     }
+
 }

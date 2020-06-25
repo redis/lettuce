@@ -248,12 +248,12 @@ public class ClientsideCachingIntegrationTests extends TestSupport {
         /**
          * Return the value to which this cache maps the specified key.
          * <p>
-         * Note: This method does not allow for differentiating between a cached {@literal null} value and no cache entry found
+         * Note: This method does not allow for differentiating between a cached {@code null} value and no cache entry found
          * at all.
          *
          * @param key the key whose associated value is to be returned.
-         * @return the value to which this cache maps the specified key (which may be {@literal null} itself), or also
-         *         {@literal null} if the cache contains no mapping for this key.
+         * @return the value to which this cache maps the specified key (which may be {@code null} itself), or also
+         *         {@code null} if the cache contains no mapping for this key.
          * @see CacheAccessor#get(Object)
          * @see RedisCache#get(Object)
          */
@@ -270,7 +270,7 @@ public class ClientsideCachingIntegrationTests extends TestSupport {
          * @param valueLoader the value loader that is used to obtain the value if the client-side cache and Redis cache are not
          *        associated with a value.
          * @return the value to which this cache maps the specified key.
-         * @throws ValueRetrievalException if the {@code valueLoader} throws an exception or returns a {@literal null} value.
+         * @throws ValueRetrievalException if the {@code valueLoader} throws an exception or returns a {@code null} value.
          */
         V get(K key, Callable<V> valueLoader);
 
@@ -306,12 +306,12 @@ public class ClientsideCachingIntegrationTests extends TestSupport {
         /**
          * Return the value to which this cache maps the specified key.
          * <p>
-         * Note: This method does not allow for differentiating between a cached {@literal null} value and no cache entry found
+         * Note: This method does not allow for differentiating between a cached {@code null} value and no cache entry found
          * at all.
          *
          * @param key the key whose associated value is to be returned.
-         * @return the value to which this cache maps the specified key (which may be {@literal null} itself), or also
-         *         {@literal null} if the cache contains no mapping for this key.
+         * @return the value to which this cache maps the specified key (which may be {@code null} itself), or also
+         *         {@code null} if the cache contains no mapping for this key.
          */
         V get(K key);
 
@@ -382,8 +382,8 @@ public class ClientsideCachingIntegrationTests extends TestSupport {
          * Retrieve a {@code value} from Redis for the given cache {@code key}.
          *
          * @param key the key whose associated value is to be returned.
-         * @return the value to which this Redis cache value maps the specified key (which may be {@literal null} itself), or
-         *         also {@literal null} if the Redis cache contains no mapping for this key.
+         * @return the value to which this Redis cache value maps the specified key (which may be {@code null} itself), or
+         *         also {@code null} if the Redis cache contains no mapping for this key.
          */
         V get(K key);
 

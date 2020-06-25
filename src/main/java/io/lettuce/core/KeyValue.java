@@ -53,8 +53,8 @@ public class KeyValue<K, V> extends Value<V> {
      * Creates a {@link KeyValue} from a {@code key} and an {@link Optional}. The resulting value contains the value from the
      * {@link Optional} if a value is present. Value is empty if the {@link Optional} is empty.
      *
-     * @param key the key, must not be {@literal null}.
-     * @param optional the optional. May be empty but never {@literal null}.
+     * @param key the key, must not be {@code null}.
+     * @param optional the optional. May be empty but never {@code null}.
      * @param <K>
      * @param <T>
      * @param <V>
@@ -75,8 +75,8 @@ public class KeyValue<K, V> extends Value<V> {
      * Creates a {@link KeyValue} from a {@code key} and{@code value}. The resulting value contains the value if the
      * {@code value} is not null.
      *
-     * @param key the key, must not be {@literal null}.
-     * @param value the value. May be {@literal null}.
+     * @param key the key, must not be {@code null}.
+     * @param value the value. May be {@code null}.
      * @param <K>
      * @param <T>
      * @param <V>
@@ -94,7 +94,7 @@ public class KeyValue<K, V> extends Value<V> {
     /**
      * Returns an empty {@code KeyValue} instance with the {@code key} set. No value is present for this instance.
      *
-     * @param key the key, must not be {@literal null}.
+     * @param key the key, must not be {@code null}.
      * @param <K>
      * @param <V>
      * @return the {@link KeyValue}
@@ -106,8 +106,8 @@ public class KeyValue<K, V> extends Value<V> {
     /**
      * Creates a {@link KeyValue} from a {@code key} and {@code value}. The resulting value contains the value.
      *
-     * @param key the key. Must not be {@literal null}.
-     * @param value the value. Must not be {@literal null}.
+     * @param key the key. Must not be {@code null}.
+     * @param value the value. Must not be {@code null}.
      * @param <K>
      * @param <T>
      * @param <V>
@@ -175,4 +175,5 @@ public class KeyValue<K, V> extends Value<V> {
 
         return (KeyValue<K, R>) this;
     }
+
 }

@@ -40,8 +40,11 @@ public class KillArgs implements CompositeArgument {
     }
 
     private Boolean skipme;
+
     private String addr;
+
     private Long id;
+
     private Type type;
 
     /**
@@ -68,7 +71,7 @@ public class KillArgs implements CompositeArgument {
         /**
          * Creates new {@link KillArgs} setting {@literal ADDR}.
          *
-         * @param addr must not be {@literal null}.
+         * @param addr must not be {@code null}.
          * @return new {@link KillArgs} with {@literal ADDR} set.
          * @see KillArgs#addr(String)
          */
@@ -127,6 +130,7 @@ public class KillArgs implements CompositeArgument {
         public static KillArgs typeSlave() {
             return new KillArgs().type(Type.SLAVE);
         }
+
     }
 
     /**
@@ -155,7 +159,7 @@ public class KillArgs implements CompositeArgument {
     /**
      * Kill the client at {@code addr}.
      *
-     * @param addr must not be {@literal null}.
+     * @param addr must not be {@code null}.
      * @return {@code this} {@link KillArgs}.
      */
     public KillArgs addr(String addr) {
@@ -182,7 +186,7 @@ public class KillArgs implements CompositeArgument {
      * This closes the connections of all the clients in the specified {@link Type class}. Note that clients blocked into the
      * {@literal MONITOR} command are considered to belong to the normal class.
      *
-     * @param type must not be {@literal null}.
+     * @param type must not be {@code null}.
      * @return {@code this} {@link KillArgs}.
      */
     public KillArgs type(Type type) {
@@ -211,4 +215,5 @@ public class KillArgs implements CompositeArgument {
             args.add(TYPE).add(type.name().toLowerCase());
         }
     }
+
 }

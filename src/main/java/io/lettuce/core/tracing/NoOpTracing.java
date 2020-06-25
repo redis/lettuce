@@ -79,6 +79,7 @@ enum NoOpTracing implements Tracing, TraceContextProvider, TracerProvider {
         public Span nextSpan() {
             return NoOpSpan.INSTANCE;
         }
+
     }
 
     public static class NoOpSpan extends Tracer.Span {
@@ -118,5 +119,7 @@ enum NoOpTracing implements Tracing, TraceContextProvider, TracerProvider {
         @Override
         public void finish() {
         }
+
     }
+
 }

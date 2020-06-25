@@ -72,4 +72,5 @@ public interface RedisPubSubListener<K, V> {
      * @param count Subscription count.
      */
     void punsubscribed(K pattern, long count);
+
 }

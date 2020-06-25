@@ -57,4 +57,5 @@ public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, Strea
         value = null;
         output.setCount(output.getCount() + 1);
     }
+
 }

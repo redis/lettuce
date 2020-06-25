@@ -27,7 +27,9 @@ import io.lettuce.core.ClientOptions;
  * @since 3.4
  */
 public class ConnectionActivatedEvent extends ConnectionEventSupport {
+
     public ConnectionActivatedEvent(SocketAddress local, SocketAddress remote) {
         super(local, remote);
     }
+
 }

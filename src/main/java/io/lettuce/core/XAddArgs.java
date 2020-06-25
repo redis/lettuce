@@ -31,7 +31,9 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class XAddArgs {
 
     private String id;
+
     private Long maxlen;
+
     private boolean approximateTrimming;
 
     /**
@@ -54,12 +56,13 @@ public class XAddArgs {
         public static XAddArgs maxlen(long count) {
             return new XAddArgs().maxlen(count);
         }
+
     }
 
     /**
      * Limit results to {@code maxlen} entries.
      *
-     * @param id must not be {@literal null}.
+     * @param id must not be {@code null}.
      * @return {@code this}
      */
     public XAddArgs id(String id) {
@@ -96,7 +99,7 @@ public class XAddArgs {
     /**
      * Apply efficient trimming for capped streams using the {@code ~} flag.
      *
-     * @param approximateTrimming {@literal true} to apply efficient radix node trimming.
+     * @param approximateTrimming {@code true} to apply efficient radix node trimming.
      * @return {@code this}
      */
     public XAddArgs approximateTrimming(boolean approximateTrimming) {
@@ -124,4 +127,5 @@ public class XAddArgs {
             args.add("*");
         }
     }
+
 }

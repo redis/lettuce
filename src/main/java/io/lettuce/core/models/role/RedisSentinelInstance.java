@@ -29,6 +29,7 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 @SuppressWarnings("serial")
 public class RedisSentinelInstance implements RedisInstance, Serializable {
+
     private List<String> monitoredMasters = Collections.emptyList();
 
     public RedisSentinelInstance() {
@@ -37,7 +38,7 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
     /**
      * Constructs a {@link RedisSentinelInstance}
      *
-     * @param monitoredMasters list of monitored masters, must not be {@literal null} but may be empty
+     * @param monitoredMasters list of monitored masters, must not be {@code null} but may be empty
      */
     public RedisSentinelInstance(List<String> monitoredMasters) {
         LettuceAssert.notNull(monitoredMasters, "List of monitoredMasters must not be null");
@@ -74,4 +75,5 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
         sb.append(']');
         return sb.toString();
     }
+
 }

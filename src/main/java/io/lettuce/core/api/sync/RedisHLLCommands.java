@@ -58,4 +58,5 @@ public interface RedisHLLCommands<K, V> {
      *         The approximated number of unique elements observed via {@code PFADD}.
      */
     Long pfcount(K... keys);
+
 }

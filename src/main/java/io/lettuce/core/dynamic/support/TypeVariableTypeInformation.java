@@ -32,16 +32,17 @@ import io.lettuce.core.internal.LettuceAssert;
 public class TypeVariableTypeInformation<T> extends ParentTypeAwareTypeInformation<T> {
 
     private final TypeVariable<?> variable;
+
     private final Type owningType;
 
     /**
      * Creates a bew {@link TypeVariableTypeInformation} for the given {@link TypeVariable} owning {@link Type} and parent
      * {@link TypeDiscoverer}.
      *
-     * @param variable must not be {@literal null}
-     * @param owningType must not be {@literal null}
-     * @param parent can be be {@literal null}
-     * @param typeVariableMap must not be {@literal null}
+     * @param variable must not be {@code null}
+     * @param owningType must not be {@code null}
+     * @param parent can be be {@code null}
+     * @param typeVariableMap must not be {@code null}
      */
     public TypeVariableTypeInformation(TypeVariable<?> variable, Type owningType, TypeDiscoverer<?> parent,
             Map<TypeVariable<?>, Type> typeVariableMap) {
@@ -132,4 +133,5 @@ public class TypeVariableTypeInformation<T> extends ParentTypeAwareTypeInformati
     public String getVariableName() {
         return variable.getName();
     }
+
 }

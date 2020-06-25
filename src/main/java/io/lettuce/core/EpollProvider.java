@@ -27,9 +27,10 @@ package io.lettuce.core;
 public class EpollProvider {
 
     /**
-     * @return {@literal true} if epoll is available.
+     * @return {@code true} if epoll is available.
      */
     public static boolean isAvailable() {
         return io.lettuce.core.resource.EpollProvider.isAvailable();
     }
+
 }

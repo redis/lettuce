@@ -90,4 +90,5 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
     public StatefulRedisPubSubConnection<K, V> getStatefulConnection() {
         return (StatefulRedisPubSubConnection<K, V>) super.getStatefulConnection();
     }
+
 }

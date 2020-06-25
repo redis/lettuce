@@ -115,7 +115,7 @@ public abstract class ExceptionFactory {
      * Redis error messages may create subtypes of {@link RedisCommandExecutionException}.
      *
      * @param message the detail message.
-     * @param cause the nested exception, may be {@literal null}.
+     * @param cause the nested exception, may be {@code null}.
      * @return the {@link RedisCommandExecutionException}.
      */
     public static RedisCommandExecutionException createExecutionException(String message, Throwable cause) {
@@ -140,4 +140,5 @@ public abstract class ExceptionFactory {
 
         return new RedisCommandExecutionException(cause);
     }
+
 }

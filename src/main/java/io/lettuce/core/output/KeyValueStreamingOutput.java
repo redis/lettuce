@@ -30,8 +30,11 @@ import io.lettuce.core.codec.RedisCodec;
 public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
 
     private Iterable<K> keys;
+
     private Iterator<K> keyIterator;
+
     private K key;
+
     private KeyValueStreamingChannel<K, V> channel;
 
     public KeyValueStreamingOutput(RedisCodec<K, V> codec, KeyValueStreamingChannel<K, V> channel) {
@@ -65,4 +68,5 @@ public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
         output = output.longValue() + 1;
         key = null;
     }
+
 }

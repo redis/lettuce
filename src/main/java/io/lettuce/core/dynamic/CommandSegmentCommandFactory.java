@@ -37,11 +37,17 @@ import io.lettuce.core.protocol.RedisCommand;
 class CommandSegmentCommandFactory implements CommandFactory {
 
     private final CommandMethod commandMethod;
+
     private final CommandSegments segments;
+
     private final CommandOutputFactoryResolver outputResolver;
+
     private final RedisCodec<Object, Object> redisCodec;
+
     private final ParameterBinder parameterBinder = new ParameterBinder();
+
     private final CommandOutputFactory outputFactory;
+
     private final TypeContext typeContext;
 
     public CommandSegmentCommandFactory(CommandSegments commandSegments, CommandMethod commandMethod,
@@ -91,11 +97,11 @@ class CommandSegmentCommandFactory implements CommandFactory {
         CommandArgs<Object, Object> args = new CommandArgs<>(redisCodec);
 
         CommandOutput<Object, Object, ?> output = outputFactory.create(redisCodec);
-        Command<Object, Object, ?> command = new Command<>(this.segments.getCommandType(),
-                output, args);
+        Command<Object, Object, ?> command = new Command<>(this.segments.getCommandType(), output, args);
 
         parameterBinder.bind(args, redisCodec, segments, parametersAccessor);
 
         return (Command) command;
     }
+
 }

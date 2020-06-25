@@ -37,7 +37,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      *
      * @param timeout the timeout in seconds.
      * @param keys the keys.
-     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped member.
+     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped
+     *         member.
      * @since 5.1
      */
     AsyncExecutions<KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys);
@@ -47,7 +48,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      *
      * @param timeout the timeout in seconds.
      * @param keys the keys.
-     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped member.
+     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped
+     *         member.
      * @since 5.1
      */
     AsyncExecutions<KeyValue<K, ScoredValue<V>>> bzpopmax(long timeout, K... keys);
@@ -159,7 +161,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * Get the number of members in a sorted set.
      *
      * @param key the key
-     * @return Long integer-reply the cardinality (number of elements) of the sorted set, or {@literal false} if {@code key}
+     * @return Long integer-reply the cardinality (number of elements) of the sorted set, or {@code false} if {@code key}
      *         does not exist.
      */
     AsyncExecutions<Long> zcard(K key);
@@ -500,7 +502,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    AsyncExecutions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
+    AsyncExecutions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
+            long count);
 
     /**
      * Stream over a range of members in a sorted set, by score.
@@ -515,7 +518,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    AsyncExecutions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
+    AsyncExecutions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
+            long count);
 
     /**
      * Stream over a range of members in a sorted set, by score.
@@ -652,7 +656,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
+    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -667,7 +672,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
+    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -679,7 +685,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @return Long count of elements in the specified score range.
      * @since 4.3
      */
-    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
+    AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit);
 
     /**
      * Determine the index of a member in a sorted set.
@@ -954,7 +961,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}
      */
     @Deprecated
-    AsyncExecutions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
+    AsyncExecutions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
+            long count);
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
@@ -969,7 +977,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}
      */
     @Deprecated
-    AsyncExecutions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
+    AsyncExecutions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
+            long count);
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
@@ -1090,7 +1099,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param range the range
      * @return Long count of elements in the specified range.
      */
-    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
+    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
+            Range<? extends Number> range);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -1105,7 +1115,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}
      */
     @Deprecated
-    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
+    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -1120,7 +1131,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}
      */
     @Deprecated
-    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
+    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -1132,7 +1144,8 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @return Long count of elements in the specified range.
      * @since 4.3
      */
-    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
+    AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
+            Range<? extends Number> range, Limit limit);
 
     /**
      * Determine the index of a member in a sorted set, with scores ordered from high to low.
@@ -1165,7 +1178,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * Incrementally iterate sorted sets elements and associated scores.
      *
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @param scanArgs scan arguments
      * @return ScoredValueScanCursor&lt;V&gt; scan cursor.
      */
@@ -1175,7 +1188,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * Incrementally iterate sorted sets elements and associated scores.
      *
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @return ScoredValueScanCursor&lt;V&gt; scan cursor.
      */
     AsyncExecutions<ScoredValueScanCursor<V>> zscan(K key, ScanCursor scanCursor);
@@ -1204,18 +1217,19 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    AsyncExecutions<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    AsyncExecutions<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate sorted sets elements and associated scores.
      *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @return StreamScanCursor scan cursor.
      */
     AsyncExecutions<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
@@ -1248,4 +1262,5 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
     AsyncExecutions<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
+
 }

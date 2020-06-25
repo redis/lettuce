@@ -52,4 +52,5 @@ class StatefulRedisUpstreamReplicaConnectionImpl<K, V> extends StatefulRedisConn
     public UpstreamReplicaChannelWriter getChannelWriter() {
         return (UpstreamReplicaChannelWriter) super.getChannelWriter();
     }
+
 }

@@ -67,9 +67,10 @@ class ReactiveCommandSegmentCommandFactory extends CommandSegmentCommandFactory 
     }
 
     /**
-     * @return {@literal true} if the resolved {@link io.lettuce.core.output.CommandOutput} should use streaming.
+     * @return {@code true} if the resolved {@link io.lettuce.core.output.CommandOutput} should use streaming.
      */
     boolean isStreamingExecution() {
         return streamingExecution;
     }
+
 }

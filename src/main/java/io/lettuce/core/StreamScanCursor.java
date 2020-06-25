@@ -22,6 +22,7 @@ package io.lettuce.core;
  * @since 3.0
  */
 public class StreamScanCursor extends ScanCursor {
+
     private long count;
 
     public long getCount() {
@@ -31,4 +32,5 @@ public class StreamScanCursor extends ScanCursor {
     public void setCount(long count) {
         this.count = count;
     }
+
 }

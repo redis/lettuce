@@ -42,11 +42,15 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class RedisStateMachine {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisStateMachine.class);
+
     private static final ByteBuffer QUEUED = StandardCharsets.US_ASCII.encode("QUEUED");
+
     private static final int TERMINATOR_LENGTH = 2;
+
     private static final int NOT_FOUND = -1;
 
     static class State {
+
         enum Type {
 
             /**
@@ -163,9 +167,11 @@ public class RedisStateMachine {
             Type(char marker) {
                 this.marker = (byte) marker;
             }
+
         }
 
         Type type = null;
+
         int count = NOT_FOUND;
 
         @Override
@@ -177,15 +183,21 @@ public class RedisStateMachine {
             sb.append(']');
             return sb.toString();
         }
+
     }
 
     private final State[] stack = new State[32];
+
     private final boolean debugEnabled = logger.isDebugEnabled();
+
     private final ByteBuf responseElementBuffer;
+
     private final AtomicBoolean closed = new AtomicBoolean();
+
     private final Resp2LongProcessor longProcessor = new Resp2LongProcessor();
 
     private ProtocolVersion protocolVersion = null;
+
     private int stackElements;
 
     /**
@@ -803,7 +815,9 @@ public class RedisStateMachine {
     static class Resp2LongProcessor implements ByteProcessor {
 
         long result;
+
         boolean negative;
+
         boolean first;
 
         public long getValue(ByteBuf buffer, int start, int end) {
@@ -844,5 +858,7 @@ public class RedisStateMachine {
 
             return true;
         }
+
     }
+
 }

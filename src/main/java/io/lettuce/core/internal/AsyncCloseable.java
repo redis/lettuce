@@ -33,4 +33,5 @@ public interface AsyncCloseable {
      * Calls to this method return a {@link CompletableFuture} that is notified with the outcome of the close request.
      */
     CompletableFuture<Void> closeAsync();
+
 }

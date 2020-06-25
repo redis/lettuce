@@ -186,8 +186,8 @@ public interface RedisSentinelAsyncCommands<K, V> {
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
      *
-     * @param type the command, must not be {@literal null}.
-     * @param output the command output, must not be {@literal null}.
+     * @param type the command, must not be {@code null}.
+     * @param output the command output, must not be {@code null}.
      * @param <T> response type
      * @return the command response
      * @since 5.2
@@ -197,9 +197,9 @@ public interface RedisSentinelAsyncCommands<K, V> {
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
      *
-     * @param type the command, must not be {@literal null}.
-     * @param output the command output, must not be {@literal null}.
-     * @param args the command arguments, must not be {@literal null}.
+     * @param type the command, must not be {@code null}.
+     * @param output the command output, must not be {@code null}.
+     * @param args the command arguments, must not be {@code null}.
      * @param <T> response type
      * @return the command response
      * @since 5.2
@@ -215,4 +215,5 @@ public interface RedisSentinelAsyncCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
 }

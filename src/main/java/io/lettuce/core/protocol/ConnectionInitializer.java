@@ -35,4 +35,5 @@ public interface ConnectionInitializer {
      * @return the {@link CompletionStage} that completes once the channel is fully initialized.
      */
     CompletionStage<Void> initialize(Channel channel);
+
 }

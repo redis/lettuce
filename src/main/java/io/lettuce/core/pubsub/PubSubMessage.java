@@ -34,7 +34,7 @@ public interface PubSubMessage<K, V> {
     K channel();
 
     /**
-     * @return pattern that applies if the message was received through a pattern subscription. Can be {@literal null}.
+     * @return pattern that applies if the message was received through a pattern subscription. Can be {@code null}.
      */
     K pattern();
 
@@ -44,7 +44,8 @@ public interface PubSubMessage<K, V> {
     long count();
 
     /**
-     * @return the message body, if applicable. Can be {@literal null}.
+     * @return the message body, if applicable. Can be {@code null}.
      */
     V body();
+
 }

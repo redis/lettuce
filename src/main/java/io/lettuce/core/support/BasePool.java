@@ -26,13 +26,15 @@ import io.lettuce.core.internal.LettuceAssert;
 public abstract class BasePool {
 
     private final boolean testOnCreate;
+
     private final boolean testOnAcquire;
+
     private final boolean testOnRelease;
 
     /**
      * Create a new pool given {@link BasePoolConfig}.
      *
-     * @param poolConfig must not be {@literal null}.
+     * @param poolConfig must not be {@code null}.
      */
     protected BasePool(BasePoolConfig poolConfig) {
 
@@ -48,7 +50,7 @@ public abstract class BasePool {
      * is performed by the {@link AsyncObjectFactory#validate(Object)} method of the factory associated with the pool. If the
      * object fails to validate, then acquire will fail.
      *
-     * @return {@literal true} if newly created objects are validated before being returned from the acquire method.
+     * @return {@code true} if newly created objects are validated before being returned from the acquire method.
      */
     public boolean isTestOnCreate() {
         return testOnCreate;
@@ -60,7 +62,7 @@ public abstract class BasePool {
      * pool. If the object fails to validate, it will be removed from the pool and destroyed, and a new attempt will be made to
      * borrow an object from the pool.
      *
-     * @return {@literal true} if objects are validated before being returned from the acquire method.
+     * @return {@code true} if objects are validated before being returned from the acquire method.
      */
     public boolean isTestOnAcquire() {
         return testOnAcquire;
@@ -71,7 +73,7 @@ public abstract class BasePool {
      * method. Validation is performed by the {@link AsyncObjectFactory#validate(Object)} method of the factory associated with
      * the pool. Returning objects that fail validation are destroyed rather then being returned the pool.
      *
-     * @return {@literal true} if objects are validated on return to the pool via the release method.
+     * @return {@code true} if objects are validated on return to the pool via the release method.
      */
     public boolean isTestOnRelease() {
         return testOnRelease;
@@ -84,4 +86,5 @@ public abstract class BasePool {
         cause.setStackTrace(new StackTraceElement[] { new StackTraceElement(clazz.getName(), method, null, -1) });
         return cause;
     }
+
 }

@@ -72,7 +72,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param seconds the seconds type: long
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
     RedisFuture<Boolean> expire(K key, long seconds);
@@ -84,7 +84,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param timestamp the timestamp type: posix time
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> expireat(K key, Date timestamp);
@@ -96,7 +96,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param timestamp the timestamp type: posix time
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> expireat(K key, long timestamp);
@@ -182,7 +182,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param key the key
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the timeout was removed. {@literal false} if {@code key} does not exist or does not have an
+     *         {@code true} if the timeout was removed. {@code false} if {@code key} does not exist or does not have an
      *         associated timeout.
      */
     RedisFuture<Boolean> persist(K key);
@@ -194,7 +194,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param milliseconds the milliseconds type: long
      * @return integer-reply, specifically:
      *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not
      *         be set.
      */
     RedisFuture<Boolean> pexpire(K key, long milliseconds);
@@ -206,7 +206,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> pexpireat(K key, Date timestamp);
@@ -218,7 +218,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not
      *         be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> pexpireat(K key, long timestamp);
@@ -235,7 +235,7 @@ public interface RedisKeyAsyncCommands<K, V> {
     /**
      * Return a random key from the keyspace.
      *
-     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@code null} when the database is empty.
      */
     RedisFuture<K> randomkey();
 
@@ -255,7 +255,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param newKey the newkey type: key
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if {@code key} was renamed to {@code newkey}. {@literal false} if {@code newkey} already exists.
+     *         {@code true} if {@code key} was renamed to {@code newkey}. {@code false} if {@code newkey} already exists.
      */
     RedisFuture<Boolean> renamenx(K key, K newKey);
 
@@ -274,7 +274,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key
      * @param value the serialized-value type: string
-     * @param args the {@link RestoreArgs}, must not be {@literal null}.
+     * @param args the {@link RestoreArgs}, must not be {@code null}.
      * @return String simple-string-reply The command returns OK on success.
      * @since 5.1
      */
@@ -368,7 +368,7 @@ public interface RedisKeyAsyncCommands<K, V> {
     /**
      * Incrementally iterate the keys space.
      *
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @param scanArgs scan arguments
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
@@ -377,7 +377,7 @@ public interface RedisKeyAsyncCommands<K, V> {
     /**
      * Incrementally iterate the keys space.
      *
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor);
@@ -403,7 +403,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * Incrementally iterate the keys space.
      *
      * @param channel streaming channel that receives a call for every key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
@@ -413,8 +413,9 @@ public interface RedisKeyAsyncCommands<K, V> {
      * Incrementally iterate the keys space.
      *
      * @param channel streaming channel that receives a call for every key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @return StreamScanCursor scan cursor.
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
+
 }

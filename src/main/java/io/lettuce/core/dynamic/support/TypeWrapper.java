@@ -64,10 +64,12 @@ abstract class TypeWrapper {
     @SuppressWarnings("serial")
     public static Type forGenericSuperclass(final Class<?> type) {
         return forTypeProvider(new DefaultTypeProvider() {
+
             @Override
             public Type getType() {
                 return type.getGenericSuperclass();
             }
+
         });
     }
 
@@ -80,10 +82,12 @@ abstract class TypeWrapper {
         for (int i = 0; i < result.length; i++) {
             final int index = i;
             result[i] = forTypeProvider(new DefaultTypeProvider() {
+
                 @Override
                 public Type getType() {
                     return type.getGenericInterfaces()[index];
                 }
+
             });
         }
         return result;
@@ -98,10 +102,12 @@ abstract class TypeWrapper {
         for (int i = 0; i < result.length; i++) {
             final int index = i;
             result[i] = forTypeProvider(new DefaultTypeProvider() {
+
                 @Override
                 public Type getType() {
                     return type.getTypeParameters()[index];
                 }
+
             });
         }
         return result;
@@ -151,6 +157,7 @@ abstract class TypeWrapper {
          * Return the underlying type provider.
          */
         TypeProvider getTypeProvider();
+
     }
 
     /**
@@ -167,6 +174,7 @@ abstract class TypeWrapper {
          * Return the source of the type or {@code null}.
          */
         Object getSource();
+
     }
 
     /**
@@ -179,6 +187,7 @@ abstract class TypeWrapper {
         public Object getSource() {
             return null;
         }
+
     }
 
     /**
@@ -225,6 +234,7 @@ abstract class TypeWrapper {
                 throw ex.getTargetException();
             }
         }
+
     }
 
     /**
@@ -263,6 +273,7 @@ abstract class TypeWrapper {
                 throw new IllegalStateException("Could not find original class structure", ex);
             }
         }
+
     }
 
     /**
@@ -318,6 +329,7 @@ abstract class TypeWrapper {
                 throw new IllegalStateException("Could not find original class structure", ex);
             }
         }
+
     }
 
     /**
@@ -359,6 +371,7 @@ abstract class TypeWrapper {
         public Object getSource() {
             return null;
         }
+
     }
 
 }

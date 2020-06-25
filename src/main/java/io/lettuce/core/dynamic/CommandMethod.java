@@ -56,13 +56,13 @@ public interface CommandMethod {
      * Lookup a method annotation.
      *
      * @param annotationClass the annotation class.
-     * @return the annotation object or {@literal null} if not found.
+     * @return the annotation object or {@code null} if not found.
      */
     <A extends Annotation> A getAnnotation(Class<A> annotationClass);
 
     /**
      * @param annotationClass the annotation class.
-     * @return {@literal true} if the method is annotated with {@code annotationClass}.
+     * @return {@code true} if the method is annotated with {@code annotationClass}.
      */
     boolean hasAnnotation(Class<? extends Annotation> annotationClass);
 
@@ -72,18 +72,19 @@ public interface CommandMethod {
     String getName();
 
     /**
-     * @return {@literal true} if the method uses asynchronous execution declaring {@link Future} as result type.
+     * @return {@code true} if the method uses asynchronous execution declaring {@link Future} as result type.
      */
     boolean isFutureExecution();
 
     /**
-     * @return {@literal true} if the method uses reactive execution declaring {@link org.reactivestreams.Publisher} as result
+     * @return {@code true} if the method uses reactive execution declaring {@link org.reactivestreams.Publisher} as result
      *         type.
      */
     boolean isReactiveExecution();
 
     /**
-     * @return {@literal true} if the method defines a {@link io.lettuce.core.dynamic.batch.CommandBatching} argument.
+     * @return {@code true} if the method defines a {@link io.lettuce.core.dynamic.batch.CommandBatching} argument.
      */
     boolean isBatchExecution();
+
 }

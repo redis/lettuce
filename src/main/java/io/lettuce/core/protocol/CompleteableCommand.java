@@ -30,7 +30,7 @@ public interface CompleteableCommand<T> {
     /**
      * Register a command callback for successive command completion that notifies the callback with the command result.
      *
-     * @param action must not be {@literal null}.
+     * @param action must not be {@code null}.
      */
     void onComplete(Consumer<? super T> action);
 
@@ -38,7 +38,8 @@ public interface CompleteableCommand<T> {
      * Register a command callback for command completion that notifies the callback with the command result or the failure
      * resulting from command completion.
      *
-     * @param action must not be {@literal null}.
+     * @param action must not be {@code null}.
      */
     void onComplete(BiConsumer<? super T, Throwable> action);
+
 }

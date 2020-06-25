@@ -28,7 +28,9 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 @SuppressWarnings("serial")
 public class RoleParser {
+
     protected static final Map<String, RedisInstance.Role> ROLE_MAPPING;
+
     protected static final Map<String, RedisSlaveInstance.State> REPLICA_STATE_MAPPING;
 
     static {
@@ -42,8 +44,7 @@ public class RoleParser {
         Map<String, RedisReplicaInstance.State> replicas = new HashMap<>();
         replicas.put("connect", RedisReplicaInstance.State.CONNECT);
         replicas.put("connected", RedisReplicaInstance.State.CONNECTED);
-        replicas.put("connecting",
-                RedisReplicaInstance.State.CONNECTING);
+        replicas.put("connecting", RedisReplicaInstance.State.CONNECTING);
         replicas.put("sync", RedisReplicaInstance.State.SYNC);
 
         REPLICA_STATE_MAPPING = Collections.unmodifiableMap(replicas);
@@ -209,4 +210,5 @@ public class RoleParser {
         }
         return replicationOffset;
     }
+
 }

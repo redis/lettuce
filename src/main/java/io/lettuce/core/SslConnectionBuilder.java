@@ -85,10 +85,15 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
 
         private final Supplier<List<ChannelHandler>> handlers;
+
         private final HostAndPort hostAndPort;
+
         private final boolean verifyPeer;
+
         private final boolean startTls;
+
         private final ClientResources clientResources;
+
         private final SslOptions sslOptions;
 
         public SslChannelInitializer(Supplier<List<ChannelHandler>> handlers, HostAndPort hostAndPort, boolean verifyPeer,
@@ -136,5 +141,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             return sslEngine;
         }
+
     }
+
 }

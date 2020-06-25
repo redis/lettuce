@@ -36,6 +36,7 @@ import io.lettuce.core.internal.LettuceAssert;
 class DefaultMethodParametersAccessor implements MethodParametersAccessor {
 
     private final Parameters<? extends Parameter> parameters;
+
     private final List<Object> values;
 
     DefaultMethodParametersAccessor(Parameters<? extends Parameter> parameters, Object... values) {
@@ -110,6 +111,7 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
     static class BindableParameterIterator implements Iterator<Object> {
 
         private final int bindableParameterCount;
+
         private final DefaultMethodParametersAccessor accessor;
 
         private int currentIndex = 0;
@@ -117,7 +119,7 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
         /**
          * Creates a new {@link BindableParameterIterator}.
          *
-         * @param accessor must not be {@literal null}.
+         * @param accessor must not be {@code null}.
          */
         BindableParameterIterator(DefaultMethodParametersAccessor accessor) {
 
@@ -143,5 +145,7 @@ class DefaultMethodParametersAccessor implements MethodParametersAccessor {
         public void remove() {
             throw new UnsupportedOperationException();
         }
+
     }
+
 }

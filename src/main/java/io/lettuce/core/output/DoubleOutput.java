@@ -43,4 +43,5 @@ public class DoubleOutput<K, V> extends CommandOutput<K, V, Double> {
     public void set(double number) {
         output = number;
     }
+
 }

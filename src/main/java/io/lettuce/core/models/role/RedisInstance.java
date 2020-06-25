@@ -36,38 +36,46 @@ public interface RedisInstance {
 
         @Deprecated
         MASTER {
+
             @Override
             public boolean isUpstream() {
                 return true;
             }
+
         },
 
         @Deprecated
         SLAVE {
+
             @Override
             public boolean isReplica() {
                 return true;
             }
+
         },
 
         UPSTREAM {
+
             @Override
             public boolean isUpstream() {
                 return true;
             }
+
         },
 
         REPLICA {
+
             @Override
             public boolean isReplica() {
                 return true;
             }
+
         },
 
         SENTINEL;
 
         /**
-         * @return {@literal true} if the role indicates that the role is a replication source.
+         * @return {@code true} if the role indicates that the role is a replication source.
          * @since 6.0
          */
         public boolean isUpstream() {
@@ -75,11 +83,13 @@ public interface RedisInstance {
         }
 
         /**
-         * @return {@literal true} if the role indicates that the role is a replicated node (replica).
+         * @return {@code true} if the role indicates that the role is a replicated node (replica).
          * @since 6.0
          */
         public boolean isReplica() {
             return false;
         }
+
     }
+
 }

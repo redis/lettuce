@@ -33,11 +33,17 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
         implements StreamingOutput<StreamMessage<K, V>> {
 
     private boolean initialized;
+
     private Subscriber<StreamMessage<K, V>> subscriber;
+
     private boolean skipStreamKeyReset = false;
+
     private K stream;
+
     private K key;
+
     private String id;
+
     private Map<K, V> body;
 
     public StreamReadOutput(RedisCodec<K, V> codec) {
@@ -119,4 +125,5 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
     public Subscriber<StreamMessage<K, V>> getSubscriber() {
         return subscriber;
     }
+
 }

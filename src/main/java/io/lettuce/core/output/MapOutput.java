@@ -34,6 +34,7 @@ import io.lettuce.core.codec.RedisCodec;
 public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
 
     private boolean initialized;
+
     private K key;
 
     public MapOutput(RedisCodec<K, V> codec) {
@@ -75,4 +76,5 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
             initialized = true;
         }
     }
+
 }

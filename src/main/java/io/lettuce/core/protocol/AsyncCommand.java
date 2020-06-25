@@ -40,12 +40,12 @@ import io.netty.buffer.ByteBuf;
  *
  * @author Mark Paluch
  */
-public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T>, RedisFuture<T>,
-        CompleteableCommand<T>, DecoratedCommand<K, V, T> {
+public class AsyncCommand<K, V, T> extends CompletableFuture<T>
+        implements RedisCommand<K, V, T>, RedisFuture<T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
     @SuppressWarnings("rawtypes")
-    private static final AtomicIntegerFieldUpdater<AsyncCommand> COUNT_UPDATER = AtomicIntegerFieldUpdater.newUpdater(
-            AsyncCommand.class, "count");
+    private static final AtomicIntegerFieldUpdater<AsyncCommand> COUNT_UPDATER = AtomicIntegerFieldUpdater
+            .newUpdater(AsyncCommand.class, "count");
 
     private final RedisCommand<K, V, T> command;
 
@@ -54,14 +54,14 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     private volatile int count = 1;
 
     /**
-     * @param command the command, must not be {@literal null}.
+     * @param command the command, must not be {@code null}.
      */
     public AsyncCommand(RedisCommand<K, V, T> command) {
         this(command, 1);
     }
 
     /**
-     * @param command the command, must not be {@literal null}.
+     * @param command the command, must not be {@code null}.
      */
     protected AsyncCommand(RedisCommand<K, V, T> command, int count) {
         LettuceAssert.notNull(command, "RedisCommand must not be null");

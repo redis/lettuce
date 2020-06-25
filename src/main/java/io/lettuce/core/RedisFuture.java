@@ -44,4 +44,5 @@ public interface RedisFuture<V> extends CompletionStage<V>, Future<V> {
      * @throws InterruptedException if the current thread is interrupted while waiting
      */
     boolean await(long timeout, TimeUnit unit) throws InterruptedException;
+
 }

@@ -26,6 +26,7 @@ import io.lettuce.core.internal.LettuceAssert;
 abstract class ConnectionEventSupport implements ConnectionEvent {
 
     private final SocketAddress local;
+
     private final SocketAddress remote;
 
     ConnectionEventSupport(SocketAddress local, SocketAddress remote) {
@@ -64,4 +65,5 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
         sb.append(']');
         return sb.toString();
     }
+
 }

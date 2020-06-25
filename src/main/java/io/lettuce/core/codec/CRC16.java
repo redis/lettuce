@@ -108,4 +108,5 @@ public class CRC16 {
     private static int doCrc(byte b, int crc) {
         return ((crc << 8) ^ LOOKUP_TABLE[((crc >>> 8) ^ (b & 0xFF)) & 0xFF]);
     }
+
 }

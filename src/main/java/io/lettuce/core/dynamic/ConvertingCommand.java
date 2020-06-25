@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 class ConvertingCommand implements ExecutableCommand {
 
     private final ConversionService conversionService;
+
     private final ExecutableCommand delegate;
 
     public ConvertingCommand(ConversionService conversionService, ExecutableCommand delegate) {
@@ -50,4 +51,5 @@ class ConvertingCommand implements ExecutableCommand {
     public CommandMethod getCommandMethod() {
         return delegate.getCommandMethod();
     }
+
 }

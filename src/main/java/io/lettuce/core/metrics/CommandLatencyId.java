@@ -31,8 +31,11 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 public class CommandLatencyId implements Serializable, Comparable<CommandLatencyId> {
 
     private final SocketAddress localAddress;
+
     private final SocketAddress remoteAddress;
+
     private final ProtocolKeyword commandType;
+
     private final String commandName;
 
     protected CommandLatencyId(SocketAddress localAddress, SocketAddress remoteAddress, ProtocolKeyword commandType) {
@@ -54,7 +57,8 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
      * @param commandType the command type
      * @return a new instance of {@link CommandLatencyId}
      */
-    public static CommandLatencyId create(SocketAddress localAddress, SocketAddress remoteAddress, ProtocolKeyword commandType) {
+    public static CommandLatencyId create(SocketAddress localAddress, SocketAddress remoteAddress,
+            ProtocolKeyword commandType) {
         return new CommandLatencyId(localAddress, remoteAddress, commandType);
     }
 
@@ -138,4 +142,5 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
         sb.append(']');
         return sb.toString();
     }
+
 }

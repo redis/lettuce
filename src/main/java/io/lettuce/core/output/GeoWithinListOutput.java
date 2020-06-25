@@ -30,18 +30,25 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>> implements StreamingOutput<GeoWithin<V>> {
+public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>>
+        implements StreamingOutput<GeoWithin<V>> {
 
     private V member;
+
     private Double distance;
+
     private Long geohash;
+
     private GeoCoordinates coordinates;
 
     private Double x;
 
     private boolean withDistance;
+
     private boolean withHash;
+
     private boolean withCoordinates;
+
     private Subscriber<GeoWithin<V>> subscriber;
 
     public GeoWithinListOutput(RedisCodec<K, V> codec, boolean withDistance, boolean withHash, boolean withCoordinates) {
@@ -121,4 +128,5 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     public Subscriber<GeoWithin<V>> getSubscriber() {
         return subscriber;
     }
+
 }

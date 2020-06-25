@@ -36,6 +36,7 @@ import io.netty.channel.group.ChannelGroup;
 class ChannelGroupListener extends ChannelInboundHandlerAdapter {
 
     private final ChannelGroup channels;
+
     private final EventBus eventBus;
 
     public ChannelGroupListener(ChannelGroup channels, EventBus eventBus) {
@@ -56,4 +57,5 @@ class ChannelGroupListener extends ChannelInboundHandlerAdapter {
         channels.remove(ctx.channel());
         super.channelInactive(ctx);
     }
+
 }

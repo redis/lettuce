@@ -52,4 +52,5 @@ public interface PushMessage {
      * @return the notification message containing all response values including {@link #getType()}.
      */
     List<Object> getContent(Function<ByteBuffer, Object> decodeFunction);
+
 }

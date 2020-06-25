@@ -31,8 +31,9 @@ interface CommandFactory {
     /**
      * Create a new {@link RedisCommand} given {@code parameters}.
      *
-     * @param parameters must not be {@literal null}.
+     * @param parameters must not be {@code null}.
      * @return the {@link RedisCommand}.
      */
     RedisCommand<Object, Object, Object> createCommand(Object[] parameters);
+
 }

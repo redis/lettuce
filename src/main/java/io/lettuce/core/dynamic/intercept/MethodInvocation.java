@@ -48,4 +48,5 @@ public interface MethodInvocation {
      * @return method call arguments.
      */
     Object[] getArguments();
+
 }

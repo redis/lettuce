@@ -106,8 +106,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      */
     @Deprecated
     default AsyncNodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
-        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
+        return readonly(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -128,8 +128,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @since 5.2
      */
     default AsyncNodeSelection<K, V> replicas(Predicate<RedisClusterNode> predicate) {
-        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
+        return readonly(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -283,7 +283,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Return a random key from the keyspace on a random master.
      *
-     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@code null} when the database is empty.
      * @see RedisKeyAsyncCommands#randomkey()
      */
     RedisFuture<K> randomkey();
@@ -325,7 +325,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
      *
-     * @param save {@literal true} force save operation
+     * @param save {@code true} force save operation
      * @see RedisServerAsyncCommands#shutdown(boolean)
      */
     void shutdown(boolean save);
@@ -418,4 +418,5 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return Long integer-reply the number of found keys.
      */
     RedisFuture<Long> touch(K... keys);
+
 }

@@ -30,9 +30,13 @@ import io.lettuce.core.protocol.CommandArgs;
 public class SetArgs implements CompositeArgument {
 
     private Long ex;
+
     private Long px;
+
     private boolean nx = false;
+
     private boolean xx = false;
+
     private boolean keepttl = false;
 
     /**
@@ -98,6 +102,7 @@ public class SetArgs implements CompositeArgument {
         public static SetArgs keepttl() {
             return new SetArgs().keepttl();
         }
+
     }
 
     /**
@@ -180,4 +185,5 @@ public class SetArgs implements CompositeArgument {
             args.add("KEEPTTL");
         }
     }
+
 }

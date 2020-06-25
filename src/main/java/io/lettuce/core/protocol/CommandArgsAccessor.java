@@ -36,7 +36,7 @@ public class CommandArgsAccessor {
      * Get the first encoded key for cluster command routing.
      *
      * @param commandArgs must not be null.
-     * @return the first encoded key or {@literal null}.
+     * @return the first encoded key or {@code null}.
      */
     @SuppressWarnings("unchecked")
     public static <K, V> ByteBuffer encodeFirstKey(CommandArgs<K, V> commandArgs) {
@@ -55,7 +55,7 @@ public class CommandArgsAccessor {
      * Get the first {@link String} argument.
      *
      * @param commandArgs must not be null.
-     * @return the first {@link String} argument or {@literal null}.
+     * @return the first {@link String} argument or {@code null}.
      */
     @SuppressWarnings("unchecked")
     public static <K, V> String getFirstString(CommandArgs<K, V> commandArgs) {
@@ -74,7 +74,7 @@ public class CommandArgsAccessor {
      * Get the first {@code char[]}-array argument.
      *
      * @param commandArgs must not be null.
-     * @return the first {@link String} argument or {@literal null}.
+     * @return the first {@link String} argument or {@code null}.
      */
     @SuppressWarnings("unchecked")
     public static <K, V> char[] getFirstCharArray(CommandArgs<K, V> commandArgs) {
@@ -93,7 +93,7 @@ public class CommandArgsAccessor {
      * Get the all {@link String} arguments.
      *
      * @param commandArgs must not be null.
-     * @return the first {@link String} argument or {@literal null}.
+     * @return the first {@link String} argument or {@code null}.
      * @since 6.0
      */
     public static <K, V> List<String> getStringArguments(CommandArgs<K, V> commandArgs) {
@@ -114,7 +114,7 @@ public class CommandArgsAccessor {
      * Get the all {@code char[]} arguments.
      *
      * @param commandArgs must not be null.
-     * @return the first {@link String} argument or {@literal null}.
+     * @return the first {@link String} argument or {@code null}.
      * @since 6.0
      */
     public static <K, V> List<char[]> getCharArrayArguments(CommandArgs<K, V> commandArgs) {
@@ -139,7 +139,7 @@ public class CommandArgsAccessor {
      * Get the first {@link Long integer} argument.
      *
      * @param commandArgs must not be null.
-     * @return the first {@link Long integer} argument or {@literal null}.
+     * @return the first {@link Long integer} argument or {@code null}.
      */
     @SuppressWarnings("unchecked")
     public static <K, V> Long getFirstInteger(CommandArgs<K, V> commandArgs) {
@@ -153,4 +153,5 @@ public class CommandArgsAccessor {
 
         return null;
     }
+
 }

@@ -54,6 +54,7 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
             ReplicaUtils.RedisURIComparator.INSTANCE);
 
     private final List<Throwable> exceptions = new CopyOnWriteArrayList<>();
+
     private final List<RedisNodeDescription> nodes;
 
     private volatile boolean closed = false;
@@ -107,7 +108,7 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
     }
 
     /**
-     * @return {@literal true} if no connections present.
+     * @return {@code true} if no connections present.
      */
     public boolean isEmpty() {
         synchronized (this.connections) {
@@ -117,7 +118,6 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
 
     /*
      * Initiate {@code PING} on all connections and return the {@link Requests}.
-     *
      * @return the {@link Requests}.
      */
     public Requests requestPing() {
@@ -162,4 +162,5 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
 
         return Futures.allOf(close);
     }
+
 }

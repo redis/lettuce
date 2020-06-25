@@ -31,13 +31,14 @@ import io.lettuce.core.internal.LettuceAssert;
 class DefaultTransactionResult implements Iterable<Object>, TransactionResult {
 
     private final boolean discarded;
+
     private final List<Object> result;
 
     /**
      * Creates a new {@link DefaultTransactionResult}.
      *
-     * @param discarded {@literal true} if the transaction is discarded.
-     * @param result the transaction result, must not be {@literal null}.
+     * @param discarded {@code true} if the transaction is discarded.
+     * @param result the transaction result, must not be {@code null}.
      */
     public DefaultTransactionResult(boolean discarded, List<Object> result) {
 
@@ -87,4 +88,5 @@ class DefaultTransactionResult implements Iterable<Object>, TransactionResult {
         sb.append(']');
         return sb.toString();
     }
+
 }

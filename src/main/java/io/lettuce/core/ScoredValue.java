@@ -52,7 +52,7 @@ public class ScoredValue<V> extends Value<V> {
      * {@link Optional} if a value is present. Value is empty if the {@link Optional} is empty.
      *
      * @param score the score
-     * @param optional the optional. May be empty but never {@literal null}.
+     * @param optional the optional. May be empty but never {@code null}.
      * @param <T>
      * @param <V>
      * @return the {@link ScoredValue}
@@ -73,7 +73,7 @@ public class ScoredValue<V> extends Value<V> {
      * {@code value} is not null.
      *
      * @param score the score
-     * @param value the value. May be {@literal null}.
+     * @param value the value. May be {@code null}.
      * @param <T>
      * @param <V>
      * @return the {@link ScoredValue}
@@ -101,7 +101,7 @@ public class ScoredValue<V> extends Value<V> {
      * Creates a {@link ScoredValue} from a {@code key} and {@code value}. The resulting value contains the value.
      *
      * @param score the score
-     * @param value the value. Must not be {@literal null}.
+     * @param value the value. Must not be {@code null}.
      * @param <T>
      * @param <V>
      * @return the {@link ScoredValue}
@@ -184,4 +184,5 @@ public class ScoredValue<V> extends Value<V> {
 
         return this;
     }
+
 }

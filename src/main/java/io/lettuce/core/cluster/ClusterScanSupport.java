@@ -38,32 +38,40 @@ class ClusterScanSupport {
      * Map a {@link RedisFuture} of {@link KeyScanCursor} to a {@link RedisFuture} of {@link ClusterKeyScanCursor}.
      */
     static final ScanCursorMapper<RedisFuture<KeyScanCursor<?>>> futureKeyScanCursorMapper = new ScanCursorMapper<RedisFuture<KeyScanCursor<?>>>() {
+
         @Override
         public RedisFuture<KeyScanCursor<?>> map(List<String> nodeIds, String currentNodeId,
                 RedisFuture<KeyScanCursor<?>> cursor) {
             return new PipelinedRedisFuture<>(cursor, new Function<KeyScanCursor<?>, KeyScanCursor<?>>() {
+
                 @Override
                 public KeyScanCursor<?> apply(KeyScanCursor<?> result) {
                     return new ClusterKeyScanCursor<>(nodeIds, currentNodeId, result);
                 }
+
             });
         }
+
     };
 
     /**
      * Map a {@link RedisFuture} of {@link StreamScanCursor} to a {@link RedisFuture} of {@link ClusterStreamScanCursor}.
      */
     static final ScanCursorMapper<RedisFuture<StreamScanCursor>> futureStreamScanCursorMapper = new ScanCursorMapper<RedisFuture<StreamScanCursor>>() {
+
         @Override
         public RedisFuture<StreamScanCursor> map(List<String> nodeIds, String currentNodeId,
                 RedisFuture<StreamScanCursor> cursor) {
             return new PipelinedRedisFuture<>(cursor, new Function<StreamScanCursor, StreamScanCursor>() {
+
                 @Override
                 public StreamScanCursor apply(StreamScanCursor result) {
                     return new ClusterStreamScanCursor(nodeIds, currentNodeId, result);
                 }
+
             });
         }
+
     };
 
     /**
@@ -77,16 +85,18 @@ class ClusterScanSupport {
      */
     static final ScanCursorMapper<Mono<StreamScanCursor>> reactiveStreamScanCursorMapper = (nodeIds, currentNodeId,
             cursor) -> cursor.map(new Function<StreamScanCursor, StreamScanCursor>() {
+
                 @Override
                 public StreamScanCursor apply(StreamScanCursor streamScanCursor) {
                     return new ClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor);
                 }
+
             });
 
     /**
      * Retrieve the cursor to continue the scan.
      *
-     * @param scanCursor can be {@literal null}.
+     * @param scanCursor can be {@code null}.
      * @return
      */
     static ScanCursor getContinuationCursor(ScanCursor scanCursor) {
@@ -147,6 +157,7 @@ class ClusterScanSupport {
                 List<RedisNodeDescription> readCandidates = (List) partitionAccessor.getReadCandidates(redisClusterNode);
 
                 List<RedisNodeDescription> selection = connection.getReadFrom().select(new ReadFrom.Nodes() {
+
                     @Override
                     public List<RedisNodeDescription> getNodes() {
                         return readCandidates;
@@ -156,6 +167,7 @@ class ClusterScanSupport {
                     public Iterator<RedisNodeDescription> iterator() {
                         return readCandidates.iterator();
                     }
+
                 });
 
                 if (!selection.isEmpty()) {
@@ -223,13 +235,16 @@ class ClusterScanSupport {
      * @param <T>
      */
     interface ScanCursorMapper<T> {
+
         T map(List<String> nodeIds, String currentNodeId, T cursor);
+
     }
 
     /**
      * Marker for a cluster scan cursor.
      */
     interface ClusterScanCursor {
+
         List<String> getNodeIds();
 
         String getCurrentNodeId();
@@ -237,6 +252,7 @@ class ClusterScanSupport {
         boolean isScanOnCurrentNodeFinished();
 
         boolean isFinished();
+
     }
 
     /**
@@ -245,8 +261,11 @@ class ClusterScanSupport {
      * @param <K>
      */
     private static class ClusterKeyScanCursor<K> extends KeyScanCursor<K> implements ClusterScanCursor {
+
         final List<String> nodeIds;
+
         final String currentNodeId;
+
         final KeyScanCursor<K> cursor;
 
         public ClusterKeyScanCursor(List<String> nodeIds, String currentNodeId, KeyScanCursor<K> cursor) {
@@ -278,14 +297,18 @@ class ClusterScanSupport {
         public boolean isScanOnCurrentNodeFinished() {
             return cursor.isFinished();
         }
+
     }
 
     /**
      * State object for a cluster-wide SCAN using streaming.
      */
     private static class ClusterStreamScanCursor extends StreamScanCursor implements ClusterScanCursor {
+
         final List<String> nodeIds;
+
         final String currentNodeId;
+
         final StreamScanCursor cursor;
 
         public ClusterStreamScanCursor(List<String> nodeIds, String currentNodeId, StreamScanCursor cursor) {
@@ -317,5 +340,7 @@ class ClusterScanSupport {
         public boolean isScanOnCurrentNodeFinished() {
             return cursor.isFinished();
         }
+
     }
+
 }

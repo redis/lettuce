@@ -36,8 +36,9 @@ interface CommandMethodVerifier {
      * Verify a {@link CommandMethod} with its {@link CommandSegments}. This method verifies that the command exists and that
      * the required number of arguments is declared.
      *
-     * @param commandSegments must not be {@literal null}.
-     * @param commandMethod must not be {@literal null}.
+     * @param commandSegments must not be {@code null}.
+     * @param commandMethod must not be {@code null}.
      */
     void validate(CommandSegments commandSegments, CommandMethod commandMethod) throws CommandMethodSyntaxException;
+
 }

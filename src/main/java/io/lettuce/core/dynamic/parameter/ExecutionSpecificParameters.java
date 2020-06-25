@@ -36,12 +36,13 @@ public class ExecutionSpecificParameters extends Parameters<ExecutionSpecificPar
     private static final List<Class<?>> TYPES = Arrays.asList(Timeout.class, CommandBatching.class);
 
     private final int timeoutIndex;
+
     private final int commandBatchingIndex;
 
     /**
      * Create new {@link ExecutionSpecificParameters} given a {@link Method}.
      *
-     * @param method must not be {@literal null}.
+     * @param method must not be {@code null}.
      */
     public ExecutionSpecificParameters(Method method) {
 
@@ -93,14 +94,14 @@ public class ExecutionSpecificParameters extends Parameters<ExecutionSpecificPar
     }
 
     /**
-     * @return {@literal true} if the method defines a {@link CommandBatching} parameter.
+     * @return {@code true} if the method defines a {@link CommandBatching} parameter.
      */
     public boolean hasCommandBatchingIndex() {
         return commandBatchingIndex != -1;
     }
 
     /**
-     * @return {@literal true} if the method defines a {@link Timeout} parameter.
+     * @return {@code true} if the method defines a {@link Timeout} parameter.
      */
     public boolean hasTimeoutIndex() {
         return getTimeoutIndex() != -1;
@@ -116,5 +117,7 @@ public class ExecutionSpecificParameters extends Parameters<ExecutionSpecificPar
         public boolean isSpecialParameter() {
             return super.isSpecialParameter() || TYPES.contains(getParameterType());
         }
+
     }
+
 }

@@ -27,10 +27,12 @@ import io.lettuce.core.ScoredValue;
  */
 @FunctionalInterface
 public interface ScoredValueStreamingChannel<V> extends StreamingChannel {
+
     /**
      * Called on every incoming ScoredValue.
      *
      * @param value the scored value
      */
     void onValue(ScoredValue<V> value);
+
 }

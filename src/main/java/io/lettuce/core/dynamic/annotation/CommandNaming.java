@@ -81,4 +81,5 @@ public @interface CommandNaming {
          */
         DEFAULT;
     }
+
 }

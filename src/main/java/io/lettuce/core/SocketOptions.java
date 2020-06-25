@@ -29,14 +29,19 @@ import io.lettuce.core.internal.LettuceAssert;
 public class SocketOptions {
 
     public static final long DEFAULT_CONNECT_TIMEOUT = 10;
+
     public static final TimeUnit DEFAULT_CONNECT_TIMEOUT_UNIT = TimeUnit.SECONDS;
+
     public static final Duration DEFAULT_CONNECT_TIMEOUT_DURATION = Duration.ofSeconds(DEFAULT_CONNECT_TIMEOUT);
 
     public static final boolean DEFAULT_SO_KEEPALIVE = false;
+
     public static final boolean DEFAULT_SO_NO_DELAY = false;
 
     private final Duration connectTimeout;
+
     private final boolean keepAlive;
+
     private final boolean tcpNoDelay;
 
     protected SocketOptions(Builder builder) {
@@ -86,7 +91,9 @@ public class SocketOptions {
     public static class Builder {
 
         private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT_DURATION;
+
         private boolean keepAlive = DEFAULT_SO_KEEPALIVE;
+
         private boolean tcpNoDelay = DEFAULT_SO_NO_DELAY;
 
         private Builder() {
@@ -114,7 +121,7 @@ public class SocketOptions {
          * {@link #DEFAULT_CONNECT_TIMEOUT_UNIT}.
          *
          * @param connectTimeout connection timeout, must be greater {@literal 0}.
-         * @param connectTimeoutUnit unit for {@code connectTimeout}, must not be {@literal null}.
+         * @param connectTimeoutUnit unit for {@code connectTimeout}, must not be {@code null}.
          * @return {@code this}
          * @deprecated since 5.0, use {@link #connectTimeout(Duration)}
          */
@@ -128,7 +135,7 @@ public class SocketOptions {
         }
 
         /**
-         * Sets whether to enable TCP keepalive. Defaults to {@literal false}. See {@link #DEFAULT_SO_KEEPALIVE}.
+         * Sets whether to enable TCP keepalive. Defaults to {@code false}. See {@link #DEFAULT_SO_KEEPALIVE}.
          *
          * @param keepAlive whether to enable or disable the TCP keepalive.
          * @return {@code this}
@@ -141,10 +148,10 @@ public class SocketOptions {
         }
 
         /**
-         * Sets whether to disable Nagle's algorithm. Defaults to {@literal false} (Nagle enabled). See
+         * Sets whether to disable Nagle's algorithm. Defaults to {@code false} (Nagle enabled). See
          * {@link #DEFAULT_SO_NO_DELAY}.
          *
-         * @param tcpNoDelay {@literal true} to disable Nagle's algorithm, {@literal false} to enable Nagle's algorithm.
+         * @param tcpNoDelay {@code true} to disable Nagle's algorithm, {@code false} to enable Nagle's algorithm.
          * @return {@code this}
          * @see java.net.SocketOptions#TCP_NODELAY
          */
@@ -162,6 +169,7 @@ public class SocketOptions {
         public SocketOptions build() {
             return new SocketOptions(this);
         }
+
     }
 
     /**
@@ -206,10 +214,11 @@ public class SocketOptions {
     /**
      * Returns whether to use TCP NoDelay.
      *
-     * @return {@literal true} to disable Nagle's algorithm, {@literal false} to enable Nagle's algorithm.
+     * @return {@code true} to disable Nagle's algorithm, {@code false} to enable Nagle's algorithm.
      * @see java.net.SocketOptions#TCP_NODELAY
      */
     public boolean isTcpNoDelay() {
         return tcpNoDelay;
     }
+
 }

@@ -40,7 +40,9 @@ public abstract class BasePoolConfig {
     public static final boolean DEFAULT_TEST_ON_RELEASE = false;
 
     private final boolean testOnCreate;
+
     private final boolean testOnAcquire;
+
     private final boolean testOnRelease;
 
     protected BasePoolConfig(boolean testOnCreate, boolean testOnAcquire, boolean testOnRelease) {
@@ -83,7 +85,9 @@ public abstract class BasePoolConfig {
     public abstract static class Builder {
 
         protected boolean testOnCreate = DEFAULT_TEST_ON_CREATE;
+
         protected boolean testOnAcquire = DEFAULT_TEST_ON_ACQUIRE;
+
         protected boolean testOnRelease = DEFAULT_TEST_ON_RELEASE;
 
         protected Builder() {
@@ -105,8 +109,8 @@ public abstract class BasePoolConfig {
          * Validation is performed by the {@link AsyncObjectFactory#validate(Object)} method of the factory associated with the
          * pool. If the object fails to validate, then acquire will fail.
          *
-         * @param testOnCreate {@literal true} if newly created objects should be validated before being returned from the
-         *        acquire method. {@literal true} to enable test on creation.
+         * @param testOnCreate {@code true} if newly created objects should be validated before being returned from the
+         *        acquire method. {@code true} to enable test on creation.
          *
          * @return {@code this} {@link Builder}.
          */
@@ -134,7 +138,7 @@ public abstract class BasePoolConfig {
          * pool. If the object fails to validate, it will be removed from the pool and destroyed, and a new attempt will be made
          * to borrow an object from the pool.
          *
-         * @param testOnAcquire {@literal true} if objects should be validated before being returned from the acquire method.
+         * @param testOnAcquire {@code true} if objects should be validated before being returned from the acquire method.
          * @return {@code this} {@link Builder}.
          */
         public Builder testOnAcquire(boolean testOnAcquire) {
@@ -159,7 +163,7 @@ public abstract class BasePoolConfig {
          * release method. Validation is performed by the {@link AsyncObjectFactory#validate(Object)} method of the factory
          * associated with the pool. Returning objects that fail validation are destroyed rather then being returned the pool.
          *
-         * @param testOnRelease {@literal true} if objects should be validated on return to the pool via the release method.
+         * @param testOnRelease {@code true} if objects should be validated on return to the pool via the release method.
          * @return {@code this} {@link Builder}.
          */
         public Builder testOnRelease(boolean testOnRelease) {
@@ -167,5 +171,7 @@ public abstract class BasePoolConfig {
             this.testOnRelease = testOnRelease;
             return this;
         }
+
     }
+
 }

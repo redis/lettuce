@@ -39,4 +39,5 @@ class OutputFactory {
 
         return new LinkedHashSet<>(capacity, 1);
     }
+
 }

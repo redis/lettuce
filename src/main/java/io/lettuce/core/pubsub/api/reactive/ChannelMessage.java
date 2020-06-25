@@ -23,6 +23,7 @@ package io.lettuce.core.pubsub.api.reactive;
 public class ChannelMessage<K, V> {
 
     private final K channel;
+
     private final V message;
 
     /**
@@ -50,4 +51,5 @@ public class ChannelMessage<K, V> {
     public V getMessage() {
         return message;
     }
+
 }

@@ -37,4 +37,5 @@ public class KeyScanOutput<K, V> extends ScanOutput<K, V, KeyScanCursor<K>> {
     protected void setOutput(ByteBuffer bytes) {
         output.getKeys().add(bytes == null ? null : codec.decodeKey(bytes));
     }
+
 }

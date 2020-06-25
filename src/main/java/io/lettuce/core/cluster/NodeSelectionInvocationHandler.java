@@ -44,11 +44,15 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     private static final Method NULL_MARKER_METHOD;
 
     private final Map<Method, Method> nodeSelectionMethods = new ConcurrentHashMap<>();
+
     private final Map<Method, Method> connectionMethod = new ConcurrentHashMap<>();
+
     private final Class<?> commandsInterface;
 
     private final AbstractNodeSelection<?, ?, ?, ?> selection;
+
     private final ExecutionModel executionModel;
+
     private final TimeoutProvider timeoutProvider;
 
     static {
@@ -309,4 +313,5 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     enum ExecutionModel {
         SYNC, ASYNC, REACTIVE
     }
+
 }

@@ -27,12 +27,13 @@ import io.lettuce.core.internal.AsyncCloseable;
  */
 class ResumeAfter {
 
-    private static final AtomicIntegerFieldUpdater<ResumeAfter> UPDATER = AtomicIntegerFieldUpdater.newUpdater(
-            ResumeAfter.class, "closed");
+    private static final AtomicIntegerFieldUpdater<ResumeAfter> UPDATER = AtomicIntegerFieldUpdater
+            .newUpdater(ResumeAfter.class, "closed");
 
     private final AsyncCloseable closeable;
 
     private static final int ST_OPEN = 0;
+
     private static final int ST_CLOSED = 1;
 
     @SuppressWarnings("unused")
@@ -85,4 +86,5 @@ class ResumeAfter {
     private boolean firstCloseLatch() {
         return UPDATER.compareAndSet(ResumeAfter.this, ST_OPEN, ST_CLOSED);
     }
+
 }

@@ -112,7 +112,7 @@ public abstract class ReadFrom {
     /**
      * Returns whether this {@link ReadFrom} requires ordering of the resulting {@link RedisNodeDescription nodes}.
      *
-     * @return {@literal true} if code using {@link ReadFrom} should retain ordering or {@literal false} to allow reordering of
+     * @return {@code true} if code using {@link ReadFrom} should retain ordering or {@code false} to allow reordering of
      *         {@link RedisNodeDescription nodes}.
      * @since 5.2
      */
@@ -125,7 +125,7 @@ public abstract class ReadFrom {
      *
      * @param name the name of the read from setting
      * @return the {@link ReadFrom} preset
-     * @throws IllegalArgumentException if {@code name} is empty, {@literal null} or the {@link ReadFrom} preset is unknown.
+     * @throws IllegalArgumentException if {@code name} is empty, {@code null} or the {@link ReadFrom} preset is unknown.
      */
     public static ReadFrom valueOf(String name) {
 
@@ -180,5 +180,7 @@ public abstract class ReadFrom {
          *
          */
         List<RedisNodeDescription> getNodes();
+
     }
+
 }

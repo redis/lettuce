@@ -84,8 +84,8 @@ public interface BaseRedisReactiveCommands<K, V> {
     /**
      * Return the role of the instance in the context of replication.
      *
-     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional
-     *         elements are role-specific.
+     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional elements are
+     *         role-specific.
      */
     Flux<Object> role();
 
@@ -131,8 +131,8 @@ public interface BaseRedisReactiveCommands<K, V> {
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
      *
-     * @param type the command, must not be {@literal null}.
-     * @param output the command output, must not be {@literal null}.
+     * @param type the command, must not be {@code null}.
+     * @param output the command output, must not be {@code null}.
      * @param <T> response type
      * @return the command response
      */
@@ -141,9 +141,9 @@ public interface BaseRedisReactiveCommands<K, V> {
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
      *
-     * @param type the command, must not be {@literal null}.
-     * @param output the command output, must not be {@literal null}.
-     * @param args the command arguments, must not be {@literal null}.
+     * @param type the command, must not be {@code null}.
+     * @param output the command output, must not be {@code null}.
+     * @param args the command arguments, must not be {@code null}.
      * @param <T> response type
      * @return the command response
      */
@@ -161,7 +161,7 @@ public interface BaseRedisReactiveCommands<K, V> {
     void reset();
 
     /**
-     * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
+     * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands
      * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
      *
@@ -174,4 +174,5 @@ public interface BaseRedisReactiveCommands<K, V> {
      * achieve batching. No-op if channel is not connected.
      */
     void flushCommands();
+
 }

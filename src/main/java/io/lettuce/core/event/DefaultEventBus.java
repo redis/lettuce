@@ -29,7 +29,9 @@ import reactor.core.scheduler.Scheduler;
 public class DefaultEventBus implements EventBus {
 
     private final DirectProcessor<Event> bus;
+
     private final FluxSink<Event> sink;
+
     private final Scheduler scheduler;
 
     public DefaultEventBus(Scheduler scheduler) {
@@ -47,4 +49,5 @@ public class DefaultEventBus implements EventBus {
     public void publish(Event event) {
         sink.next(event);
     }
+
 }

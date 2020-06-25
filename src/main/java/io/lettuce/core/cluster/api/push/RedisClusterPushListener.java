@@ -33,4 +33,5 @@ public interface RedisClusterPushListener {
      * @param message message to respond to.
      */
     void onPushMessage(RedisClusterNode node, PushMessage message);
+
 }

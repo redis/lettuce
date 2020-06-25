@@ -27,9 +27,10 @@ package io.lettuce.core;
 public class KqueueProvider {
 
     /**
-     * @return {@literal true} if kqueue is available.
+     * @return {@code true} if kqueue is available.
      */
     public static boolean isAvailable() {
         return io.lettuce.core.resource.KqueueProvider.isAvailable();
     }
+
 }

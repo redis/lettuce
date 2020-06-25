@@ -29,9 +29,10 @@ interface ExecutableCommandLookupStrategy {
     /**
      * Resolve a {@link ExecutableCommand} given the {@link Method} and {@link RedisCommandsMetadata}.
      *
-     * @param method must not be {@literal null}.
-     * @param metadata must not be {@literal null}.
+     * @param method must not be {@code null}.
+     * @param metadata must not be {@code null}.
      * @return the {@link ExecutableCommand}.
      */
     ExecutableCommand resolveCommandMethod(CommandMethod method, RedisCommandsMetadata metadata);
+
 }

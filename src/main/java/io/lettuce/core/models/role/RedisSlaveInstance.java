@@ -36,8 +36,8 @@ public class RedisSlaveInstance extends RedisReplicaInstance implements RedisIns
     /**
      * Constructs a {@link RedisSlaveInstance}
      *
-     * @param master master for the replication, must not be {@literal null}
-     * @param state replica state, must not be {@literal null}
+     * @param master master for the replication, must not be {@code null}
+     * @param state replica state, must not be {@code null}
      */
     RedisSlaveInstance(ReplicationPartner master, State state) {
         super(master, state);

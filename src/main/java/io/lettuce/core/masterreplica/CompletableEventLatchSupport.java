@@ -36,13 +36,14 @@ abstract class CompletableEventLatchSupport<T, V> {
 
     @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<CompletableEventLatchSupport> GATE_UPDATER = AtomicIntegerFieldUpdater
-            .newUpdater(
-            CompletableEventLatchSupport.class, "gate");
+            .newUpdater(CompletableEventLatchSupport.class, "gate");
 
     private static final int GATE_OPEN = 0;
+
     private static final int GATE_CLOSED = 1;
 
     private final int expectedCount;
+
     private final CompletableFuture<V> selfFuture = new CompletableFuture<>();
 
     private volatile ScheduledFuture<?> timeoutScheduleFuture;
@@ -117,6 +118,7 @@ abstract class CompletableEventLatchSupport<T, V> {
         if (GATE_UPDATER.compareAndSet(this, GATE_OPEN, GATE_CLOSED)) {
 
             onEmit(new Emission<V>() {
+
                 @Override
                 public void success(V value) {
                     selfFuture.complete(value);
@@ -126,6 +128,7 @@ abstract class CompletableEventLatchSupport<T, V> {
                 public void error(Throwable exception) {
                     selfFuture.completeExceptionally(exception);
                 }
+
             });
         }
     }
@@ -188,5 +191,7 @@ abstract class CompletableEventLatchSupport<T, V> {
          * @param exception the error to emit.
          */
         void error(Throwable exception);
+
     }
+
 }

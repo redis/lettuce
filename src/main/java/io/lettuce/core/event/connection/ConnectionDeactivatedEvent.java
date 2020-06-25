@@ -24,7 +24,9 @@ import java.net.SocketAddress;
  * @since 3.4
  */
 public class ConnectionDeactivatedEvent extends ConnectionEventSupport {
+
     public ConnectionDeactivatedEvent(SocketAddress local, SocketAddress remote) {
         super(local, remote);
     }
+
 }

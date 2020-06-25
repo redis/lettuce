@@ -37,8 +37,11 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         implements StatefulRedisSentinelConnection<K, V> {
 
     protected final RedisCodec<K, V> codec;
+
     protected final RedisSentinelCommands<K, V> sync;
+
     protected final RedisSentinelAsyncCommands<K, V> async;
+
     protected final RedisSentinelReactiveCommands<K, V> reactive;
 
     private final SentinelConnectionState connectionState = new SentinelConnectionState();
@@ -98,9 +101,12 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     }
 
     static class SentinelConnectionState extends ConnectionState {
+
         @Override
         protected void setClientName(String clientName) {
             super.setClientName(clientName);
         }
+
     }
+
 }

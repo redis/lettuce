@@ -33,6 +33,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class KeyListOutput<K, V> extends CommandOutput<K, V, List<K>> implements StreamingOutput<K> {
 
     private boolean initialized;
+
     private Subscriber<K> subscriber;
 
     public KeyListOutput(RedisCodec<K, V> codec) {
@@ -69,4 +70,5 @@ public class KeyListOutput<K, V> extends CommandOutput<K, V, List<K>> implements
     public Subscriber<K> getSubscriber() {
         return subscriber;
     }
+
 }

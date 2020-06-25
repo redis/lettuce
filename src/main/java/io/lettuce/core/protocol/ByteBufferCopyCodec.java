@@ -54,4 +54,5 @@ enum ByteBufferCopyCodec implements RedisCodec<ByteBuffer, ByteBuffer> {
         copy.flip();
         return copy;
     }
+
 }

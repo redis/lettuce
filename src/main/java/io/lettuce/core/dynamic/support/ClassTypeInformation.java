@@ -33,9 +33,13 @@ import io.lettuce.core.internal.LettuceClassUtils;
 public class ClassTypeInformation<S> extends TypeDiscoverer<S> {
 
     public static final ClassTypeInformation<Collection> COLLECTION = new ClassTypeInformation(Collection.class);
+
     public static final ClassTypeInformation<List> LIST = new ClassTypeInformation(List.class);
+
     public static final ClassTypeInformation<Set> SET = new ClassTypeInformation(Set.class);
+
     public static final ClassTypeInformation<Map> MAP = new ClassTypeInformation(Map.class);
+
     public static final ClassTypeInformation<Object> OBJECT = new ClassTypeInformation(Object.class);
 
     private static final Map<Class<?>, Reference<ClassTypeInformation<?>>> CACHE = Collections
@@ -53,7 +57,7 @@ public class ClassTypeInformation<S> extends TypeDiscoverer<S> {
      * Simple factory method to easily create new instances of {@link ClassTypeInformation}.
      *
      * @param <S>
-     * @param type must not be {@literal null}.
+     * @param type must not be {@code null}.
      * @return
      */
     public static <S> ClassTypeInformation<S> from(Class<S> type) {
@@ -75,7 +79,7 @@ public class ClassTypeInformation<S> extends TypeDiscoverer<S> {
     /**
      * Creates a {@link TypeInformation} from the given method's return type.
      *
-     * @param method must not be {@literal null}.
+     * @param method must not be {@code null}.
      * @return
      */
     public static <S> TypeInformation<S> fromReturnTypeOf(Method method) {
@@ -87,7 +91,7 @@ public class ClassTypeInformation<S> extends TypeDiscoverer<S> {
     /**
      * Creates a {@link TypeInformation} from the given method's parameter type.
      *
-     * @param method must not be {@literal null}.
+     * @param method must not be {@code null}.
      * @return
      */
     public static <S> TypeInformation<S> fromMethodParameter(Method method, int index) {
@@ -126,7 +130,7 @@ public class ClassTypeInformation<S> extends TypeDiscoverer<S> {
     /**
      * Little helper to allow us to create a generified map, actually just to satisfy the compiler.
      *
-     * @param type must not be {@literal null}.
+     * @param type must not be {@code null}.
      * @return
      */
     private static Map<TypeVariable<?>, Type> getTypeVariableMap(Class<?> type) {
@@ -177,4 +181,5 @@ public class ClassTypeInformation<S> extends TypeDiscoverer<S> {
     public String toString() {
         return type.getName();
     }
+
 }

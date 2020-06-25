@@ -32,6 +32,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 class CommandSet {
 
     private final Map<String, CommandDetail> commands;
+
     private final EnumSet<CommandType> availableCommands = EnumSet.noneOf(CommandType.class);
 
     public CommandSet(Collection<CommandDetail> commands) {
@@ -64,8 +65,8 @@ class CommandSet {
      * Check whether Redis supports a particular command given a {@link ProtocolKeyword}. Querying commands using
      * {@link CommandType} yields a better performance than other subtypes of {@link ProtocolKeyword}.
      *
-     * @param commandName the command name, must not be {@literal null}.
-     * @return {@literal true} if the command is supported/available.
+     * @param commandName the command name, must not be {@code null}.
+     * @return {@code true} if the command is supported/available.
      */
     public boolean hasCommand(ProtocolKeyword commandName) {
 
@@ -75,4 +76,5 @@ class CommandSet {
 
         return commands.containsKey(commandName.name().toLowerCase());
     }
+
 }

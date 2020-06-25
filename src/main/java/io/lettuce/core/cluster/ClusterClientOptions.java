@@ -34,14 +34,21 @@ import io.lettuce.core.protocol.ProtocolVersion;
 public class ClusterClientOptions extends ClientOptions {
 
     public static final boolean DEFAULT_REFRESH_CLUSTER_VIEW = false;
+
     public static final long DEFAULT_REFRESH_PERIOD = 60;
+
     public static final Duration DEFAULT_REFRESH_PERIOD_DURATION = Duration.ofSeconds(DEFAULT_REFRESH_PERIOD);
+
     public static final boolean DEFAULT_CLOSE_STALE_CONNECTIONS = true;
+
     public static final boolean DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP = true;
+
     public static final int DEFAULT_MAX_REDIRECTS = 5;
 
     private final boolean validateClusterNodeMembership;
+
     private final int maxRedirects;
+
     private final ClusterTopologyRefreshOptions topologyRefreshOptions;
 
     protected ClusterClientOptions(Builder builder) {
@@ -136,18 +143,21 @@ public class ClusterClientOptions extends ClientOptions {
     public static class Builder extends ClientOptions.Builder {
 
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
+
         private boolean validateClusterNodeMembership = DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP;
+
         private int maxRedirects = DEFAULT_MAX_REDIRECTS;
+
         private ClusterTopologyRefreshOptions topologyRefreshOptions = null;
 
         protected Builder() {
         }
 
         /**
-         * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@literal true}. See
+         * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code true}. See
          * {@link ClusterClientOptions#DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP}.
          *
-         * @param validateClusterNodeMembership {@literal true} if validation is enabled.
+         * @param validateClusterNodeMembership {@code true} if validation is enabled.
          * @return {@code this}
          */
         public Builder validateClusterNodeMembership(boolean validateClusterNodeMembership) {
@@ -264,6 +274,7 @@ public class ClusterClientOptions extends ClientOptions {
         public ClusterClientOptions build() {
             return new ClusterClientOptions(this);
         }
+
     }
 
     /**
@@ -294,10 +305,10 @@ public class ClusterClientOptions extends ClientOptions {
 
     /**
      * Flag, whether regular cluster topology updates are updated. The client starts updating the cluster topology in the
-     * intervals of {@link #getRefreshPeriod()}. Defaults to {@literal false}. Returns the value from
+     * intervals of {@link #getRefreshPeriod()}. Defaults to {@code false}. Returns the value from
      * {@link ClusterTopologyRefreshOptions} if provided.
      *
-     * @return {@literal true} it the cluster topology view is updated periodically
+     * @return {@code true} it the cluster topology view is updated periodically
      */
     public boolean isRefreshClusterView() {
         return topologyRefreshOptions.isPeriodicRefreshEnabled();
@@ -314,20 +325,20 @@ public class ClusterClientOptions extends ClientOptions {
     }
 
     /**
-     * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@literal true}. Comes only
-     * into effect if {@link #isRefreshClusterView()} is {@literal true}. Returns the value from
+     * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@code true}. Comes only
+     * into effect if {@link #isRefreshClusterView()} is {@code true}. Returns the value from
      * {@link ClusterTopologyRefreshOptions} if provided.
      *
-     * @return {@literal true} if stale connections are cleaned up after cluster topology updates
+     * @return {@code true} if stale connections are cleaned up after cluster topology updates
      */
     public boolean isCloseStaleConnections() {
         return topologyRefreshOptions.isCloseStaleConnections();
     }
 
     /**
-     * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@literal true}.
+     * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code true}.
      *
-     * @return {@literal true} if validation is enabled.
+     * @return {@code true} if validation is enabled.
      */
     public boolean isValidateClusterNodeMembership() {
         return validateClusterNodeMembership;

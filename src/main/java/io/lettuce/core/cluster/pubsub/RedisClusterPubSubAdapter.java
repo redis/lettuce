@@ -56,4 +56,5 @@ public class RedisClusterPubSubAdapter<K, V> implements RedisClusterPubSubListen
     public void punsubscribed(RedisClusterNode node, K pattern, long count) {
         // empty adapter method
     }
+
 }

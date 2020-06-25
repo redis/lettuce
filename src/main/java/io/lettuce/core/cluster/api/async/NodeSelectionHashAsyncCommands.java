@@ -51,7 +51,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param field the field type: key
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the hash contains {@code field}. {@literal false} if the hash does not contain {@code field},
+     *         {@code true} if the hash contains {@code field}. {@code false} if the hash does not contain {@code field},
      *         or {@code key} does not exist.
      */
     AsyncExecutions<Boolean> hexists(K key, K field);
@@ -61,7 +61,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      *
      * @param key the key
      * @param field the field type: key
-     * @return V bulk-string-reply the value associated with {@code field}, or {@literal null} when {@code field} is not present
+     * @return V bulk-string-reply the value associated with {@code field}, or {@code null} when {@code field} is not present
      *         in the hash or {@code key} does not exist.
      */
     AsyncExecutions<V> hget(K key, K field);
@@ -181,7 +181,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @param scanArgs scan arguments
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
@@ -191,7 +191,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
     AsyncExecutions<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor);
@@ -220,18 +220,19 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      *
      * @param channel streaming channel that receives a call for every key-value pair
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
-    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param channel streaming channel that receives a call for every key-value pair
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @return StreamScanCursor scan cursor.
      */
     AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
@@ -244,7 +245,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param value the value
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if {@code field} is a new field in the hash and {@code value} was set. {@literal false} if
+     *         {@code true} if {@code field} is a new field in the hash and {@code value} was set. {@code false} if
      *         {@code field} already exists in the hash and the value was updated.
      */
     AsyncExecutions<Boolean> hset(K key, K field, V value);
@@ -299,4 +300,5 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @return Long count of the keys.
      */
     AsyncExecutions<Long> hvals(ValueStreamingChannel<V> channel, K key);
+
 }

@@ -678,4 +678,5 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
+
 }

@@ -76,5 +76,7 @@ public class ConnectionEvents {
         public int getAttempt() {
             return attempt;
         }
+
     }
+
 }

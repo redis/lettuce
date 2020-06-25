@@ -73,4 +73,5 @@ public interface Executions<T> extends Iterable<T> {
     default Stream<T> stream() {
         return StreamSupport.stream(spliterator(), false);
     }
+
 }

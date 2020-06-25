@@ -29,8 +29,9 @@ public interface RedisCodecResolver {
     /**
      * Resolve a {@link RedisCodec} for the given {@link CommandMethod}.
      *
-     * @param commandMethod must not be {@literal null}.
-     * @return the resolved {@link RedisCodec} or {@literal null} if not resolvable.
+     * @param commandMethod must not be {@code null}.
+     * @return the resolved {@link RedisCodec} or {@code null} if not resolvable.
      */
     RedisCodec<?, ?> resolve(CommandMethod commandMethod);
+
 }

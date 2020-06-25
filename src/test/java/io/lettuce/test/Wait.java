@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 public class Wait {
 
     /**
-     * Initialize a {@link Wait.WaitBuilder} to wait until the {@code supplier} supplies {@literal true}
+     * Initialize a {@link Wait.WaitBuilder} to wait until the {@code supplier} supplies {@code true}
      *
      * @param supplier
      * @return
@@ -230,7 +230,7 @@ public class Wait {
     }
 
     /**
-     * Utility to await until a {@link WaitCondition} yields {@literal true}.
+     * Utility to await until a {@link WaitCondition} yields {@code true}.
      */
     private static class Waiter {
 

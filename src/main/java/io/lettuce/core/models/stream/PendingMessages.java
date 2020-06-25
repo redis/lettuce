@@ -28,7 +28,9 @@ import io.lettuce.core.Range;
 public class PendingMessages {
 
     private final long count;
+
     private final Range<String> messageIds;
+
     private final Map<String, Long> consumerMessageCount;
 
     public PendingMessages(long count, Range<String> messageIds, Map<String, Long> consumerMessageCount) {
@@ -49,4 +51,5 @@ public class PendingMessages {
     public Map<String, Long> getConsumerMessageCount() {
         return consumerMessageCount;
     }
+
 }

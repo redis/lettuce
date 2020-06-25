@@ -33,4 +33,5 @@ interface UpstreamReplicaConnector<K, V> {
      * @return Future that is notified about the connection progress.
      */
     CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync();
+
 }

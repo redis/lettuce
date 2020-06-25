@@ -54,4 +54,5 @@ public enum CommandKeyword implements ProtocolKeyword {
     public byte[] getBytes() {
         return bytes;
     }
+
 }

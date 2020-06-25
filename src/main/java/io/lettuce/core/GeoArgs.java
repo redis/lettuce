@@ -31,9 +31,13 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class GeoArgs implements CompositeArgument {
 
     private boolean withdistance;
+
     private boolean withcoordinates;
+
     private boolean withhash;
+
     private Long count;
+
     private Sort sort = Sort.none;
 
     /**
@@ -99,6 +103,7 @@ public class GeoArgs implements CompositeArgument {
         public static GeoArgs count(long count) {
             return new GeoArgs().withCount(count);
         }
+
     }
 
     /**
@@ -149,7 +154,7 @@ public class GeoArgs implements CompositeArgument {
 
     /**
      *
-     * @return {@literal true} if distance is requested.
+     * @return {@code true} if distance is requested.
      */
     public boolean isWithDistance() {
         return withdistance;
@@ -157,7 +162,7 @@ public class GeoArgs implements CompositeArgument {
 
     /**
      *
-     * @return {@literal true} if coordinates are requested.
+     * @return {@code true} if coordinates are requested.
      */
     public boolean isWithCoordinates() {
         return withcoordinates;
@@ -165,7 +170,7 @@ public class GeoArgs implements CompositeArgument {
 
     /**
      *
-     * @return {@literal true} if geohash is requested.
+     * @return {@code true} if geohash is requested.
      */
     public boolean isWithHash() {
         return withhash;
@@ -192,7 +197,7 @@ public class GeoArgs implements CompositeArgument {
     /**
      * Sort results.
      *
-     * @param sort sort order, must not be {@literal null}
+     * @param sort sort order, must not be {@code null}
      * @return {@code this}
      */
     public GeoArgs sort(Sort sort) {
@@ -272,4 +277,5 @@ public class GeoArgs implements CompositeArgument {
             args.add(CommandKeyword.COUNT).add(count);
         }
     }
+
 }

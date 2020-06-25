@@ -81,4 +81,5 @@ public interface RedisClusterPubSubListener<K, V> {
      * @param count Subscription count.
      */
     void punsubscribed(RedisClusterNode node, K pattern, long count);
+
 }

@@ -32,4 +32,5 @@ public class RedisCommandInterruptedException extends RedisException {
     public RedisCommandInterruptedException(Throwable cause) {
         super("Command interrupted", cause);
     }
+
 }

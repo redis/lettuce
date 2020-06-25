@@ -62,10 +62,12 @@ public class ClusterSlotsParser {
         }
 
         Collections.sort(result, new Comparator<ClusterSlotRange>() {
+
             @Override
             public int compare(ClusterSlotRange o1, ClusterSlotRange o2) {
                 return o1.getFrom() - o2.getFrom();
             }
+
         });
 
         return Collections.unmodifiableList(result);
@@ -164,4 +166,5 @@ public class ClusterSlotsParser {
         }
         return defaultValue;
     }
+
 }

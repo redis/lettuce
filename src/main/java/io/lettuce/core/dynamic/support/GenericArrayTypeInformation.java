@@ -32,9 +32,9 @@ class GenericArrayTypeInformation<S> extends ParentTypeAwareTypeInformation<S> {
      * Creates a new {@link GenericArrayTypeInformation} for the given {@link GenericArrayTypeInformation} and
      * {@link TypeDiscoverer}.
      *
-     * @param type must not be {@literal null}.
-     * @param parent must not be {@literal null}.
-     * @param typeVariableMap must not be {@literal null}.
+     * @param type must not be {@code null}.
+     * @param parent must not be {@code null}.
+     * @param typeVariableMap must not be {@code null}.
      */
     protected GenericArrayTypeInformation(GenericArrayType type, TypeDiscoverer<?> parent,
             Map<TypeVariable<?>, Type> typeVariableMap) {
@@ -60,4 +60,5 @@ class GenericArrayTypeInformation<S> extends ParentTypeAwareTypeInformation<S> {
     public String toString() {
         return type.toString();
     }
+
 }

@@ -29,6 +29,7 @@ import io.netty.buffer.ByteBuf;
 public class TracedCommand<K, V, T> extends CommandWrapper<K, V, T> implements TraceContextProvider {
 
     private final TraceContext traceContext;
+
     private Tracer.Span span;
 
     public TracedCommand(RedisCommand<K, V, T> command, TraceContext traceContext) {
@@ -61,4 +62,5 @@ public class TracedCommand<K, V, T> extends CommandWrapper<K, V, T> implements T
             span.annotate("redis.encode.end");
         }
     }
+
 }

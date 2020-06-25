@@ -38,4 +38,5 @@ public class KeyOutput<K, V> extends CommandOutput<K, V, K> {
     public void set(ByteBuffer bytes) {
         output = (bytes == null) ? null : codec.decodeKey(bytes);
     }
+
 }

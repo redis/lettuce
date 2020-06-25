@@ -36,7 +36,9 @@ import io.netty.util.Timeout;
 public class RedisHandshakeHandler extends ChannelInboundHandlerAdapter {
 
     private final ConnectionInitializer connectionInitializer;
+
     private final ClientResources clientResources;
+
     private final Duration initializeTimeout;
 
     private final CompletableFuture<Void> handshakeFuture = new CompletableFuture<>();

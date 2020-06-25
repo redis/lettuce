@@ -77,8 +77,8 @@ public interface RedisClusterPubSubAsyncCommands<K, V> extends RedisPubSubAsyncC
      */
     @Deprecated
     default PubSubAsyncNodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
-        return nodes(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
+        return nodes(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -100,8 +100,8 @@ public interface RedisClusterPubSubAsyncCommands<K, V> extends RedisPubSubAsyncC
      * @since 5.2
      */
     default PubSubAsyncNodeSelection<K, V> replicas(Predicate<RedisClusterNode> predicate) {
-        return nodes(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
+        return nodes(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -120,4 +120,5 @@ public interface RedisClusterPubSubAsyncCommands<K, V> extends RedisPubSubAsyncC
      * @return API with asynchronous executed commands on a selection of cluster nodes matching {@code predicate}
      */
     PubSubAsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate);
+
 }

@@ -45,7 +45,7 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
     /**
      * Creates a new {@link AnnotationRedisCodecResolver} given a {@link List} of {@link RedisCodec}s.
      *
-     * @param codecs must not be {@literal null}.
+     * @param codecs must not be {@code null}.
      */
     public AnnotationRedisCodecResolver(List<RedisCodec<?, ?>> codecs) {
 
@@ -209,6 +209,7 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
     private static class Voted<T> implements Comparable<Voted<?>> {
 
         private T subject;
+
         private int votes;
 
         Voted(T subject, int votes) {
@@ -220,6 +221,7 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         public int compareTo(Voted<?> o) {
             return votes - o.votes;
         }
+
     }
 
     /**
@@ -228,7 +230,9 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
     protected static class ParameterWrappers {
 
         private static final Set<Class<?>> WRAPPERS = new HashSet<>();
+
         private static final Set<Class<?>> WITH_KEY_TYPE = new HashSet<>();
+
         private static final Set<Class<?>> WITH_VALUE_TYPE = new HashSet<>();
 
         static {
@@ -254,8 +258,8 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         }
 
         /**
-         * @param typeInformation must not be {@literal null}.
-         * @return {@literal true} if {@code parameterClass} is a parameter wrapper.
+         * @param typeInformation must not be {@code null}.
+         * @return {@code true} if {@code parameterClass} is a parameter wrapper.
          */
         public static boolean supports(TypeInformation<?> typeInformation) {
             return WRAPPERS.contains(typeInformation.getType())
@@ -263,23 +267,23 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         }
 
         /**
-         * @param typeInformation must not be {@literal null}.
-         * @return {@literal true} if the type has a key type variable.
+         * @param typeInformation must not be {@code null}.
+         * @return {@code true} if the type has a key type variable.
          */
         public static boolean hasKeyType(TypeInformation<?> typeInformation) {
             return WITH_KEY_TYPE.contains(typeInformation.getType());
         }
 
         /**
-         * @param typeInformation must not be {@literal null}.
-         * @return {@literal true} if the type has a value type variable.
+         * @param typeInformation must not be {@code null}.
+         * @return {@code true} if the type has a value type variable.
          */
         public static boolean hasValueType(TypeInformation<?> typeInformation) {
             return WITH_VALUE_TYPE.contains(typeInformation.getType());
         }
 
         /**
-         * @param typeInformation must not be {@literal null}.
+         * @param typeInformation must not be {@code null}.
          * @return the key type.
          */
         public static TypeInformation<?> getKeyType(TypeInformation<?> typeInformation) {
@@ -292,7 +296,7 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
         }
 
         /**
-         * @param typeInformation must not be {@literal null}.
+         * @param typeInformation must not be {@code null}.
          * @return the value type.
          */
         public static TypeInformation<?> getValueType(TypeInformation<?> typeInformation) {
@@ -313,5 +317,7 @@ public class AnnotationRedisCodecResolver implements RedisCodecResolver {
 
             return typeArguments.get(0);
         }
+
     }
+
 }

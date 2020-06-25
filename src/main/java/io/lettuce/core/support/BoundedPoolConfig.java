@@ -40,7 +40,9 @@ public class BoundedPoolConfig extends BasePoolConfig {
     public static final int DEFAULT_MIN_IDLE = 0;
 
     private final int maxTotal;
+
     private final int maxIdle;
+
     private final int minIdle;
 
     protected BoundedPoolConfig(boolean testOnCreate, boolean testOnAcquire, boolean testOnRelease, int maxTotal, int maxIdle,
@@ -99,7 +101,9 @@ public class BoundedPoolConfig extends BasePoolConfig {
     public static class Builder extends BasePoolConfig.Builder {
 
         private int maxTotal = DEFAULT_MAX_TOTAL;
+
         private int maxIdle = DEFAULT_MAX_IDLE;
+
         private int minIdle = DEFAULT_MIN_IDLE;
 
         protected Builder() {
@@ -197,5 +201,7 @@ public class BoundedPoolConfig extends BasePoolConfig {
         public BoundedPoolConfig build() {
             return new BoundedPoolConfig(testOnCreate, testOnAcquire, testOnRelease, maxTotal, maxIdle, minIdle);
         }
+
     }
+
 }

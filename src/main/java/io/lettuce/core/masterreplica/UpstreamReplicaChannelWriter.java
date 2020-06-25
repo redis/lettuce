@@ -37,9 +37,11 @@ import io.lettuce.core.resource.ClientResources;
 class UpstreamReplicaChannelWriter implements RedisChannelWriter {
 
     private UpstreamReplicaConnectionProvider<?, ?> upstreamReplicaConnectionProvider;
+
     private final ClientResources clientResources;
 
     private boolean closed = false;
+
     private boolean inTransaction;
 
     UpstreamReplicaChannelWriter(UpstreamReplicaConnectionProvider<?, ?> upstreamReplicaConnectionProvider,
@@ -249,7 +251,7 @@ class UpstreamReplicaChannelWriter implements RedisChannelWriter {
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
      *
-     * @param readFrom the read from setting, must not be {@literal null}
+     * @param readFrom the read from setting, must not be {@code null}
      */
     public void setReadFrom(ReadFrom readFrom) {
         upstreamReplicaConnectionProvider.setReadFrom(readFrom);
@@ -275,4 +277,5 @@ class UpstreamReplicaChannelWriter implements RedisChannelWriter {
     private boolean isEndTransaction(ProtocolKeyword command) {
         return command.name().equals("EXEC") || command.name().equals("DISCARD");
     }
+
 }

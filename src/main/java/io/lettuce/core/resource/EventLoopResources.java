@@ -34,8 +34,8 @@ public interface EventLoopResources {
     /**
      * Checks if the given {@code type} matches the underlying {@link EventExecutorGroup} type.
      *
-     * @param type must not be {@literal null}.
-     * @return {@literal true} if {@code type} is a {@link EventExecutorGroup} of the underlying loop resources.
+     * @param type must not be {@code null}.
+     * @return {@code true} if {@code type} is a {@link EventExecutorGroup} of the underlying loop resources.
      */
     boolean matches(Class<? extends EventExecutorGroup> type);
 
@@ -68,4 +68,5 @@ public interface EventLoopResources {
      * @return a domain socket address object.
      */
     SocketAddress newSocketAddress(String socketPath);
+
 }

@@ -35,8 +35,11 @@ import io.lettuce.core.protocol.RedisCommand;
 class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
     private final StatefulConnection<?, ?> connection;
+
     private final TimeoutProvider timeoutProvider;
+
     private final Object asyncApi;
+
     private final MethodTranslator translator;
 
     FutureSyncInvocationHandler(StatefulConnection<?, ?> connection, Object asyncApi, Class<?>[] interfaces) {
@@ -90,4 +93,5 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
     private static boolean isNonTxControlMethod(String methodName) {
         return !methodName.equals("exec") && !methodName.equals("multi") && !methodName.equals("discard");
     }
+
 }

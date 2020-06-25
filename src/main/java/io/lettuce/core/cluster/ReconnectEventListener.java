@@ -33,4 +33,5 @@ class ReconnectEventListener implements ReconnectionListener {
     public void onReconnectAttempt(Reconnect reconnect) {
         clusterEventListener.onReconnectAttempt(reconnect.getAttempt());
     }
+
 }

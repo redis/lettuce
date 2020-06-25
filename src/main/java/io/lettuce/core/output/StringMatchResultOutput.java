@@ -34,9 +34,13 @@ import io.lettuce.core.codec.RedisCodec;
 public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMatchResult> {
 
     private final boolean withIdx;
+
     private String matchString;
+
     private int len;
+
     private List<Long> positions;
+
     private final List<MatchedPosition> matchedPositions = new ArrayList<>();
 
     public StringMatchResultOutput(RedisCodec<K, V> codec, boolean withIdx) {
@@ -88,4 +92,5 @@ public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMat
         return new MatchedPosition(new Position(positions.get(0), positions.get(1)),
                 new Position(positions.get(2), positions.get(3)), matchLen);
     }
+
 }

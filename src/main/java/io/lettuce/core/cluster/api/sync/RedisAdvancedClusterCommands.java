@@ -282,7 +282,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Return a random key from the keyspace on a random master.
      *
-     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@code null} when the database is empty.
      * @see RedisKeyCommands#randomkey()
      */
     K randomkey();
@@ -306,7 +306,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
      *
-     * @param save {@literal true} force save operation
+     * @param save {@code true} force save operation
      * @see RedisServerCommands#shutdown(boolean)
      */
     void shutdown(boolean save);
@@ -399,4 +399,5 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @return Long integer-reply the number of found keys.
      */
     Long touch(K... keys);
+
 }

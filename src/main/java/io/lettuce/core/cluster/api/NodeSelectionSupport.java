@@ -60,4 +60,5 @@ public interface NodeSelectionSupport<API, CMD> {
      * @return map of {@link RedisClusterNode} and the connection/commands objects
      */
     Map<RedisClusterNode, API> asMap();
+
 }

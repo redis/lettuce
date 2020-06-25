@@ -32,4 +32,5 @@ public interface ValueStreamingChannel<V> {
      * @param value the value
      */
     void onValue(V value);
+
 }

@@ -49,10 +49,15 @@ import io.lettuce.core.protocol.*;
 public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements StatefulRedisConnection<K, V> {
 
     protected final RedisCodec<K, V> codec;
+
     protected final RedisCommands<K, V> sync;
+
     protected final RedisAsyncCommandsImpl<K, V> async;
+
     protected final RedisReactiveCommandsImpl<K, V> reactive;
+
     private final ConnectionState state = new ConnectionState();
+
     private final PushHandler pushHandler;
 
     protected MultiOutput<K, V> multi;
@@ -277,4 +282,5 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public ConnectionState getConnectionState() {
         return state;
     }
+
 }

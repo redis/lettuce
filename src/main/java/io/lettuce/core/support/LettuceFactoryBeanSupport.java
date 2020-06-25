@@ -34,8 +34,11 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
     public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";
 
     private char[] password = new char[0];
+
     private URI uri;
+
     private RedisURI redisURI;
+
     private ClientResources clientResources;
 
     @Override
@@ -111,4 +114,5 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
     public boolean isSingleton() {
         return true;
     }
+
 }

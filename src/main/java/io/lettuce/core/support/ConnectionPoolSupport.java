@@ -59,8 +59,8 @@ import io.lettuce.core.support.ConnectionWrapping.Origin;
  * <pre class="code">
  * // application initialization
  * RedisClusterClient clusterClient = RedisClusterClient.create(RedisURI.create(host, port));
- * GenericObjectPool&lt;StatefulRedisClusterConnection&lt;String, String&gt;&gt; pool = ConnectionPoolSupport.createGenericObjectPool(
- *         () -&gt; clusterClient.connect(), new GenericObjectPoolConfig());
+ * GenericObjectPool&lt;StatefulRedisClusterConnection&lt;String, String&gt;&gt; pool = ConnectionPoolSupport
+ *         .createGenericObjectPool(() -&gt; clusterClient.connect(), new GenericObjectPoolConfig());
  *
  * // executing work
  * try (StatefulRedisClusterConnection&lt;String, String&gt; connection = pool.borrowObject()) {
@@ -84,8 +84,8 @@ public abstract class ConnectionPoolSupport {
      * Creates a new {@link GenericObjectPool} using the {@link Supplier}. Allocated instances are wrapped and must not be
      * returned with {@link ObjectPool#returnObject(Object)}.
      *
-     * @param connectionSupplier must not be {@literal null}.
-     * @param config must not be {@literal null}.
+     * @param connectionSupplier must not be {@code null}.
+     * @param config must not be {@code null}.
      * @param <T> connection type.
      * @return the connection pool.
      */
@@ -97,10 +97,10 @@ public abstract class ConnectionPoolSupport {
     /**
      * Creates a new {@link GenericObjectPool} using the {@link Supplier}.
      *
-     * @param connectionSupplier must not be {@literal null}.
-     * @param config must not be {@literal null}.
-     * @param wrapConnections {@literal false} to return direct connections that need to be returned to the pool using
-     *        {@link ObjectPool#returnObject(Object)}. {@literal true} to return wrapped connection that are returned to the
+     * @param connectionSupplier must not be {@code null}.
+     * @param config must not be {@code null}.
+     * @param wrapConnections {@code false} to return direct connections that need to be returned to the pool using
+     *        {@link ObjectPool#returnObject(Object)}. {@code true} to return wrapped connection that are returned to the
      *        pool when invoking {@link StatefulConnection#close()}.
      * @param <T> connection type.
      * @return the connection pool.
@@ -118,8 +118,8 @@ public abstract class ConnectionPoolSupport {
 
             @Override
             public T borrowObject() throws Exception {
-                return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get()) : super
-                        .borrowObject();
+                return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get())
+                        : super.borrowObject();
             }
 
             @Override
@@ -131,6 +131,7 @@ public abstract class ConnectionPoolSupport {
                 }
                 super.returnObject(obj);
             }
+
         };
 
         poolRef.set(new ObjectPoolWrapper<>(pool));
@@ -142,7 +143,7 @@ public abstract class ConnectionPoolSupport {
      * Creates a new {@link SoftReferenceObjectPool} using the {@link Supplier}. Allocated instances are wrapped and must not be
      * returned with {@link ObjectPool#returnObject(Object)}.
      *
-     * @param connectionSupplier must not be {@literal null}.
+     * @param connectionSupplier must not be {@code null}.
      * @param <T> connection type.
      * @return the connection pool.
      */
@@ -154,9 +155,9 @@ public abstract class ConnectionPoolSupport {
     /**
      * Creates a new {@link SoftReferenceObjectPool} using the {@link Supplier}.
      *
-     * @param connectionSupplier must not be {@literal null}.
-     * @param wrapConnections {@literal false} to return direct connections that need to be returned to the pool using
-     *        {@link ObjectPool#returnObject(Object)}. {@literal true} to return wrapped connection that are returned to the
+     * @param connectionSupplier must not be {@code null}.
+     * @param wrapConnections {@code false} to return direct connections that need to be returned to the pool using
+     *        {@link ObjectPool#returnObject(Object)}. {@code true} to return wrapped connection that are returned to the
      *        pool when invoking {@link StatefulConnection#close()}.
      * @param <T> connection type.
      * @return the connection pool.
@@ -170,10 +171,11 @@ public abstract class ConnectionPoolSupport {
         AtomicReference<Origin<T>> poolRef = new AtomicReference<>();
 
         SoftReferenceObjectPool<T> pool = new SoftReferenceObjectPool<T>(new RedisPooledObjectFactory<>(connectionSupplier)) {
+
             @Override
             public synchronized T borrowObject() throws Exception {
-                return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get()) : super
-                        .borrowObject();
+                return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get())
+                        : super.borrowObject();
             }
 
             @Override
@@ -185,12 +187,12 @@ public abstract class ConnectionPoolSupport {
                 }
                 super.returnObject(obj);
             }
+
         };
         poolRef.set(new ObjectPoolWrapper<>(pool));
 
         return pool;
     }
-
 
     /**
      * @author Mark Paluch
@@ -223,6 +225,7 @@ public abstract class ConnectionPoolSupport {
         public boolean validateObject(PooledObject<T> p) {
             return p.getObject().isOpen();
         }
+
     }
 
     private static class ObjectPoolWrapper<T> implements Origin<T> {
@@ -245,5 +248,7 @@ public abstract class ConnectionPoolSupport {
             pool.returnObject(o);
             return COMPLETED;
         }
+
     }
+
 }

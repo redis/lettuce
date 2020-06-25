@@ -30,4 +30,5 @@ public interface RedisNodeDescription extends RedisInstance {
      * @return the URI of the node
      */
     RedisURI getUri();
+
 }

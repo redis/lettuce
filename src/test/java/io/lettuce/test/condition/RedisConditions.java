@@ -66,7 +66,7 @@ public class RedisConditions {
     /**
      * Create {@link RedisCommands} given {@link StatefulRedisConnection}.
      *
-     * @param connection must not be {@literal null}.
+     * @param connection must not be {@code null}.
      * @return
      */
     public static RedisConditions of(StatefulRedisConnection<String, String> connection) {
@@ -76,7 +76,7 @@ public class RedisConditions {
     /**
      * Create {@link RedisCommands} given {@link StatefulRedisClusterConnection}.
      *
-     * @param connection must not be {@literal null}.
+     * @param connection must not be {@code null}.
      * @return
      */
     public static RedisConditions of(StatefulRedisClusterConnection<String, String> connection) {
@@ -86,7 +86,7 @@ public class RedisConditions {
     /**
      * Create {@link RedisConditions} given {@link RedisCommands}.
      *
-     * @param commands must not be {@literal null}.
+     * @param commands must not be {@code null}.
      * @return
      */
     public static RedisConditions of(RedisClusterCommands<String, String> commands) {
@@ -102,7 +102,7 @@ public class RedisConditions {
 
     /**
      * @param command
-     * @return {@literal true} if the command is present.
+     * @return {@code true} if the command is present.
      */
     public boolean hasCommand(String command) {
         return commands.containsKey(command.toUpperCase());
@@ -111,7 +111,7 @@ public class RedisConditions {
     /**
      * @param command command name.
      * @param arity expected arity.
-     * @return {@literal true} if the command is present with the given arity.
+     * @return {@code true} if the command is present with the given arity.
      */
     public boolean hasCommandArity(String command, int arity) {
 
@@ -124,7 +124,7 @@ public class RedisConditions {
 
     /**
      * @param versionNumber
-     * @return {@literal true} if the version number is met.
+     * @return {@code true} if the version number is met.
      */
     public boolean hasVersionGreaterOrEqualsTo(String versionNumber) {
         return version.isGreaterThanOrEqualTo(Version.parse(versionNumber));
@@ -145,7 +145,7 @@ public class RedisConditions {
         /**
          * Creates a new {@link Version} from the given integer values. At least one value has to be given but a maximum of 4.
          *
-         * @param parts must not be {@literal null} or empty.
+         * @param parts must not be {@code null} or empty.
          */
         Version(int... parts) {
 
@@ -166,7 +166,7 @@ public class RedisConditions {
         /**
          * Parses the given string representation of a version into a {@link Version} object.
          *
-         * @param version must not be {@literal null} or empty.
+         * @param version must not be {@code null} or empty.
          * @return
          */
         public static Version parse(String version) {

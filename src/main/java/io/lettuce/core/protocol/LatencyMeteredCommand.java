@@ -24,7 +24,9 @@ package io.lettuce.core.protocol;
 class LatencyMeteredCommand<K, V, T> extends CommandWrapper<K, V, T> implements WithLatency {
 
     private long sentNs = -1;
+
     private long firstResponseNs = -1;
+
     private long completedNs = -1;
 
     public LatencyMeteredCommand(RedisCommand<K, V, T> command) {
@@ -62,4 +64,5 @@ class LatencyMeteredCommand<K, V, T> extends CommandWrapper<K, V, T> implements 
     public long getCompleted() {
         return completedNs;
     }
+
 }

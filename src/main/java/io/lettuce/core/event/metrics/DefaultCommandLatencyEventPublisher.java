@@ -31,8 +31,11 @@ import io.netty.util.concurrent.ScheduledFuture;
 public class DefaultCommandLatencyEventPublisher implements MetricEventPublisher {
 
     private final EventExecutorGroup eventExecutorGroup;
+
     private final EventPublisherOptions options;
+
     private final EventBus eventBus;
+
     private final CommandLatencyCollector commandLatencyCollector;
 
     private final Runnable EMITTER = this::emitMetricsEvent;
@@ -76,4 +79,5 @@ public class DefaultCommandLatencyEventPublisher implements MetricEventPublisher
 
         eventBus.publish(new CommandLatencyEvent(commandLatencyCollector.retrieveMetrics()));
     }
+
 }

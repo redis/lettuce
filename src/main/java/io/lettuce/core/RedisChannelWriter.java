@@ -84,7 +84,7 @@ public interface RedisChannelWriter extends Closeable, AsyncCloseable {
     void setConnectionFacade(ConnectionFacade connection);
 
     /**
-     * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
+     * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands
      * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
      *
@@ -103,4 +103,5 @@ public interface RedisChannelWriter extends Closeable, AsyncCloseable {
      * @since 5.1
      */
     ClientResources getClientResources();
+
 }

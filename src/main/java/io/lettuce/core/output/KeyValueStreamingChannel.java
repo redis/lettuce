@@ -33,4 +33,5 @@ public interface KeyValueStreamingChannel<K, V> extends StreamingChannel {
      * @param value the value
      */
     void onKeyValue(K key, V value);
+
 }

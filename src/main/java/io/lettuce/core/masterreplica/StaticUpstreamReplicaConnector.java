@@ -39,7 +39,9 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 class StaticUpstreamReplicaConnector<K, V> implements UpstreamReplicaConnector<K, V> {
 
     private final RedisClient redisClient;
+
     private final RedisCodec<K, V> codec;
+
     private final Iterable<RedisURI> redisURIs;
 
     StaticUpstreamReplicaConnector(RedisClient redisClient, RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
@@ -80,10 +82,10 @@ class StaticUpstreamReplicaConnector<K, V> implements UpstreamReplicaConnector<K
                 redisClient.getResources());
 
         StatefulRedisUpstreamReplicaConnectionImpl<K, V> connection = new StatefulRedisUpstreamReplicaConnectionImpl<>(
-                channelWriter,
-                codec, seedNode.getTimeout());
+                channelWriter, codec, seedNode.getTimeout());
         connection.setOptions(redisClient.getOptions());
 
         return Mono.just(connection);
     }
+
 }

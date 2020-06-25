@@ -199,7 +199,7 @@ public class LettuceAssert {
     }
 
     /**
-     * Assert that {@code value} is {@literal true}.
+     * Assert that {@code value} is {@code true}.
      *
      * @param value the value to check
      * @param message the exception message to use if the assertion fails
@@ -212,7 +212,7 @@ public class LettuceAssert {
     }
 
     /**
-     * Assert that {@code value} is {@literal true}.
+     * Assert that {@code value} is {@code true}.
      *
      * @param value the value to check
      * @param messageSupplier the exception message supplier to use if the assertion fails
@@ -253,4 +253,5 @@ public class LettuceAssert {
             throw new IllegalStateException(messageSupplier.get());
         }
     }
+
 }

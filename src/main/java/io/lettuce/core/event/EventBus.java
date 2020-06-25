@@ -38,4 +38,5 @@ public interface EventBus {
      * @param event the event to publish
      */
     void publish(Event event);
+
 }

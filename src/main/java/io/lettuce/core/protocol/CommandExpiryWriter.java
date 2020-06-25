@@ -42,9 +42,13 @@ import io.lettuce.core.resource.ClientResources;
 public class CommandExpiryWriter implements RedisChannelWriter {
 
     private final RedisChannelWriter writer;
+
     private final TimeoutSource source;
+
     private final TimeUnit timeUnit;
+
     private final ScheduledExecutorService executorService;
+
     private final boolean applyConnectionTimeout;
 
     private volatile long timeout = -1;
@@ -52,9 +56,9 @@ public class CommandExpiryWriter implements RedisChannelWriter {
     /**
      * Create a new {@link CommandExpiryWriter}.
      *
-     * @param writer must not be {@literal null}.
-     * @param clientOptions must not be {@literal null}.
-     * @param clientResources must not be {@literal null}.
+     * @param writer must not be {@code null}.
+     * @param clientOptions must not be {@code null}.
+     * @param clientResources must not be {@code null}.
      */
     public CommandExpiryWriter(RedisChannelWriter writer, ClientOptions clientOptions, ClientResources clientResources) {
 
@@ -73,8 +77,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
     /**
      * Check whether {@link ClientOptions} is configured to timeout commands.
      *
-     * @param clientOptions must not be {@literal null}.
-     * @return {@literal true} if {@link ClientOptions} are configured to timeout commands.
+     * @param clientOptions must not be {@code null}.
+     * @return {@code true} if {@link ClientOptions} are configured to timeout commands.
      */
     public static boolean isSupported(ClientOptions clientOptions) {
 
@@ -164,8 +168,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         ScheduledFuture<?> schedule = executors.schedule(() -> {
 
             if (!command.isDone()) {
-                command.completeExceptionally(ExceptionFactory.createTimeoutException(Duration.ofNanos(timeUnit
-                        .toNanos(timeout))));
+                command.completeExceptionally(
+                        ExceptionFactory.createTimeoutException(Duration.ofNanos(timeUnit.toNanos(timeout))));
             }
 
         }, timeout, timeUnit);
@@ -179,4 +183,5 @@ public class CommandExpiryWriter implements RedisChannelWriter {
             });
         }
     }
+
 }

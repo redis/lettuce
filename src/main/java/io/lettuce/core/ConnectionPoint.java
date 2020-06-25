@@ -42,4 +42,5 @@ public interface ConnectionPoint {
      * @return path to a Unix Domain Socket
      */
     String getSocket();
+
 }

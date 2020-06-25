@@ -40,13 +40,14 @@ interface RedisCommandsMetadata {
      * Lookup an interface annotation.
      *
      * @param annotationClass the annotation class.
-     * @return the annotation object or {@literal null} if not found.
+     * @return the annotation object or {@code null} if not found.
      */
     <A extends Annotation> A getAnnotation(Class<A> annotationClass);
 
     /**
      * @param annotationClass the annotation class.
-     * @return {@literal true} if the interface is annotated with {@code annotationClass}.
+     * @return {@code true} if the interface is annotated with {@code annotationClass}.
      */
     boolean hasAnnotation(Class<? extends Annotation> annotationClass);
+
 }

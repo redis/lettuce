@@ -30,14 +30,14 @@ public interface ClusterPushHandler {
     /**
      * Add a new {@link RedisClusterPushListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     void addListener(RedisClusterPushListener listener);
 
     /**
      * Remove an existing {@link RedisClusterPushListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     void removeListener(RedisClusterPushListener listener);
 
@@ -47,4 +47,5 @@ public interface ClusterPushHandler {
      * @return the collection of listeners.
      */
     Collection<RedisClusterPushListener> getPushListeners();
+
 }

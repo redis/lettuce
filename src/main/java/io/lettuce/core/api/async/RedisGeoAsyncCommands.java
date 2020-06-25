@@ -50,11 +50,12 @@ public interface RedisGeoAsyncCommands<K, V> {
     RedisFuture<Long> geoadd(K key, Object... lngLatMember);
 
     /**
-     * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a geospatial index.
+     * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a
+     * geospatial index.
      *
      * @param key the key of the geo set
      * @param members the members
-     * @return bulk reply Geohash strings in the order of {@code members}. Returns {@literal null} if a member is not found.
+     * @return bulk reply Geohash strings in the order of {@code members}. Returns {@code null} if a member is not found.
      */
     RedisFuture<List<Value<String>>> geohash(K key, V... members);
 
@@ -81,10 +82,12 @@ public interface RedisGeoAsyncCommands<K, V> {
      * @param geoArgs args to control the result
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}
      */
-    RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
+    RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs);
 
     /**
-     * Perform a {@link #georadius(Object, double, double, double, GeoArgs.Unit, GeoArgs)} query and store the results in a sorted set.
+     * Perform a {@link #georadius(Object, double, double, double, GeoArgs.Unit, GeoArgs)} query and store the results in a
+     * sorted set.
      *
      * @param key the key of the geo set
      * @param longitude the longitude coordinate according to WGS84
@@ -95,7 +98,8 @@ public interface RedisGeoAsyncCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result
      */
-    RedisFuture<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    RedisFuture<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
@@ -123,7 +127,8 @@ public interface RedisGeoAsyncCommands<K, V> {
     RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
 
     /**
-     * Perform a {@link #georadiusbymember(Object, Object, double, GeoArgs.Unit, GeoArgs)} query and store the results in a sorted set.
+     * Perform a {@link #georadiusbymember(Object, Object, double, GeoArgs.Unit, GeoArgs)} query and store the results in a
+     * sorted set.
      *
      * @param key the key of the geo set
      * @param member reference member
@@ -133,7 +138,8 @@ public interface RedisGeoAsyncCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result
      */
-    RedisFuture<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    RedisFuture<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Get geo coordinates for the {@code members}.
@@ -142,12 +148,12 @@ public interface RedisGeoAsyncCommands<K, V> {
      * @param members the members
      *
      * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
-     *         missing elements {@literal null} is returned.
+     *         missing elements {@code null} is returned.
      */
     RedisFuture<List<GeoCoordinates>> geopos(K key, V... members);
 
     /**
-     * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@literal null} is
+     * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
      * returned. Default in meters by, otherwise according to {@code unit}
      *
      * @param key the key of the geo set
@@ -155,8 +161,9 @@ public interface RedisGeoAsyncCommands<K, V> {
      * @param to to member
      * @param unit distance unit
      *
-     * @return distance between points {@code from} and {@code to}. If one or more elements are missing {@literal null} is
+     * @return distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
      *         returned.
      */
     RedisFuture<Double> geodist(K key, V from, V to, GeoArgs.Unit unit);
+
 }

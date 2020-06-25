@@ -116,4 +116,5 @@ public enum CommandType implements ProtocolKeyword {
     public byte[] getBytes() {
         return bytes;
     }
+
 }

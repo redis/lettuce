@@ -31,6 +31,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class LPosArgs implements CompositeArgument {
 
     private Long first;
+
     private Long maxlen;
 
     /**
@@ -73,6 +74,7 @@ public class LPosArgs implements CompositeArgument {
         public static LPosArgs first(long rank) {
             return new LPosArgs().first(rank);
         }
+
     }
 
     /**
@@ -115,4 +117,5 @@ public class LPosArgs implements CompositeArgument {
             args.add(first);
         }
     }
+
 }

@@ -55,7 +55,7 @@ public abstract class CipherCodec {
     /**
      * A {@link RedisCodec} that compresses values from a delegating {@link RedisCodec}.
      *
-     * @param delegate codec used for key-value encoding/decoding, must not be {@literal null}.
+     * @param delegate codec used for key-value encoding/decoding, must not be {@code null}.
      * @param encrypt the {@link CipherSupplier} of encryption {@link Cipher} to use.
      * @param decrypt the {@link CipherSupplier} of decryption {@link Cipher} to use.
      * @param <K> Key type.
@@ -74,7 +74,9 @@ public abstract class CipherCodec {
     private static class CipherCodecWrapper implements RedisCodec<Object, Object>, ToByteBufEncoder<Object, Object> {
 
         private RedisCodec<Object, Object> delegate;
+
         private CipherSupplier encrypt;
+
         private CipherSupplier decrypt;
 
         CipherCodecWrapper(RedisCodec<Object, Object> delegate, CipherSupplier encrypt, CipherSupplier decrypt) {
@@ -202,6 +204,7 @@ public abstract class CipherCodec {
 
             return buffer;
         }
+
     }
 
     /**
@@ -228,6 +231,7 @@ public abstract class CipherCodec {
         default KeyDescriptor encryptionKey() {
             return KeyDescriptor.unnamed();
         }
+
     }
 
     /**
@@ -240,6 +244,7 @@ public abstract class CipherCodec {
         private static final KeyDescriptor UNNAMED = new KeyDescriptor("".getBytes(StandardCharsets.US_ASCII), 0);
 
         private final byte[] name;
+
         private final int version;
 
         private KeyDescriptor(byte[] name, int version) {
@@ -290,7 +295,7 @@ public abstract class CipherCodec {
          *
          * @param name the key name. Must not contain plus or dollar character.
          * @param version the key version.
-         * @param charset must not be {@literal null}.
+         * @param charset must not be {@code null}.
          * @return the {@link KeyDescriptor} for {@code name}.
          */
         public static KeyDescriptor create(String name, int version, Charset charset) {
@@ -354,7 +359,7 @@ public abstract class CipherCodec {
         /**
          * Returns the key {@code name} by decoding name bytes using the given {@link Charset}.
          *
-         * @param charset the {@link Charset} to use to decode the key name, must not be {@literal null}.
+         * @param charset the {@link Charset} to use to decode the key name, must not be {@code null}.
          * @return the key name.
          */
         public String getName(Charset charset) {
@@ -372,5 +377,7 @@ public abstract class CipherCodec {
             target.put((byte) '$').put(this.name).put((byte) '+').put(Integer.toString(this.version).getBytes())
                     .put((byte) '$');
         }
+
     }
+
 }

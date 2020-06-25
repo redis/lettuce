@@ -53,4 +53,5 @@ public class PartitionException extends RedisException {
     public PartitionException(Throwable cause) {
         super(cause);
     }
+
 }

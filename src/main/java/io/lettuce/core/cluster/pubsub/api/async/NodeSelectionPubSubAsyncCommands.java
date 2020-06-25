@@ -56,4 +56,5 @@ public interface NodeSelectionPubSubAsyncCommands<K, V> {
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
      */
     AsyncExecutions<Void> unsubscribe(K... channels);
+
 }

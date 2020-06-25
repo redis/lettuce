@@ -116,4 +116,5 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
      * @return the underlying connection.
      */
     StatefulRedisPubSubConnection<K, V> getStatefulConnection();
+
 }

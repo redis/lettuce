@@ -23,7 +23,7 @@ import java.util.Iterator;
  * <p>
  * {@link MethodInterceptorChain} is created from one or more {@link MethodInterceptor}s and compiled to a forward-only call
  * chain. A chain of {@link MethodInterceptorChain} has a head and tail context. The tail context is no-op and simply returns
- * {@literal null}.
+ * {@code null}.
  * <p>
  * Invocations are represented as {@link PooledMethodInvocation} using thread-local pooling. An invocation lives within the
  * boundaries of a thread therefore it's safe to use thread-local object pooling.
@@ -34,6 +34,7 @@ import java.util.Iterator;
 abstract class MethodInterceptorChain {
 
     private final ThreadLocal<PooledMethodInvocation> pool = ThreadLocal.withInitial(PooledMethodInvocation::new);
+
     final MethodInterceptorChain next;
 
     MethodInterceptorChain(MethodInterceptorChain next) {
@@ -44,7 +45,7 @@ abstract class MethodInterceptorChain {
      * Create a {@link MethodInterceptorChain} from {@link MethodInterceptor}s. Chain elements are created eagerly by
      * stack-walking {@code interceptors}. Make sure the {@link Iterable} does not exhaust the stack size.
      *
-     * @param interceptors must not be {@literal null}.
+     * @param interceptors must not be {@code null}.
      * @return the {@link MethodInterceptorChain} that is an entry point for method invocations.
      */
     public static Head from(Iterable<? extends MethodInterceptor> interceptors) {
@@ -63,9 +64,9 @@ abstract class MethodInterceptorChain {
     /**
      * Invoke a {@link Method} with its {@code args}.
      *
-     * @param target must not be {@literal null}.
-     * @param method must not be {@literal null}.
-     * @param args must not be {@literal null}.
+     * @param target must not be {@code null}.
+     * @param method must not be {@code null}.
+     * @param args must not be {@code null}.
      * @return
      * @throws Throwable
      */
@@ -94,7 +95,7 @@ abstract class MethodInterceptorChain {
     /**
      * Proceed to the next {@link MethodInterceptorChain}.
      *
-     * @param invocation must not be {@literal null}.
+     * @param invocation must not be {@code null}.
      * @return
      * @throws Throwable
      */
@@ -116,6 +117,7 @@ abstract class MethodInterceptorChain {
         Object proceed(MethodInvocation invocation) throws Throwable {
             return interceptor.invoke(invocation);
         }
+
     }
 
     /**
@@ -131,6 +133,7 @@ abstract class MethodInterceptorChain {
         Object proceed(MethodInvocation invocation) throws Throwable {
             return next.proceed(invocation);
         }
+
     }
 
     /**
@@ -148,6 +151,7 @@ abstract class MethodInterceptorChain {
         Object proceed(MethodInvocation invocation) throws Throwable {
             return null;
         }
+
     }
 
     /**
@@ -156,8 +160,11 @@ abstract class MethodInterceptorChain {
     static class PooledMethodInvocation implements MethodInvocation, InvocationTargetProvider {
 
         private Object target;
+
         private Method method;
+
         private Object args[];
+
         private MethodInterceptorChain current;
 
         PooledMethodInvocation() {
@@ -208,5 +215,7 @@ abstract class MethodInterceptorChain {
         public Object[] getArguments() {
             return args;
         }
+
     }
+
 }

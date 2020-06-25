@@ -67,4 +67,5 @@ class RedisClusterClientCdiBean extends AbstractCdiBean<RedisClusterClient> {
     public void destroy(RedisClusterClient instance, CreationalContext<RedisClusterClient> creationalContext) {
         instance.shutdown();
     }
+
 }

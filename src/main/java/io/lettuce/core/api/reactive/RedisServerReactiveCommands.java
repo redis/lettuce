@@ -341,7 +341,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Synchronously save the dataset to disk and then shut down the server.
      *
-     * @param save {@literal true} force save operation
+     * @param save {@code true} force save operation
      */
     Mono<Void> shutdown(boolean save);
 
@@ -400,4 +400,5 @@ public interface RedisServerReactiveCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     Flux<V> time();
+
 }

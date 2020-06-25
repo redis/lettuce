@@ -38,4 +38,5 @@ public interface ConnectionId {
      * @return the remote address
      */
     SocketAddress remoteAddress();
+
 }

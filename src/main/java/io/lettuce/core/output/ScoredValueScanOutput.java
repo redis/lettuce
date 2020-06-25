@@ -54,4 +54,5 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
         output.getValues().add(ScoredValue.fromNullable(number, value));
         value = null;
     }
+
 }

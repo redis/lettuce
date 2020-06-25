@@ -26,4 +26,5 @@ public interface TraceContext {
 
     TraceContext EMPTY = new TraceContext() {
     };
+
 }

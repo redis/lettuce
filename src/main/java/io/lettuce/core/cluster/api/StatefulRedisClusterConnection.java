@@ -138,7 +138,7 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
      *
-     * @param readFrom the read from setting, must not be {@literal null}
+     * @param readFrom the read from setting, must not be {@code null}
      */
     void setReadFrom(ReadFrom readFrom);
 
@@ -162,7 +162,7 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     /**
      * Add a new {@link RedisClusterPushListener listener} to consume push messages.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      * @since 6.0
      */
     void addListener(RedisClusterPushListener listener);
@@ -170,8 +170,9 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     /**
      * Remove an existing {@link RedisClusterPushListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      * @since 6.0
      */
     void removeListener(RedisClusterPushListener listener);
+
 }

@@ -51,15 +51,22 @@ import io.lettuce.core.protocol.RedisCommand;
 class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final StatefulConnection<K, V> connection;
+
     private final TimeoutProvider timeoutProvider;
+
     private final Class<?> asyncCommandsInterface;
+
     private final Class<?> nodeSelectionInterface;
+
     private final Class<?> nodeSelectionCommandsInterface;
+
     private final Object asyncApi;
 
     private final Map<Method, Method> apiMethodCache = new ConcurrentHashMap<>(RedisClusterCommands.class.getMethods().length,
             1);
+
     private final Map<Method, Method> connectionMethodCache = new ConcurrentHashMap<>(5, 1);
+
     private final Map<Method, MethodHandle> methodHandleCache = new ConcurrentHashMap<>(5, 1);
 
     ClusterFutureSyncInvocationHandler(StatefulConnection<K, V> connection, Class<?> asyncCommandsInterface,
@@ -204,4 +211,5 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
             throw new IllegalArgumentException(e);
         }
     }
+
 }

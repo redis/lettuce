@@ -40,17 +40,29 @@ import io.netty.util.Timer;
 public class ConnectionBuilder {
 
     private Mono<SocketAddress> socketAddressSupplier;
+
     private ConnectionEvents connectionEvents;
+
     private RedisChannelHandler<?, ?> connection;
+
     private Endpoint endpoint;
+
     private Supplier<CommandHandler> commandHandlerSupplier;
+
     private ChannelGroup channelGroup;
+
     private Bootstrap bootstrap;
+
     private ClientOptions clientOptions;
+
     private Duration timeout;
+
     private ClientResources clientResources;
+
     private ConnectionInitializer connectionInitializer;
+
     private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
+
     private ConnectionWatchdog connectionWatchdog;
 
     public static ConnectionBuilder connectionBuilder() {
@@ -107,9 +119,8 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
 
         ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
-                clientResources.timer(),
-                clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener, connection,
-                clientResources.eventBus());
+                clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
+                connection, clientResources.eventBus());
 
         endpoint.registerConnectionWatchdog(watchdog);
 
@@ -215,6 +226,7 @@ public class ConnectionBuilder {
     static class PlainChannelInitializer extends ChannelInitializer<Channel> {
 
         private final Supplier<List<ChannelHandler>> handlers;
+
         private final ClientResources clientResources;
 
         PlainChannelInitializer(Supplier<List<ChannelHandler>> handlers, ClientResources clientResources) {
@@ -235,5 +247,7 @@ public class ConnectionBuilder {
 
             clientResources.nettyCustomizer().afterChannelInitialized(channel);
         }
+
     }
+
 }

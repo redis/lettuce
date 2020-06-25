@@ -27,7 +27,9 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 @SuppressWarnings("serial")
 public class RedisReplicaInstance implements RedisInstance, Serializable {
+
     private ReplicationPartner upstream;
+
     private State state;
 
     public RedisReplicaInstance() {
@@ -36,8 +38,8 @@ public class RedisReplicaInstance implements RedisInstance, Serializable {
     /**
      * Constructs a {@link RedisReplicaInstance}
      *
-     * @param upstream master for the replication, must not be {@literal null}
-     * @param state replica state, must not be {@literal null}
+     * @param upstream master for the replication, must not be {@code null}
+     * @param state replica state, must not be {@code null}
      */
     RedisReplicaInstance(ReplicationPartner upstream, State state) {
         LettuceAssert.notNull(upstream, "Upstream must not be null");
@@ -114,4 +116,5 @@ public class RedisReplicaInstance implements RedisInstance, Serializable {
         sb.append(']');
         return sb.toString();
     }
+
 }

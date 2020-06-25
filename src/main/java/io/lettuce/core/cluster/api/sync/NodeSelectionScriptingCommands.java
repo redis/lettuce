@@ -143,4 +143,5 @@ public interface NodeSelectionScriptingCommands<K, V> {
      * @since 6.0
      */
     Executions<String> scriptLoad(byte[] script);
+
 }

@@ -132,17 +132,29 @@ import io.lettuce.core.internal.LettuceSets;
 public class RedisURI implements Serializable, ConnectionPoint {
 
     public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";
+
     public static final String URI_SCHEME_REDIS_SENTINEL_SECURE = "rediss-sentinel";
+
     public static final String URI_SCHEME_REDIS = "redis";
+
     public static final String URI_SCHEME_REDIS_SECURE = "rediss";
+
     public static final String URI_SCHEME_REDIS_SECURE_ALT = "redis+ssl";
+
     public static final String URI_SCHEME_REDIS_TLS_ALT = "redis+tls";
+
     public static final String URI_SCHEME_REDIS_SOCKET = "redis-socket";
+
     public static final String URI_SCHEME_REDIS_SOCKET_ALT = "redis+socket";
+
     public static final String PARAMETER_NAME_TIMEOUT = "timeout";
+
     public static final String PARAMETER_NAME_DATABASE = "database";
+
     public static final String PARAMETER_NAME_DATABASE_ALT = "db";
+
     public static final String PARAMETER_NAME_SENTINEL_MASTER_ID = "sentinelMasterId";
+
     public static final String PARAMETER_NAME_CLIENT_NAME = "clientName";
 
     public static final Map<String, LongFunction<Duration>> CONVERTER_MAP;
@@ -173,20 +185,33 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Default timeout: 60 sec
      */
     public static final long DEFAULT_TIMEOUT = 60;
+
     public static final Duration DEFAULT_TIMEOUT_DURATION = Duration.ofSeconds(DEFAULT_TIMEOUT);
 
     private String host;
+
     private String socket;
+
     private String sentinelMasterId;
+
     private int port;
+
     private int database;
+
     private String clientName;
+
     private String username;
+
     private char[] password;
+
     private boolean ssl = false;
+
     private boolean verifyPeer = true;
+
     private boolean startTls = false;
+
     private Duration timeout = DEFAULT_TIMEOUT_DURATION;
+
     private final List<RedisURI> sentinels = new ArrayList<>();
 
     /**
@@ -344,7 +369,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the username.
      *
-     * @param username the username, must not be {@literal null}.
+     * @param username the username, must not be {@code null}.
      * @since 6.0
      */
     public void setUsername(String username) {
@@ -363,7 +388,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the password. Use empty string to skip authentication.
      *
-     * @param password the password, must not be {@literal null}.
+     * @param password the password, must not be {@code null}.
      * @deprecated since 6.0. Use {@link #setPassword(CharSequence)} or {@link #setPassword(char[])} avoid String caching.
      */
     @Deprecated
@@ -374,7 +399,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the password. Use empty string to skip authentication.
      *
-     * @param password the password, must not be {@literal null}.
+     * @param password the password, must not be {@code null}.
      * @since 5.2
      */
     public void setPassword(CharSequence password) {
@@ -386,7 +411,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the password. Use empty char array to skip authentication.
      *
-     * @param password the password, must not be {@literal null}.
+     * @param password the password, must not be {@code null}.
      * @since 4.4
      */
     public void setPassword(char[] password) {
@@ -461,9 +486,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Returns {@literal true} if SSL mode is enabled.
+     * Returns {@code true} if SSL mode is enabled.
      *
-     * @return {@literal true} if SSL mode is enabled.
+     * @return {@code true} if SSL mode is enabled.
      */
     public boolean isSsl() {
         return ssl;
@@ -482,7 +507,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets whether to verify peers when using {@link #isSsl() SSL}.
      *
-     * @return {@literal true} to verify peers when using {@link #isSsl() SSL}.
+     * @return {@code true} to verify peers when using {@link #isSsl() SSL}.
      */
     public boolean isVerifyPeer() {
         return verifyPeer;
@@ -492,7 +517,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Sets whether to verify peers when using {@link #isSsl() SSL}. Sets peer verification also for already configured Redis
      * Sentinel nodes.
      *
-     * @param verifyPeer {@literal true} to verify peers when using {@link #isSsl() SSL}.
+     * @param verifyPeer {@code true} to verify peers when using {@link #isSsl() SSL}.
      */
     public void setVerifyPeer(boolean verifyPeer) {
         this.verifyPeer = verifyPeer;
@@ -500,9 +525,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Returns {@literal true} if StartTLS is enabled.
+     * Returns {@code true} if StartTLS is enabled.
      *
-     * @return {@literal true} if StartTLS is enabled.
+     * @return {@code true} if StartTLS is enabled.
      */
     public boolean isStartTls() {
         return startTls;
@@ -511,7 +536,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Returns whether StartTLS is enabled. Sets StartTLS also for already configured Redis Sentinel nodes.
      *
-     * @param startTls {@literal true} if StartTLS is enabled.
+     * @param startTls {@code true} if StartTLS is enabled.
      */
     public void setStartTls(boolean startTls) {
         this.startTls = startTls;
@@ -983,18 +1008,31 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public static class Builder {
 
         private String host;
+
         private String socket;
+
         private String sentinelMasterId;
+
         private int port = DEFAULT_REDIS_PORT;
+
         private int database;
+
         private String clientName;
+
         private String username;
+
         private char[] password;
+
         private char[] sentinelPassword;
+
         private boolean ssl = false;
+
         private boolean verifyPeer = true;
+
         private boolean startTls = false;
+
         private Duration timeout = DEFAULT_TIMEOUT_DURATION;
+
         private final List<RedisURI> sentinels = new ArrayList<>();
 
         private Builder() {
@@ -1213,7 +1251,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         /**
          * Adds ssl information to the builder. Sets SSL also for already configured Redis Sentinel nodes.
          *
-         * @param ssl {@literal true} if use SSL
+         * @param ssl {@code true} if use SSL
          * @return the builder
          */
         public Builder withSsl(boolean ssl) {
@@ -1226,7 +1264,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         /**
          * Enables/disables StartTLS when using SSL. Sets StartTLS also for already configured Redis Sentinel nodes.
          *
-         * @param startTls {@literal true} if use StartTLS
+         * @param startTls {@code true} if use StartTLS
          * @return the builder
          */
         public Builder withStartTls(boolean startTls) {
@@ -1239,7 +1277,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         /**
          * Enables/disables peer verification. Sets peer verification also for already configured Redis Sentinel nodes.
          *
-         * @param verifyPeer {@literal true} to verify hosts when using SSL
+         * @param verifyPeer {@code true} to verify hosts when using SSL
          * @return the builder
          */
         public Builder withVerifyPeer(boolean verifyPeer) {
@@ -1345,7 +1383,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         /**
          * Configures a timeout.
          *
-         * @param timeout must not be {@literal null} or negative.
+         * @param timeout must not be {@code null} or negative.
          * @return the builder
          */
         public Builder withTimeout(Duration timeout) {
@@ -1360,7 +1398,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         /**
          * Configures a sentinel master Id.
          *
-         * @param sentinelMasterId sentinel master id, must not be empty or {@literal null}
+         * @param sentinelMasterId sentinel master id, must not be empty or {@code null}
          * @return the builder
          */
         public Builder withSentinelMasterId(String sentinelMasterId) {
@@ -1412,10 +1450,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             return redisURI;
         }
+
     }
 
     /** Return true for valid port numbers. */
     private static boolean isValidPort(int port) {
         return port >= 0 && port <= 65535;
     }
+
 }

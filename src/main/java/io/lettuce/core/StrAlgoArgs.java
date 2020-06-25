@@ -33,11 +33,17 @@ import io.lettuce.core.protocol.CommandArgs;
 public class StrAlgoArgs implements CompositeArgument {
 
     private boolean justLen;
+
     private int minMatchLen;
+
     private boolean withMatchLen;
+
     private boolean withIdx;
+
     private By by = By.STRINGS;
+
     private String[] keys;
+
     private Charset charset = StandardCharsets.UTF_8;
 
     /**
@@ -77,7 +83,9 @@ public class StrAlgoArgs implements CompositeArgument {
         public static StrAlgoArgs strings(Charset charset, String... strings) {
             return new StrAlgoArgs().by(By.STRINGS, strings).charset(charset);
         }
+
     }
+
     /**
      * restrict the list of matches to the ones of a given minimal length.
      *
@@ -170,4 +178,5 @@ public class StrAlgoArgs implements CompositeArgument {
             args.add("WITHMATCHLEN");
         }
     }
+
 }

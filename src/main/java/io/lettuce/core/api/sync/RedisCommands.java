@@ -72,4 +72,5 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisClust
      * @return the underlying connection.
      */
     StatefulRedisConnection<K, V> getStatefulConnection();
+
 }

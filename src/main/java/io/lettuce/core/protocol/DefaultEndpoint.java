@@ -52,7 +52,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandler {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEndpoint.class);
+
     private static final AtomicLong ENDPOINT_COUNTER = new AtomicLong();
+
     private static final AtomicIntegerFieldUpdater<DefaultEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater
             .newUpdater(DefaultEndpoint.class, "queueSize");
 
@@ -60,29 +62,43 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             .newUpdater(DefaultEndpoint.class, "status");
 
     private static final int ST_OPEN = 0;
+
     private static final int ST_CLOSED = 1;
 
     protected volatile Channel channel;
 
     private final Reliability reliability;
+
     private final ClientOptions clientOptions;
+
     private final ClientResources clientResources;
+
     private final Queue<RedisCommand<?, ?, ?>> disconnectedBuffer;
+
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
+
     private final boolean boundedQueues;
+
     private final boolean rejectCommandsWhileDisconnected;
 
     private final long endpointId = ENDPOINT_COUNTER.incrementAndGet();
+
     private final List<PushListener> pushListeners = new CopyOnWriteArrayList<>();
+
     private final SharedLock sharedLock = new SharedLock();
+
     private final boolean debugEnabled = logger.isDebugEnabled();
+
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
     private String logPrefix;
+
     private boolean autoFlushCommands = true;
+
     private boolean inActivation = false;
 
     private ConnectionWatchdog connectionWatchdog;
+
     private ConnectionFacade connectionFacade;
 
     private volatile Throwable connectionError;
@@ -98,8 +114,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     /**
      * Create a new {@link DefaultEndpoint}.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}.
-     * @param clientResources client resources for this connection, must not be {@literal null}.
+     * @param clientOptions client options for this connection, must not be {@code null}.
+     * @param clientResources client resources for this connection, must not be {@code null}.
      */
     public DefaultEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
 
@@ -789,7 +805,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     static class ListenerSupport {
 
         Collection<? extends RedisCommand<?, ?, ?>> sentCommands;
+
         RedisCommand<?, ?, ?> sentCommand;
+
         DefaultEndpoint endpoint;
 
         void dequeue() {
@@ -811,15 +829,18 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 }
             }
         }
+
     }
 
     static class AtMostOnceWriteListener extends ListenerSupport implements ChannelFutureListener {
 
         private static final Recycler<AtMostOnceWriteListener> RECYCLER = new Recycler<AtMostOnceWriteListener>() {
+
             @Override
             protected AtMostOnceWriteListener newObject(Handle<AtMostOnceWriteListener> handle) {
                 return new AtMostOnceWriteListener(handle);
             }
+
         };
 
         private final Recycler.Handle<AtMostOnceWriteListener> handle;
@@ -872,6 +893,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
             handle.recycle(this);
         }
+
     }
 
     /**
@@ -880,10 +902,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     static class RetryListener extends ListenerSupport implements GenericFutureListener<Future<Void>> {
 
         private static final Recycler<RetryListener> RECYCLER = new Recycler<RetryListener>() {
+
             @Override
             protected RetryListener newObject(Handle<RetryListener> handle) {
                 return new RetryListener(handle);
             }
+
         };
 
         private final Recycler.Handle<RetryListener> handle;
@@ -1028,6 +1052,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
             handle.recycle(this);
         }
+
     }
 
     private enum Reliability {
@@ -1056,5 +1081,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
             return false;
         }
+
     }
+
 }

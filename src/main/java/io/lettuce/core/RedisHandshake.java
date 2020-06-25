@@ -42,7 +42,9 @@ class RedisHandshake implements ConnectionInitializer {
     private final RedisCommandBuilder<String, String> commandBuilder = new RedisCommandBuilder<>(StringCodec.UTF8);
 
     private final ProtocolVersion requestedProtocolVersion;
+
     private final boolean pingOnConnect;
+
     private final ConnectionState connectionState;
 
     private volatile ProtocolVersion negotiatedProtocolVersion;
@@ -55,7 +57,7 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     /**
-     * @return the requested {@link ProtocolVersion}. May be {@literal null} if not configured.
+     * @return the requested {@link ProtocolVersion}. May be {@code null} if not configured.
      */
     public ProtocolVersion getRequestedProtocolVersion() {
         return requestedProtocolVersion;
@@ -228,4 +230,5 @@ class RedisHandshake implements ConnectionInitializer {
     private static boolean isUnknownCommand(String error) {
         return LettuceStrings.isNotEmpty(error) && error.startsWith("ERR unknown command");
     }
+
 }

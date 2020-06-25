@@ -37,4 +37,5 @@ public class MapScanCursor<K, V> extends ScanCursor {
     public Map<K, V> getMap() {
         return map;
     }
+
 }

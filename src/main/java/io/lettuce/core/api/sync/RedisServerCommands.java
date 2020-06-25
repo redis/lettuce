@@ -339,7 +339,7 @@ public interface RedisServerCommands<K, V> {
     /**
      * Synchronously save the dataset to disk and then shut down the server.
      *
-     * @param save {@literal true} force save operation
+     * @param save {@code true} force save operation
      */
     void shutdown(boolean save);
 
@@ -398,4 +398,5 @@ public interface RedisServerCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     List<V> time();
+
 }

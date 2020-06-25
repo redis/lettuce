@@ -35,7 +35,7 @@ public interface StatefulRedisMasterSlaveConnection<K, V> extends StatefulRedisM
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
      *
-     * @param readFrom the read from setting, must not be {@literal null}
+     * @param readFrom the read from setting, must not be {@code null}
      */
     void setReadFrom(ReadFrom readFrom);
 
@@ -45,4 +45,5 @@ public interface StatefulRedisMasterSlaveConnection<K, V> extends StatefulRedisM
      * @return the read from setting
      */
     ReadFrom getReadFrom();
+
 }

@@ -64,16 +64,20 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     private final boolean traceEnabled = LOG.isTraceEnabled();
 
     private final Supplier<? extends RedisCommand<K, V, T>> commandSupplier;
+
     private final AtomicReference<RedisCommand<K, V, T>> ref;
+
     private final StatefulConnection<K, V> connection;
+
     private final boolean dissolve;
+
     private final Executor executor;
 
     /**
      * Creates a new {@link RedisPublisher} for a static command.
      *
-     * @param staticCommand static command, must not be {@literal null}.
-     * @param connection the connection, must not be {@literal null}.
+     * @param staticCommand static command, must not be {@code null}.
+     * @param connection the connection, must not be {@code null}.
      * @param dissolve dissolve collections into particular elements.
      * @param publishOn executor to use for publishOn signals.
      */
@@ -85,8 +89,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     /**
      * Creates a new {@link RedisPublisher} for a command supplier.
      *
-     * @param commandSupplier command supplier, must not be {@literal null}.
-     * @param connection the connection, must not be {@literal null}.
+     * @param commandSupplier command supplier, must not be {@code null}.
+     * @param connection the connection, must not be {@code null}.
      * @param dissolve dissolve collections into particular elements.
      * @param publishOn executor to use for publishOn signals.
      */
@@ -138,6 +142,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisPublisher.class);
 
         static final int ST_PROGRESS = 0;
+
         static final int ST_COMPLETED = 1;
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -153,19 +158,26 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 .newUpdater(RedisSubscription.class, CommandDispatch.class, "commandDispatch");
 
         private final SubscriptionCommand<?, ?, T> subscriptionCommand;
+
         private final boolean traceEnabled = LOG.isTraceEnabled();
 
         final Queue<T> data = Operators.newQueue();
+
         final StatefulConnection<?, ?> connection;
+
         final RedisCommand<?, ?, T> command;
+
         final boolean dissolve;
+
         private final Executor executor;
 
         // accessed via AtomicLongFieldUpdater
         @SuppressWarnings("unused")
         volatile long demand;
+
         @SuppressWarnings("unused")
         volatile State state = State.UNSUBSCRIBED;
+
         @SuppressWarnings("unused")
         volatile CommandDispatch commandDispatch = CommandDispatch.UNDISPATCHED;
 
@@ -202,7 +214,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         /**
          * Subscription procedure called by a {@link Publisher}
          *
-         * @param subscriber the subscriber, must not be {@literal null}.
+         * @param subscriber the subscriber, must not be {@code null}.
          */
         void subscribe(Subscriber<? super T> subscriber) {
 
@@ -348,7 +360,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         /**
          * Reads data from the input, if possible.
          *
-         * @return the data that was read or {@literal null}
+         * @return the data that was read or {@code null}
          */
         protected T read() {
             return data.poll();
@@ -423,6 +435,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         RedisPublisher.State state() {
             return STATE.get(this);
         }
+
     }
 
     /**
@@ -453,11 +466,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     redisSubscription.dispatchCommand();
                 }
             }
+
         },
         DISPATCHED;
 
         void dispatch(RedisSubscription<?> redisSubscription) {
         }
+
     }
 
     /**
@@ -486,6 +501,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
          * to {@link #NO_DEMAND}.
          */
         UNSUBSCRIBED {
+
             @SuppressWarnings("unchecked")
             @Override
             void subscribe(RedisSubscription<?> subscription, Subscriber<?> subscriber) {
@@ -500,6 +516,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     throw new IllegalStateException(toString());
                 }
             }
+
         },
 
         /**
@@ -508,6 +525,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
          * data available for reading.
          */
         NO_DEMAND {
+
             @Override
             void request(RedisSubscription<?> subscription, long n) {
 
@@ -529,6 +547,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     onError(subscription, Exceptions.nullOrNegativeRequestException(n));
                 }
             }
+
         },
 
         /**
@@ -536,6 +555,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
          * available data. The state will be changed to {@link #NO_DEMAND} if there is no demand.
          */
         DEMAND {
+
             @Override
             void onDataAvailable(RedisSubscription<?> subscription) {
 
@@ -566,7 +586,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             /**
              * @param subscription
-             * @return {@literal true} if the {@code read()} call was able to perform a read and whether this method should be
+             * @return {@code true} if the {@code read()} call was able to perform a read and whether this method should be
              *         called again to emit remaining data.
              */
             private boolean read(RedisSubscription<?> subscription) {
@@ -598,13 +618,16 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                 return false;
             }
+
         },
 
         READING {
+
             @Override
             void request(RedisSubscription<?> subscription, long n) {
                 DEMAND.request(subscription, n);
             }
+
         },
 
         /**
@@ -631,6 +654,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             void onError(RedisSubscription<?> subscription, Throwable t) {
                 // ignore
             }
+
         };
 
         void subscribe(RedisSubscription<?> subscription, Subscriber<?> subscriber) {
@@ -690,6 +714,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                 }
             }
         }
+
     }
 
     /**
@@ -702,8 +727,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     private static class SubscriptionCommand<K, V, T> extends CommandWrapper<K, V, T> implements DemandAware.Sink {
 
         private final boolean dissolve;
+
         private final RedisSubscription<T> subscription;
+
         private volatile boolean completed = false;
+
         private volatile DemandAware.Source source;
 
         public SubscriptionCommand(RedisCommand<K, V, T> command, RedisSubscription<T> subscription, boolean dissolve) {
@@ -800,6 +828,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         private void onError(Throwable throwable) {
             subscription.onError(throwable);
         }
+
     }
 
     /**
@@ -810,6 +839,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     private static class CompositeSubscriber<T> extends StreamingOutput.Subscriber<T> {
 
         private final StreamingOutput.Subscriber<T> first;
+
         private final StreamingOutput.Subscriber<T> second;
 
         public CompositeSubscriber(StreamingOutput.Subscriber<T> first, StreamingOutput.Subscriber<T> second) {
@@ -828,6 +858,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
             first.onNext(outputTarget, t);
             second.onNext(outputTarget, t);
         }
+
     }
 
     /**
@@ -856,6 +887,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             return new PublishOnSubscriber(delegate, executor);
         }
+
     }
 
     /**
@@ -895,6 +927,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         public void onComplete() {
             delegate.onComplete();
         }
+
     }
 
     /**
@@ -905,6 +938,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     static class PublishOnSubscriber<T> implements RedisSubscriber<T> {
 
         private final CoreSubscriber<T> delegate;
+
         private final Executor executor;
 
         public PublishOnSubscriber(Subscriber<T> delegate, Executor executor) {
@@ -936,6 +970,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         public void onComplete() {
             executor.execute(OnComplete.newInstance(delegate));
         }
+
     }
 
     /**
@@ -944,14 +979,18 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     static class OnNext implements Runnable {
 
         private static final Recycler<OnNext> RECYCLER = new Recycler<OnNext>() {
+
             @Override
             protected OnNext newObject(Handle<OnNext> handle) {
                 return new OnNext(handle);
             }
+
         };
 
         private final Recycler.Handle<OnNext> handle;
+
         private Object signal;
+
         private Subscriber<Object> subscriber;
 
         OnNext(Recycler.Handle<OnNext> handle) {
@@ -990,6 +1029,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             handle.recycle(this);
         }
+
     }
 
     /**
@@ -998,14 +1038,18 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
     static class OnComplete implements Runnable {
 
         private static final Recycler<OnComplete> RECYCLER = new Recycler<OnComplete>() {
+
             @Override
             protected OnComplete newObject(Handle<OnComplete> handle) {
                 return new OnComplete(handle);
             }
+
         };
 
         private final Recycler.Handle<OnComplete> handle;
+
         private Throwable signal;
+
         private Subscriber<?> subscriber;
 
         OnComplete(Recycler.Handle<OnComplete> handle) {
@@ -1064,5 +1108,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             handle.recycle(this);
         }
+
     }
+
 }

@@ -31,10 +31,11 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Mark Paluch
  * @since 5.0
  */
-public class StringValueListOutput<K, V> extends CommandOutput<K, V, List<Value<String>>> implements
-        StreamingOutput<Value<String>> {
+public class StringValueListOutput<K, V> extends CommandOutput<K, V, List<Value<String>>>
+        implements StreamingOutput<Value<String>> {
 
     private boolean initialized;
+
     private Subscriber<Value<String>> subscriber;
 
     public StringValueListOutput(RedisCodec<K, V> codec) {
@@ -66,4 +67,5 @@ public class StringValueListOutput<K, V> extends CommandOutput<K, V, List<Value<
     public Subscriber<Value<String>> getSubscriber() {
         return subscriber;
     }
+
 }

@@ -63,5 +63,7 @@ public interface StreamingOutput<T> {
         public void onNext(Collection<T> outputTarget, T t) {
             onNext(t);
         }
+
     }
+
 }

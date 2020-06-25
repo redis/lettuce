@@ -54,7 +54,9 @@ class Operators {
      * as a {@link BiFunction BiFunction&lt;Throwable, Object, Throwable&gt;}.
      */
     private static final String KEY_ON_OPERATOR_ERROR = "reactor.onOperatorError.local";
+
     private static final Field onOperatorErrorHook = findOnOperatorErrorHookField();
+
     private static final Supplier<Queue<Object>> queueSupplier = getQueueSupplier();
 
     private static Field findOnOperatorErrorHookField() {
@@ -114,7 +116,7 @@ class Operators {
      * @param updater current field updater
      * @param instance current instance to update
      * @param toAdd delta to add
-     * @return {@literal true} if the operation succeeded.
+     * @return {@code true} if the operation succeeded.
      * @since 5.0.1
      */
     public static <T> boolean request(AtomicLongFieldUpdater<T> updater, T instance, long toAdd) {
@@ -250,4 +252,5 @@ class Operators {
             return null;
         }
     }
+
 }

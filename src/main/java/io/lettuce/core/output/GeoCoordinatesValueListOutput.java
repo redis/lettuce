@@ -31,11 +31,13 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, List<Value<GeoCoordinates>>> implements
-        StreamingOutput<Value<GeoCoordinates>> {
+public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, List<Value<GeoCoordinates>>>
+        implements StreamingOutput<Value<GeoCoordinates>> {
 
     private Double x;
+
     private boolean initialized;
+
     private Subscriber<Value<GeoCoordinates>> subscriber;
 
     public GeoCoordinatesValueListOutput(RedisCodec<K, V> codec) {
@@ -90,4 +92,5 @@ public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, Lis
     public Subscriber<Value<GeoCoordinates>> getSubscriber() {
         return subscriber;
     }
+
 }

@@ -32,4 +32,5 @@ public class UnknownPartitionException extends PartitionException {
     public UnknownPartitionException(String msg) {
         super(msg);
     }
+
 }

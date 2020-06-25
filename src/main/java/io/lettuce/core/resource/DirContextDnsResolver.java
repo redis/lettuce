@@ -52,21 +52,29 @@ import io.lettuce.core.internal.LettuceAssert;
 public class DirContextDnsResolver implements DnsResolver, Closeable {
 
     static final String PREFER_IPV4_KEY = "java.net.preferIPv4Stack";
+
     static final String PREFER_IPV6_KEY = "java.net.preferIPv6Stack";
 
     private static final int IPV4_PART_COUNT = 4;
+
     private static final int IPV6_PART_COUNT = 8;
 
     private static final String CTX_FACTORY_NAME = "com.sun.jndi.dns.DnsContextFactory";
+
     private static final String INITIAL_TIMEOUT = "com.sun.jndi.dns.timeout.initial";
+
     private static final String LOOKUP_RETRIES = "com.sun.jndi.dns.timeout.retries";
 
     private static final String DEFAULT_INITIAL_TIMEOUT = "1000";
+
     private static final String DEFAULT_RETRIES = "4";
 
     private final boolean preferIpv4;
+
     private final boolean preferIpv6;
+
     private final Properties properties;
+
     private final InitialDirContext context;
 
     /**
@@ -79,7 +87,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
     /**
      * Creates a new {@link DirContextDnsResolver} using a collection of DNS servers.
      *
-     * @param dnsServer must not be {@literal null} and not empty.
+     * @param dnsServer must not be {@code null} and not empty.
      */
     public DirContextDnsResolver(String dnsServer) {
         this(Collections.singleton(dnsServer));
@@ -88,7 +96,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
     /**
      * Creates a new {@link DirContextDnsResolver} using a collection of DNS servers.
      *
-     * @param dnsServers must not be {@literal null} and not empty.
+     * @param dnsServers must not be {@code null} and not empty.
      */
     public DirContextDnsResolver(Iterable<String> dnsServers) {
         this(getProperties(dnsServers), new StackPreference());
@@ -99,7 +107,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
      *
      * @param preferIpv4 flag to prefer IPv4 over IPv6 address resolution.
      * @param preferIpv6 flag to prefer IPv6 over IPv4 address resolution.
-     * @param properties custom properties for creating the context, must not be {@literal null}.
+     * @param properties custom properties for creating the context, must not be {@code null}.
      */
     public DirContextDnsResolver(boolean preferIpv4, boolean preferIpv6, Properties properties) {
 
@@ -151,7 +159,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
     /**
      * Perform hostname to address resolution.
      *
-     * @param host the hostname, must not be empty or {@literal null}.
+     * @param host the hostname, must not be empty or {@code null}.
      * @return array of one or more {@link InetAddress addresses}
      * @throws UnknownHostException
      */
@@ -298,6 +306,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
     private static final class StackPreference {
 
         final boolean preferIpv4;
+
         final boolean preferIpv6;
 
         public StackPreference() {
@@ -335,6 +344,7 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
             this.preferIpv4 = preferIpv4;
             this.preferIpv6 = preferIpv6;
         }
+
     }
 
     private static byte[] ipStringToBytes(String ipString) {
@@ -479,4 +489,5 @@ public class DirContextDnsResolver implements DnsResolver, Closeable {
         }
         return (short) hextet;
     }
+
 }

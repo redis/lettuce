@@ -37,4 +37,5 @@ enum DefaultNettyCustomizer implements NettyCustomizer {
     public void afterChannelInitialized(Channel channel) {
         // no-op
     }
+
 }

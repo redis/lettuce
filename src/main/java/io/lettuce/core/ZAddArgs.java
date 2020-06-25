@@ -28,7 +28,9 @@ import io.lettuce.core.protocol.CommandArgs;
 public class ZAddArgs implements CompositeArgument {
 
     private boolean nx = false;
+
     private boolean xx = false;
+
     private boolean ch = false;
 
     /**
@@ -71,6 +73,7 @@ public class ZAddArgs implements CompositeArgument {
         public static ZAddArgs ch() {
             return new ZAddArgs().ch();
         }
+
     }
 
     /**
@@ -120,4 +123,5 @@ public class ZAddArgs implements CompositeArgument {
             args.add("CH");
         }
     }
+
 }

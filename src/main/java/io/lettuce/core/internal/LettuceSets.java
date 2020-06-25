@@ -40,7 +40,7 @@ public final class LettuceSets {
     /**
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the set should contain, must not be {@literal null}.
+     * @param elements the elements that the set should contain, must not be {@code null}.
      * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
@@ -55,7 +55,7 @@ public final class LettuceSets {
     /**
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the set should contain, must not be {@literal null}.
+     * @param elements the elements that the set should contain, must not be {@code null}.
      * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
@@ -77,7 +77,7 @@ public final class LettuceSets {
     /**
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the set should contain, must not be {@literal null}.
+     * @param elements the elements that the set should contain, must not be {@code null}.
      * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
@@ -94,7 +94,7 @@ public final class LettuceSets {
     /**
      * Creates a new unmodifiable {@code HashSet} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the set should contain, must not be {@literal null}.
+     * @param elements the elements that the set should contain, must not be {@code null}.
      * @param <T> the element type
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
@@ -102,4 +102,5 @@ public final class LettuceSets {
     public static <T> Set<T> unmodifiableSet(T... elements) {
         return Collections.unmodifiableSet(newHashSet(elements));
     }
+
 }

@@ -36,7 +36,7 @@ class RoundRobin<V> {
      * vice versa.
      *
      * @param leader the leader collection containing source elements for this {@link RoundRobin}.
-     * @return {@literal true} if this {@link RoundRobin} is consistent with the leader {@link Collection}.
+     * @return {@code true} if this {@link RoundRobin} is consistent with the leader {@link Collection}.
      */
     public boolean isConsistent(Collection<? extends V> leader) {
 
@@ -82,4 +82,5 @@ class RoundRobin<V> {
 
         return this.offset = collection.iterator().next();
     }
+
 }

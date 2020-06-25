@@ -40,7 +40,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param keys the keys
      * @return KeyValue&lt;K,V&gt; array-reply specifically:
      *
-     *         A {@literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
+     *         A {@code null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
      *         with the first element being the name of the key where an element was popped and the second element being the
      *         value of the popped element.
      */
@@ -53,7 +53,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param keys the keys
      * @return KeyValue&lt;K,V&gt; array-reply specifically:
      *
-     *         A {@literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
+     *         A {@code null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
      *         with the first element being the name of the key where an element was popped and the second element being the
      *         value of the popped element.
      */
@@ -75,7 +75,7 @@ public interface RedisListReactiveCommands<K, V> {
      *
      * @param key the key
      * @param index the index type: long
-     * @return V bulk-string-reply the requested element, or {@literal null} when {@code index} is out of range.
+     * @return V bulk-string-reply the requested element, or {@code null} when {@code index} is out of range.
      */
     Mono<V> lindex(K key, long index);
 
@@ -103,14 +103,14 @@ public interface RedisListReactiveCommands<K, V> {
      * Remove and get the first element in a list.
      *
      * @param key the key
-     * @return V bulk-string-reply the value of the first element, or {@literal null} when {@code key} does not exist.
+     * @return V bulk-string-reply the value of the first element, or {@code null} when {@code key} does not exist.
      */
     Mono<V> lpop(K key);
 
     /**
      * Return the index of matching elements inside a Redis list. By default, when no options are given, it will scan the list
      * from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
-     * in the list) is returned. Otherwise, if no match is found, {@literal null} is returned. The returned elements indexes are
+     * in the list) is returned. Otherwise, if no match is found, {@code null} is returned. The returned elements indexes are
      * always referring to what {@link #lindex(java.lang.Object, long)} would return. So first element from head is {@code 0},
      * and so forth.
      *
@@ -124,7 +124,7 @@ public interface RedisListReactiveCommands<K, V> {
     /**
      * Return the index of matching elements inside a Redis list. By default, when no options are given, it will scan the list
      * from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
-     * in the list) is returned. Otherwise, if no match is found, {@literal null} is returned. The returned elements indexes are
+     * in the list) is returned. Otherwise, if no match is found, {@code null} is returned. The returned elements indexes are
      * always referring to what {@link #lindex(java.lang.Object, long)} would return. So first element from head is {@code 0},
      * and so forth.
      *
@@ -238,7 +238,7 @@ public interface RedisListReactiveCommands<K, V> {
      * Remove and get the last element in a list.
      *
      * @param key the key
-     * @return V bulk-string-reply the value of the last element, or {@literal null} when {@code key} does not exist.
+     * @return V bulk-string-reply the value of the last element, or {@code null} when {@code key} does not exist.
      */
     Mono<V> rpop(K key);
 
@@ -268,4 +268,5 @@ public interface RedisListReactiveCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      */
     Mono<Long> rpushx(K key, V... values);
+
 }

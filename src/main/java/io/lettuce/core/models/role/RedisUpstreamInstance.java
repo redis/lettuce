@@ -31,6 +31,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class RedisUpstreamInstance implements RedisInstance, Serializable {
 
     private long replicationOffset;
+
     private List<ReplicationPartner> replicas = Collections.emptyList();
 
     public RedisUpstreamInstance() {
@@ -40,7 +41,7 @@ public class RedisUpstreamInstance implements RedisInstance, Serializable {
      * Constructs a {@link RedisUpstreamInstance}
      *
      * @param replicationOffset the replication offset
-     * @param replicas list of replicas, must not be {@literal null} but may be empty
+     * @param replicas list of replicas, must not be {@code null} but may be empty
      */
     public RedisUpstreamInstance(long replicationOffset, List<ReplicationPartner> replicas) {
         LettuceAssert.notNull(replicas, "Replicas must not be null");
@@ -93,4 +94,5 @@ public class RedisUpstreamInstance implements RedisInstance, Serializable {
         sb.append(']');
         return sb.toString();
     }
+
 }

@@ -65,7 +65,7 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * Execute {@code BITFIELD} with its subcommands.
      *
      * @param key the key
-     * @param bitFieldArgs the args containing subcommands, must not be {@literal null}.
+     * @param bitFieldArgs the args containing subcommands, must not be {@code null}.
      *
      * @return Long bulk-reply the results from the bitfield commands.
      */
@@ -198,7 +198,7 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * Get the value of a key.
      *
      * @param key the key
-     * @return V bulk-string-reply the value of {@code key}, or {@literal null} when {@code key} does not exist.
+     * @return V bulk-string-reply the value of {@code key}, or {@code null} when {@code key} does not exist.
      */
     AsyncExecutions<V> get(K key);
 
@@ -226,7 +226,7 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      *
      * @param key the key
      * @param value the value
-     * @return V bulk-string-reply the old value stored at {@code key}, or {@literal null} when {@code key} did not exist.
+     * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
      */
     AsyncExecutions<V> getset(K key, V value);
 
@@ -390,4 +390,5 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */
     AsyncExecutions<Long> strlen(K key);
+
 }

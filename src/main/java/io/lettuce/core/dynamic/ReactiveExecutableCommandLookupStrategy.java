@@ -33,10 +33,15 @@ import io.lettuce.core.internal.LettuceAssert;
 class ReactiveExecutableCommandLookupStrategy implements ExecutableCommandLookupStrategy {
 
     private final AbstractRedisReactiveCommands<Object, Object> redisReactiveCommands;
+
     private final ConversionService conversionService = new ConversionService();
+
     private final List<RedisCodec<?, ?>> redisCodecs;
+
     private final CommandOutputFactoryResolver outputFactoryResolver;
+
     private final ReactiveCommandFactoryResolver commandFactoryResolver;
+
     private final CommandMethodVerifier commandMethodVerifier;
 
     ReactiveExecutableCommandLookupStrategy(List<RedisCodec<?, ?>> redisCodecs,
@@ -64,13 +69,14 @@ class ReactiveExecutableCommandLookupStrategy implements ExecutableCommandLookup
         ReactiveCommandSegmentCommandFactory commandFactory = commandFactoryResolver.resolveRedisCommandFactory(method,
                 commandsMetadata);
 
-        return new ConvertingCommand(conversionService, new ReactiveExecutableCommand(method, commandFactory,
-                redisReactiveCommands));
+        return new ConvertingCommand(conversionService,
+                new ReactiveExecutableCommand(method, commandFactory, redisReactiveCommands));
     }
 
     class ReactiveCommandFactoryResolver implements CommandFactoryResolver {
 
         final AnnotationCommandSegmentFactory commandSegmentFactory = new AnnotationCommandSegmentFactory();
+
         final AnnotationRedisCodecResolver codecResolver;
 
         ReactiveCommandFactoryResolver() {
@@ -95,5 +101,7 @@ class ReactiveExecutableCommandLookupStrategy implements ExecutableCommandLookup
 
             return new ReactiveCommandSegmentCommandFactory(commandSegments, commandMethod, codec, outputFactoryResolver);
         }
+
     }
+
 }

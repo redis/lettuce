@@ -28,4 +28,5 @@ public class RedisProtocolException extends RedisException {
     public RedisProtocolException(String msg) {
         super(msg);
     }
+
 }

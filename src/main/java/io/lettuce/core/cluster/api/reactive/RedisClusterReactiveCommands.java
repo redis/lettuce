@@ -32,11 +32,11 @@ import io.lettuce.core.api.reactive.*;
  * @author Mark Paluch
  * @since 5.0
  */
-public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
-        RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
-        RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
-        RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
-        RedisStringReactiveCommands<K, V> {
+public interface RedisClusterReactiveCommands<K, V>
+        extends BaseRedisReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>,
+        RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>,
+        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
+        RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
@@ -258,7 +258,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
     /**
      * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
      *
-     * @param force do not coordinate with master if {@literal true}
+     * @param force do not coordinate with master if {@code true}
      * @return String simple-string-reply
      */
     Mono<String> clusterFailover(boolean force);
@@ -275,7 +275,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
      * <li>If the node was a replica, the whole data set is flushed away</li>
      * </ul>
      *
-     * @param hard {@literal true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
+     * @param hard {@code true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
      * @return String simple-string-reply
      */
     Mono<String> clusterReset(boolean hard);
@@ -288,8 +288,8 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
     Mono<String> clusterFlushslots();
 
     /**
-     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running write
-     * queries.
+     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running
+     * write queries.
      *
      * @return String simple-string-reply
      */
@@ -338,4 +338,5 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
     Mono<Boolean> msetnx(Map<K, V> map);
+
 }

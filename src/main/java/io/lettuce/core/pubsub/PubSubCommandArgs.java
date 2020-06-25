@@ -30,7 +30,7 @@ import io.lettuce.core.protocol.CommandArgs;
 class PubSubCommandArgs<K, V> extends CommandArgs<K, V> {
 
     /**
-     * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
+     * @param codec Codec used to encode/decode keys and values, must not be {@code null}.
      */
     public PubSubCommandArgs(RedisCodec<K, V> codec) {
         super(codec);
@@ -38,10 +38,11 @@ class PubSubCommandArgs<K, V> extends CommandArgs<K, V> {
 
     /**
      *
-     * @return always {@literal null}.
+     * @return always {@code null}.
      */
     @Override
     public ByteBuffer getFirstEncodedKey() {
         return null;
     }
+
 }

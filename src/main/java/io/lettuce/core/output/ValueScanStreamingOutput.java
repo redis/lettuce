@@ -42,4 +42,5 @@ public class ValueScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanC
         channel.onValue(bytes == null ? null : codec.decodeValue(bytes));
         output.setCount(output.getCount() + 1);
     }
+
 }

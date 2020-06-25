@@ -95,4 +95,5 @@ public interface RedisCommand<K, V, T> {
      * @throws IllegalStateException if the command is cancelled/completed
      */
     void setOutput(CommandOutput<K, V, T> output);
+
 }

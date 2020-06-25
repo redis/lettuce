@@ -38,6 +38,7 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandEncoder.class);
 
     private final boolean traceEnabled = logger.isTraceEnabled();
+
     private final boolean debugEnabled = logger.isDebugEnabled();
 
     public CommandEncoder() {
@@ -93,8 +94,7 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
         } catch (RuntimeException e) {
             out.resetWriterIndex();
             command.completeExceptionally(new EncoderException(
-                    "Cannot encode command. Please close the connection as the connection state may be out of sync.",
-                    e));
+                    "Cannot encode command. Please close the connection as the connection state may be out of sync.", e));
         }
 
         if (debugEnabled) {
@@ -110,4 +110,5 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
         buffer.append('[').append(ChannelLogDescriptor.logDescriptor(channel)).append(']');
         return buffer.toString();
     }
+
 }

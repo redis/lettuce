@@ -35,4 +35,5 @@ public class Utf8StringCodec extends StringCodec implements RedisCodec<String, S
     public Utf8StringCodec() {
         super(StandardCharsets.UTF_8);
     }
+
 }

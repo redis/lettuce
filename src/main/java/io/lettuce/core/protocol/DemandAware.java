@@ -35,11 +35,11 @@ public interface DemandAware {
     interface Sink {
 
         /**
-         * Returns {@literal true} if the {@link Sink} has demand or {@literal false} if the source has no demand.
-         * {@literal false} means either the {@link Sink} has no demand in general because data is not needed or the current
+         * Returns {@code true} if the {@link Sink} has demand or {@code false} if the source has no demand.
+         * {@code false} means either the {@link Sink} has no demand in general because data is not needed or the current
          * demand is saturated.
          *
-         * @return {@literal true} if the {@link Sink} demands data.
+         * @return {@code true} if the {@link Sink} demands data.
          */
         boolean hasDemand();
 
@@ -47,7 +47,7 @@ public interface DemandAware {
          * Sets the {@link Source} for a {@link Sink}. The {@link Sink} is notified by this {@link Source} if the source
          * indicates new demand or the sink catches up so it's ready to receive more data.
          *
-         * @param source the reference to the data {@link Source}, must not be {@literal null}.
+         * @param source the reference to the data {@link Source}, must not be {@code null}.
          */
         void setSource(Source source);
 
@@ -56,6 +56,7 @@ public interface DemandAware {
          * asked for data.
          */
         void removeSource();
+
     }
 
     /**
@@ -68,5 +69,7 @@ public interface DemandAware {
          * Signals demand to the {@link Source}
          */
         void requestMore();
+
     }
+
 }

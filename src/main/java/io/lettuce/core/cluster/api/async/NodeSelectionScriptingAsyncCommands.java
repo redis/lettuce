@@ -143,4 +143,5 @@ public interface NodeSelectionScriptingAsyncCommands<K, V> {
      * @since 6.0
      */
     AsyncExecutions<String> scriptLoad(byte[] script);
+
 }

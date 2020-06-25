@@ -64,11 +64,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * <pre class="code">
  * public class Consumer {
+ * 
  *     &#064;Inject
  *     private RedisClient client;
  *
  *     &#064;Inject
  *     private RedisClusterClient clusterClient;
+ * 
  * }
  * </pre>
  *
@@ -79,6 +81,7 @@ public class LettuceCdiExtension implements Extension {
     private static final InternalLogger LOGGER = InternalLoggerFactory.getInstance(LettuceCdiExtension.class);
 
     private final Map<Set<Annotation>, Bean<RedisURI>> redisUris = new ConcurrentHashMap<>();
+
     private final Map<Set<Annotation>, Bean<ClientResources>> clientResources = new ConcurrentHashMap<>();
 
     public LettuceCdiExtension() {
@@ -112,8 +115,8 @@ public class LettuceCdiExtension implements Extension {
             if (ClientResources.class.isAssignableFrom((Class<?>) type)) {
                 Set<Annotation> qualifiers = LettuceSets.newHashSet(bean.getQualifiers());
                 if (bean.isAlternative() || !clientResources.containsKey(qualifiers)) {
-                    LOGGER.debug(String.format("Discovered '%s' with qualifiers %s.", ClientResources.class.getName(),
-                            qualifiers));
+                    LOGGER.debug(
+                            String.format("Discovered '%s' with qualifiers %s.", ClientResources.class.getName(), qualifiers));
                     clientResources.put(qualifiers, (Bean<ClientResources>) bean);
                 }
             }
@@ -164,4 +167,5 @@ public class LettuceCdiExtension implements Extension {
         LOGGER.info(String.format("Registering bean '%s' with qualifiers %s.", bean.getBeanClass().getName(), qualifiers));
         afterBeanDiscovery.addBean(bean);
     }
+
 }

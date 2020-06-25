@@ -29,13 +29,14 @@ import io.lettuce.core.LettuceStrings;
 class ParametrizedTypeInformation<T> extends ParentTypeAwareTypeInformation<T> {
 
     private final ParameterizedType type;
+
     private Boolean resolved;
 
     /**
      * Creates a new {@link ParametrizedTypeInformation} for the given {@link Type} and parent {@link TypeDiscoverer}.
      *
-     * @param type must not be {@literal null}
-     * @param parent must not be {@literal null}
+     * @param type must not be {@code null}
+     * @param parent must not be {@code null}
      */
     public ParametrizedTypeInformation(ParameterizedType type, TypeDiscoverer<?> parent,
             Map<TypeVariable<?>, Type> typeVariableMap) {
@@ -206,4 +207,5 @@ class ParametrizedTypeInformation<T> extends ParentTypeAwareTypeInformation<T> {
         this.resolved = resolved;
         return resolved;
     }
+
 }

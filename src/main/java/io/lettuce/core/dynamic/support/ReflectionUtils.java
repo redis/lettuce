@@ -323,6 +323,7 @@ public abstract class ReflectionUtils {
          * @param method the method to operate on
          */
         void doWith(Method method) throws IllegalArgumentException, IllegalAccessException;
+
     }
 
     /**
@@ -336,6 +337,7 @@ public abstract class ReflectionUtils {
          * @param method the method to check
          */
         boolean matches(Method method);
+
     }
 
     /**
@@ -349,6 +351,7 @@ public abstract class ReflectionUtils {
          * @param field the field to operate on
          */
         void doWith(Field field) throws IllegalArgumentException, IllegalAccessException;
+
     }
 
     /**
@@ -362,5 +365,7 @@ public abstract class ReflectionUtils {
          * @param field the field to check
          */
         boolean matches(Field field);
+
     }
+
 }

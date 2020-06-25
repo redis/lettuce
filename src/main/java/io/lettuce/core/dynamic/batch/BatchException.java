@@ -53,4 +53,5 @@ public class BatchException extends RedisCommandExecutionException {
     public List<RedisCommand<?, ?, ?>> getFailedCommands() {
         return failedCommands;
     }
+
 }

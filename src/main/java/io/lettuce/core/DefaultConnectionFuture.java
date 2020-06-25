@@ -31,6 +31,7 @@ import java.util.function.Function;
 class DefaultConnectionFuture<T> extends CompletableFuture<T> implements ConnectionFuture<T> {
 
     private final CompletableFuture<SocketAddress> remoteAddress;
+
     private final CompletableFuture<T> delegate;
 
     public DefaultConnectionFuture(SocketAddress remoteAddress, CompletableFuture<T> delegate) {
@@ -351,4 +352,5 @@ class DefaultConnectionFuture<T> extends CompletableFuture<T> implements Connect
     public int getNumberOfDependents() {
         return delegate.getNumberOfDependents();
     }
+
 }

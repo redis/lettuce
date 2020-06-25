@@ -38,7 +38,7 @@ public interface Batcher {
      * Add command to the {@link Batcher}.
      *
      * @param command the command to batch.
-     * @param batching invocation-specific {@link CommandBatching} control. May be {@literal null} to use default batching
+     * @param batching invocation-specific {@link CommandBatching} control. May be {@code null} to use default batching
      *        settings.
      * @return result of the batching. Either an {@link BatchTasks#EMPTY empty} result or a result containing the batched
      *         commands.
@@ -51,4 +51,5 @@ public interface Batcher {
     default BatchTasks flush() {
         return BatchTasks.EMPTY;
     }
+
 }

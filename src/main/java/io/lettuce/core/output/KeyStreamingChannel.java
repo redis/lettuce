@@ -24,11 +24,13 @@ package io.lettuce.core.output;
  * @since 3.0
  */
 @FunctionalInterface
-public interface KeyStreamingChannel<K> extends StreamingChannel{
+public interface KeyStreamingChannel<K> extends StreamingChannel {
+
     /**
      * Called on every incoming key.
      *
      * @param key the key
      */
     void onKey(K key);
+
 }

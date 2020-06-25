@@ -64,7 +64,7 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
     /**
      * Add a new {@link PushListener listener} to consume push messages.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      * @since 6.0
      */
     void addListener(PushListener listener);
@@ -72,8 +72,9 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
     /**
      * Remove an existing {@link PushListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      * @since 6.0
      */
     void removeListener(PushListener listener);
+
 }

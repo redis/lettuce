@@ -60,7 +60,7 @@ class NodeTopologyViews {
     }
 
     /**
-     * @return {@literal true} if no views are present.
+     * @return {@code true} if no views are present.
      */
     public boolean isEmpty() {
         return views.isEmpty();
@@ -76,4 +76,5 @@ class NodeTopologyViews {
 
         return nodeSpecificViews;
     }
+
 }

@@ -125,14 +125,14 @@ public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncC
             implements PubSubAsyncNodeSelection<K, V> {
 
         private final List<RedisClusterNode> redisClusterNodes;
+
         private final ClusterDistributionChannelWriter writer;
 
         @SuppressWarnings("unchecked")
         public StaticPubSubAsyncNodeSelection(StatefulRedisClusterPubSubConnection<K, V> globalConnection,
                 Predicate<RedisClusterNode> selector) {
 
-            this.redisClusterNodes = globalConnection.getPartitions().stream().filter(selector)
-                    .collect(Collectors.toList());
+            this.redisClusterNodes = globalConnection.getPartitions().stream().filter(selector).collect(Collectors.toList());
             writer = ((StatefulRedisClusterPubSubConnectionImpl) globalConnection).getClusterDistributionChannelWriter();
         }
 
@@ -154,5 +154,7 @@ public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncC
             return async.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort())
                     .thenApply(it -> (StatefulRedisPubSubConnection<K, V>) it);
         }
+
     }
+
 }

@@ -33,7 +33,9 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class XReadArgs {
 
     private Long block;
+
     private Long count;
+
     private boolean noack;
 
     /**
@@ -102,6 +104,7 @@ public class XReadArgs {
         public static XReadArgs noack(boolean noack) {
             return new XReadArgs().noack(noack);
         }
+
     }
 
     /**
@@ -144,7 +147,7 @@ public class XReadArgs {
     /**
      * Use NOACK option to disable auto-acknowledgement. Only valid for {@literal XREADGROUP}.
      *
-     * @param noack {@literal true} to disable auto-ack.
+     * @param noack {@code true} to disable auto-ack.
      * @return {@code this}.
      */
     public XReadArgs noack(boolean noack) {
@@ -174,6 +177,7 @@ public class XReadArgs {
     public static class StreamOffset<K> {
 
         final K name;
+
         final String offset;
 
         private StreamOffset(K name, String offset) {
@@ -184,7 +188,7 @@ public class XReadArgs {
         /**
          * Read all new arriving elements from the stream identified by {@code name}.
          *
-         * @param name must not be {@literal null}.
+         * @param name must not be {@code null}.
          * @return the {@link StreamOffset} object without a specific offset.
          */
         public static <K> StreamOffset<K> latest(K name) {
@@ -198,7 +202,7 @@ public class XReadArgs {
          * Read all new arriving elements from the stream identified by {@code name} with ids greater than the last one consumed
          * by the consumer group.
          *
-         * @param name must not be {@literal null}.
+         * @param name must not be {@code null}.
          * @return the {@link StreamOffset} object without a specific offset.
          */
         public static <K> StreamOffset<K> lastConsumed(K name) {
@@ -211,7 +215,7 @@ public class XReadArgs {
         /**
          * Read all arriving elements from the stream identified by {@code name} starting at {@code offset}.
          *
-         * @param name must not be {@literal null}.
+         * @param name must not be {@code null}.
          * @param offset the stream offset.
          * @return the {@link StreamOffset} object without a specific offset.
          */
@@ -235,5 +239,7 @@ public class XReadArgs {
         public String toString() {
             return String.format("%s:%s", name, offset);
         }
+
     }
+
 }

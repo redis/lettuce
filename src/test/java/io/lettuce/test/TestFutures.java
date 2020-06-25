@@ -40,7 +40,7 @@ public class TestFutures {
      * Check if all {@code futures} are {@link Future#isDone() completed}.
      *
      * @param futures
-     * @return {@literal true} if all {@code futures} are {@link Future#isDone() completed}
+     * @return {@code true} if all {@code futures} are {@link Future#isDone() completed}
      */
     public static boolean areAllDone(Collection<? extends Future<?>> futures) {
 

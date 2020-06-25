@@ -40,10 +40,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class UpstreamReplicaTopologyRefresh {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(UpstreamReplicaTopologyRefresh.class);
+
     private static final StringCodec CODEC = StringCodec.UTF8;
 
     private final NodeConnectionFactory nodeConnectionFactory;
+
     private final TopologyProvider topologyProvider;
+
     private ScheduledExecutorService eventExecutors;
 
     UpstreamReplicaTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
@@ -142,4 +145,5 @@ class UpstreamReplicaTopologyRefresh {
             }
         }
     }
+
 }

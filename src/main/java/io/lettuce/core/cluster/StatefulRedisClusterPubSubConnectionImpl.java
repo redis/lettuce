@@ -47,8 +47,11 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         implements StatefulRedisClusterPubSubConnection<K, V> {
 
     private final PubSubClusterEndpoint<K, V> endpoint;
+
     private final ClusterPushHandler clusterPushHandler;
+
     private volatile Partitions partitions;
+
     private volatile CommandSet commandSet;
 
     /**
@@ -60,8 +63,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
      * @param timeout Maximum time to wait for a response.
      */
     public StatefulRedisClusterPubSubConnectionImpl(PubSubClusterEndpoint<K, V> endpoint, ClusterPushHandler clusterPushHandler,
-            RedisChannelWriter writer,
-            RedisCodec<K, V> codec, Duration timeout) {
+            RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
 
         super(endpoint, writer, codec, timeout);
 
@@ -185,7 +187,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     /**
      * Add a new {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     @Override
     public void addListener(RedisClusterPubSubListener<K, V> listener) {
@@ -195,7 +197,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     /**
      * Remove an existing {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     @Override
     public void removeListener(RedisClusterPubSubListener<K, V> listener) {
@@ -225,4 +227,5 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         }
         return null;
     }
+
 }

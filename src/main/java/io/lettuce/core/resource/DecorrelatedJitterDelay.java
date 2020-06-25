@@ -39,8 +39,11 @@ import io.lettuce.core.resource.Delay.StatefulDelay;
 class DecorrelatedJitterDelay extends Delay implements StatefulDelay {
 
     private final Duration lower;
+
     private final Duration upper;
+
     private final long base;
+
     private final TimeUnit targetTimeUnit;
 
     /*
@@ -68,4 +71,5 @@ class DecorrelatedJitterDelay extends Delay implements StatefulDelay {
     public void reset() {
         prevDelay = 0L;
     }
+
 }

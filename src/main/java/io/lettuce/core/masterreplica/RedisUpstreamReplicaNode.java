@@ -27,6 +27,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 class RedisUpstreamReplicaNode implements RedisNodeDescription {
 
     private final RedisURI redisURI;
+
     private final Role role;
 
     RedisUpstreamReplicaNode(String host, int port, RedisURI seed, Role role) {
@@ -87,4 +88,5 @@ class RedisUpstreamReplicaNode implements RedisNodeDescription {
         sb.append(']');
         return sb.toString();
     }
+
 }

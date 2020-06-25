@@ -43,9 +43,11 @@ public class EpollProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(EpollProvider.class);
 
     private static final String EPOLL_ENABLED_KEY = "io.lettuce.core.epoll";
+
     private static final boolean EPOLL_ENABLED = Boolean.parseBoolean(SystemPropertyUtil.get(EPOLL_ENABLED_KEY, "true"));
 
     private static final boolean EPOLL_AVAILABLE;
+
     private static final EventLoopResources EPOLL_RESOURCES;
 
     static {
@@ -71,7 +73,7 @@ public class EpollProvider {
     }
 
     /**
-     * @return {@literal true} if epoll is available.
+     * @return {@code true} if epoll is available.
      */
     public static boolean isAvailable() {
         return EPOLL_AVAILABLE && EPOLL_ENABLED;
@@ -150,6 +152,7 @@ public class EpollProvider {
             checkForEpollLibrary();
             return null;
         }
+
     }
 
     /**
@@ -206,5 +209,7 @@ public class EpollProvider {
 
             return new DomainSocketAddress(socketPath);
         }
+
     }
+
 }

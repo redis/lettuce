@@ -31,13 +31,15 @@ import io.lettuce.core.internal.LettuceAssert;
 public abstract class CommandOutput<K, V, T> {
 
     protected final RedisCodec<K, V> codec;
+
     protected T output;
+
     protected String error;
 
     /**
      * Initialize a new instance that encodes and decodes keys and values using the supplied codec.
      *
-     * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
+     * @param codec Codec used to encode/decode keys and values, must not be {@code null}.
      * @param output Initial value of output.
      */
     public CommandOutput(RedisCodec<K, V> codec, T output) {
@@ -234,4 +236,5 @@ public abstract class CommandOutput<K, V, T> {
     public void multiSet(int count) {
         multi(count);
     }
+
 }

@@ -62,4 +62,5 @@ public interface RedisConnectionStateListener {
      * @param cause Caught exception.
      */
     void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause);
+
 }

@@ -35,12 +35,19 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class TrackingArgs implements CompositeArgument {
 
     private boolean enabled;
+
     private Long redirect;
+
     private boolean bcast;
+
     private String[] prefixes;
+
     private Charset prefixCharset = StandardCharsets.UTF_8;
+
     private boolean optin;
+
     private boolean optout;
+
     private boolean noloop;
 
     /**
@@ -65,7 +72,7 @@ public class TrackingArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link TrackingArgs} with {@literal CLIENT TRACKING ON} if {@code enabled} is {@literal true}.
+         * Creates new {@link TrackingArgs} with {@literal CLIENT TRACKING ON} if {@code enabled} is {@code true}.
          *
          * @param enabled whether to enable key tracking for the currently connected client.
          * @return new {@link TrackingArgs}.
@@ -74,6 +81,7 @@ public class TrackingArgs implements CompositeArgument {
         public static TrackingArgs enabled(boolean enabled) {
             return new TrackingArgs().enabled(enabled);
         }
+
     }
 
     /**
@@ -204,4 +212,5 @@ public class TrackingArgs implements CompositeArgument {
             args.add("NOLOOP");
         }
     }
+
 }

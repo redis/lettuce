@@ -56,6 +56,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <h3>Example</h3>
  *
  * <pre class="code">
+ *
  * public interface MyRedisCommands extends Commands {
  *
  *     String get(String key); // Synchronous Execution of GET
@@ -75,6 +76,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *     &#064;CommandNaming(split = DOT)
  *     // support for Redis Module command notation -&gt; NR.RUN
  *     double nrRun(String key, int... indexes);
+ *
  * }
  *
  * RedisCommandFactory factory = new RedisCommandFactory(connection);
@@ -93,8 +95,11 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class RedisCommandFactory {
 
     private final InternalLogger log = InternalLoggerFactory.getInstance(getClass());
+
     private final StatefulConnection<?, ?> connection;
+
     private final DefaultCommandMethodVerifier commandMethodVerifier;
+
     private final List<RedisCodec<?, ?>> redisCodecs = new ArrayList<>();
 
     private CommandOutputFactoryResolver commandOutputFactoryResolver = new OutputRegistryCommandOutputFactoryResolver(
@@ -105,7 +110,7 @@ public class RedisCommandFactory {
     /**
      * Create a new {@link CommandFactory} given {@link StatefulConnection}.
      *
-     * @param connection must not be {@literal null}.
+     * @param connection must not be {@code null}.
      */
     public RedisCommandFactory(StatefulConnection<?, ?> connection) {
         this(connection, LettuceLists.newList(new ByteArrayCodec(), new StringCodec(StandardCharsets.UTF_8)));
@@ -114,8 +119,8 @@ public class RedisCommandFactory {
     /**
      * Create a new {@link CommandFactory} given {@link StatefulConnection} and a {@link List} of {@link RedisCodec}s to use
      *
-     * @param connection must not be {@literal null}.
-     * @param redisCodecs must not be {@literal null}.
+     * @param connection must not be {@code null}.
+     * @param redisCodecs must not be {@code null}.
      */
     public RedisCommandFactory(StatefulConnection<?, ?> connection, Iterable<? extends RedisCodec<?, ?>> redisCodecs) {
 
@@ -153,7 +158,7 @@ public class RedisCommandFactory {
     /**
      * Set a {@link CommandOutputFactoryResolver}.
      *
-     * @param commandOutputFactoryResolver must not be {@literal null}.
+     * @param commandOutputFactoryResolver must not be {@code null}.
      */
     public void setCommandOutputFactoryResolver(CommandOutputFactoryResolver commandOutputFactoryResolver) {
 
@@ -165,7 +170,7 @@ public class RedisCommandFactory {
     /**
      * Enables/disables command verification which checks the command name against Redis {@code COMMAND} and the argument count.
      *
-     * @param verifyCommandMethods {@literal true} to enable command verification (default) or {@literal false} to disable
+     * @param verifyCommandMethods {@code true} to enable command verification (default) or {@code false} to disable
      *        command verification.
      */
     public void setVerifyCommandMethods(boolean verifyCommandMethods) {
@@ -175,7 +180,7 @@ public class RedisCommandFactory {
     /**
      * Returns a Redis Commands interface instance for the given interface.
      *
-     * @param commandInterface must not be {@literal null}.
+     * @param commandInterface must not be {@code null}.
      * @param <T> command interface type.
      * @return the implemented Redis Commands interface.
      */
@@ -236,12 +241,14 @@ public class RedisCommandFactory {
         private boolean hasFactoryFor(Method method) {
             return commandMethods.containsKey(method);
         }
+
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     class CompositeCommandLookupStrategy implements ExecutableCommandLookupStrategy {
 
         private final AsyncExecutableCommandLookupStrategy async;
+
         private final ReactiveExecutableCommandLookupStrategy reactive;
 
         CompositeCommandLookupStrategy() {
@@ -289,17 +296,22 @@ public class RedisCommandFactory {
 
             return async.resolveCommandMethod(method, metadata);
         }
+
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     class BatchAwareCommandLookupStrategy implements ExecutableCommandLookupStrategy {
 
         private final ExecutableCommandLookupStrategy fallbackStrategy;
+
         private final boolean globalBatching;
+
         private final CommandMethodVerifier verifier;
+
         private final long batchSize;
 
         private Batcher batcher = Batcher.NONE;
+
         private BatchExecutableCommandLookupStrategy batchingStrategy;
 
         public BatchAwareCommandLookupStrategy(ExecutableCommandLookupStrategy fallbackStrategy,
@@ -338,5 +350,7 @@ public class RedisCommandFactory {
 
             return fallbackStrategy.resolveCommandMethod(method, metadata);
         }
+
     }
+
 }

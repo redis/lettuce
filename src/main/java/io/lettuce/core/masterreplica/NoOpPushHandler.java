@@ -42,4 +42,5 @@ enum NoOpPushHandler implements PushHandler {
     public Collection<PushListener> getPushListeners() {
         return Collections.emptyList();
     }
+
 }

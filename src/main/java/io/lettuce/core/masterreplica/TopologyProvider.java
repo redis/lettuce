@@ -49,4 +49,5 @@ interface TopologyProvider {
     default CompletableFuture<List<RedisNodeDescription>> getNodesAsync() {
         return CompletableFuture.completedFuture(getNodes());
     }
+
 }

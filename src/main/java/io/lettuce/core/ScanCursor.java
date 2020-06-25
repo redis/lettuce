@@ -36,6 +36,7 @@ public class ScanCursor {
     public static final ScanCursor INITIAL = new ImmutableScanCursor("0", false);
 
     private String cursor;
+
     private boolean finished;
 
     /**
@@ -113,5 +114,7 @@ public class ScanCursor {
         public void setFinished(boolean finished) {
             throw new UnsupportedOperationException("setFinished not supported on " + getClass().getSimpleName());
         }
+
     }
+
 }

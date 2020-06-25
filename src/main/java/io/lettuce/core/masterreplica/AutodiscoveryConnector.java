@@ -43,7 +43,9 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 class AutodiscoveryConnector<K, V> implements UpstreamReplicaConnector<K, V> {
 
     private final RedisClient redisClient;
+
     private final RedisCodec<K, V> codec;
+
     private final RedisURI redisURI;
 
     private final Map<RedisURI, StatefulRedisConnection<?, ?>> initialConnections = new ConcurrentHashMap<>();
@@ -58,18 +60,16 @@ class AutodiscoveryConnector<K, V> implements UpstreamReplicaConnector<K, V> {
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
         ConnectionFuture<StatefulRedisConnection<K, V>> initialConnection = redisClient.connectAsync(codec, redisURI);
-        Mono<StatefulRedisMasterReplicaConnection<K, V>> connect = Mono
-                .fromCompletionStage(initialConnection)
-                .flatMap(
-                        nodeConnection -> {
+        Mono<StatefulRedisMasterReplicaConnection<K, V>> connect = Mono.fromCompletionStage(initialConnection)
+                .flatMap(nodeConnection -> {
 
-                            initialConnections.put(redisURI, nodeConnection);
+                    initialConnections.put(redisURI, nodeConnection);
 
-                            TopologyProvider topologyProvider = new ReplicaTopologyProvider(nodeConnection, redisURI);
+                    TopologyProvider topologyProvider = new ReplicaTopologyProvider(nodeConnection, redisURI);
 
-                            return Mono.fromCompletionStage(topologyProvider.getNodesAsync()).flatMap(
-                                    nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
-                        }).flatMap(connectionAndUri -> {
+                    return Mono.fromCompletionStage(topologyProvider.getNodesAsync())
+                            .flatMap(nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
+                }).flatMap(connectionAndUri -> {
                     return initializeConnection(codec, connectionAndUri);
                 });
 
@@ -123,8 +123,7 @@ class AutodiscoveryConnector<K, V> implements UpstreamReplicaConnector<K, V> {
             connectionProvider.setKnownNodes(nodes);
 
             UpstreamReplicaChannelWriter channelWriter = new UpstreamReplicaChannelWriter(connectionProvider,
-                    redisClient
-                    .getResources());
+                    redisClient.getResources());
 
             StatefulRedisUpstreamReplicaConnectionImpl<K, V> connection = new StatefulRedisUpstreamReplicaConnectionImpl<>(
                     channelWriter, codec, redisURI.getTimeout());
@@ -144,8 +143,8 @@ class AutodiscoveryConnector<K, V> implements UpstreamReplicaConnector<K, V> {
     private static RedisNodeDescription getConnectedNode(RedisURI redisURI, List<RedisNodeDescription> nodes) {
 
         Optional<RedisNodeDescription> first = findFirst(nodes, n -> equals(redisURI, n));
-        return first.orElseThrow(() -> new IllegalStateException("Cannot lookup node descriptor for connected node at "
-                + redisURI));
+        return first.orElseThrow(
+                () -> new IllegalStateException("Cannot lookup node descriptor for connected node at " + redisURI));
     }
 
     private static Optional<RedisNodeDescription> findFirst(List<RedisNodeDescription> nodes,
@@ -156,4 +155,5 @@ class AutodiscoveryConnector<K, V> implements UpstreamReplicaConnector<K, V> {
     private static boolean equals(RedisURI redisURI, RedisNodeDescription node) {
         return node.getUri().getHost().equals(redisURI.getHost()) && node.getUri().getPort() == redisURI.getPort();
     }
+
 }

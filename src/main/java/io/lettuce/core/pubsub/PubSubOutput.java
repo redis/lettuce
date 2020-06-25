@@ -47,12 +47,17 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> implements PubSub
         public static boolean isPubSubType(String name) {
             return names.contains(name);
         }
+
     }
 
     private Type type;
+
     private K channel;
+
     private K pattern;
+
     private long count;
+
     private boolean completed;
 
     public PubSubOutput(RedisCodec<K, V> codec) {

@@ -38,8 +38,8 @@ class ReadOnlyCommands {
     }
 
     /**
-     * @param protocolKeyword must not be {@literal null}.
-     * @return {@literal true} if {@link ProtocolKeyword} is a read-only command.
+     * @param protocolKeyword must not be {@code null}.
+     * @return {@code true} if {@link ProtocolKeyword} is a read-only command.
      */
     public static boolean isReadOnlyCommand(ProtocolKeyword protocolKeyword) {
         return READ_ONLY_COMMANDS.contains(protocolKeyword);
@@ -67,4 +67,5 @@ class ReadOnlyCommands {
         // Pub/Sub commands are no key-space commands so they are safe to execute on replica nodes
         PUBLISH, PUBSUB, PSUBSCRIBE, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE
     }
+
 }

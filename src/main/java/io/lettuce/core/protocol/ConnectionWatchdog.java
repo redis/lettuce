@@ -51,39 +51,53 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private static final long LOGGING_QUIET_TIME_MS = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
+
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionWatchdog.class);
 
     private final Delay reconnectDelay;
+
     private final Bootstrap bootstrap;
+
     private final EventExecutorGroup reconnectWorkers;
+
     private final ReconnectionHandler reconnectionHandler;
+
     private final ReconnectionListener reconnectionListener;
+
     private final Timer timer;
+
     private final EventBus eventBus;
 
     private Channel channel;
+
     private SocketAddress remoteAddress;
+
     private long lastReconnectionLogging = -1;
+
     private String logPrefix;
 
     private final AtomicBoolean reconnectSchedulerSync;
+
     private volatile int attempts;
+
     private volatile boolean armed;
+
     private volatile boolean listenOnChannelInactive;
+
     private volatile Timeout reconnectScheduleTimeout;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
      *
-     * @param reconnectDelay reconnect delay, must not be {@literal null}
-     * @param clientOptions client options for the current connection, must not be {@literal null}
-     * @param bootstrap Configuration for new channels, must not be {@literal null}
-     * @param timer Timer used for delayed reconnect, must not be {@literal null}
-     * @param reconnectWorkers executor group for reconnect tasks, must not be {@literal null}
-     * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@literal null}
-     * @param reconnectionListener the reconnection listener, must not be {@literal null}
-     * @param connectionFacade the connection facade, must not be {@literal null}
+     * @param reconnectDelay reconnect delay, must not be {@code null}
+     * @param clientOptions client options for the current connection, must not be {@code null}
+     * @param bootstrap Configuration for new channels, must not be {@code null}
+     * @param timer Timer used for delayed reconnect, must not be {@code null}
+     * @param reconnectWorkers executor group for reconnect tasks, must not be {@code null}
+     * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@code null}
+     * @param reconnectionListener the reconnection listener, must not be {@code null}
+     * @param connectionFacade the connection facade, must not be {@code null}
      * @param eventBus Event bus to emit reconnect events.
      */
     public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
@@ -342,7 +356,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     /**
      * Enable event listener for disconnected events.
      *
-     * @param listenOnChannelInactive {@literal true} to listen for disconnected events.
+     * @param listenOnChannelInactive {@code true} to listen for disconnected events.
      */
     public void setListenOnChannelInactive(boolean listenOnChannelInactive) {
         this.listenOnChannelInactive = listenOnChannelInactive;
@@ -355,7 +369,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     /**
      * Suspend reconnection temporarily. Reconnect suspension will interrupt reconnection attempts.
      *
-     * @param reconnectSuspended {@literal true} to suspend reconnection
+     * @param reconnectSuspended {@code true} to suspend reconnection
      */
     public void setReconnectSuspended(boolean reconnectSuspended) {
         reconnectionHandler.setReconnectSuspended(reconnectSuspended);
@@ -384,4 +398,5 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", last known addr=" + remoteAddress + ']';
         return logPrefix = buffer;
     }
+
 }

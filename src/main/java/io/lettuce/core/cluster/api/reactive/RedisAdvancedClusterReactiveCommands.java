@@ -220,7 +220,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
      *
-     * @param save {@literal true} force save operation
+     * @param save {@code true} force save operation
      * @see RedisServerReactiveCommands#shutdown(boolean)
      */
     Mono<Void> shutdown(boolean save);

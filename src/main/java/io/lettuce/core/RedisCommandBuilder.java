@@ -41,10 +41,13 @@ import io.lettuce.core.protocol.*;
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";
+
     private static final String MUST_NOT_BE_EMPTY = "must not be empty";
+
     private static final String MUST_NOT_BE_NULL = "must not be null";
 
     private static final byte[] MINUS_BYTES = { '-' };
+
     private static final byte[] PLUS_BYTES = { '+' };
 
     RedisCommandBuilder(RedisCodec<K, V> codec) {
@@ -92,7 +95,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         for (int i = 0; i < password.length(); i++) {
             chars[i] = password.charAt(i);
         }
-        return auth(username,chars);
+        return auth(username, chars);
     }
 
     Command<K, V, String> auth(String username, char[] password) {
@@ -3349,4 +3352,5 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     private static void notNullRange(Range<?> range) {
         LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
     }
+
 }

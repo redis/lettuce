@@ -76,4 +76,5 @@ public interface AsyncExecutions<T> extends Iterable<CompletableFuture<T>>, Comp
     default Stream<CompletableFuture<T>> stream() {
         return StreamSupport.stream(spliterator(), false);
     }
+
 }

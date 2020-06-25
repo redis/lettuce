@@ -30,6 +30,7 @@ import io.netty.buffer.ByteBuf;
 class TimedAsyncCommand<K, V, T> extends AsyncCommand<K, V, T> {
 
     long encodedAtNs = -1;
+
     long completedAtNs = -1;
 
     public TimedAsyncCommand(RedisCommand<K, V, T> command) {
@@ -57,4 +58,5 @@ class TimedAsyncCommand<K, V, T> extends AsyncCommand<K, V, T> {
         }
         return completedAtNs - encodedAtNs;
     }
+
 }

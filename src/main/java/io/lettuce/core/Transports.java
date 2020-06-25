@@ -66,7 +66,7 @@ class Transports {
                 : EpollProvider.getResources();
 
         /**
-         * @return {@literal true} if a native transport is available.
+         * @return {@code true} if a native transport is available.
          */
         static boolean isSocketSupported() {
             return EpollProvider.isAvailable() || KqueueProvider.isAvailable();
@@ -98,5 +98,7 @@ class Transports {
             LettuceAssert.assertState(NativeTransports.isSocketSupported(),
                     "A unix domain socket connections requires epoll or kqueue and neither is available");
         }
+
     }
+
 }

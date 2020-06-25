@@ -41,4 +41,5 @@ public enum ProtocolVersion {
     public static ProtocolVersion newestSupported() {
         return RESP3;
     }
+
 }

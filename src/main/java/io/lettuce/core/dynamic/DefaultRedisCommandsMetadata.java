@@ -41,7 +41,7 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
     /**
      * Create {@link DefaultRedisCommandsMetadata} given a {@link Class command interface}.
      *
-     * @param apiInterface must not be {@literal null}.
+     * @param apiInterface must not be {@code null}.
      */
     DefaultRedisCommandsMetadata(Class<?> apiInterface) {
         this.apiInterface = apiInterface;

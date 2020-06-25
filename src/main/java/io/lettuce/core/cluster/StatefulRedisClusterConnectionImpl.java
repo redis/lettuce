@@ -61,14 +61,19 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         implements StatefulRedisClusterConnection<K, V> {
 
     private final ClusterPushHandler pushHandler;
+
     protected final RedisCodec<K, V> codec;
+
     protected final RedisAdvancedClusterCommands<K, V> sync;
+
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
+
     protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
 
     private final ClusterConnectionState connectionState = new ClusterConnectionState();
 
     private Partitions partitions;
+
     private volatile CommandSet commandSet;
 
     /**
@@ -292,5 +297,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         protected void setReadOnly(boolean readOnly) {
             super.setReadOnly(readOnly);
         }
+
     }
+
 }

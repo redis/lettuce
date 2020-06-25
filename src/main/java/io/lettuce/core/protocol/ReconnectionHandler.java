@@ -48,11 +48,15 @@ class ReconnectionHandler {
             CancellationException.class, RedisCommandTimeoutException.class, ConnectException.class);
 
     private final ClientOptions clientOptions;
+
     private final Bootstrap bootstrap;
+
     private final Mono<SocketAddress> socketAddressSupplier;
+
     private final ConnectionFacade connectionFacade;
 
     private volatile CompletableFuture<Channel> currentFuture;
+
     private volatile boolean reconnectSuspended;
 
     ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap, Mono<SocketAddress> socketAddressSupplier,
@@ -184,7 +188,7 @@ class ReconnectionHandler {
 
     /**
      * @param throwable
-     * @return {@literal true} if {@code throwable} is an execution {@link Exception}.
+     * @return {@code true} if {@code throwable} is an execution {@link Exception}.
      */
     public static boolean isExecutionException(Throwable throwable) {
 
@@ -200,4 +204,5 @@ class ReconnectionHandler {
     ClientOptions getClientOptions() {
         return clientOptions;
     }
+
 }

@@ -28,8 +28,7 @@ import io.lettuce.core.resource.ClientResources;
 
 /**
  * Factory Bean for {@link RedisClient} instances. Requires a {@link RedisURI} and allows to reuse
- * {@link io.lettuce.core.resource.ClientResources}. URI Formats:
- * {@code
+ * {@link io.lettuce.core.resource.ClientResources}. URI Formats: {@code
  *     redis-sentinel://host[:port][,host2[:port2]][/databaseNumber]#sentinelMasterId
  * }
  *
@@ -72,4 +71,5 @@ class RedisClientCdiBean extends AbstractCdiBean<RedisClient> {
     public void destroy(RedisClient instance, CreationalContext<RedisClient> creationalContext) {
         instance.shutdown();
     }
+
 }

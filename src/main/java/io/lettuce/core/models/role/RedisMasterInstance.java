@@ -35,7 +35,7 @@ public class RedisMasterInstance extends RedisUpstreamInstance {
      * Constructs a {@link RedisMasterInstance}
      *
      * @param replicationOffset the replication offset
-     * @param replicas list of replicas, must not be {@literal null} but may be empty
+     * @param replicas list of replicas, must not be {@code null} but may be empty
      */
     public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> replicas) {
         super(replicationOffset, replicas);

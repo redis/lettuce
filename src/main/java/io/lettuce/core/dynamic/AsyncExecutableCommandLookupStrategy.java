@@ -48,4 +48,5 @@ class AsyncExecutableCommandLookupStrategy extends ExecutableCommandLookupStrate
 
         return new AsyncExecutableCommand(method, commandFactory, connection);
     }
+
 }

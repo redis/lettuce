@@ -43,9 +43,11 @@ public class KqueueProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(KqueueProvider.class);
 
     private static final String KQUEUE_ENABLED_KEY = "io.lettuce.core.kqueue";
+
     private static final boolean KQUEUE_ENABLED = Boolean.parseBoolean(SystemPropertyUtil.get(KQUEUE_ENABLED_KEY, "true"));
 
     private static final boolean KQUEUE_AVAILABLE;
+
     private static final EventLoopResources KQUEUE_RESOURCES;
 
     static {
@@ -71,7 +73,7 @@ public class KqueueProvider {
     }
 
     /**
-     * @return {@literal true} if kqueue is available.
+     * @return {@code true} if kqueue is available.
      */
     public static boolean isAvailable() {
         return KQUEUE_AVAILABLE && KQUEUE_ENABLED;
@@ -150,6 +152,7 @@ public class KqueueProvider {
             checkForKqueueLibrary();
             return null;
         }
+
     }
 
     /**
@@ -206,5 +209,7 @@ public class KqueueProvider {
 
             return new DomainSocketAddress(socketPath);
         }
+
     }
+
 }

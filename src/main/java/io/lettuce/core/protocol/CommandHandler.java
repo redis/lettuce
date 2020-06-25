@@ -69,40 +69,59 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             "Broken pipe", "Connection timed out");
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
+
     private static final AtomicLong COMMAND_HANDLER_COUNTER = new AtomicLong();
 
     private final ClientOptions clientOptions;
+
     private final ClientResources clientResources;
+
     private final Endpoint endpoint;
 
     private final ArrayDeque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
+
     private final long commandHandlerId = COMMAND_HANDLER_COUNTER.incrementAndGet();
 
     private final boolean traceEnabled = logger.isTraceEnabled();
+
     private final boolean debugEnabled = logger.isDebugEnabled();
+
     private final boolean latencyMetricsEnabled;
+
     private final boolean tracingEnabled;
+
     private final boolean includeCommandArgsInSpanTags;
+
     private final float discardReadBytesRatio;
+
     private final boolean boundedQueues;
+
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
     private RedisStateMachine rsm;
+
     private Channel channel;
+
     private ByteBuf buffer;
+
     private PushOutput<ByteBuffer, ByteBuffer> pushOutput;
+
     private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
+
     private String logPrefix;
+
     private PristineFallbackCommand fallbackCommand;
+
     private boolean pristine;
+
     private Tracing.Endpoint tracedEndpoint;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}
-     * @param clientResources client resources for this connection, must not be {@literal null}
-     * @param endpoint must not be {@literal null}.
+     * @param clientOptions client options for this connection, must not be {@code null}
+     * @param clientResources client resources for this connection, must not be {@code null}
+     * @param endpoint must not be {@code null}.
      */
     public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Endpoint endpoint) {
 
@@ -805,7 +824,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * Consume a response without having a command on the stack.
      *
      * @param buffer
-     * @return {@literal true} if the buffer decode was successful. {@literal false} if the buffer was not decoded.
+     * @return {@code true} if the buffer decode was successful. {@code false} if the buffer was not decoded.
      */
     private boolean consumeResponse(ByteBuf buffer) {
 
@@ -965,6 +984,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 }
             }
         }
+
     }
 
     enum EnableAutoRead {
@@ -977,14 +997,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     static class AddToStack implements GenericFutureListener<Future<Void>> {
 
         private static final Recycler<AddToStack> RECYCLER = new Recycler<AddToStack>() {
+
             @Override
             protected AddToStack newObject(Handle<AddToStack> handle) {
                 return new AddToStack(handle);
             }
+
         };
 
         private final Recycler.Handle<AddToStack> handle;
+
         private ArrayDeque<Object> stack;
+
         private RedisCommand<?, ?, ?> command;
 
         AddToStack(Recycler.Handle<AddToStack> handle) {
@@ -1029,5 +1053,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             handle.recycle(this);
         }
+
     }
+
 }

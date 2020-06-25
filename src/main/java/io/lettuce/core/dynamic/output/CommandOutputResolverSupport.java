@@ -32,9 +32,9 @@ public abstract class CommandOutputResolverSupport {
      * <p>
      * This method descends the component type hierarchy and considers primitive/wrapper type conversion.
      *
-     * @param selector must not be {@literal null}.
-     * @param provider must not be {@literal null}.
-     * @return {@literal true} if selector can be assigned from its provider type.
+     * @param selector must not be {@code null}.
+     * @param provider must not be {@code null}.
+     * @return {@code true} if selector can be assigned from its provider type.
      */
     protected boolean isAssignableFrom(OutputSelector selector, OutputType provider) {
 
@@ -43,4 +43,5 @@ public abstract class CommandOutputResolverSupport {
 
         return selectorType.isAssignableFrom(resolvableType);
     }
+
 }

@@ -32,6 +32,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class IntegerListOutput<K, V> extends CommandOutput<K, V, List<Long>> implements StreamingOutput<Long> {
 
     private boolean initialized;
+
     private Subscriber<Long> subscriber;
 
     public IntegerListOutput(RedisCodec<K, V> codec) {
@@ -63,4 +64,5 @@ public class IntegerListOutput<K, V> extends CommandOutput<K, V, List<Long>> imp
     public Subscriber<Long> getSubscriber() {
         return subscriber;
     }
+
 }

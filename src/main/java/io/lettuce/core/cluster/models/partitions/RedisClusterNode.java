@@ -41,16 +41,23 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     private RedisURI uri;
+
     private String nodeId;
 
     private boolean connected;
+
     private String slaveOf;
+
     private long pingSentTimestamp;
+
     private long pongReceivedTimestamp;
+
     private long configEpoch;
 
     private BitSet slots;
+
     private final Set<NodeFlag> flags = EnumSet.noneOf(NodeFlag.class);
+
     private final List<RedisURI> aliases = new ArrayList<>();
 
     public RedisClusterNode() {
@@ -142,7 +149,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the connection point details. Usually the host/ip/port where a particular Redis Cluster node server is running.
      *
-     * @param uri the {@link RedisURI}, must not be {@literal null}
+     * @param uri the {@link RedisURI}, must not be {@code null}
      */
     public void setUri(RedisURI uri) {
 
@@ -185,7 +192,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the replication source.
      *
-     * @param slaveOf the replication source, can be {@literal null}
+     * @param slaveOf the replication source, can be {@code null}
      */
     public void setSlaveOf(String slaveOf) {
         this.slaveOf = slaveOf;
@@ -280,7 +287,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#UPSTREAM}. The list is empty if this node is
      * not a upstream or the node is not responsible for any slots at all.
      *
-     * @param slots list of slots, must not be {@literal null} but may be empty
+     * @param slots list of slots, must not be {@code null} but may be empty
      */
     public void setSlots(List<Integer> slots) {
 
@@ -307,10 +314,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * Return {@literal true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
+     * Return {@code true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
      *
      * @param other the node to compare with.
-     * @return {@literal true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
+     * @return {@code true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
      */
     public boolean hasSameSlotsAs(RedisClusterNode other) {
 
@@ -365,7 +372,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Add an alias to {@link RedisClusterNode}.
      *
-     * @param alias must not be {@literal null}.
+     * @param alias must not be {@code null}.
      */
     public void addAlias(RedisURI alias) {
 
@@ -459,4 +466,5 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         MASTER, UPSTREAM, //
         EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }
+
 }

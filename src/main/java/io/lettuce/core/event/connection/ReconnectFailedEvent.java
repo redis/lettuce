@@ -26,6 +26,7 @@ import java.net.SocketAddress;
 public class ReconnectFailedEvent extends ConnectionEventSupport {
 
     private final Throwable cause;
+
     private final int attempt;
 
     public ReconnectFailedEvent(SocketAddress local, SocketAddress remote, Throwable cause, int attempt) {
@@ -52,4 +53,5 @@ public class ReconnectFailedEvent extends ConnectionEventSupport {
     public int getAttempt() {
         return attempt;
     }
+
 }

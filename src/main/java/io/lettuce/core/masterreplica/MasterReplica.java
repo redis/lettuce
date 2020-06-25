@@ -102,8 +102,8 @@ public class MasterReplica {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURI the Redis server to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURI the Redis server to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection.
@@ -122,8 +122,8 @@ public class MasterReplica {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURI the Redis server to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURI the Redis server to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return {@link CompletableFuture} that is notified once the connect is finished.
@@ -163,8 +163,8 @@ public class MasterReplica {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection.
@@ -190,8 +190,8 @@ public class MasterReplica {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return {@link CompletableFuture} that is notified once the connect is finished.
@@ -282,4 +282,5 @@ public class MasterReplica {
             return CompletableFuture.completedFuture(v);
         }).toCompletableFuture();
     }
+
 }

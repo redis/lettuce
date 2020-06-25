@@ -468,8 +468,8 @@ class DefaultEndpointUnitTests {
         /**
          * Create a new {@link DefaultEndpoint}.
          *
-         * @param clientOptions client options for this connection, must not be {@literal null}.
-         * @param clientResources client resources for this connection, must not be {@literal null}.
+         * @param clientOptions client options for this connection, must not be {@code null}.
+         * @param clientResources client resources for this connection, must not be {@code null}.
          */
         TestableEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
             super(clientOptions, clientResources);

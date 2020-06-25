@@ -51,4 +51,5 @@ public class RedisException extends RuntimeException {
     public RedisException(Throwable cause) {
         super(cause);
     }
+
 }

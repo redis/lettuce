@@ -37,7 +37,8 @@ public interface RedisSortedSetCommands<K, V> {
      *
      * @param timeout the timeout in seconds.
      * @param keys the keys.
-     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped member.
+     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped
+     *         member.
      * @since 5.1
      */
     KeyValue<K, ScoredValue<V>> bzpopmin(long timeout, K... keys);
@@ -47,7 +48,8 @@ public interface RedisSortedSetCommands<K, V> {
      *
      * @param timeout the timeout in seconds.
      * @param keys the keys.
-     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped member.
+     * @return KeyValue&lt;K, ScoredValue&lt;V&gt;&gt; multi-bulk containing the name of the key, the score and the popped
+     *         member.
      * @since 5.1
      */
     KeyValue<K, ScoredValue<V>> bzpopmax(long timeout, K... keys);
@@ -159,7 +161,7 @@ public interface RedisSortedSetCommands<K, V> {
      * Get the number of members in a sorted set.
      *
      * @param key the key
-     * @return Long integer-reply the cardinality (number of elements) of the sorted set, or {@literal false} if {@code key}
+     * @return Long integer-reply the cardinality (number of elements) of the sorted set, or {@code false} if {@code key}
      *         does not exist.
      */
     Long zcard(K key);
@@ -652,7 +654,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset,
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -667,7 +670,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}
      */
     @Deprecated
-    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
+    Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset,
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -1105,7 +1109,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}
      */
     @Deprecated
-    Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
+    Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset,
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -1120,7 +1125,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}
      */
     @Deprecated
-    Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
+    Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset,
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -1165,7 +1171,7 @@ public interface RedisSortedSetCommands<K, V> {
      * Incrementally iterate sorted sets elements and associated scores.
      *
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @param scanArgs scan arguments
      * @return ScoredValueScanCursor&lt;V&gt; scan cursor.
      */
@@ -1175,7 +1181,7 @@ public interface RedisSortedSetCommands<K, V> {
      * Incrementally iterate sorted sets elements and associated scores.
      *
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @return ScoredValueScanCursor&lt;V&gt; scan cursor.
      */
     ScoredValueScanCursor<V> zscan(K key, ScanCursor scanCursor);
@@ -1204,7 +1210,7 @@ public interface RedisSortedSetCommands<K, V> {
      *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      */
@@ -1215,7 +1221,7 @@ public interface RedisSortedSetCommands<K, V> {
      *
      * @param channel streaming channel that receives a call for every scored value
      * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}
      * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
@@ -1248,4 +1254,5 @@ public interface RedisSortedSetCommands<K, V> {
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
     Long zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
+
 }

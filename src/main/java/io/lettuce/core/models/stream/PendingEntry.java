@@ -24,8 +24,11 @@ package io.lettuce.core.models.stream;
 public class PendingEntry {
 
     private final String messageId;
+
     private final String consumer;
+
     private final long millisSinceDelivery;
+
     private final long deliveryCount;
 
     public PendingEntry(String messageId, String consumer, long millisSinceDelivery, long deliveryCount) {
@@ -55,7 +58,8 @@ public class PendingEntry {
     @Override
     public String toString() {
 
-        return String.format("%s [messageId='%s', consumer='%s', millisSinceDelivery=%d, deliveryCount=%d]", getClass()
-                .getSimpleName(), messageId, consumer, millisSinceDelivery, deliveryCount);
+        return String.format("%s [messageId='%s', consumer='%s', millisSinceDelivery=%d, deliveryCount=%d]",
+                getClass().getSimpleName(), messageId, consumer, millisSinceDelivery, deliveryCount);
     }
+
 }

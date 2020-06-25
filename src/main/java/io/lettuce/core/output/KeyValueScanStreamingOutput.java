@@ -31,6 +31,7 @@ import io.lettuce.core.codec.RedisCodec;
 public class KeyValueScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanCursor> {
 
     private K key;
+
     private KeyValueStreamingChannel<K, V> channel;
 
     public KeyValueScanStreamingOutput(RedisCodec<K, V> codec, KeyValueStreamingChannel<K, V> channel) {

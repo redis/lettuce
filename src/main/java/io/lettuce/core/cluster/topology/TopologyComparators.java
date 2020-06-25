@@ -117,7 +117,7 @@ public class TopologyComparators {
      *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code UPSTREAM} or {@code REPLICA} flags changed or the responsible slots changed.
+     * @return {@code true} if {@code UPSTREAM} or {@code REPLICA} flags changed or the responsible slots changed.
      */
     public static boolean isChanged(Partitions o1, Partitions o2) {
 
@@ -139,7 +139,7 @@ public class TopologyComparators {
      *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code UPSTREAM} or {@code REPLICA} flags changed or the responsible slots changed.
+     * @return {@code true} if {@code UPSTREAM} or {@code REPLICA} flags changed or the responsible slots changed.
      */
     static boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
 
@@ -172,6 +172,7 @@ public class TopologyComparators {
     }
 
     static class PredefinedRedisClusterNodeComparator implements Comparator<RedisClusterNode> {
+
         private final List<RedisURI> fixedOrder;
 
         public PredefinedRedisClusterNodeComparator(List<RedisURI> fixedOrder) {
@@ -186,6 +187,7 @@ public class TopologyComparators {
 
             return Integer.compare(index1, index2);
         }
+
     }
 
     /**
@@ -218,6 +220,7 @@ public class TopologyComparators {
 
             return 0;
         }
+
     }
 
     /**
@@ -250,6 +253,7 @@ public class TopologyComparators {
 
             return 0;
         }
+
     }
 
     /**
@@ -274,6 +278,7 @@ public class TopologyComparators {
 
             return h1.compareToIgnoreCase(h2);
         }
+
     }
 
     /**
@@ -288,30 +293,36 @@ public class TopologyComparators {
          * Sort by latency.
          */
         BY_LATENCY {
+
             @Override
             void sort(Partitions partitions) {
                 partitions.getPartitions().sort(TopologyComparators.LatencyComparator.INSTANCE);
             }
+
         },
 
         /**
          * Do not sort.
          */
         NONE {
+
             @Override
             void sort(Partitions partitions) {
 
             }
+
         },
 
         /**
          * Randomize nodes.
          */
         RANDOMIZE {
+
             @Override
             void sort(Partitions partitions) {
                 Collections.shuffle(partitions.getPartitions());
             }
+
         };
 
         abstract void sort(Partitions partitions);
@@ -332,5 +343,7 @@ public class TopologyComparators {
 
             return BY_LATENCY;
         }
+
     }
+
 }

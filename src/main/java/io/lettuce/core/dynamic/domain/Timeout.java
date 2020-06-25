@@ -54,7 +54,7 @@ public class Timeout {
      * Create a {@link Timeout}.
      *
      * @param timeout the timeout value, must be non-negative.
-     * @param timeUnit the associated {@link TimeUnit}, must not be {@literal null}.
+     * @param timeUnit the associated {@link TimeUnit}, must not be {@code null}.
      * @return the {@link Timeout}.
      */
     public static Timeout create(long timeout, TimeUnit timeUnit) {
@@ -70,4 +70,5 @@ public class Timeout {
     public Duration getTimeout() {
         return timeout;
     }
+
 }

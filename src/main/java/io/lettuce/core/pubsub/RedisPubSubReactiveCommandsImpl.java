@@ -66,6 +66,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
                 public void message(K pattern, K channel, V message) {
                     sink.next(new PatternMessage<>(pattern, channel, message));
                 }
+
             };
 
             StatefulRedisPubSubConnection<K, V> statefulConnection = getStatefulConnection();
@@ -94,6 +95,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
                 public void message(K channel, V message) {
                     sink.next(new ChannelMessage<>(channel, message));
                 }
+
             };
 
             StatefulRedisPubSubConnection<K, V> statefulConnection = getStatefulConnection();

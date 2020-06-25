@@ -56,4 +56,5 @@ public interface NodeSelectionPubSubCommands<K, V> {
      * @return Executions Future to synchronize {@code unsubscribe} completion.
      */
     Executions<Void> unsubscribe(K... channels);
+
 }

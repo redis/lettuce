@@ -25,15 +25,14 @@ import io.lettuce.core.cluster.api.sync.Executions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 
 /**
- * @author Mark Paluch
- * TODO: Add timeout handling
+ * @author Mark Paluch TODO: Add timeout handling
  */
 class SyncExecutionsImpl<T> implements Executions<T> {
 
     private Map<RedisClusterNode, T> executions;
 
-    public SyncExecutionsImpl(Map<RedisClusterNode, CompletionStage<? extends T>> executions) throws ExecutionException,
-            InterruptedException {
+    public SyncExecutionsImpl(Map<RedisClusterNode, CompletionStage<? extends T>> executions)
+            throws ExecutionException, InterruptedException {
 
         Map<RedisClusterNode, T> result = new HashMap<>(executions.size(), 1);
         for (Map.Entry<RedisClusterNode, CompletionStage<? extends T>> entry : executions.entrySet()) {

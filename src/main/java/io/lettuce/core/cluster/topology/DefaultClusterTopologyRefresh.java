@@ -52,6 +52,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultClusterTopologyRefresh.class);
 
     private final NodeConnectionFactory nodeConnectionFactory;
+
     private final ClientResources clientResources;
 
     public DefaultClusterTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, ClientResources clientResources) {
@@ -65,7 +66,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
      *
      * @param seed collection of {@link RedisURI}s
      * @param connectTimeout connect timeout
-     * @param discovery {@literal true} to discover additional nodes
+     * @param discovery {@code true} to discover additional nodes
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
     public CompletionStage<Map<RedisURI, Partitions>> loadViews(Iterable<RedisURI> seed, Duration connectTimeout,
@@ -465,6 +466,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
             }
             return activeConnections;
         }
+
     }
 
     @SuppressWarnings("serial")
@@ -501,5 +503,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         public synchronized Throwable fillInStackTrace() {
             return this;
         }
+
     }
+
 }

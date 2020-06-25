@@ -72,4 +72,5 @@ public class BaseRedisCommandBuilder<K, V> {
                 throw new RedisException("Unsupported script output type");
         }
     }
+
 }

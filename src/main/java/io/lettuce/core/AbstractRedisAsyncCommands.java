@@ -51,6 +51,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
+
     private final RedisCommandBuilder<K, V> commandBuilder;
 
     /**
@@ -2257,4 +2258,5 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
         LettuceAssert.notEmpty(script, "Lua script must not be empty");
         return script.getBytes(getConnection().getOptions().getScriptCharset());
     }
+
 }

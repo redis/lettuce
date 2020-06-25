@@ -35,13 +35,14 @@ import io.lettuce.core.internal.LettuceAssert;
 public class MappingSocketAddressResolver extends SocketAddressResolver {
 
     private final Function<HostAndPort, HostAndPort> mappingFunction;
+
     private final DnsResolver dnsResolver;
 
     /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver} and {@link Function mapping function}.
      *
-     * @param dnsResolver must not be {@literal null}.
-     * @param mappingFunction must not be {@literal null}.
+     * @param dnsResolver must not be {@code null}.
+     * @param mappingFunction must not be {@code null}.
      */
     private MappingSocketAddressResolver(DnsResolver dnsResolver, Function<HostAndPort, HostAndPort> mappingFunction) {
 
@@ -55,8 +56,8 @@ public class MappingSocketAddressResolver extends SocketAddressResolver {
     /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver} and {@link Function mapping function}.
      *
-     * @param dnsResolver must not be {@literal null}.
-     * @param mappingFunction must not be {@literal null}.
+     * @param dnsResolver must not be {@code null}.
+     * @param mappingFunction must not be {@code null}.
      * @return the {@link MappingSocketAddressResolver}.
      */
     public static MappingSocketAddressResolver create(DnsResolver dnsResolver,
@@ -95,4 +96,5 @@ public class MappingSocketAddressResolver extends SocketAddressResolver {
 
         return new InetSocketAddress(inetAddress[0], mapped.getPort());
     }
+
 }

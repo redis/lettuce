@@ -46,15 +46,19 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class UpstreamReplicaConnectionProvider<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(UpstreamReplicaConnectionProvider.class);
+
     private final boolean debugEnabled = logger.isDebugEnabled();
 
     private final RedisURI initialRedisUri;
+
     private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, CompletionStage<StatefulRedisConnection<K, V>>> connectionProvider;
 
     private List<RedisNodeDescription> knownNodes = new ArrayList<>();
 
     private boolean autoFlushCommands = true;
+
     private final Object stateLock = new Object();
+
     private ReadFrom readFrom;
 
     UpstreamReplicaConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
@@ -110,6 +114,7 @@ class UpstreamReplicaConnectionProvider<K, V> {
 
         if (readFrom != null && intent == Intent.READ) {
             List<RedisNodeDescription> selection = readFrom.select(new ReadFrom.Nodes() {
+
                 @Override
                 public List<RedisNodeDescription> getNodes() {
                     return knownNodes;
@@ -119,6 +124,7 @@ class UpstreamReplicaConnectionProvider<K, V> {
                 public Iterator<RedisNodeDescription> iterator() {
                     return knownNodes.iterator();
                 }
+
             });
 
             if (selection.isEmpty()) {
@@ -305,6 +311,7 @@ class UpstreamReplicaConnectionProvider<K, V> {
     class DefaultConnectionFactory implements Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> {
 
         private final RedisClient redisClient;
+
         private final RedisCodec<K, V> redisCodec;
 
         DefaultConnectionFactory(RedisClient redisClient, RedisCodec<K, V> redisCodec) {
@@ -338,6 +345,7 @@ class UpstreamReplicaConnectionProvider<K, V> {
 
             return connectionFuture;
         }
+
     }
 
     private static ConnectionKey toConnectionKey(RedisURI redisURI) {
@@ -350,6 +358,7 @@ class UpstreamReplicaConnectionProvider<K, V> {
     static class ConnectionKey {
 
         private final String host;
+
         private final int port;
 
         ConnectionKey(String host, int port) {
@@ -378,9 +387,11 @@ class UpstreamReplicaConnectionProvider<K, V> {
             result = 31 * result + port;
             return result;
         }
+
     }
 
     enum Intent {
         READ, WRITE;
     }
+
 }

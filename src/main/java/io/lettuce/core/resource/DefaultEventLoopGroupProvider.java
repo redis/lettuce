@@ -42,9 +42,11 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEventLoopGroupProvider.class);
 
     private final Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
+
     private final Map<ExecutorService, Long> refCounter = new ConcurrentHashMap<>(2);
 
     private final int numberOfThreads;
+
     private final ThreadFactoryProvider threadFactoryProvider;
 
     private volatile boolean shutdownCalled = false;
@@ -298,6 +300,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
          * @return the {@link ThreadFactory}.
          */
         ThreadFactory getThreadFactory(String poolName);
+
     }
 
     enum DefaultThreadFactoryProvider implements ThreadFactoryProvider {
@@ -308,5 +311,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         public ThreadFactory getThreadFactory(String poolName) {
             return new DefaultThreadFactory(poolName, true);
         }
+
     }
+
 }

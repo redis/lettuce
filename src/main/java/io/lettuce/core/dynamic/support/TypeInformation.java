@@ -32,7 +32,7 @@ public interface TypeInformation<S> {
     /**
      * Returns the {@link TypeInformation}s for the parameters of the given {@link Constructor}.
      *
-     * @param constructor must not be {@literal null}.
+     * @param constructor must not be {@code null}.
      * @return
      */
     List<TypeInformation<?>> getParameterTypes(Constructor<?> constructor);
@@ -40,7 +40,7 @@ public interface TypeInformation<S> {
     /**
      * Returns whether the type can be considered a collection, which means it's a container of elements, e.g. a
      * {@link java.util.Collection} and {@link java.lang.reflect.Array} or anything implementing {@link Iterable}. If this
-     * returns {@literal true} you can expect {@link #getComponentType()} to return a non-{@literal null} value.
+     * returns {@code true} you can expect {@link #getComponentType()} to return a non-{@code null} value.
      *
      * @return
      */
@@ -54,8 +54,8 @@ public interface TypeInformation<S> {
     TypeInformation<?> getComponentType();
 
     /**
-     * Returns whether the property is a {@link java.util.Map}. If this returns {@literal true} you can expect
-     * {@link #getComponentType()} as well as {@link #getMapValueType()} to return something not {@literal null}.
+     * Returns whether the property is a {@link java.util.Map}. If this returns {@code true} you can expect
+     * {@link #getComponentType()} as well as {@link #getMapValueType()} to return something not {@code null}.
      *
      * @return
      */
@@ -94,7 +94,7 @@ public interface TypeInformation<S> {
      * Returns a {@link TypeInformation} for the return type of the given {@link Method}. Will potentially resolve generics
      * information against the current types type parameter bindings.
      *
-     * @param method must not be {@literal null}.
+     * @param method must not be {@code null}.
      * @return
      */
     TypeInformation<?> getReturnType(Method method);
@@ -102,7 +102,7 @@ public interface TypeInformation<S> {
     /**
      * Returns the {@link TypeInformation}s for the parameters of the given {@link Method}.
      *
-     * @param method must not be {@literal null}.
+     * @param method must not be {@code null}.
      * @return
      */
     List<TypeInformation<?>> getParameterTypes(Method method);
@@ -110,8 +110,8 @@ public interface TypeInformation<S> {
     /**
      * Returns the {@link TypeInformation} for the given raw super type.
      *
-     * @param superType must not be {@literal null}.
-     * @return the {@link TypeInformation} for the given raw super type or {@literal null} in case the current
+     * @param superType must not be {@code null}.
+     * @return the {@link TypeInformation} for the given raw super type or {@code null} in case the current
      *         {@link TypeInformation} does not implement the given type.
      */
     TypeInformation<?> getSuperTypeInformation(Class<?> superType);
@@ -134,4 +134,5 @@ public interface TypeInformation<S> {
     List<TypeInformation<?>> getTypeArguments();
 
     Map<TypeVariable<?>, Type> getTypeVariableMap();
+
 }

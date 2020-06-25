@@ -50,4 +50,5 @@ class ReactiveExecutionsImpl<T> implements ReactiveExecutions<T> {
     public Collection<RedisClusterNode> nodes() {
         return executions.keySet();
     }
+
 }

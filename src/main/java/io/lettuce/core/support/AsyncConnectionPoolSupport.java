@@ -50,10 +50,12 @@ import io.lettuce.core.support.ConnectionWrapping.Origin;
  * <h3>Example</h3>
  *
  * <pre class="code">
+ *
  * // application initialization
  * RedisClusterClient clusterClient = RedisClusterClient.create(RedisURI.create(host, port));
- * AsyncPool&lt;StatefulRedisConnection&lt;String, String&gt;&gt; pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
- *         () -&gt; clusterClient.connectAsync(), BoundedPoolConfig.create());
+ *
+ * AsyncPool&lt;StatefulRedisConnection&lt;String, String&gt;&gt; pool = AsyncConnectionPoolSupport
+ *         .createBoundedObjectPool(() -&gt; clusterClient.connectAsync(), BoundedPoolConfig.create());
  *
  * // executing work
  * CompletableFuture&lt;String&gt; pingResponse = pool.acquire().thenCompose(c -&gt; {
@@ -80,8 +82,8 @@ public abstract class AsyncConnectionPoolSupport {
      * Creates a new {@link BoundedAsyncPool} using the {@link Supplier}. Allocated instances are wrapped and must not be
      * returned with {@link AsyncPool#release(Object)}.
      *
-     * @param connectionSupplier must not be {@literal null}.
-     * @param config must not be {@literal null}.
+     * @param connectionSupplier must not be {@code null}.
+     * @param config must not be {@code null}.
      * @param <T> connection type.
      * @return the connection pool.
      */
@@ -93,10 +95,10 @@ public abstract class AsyncConnectionPoolSupport {
     /**
      * Creates a new {@link BoundedAsyncPool} using the {@link Supplier}.
      *
-     * @param connectionSupplier must not be {@literal null}.
-     * @param config must not be {@literal null}.
-     * @param wrapConnections {@literal false} to return direct connections that need to be returned to the pool using
-     *        {@link AsyncPool#release(Object)}. {@literal true} to return wrapped connection that are returned to the pool when
+     * @param connectionSupplier must not be {@code null}.
+     * @param config must not be {@code null}.
+     * @param wrapConnections {@code false} to return direct connections that need to be returned to the pool using
+     *        {@link AsyncPool#release(Object)}. {@code true} to return wrapped connection that are returned to the pool when
      *        invoking {@link StatefulConnection#close()}/{@link StatefulConnection#closeAsync()}.
      * @param <T> connection type.
      * @return the connection pool.
@@ -133,6 +135,7 @@ public abstract class AsyncConnectionPoolSupport {
 
                 return super.release(object);
             }
+
         };
 
         poolRef.set(new AsyncPoolWrapper<>(pool));
@@ -166,6 +169,7 @@ public abstract class AsyncConnectionPoolSupport {
         public CompletableFuture<Boolean> validate(T object) {
             return CompletableFuture.completedFuture(object.isOpen());
         }
+
     }
 
     private static class AsyncPoolWrapper<T> implements Origin<T> {
@@ -185,5 +189,7 @@ public abstract class AsyncConnectionPoolSupport {
         public CompletableFuture<Void> returnObjectAsync(T o) {
             return pool.release(o);
         }
+
     }
+
 }

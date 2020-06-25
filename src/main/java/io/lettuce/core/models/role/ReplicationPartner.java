@@ -28,7 +28,9 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 @SuppressWarnings("serial")
 public class ReplicationPartner implements Serializable {
+
     private HostAndPort host;
+
     private long replicationOffset;
 
     public ReplicationPartner() {
@@ -38,7 +40,7 @@ public class ReplicationPartner implements Serializable {
     /**
      * Constructs a replication partner.
      *
-     * @param host host information, must not be {@literal null}
+     * @param host host information, must not be {@code null}
      * @param replicationOffset the replication offset
      */
     public ReplicationPartner(HostAndPort host, long replicationOffset) {
@@ -81,4 +83,5 @@ public class ReplicationPartner implements Serializable {
         sb.append(']');
         return sb.toString();
     }
+
 }

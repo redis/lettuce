@@ -61,6 +61,7 @@ public class XGroupCreateArgs {
         public static XGroupCreateArgs mkstream(boolean mkstream) {
             return new XGroupCreateArgs().mkstream(mkstream);
         }
+
     }
 
     /**
@@ -81,4 +82,5 @@ public class XGroupCreateArgs {
             args.add("MKSTREAM");
         }
     }
+
 }

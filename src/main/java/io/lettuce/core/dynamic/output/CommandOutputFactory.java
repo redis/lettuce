@@ -33,10 +33,11 @@ public interface CommandOutputFactory {
     /**
      * Create and initialize a new {@link CommandOutput} given {@link RedisCodec}.
      *
-     * @param codec must not be {@literal null}.
+     * @param codec must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return the new {@link CommandOutput}.
      */
     <K, V> CommandOutput<K, V, ?> create(RedisCodec<K, V> codec);
+
 }

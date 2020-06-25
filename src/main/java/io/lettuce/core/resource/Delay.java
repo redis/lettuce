@@ -38,8 +38,11 @@ import io.lettuce.core.internal.LettuceAssert;
 public abstract class Delay {
 
     private static Duration DEFAULT_LOWER_BOUND = Duration.ZERO;
+
     private static Duration DEFAULT_UPPER_BOUND = Duration.ofSeconds(30);
+
     private static int DEFAULT_POWER_OF = 2;
+
     private static TimeUnit DEFAULT_TIMEUNIT = TimeUnit.MILLISECONDS;
 
     /**
@@ -56,6 +59,7 @@ public abstract class Delay {
          * Reset this delay state. Resetting prepares a stateful delay for its next usage.
          */
         void reset();
+
     }
 
     /**
@@ -339,4 +343,5 @@ public abstract class Delay {
 
         return calculatedValue;
     }
+
 }

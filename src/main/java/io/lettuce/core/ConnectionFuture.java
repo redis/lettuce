@@ -36,8 +36,8 @@ public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
      * Create a {@link ConnectionFuture} given {@link SocketAddress} and {@link CompletableFuture} holding the connection
      * progress.
      *
-     * @param remoteAddress initial connection endpoint, must not be {@literal null}.
-     * @param delegate must not be {@literal null}.
+     * @param remoteAddress initial connection endpoint, must not be {@code null}.
+     * @param delegate must not be {@code null}.
      * @return the {@link ConnectionFuture} for {@link SocketAddress} and {@link CompletableFuture}.
      * @since 5.0
      */
@@ -48,8 +48,8 @@ public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
     /**
      * Create a completed {@link ConnectionFuture} given {@link SocketAddress} and {@code value} holding the value.
      *
-     * @param remoteAddress initial connection endpoint, must not be {@literal null}.
-     * @param value must not be {@literal null}.
+     * @param remoteAddress initial connection endpoint, must not be {@code null}.
+     * @param value must not be {@code null}.
      * @return the {@link ConnectionFuture} for {@link SocketAddress} and {@code value}.
      * @since 5.1
      */
@@ -70,7 +70,7 @@ public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
     /**
      * Return the remote {@link SocketAddress}.
      *
-     * @return the remote {@link SocketAddress}. May be {@literal null} until the socket address is resolved.
+     * @return the remote {@link SocketAddress}. May be {@code null} until the socket address is resolved.
      */
     SocketAddress getRemoteAddress();
 
@@ -113,7 +113,8 @@ public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
     ConnectionFuture<Void> thenRunAsync(Runnable action, Executor executor);
 
     @Override
-    <U, V> ConnectionFuture<V> thenCombine(CompletionStage<? extends U> other, BiFunction<? super T, ? super U, ? extends V> fn);
+    <U, V> ConnectionFuture<V> thenCombine(CompletionStage<? extends U> other,
+            BiFunction<? super T, ? super U, ? extends V> fn);
 
     @Override
     <U, V> ConnectionFuture<V> thenCombineAsync(CompletionStage<? extends U> other,
@@ -149,7 +150,8 @@ public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
     <U> ConnectionFuture<U> applyToEitherAsync(CompletionStage<? extends T> other, Function<? super T, U> fn);
 
     @Override
-    <U> ConnectionFuture<U> applyToEitherAsync(CompletionStage<? extends T> other, Function<? super T, U> fn, Executor executor);
+    <U> ConnectionFuture<U> applyToEitherAsync(CompletionStage<? extends T> other, Function<? super T, U> fn,
+            Executor executor);
 
     @Override
     ConnectionFuture<Void> acceptEither(CompletionStage<? extends T> other, Consumer<? super T> action);
@@ -200,4 +202,5 @@ public interface ConnectionFuture<T> extends CompletionStage<T>, Future<T> {
 
     @Override
     <U> ConnectionFuture<U> handleAsync(BiFunction<? super T, Throwable, ? extends U> fn, Executor executor);
+
 }

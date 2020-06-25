@@ -35,6 +35,7 @@ class AsyncConnections {
 
     private final Map<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> connections = new TreeMap<>(
             ReplicaUtils.RedisURIComparator.INSTANCE);
+
     private final List<RedisNodeDescription> nodeList;
 
     AsyncConnections(List<RedisNodeDescription> nodeList) {
@@ -72,4 +73,5 @@ class AsyncConnections {
 
         return Mono.fromCompletionStage(connections.getOrTimeout(timeout, timeoutExecutor));
     }
+
 }
