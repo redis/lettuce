@@ -37,9 +37,9 @@ public abstract class ReflectionUtils {
      * <p>
      * Thrown exceptions are handled via a call to {@link #handleReflectionException(Exception)}.
      *
-     * @param field the field to get
-     * @param target the target object from which to get the field
-     * @return the field's current value
+     * @param field the field to get.
+     * @param target the target object from which to get the field.
+     * @return the field's current value.
      */
     public static Object getField(Field field, Object target) {
         try {
@@ -57,9 +57,9 @@ public abstract class ReflectionUtils {
      * <p>
      * Returns {@code null} if no {@link Method} can be found.
      *
-     * @param clazz the class to introspect
-     * @param name the name of the method
-     * @return the Method object, or {@code null} if none found
+     * @param clazz the class to introspect.
+     * @param name the name of the method.
+     * @return the Method object, or {@code null} if none found.
      */
     public static Method findMethod(Class<?> clazz, String name) {
         return findMethod(clazz, name, new Class<?>[0]);
@@ -71,10 +71,10 @@ public abstract class ReflectionUtils {
      * <p>
      * Returns {@code null} if no {@link Method} can be found.
      *
-     * @param clazz the class to introspect
-     * @param name the name of the method
-     * @param paramTypes the parameter types of the method (may be {@code null} to indicate any signature)
-     * @return the Method object, or {@code null} if none found
+     * @param clazz the class to introspect.
+     * @param name the name of the method.
+     * @param paramTypes the parameter types of the method (may be {@code null} to indicate any signature).
+     * @return the Method object, or {@code null} if none found.
      */
     public static Method findMethod(Class<?> clazz, String name, Class<?>... paramTypes) {
         LettuceAssert.notNull(clazz, "Class must not be null");
@@ -99,9 +99,9 @@ public abstract class ReflectionUtils {
      * <p>
      * Thrown exceptions are handled via a call to {@link #handleReflectionException}.
      *
-     * @param method the method to invoke
-     * @param target the target object to invoke the method on
-     * @return the invocation result, if any
+     * @param method the method to invoke.
+     * @param target the target object to invoke the method on.
+     * @return the invocation result, if any.
      * @see #invokeMethod(java.lang.reflect.Method, Object, Object[])
      */
     public static Object invokeMethod(Method method, Object target) {
@@ -114,10 +114,10 @@ public abstract class ReflectionUtils {
      * <p>
      * Thrown exceptions are handled via a call to {@link #handleReflectionException}.
      *
-     * @param method the method to invoke
-     * @param target the target object to invoke the method on
-     * @param args the invocation arguments (may be {@code null})
-     * @return the invocation result, if any
+     * @param method the method to invoke.
+     * @param target the target object to invoke the method on.
+     * @param args the invocation arguments (may be {@code null}).
+     * @return the invocation result, if any.
      */
     public static Object invokeMethod(Method method, Object target, Object... args) {
         try {
@@ -135,7 +135,7 @@ public abstract class ReflectionUtils {
      * Throws the underlying RuntimeException or Error in case of an InvocationTargetException with such a root cause. Throws an
      * IllegalStateException with an appropriate message or UndeclaredThrowableException otherwise.
      *
-     * @param ex the reflection exception to handle
+     * @param ex the reflection exception to handle.
      */
     public static void handleReflectionException(Exception ex) {
         if (ex instanceof NoSuchMethodException) {
@@ -160,7 +160,7 @@ public abstract class ReflectionUtils {
      * Throws the underlying RuntimeException or Error in case of such a root cause. Throws an UndeclaredThrowableException
      * otherwise.
      *
-     * @param ex the invocation target exception to handle
+     * @param ex the invocation target exception to handle.
      */
     public static void handleInvocationTargetException(InvocationTargetException ex) {
         rethrowRuntimeException(ex.getTargetException());
@@ -174,7 +174,7 @@ public abstract class ReflectionUtils {
      * Rethrows the underlying exception cast to a {@link RuntimeException} or {@link Error} if appropriate; otherwise, throws
      * an {@link UndeclaredThrowableException}.
      *
-     * @param ex the exception to rethrow
+     * @param ex the exception to rethrow.
      * @throws RuntimeException the rethrown exception
      */
     public static void rethrowRuntimeException(Throwable ex) {
@@ -192,8 +192,8 @@ public abstract class ReflectionUtils {
      * <p>
      * The same named method occurring on subclass and superclass will appear twice, unless excluded by a {@link MethodFilter}.
      *
-     * @param clazz the class to introspect
-     * @param mc the callback to invoke for each method
+     * @param clazz the class to introspect.
+     * @param mc the callback to invoke for each method.
      * @see #doWithMethods(Class, MethodCallback, MethodFilter)
      */
     public static void doWithMethods(Class<?> clazz, MethodCallback mc) {
@@ -207,9 +207,9 @@ public abstract class ReflectionUtils {
      * The same named method occurring on subclass and superclass will appear twice, unless excluded by the specified
      * {@link MethodFilter}.
      *
-     * @param clazz the class to introspect
-     * @param mc the callback to invoke for each method
-     * @param mf the filter that determines the methods to apply the callback to
+     * @param clazz the class to introspect.
+     * @param mc the callback to invoke for each method.
+     * @param mf the filter that determines the methods to apply the callback to.
      */
     public static void doWithMethods(Class<?> clazz, MethodCallback mc, MethodFilter mf) {
         // Keep backing up the inheritance hierarchy.
@@ -238,8 +238,8 @@ public abstract class ReflectionUtils {
      * check and defensive array copying. In addition, it also includes Java 8 default methods from locally implemented
      * interfaces, since those are effectively to be treated just like declared methods.
      *
-     * @param clazz the class to introspect
-     * @return the cached array of methods
+     * @param clazz the class to introspect.
+     * @return the cached array of methods.
      * @see Class#getDeclaredMethods()
      */
     private static Method[] getDeclaredMethods(Class<?> clazz) {
@@ -279,8 +279,8 @@ public abstract class ReflectionUtils {
     /**
      * Invoke the given callback on all fields in the target class, going up the class hierarchy to get all declared fields.
      *
-     * @param clazz the target class to analyze
-     * @param fc the callback to invoke for each field
+     * @param clazz the target class to analyze.
+     * @param fc the callback to invoke for each field.
      */
     public static void doWithFields(Class<?> clazz, FieldCallback fc) {
         doWithFields(clazz, fc, null);
@@ -289,9 +289,9 @@ public abstract class ReflectionUtils {
     /**
      * Invoke the given callback on all fields in the target class, going up the class hierarchy to get all declared fields.
      *
-     * @param clazz the target class to analyze
-     * @param fc the callback to invoke for each field
-     * @param ff the filter that determines the fields to apply the callback to
+     * @param clazz the target class to analyze.
+     * @param fc the callback to invoke for each field.
+     * @param ff the filter that determines the fields to apply the callback to.
      */
     public static void doWithFields(Class<?> clazz, FieldCallback fc, FieldFilter ff) {
         // Keep backing up the inheritance hierarchy.
@@ -323,6 +323,7 @@ public abstract class ReflectionUtils {
          * @param method the method to operate on
          */
         void doWith(Method method) throws IllegalArgumentException, IllegalAccessException;
+
     }
 
     /**
@@ -336,6 +337,7 @@ public abstract class ReflectionUtils {
          * @param method the method to check
          */
         boolean matches(Method method);
+
     }
 
     /**
@@ -349,6 +351,7 @@ public abstract class ReflectionUtils {
          * @param field the field to operate on
          */
         void doWith(Field field) throws IllegalArgumentException, IllegalAccessException;
+
     }
 
     /**
@@ -362,5 +365,7 @@ public abstract class ReflectionUtils {
          * @param field the field to check
          */
         boolean matches(Field field);
+
     }
+
 }

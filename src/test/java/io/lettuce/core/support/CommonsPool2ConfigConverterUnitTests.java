@@ -96,4 +96,5 @@ class CommonsPool2ConfigConverterUnitTests {
 
         assertThat(targetExtractor.apply(result)).isEqualTo(value);
     }
+
 }

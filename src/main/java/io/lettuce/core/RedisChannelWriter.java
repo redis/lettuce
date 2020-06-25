@@ -37,7 +37,7 @@ public interface RedisChannelWriter extends Closeable, AsyncCloseable {
      * after the call.
      *
      * @param command the Redis command.
-     * @param <T> result type
+     * @param <T> result type.
      * @return the written Redis command.
      */
     <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
@@ -47,9 +47,9 @@ public interface RedisChannelWriter extends Closeable, AsyncCloseable {
      * returned after the call.
      *
      * @param commands the Redis commands.
-     * @param <K> key type
-     * @param <V> value type
-     * @return the written redis command
+     * @param <K> key type.
+     * @param <V> value type.
+     * @return the written redis command.
      */
     <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands);
 
@@ -79,13 +79,13 @@ public interface RedisChannelWriter extends Closeable, AsyncCloseable {
     /**
      * Set the corresponding connection facade in order to notify it about channel active/inactive state.
      *
-     * @param connection the connection facade (external connection object)
+     * @param connection the connection facade (external connection object).
      */
     void setConnectionFacade(ConnectionFacade connection);
 
     /**
-     * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
-     * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
+     * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands can
+     * be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
      *
      * @param autoFlush state of autoFlush.
@@ -99,8 +99,10 @@ public interface RedisChannelWriter extends Closeable, AsyncCloseable {
     void flushCommands();
 
     /**
+     *
      * @return the {@link ClientResources}.
      * @since 5.1
      */
     ClientResources getClientResources();
+
 }

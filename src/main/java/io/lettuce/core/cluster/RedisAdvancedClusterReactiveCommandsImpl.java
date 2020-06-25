@@ -525,10 +525,10 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     /**
-     * Run a command on all available masters,
+     * Run a command on all available masters,.
      *
-     * @param function function producing the command
-     * @param <T> result type
+     * @param function function producing the command.
+     * @param <T> result type.
      * @return map of a key (counter) and commands.
      */
     protected <T> Map<String, Publisher<T>> executeOnMasters(
@@ -539,9 +539,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     /**
      * Run a command on all available nodes that match {@code filter}.
      *
-     * @param function function producing the command
-     * @param filter filter function for the node selection
-     * @param <T> result type
+     * @param function function producing the command.
+     * @param filter filter function for the node selection.
+     * @param <T> result type.
      * @return map of a key (counter) and commands.
      */
     protected <T> Map<String, Publisher<T>> executeOnNodes(
@@ -589,7 +589,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     /**
      * Perform a SCAN in the cluster.
-     *
      */
     static <T extends ScanCursor, K, V> Mono<T> clusterScan(StatefulRedisClusterConnection<K, V> connection,
             AsyncClusterConnectionProvider connectionProvider, ScanCursor cursor,
@@ -608,4 +607,5 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {
         return Mono.fromCompletionStage(future);
     }
+
 }

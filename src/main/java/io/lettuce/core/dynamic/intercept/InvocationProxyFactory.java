@@ -41,12 +41,13 @@ import io.lettuce.core.internal.LettuceAssert;
 public class InvocationProxyFactory {
 
     private final List<MethodInterceptor> interceptors = new ArrayList<>();
+
     private final List<Class<?>> interfaces = new ArrayList<>();
 
     /**
      * Create a proxy instance give a {@link ClassLoader}.
      *
-     * @param classLoader must not be {@literal null}.
+     * @param classLoader must not be {@code null}.
      * @param <T> inferred result type.
      * @return the invocation proxy instance.
      */
@@ -63,7 +64,7 @@ public class InvocationProxyFactory {
     /**
      * Add a interface type that should be implemented by the resulting invocation proxy.
      *
-     * @param ifc must not be {@literal null} and must be an interface type.
+     * @param ifc must not be {@code null} and must be an interface type.
      */
     public void addInterface(Class<?> ifc) {
 
@@ -76,7 +77,7 @@ public class InvocationProxyFactory {
     /**
      * Add a {@link MethodInterceptor} to the interceptor chain.
      *
-     * @param interceptor notNull
+     * @param interceptor notNull.
      */
     public void addInterceptor(MethodInterceptor interceptor) {
 
@@ -100,5 +101,7 @@ public class InvocationProxyFactory {
         protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
             return context.invoke(proxy, method, args);
         }
+
     }
+
 }

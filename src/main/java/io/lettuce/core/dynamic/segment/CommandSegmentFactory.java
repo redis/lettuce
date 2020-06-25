@@ -28,8 +28,9 @@ public interface CommandSegmentFactory {
     /**
      * Create {@link CommandSegments} for a {@link CommandMethod}.
      *
-     * @param commandMethod must not be {@literal null}.
+     * @param commandMethod must not be {@code null}.
      * @return the {@link CommandSegments}.
      */
     CommandSegments createCommandSegments(CommandMethod commandMethod);
+
 }

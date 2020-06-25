@@ -18,7 +18,6 @@ package io.lettuce.core;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 /**
  * Close Events Facility. Can register/unregister CloseListener and fire a closed event to all registered listeners.
  *
@@ -40,6 +39,9 @@ class CloseEvents {
     }
 
     interface CloseListener {
+
         void resourceClosed(Object resource);
+
     }
+
 }

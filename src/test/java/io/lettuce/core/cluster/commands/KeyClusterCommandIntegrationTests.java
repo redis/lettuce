@@ -39,6 +39,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 class KeyClusterCommandIntegrationTests extends TestSupport {
 
     private final StatefulRedisClusterConnection<String, String> clusterConnection;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -100,4 +101,5 @@ class KeyClusterCommandIntegrationTests extends TestSupport {
         assertThat(redis.unlink(key, "a", "b")).isEqualTo(3);
         assertThat(redis.exists(key)).isEqualTo(0);
     }
+
 }

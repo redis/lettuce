@@ -42,4 +42,5 @@ public class KeyScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamScanCur
         channel.onKey(bytes == null ? null : codec.decodeKey(bytes));
         output.setCount(output.getCount() + 1);
     }
+
 }

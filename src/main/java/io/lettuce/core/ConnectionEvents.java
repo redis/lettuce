@@ -84,6 +84,7 @@ public class ConnectionEvents {
         public RedisCommand<?, ?, ?> getCommand() {
             return command;
         }
+
     }
 
     /**
@@ -100,5 +101,7 @@ public class ConnectionEvents {
         public int getAttempt() {
             return attempt;
         }
+
     }
+
 }

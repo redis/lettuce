@@ -34,4 +34,5 @@ public class ConnectToRedis {
         connection.close();
         redisClient.shutdown();
     }
+
 }

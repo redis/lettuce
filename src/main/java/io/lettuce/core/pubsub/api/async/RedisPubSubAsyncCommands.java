@@ -32,31 +32,31 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
     /**
      * Listen for messages published to channels matching the given patterns.
      *
-     * @param patterns the patterns
-     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code psubscribe} completion
+     * @param patterns the patterns.
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code psubscribe} completion.
      */
     RedisFuture<Void> psubscribe(K... patterns);
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
      *
-     * @param patterns the patterns
-     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code punsubscribe} completion
+     * @param patterns the patterns.
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code punsubscribe} completion.
      */
     RedisFuture<Void> punsubscribe(K... patterns);
 
     /**
      * Listen for messages published to the given channels.
      *
-     * @param channels the channels
-     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
+     * @param channels the channels.
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion.
      */
     RedisFuture<Void> subscribe(K... channels);
 
     /**
      * Stop listening for messages posted to the given channels.
      *
-     * @param channels the channels
+     * @param channels the channels.
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
      */
     RedisFuture<Void> unsubscribe(K... channels);
@@ -65,4 +65,5 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
      * @return the underlying connection.
      */
     StatefulRedisPubSubConnection<K, V> getStatefulConnection();
+
 }

@@ -37,4 +37,5 @@ public class DateOutput<K, V> extends CommandOutput<K, V, Date> {
     public void set(long time) {
         output = new Date(time * 1000);
     }
+
 }

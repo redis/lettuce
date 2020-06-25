@@ -63,8 +63,8 @@ public class CommandDetailParser {
     /**
      * Parse the output of the Redis COMMAND/COMMAND INFO command and convert to a list of {@link CommandDetail}.
      *
-     * @param commandOutput the command output, must not be {@literal null}
-     * @return RedisInstance
+     * @param commandOutput the command output, must not be {@code null}.
+     * @return RedisInstance.
      */
     public static List<CommandDetail> parse(List<?> commandOutput) {
         LettuceAssert.notNull(commandOutput, "CommandOutput must not be null");

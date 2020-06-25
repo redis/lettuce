@@ -20,7 +20,6 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- *
  * Argument list builder for the Redis <a href="http://redis.io/commands/georadius">GEORADIUS</a> and
  * <a href="http://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> commands.
  * <p>
@@ -31,9 +30,13 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class GeoArgs implements CompositeArgument {
 
     private boolean withdistance;
+
     private boolean withcoordinates;
+
     private boolean withhash;
+
     private Long count;
+
     private Sort sort = Sort.none;
 
     /**
@@ -99,6 +102,7 @@ public class GeoArgs implements CompositeArgument {
         public static GeoArgs count(long count) {
             return new GeoArgs().withCount(count);
         }
+
     }
 
     /**
@@ -149,7 +153,7 @@ public class GeoArgs implements CompositeArgument {
 
     /**
      *
-     * @return {@literal true} if distance is requested.
+     * @return {@code true} if distance is requested.
      */
     public boolean isWithDistance() {
         return withdistance;
@@ -157,7 +161,7 @@ public class GeoArgs implements CompositeArgument {
 
     /**
      *
-     * @return {@literal true} if coordinates are requested.
+     * @return {@code true} if coordinates are requested.
      */
     public boolean isWithCoordinates() {
         return withcoordinates;
@@ -165,7 +169,7 @@ public class GeoArgs implements CompositeArgument {
 
     /**
      *
-     * @return {@literal true} if geohash is requested.
+     * @return {@code true} if geohash is requested.
      */
     public boolean isWithHash() {
         return withhash;
@@ -174,7 +178,7 @@ public class GeoArgs implements CompositeArgument {
     /**
      * Sort results ascending.
      *
-     * @return {@code this}
+     * @return {@code this}.
      */
     public GeoArgs asc() {
         return sort(Sort.asc);
@@ -183,7 +187,7 @@ public class GeoArgs implements CompositeArgument {
     /**
      * Sort results descending.
      *
-     * @return {@code this}
+     * @return {@code this}.
      */
     public GeoArgs desc() {
         return sort(Sort.desc);
@@ -192,8 +196,8 @@ public class GeoArgs implements CompositeArgument {
     /**
      * Sort results.
      *
-     * @param sort sort order, must not be {@literal null}
-     * @return {@code this}
+     * @param sort sort order, must not be {@code null}.
+     * @return {@code this}.
      */
     public GeoArgs sort(Sort sort) {
 
@@ -272,4 +276,5 @@ public class GeoArgs implements CompositeArgument {
             args.add(CommandKeyword.COUNT).add(count);
         }
     }
+
 }

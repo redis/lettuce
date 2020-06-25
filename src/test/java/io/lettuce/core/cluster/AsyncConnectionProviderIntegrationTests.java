@@ -57,7 +57,9 @@ import io.netty.channel.ConnectTimeoutException;
 class AsyncConnectionProviderIntegrationTests {
 
     private final RedisClusterClient redisClient;
+
     private ServerSocket serverSocket;
+
     private CountDownLatch connectInitiated = new CountDownLatch(1);
 
     private AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<String, String>, ConnectionFuture<StatefulRedisConnection<String, String>>> sut;
@@ -74,21 +76,23 @@ class AsyncConnectionProviderIntegrationTests {
 
         sut = new AsyncConnectionProvider<>(
                 new AbstractClusterNodeConnectionFactory<String, String>(redisClient.getResources()) {
-            @Override
-            public ConnectionFuture<StatefulRedisConnection<String, String>> apply(ConnectionKey connectionKey) {
 
-                RedisURI redisURI = RedisURI.create(TestSettings.host(), serverSocket.getLocalPort());
-                redisURI.setTimeout(Duration.ofSeconds(5));
+                    @Override
+                    public ConnectionFuture<StatefulRedisConnection<String, String>> apply(ConnectionKey connectionKey) {
 
-                ConnectionFuture<StatefulRedisConnection<String, String>> future = redisClient.connectToNodeAsync(
-                        StringCodec.UTF8, "", null,
-                        Mono.just(new InetSocketAddress(connectionKey.host, serverSocket.getLocalPort())));
+                        RedisURI redisURI = RedisURI.create(TestSettings.host(), serverSocket.getLocalPort());
+                        redisURI.setTimeout(Duration.ofSeconds(5));
 
-                connectInitiated.countDown();
+                        ConnectionFuture<StatefulRedisConnection<String, String>> future = redisClient.connectToNodeAsync(
+                                StringCodec.UTF8, "", null,
+                                Mono.just(new InetSocketAddress(connectionKey.host, serverSocket.getLocalPort())));
 
-                return future;
-            }
-        });
+                        connectInitiated.countDown();
+
+                        return future;
+                    }
+
+                });
     }
 
     @AfterEach
@@ -169,13 +173,13 @@ class AsyncConnectionProviderIntegrationTests {
 
         StopWatch stopWatch = new StopWatch();
 
-        assertThatThrownBy(() -> Futures.await(sut.getConnection(connectionKey))).hasCauseInstanceOf(
-                ConnectTimeoutException.class);
+        assertThatThrownBy(() -> Futures.await(sut.getConnection(connectionKey)))
+                .hasCauseInstanceOf(ConnectTimeoutException.class);
 
         stopWatch.start();
 
-        assertThatThrownBy(() -> Futures.await(sut.getConnection(connectionKey))).hasCauseInstanceOf(
-                ConnectTimeoutException.class);
+        assertThatThrownBy(() -> Futures.await(sut.getConnection(connectionKey)))
+                .hasCauseInstanceOf(ConnectTimeoutException.class);
 
         stopWatch.stop();
 
@@ -275,4 +279,5 @@ class AsyncConnectionProviderIntegrationTests {
 
         socket.close();
     }
+
 }

@@ -31,16 +31,19 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Mark Paluch
  * @since 5.1
  */
-public class StreamMessageListOutput<K, V> extends CommandOutput<K, V, List<StreamMessage<K, V>>> implements
-        StreamingOutput<StreamMessage<K, V>> {
+public class StreamMessageListOutput<K, V> extends CommandOutput<K, V, List<StreamMessage<K, V>>>
+        implements StreamingOutput<StreamMessage<K, V>> {
 
     private final K stream;
 
     private boolean initialized;
+
     private Subscriber<StreamMessage<K, V>> subscriber;
 
     private K key;
+
     private String id;
+
     private Map<K, V> body;
 
     public StreamMessageListOutput(RedisCodec<K, V> codec, K stream) {
@@ -100,4 +103,5 @@ public class StreamMessageListOutput<K, V> extends CommandOutput<K, V, List<Stre
     public Subscriber<StreamMessage<K, V>> getSubscriber() {
         return subscriber;
     }
+
 }

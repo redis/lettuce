@@ -134,4 +134,5 @@ class RedisClusterClientFactoryBeanUnitTests {
     private RedisURI getRedisURI() {
         return sut.getRedisURIs().iterator().next();
     }
+
 }

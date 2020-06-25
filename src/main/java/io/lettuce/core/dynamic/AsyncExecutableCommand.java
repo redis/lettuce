@@ -34,7 +34,9 @@ import io.lettuce.core.protocol.RedisCommand;
 class AsyncExecutableCommand implements ExecutableCommand {
 
     private final CommandMethod commandMethod;
+
     private final CommandFactory commandFactory;
+
     private final StatefulConnection<Object, Object> connection;
 
     AsyncExecutableCommand(CommandMethod commandMethod, CommandFactory commandFactory,
@@ -94,4 +96,5 @@ class AsyncExecutableCommand implements ExecutableCommand {
     public CommandMethod getCommandMethod() {
         return commandMethod;
     }
+
 }

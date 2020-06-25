@@ -36,6 +36,7 @@ class Requests extends
 
     private final Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = new TreeMap<>(
             MasterSlaveUtils.RedisURIComparator.INSTANCE);
+
     private final List<RedisNodeDescription> nodes;
 
     public Requests(int expectedCount, List<RedisNodeDescription> nodes) {
@@ -76,7 +77,6 @@ class Requests extends
             result.add(redisNodeDescription);
         }
 
-
         SortAction sortAction = SortAction.getSortAction();
         sortAction.sort(result, new LatencyComparator(latencies));
 
@@ -90,4 +90,5 @@ class Requests extends
     protected TimedAsyncCommand<String, String, String> getRequest(RedisURI redisURI) {
         return rawViews.get(redisURI);
     }
+
 }

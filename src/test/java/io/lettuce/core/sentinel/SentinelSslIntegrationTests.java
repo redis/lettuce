@@ -97,4 +97,5 @@ class SentinelSslIntegrationTests extends TestSupport {
         connection.close();
         FastShutdown.shutdown(client);
     }
+
 }

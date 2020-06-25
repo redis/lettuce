@@ -35,4 +35,5 @@ public class ConnectToRedisUsingRedisSentinel {
         connection.close();
         redisClient.shutdown();
     }
+
 }

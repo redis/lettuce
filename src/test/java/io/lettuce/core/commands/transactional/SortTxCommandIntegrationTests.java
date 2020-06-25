@@ -29,4 +29,5 @@ class SortTxCommandIntegrationTests extends SortCommandIntegrationTests {
     SortTxCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(TxSyncInvocationHandler.sync(connection));
     }
+
 }

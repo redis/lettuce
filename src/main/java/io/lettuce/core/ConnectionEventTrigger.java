@@ -25,13 +25,16 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.local.LocalAddress;
 
 /**
+ *
  * @author Mark Paluch
  * @since 3.0
  */
 class ConnectionEventTrigger extends ChannelInboundHandlerAdapter {
 
     private final ConnectionEvents connectionEvents;
+
     private final RedisChannelHandler<?, ?> connection;
+
     private final EventBus eventBus;
 
     ConnectionEventTrigger(ConnectionEvents connectionEvents, RedisChannelHandler<?, ?> connection, EventBus eventBus) {

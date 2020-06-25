@@ -55,7 +55,7 @@ public abstract class ScanStream {
     /**
      * Sequentially iterate over keys in the keyspace. This method uses {@code SCAN} to perform an iterative scan.
      *
-     * @param commands the commands interface, must not be {@literal null}.
+     * @param commands the commands interface, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link Flux}.
@@ -67,8 +67,8 @@ public abstract class ScanStream {
     /**
      * Sequentially iterate over keys in the keyspace. This method uses {@code SCAN} to perform an iterative scan.
      *
-     * @param commands the commands interface, must not be {@literal null}.
-     * @param scanArgs the scan arguments, must not be {@literal null}.
+     * @param commands the commands interface, must not be {@code null}.
+     * @param scanArgs the scan arguments, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link Flux}.
@@ -97,7 +97,7 @@ public abstract class ScanStream {
      * Sequentially iterate over entries in a hash identified by {@code key}. This method uses {@code HSCAN} to perform an
      * iterative scan.
      *
-     * @param commands the commands interface, must not be {@literal null}.
+     * @param commands the commands interface, must not be {@code null}.
      * @param key the hash to scan.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -111,9 +111,9 @@ public abstract class ScanStream {
      * Sequentially iterate over entries in a hash identified by {@code key}. This method uses {@code HSCAN} to perform an
      * iterative scan.
      *
-     * @param commands the commands interface, must not be {@literal null}.
+     * @param commands the commands interface, must not be {@code null}.
      * @param key the hash to scan.
-     * @param scanArgs the scan arguments, must not be {@literal null}.
+     * @param scanArgs the scan arguments, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link Flux}.
@@ -153,7 +153,7 @@ public abstract class ScanStream {
      * Sequentially iterate over elements in a set identified by {@code key}. This method uses {@code SSCAN} to perform an
      * iterative scan.
      *
-     * @param commands the commands interface, must not be {@literal null}.
+     * @param commands the commands interface, must not be {@code null}.
      * @param key the set to scan.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -167,9 +167,9 @@ public abstract class ScanStream {
      * Sequentially iterate over elements in a set identified by {@code key}. This method uses {@code SSCAN} to perform an
      * iterative scan.
      *
-     * @param commands the commands interface, must not be {@literal null}.
+     * @param commands the commands interface, must not be {@code null}.
      * @param key the set to scan.
-     * @param scanArgs the scan arguments, must not be {@literal null}.
+     * @param scanArgs the scan arguments, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link Flux}.
@@ -199,7 +199,7 @@ public abstract class ScanStream {
      * Sequentially iterate over elements in a set identified by {@code key}. This method uses {@code SSCAN} to perform an
      * iterative scan.
      *
-     * @param commands the commands interface, must not be {@literal null}.
+     * @param commands the commands interface, must not be {@code null}.
      * @param key the sorted set to scan.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -213,9 +213,9 @@ public abstract class ScanStream {
      * Sequentially iterate over elements in a set identified by {@code key}. This method uses {@code SSCAN} to perform an
      * iterative scan.
      *
-     * @param commands the commands interface, must not be {@literal null}.
+     * @param commands the commands interface, must not be {@code null}.
      * @param key the sorted set to scan.
-     * @param scanArgs the scan arguments, must not be {@literal null}.
+     * @param scanArgs the scan arguments, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link Flux}.
@@ -235,8 +235,8 @@ public abstract class ScanStream {
 
         return Flux.create(sink -> {
 
-            Mono<ScoredValueScanCursor<V>> res = scanArgs.map(it -> commands.zscan(key, it)).orElseGet(
-                    () -> commands.zscan(key));
+            Mono<ScoredValueScanCursor<V>> res = scanArgs.map(it -> commands.zscan(key, it))
+                    .orElseGet(() -> commands.zscan(key));
 
             scan(sink, res, c -> scanArgs.map(it -> commands.zscan(key, c, it)).orElseGet(() -> commands.zscan(key, c)), //
                     ScoredValueScanCursor::getValues);
@@ -262,15 +262,17 @@ public abstract class ScanStream {
                 .newUpdater(SubscriptionAdapter.class, ScanSubscriber.class, "currentSubscription");
 
         @SuppressWarnings("rawtypes")
-        private static final AtomicIntegerFieldUpdater<SubscriptionAdapter> STATUS = AtomicIntegerFieldUpdater.newUpdater(
-                SubscriptionAdapter.class, "status");
+        private static final AtomicIntegerFieldUpdater<SubscriptionAdapter> STATUS = AtomicIntegerFieldUpdater
+                .newUpdater(SubscriptionAdapter.class, "status");
 
         private static final int STATUS_ACTIVE = 0;
+
         private static final int STATUS_TERMINATED = 0;
 
         // Access via SUBSCRIBER.
         @SuppressWarnings("unused")
         private volatile ScanSubscriber<T, C> currentSubscription;
+
         private volatile boolean canceled;
 
         // Access via STATUS.
@@ -278,9 +280,13 @@ public abstract class ScanStream {
         private volatile int status = STATUS_ACTIVE;
 
         private final FluxSink<T> sink;
+
         private final Context context;
+
         private final Mono<C> initial;
+
         private final Function<ScanCursor, Mono<C>> scanFunction;
+
         private final Function<C, Collection<T>> manyMapper;
 
         SubscriptionAdapter(FluxSink<T> sink, Mono<C> initial, Function<ScanCursor, Mono<C>> scanFunction,
@@ -394,6 +400,7 @@ public abstract class ScanStream {
         protected boolean terminate() {
             return STATUS.compareAndSet(this, STATUS_ACTIVE, STATUS_TERMINATED);
         }
+
     }
 
     /**
@@ -409,22 +416,29 @@ public abstract class ScanStream {
                 .newUpdater(ScanSubscriber.class, ScanCursor.class, "cursor");
 
         @SuppressWarnings("rawtypes")
-        private static final AtomicLongFieldUpdater<ScanSubscriber> EMITTED = AtomicLongFieldUpdater.newUpdater(
-                ScanSubscriber.class, "emitted");
+        private static final AtomicLongFieldUpdater<ScanSubscriber> EMITTED = AtomicLongFieldUpdater
+                .newUpdater(ScanSubscriber.class, "emitted");
 
         private final Completable completable;
+
         private final FluxSink<T> sink;
+
         private final Queue<T> buffer = Operators.newQueue();
+
         private final Context context;
+
         private final Function<C, Collection<T>> manyMapper;
 
         volatile boolean canceled;
+
         // see CURSOR
         @SuppressWarnings("unused")
         private volatile C cursor;
+
         // see EMITTED
         @SuppressWarnings("unused")
         private volatile long emitted;
+
         private volatile long cursorSize;
 
         ScanSubscriber(Completable completable, FluxSink<T> sink, Context context, Function<C, Collection<T>> manyMapper) {
@@ -536,6 +550,7 @@ public abstract class ScanStream {
         public boolean isExhausted() {
             return EMITTED.get(this) == cursorSize && getCursor() != null;
         }
+
     }
 
     /**
@@ -554,5 +569,7 @@ public abstract class ScanStream {
          * @param throwable
          */
         void onError(Throwable throwable);
+
     }
+
 }

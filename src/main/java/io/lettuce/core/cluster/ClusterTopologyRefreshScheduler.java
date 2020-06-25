@@ -26,16 +26,21 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
+ *
  * @author Mark Paluch
  */
 class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterTopologyRefreshScheduler.class);
+
     private static final ClusterTopologyRefreshOptions FALLBACK_OPTIONS = ClusterTopologyRefreshOptions.create();
 
     private final RedisClusterClient redisClusterClient;
+
     private final ClientResources clientResources;
+
     private final ClusterTopologyRefreshTask clusterTopologyRefreshTask;
+
     private final AtomicReference<Timeout> timeoutRef = new AtomicReference<>();
 
     ClusterTopologyRefreshScheduler(RedisClusterClient redisClusterClient, ClientResources clientResources) {
@@ -86,9 +91,9 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     }
 
     /**
-     * Check if the {@link EventExecutorGroup} is active
+     * Check if the {@link EventExecutorGroup} is active.
      *
-     * @return false if the worker pool is terminating, shutdown or terminated
+     * @return {@code false} if the worker pool is terminating, shutdown or terminated.
      */
     private boolean isEventLoopActive() {
 
@@ -218,11 +223,13 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
             }
             return 0;
         }
+
     }
 
     private static class ClusterTopologyRefreshTask implements Runnable {
 
         private final RedisClusterClient redisClusterClient;
+
         private final AtomicBoolean unique = new AtomicBoolean();
 
         ClusterTopologyRefreshTask(RedisClusterClient redisClusterClient) {
@@ -258,5 +265,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
                 logger.warn("Cannot refresh Redis Cluster topology", e);
             }
         }
+
     }
+
 }

@@ -55,4 +55,5 @@ public class CanConnect {
             return false;
         }
     }
+
 }

@@ -53,4 +53,5 @@ class PipelinedRedisFutureUnitTests {
         assertThat(Futures.get(sut.toCompletableFuture())).isEqualTo(other);
         assertThat(sut.getError()).isNull();
     }
+
 }

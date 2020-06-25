@@ -33,12 +33,17 @@ import io.lettuce.test.settings.TestSettings;
  * Test for override/extensability of RedisClient
  */
 class MyExtendedRedisClientTest {
+
     private static final String host = TestSettings.host();
+
     private static final int port = TestSettings.port();
 
     private static MyExtendedRedisClient client;
+
     protected RedisCommands<String, String> redis;
+
     protected String key = "key";
+
     protected String value = "value";
 
     @BeforeAll
@@ -57,12 +62,12 @@ class MyExtendedRedisClientTest {
 
     @Test
     void testPubsub() throws Exception {
-        StatefulRedisPubSubConnection<String, String> connection = client
-                .connectPubSub();
+        StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub();
         RedisPubSubAsyncCommands<String, String> commands = connection.async();
         assertThat(commands).isInstanceOf(RedisPubSubAsyncCommandsImpl.class);
         assertThat(commands.getStatefulConnection()).isInstanceOf(MyPubSubConnection.class);
         commands.set("key", "value").get();
         connection.close();
     }
+
 }

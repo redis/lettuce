@@ -44,16 +44,16 @@ public interface Tracing {
     TraceContextProvider initialTraceContextProvider();
 
     /**
-     * Returns {@literal true} if tracing is enabled.
+     * Returns {@code true} if tracing is enabled.
      *
-     * @return {@literal true} if tracing is enabled.
+     * @return {@code true} if tracing is enabled.
      */
     boolean isEnabled();
 
     /**
-     * Returns {@literal true} if tags for {@link Tracer.Span}s should include the command arguments.
+     * Returns {@code true} if tags for {@link Tracer.Span}s should include the command arguments.
      *
-     * @return {@literal true} if tags for {@link Tracer.Span}s should include the command arguments.
+     * @return {@code true} if tags for {@link Tracer.Span}s should include the command arguments.
      * @since 5.2
      */
     boolean includeCommandArgsInSpanTags();
@@ -112,4 +112,5 @@ public interface Tracing {
      */
     interface Endpoint {
     }
+
 }

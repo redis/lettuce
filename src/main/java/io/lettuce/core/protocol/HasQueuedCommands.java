@@ -25,5 +25,6 @@ import java.util.Collection;
  */
 interface HasQueuedCommands {
 
-    Collection<RedisCommand<?,?,?>> drainQueue();
+    Collection<RedisCommand<?, ?, ?>> drainQueue();
+
 }

@@ -34,7 +34,9 @@ import io.lettuce.core.codec.RedisCodec;
 public class ArrayOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     private boolean initialized;
+
     private Deque<Integer> counts = new ArrayDeque<Integer>();
+
     private Deque<List<Object>> stack = new ArrayDeque<List<Object>>();
 
     public ArrayOutput(RedisCodec<K, V> codec) {
@@ -87,4 +89,5 @@ public class ArrayOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         }
         counts.push(count);
     }
+
 }

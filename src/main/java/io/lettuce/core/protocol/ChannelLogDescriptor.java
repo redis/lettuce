@@ -18,6 +18,7 @@ package io.lettuce.core.protocol;
 import io.netty.channel.Channel;
 
 /**
+ *
  * @author Mark Paluch
  */
 class ChannelLogDescriptor {
@@ -52,4 +53,5 @@ class ChannelLogDescriptor {
     private static String getId(Channel channel) {
         return String.format("0x%08x", channel.hashCode());
     }
+
 }

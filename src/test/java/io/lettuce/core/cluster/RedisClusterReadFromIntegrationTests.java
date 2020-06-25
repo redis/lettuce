@@ -38,7 +38,9 @@ import io.lettuce.test.LettuceExtension;
 class RedisClusterReadFromIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
+
     private StatefulRedisClusterConnection<String, String> connection;
+
     private RedisAdvancedClusterCommands<String, String> sync;
 
     @Inject
@@ -112,4 +114,5 @@ class RedisClusterReadFromIntegrationTests extends TestSupport {
         connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port2).sync().waitForReplication(1, 1000);
         assertThat(sync.get(key)).isEqualTo("value1");
     }
+
 }

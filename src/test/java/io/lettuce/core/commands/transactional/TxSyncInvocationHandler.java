@@ -33,9 +33,13 @@ import io.lettuce.core.internal.AbstractInvocationHandler;
 class TxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final Object api;
+
     private final Method multi;
+
     private final Method discard;
+
     private final Method exec;
+
     private final Method ping;
 
     private TxSyncInvocationHandler(Object api) throws Exception {
@@ -115,4 +119,5 @@ class TxSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
             throw new IllegalStateException(e);
         }
     }
+
 }

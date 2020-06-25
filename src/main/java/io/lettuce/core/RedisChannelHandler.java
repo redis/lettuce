@@ -48,25 +48,33 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
     @SuppressWarnings("rawtypes")
-    private static final AtomicIntegerFieldUpdater<RedisChannelHandler> CLOSED = AtomicIntegerFieldUpdater.newUpdater(
-            RedisChannelHandler.class, "closed");
+    private static final AtomicIntegerFieldUpdater<RedisChannelHandler> CLOSED = AtomicIntegerFieldUpdater
+            .newUpdater(RedisChannelHandler.class, "closed");
 
     private static final int ST_OPEN = 0;
+
     private static final int ST_CLOSED = 1;
 
     private Duration timeout;
+
     private CloseEvents closeEvents = new CloseEvents();
 
     private final RedisChannelWriter channelWriter;
+
     private final ClientResources clientResources;
+
     private final boolean tracingEnabled;
+
     private final boolean debugEnabled = logger.isDebugEnabled();
+
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
     // accessed via CLOSED
     @SuppressWarnings("unused")
     private volatile int closed = ST_OPEN;
+
     private volatile boolean active = true;
+
     private volatile ClientOptions clientOptions;
 
     /**
@@ -106,7 +114,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
      *
      * @param timeout Command timeout.
      * @param unit Unit of time for the timeout.
-     * @deprecated since 5.0, use {@link #setTimeout(Duration)}
+     * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
      */
     @Deprecated
     public void setTimeout(long timeout, TimeUnit unit) {
@@ -177,8 +185,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
             TraceContextProvider provider = CommandWrapper.unwrap(cmd, TraceContextProvider.class);
 
             if (provider == null) {
-                commandToSend = new TracedCommand<>(cmd, clientResources.tracing()
-                        .initialTraceContextProvider().getTraceContext());
+                commandToSend = new TracedCommand<>(cmd,
+                        clientResources.tracing().initialTraceContextProvider().getTraceContext());
             }
 
             return channelWriter.write(commandToSend);
@@ -202,8 +210,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
                 RedisCommand<K, V, ?> commandToUse = command;
                 TraceContextProvider provider = CommandWrapper.unwrap(command, TraceContextProvider.class);
                 if (provider == null) {
-                    commandToUse = new TracedCommand<>(command, clientResources.tracing()
-                            .initialTraceContextProvider().getTraceContext());
+                    commandToUse = new TracedCommand<>(command,
+                            clientResources.tracing().initialTraceContextProvider().getTraceContext());
                 }
 
                 withTracer.add(commandToUse);
@@ -219,8 +227,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     /**
      * Register Closeable resources. Internal access only.
      *
-     * @param registry registry of closeables
-     * @param closeables closeables to register
+     * @param registry registry of closeables.
+     * @param closeables closeables to register.
      */
     public void registerCloseables(final Collection<Closeable> registry, Closeable... closeables) {
 
@@ -254,7 +262,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     * @return true if the connection is closed (final state in the connection lifecyle).
+     *
+     * @return {@code true} if the connection is closed (final state in the connection lifecyle).
      */
     public boolean isClosed() {
         return CLOSED.get(this) == ST_CLOSED;
@@ -276,14 +285,16 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     * @return the channel writer
+     *
+     * @return the channel writer.
      */
     public RedisChannelWriter getChannelWriter() {
         return channelWriter;
     }
 
     /**
-     * @return true if the connection is active and not closed.
+     *
+     * @return {@code true} if the connection is active and not closed.
      */
     public boolean isOpen() {
         return active;
@@ -325,4 +336,5 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     public void flushCommands() {
         getChannelWriter().flushCommands();
     }
+
 }

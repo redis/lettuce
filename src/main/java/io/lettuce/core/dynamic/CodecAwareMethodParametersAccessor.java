@@ -33,6 +33,7 @@ import io.lettuce.core.internal.LettuceAssert;
 class CodecAwareMethodParametersAccessor implements MethodParametersAccessor {
 
     private final MethodParametersAccessor delegate;
+
     private final TypeContext typeContext;
 
     public CodecAwareMethodParametersAccessor(MethodParametersAccessor delegate, RedisCodec<?, ?> redisCodec) {
@@ -124,6 +125,7 @@ class CodecAwareMethodParametersAccessor implements MethodParametersAccessor {
     public static class TypeContext {
 
         final TypeInformation<?> keyType;
+
         final TypeInformation<?> valueType;
 
         @SuppressWarnings("rawtypes")
@@ -136,5 +138,7 @@ class CodecAwareMethodParametersAccessor implements MethodParametersAccessor {
             this.keyType = typeInformation.getTypeArgument(RedisCodec.class, 0);
             this.valueType = typeInformation.getTypeArgument(RedisCodec.class, 1);
         }
+
     }
+
 }

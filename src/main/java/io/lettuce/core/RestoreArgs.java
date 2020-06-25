@@ -31,6 +31,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class RestoreArgs {
 
     long ttl;
+
     boolean replace;
 
     /**
@@ -66,6 +67,7 @@ public class RestoreArgs {
 
             return ttl(ttl.toMillis());
         }
+
     }
 
     /**
@@ -105,7 +107,7 @@ public class RestoreArgs {
     /**
      * Replaces existing keys if the target key already exists.
      *
-     * @param replace {@literal true} to enable replacing of existing keys.
+     * @param replace {@code true} to enable replacing of existing keys.
      * @return {@code this}.
      */
     public RestoreArgs replace(boolean replace) {
@@ -113,4 +115,5 @@ public class RestoreArgs {
         this.replace = replace;
         return this;
     }
+
 }

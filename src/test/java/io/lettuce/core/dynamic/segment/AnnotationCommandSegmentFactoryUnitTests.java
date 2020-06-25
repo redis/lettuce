@@ -37,8 +37,8 @@ class AnnotationCommandSegmentFactoryUnitTests {
     @Test
     void notAnnotatedDotAsIs() {
 
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(CommandMethods.class,
-                "notAnnotated"));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(CommandMethods.class, "notAnnotated"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -49,8 +49,8 @@ class AnnotationCommandSegmentFactoryUnitTests {
     @Test
     void uppercaseDot() {
 
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils
-                .findMethod(CommandMethods.class, "upperCase"));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(CommandMethods.class, "upperCase"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -61,8 +61,8 @@ class AnnotationCommandSegmentFactoryUnitTests {
     @Test
     void methodNameAsIs() {
 
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(CommandMethods.class,
-                "methodName"));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(CommandMethods.class, "methodName"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -73,8 +73,8 @@ class AnnotationCommandSegmentFactoryUnitTests {
     @Test
     void splitAsIs() {
 
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(CommandMethods.class,
-                "clientSetname"));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(CommandMethods.class, "clientSetname"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -85,8 +85,8 @@ class AnnotationCommandSegmentFactoryUnitTests {
     @Test
     void commandAnnotation() {
 
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils
-                .findMethod(CommandMethods.class, "atCommand"));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(CommandMethods.class, "atCommand"));
 
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
@@ -122,10 +122,13 @@ class AnnotationCommandSegmentFactoryUnitTests {
 
         @Command("HELLO WORLD")
         void atCommand();
+
     }
 
     private static interface Defaulted {
 
         void clientSetname();
+
     }
+
 }

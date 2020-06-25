@@ -26,9 +26,11 @@ import java.util.concurrent.TimeUnit;
 public class CommandMetrics {
 
     private final long count;
+
     private final TimeUnit timeUnit;
 
     private final CommandLatency firstResponse;
+
     private final CommandLatency completion;
 
     public CommandMetrics(long count, TimeUnit timeUnit, CommandLatency firstResponse, CommandLatency completion) {
@@ -40,7 +42,7 @@ public class CommandMetrics {
 
     /**
      *
-     * @return the count
+     * @return the count.
      */
     public long getCount() {
         return count;
@@ -56,7 +58,7 @@ public class CommandMetrics {
 
     /**
      *
-     * @return latencies between send and the first command response
+     * @return latencies between send and the first command response.
      */
     public CommandLatency getFirstResponse() {
         return firstResponse;
@@ -64,7 +66,7 @@ public class CommandMetrics {
 
     /**
      *
-     * @return latencies between send and the command completion
+     * @return latencies between send and the command completion.
      */
     public CommandLatency getCompletion() {
         return completion;
@@ -82,8 +84,11 @@ public class CommandMetrics {
     }
 
     public static class CommandLatency {
+
         private final long min;
+
         private final long max;
+
         private final Map<Double, Long> percentiles;
 
         public CommandLatency(long min, long max, Map<Double, Long> percentiles) {
@@ -125,5 +130,7 @@ public class CommandMetrics {
             sb.append(']');
             return sb.toString();
         }
+
     }
+
 }

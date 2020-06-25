@@ -43,9 +43,11 @@ public class EpollProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(EpollProvider.class);
 
     private static final String EPOLL_ENABLED_KEY = "io.lettuce.core.epoll";
+
     private static final boolean EPOLL_ENABLED = Boolean.parseBoolean(SystemPropertyUtil.get(EPOLL_ENABLED_KEY, "true"));
 
     private static final boolean EPOLL_AVAILABLE;
+
     private static final EpollResources epollResources;
 
     static {
@@ -71,7 +73,8 @@ public class EpollProvider {
     }
 
     /**
-     * @return {@literal true} if epoll is available.
+     *
+     * @return {@code true} if epoll is available.
      */
     public static boolean isAvailable() {
         return EPOLL_AVAILABLE && EPOLL_ENABLED;
@@ -86,15 +89,14 @@ public class EpollProvider {
 
         LettuceAssert.assertState(EPOLL_ENABLED,
                 String.format("epoll use is disabled via System properties (%s)", EPOLL_ENABLED_KEY));
-        LettuceAssert
-                .assertState(
-                        isAvailable(),
-                        "netty-transport-native-epoll is not available. Make sure netty-transport-native-epoll library on the class path and supported by your operating system.");
+        LettuceAssert.assertState(isAvailable(),
+                "netty-transport-native-epoll is not available. Make sure netty-transport-native-epoll library on the class path and supported by your operating system.");
     }
 
     /**
-     * @param type must not be {@literal null}.
-     * @return {@literal true} if {@code type} is a {@link io.netty.channel.epoll.EpollEventLoopGroup}.
+     *
+     * @param type must not be {@code null}.
+     * @return {@code true} if {@code type} is a {@link io.netty.channel.epoll.EpollEventLoopGroup}.
      */
     public static boolean isEventLoopGroup(Class<? extends EventExecutorGroup> type) {
         return epollResources.isEventLoopGroup(type);
@@ -112,6 +114,7 @@ public class EpollProvider {
     }
 
     /**
+     *
      * @return the {@link io.netty.channel.epoll.EpollDomainSocketChannel} class.
      */
     static Class<? extends Channel> domainSocketChannelClass() {
@@ -119,6 +122,7 @@ public class EpollProvider {
     }
 
     /**
+     *
      * @return the {@link io.netty.channel.epoll.EpollSocketChannel} class.
      */
     static Class<? extends Channel> socketChannelClass() {
@@ -126,6 +130,7 @@ public class EpollProvider {
     }
 
     /**
+     *
      * @return the {@link io.netty.channel.epoll.EpollEventLoopGroup} class.
      */
     static Class<? extends EventLoopGroup> eventLoopGroupClass() {
@@ -142,8 +147,8 @@ public class EpollProvider {
     public interface EpollResources {
 
         /**
-         * @param type must not be {@literal null}.
-         * @return {@literal true} if {@code type} is a {@link EpollEventLoopGroup}.
+         * @param type must not be {@code null}.
+         * @return {@code true} if {@code type} is a {@link EpollEventLoopGroup}.
          */
         boolean isEventLoopGroup(Class<? extends EventExecutorGroup> type);
 
@@ -172,6 +177,7 @@ public class EpollProvider {
         Class<? extends EventLoopGroup> eventLoopGroupClass();
 
         SocketAddress newSocketAddress(String socketPath);
+
     }
 
     /**
@@ -222,6 +228,7 @@ public class EpollProvider {
             checkForEpollLibrary();
             return null;
         }
+
     }
 
     /**
@@ -273,5 +280,7 @@ public class EpollProvider {
             checkForEpollLibrary();
             return new DomainSocketAddress(socketPath);
         }
+
     }
+
 }

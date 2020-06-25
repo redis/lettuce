@@ -43,8 +43,11 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
     static final Supplier<AsyncCommand<?, ?, ?>> NO_PING = () -> null;
 
     private final Supplier<List<ChannelHandler>> handlers;
+
     private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;
+
     private final ClientResources clientResources;
+
     private final Duration timeout;
 
     private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
@@ -121,6 +124,7 @@ class PlainChannelInitializer extends io.netty.channel.ChannelInitializer<Channe
                     }
                     super.exceptionCaught(ctx, cause);
                 }
+
             });
         }
 

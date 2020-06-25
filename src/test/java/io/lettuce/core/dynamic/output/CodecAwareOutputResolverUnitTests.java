@@ -111,6 +111,7 @@ class CodecAwareOutputResolverUnitTests {
         String string();
 
         ByteBuffer byteBuffer();
+
     }
 
     private static class ByteBufferAndStringCodec implements RedisCodec<ByteBuffer, String> {
@@ -134,5 +135,7 @@ class CodecAwareOutputResolverUnitTests {
         public ByteBuffer encodeValue(String value) {
             return null;
         }
+
     }
+
 }

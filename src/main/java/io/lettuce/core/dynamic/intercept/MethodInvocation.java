@@ -34,7 +34,7 @@ public interface MethodInvocation {
      * <p>
      * The implementation and the semantics of this method depends on the actual joinpoint type (see the children interfaces).
      *
-     * @return see the children interfaces' proceed definition
+     * @return see the children interfaces' proceed definition.
      * @throws Throwable if the invocation throws an exception
      */
     Object proceed() throws Throwable;
@@ -48,4 +48,5 @@ public interface MethodInvocation {
      * @return method call arguments.
      */
     Object[] getArguments();
+
 }

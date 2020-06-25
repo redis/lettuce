@@ -26,8 +26,10 @@ public abstract class SentinelTestSettings extends TestSupport {
 
     public static final RedisURI SENTINEL_URI = RedisURI.Builder.sentinel(TestSettings.host(), SentinelTestSettings.MASTER_ID)
             .build();
+
     public static final String MASTER_ID = "mymaster";
 
     private SentinelTestSettings() {
     }
+
 }

@@ -43,8 +43,8 @@ class RedisURIBuilderUnitTests {
 
     @Test
     void sentinelWithHostShouldFail() {
-        assertThatThrownBy(() -> RedisURI.Builder.sentinel("localhost").withHost("localhost")).isInstanceOf(
-                IllegalStateException.class);
+        assertThatThrownBy(() -> RedisURI.Builder.sentinel("localhost").withHost("localhost"))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -92,8 +92,8 @@ class RedisURIBuilderUnitTests {
 
     @Test
     void redisWithInvalidPort() {
-        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withPort(65536)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withPort(65536))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -270,4 +270,5 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.isSsl()).isFalse();
     }
+
 }

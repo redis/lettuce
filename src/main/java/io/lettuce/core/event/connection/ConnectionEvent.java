@@ -19,7 +19,7 @@ import io.lettuce.core.ConnectionId;
 import io.lettuce.core.event.Event;
 
 /**
- * Interface for Connection-related events
+ * Interface for Connection-related events.
  *
  * @author Mark Paluch
  * @since 3.4

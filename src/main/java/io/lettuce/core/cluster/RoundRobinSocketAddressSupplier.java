@@ -36,7 +36,9 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RoundRobinSocketAddressSupplier.class);
 
     private final Collection<RedisClusterNode> partitions;
+
     private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction;
+
     private final ClientResources clientResources;
 
     private RoundRobin<RedisClusterNode> roundRobin;
@@ -76,4 +78,5 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
         logger.debug("Resolved SocketAddress {} using for Cluster node {}", resolvedAddress, redisClusterNode.getNodeId());
         return resolvedAddress;
     }
+
 }

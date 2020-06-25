@@ -50,7 +50,7 @@ public interface StreamingOutput<T> {
         /**
          * Data notification sent by the {@link StreamingOutput}.
          *
-         * @param t element
+         * @param t element.
          */
         public abstract void onNext(T t);
 
@@ -58,10 +58,12 @@ public interface StreamingOutput<T> {
          * Data notification sent by the {@link StreamingOutput}.
          *
          * @param outputTarget target
-         * @param t element
+         * @param t element.
          */
         public void onNext(Collection<T> outputTarget, T t) {
             onNext(t);
         }
+
     }
+
 }

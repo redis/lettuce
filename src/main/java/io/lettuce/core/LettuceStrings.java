@@ -41,8 +41,8 @@ public class LettuceStrings {
     /**
      * Checks if a CharSequence is empty ("") or null.
      *
-     * @param cs the char sequence
-     * @return true if empty
+     * @param cs the char sequence.
+     * @return {@code true} if empty.
      */
     public static boolean isEmpty(final CharSequence cs) {
         return cs == null || cs.length() == 0;
@@ -51,9 +51,8 @@ public class LettuceStrings {
     /**
      * Checks if a CharSequence is not empty ("") and not null.
      *
-     * @param cs the char sequence
-     * @return true if not empty
-     *
+     * @param cs the char sequence.
+     * @return {@code true} if not empty.
      */
     public static boolean isNotEmpty(final CharSequence cs) {
         return !isEmpty(cs);
@@ -64,7 +63,7 @@ public class LettuceStrings {
      * {@code -inf}.
      *
      * @param n the double.
-     * @return string representation of {@code n}
+     * @return string representation of {@code n}.
      */
     public static String string(double n) {
         if (Double.isInfinite(n)) {
@@ -77,7 +76,7 @@ public class LettuceStrings {
      * Convert {@link String} to {@code double}. If {@code s} is {@literal +inf}/{@literal -inf}, returns positive/negative
      * infinity.
      *
-     * @param s string representation of the number
+     * @param s string representation of the number.
      * @return the {@code double} value.
      * @since 4.3.3
      */
@@ -97,8 +96,8 @@ public class LettuceStrings {
     /**
      * Create SHA1 digest from Lua script.
      *
-     * @param script the script
-     * @return the Base16 encoded SHA1 value
+     * @param script the script.
+     * @return the Base16 encoded SHA1 value.
      */
     public static String digest(byte[] script) {
         return digest(ByteBuffer.wrap(script));
@@ -107,8 +106,8 @@ public class LettuceStrings {
     /**
      * Create SHA1 digest from Lua script.
      *
-     * @param script the script
-     * @return the Base16 encoded SHA1 value
+     * @param script the script.
+     * @return the Base16 encoded SHA1 value.
      */
     public static String digest(ByteBuffer script) {
         try {
@@ -125,9 +124,9 @@ public class LettuceStrings {
      * <p>
      * Useful for {@code toString()} implementations.
      *
-     * @param arr the array to display
-     * @param delim the delimiter to use (typically a ",")
-     * @return the delimited {@code String}
+     * @param arr the array to display.
+     * @param delim the delimiter to use (typically a ",").
+     * @return the delimited {@code String}.
      */
     public static String arrayToDelimitedString(Object[] arr, String delim) {
 
@@ -154,11 +153,11 @@ public class LettuceStrings {
      * <p>
      * Useful for {@code toString()} implementations.
      *
-     * @param coll the {@code Collection} to convert
-     * @param delim the delimiter to use (typically a ",")
-     * @param prefix the {@code String} to start each element with
-     * @param suffix the {@code String} to end each element with
-     * @return the delimited {@code String}
+     * @param coll the {@code Collection} to convert.
+     * @param delim the delimiter to use (typically a ",").
+     * @param prefix the {@code String} to start each element with.
+     * @param suffix the {@code String} to end each element with.
+     * @return the delimited {@code String}.
      */
     public static String collectionToDelimitedString(Collection<?> coll, String delim, String prefix, String suffix) {
 
@@ -176,4 +175,5 @@ public class LettuceStrings {
         }
         return sb.toString();
     }
+
 }

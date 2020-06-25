@@ -71,17 +71,21 @@ class ConversionServiceUnitTests {
     }
 
     private class FluxToObservableConverter implements Function<Flux<?>, Observable<?>> {
+
         @Override
         public Observable<?> apply(Flux<?> source) {
             return null;
         }
+
     }
 
     private class MonoToObservableConverter implements Function<Mono<?>, Observable<?>> {
+
         @Override
         public Observable<?> apply(Mono<?> source) {
             return Observable.just("world");
         }
+
     }
 
 }

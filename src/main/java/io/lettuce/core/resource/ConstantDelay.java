@@ -34,4 +34,5 @@ class ConstantDelay extends Delay {
     public Duration createDelay(long attempt) {
         return delay;
     }
+
 }

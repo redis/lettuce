@@ -126,8 +126,8 @@ class RedisURIUnitTests {
         assertThat(redisURI.getSentinels().get(2).getPort()).isEqualTo(1234);
         assertThat(redisURI.getDatabase()).isEqualTo(5);
 
-        assertThat(redisURI.toURI().toString()).isEqualTo(
-                "redis-sentinel://auth@h1:222,h2,h3:1234?database=5&sentinelMasterId=masterId");
+        assertThat(redisURI.toURI().toString())
+                .isEqualTo("redis-sentinel://auth@h1:222,h2,h3:1234?database=5&sentinelMasterId=masterId");
     }
 
     @Test
@@ -136,8 +136,8 @@ class RedisURIUnitTests {
         RedisURI redisURI = RedisURI.create("rediss-sentinel://auth@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
         assertThat(redisURI.isSsl()).isTrue();
 
-        assertThat(redisURI.toURI().toString()).isEqualTo(
-                "rediss-sentinel://auth@h1:222,h2,h3:1234?database=5&sentinelMasterId=masterId");
+        assertThat(redisURI.toURI().toString())
+                .isEqualTo("rediss-sentinel://auth@h1:222,h2,h3:1234?database=5&sentinelMasterId=masterId");
     }
 
     @Test
@@ -243,4 +243,5 @@ class RedisURIUnitTests {
 
         assertThat(redisURI.toURI().toString()).isEqualTo("redis://host:1234");
     }
+
 }

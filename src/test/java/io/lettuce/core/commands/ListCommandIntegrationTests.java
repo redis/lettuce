@@ -267,4 +267,5 @@ public class ListCommandIntegrationTests extends TestSupport {
         assertThat((long) redis.rpushx(key, "two", "three")).isEqualTo(3);
         assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("one", "two", "three"));
     }
+
 }

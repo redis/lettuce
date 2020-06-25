@@ -102,8 +102,8 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
      * validated against the current topology view in {@link io.lettuce.core.cluster.models.partitions.Partitions}.
      *
-     * @param nodeId the node Id
-     * @return a connection to the requested cluster node
+     * @param nodeId the node Id.
+     * @return a connection to the requested cluster node.
      * @throws RedisException if the requested node identified by {@code nodeId} is not part of the cluster
      */
     StatefulRedisPubSubConnection<K, V> getConnection(String nodeId);
@@ -117,7 +117,7 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
      * validated against the current topology view in {@link io.lettuce.core.cluster.models.partitions.Partitions}.
      *
-     * @param nodeId the node Id
+     * @param nodeId the node Id.
      * @return {@link CompletableFuture} to indicate success or failure to connect to the requested cluster node.
      * @throws RedisException if the requested node identified by {@code nodeId} is not part of the cluster
      * @since 5.0
@@ -132,9 +132,9 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * Do not close the connections. Otherwise, unpredictable behavior will occur. Host and port connections are verified by
      * default for cluster membership, see {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
      *
-     * @param host the host
-     * @param port the port
-     * @return a connection to the requested cluster node
+     * @param host the host.
+     * @param port the port.
+     * @return a connection to the requested cluster node.
      * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
      */
     StatefulRedisPubSubConnection<K, V> getConnection(String host, int port);
@@ -147,8 +147,8 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * Do not close the connections. Otherwise, unpredictable behavior will occur. Host and port connections are verified by
      * default for cluster membership, see {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
      *
-     * @param host the host
-     * @param port the port
+     * @param host the host.
+     * @param port the port.
      * @return {@link CompletableFuture} to indicate success or failure to connect to the requested cluster node.
      * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
      * @since 5.0
@@ -156,6 +156,7 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
     CompletableFuture<StatefulRedisPubSubConnection<K, V>> getConnectionAsync(String host, int port);
 
     /**
+     *
      * @return Known partitions for this connection.
      */
     Partitions getPartitions();
@@ -164,27 +165,27 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * Enables/disables node message propagation to {@code this} {@link StatefulRedisClusterPubSubConnection connections}
      * {@link RedisPubSubListener listeners}.
      * <p>
-     * If {@code enabled} is {@literal true}, then Pub/Sub messages received on node-specific connections are propagated to this
+     * If {@code enabled} is {@code true}, then Pub/Sub messages received on node-specific connections are propagated to this
      * connection facade. Registered {@link RedisPubSubListener} will receive messages from individual node subscriptions.
      * <p>
      * Node event propagation is disabled by default.
      *
-     * @param enabled {@literal true} to enable node message propagation; {@literal false} (default) to disable message
-     *        propagation.
+     * @param enabled {@code true} to enable node message propagation; {@code false} (default) to disable message propagation.
      */
     void setNodeMessagePropagation(boolean enabled);
 
     /**
      * Add a new {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     void addListener(RedisClusterPubSubListener<K, V> listener);
 
     /**
      * Remove an existing {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     void removeListener(RedisClusterPubSubListener<K, V> listener);
+
 }

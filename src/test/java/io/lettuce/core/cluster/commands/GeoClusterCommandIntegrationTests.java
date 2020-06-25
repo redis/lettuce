@@ -72,4 +72,5 @@ class GeoClusterCommandIntegrationTests extends GeoCommandIntegrationTests {
     @Override
     public void geohashInTransaction() {
     }
+
 }

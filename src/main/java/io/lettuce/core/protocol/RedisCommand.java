@@ -51,15 +51,15 @@ public interface RedisCommand<K, V, T> {
 
     /**
      *
-     * @return the current command args
+     * @return the current command args.
      */
     CommandArgs<K, V> getArgs();
 
     /**
      *
-     * @param throwable the exception
+     * @param throwable the exception.
      * @return {@code true} if this invocation caused this CompletableFuture to transition to a completed state, else
-     *         {@code false}
+     *         {@code false}.
      */
     boolean completeExceptionally(Throwable throwable);
 
@@ -78,21 +78,22 @@ public interface RedisCommand<K, V, T> {
 
     /**
      *
-     * @return true if the command is cancelled.
+     * @return {@code true} if the command is cancelled.
      */
     boolean isCancelled();
 
     /**
      *
-     * @return true if the command is completed.
+     * @return {@code true} if the command is completed.
      */
     boolean isDone();
 
     /**
      * Set a new output. Only possible as long as the command is not completed/cancelled.
      *
-     * @param output the new command output
+     * @param output the new command output.
      * @throws IllegalStateException if the command is cancelled/completed
      */
     void setOutput(CommandOutput<K, V, T> output);
+
 }

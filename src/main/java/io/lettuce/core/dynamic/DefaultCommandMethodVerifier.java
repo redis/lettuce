@@ -46,7 +46,7 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
     /**
      * Create a new {@link DefaultCommandMethodVerifier} given a {@link List} of {@link CommandDetail}
      *
-     * @param commandDetails must not be {@literal null}.
+     * @param commandDetails must not be {@code null}.
      */
     public DefaultCommandMethodVerifier(List<CommandDetail> commandDetails) {
 
@@ -66,8 +66,8 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
 
         LettuceAssert.notEmpty(commandSegments.getCommandType().name(), "Command name must not be empty");
 
-        CommandDetail commandDetail = findCommandDetail(commandSegments.getCommandType().name()).orElseThrow(
-                () -> syntaxException(commandSegments.getCommandType().name(), commandMethod));
+        CommandDetail commandDetail = findCommandDetail(commandSegments.getCommandType().name())
+                .orElseThrow(() -> syntaxException(commandSegments.getCommandType().name(), commandMethod));
 
         validateParameters(commandDetail, commandSegments, commandMethod);
     }
@@ -103,14 +103,15 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
             message = String.format("Command %s requires at least %d parameters but method declares %d parameter(s).",
                     commandDetail.getName().toUpperCase(), Math.abs(commandDetail.getArity()) - 1, availableParameterCount);
         } else {
-            message = String.format("Command %s accepts %d parameters but method declares %d parameter(s).", commandDetail
-                    .getName().toUpperCase(), commandDetail.getArity() - 1, availableParameterCount);
+            message = String.format("Command %s accepts %d parameters but method declares %d parameter(s).",
+                    commandDetail.getName().toUpperCase(), commandDetail.getArity() - 1, availableParameterCount);
         }
 
         throw new CommandMethodSyntaxException(commandMethod, message);
     }
 
-    private int calculateAvailableParameterCount(CommandSegments commandSegments, List<? extends Parameter> bindableParameters) {
+    private int calculateAvailableParameterCount(CommandSegments commandSegments,
+            List<? extends Parameter> bindableParameters) {
 
         int count = commandSegments.size();
 
@@ -158,8 +159,8 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
         CommandMatches commandMatches = CommandMatches.forCommand(commandName, commandDetails);
 
         if (commandMatches.hasMatches()) {
-            return new CommandMethodSyntaxException(commandMethod, String.format(
-                    "Command %s does not exist. Did you mean: %s?", commandName, commandMatches));
+            return new CommandMethodSyntaxException(commandMethod,
+                    String.format("Command %s does not exist. Did you mean: %s?", commandName, commandMatches));
         }
 
         return new CommandMethodSyntaxException(commandMethod, String.format("Command %s does not exist", commandName));
@@ -185,11 +186,11 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
 
         private static List<String> calculateMatches(String command, List<CommandDetail> commandDetails) {
 
-            return commandDetails
-                    .stream()
+            return commandDetails.stream()
                     //
                     .filter(commandDetail -> calculateStringDistance(commandDetail.getName().toLowerCase(),
-                            command.toLowerCase()) <= DEFAULT_MAX_DISTANCE).map(CommandDetail::getName) //
+                            command.toLowerCase()) <= DEFAULT_MAX_DISTANCE)
+                    .map(CommandDetail::getName) //
                     .map(String::toUpperCase) //
                     .sorted(CommandMatches::calculateStringDistance).collect(Collectors.toList());
         }
@@ -246,6 +247,7 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
 
             return d[s1.length()][s2.length()];
         }
+
     }
 
 }

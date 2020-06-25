@@ -122,12 +122,19 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> implements RedisChannelInitializer {
 
         private final Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier;
+
         private final Supplier<List<ChannelHandler>> handlers;
+
         private final HostAndPort hostAndPort;
+
         private final boolean verifyPeer;
+
         private final boolean startTls;
+
         private final ClientResources clientResources;
+
         private final Duration timeout;
+
         private final SslOptions sslOptions;
 
         private volatile CompletableFuture<Boolean> initializedFuture = new CompletableFuture<>();
@@ -169,6 +176,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                         clientResources.eventBus().publish(new DisconnectedEvent(local(ctx), remote(ctx)));
                         super.channelInactive(ctx);
                     }
+
                 });
             }
 
@@ -239,6 +247,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
                         }
                         super.exceptionCaught(ctx, cause);
                     }
+
                 });
             }
 
@@ -274,5 +283,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         public CompletableFuture<Boolean> channelInitialized() {
             return initializedFuture;
         }
+
     }
+
 }

@@ -46,7 +46,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
     /**
      * Create a new {@link AbstractClusterNodeConnectionFactory} given {@link ClientResources}.
      *
-     * @param clientResources must not be {@literal null}.
+     * @param clientResources must not be {@code null}.
      */
     public AbstractClusterNodeConnectionFactory(ClientResources clientResources) {
         this.clientResources = clientResources;
@@ -66,7 +66,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
      * <p>
      * This {@link Supplier} resolves the requested endpoint on each {@link Supplier#get()}.
      *
-     * @param connectionKey must not be {@literal null}.
+     * @param connectionKey must not be {@code null}.
      * @return
      */
     Mono<SocketAddress> getSocketAddressSupplier(ConnectionKey connectionKey) {
@@ -108,4 +108,5 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
     private SocketAddress resolve(RedisURI redisURI) {
         return clientResources.socketAddressResolver().resolve(redisURI);
     }
+
 }

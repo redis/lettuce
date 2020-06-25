@@ -31,6 +31,7 @@ import io.lettuce.test.resource.TestClientResources;
 public abstract class AbstractRedisClientTest extends TestSupport {
 
     protected static RedisClient client;
+
     protected RedisCommands<String, String> redis;
 
     @BeforeAll
@@ -80,6 +81,7 @@ public abstract class AbstractRedisClientTest extends TestSupport {
     }
 
     public abstract class WithPasswordRequired {
+
         protected abstract void run(RedisClient client) throws Exception;
 
         protected WithPasswordRequired() {
@@ -100,5 +102,7 @@ public abstract class AbstractRedisClientTest extends TestSupport {
                 redis.configSet("requirepass", "");
             }
         }
+
     }
+
 }

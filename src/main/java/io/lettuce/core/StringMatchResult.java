@@ -28,7 +28,9 @@ import java.util.List;
 public class StringMatchResult {
 
     private final String matchString;
+
     private final List<MatchedPosition> matches;
+
     private final long len;
 
     /**
@@ -62,7 +64,9 @@ public class StringMatchResult {
     public static class MatchedPosition {
 
         private final Position a;
+
         private final Position b;
+
         private final long matchLen;
 
         public MatchedPosition(Position a, Position b, long matchLen) {
@@ -75,15 +79,14 @@ public class StringMatchResult {
             return a;
         }
 
-
         public Position getB() {
             return b;
         }
 
-
         public long getMatchLen() {
             return matchLen;
         }
+
     }
 
     /**
@@ -92,6 +95,7 @@ public class StringMatchResult {
     public static class Position {
 
         private final long start;
+
         private final long end;
 
         public Position(long start, long end) {
@@ -106,5 +110,7 @@ public class StringMatchResult {
         public long getEnd() {
             return end;
         }
+
     }
+
 }

@@ -49,9 +49,11 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
     private StatefulRedisMasterSlaveConnectionImpl<String, String> connection;
 
     private RedisURI master;
+
     private RedisURI replica;
 
     private RedisAsyncCommands<String, String> connectionToNode1;
+
     private RedisAsyncCommands<String, String> connectionToNode2;
 
     @BeforeEach
@@ -74,9 +76,9 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
             master = node2;
             replica = node1;
         } else {
-            assumeTrue(false, String.format(
-                    "Cannot run the test because I don't have a distinct master and replica but %s and %s", node1Instance,
-                    node2Instance));
+            assumeTrue(false,
+                    String.format("Cannot run the test because I don't have a distinct master and replica but %s and %s",
+                            node1Instance, node2Instance));
         }
 
         connectionToNode1.configSet("requirepass", passwd);
@@ -228,4 +230,5 @@ class StaticMasterSlaveTest extends AbstractRedisClientTest {
         MasterSlaveChannelWriter writer = connection.getChannelWriter();
         return writer.getMasterSlaveConnectionProvider();
     }
+
 }

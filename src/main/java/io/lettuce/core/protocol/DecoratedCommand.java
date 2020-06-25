@@ -25,7 +25,7 @@ public interface DecoratedCommand<K, V, T> {
     /**
      * The underlying command.
      *
-     * @return never {@literal null}.
+     * @return never {@code null}.
      */
     RedisCommand<K, V, T> getDelegate();
 

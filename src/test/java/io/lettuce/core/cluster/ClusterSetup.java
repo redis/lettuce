@@ -110,8 +110,8 @@ class ClusterSetup {
 
         Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
 
-        Futures.await(connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port6).clusterReplicate(
-                node1.clusterMyId()));
+        Futures.await(connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port6)
+                .clusterReplicate(node1.clusterMyId()));
 
         clusterRule.getClusterClient().reloadPartitions();
 

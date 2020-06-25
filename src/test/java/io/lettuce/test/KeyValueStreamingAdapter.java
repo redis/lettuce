@@ -44,4 +44,5 @@ public class KeyValueStreamingAdapter<K, V> implements KeyValueStreamingChannel<
     public Map<K, V> getMap() {
         return map;
     }
+
 }

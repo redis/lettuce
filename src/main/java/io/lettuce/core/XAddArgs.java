@@ -31,7 +31,9 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class XAddArgs {
 
     private String id;
+
     private Long maxlen;
+
     private boolean approximateTrimming;
 
     /**
@@ -54,13 +56,14 @@ public class XAddArgs {
         public static XAddArgs maxlen(long count) {
             return new XAddArgs().maxlen(count);
         }
+
     }
 
     /**
      * Limit results to {@code maxlen} entries.
      *
-     * @param id must not be {@literal null}.
-     * @return {@code this}
+     * @param id must not be {@code null}.
+     * @return {@code this}.
      */
     public XAddArgs id(String id) {
 
@@ -74,7 +77,7 @@ public class XAddArgs {
      * Limit stream to {@code maxlen} entries.
      *
      * @param maxlen number greater 0.
-     * @return {@code this}
+     * @return {@code this}.
      */
     public XAddArgs maxlen(long maxlen) {
 
@@ -87,7 +90,7 @@ public class XAddArgs {
     /**
      * Apply efficient trimming for capped streams using the {@code ~} flag.
      *
-     * @return {@code this}
+     * @return {@code this}.
      */
     public XAddArgs approximateTrimming() {
         return approximateTrimming(true);
@@ -96,8 +99,8 @@ public class XAddArgs {
     /**
      * Apply efficient trimming for capped streams using the {@code ~} flag.
      *
-     * @param approximateTrimming {@literal true} to apply efficient radix node trimming.
-     * @return {@code this}
+     * @param approximateTrimming {@code true} to apply efficient radix node trimming.
+     * @return {@code this}.
      */
     public XAddArgs approximateTrimming(boolean approximateTrimming) {
 
@@ -124,4 +127,5 @@ public class XAddArgs {
             args.add("*");
         }
     }
+
 }

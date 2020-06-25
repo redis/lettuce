@@ -147,4 +147,5 @@ class ClusterPartitionParserUnitTests {
 
         assertThat(original).isEqualTo(created);
     }
+
 }

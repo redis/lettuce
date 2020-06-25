@@ -39,4 +39,5 @@ class TransactionalCommandUnitTests {
 
         assertThat(command).isCompletedExceptionally();
     }
+
 }

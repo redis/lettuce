@@ -39,4 +39,5 @@ public class RoutingInvocationHandler extends ConnectionDecoratingInvocationHand
 
         return delegate.invoke(proxy, method, args);
     }
+
 }

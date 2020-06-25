@@ -49,16 +49,23 @@ class ReconnectionHandler {
             CancellationException.class, RedisCommandTimeoutException.class, ConnectException.class);
 
     private final ClientOptions clientOptions;
+
     private final Bootstrap bootstrap;
+
     private final Mono<SocketAddress> socketAddressSupplier;
+
     private final Timer timer;
+
     private final ExecutorService reconnectWorkers;
+
     private final ConnectionFacade connectionFacade;
 
     private TimeUnit timeoutUnit = TimeUnit.SECONDS;
+
     private long timeout = 60;
 
     private volatile CompletableFuture<Channel> currentFuture;
+
     private volatile boolean reconnectSuspended;
 
     ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap, Mono<SocketAddress> socketAddressSupplier,
@@ -156,45 +163,44 @@ class ReconnectionHandler {
                 return;
             }
 
-            channelInitializer.channelInitialized().whenComplete(
-                    (state, throwable) -> {
+            channelInitializer.channelInitialized().whenComplete((state, throwable) -> {
 
-                        if (throwable != null) {
+                if (throwable != null) {
 
-                            if (isExecutionException(throwable)) {
-                                initFuture.tryFailure(throwable);
-                                return;
-                            }
+                    if (isExecutionException(throwable)) {
+                        initFuture.tryFailure(throwable);
+                        return;
+                    }
 
-                            if (clientOptions.isCancelCommandsOnReconnectFailure()) {
-                                connectionFacade.reset();
-                            }
+                    if (clientOptions.isCancelCommandsOnReconnectFailure()) {
+                        connectionFacade.reset();
+                    }
 
-                            if (clientOptions.isSuspendReconnectOnProtocolFailure()) {
+                    if (clientOptions.isSuspendReconnectOnProtocolFailure()) {
 
-                                logger.error("Disabling autoReconnect due to initialization failure", throwable);
-                                setReconnectSuspended(true);
-                            }
+                        logger.error("Disabling autoReconnect due to initialization failure", throwable);
+                        setReconnectSuspended(true);
+                    }
 
-                            initFuture.tryFailure(throwable);
+                    initFuture.tryFailure(throwable);
 
-                            return;
-                        }
+                    return;
+                }
 
-                        if (logger.isDebugEnabled()) {
-                            logger.info("Reconnected to {}, Channel {}", remoteAddress,
-                                    ChannelLogDescriptor.logDescriptor(it.channel()));
-                        } else {
-                            logger.info("Reconnected to {}", remoteAddress);
-                        }
+                if (logger.isDebugEnabled()) {
+                    logger.info("Reconnected to {}, Channel {}", remoteAddress,
+                            ChannelLogDescriptor.logDescriptor(it.channel()));
+                } else {
+                    logger.info("Reconnected to {}", remoteAddress);
+                }
 
-                        initFuture.trySuccess();
-                    });
+                initFuture.trySuccess();
+            });
         });
 
         Runnable timeoutAction = () -> {
-            initFuture.tryFailure(new TimeoutException(String.format("Reconnection attempt exceeded timeout of %d %s ",
-                    timeout, timeoutUnit)));
+            initFuture.tryFailure(new TimeoutException(
+                    String.format("Reconnection attempt exceeded timeout of %d %s ", timeout, timeoutUnit)));
         };
 
         Timeout timeoutHandle = timer.newTimeout(it -> {
@@ -246,8 +252,9 @@ class ReconnectionHandler {
     }
 
     /**
+     *
      * @param throwable
-     * @return {@literal true} if {@code throwable} is an execution {@link Exception}.
+     * @return {@code true} if {@code throwable} is an execution {@link Exception}.
      */
     public static boolean isExecutionException(Throwable throwable) {
 
@@ -263,4 +270,5 @@ class ReconnectionHandler {
     ClientOptions getClientOptions() {
         return clientOptions;
     }
+
 }

@@ -42,4 +42,5 @@ public class IntegerOutput<K, V> extends CommandOutput<K, V, Long> {
     public void set(ByteBuffer bytes) {
         output = null;
     }
+
 }

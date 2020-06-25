@@ -36,26 +36,26 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
     /**
      * Authenticate to the server.
      *
-     * @param password the password
-     * @return String simple-string-reply
+     * @param password the password.
+     * @return String simple-string-reply.
      */
     Mono<String> auth(String password);
 
     /**
      * Change the selected database for the current connection.
      *
-     * @param db the database number
-     * @return String simple-string-reply
+     * @param db the database number.
+     * @return String simple-string-reply.
      */
     Mono<String> select(int db);
 
     /**
      * Swap two Redis databases, so that immediately all the clients connected to a given DB will see the data of the other DB,
-     * and the other way around
+     * and the other way around.
      *
-     * @param db1 the first database number
-     * @param db2 the second database number
-     * @return String simple-string-reply
+     * @param db1 the first database number.
+     * @param db2 the second database number.
+     * @return String simple-string-reply.
      */
     Mono<String> swapdb(int db1, int db2);
 

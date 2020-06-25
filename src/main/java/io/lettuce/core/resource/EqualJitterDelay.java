@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 class EqualJitterDelay extends ExponentialDelay {
 
     private final long base;
+
     private final TimeUnit targetTimeUnit;
 
     EqualJitterDelay(Duration lower, Duration upper, long base, TimeUnit targetTimeUnit) {
@@ -49,4 +50,5 @@ class EqualJitterDelay extends ExponentialDelay {
         long value = randomBetween(0, base * calculatePowerOfTwo(attempt));
         return applyBounds(Duration.ofNanos(targetTimeUnit.toNanos(value)));
     }
+
 }

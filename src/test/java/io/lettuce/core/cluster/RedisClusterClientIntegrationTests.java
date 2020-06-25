@@ -66,19 +66,27 @@ import io.lettuce.test.settings.TestSettings;
 class RedisClusterClientIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisClusterClient clusterClient;
 
     private StatefulRedisConnection<String, String> redis1;
+
     private StatefulRedisConnection<String, String> redis2;
+
     private StatefulRedisConnection<String, String> redis3;
+
     private StatefulRedisConnection<String, String> redis4;
 
     private RedisCommands<String, String> redissync1;
+
     private RedisCommands<String, String> redissync2;
+
     private RedisCommands<String, String> redissync3;
+
     private RedisCommands<String, String> redissync4;
 
     private RedisAdvancedClusterCommands<String, String> sync;
+
     private StatefulRedisClusterConnection<String, String> connection;
 
     @Inject
@@ -649,4 +657,5 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         connection.getStatefulConnection().close();
     }
+
 }

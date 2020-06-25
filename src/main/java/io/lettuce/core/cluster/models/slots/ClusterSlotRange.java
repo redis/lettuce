@@ -36,9 +36,11 @@ import io.lettuce.core.internal.LettuceAssert;
 public class ClusterSlotRange implements Serializable {
 
     private int from;
+
     private int to;
 
     private RedisClusterNode masterNode;
+
     private List<RedisClusterNode> replicaNodes = Collections.emptyList();
 
     public ClusterSlotRange() {
@@ -49,8 +51,8 @@ public class ClusterSlotRange implements Serializable {
      *
      * @param from from slot
      * @param to to slot
-     * @param masterNode master for the slots, may be {@literal null}
-     * @param replicaNodes list of replicas must not be {@literal null} but may be empty
+     * @param masterNode master for the slots, may be {@code null}
+     * @param replicaNodes list of replicas must not be {@code null} but may be empty
      */
     public ClusterSlotRange(int from, int to, RedisClusterNode masterNode, List<RedisClusterNode> replicaNodes) {
 
@@ -135,4 +137,5 @@ public class ClusterSlotRange implements Serializable {
         sb.append(']');
         return sb.toString();
     }
+
 }

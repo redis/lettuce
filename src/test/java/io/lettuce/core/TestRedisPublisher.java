@@ -34,4 +34,5 @@ public class TestRedisPublisher<K, V, T> extends RedisPublisher<K, V, T> {
             boolean dissolve) {
         super(redisCommandSupplier, connection, dissolve, ImmediateEventExecutor.INSTANCE);
     }
+
 }

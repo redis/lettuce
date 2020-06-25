@@ -62,6 +62,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
 class SentinelTopologyRefreshUnitTests {
 
     private static final RedisURI host1 = RedisURI.create("localhost", 1234);
+
     private static final RedisURI host2 = RedisURI.create("localhost", 3456);
 
     @Mock
@@ -90,8 +91,8 @@ class SentinelTopologyRefreshUnitTests {
     @BeforeEach
     void before() {
 
-        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host1))).thenReturn(
-                ConnectionFuture.completed(null, connection));
+        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host1)))
+                .thenReturn(ConnectionFuture.completed(null, connection));
         when(clientResources.eventExecutorGroup()).thenReturn(eventExecutors);
         when(redisClient.getResources()).thenReturn(clientResources);
         when(connection.async()).thenReturn(pubSubAsyncCommands);
@@ -125,8 +126,8 @@ class SentinelTopologyRefreshUnitTests {
 
         sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2));
 
-        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2))).thenReturn(
-                ConnectionFuture.from(null, Futures.failed(new RedisConnectionException("err"))));
+        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2)))
+                .thenReturn(ConnectionFuture.from(null, Futures.failed(new RedisConnectionException("err"))));
 
         sut.bind(refreshRunnable);
 
@@ -150,9 +151,9 @@ class SentinelTopologyRefreshUnitTests {
 
         sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2));
 
-        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2))).thenReturn(
-                ConnectionFuture.from(null, Futures.failed(new RedisConnectionException("err")))).thenReturn(
-                ConnectionFuture.completed(null, connection2));
+        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2)))
+                .thenReturn(ConnectionFuture.from(null, Futures.failed(new RedisConnectionException("err"))))
+                .thenReturn(ConnectionFuture.completed(null, connection2));
 
         sut.bind(refreshRunnable);
 
@@ -397,4 +398,5 @@ class SentinelTopologyRefreshUnitTests {
     private RedisPubSubAdapter<String, String> getAdapter() {
         return (RedisPubSubAdapter<String, String>) ReflectionTestUtils.getField(sut, "adapter");
     }
+
 }

@@ -33,8 +33,8 @@ class WildcardTypeInformation<S> extends TypeDiscoverer<S> {
     /**
      * Creates a new {@link WildcardTypeInformation} for the given type, type variable map.
      *
-     * @param type must not be {@literal null}.
-     * @param typeVariableMap must not be {@literal null}.
+     * @param type must not be {@code null}.
+     * @param typeVariableMap must not be {@code null}.
      */
     protected WildcardTypeInformation(WildcardType type, Map<TypeVariable<?>, Type> typeVariableMap) {
 
@@ -76,4 +76,5 @@ class WildcardTypeInformation<S> extends TypeDiscoverer<S> {
 
         return typeInformations;
     }
+
 }

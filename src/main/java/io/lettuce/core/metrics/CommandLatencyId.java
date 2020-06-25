@@ -31,8 +31,11 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 public class CommandLatencyId implements Serializable, Comparable<CommandLatencyId> {
 
     private final SocketAddress localAddress;
+
     private final SocketAddress remoteAddress;
+
     private final ProtocolKeyword commandType;
+
     private final String commandName;
 
     protected CommandLatencyId(SocketAddress localAddress, SocketAddress remoteAddress, ProtocolKeyword commandType) {
@@ -49,19 +52,20 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
     /**
      * Create a new instance of {@link CommandLatencyId}.
      *
-     * @param localAddress the local address
-     * @param remoteAddress the remote address
-     * @param commandType the command type
-     * @return a new instance of {@link CommandLatencyId}
+     * @param localAddress the local address.
+     * @param remoteAddress the remote address.
+     * @param commandType the command type.
+     * @return a new instance of {@link CommandLatencyId}.
      */
-    public static CommandLatencyId create(SocketAddress localAddress, SocketAddress remoteAddress, ProtocolKeyword commandType) {
+    public static CommandLatencyId create(SocketAddress localAddress, SocketAddress remoteAddress,
+            ProtocolKeyword commandType) {
         return new CommandLatencyId(localAddress, remoteAddress, commandType);
     }
 
     /**
      * Returns the local address.
      *
-     * @return the local address
+     * @return the local address.
      */
     public SocketAddress localAddress() {
         return localAddress;
@@ -70,7 +74,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
     /**
      * Returns the remote address.
      *
-     * @return the remote address
+     * @return the remote address.
      */
     public SocketAddress remoteAddress() {
         return remoteAddress;
@@ -79,7 +83,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
     /**
      * Returns the command type.
      *
-     * @return the command type
+     * @return the command type.
      */
     public ProtocolKeyword commandType() {
         return commandType;
@@ -138,4 +142,5 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
         sb.append(']');
         return sb.toString();
     }
+
 }

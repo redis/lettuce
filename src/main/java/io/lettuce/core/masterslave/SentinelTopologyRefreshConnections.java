@@ -29,6 +29,7 @@ class SentinelTopologyRefreshConnections extends
         CompletableEventLatchSupport<StatefulRedisPubSubConnection<String, String>, SentinelTopologyRefreshConnections> {
 
     private final List<Throwable> exceptions = new CopyOnWriteArrayList<>();
+
     private final AtomicInteger success = new AtomicInteger();
 
     /**
@@ -62,4 +63,5 @@ class SentinelTopologyRefreshConnections extends
             emission.success(this);
         }
     }
+
 }

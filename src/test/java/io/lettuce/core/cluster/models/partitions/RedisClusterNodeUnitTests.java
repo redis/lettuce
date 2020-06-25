@@ -63,4 +63,5 @@ class RedisClusterNodeUnitTests {
 
         assertThat(node.toString()).contains(RedisClusterNode.class.getSimpleName());
     }
+
 }

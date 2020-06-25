@@ -203,6 +203,7 @@ class CommandSegmentCommandFactoryUnitTests {
 
         @Command("XYZ")
         boolean unknownCommand();
+
     }
 
     private static interface MethodsWithTimeout {
@@ -210,5 +211,7 @@ class CommandSegmentCommandFactoryUnitTests {
         Future<String> async(String key, Timeout timeout);
 
         String sync(String key, Timeout timeout);
+
     }
+
 }

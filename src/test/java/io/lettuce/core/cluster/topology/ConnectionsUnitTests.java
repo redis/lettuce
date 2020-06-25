@@ -76,4 +76,5 @@ class ConnectionsUnitTests {
         sut.addConnection(RedisURI.create("127.0.0.1", 7381), connection1);
         verify(connection1).closeAsync();
     }
+
 }

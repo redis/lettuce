@@ -49,6 +49,7 @@ import io.lettuce.test.Wait;
 public class ScriptingCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -121,8 +122,9 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
         assertThat((Number) redis.eval(script, INTEGER)).isEqualTo(2L);
         assertThat((Number) redis.evalsha(digest, INTEGER)).isEqualTo(2L);
 
-        assertThatThrownBy(() -> redis.evalsha(redis.digest("return 1 + 1 == 4"), INTEGER)).isInstanceOf(
-                RedisNoScriptException.class).hasMessageContaining("NOSCRIPT No matching script. Please use EVAL.");
+        assertThatThrownBy(() -> redis.evalsha(redis.digest("return 1 + 1 == 4"), INTEGER))
+                .isInstanceOf(RedisNoScriptException.class)
+                .hasMessageContaining("NOSCRIPT No matching script. Please use EVAL.");
     }
 
     @Test
@@ -130,8 +132,8 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
         redis.scriptFlush();
         String digest = redis.digest("return {1234, 5678}");
 
-        assertThatThrownBy(() -> redis.evalsha(digest, MULTI)).isInstanceOf(RedisNoScriptException.class).hasMessageContaining(
-                "NOSCRIPT No matching script. Please use EVAL.");
+        assertThatThrownBy(() -> redis.evalsha(digest, MULTI)).isInstanceOf(RedisNoScriptException.class)
+                .hasMessageContaining("NOSCRIPT No matching script. Please use EVAL.");
     }
 
     @Test
@@ -176,4 +178,5 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
             connection.close();
         }
     }
+
 }

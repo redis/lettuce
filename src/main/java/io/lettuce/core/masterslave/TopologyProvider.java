@@ -36,7 +36,7 @@ public interface TopologyProvider {
     /**
      * Lookup nodes within the topology.
      *
-     * @return list of {@link RedisNodeDescription} instances
+     * @return list of {@link RedisNodeDescription} instances.
      * @throws RedisException on errors that occurred during the lookup
      */
     List<RedisNodeDescription> getNodes();
@@ -44,11 +44,12 @@ public interface TopologyProvider {
     /**
      * Lookup nodes asynchronously within the topology.
      *
-     * @return list of {@link RedisNodeDescription} instances
+     * @return list of {@link RedisNodeDescription} instances.
      * @throws RedisException on errors that occurred during the lookup
      * @since 5.1
      */
     default CompletableFuture<List<RedisNodeDescription>> getNodesAsync() {
         return CompletableFuture.completedFuture(getNodes());
     }
+
 }

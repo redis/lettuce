@@ -21,6 +21,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.*;
 
 /**
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -72,4 +73,5 @@ public class BaseRedisCommandBuilder<K, V> {
                 throw new RedisException("Unsupported script output type");
         }
     }
+
 }

@@ -29,6 +29,7 @@ import io.lettuce.core.event.Event;
 public class AdaptiveRefreshTriggeredEvent implements Event {
 
     private Supplier<Partitions> partitionsSupplier;
+
     private Runnable topologyRefreshScheduler;
 
     public AdaptiveRefreshTriggeredEvent(Supplier<Partitions> partitionsSupplier, Runnable topologyRefreshScheduler) {
@@ -51,4 +52,5 @@ public class AdaptiveRefreshTriggeredEvent implements Event {
     public Partitions getPartitions() {
         return partitionsSupplier.get();
     }
+
 }

@@ -52,6 +52,7 @@ class ReadFromImpl {
 
             return Collections.emptyList();
         }
+
     }
 
     /**
@@ -62,6 +63,7 @@ class ReadFromImpl {
         ReadFromMasterPreferred() {
             super(IS_MASTER, IS_REPLICA);
         }
+
     }
 
     /**
@@ -72,6 +74,7 @@ class ReadFromImpl {
         ReadFromReplica() {
             super(IS_REPLICA);
         }
+
     }
 
     /**
@@ -82,6 +85,7 @@ class ReadFromImpl {
         ReadFromReplicaPreferred() {
             super(IS_REPLICA, IS_MASTER);
         }
+
     }
 
     /**
@@ -98,6 +102,7 @@ class ReadFromImpl {
         protected boolean isOrderSensitive() {
             return true;
         }
+
     }
 
     /**
@@ -108,6 +113,7 @@ class ReadFromImpl {
         public ReadFromAnyNode() {
             super(x -> true);
         }
+
     }
 
     /**
@@ -145,6 +151,7 @@ class ReadFromImpl {
         protected boolean isOrderSensitive() {
             return true;
         }
+
     }
 
     /**
@@ -163,5 +170,7 @@ class ReadFromImpl {
         protected boolean isOrderSensitive() {
             return false;
         }
+
     }
+
 }

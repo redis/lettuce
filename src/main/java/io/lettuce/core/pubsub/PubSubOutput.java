@@ -35,9 +35,13 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
     }
 
     private Type type;
+
     private K channel;
+
     private K pattern;
+
     private long count;
+
     private boolean completed;
 
     public PubSubOutput(RedisCodec<K, V> codec) {
@@ -115,4 +119,5 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
     boolean isCompleted() {
         return completed;
     }
+
 }

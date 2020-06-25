@@ -96,4 +96,5 @@ public class PendingParser {
 
         return new PendingMessages(count, messageIdRange, Collections.unmodifiableMap(counts));
     }
+
 }

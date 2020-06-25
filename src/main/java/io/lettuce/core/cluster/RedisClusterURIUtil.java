@@ -38,7 +38,7 @@ public abstract class RedisClusterURIUtil {
      *
      * An URI follows the syntax: {@code redis://[password@]host[:port][,host2[:port2]]}
      *
-     * @param uri must not be empty or {@literal null}.
+     * @param uri must not be empty or {@code null}.
      * @return {@link List} of {@link RedisURI}.
      */
     public static List<RedisURI> toRedisURIs(URI uri) {
@@ -52,8 +52,8 @@ public abstract class RedisClusterURIUtil {
         for (String part : parts) {
             HostAndPort hostAndPort = HostAndPort.parse(part);
 
-            RedisURI nodeUri = RedisURI.create(hostAndPort.getHostText(), hostAndPort.hasPort() ? hostAndPort.getPort()
-                    : redisURI.getPort());
+            RedisURI nodeUri = RedisURI.create(hostAndPort.getHostText(),
+                    hostAndPort.hasPort() ? hostAndPort.getPort() : redisURI.getPort());
 
             applyUriConnectionSettings(redisURI, nodeUri);
 
@@ -80,4 +80,5 @@ public abstract class RedisClusterURIUtil {
         to.setStartTls(from.isStartTls());
         to.setVerifyPeer(from.isVerifyPeer());
     }
+
 }

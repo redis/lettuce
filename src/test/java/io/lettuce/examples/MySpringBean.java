@@ -42,4 +42,5 @@ public class MySpringBean {
         connection.close();
         return result;
     }
+
 }

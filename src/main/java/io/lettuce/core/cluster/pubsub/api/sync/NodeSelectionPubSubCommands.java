@@ -28,32 +28,33 @@ public interface NodeSelectionPubSubCommands<K, V> {
     /**
      * Listen for messages published to channels matching the given patterns.
      *
-     * @param patterns the patterns
-     * @return Executions to synchronize {@code psubscribe} completion
+     * @param patterns the patterns.
+     * @return Executions to synchronize {@code psubscribe} completion.
      */
     Executions<Void> psubscribe(K... patterns);
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
      *
-     * @param patterns the patterns
-     * @return Executions Future to synchronize {@code punsubscribe} completion
+     * @param patterns the patterns.
+     * @return Executions Future to synchronize {@code punsubscribe} completion.
      */
     Executions<Void> punsubscribe(K... patterns);
 
     /**
      * Listen for messages published to the given channels.
      *
-     * @param channels the channels
-     * @return Executions Future to synchronize {@code subscribe} completion
+     * @param channels the channels.
+     * @return Executions Future to synchronize {@code subscribe} completion.
      */
     Executions<Void> subscribe(K... channels);
 
     /**
      * Stop listening for messages posted to the given channels.
      *
-     * @param channels the channels
+     * @param channels the channels.
      * @return Executions Future to synchronize {@code unsubscribe} completion.
      */
     Executions<Void> unsubscribe(K... channels);
+
 }

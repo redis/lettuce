@@ -42,7 +42,7 @@ class ScoredValueListOutputUnitTests {
 
     @Test
     void setIntegerShouldFail() {
-        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -55,4 +55,5 @@ class ScoredValueListOutputUnitTests {
 
         assertThat(sut.get()).contains(ScoredValue.fromNullable(4.567, "key"));
     }
+
 }

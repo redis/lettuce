@@ -20,7 +20,6 @@ package io.lettuce.core.pubsub;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
  * @author Will Glozer
  */
 public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {
@@ -54,4 +53,5 @@ public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {
     public void punsubscribed(K pattern, long count) {
         // empty adapter method
     }
+
 }

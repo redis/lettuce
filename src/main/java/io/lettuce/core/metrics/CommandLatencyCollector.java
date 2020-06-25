@@ -38,7 +38,7 @@ public interface CommandLatencyCollector extends MetricCollector<Map<CommandLate
     /**
      * Creates a new {@link CommandLatencyCollector} using {@link CommandLatencyCollectorOptions}.
      *
-     * @param options must not be {@literal null}.
+     * @param options must not be {@code null}.
      * @return the {@link CommandLatencyCollector} using {@link CommandLatencyCollectorOptions}.
      */
     static CommandLatencyCollector create(CommandLatencyCollectorOptions options) {
@@ -54,6 +54,7 @@ public interface CommandLatencyCollector extends MetricCollector<Map<CommandLate
     static CommandLatencyCollector disabled() {
 
         return new CommandLatencyCollector() {
+
             @Override
             public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
                     long firstResponseLatency, long completionLatency) {
@@ -72,19 +73,20 @@ public interface CommandLatencyCollector extends MetricCollector<Map<CommandLate
             public boolean isEnabled() {
                 return false;
             }
+
         };
     }
 
     /**
      * Record the command latency per {@code connectionPoint} and {@code commandType}.
      *
-     * @param local the local address
-     * @param remote the remote address
-     * @param commandType the command type
-     * @param firstResponseLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the first response
-     * @param completionLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the command completion
+     * @param local the local address.
+     * @param remote the remote address.
+     * @param commandType the command type.
+     * @param firstResponseLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the first response.
+     * @param completionLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the command completion.
      */
-    void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
-            long firstResponseLatency, long completionLatency);
+    void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType, long firstResponseLatency,
+            long completionLatency);
 
 }

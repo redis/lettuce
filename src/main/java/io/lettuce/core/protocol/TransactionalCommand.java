@@ -20,11 +20,9 @@ package io.lettuce.core.protocol;
  * twice. Once on the submission and once during {@literal EXEC}. Only the second completion will complete the underlying
  * command.
  *
- *
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Command output type.
- *
  * @author Mark Paluch
  */
 public class TransactionalCommand<K, V, T> extends AsyncCommand<K, V, T> implements RedisCommand<K, V, T> {

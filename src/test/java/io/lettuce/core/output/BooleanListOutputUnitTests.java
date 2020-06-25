@@ -52,4 +52,5 @@ class BooleanListOutputUnitTests {
     void setByteNotImplemented() {
         assertThatThrownBy(() -> sut.set(ByteBuffer.wrap("4.567".getBytes()))).isInstanceOf(IllegalStateException.class);
     }
+
 }

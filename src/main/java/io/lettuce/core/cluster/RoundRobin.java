@@ -36,7 +36,7 @@ class RoundRobin<V> {
      * vice versa.
      *
      * @param master the master collection containing source elements for this {@link RoundRobin}.
-     * @return {@literal true} if this {@link RoundRobin} is consistent with the master {@link Collection}.
+     * @return {@code true} if this {@link RoundRobin} is consistent with the master {@link Collection}.
      */
     public boolean isConsistent(Collection<? extends V> master) {
 
@@ -59,7 +59,7 @@ class RoundRobin<V> {
     /**
      * Returns the next item.
      *
-     * @return the next item
+     * @return the next item.
      */
     public V next() {
 
@@ -82,4 +82,5 @@ class RoundRobin<V> {
 
         return this.offset = collection.iterator().next();
     }
+
 }

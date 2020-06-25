@@ -62,4 +62,5 @@ class ConnectionDecoratingInvocationHandler extends AbstractInvocationHandler {
 
         return result;
     }
+
 }

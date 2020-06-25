@@ -30,6 +30,7 @@ import io.lettuce.core.cluster.api.async.AsyncExecutions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 
 /**
+ *
  * @author Mark Paluch
  */
 class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
@@ -226,7 +227,8 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     }
 
     @Override
-    public <U> CompletionStage<U> applyToEitherAsync(CompletionStage<? extends List<T>> other, Function<? super List<T>, U> fn) {
+    public <U> CompletionStage<U> applyToEitherAsync(CompletionStage<? extends List<T>> other,
+            Function<? super List<T>, U> fn) {
         return publicStage().applyToEitherAsync(other, fn);
     }
 
@@ -278,7 +280,8 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     }
 
     @Override
-    public <U> CompletionStage<U> thenComposeAsync(Function<? super List<T>, ? extends CompletionStage<U>> fn, Executor executor) {
+    public <U> CompletionStage<U> thenComposeAsync(Function<? super List<T>, ? extends CompletionStage<U>> fn,
+            Executor executor) {
         return publicStage().thenComposeAsync(fn, executor);
     }
 
@@ -298,7 +301,8 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     }
 
     @Override
-    public CompletionStage<List<T>> whenCompleteAsync(BiConsumer<? super List<T>, ? super Throwable> action, Executor executor) {
+    public CompletionStage<List<T>> whenCompleteAsync(BiConsumer<? super List<T>, ? super Throwable> action,
+            Executor executor) {
         return publicStage().whenCompleteAsync(action, executor);
     }
 
@@ -321,4 +325,5 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     public CompletableFuture<List<T>> toCompletableFuture() {
         return publicStage().toCompletableFuture();
     }
+
 }

@@ -54,7 +54,9 @@ import io.lettuce.test.Wait;
 class ReactiveConnectionIntegrationTests extends TestSupport {
 
     private final StatefulRedisConnection<String, String> connection;
+
     private final RedisCommands<String, String> redis;
+
     private final RedisReactiveCommands<String, String> reactive;
 
     @Inject
@@ -228,14 +230,11 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         connection.async().quit();
         Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
-        StepVerifier
-                .create(connection.reactive().ping())
-                .consumeErrorWith(
-                        throwable -> {
-                            assertThat(throwable).isInstanceOf(RedisException.class).hasMessageContaining(
-                                    "not connected. Commands are rejected");
+        StepVerifier.create(connection.reactive().ping()).consumeErrorWith(throwable -> {
+            assertThat(throwable).isInstanceOf(RedisException.class)
+                    .hasMessageContaining("not connected. Commands are rejected");
 
-                        }).verify();
+        }).verify();
 
         connection.close();
     }
@@ -280,6 +279,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
             @Override
             public void onNext(String s) {
             }
+
         };
     }
 
@@ -310,5 +310,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         public void onNext(Object o) {
             result.add(o);
         }
+
     }
+
 }

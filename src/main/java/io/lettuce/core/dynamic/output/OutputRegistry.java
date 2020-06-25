@@ -39,6 +39,7 @@ import io.lettuce.core.output.*;
 public class OutputRegistry {
 
     private static final Map<OutputType, CommandOutputFactory> BUILTIN = new LinkedHashMap<>();
+
     private final Map<OutputType, CommandOutputFactory> registry = new LinkedHashMap<>();
 
     static {
@@ -83,7 +84,7 @@ public class OutputRegistry {
     /**
      * Create a new {@link OutputRegistry}.
      *
-     * @param registerBuiltin {@literal true} to register builtin {@link CommandOutput} types.
+     * @param registerBuiltin {@code true} to register builtin {@link CommandOutput} types.
      */
     public OutputRegistry(boolean registerBuiltin) {
 
@@ -95,8 +96,8 @@ public class OutputRegistry {
     /**
      * Register a {@link CommandOutput} type with its {@link CommandOutputFactory}.
      *
-     * @param commandOutputClass must not be {@literal null}.
-     * @param commandOutputFactory must not be {@literal null}.
+     * @param commandOutputClass must not be {@code null}.
+     * @param commandOutputFactory must not be {@code null}.
      */
     public <T extends CommandOutput<?, ?, ?>> void register(Class<T> commandOutputClass,
             CommandOutputFactory commandOutputFactory) {
@@ -169,8 +170,8 @@ public class OutputRegistry {
 
                 TypeInformation<?> typeInformation = ClassTypeInformation.from(codec.getClass());
 
-                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass, new CodecVariableTypeResolver(
-                        typeInformation));
+                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass,
+                        new CodecVariableTypeResolver(typeInformation));
 
                 while (resolvableType != ResolvableType.NONE) {
 
@@ -187,6 +188,7 @@ public class OutputRegistry {
 
                 throw new IllegalStateException();
             }
+
         };
     }
 
@@ -209,13 +211,14 @@ public class OutputRegistry {
         List<TypeInformation<?>> typeArguments = superTypeInformation.getTypeArguments();
 
         return new OutputType(commandOutputClass, typeArguments.get(2), false) {
+
             @Override
             public ResolvableType withCodec(RedisCodec<?, ?> codec) {
 
                 TypeInformation<?> typeInformation = ClassTypeInformation.from(codec.getClass());
 
-                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass, new CodecVariableTypeResolver(
-                        typeInformation));
+                ResolvableType resolvableType = ResolvableType.forType(commandOutputClass,
+                        new CodecVariableTypeResolver(typeInformation));
 
                 while (!resolvableType.getRawClass().equals(CommandOutput.class)) {
                     resolvableType = resolvableType.getSuperType();
@@ -223,6 +226,7 @@ public class OutputRegistry {
 
                 return resolvableType.getGeneric(2);
             }
+
         };
     }
 
@@ -230,6 +234,7 @@ public class OutputRegistry {
     static class CodecVariableTypeResolver implements ResolvableType.VariableResolver {
 
         private final TypeInformation<?> codecType;
+
         private final List<TypeInformation<?>> typeArguments;
 
         public CodecVariableTypeResolver(TypeInformation<?> codecType) {
@@ -255,6 +260,7 @@ public class OutputRegistry {
             }
             return null;
         }
+
     }
 
 }

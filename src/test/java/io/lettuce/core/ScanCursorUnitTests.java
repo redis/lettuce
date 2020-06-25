@@ -41,4 +41,5 @@ class ScanCursorUnitTests {
     void setFinishedOnImmutableInstance() {
         assertThatThrownBy(() -> ScanCursor.INITIAL.setFinished(false)).isInstanceOf(UnsupportedOperationException.class);
     }
+
 }

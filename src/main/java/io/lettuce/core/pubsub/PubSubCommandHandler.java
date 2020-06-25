@@ -50,16 +50,19 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PubSubCommandHandler.class);
 
     private final PubSubEndpoint<K, V> endpoint;
+
     private final RedisCodec<K, V> codec;
+
     private final Deque<ReplayOutput<K, V>> queue = new ArrayDeque<>();
 
     private ResponseHeaderReplayOutput<K, V> replay;
+
     private PubSubOutput<K, V, V> output;
 
     /**
      * Initialize a new instance.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}
+     * @param clientOptions client options for this connection, must not be {@code null}
      * @param clientResources client resources for this connection
      * @param codec Codec.
      * @param endpoint the Pub/Sub endpoint for Pub/Sub callback.
@@ -226,6 +229,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
     static class ResponseHeaderReplayOutput<K, V> extends ReplayOutput<K, V> {
 
         Integer multiCount;
+
         String firstElement;
 
         @Override
@@ -250,5 +254,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
 
             super.multi(count);
         }
+
     }
+
 }

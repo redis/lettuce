@@ -54,8 +54,8 @@ class ExceptionFactoryUnitTests {
         assertThat(ExceptionFactory.createExecutionException("ERR foo bar", new IllegalStateException()))
                 .isInstanceOf(RedisCommandExecutionException.class).hasMessage("ERR foo bar")
                 .hasRootCauseInstanceOf(IllegalStateException.class);
-        assertThat(ExceptionFactory.createExecutionException(null, new IllegalStateException())).isInstanceOf(
-                RedisCommandExecutionException.class).hasRootCauseInstanceOf(IllegalStateException.class);
+        assertThat(ExceptionFactory.createExecutionException(null, new IllegalStateException()))
+                .isInstanceOf(RedisCommandExecutionException.class).hasRootCauseInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -87,10 +87,11 @@ class ExceptionFactoryUnitTests {
     @Test
     void shouldFormatToMinmalApplicableTimeunit() {
 
-        assertThat(ExceptionFactory.formatTimeout(Duration.ofMinutes(2).plus(Duration.ofSeconds(10)))).isEqualTo(
-                "130 second(s)");
-        assertThat(ExceptionFactory.formatTimeout(Duration.ofSeconds(2).plus(Duration.ofMillis(5)))).isEqualTo(
-                "2005 millisecond(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofMinutes(2).plus(Duration.ofSeconds(10))))
+                .isEqualTo("130 second(s)");
+        assertThat(ExceptionFactory.formatTimeout(Duration.ofSeconds(2).plus(Duration.ofMillis(5))))
+                .isEqualTo("2005 millisecond(s)");
         assertThat(ExceptionFactory.formatTimeout(Duration.ofNanos(2))).isEqualTo("2 ns");
     }
+
 }

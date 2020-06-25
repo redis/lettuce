@@ -47,7 +47,9 @@ class UnixDomainSocketIntegrationTests {
     private static RedisClient sentinelClient;
 
     private Logger log = LogManager.getLogger(getClass());
+
     private String key = "key";
+
     private String value = "value";
 
     @BeforeAll
@@ -183,8 +185,8 @@ class UnixDomainSocketIntegrationTests {
 
     private void assumeTestSupported() {
         String osName = SystemPropertyUtil.get("os.name").toLowerCase(Locale.UK).trim();
-        assumeTrue(Transports.NativeTransports.isSocketSupported(), "Only supported on Linux/OSX, your os is " + osName
-                + " with epoll/kqueue support.");
+        assumeTrue(Transports.NativeTransports.isSocketSupported(),
+                "Only supported on Linux/OSX, your os is " + osName + " with epoll/kqueue support.");
     }
 
     private static RedisURI getSocketRedisUri() throws IOException {

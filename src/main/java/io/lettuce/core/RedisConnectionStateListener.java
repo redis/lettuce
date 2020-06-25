@@ -54,12 +54,11 @@ public interface RedisConnectionStateListener {
     void onRedisDisconnected(RedisChannelHandler<?, ?> connection);
 
     /**
-     *
      * Event handler for exceptions.
      *
      * @param connection Source connection.
-     *
      * @param cause Caught exception.
      */
     void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause);
+
 }

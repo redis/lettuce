@@ -35,4 +35,5 @@ public interface BatchExecutor {
      * @throws BatchException if at least one command failed.
      */
     void flush() throws BatchException;
+
 }

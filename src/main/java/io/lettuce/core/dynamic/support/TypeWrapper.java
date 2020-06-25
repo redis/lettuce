@@ -36,7 +36,6 @@ import io.lettuce.core.internal.LettuceAssert;
  * {@link ParameterizedType}, {@link TypeVariable} or {@link WildcardType}. With the exception of {@link Class} (which is final)
  * calls to methods that return further {@link Type}s (for example {@link GenericArrayType#getGenericComponentType()}) will be
  * automatically wrapped.
- *
  */
 abstract class TypeWrapper {
 
@@ -64,10 +63,12 @@ abstract class TypeWrapper {
     @SuppressWarnings("serial")
     public static Type forGenericSuperclass(final Class<?> type) {
         return forTypeProvider(new DefaultTypeProvider() {
+
             @Override
             public Type getType() {
                 return type.getGenericSuperclass();
             }
+
         });
     }
 
@@ -80,10 +81,12 @@ abstract class TypeWrapper {
         for (int i = 0; i < result.length; i++) {
             final int index = i;
             result[i] = forTypeProvider(new DefaultTypeProvider() {
+
                 @Override
                 public Type getType() {
                     return type.getGenericInterfaces()[index];
                 }
+
             });
         }
         return result;
@@ -98,10 +101,12 @@ abstract class TypeWrapper {
         for (int i = 0; i < result.length; i++) {
             final int index = i;
             result[i] = forTypeProvider(new DefaultTypeProvider() {
+
                 @Override
                 public Type getType() {
                     return type.getTypeParameters()[index];
                 }
+
             });
         }
         return result;
@@ -110,8 +115,8 @@ abstract class TypeWrapper {
     /**
      * Unwrap the given type, effectively returning the original non-serializable type.
      *
-     * @param type the type to unwrap
-     * @return the original non-serializable type
+     * @param type the type to unwrap.
+     * @return the original non-serializable type.
      */
     @SuppressWarnings("unchecked")
     public static <T extends Type> T unwrap(T type) {
@@ -151,6 +156,7 @@ abstract class TypeWrapper {
          * Return the underlying type provider.
          */
         TypeProvider getTypeProvider();
+
     }
 
     /**
@@ -167,6 +173,7 @@ abstract class TypeWrapper {
          * Return the source of the type or {@code null}.
          */
         Object getSource();
+
     }
 
     /**
@@ -179,6 +186,7 @@ abstract class TypeWrapper {
         public Object getSource() {
             return null;
         }
+
     }
 
     /**
@@ -225,6 +233,7 @@ abstract class TypeWrapper {
                 throw ex.getTargetException();
             }
         }
+
     }
 
     /**
@@ -263,6 +272,7 @@ abstract class TypeWrapper {
                 throw new IllegalStateException("Could not find original class structure", ex);
             }
         }
+
     }
 
     /**
@@ -318,6 +328,7 @@ abstract class TypeWrapper {
                 throw new IllegalStateException("Could not find original class structure", ex);
             }
         }
+
     }
 
     /**
@@ -359,6 +370,7 @@ abstract class TypeWrapper {
         public Object getSource() {
             return null;
         }
+
     }
 
 }

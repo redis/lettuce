@@ -26,10 +26,12 @@ import io.lettuce.core.ConnectionEvents;
 public interface ReconnectionListener {
 
     ReconnectionListener NO_OP = new ReconnectionListener() {
+
         @Override
         public void onReconnectAttempt(ConnectionEvents.Reconnect reconnect) {
 
         }
+
     };
 
     /**

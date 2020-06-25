@@ -32,7 +32,7 @@ public interface Executions<T> extends Iterable<T> {
 
     /**
      *
-     * @return map between {@link RedisClusterNode} and the {@link CompletionStage}
+     * @return map between {@link RedisClusterNode} and the {@link CompletionStage}.
      */
     Map<RedisClusterNode, T> asMap();
 
@@ -44,14 +44,14 @@ public interface Executions<T> extends Iterable<T> {
 
     /**
      *
-     * @param redisClusterNode the node
-     * @return the completion stage for this node
+     * @param redisClusterNode the node.
+     * @return the completion stage for this node.
      */
     T get(RedisClusterNode redisClusterNode);
 
     /**
      *
-     * @return iterator over the {@link CompletionStage}s
+     * @return iterator over the {@link CompletionStage}s.
      */
     @Override
     default Iterator<T> iterator() {
@@ -60,7 +60,7 @@ public interface Executions<T> extends Iterable<T> {
 
     /**
      *
-     * @return a {@code Spliterator} over the elements in this collection
+     * @return a {@code Spliterator} over the elements in this collection.
      */
     @Override
     default Spliterator<T> spliterator() {
@@ -68,9 +68,11 @@ public interface Executions<T> extends Iterable<T> {
     }
 
     /**
-     * @return a sequential {@code Stream} over the elements in this collection
+     *
+     * @return a sequential {@code Stream} over the elements in this collection.
      */
     default Stream<T> stream() {
         return StreamSupport.stream(spliterator(), false);
     }
+
 }

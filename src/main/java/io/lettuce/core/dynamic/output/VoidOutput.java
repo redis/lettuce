@@ -31,7 +31,7 @@ class VoidOutput<K, V> extends CommandOutput<K, V, Void> {
     /**
      * Initialize a new instance that encodes and decodes keys and values using the supplied codec.
      *
-     * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
+     * @param codec Codec used to encode/decode keys and values, must not be {@code null}.
      */
     public VoidOutput(RedisCodec<K, V> codec) {
         super(codec, null);
@@ -46,4 +46,5 @@ class VoidOutput<K, V> extends CommandOutput<K, V, Void> {
     public void set(long integer) {
         // no-op
     }
+
 }

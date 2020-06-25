@@ -40,6 +40,7 @@ import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncCommands<K, V> {
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
+
     private final StatefulConnection<K, V> connection;
 
     public RedisSentinelAsyncCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
@@ -173,4 +174,5 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
         return (StatefulRedisSentinelConnection<K, V>) connection;
     }
+
 }

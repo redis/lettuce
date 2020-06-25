@@ -40,8 +40,8 @@ import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
  * @author Mark Paluch
  * @since 3.0
  */
-public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
-        RedisSentinelReactiveCommands<K, V> {
+public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
+        implements RedisSentinelReactiveCommands<K, V> {
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
 
@@ -173,4 +173,5 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
     public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
         return (StatefulRedisSentinelConnection<K, V>) super.getConnection();
     }
+
 }

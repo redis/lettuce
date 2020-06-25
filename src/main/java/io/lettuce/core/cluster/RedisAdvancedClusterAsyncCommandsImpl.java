@@ -602,10 +602,10 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     /**
-     * Run a command on all available masters,
+     * Run a command on all available masters,.
      *
-     * @param function function producing the command
-     * @param <T> result type
+     * @param function function producing the command.
+     * @param <T> result type.
      * @return map of a key (counter) and commands.
      */
     protected <T> Map<String, CompletableFuture<T>> executeOnMasters(
@@ -616,9 +616,9 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     /**
      * Run a command on all available nodes that match {@code filter}.
      *
-     * @param function function producing the command
-     * @param filter filter function for the node selection
-     * @param <T> result type
+     * @param function function producing the command.
+     * @param filter filter function for the node selection.
+     * @param <T> result type.
      * @return map of a key (counter) and commands.
      */
     protected <T> Map<String, CompletableFuture<T>> executeOnNodes(
@@ -665,7 +665,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     /**
      * Perform a SCAN in the cluster.
-     *
      */
     static <T extends ScanCursor, K, V> RedisFuture<T> clusterScan(StatefulRedisClusterConnection<K, V> connection,
             ScanCursor cursor, BiFunction<RedisKeyAsyncCommands<K, V>, ScanCursor, RedisFuture<T>> scanFunction,
@@ -678,4 +677,5 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
+
 }

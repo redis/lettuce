@@ -39,8 +39,8 @@ public class ClusterSlotsParser {
      * Parse the output of the Redis CLUSTER SLOTS command and convert it to a list of
      * {@link io.lettuce.core.cluster.models.slots.ClusterSlotRange}
      *
-     * @param clusterSlotsOutput output of CLUSTER SLOTS command
-     * @return List&gt;ClusterSlotRange&gt;
+     * @param clusterSlotsOutput output of CLUSTER SLOTS command.
+     * @return List&gt;ClusterSlotRange&gt;.
      */
     public static List<ClusterSlotRange> parse(List<?> clusterSlotsOutput) {
         List<ClusterSlotRange> result = new ArrayList<>();
@@ -62,10 +62,12 @@ public class ClusterSlotsParser {
         }
 
         Collections.sort(result, new Comparator<ClusterSlotRange>() {
+
             @Override
             public int compare(ClusterSlotRange o1, ClusterSlotRange o2) {
                 return o1.getFrom() - o2.getFrom();
             }
+
         });
 
         return Collections.unmodifiableList(result);
@@ -164,4 +166,5 @@ public class ClusterSlotsParser {
         }
         return defaultValue;
     }
+
 }

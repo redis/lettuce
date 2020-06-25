@@ -42,9 +42,11 @@ public class KqueueProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(KqueueProvider.class);
 
     private static final String KQUEUE_ENABLED_KEY = "io.lettuce.core.kqueue";
+
     private static final boolean KQUEUE_ENABLED = Boolean.parseBoolean(SystemPropertyUtil.get(KQUEUE_ENABLED_KEY, "true"));
 
     private static final boolean KQUEUE_AVAILABLE;
+
     private static final KqueueResources KQUEUE_RESOURCES;
 
     static {
@@ -73,7 +75,8 @@ public class KqueueProvider {
     }
 
     /**
-     * @return {@literal true} if kqueue is available.
+     *
+     * @return {@code true} if kqueue is available.
      */
     public static boolean isAvailable() {
         return KQUEUE_AVAILABLE && KQUEUE_ENABLED;
@@ -88,15 +91,14 @@ public class KqueueProvider {
 
         LettuceAssert.assertState(KQUEUE_ENABLED,
                 String.format("kqueue use is disabled via System properties (%s)", KQUEUE_ENABLED_KEY));
-        LettuceAssert
-                .assertState(
-                        isAvailable(),
-                        "netty-transport-native-kqueue is not available. Make sure netty-transport-native-kqueue library on the class path and supported by your operating system.");
+        LettuceAssert.assertState(isAvailable(),
+                "netty-transport-native-kqueue is not available. Make sure netty-transport-native-kqueue library on the class path and supported by your operating system.");
     }
 
     /**
-     * @param type must not be {@literal null}.
-     * @return {@literal true} if {@code type} is a {@link io.netty.channel.kqueue.KQueueEventLoopGroup}.
+     *
+     * @param type must not be {@code null}.
+     * @return {@code true} if {@code type} is a {@link io.netty.channel.kqueue.KQueueEventLoopGroup}.
      */
     public static boolean isEventLoopGroup(Class<? extends EventExecutorGroup> type) {
         return KQUEUE_RESOURCES.isEventLoopGroup(type);
@@ -114,6 +116,7 @@ public class KqueueProvider {
     }
 
     /**
+     *
      * @return the {@link io.netty.channel.kqueue.KQueueDomainSocketChannel} class.
      */
     static Class<? extends Channel> domainSocketChannelClass() {
@@ -121,6 +124,7 @@ public class KqueueProvider {
     }
 
     /**
+     *
      * @return the {@link io.netty.channel.kqueue.KQueueSocketChannel} class.
      */
     static Class<? extends Channel> socketChannelClass() {
@@ -128,6 +132,7 @@ public class KqueueProvider {
     }
 
     /**
+     *
      * @return the {@link io.netty.channel.kqueue.KQueueEventLoopGroup} class.
      */
     static Class<? extends EventLoopGroup> eventLoopGroupClass() {
@@ -144,8 +149,8 @@ public class KqueueProvider {
     public interface KqueueResources {
 
         /**
-         * @param type must not be {@literal null}.
-         * @return {@literal true} if {@code type} is a {@link io.netty.channel.kqueue.KQueueEventLoopGroup}.
+         * @param type must not be {@code null}.
+         * @return {@code true} if {@code type} is a {@link io.netty.channel.kqueue.KQueueEventLoopGroup}.
          */
         boolean isEventLoopGroup(Class<? extends EventExecutorGroup> type);
 
@@ -174,6 +179,7 @@ public class KqueueProvider {
         Class<? extends EventLoopGroup> eventLoopGroupClass();
 
         SocketAddress newSocketAddress(String socketPath);
+
     }
 
     /**
@@ -224,6 +230,7 @@ public class KqueueProvider {
             checkForKqueueLibrary();
             return null;
         }
+
     }
 
     /**
@@ -248,8 +255,8 @@ public class KqueueProvider {
             checkForKqueueLibrary();
 
             try {
-                Constructor<EventLoopGroup> constructor = (Constructor) eventLoopGroupClass().getDeclaredConstructor(
-                        Integer.TYPE, ThreadFactory.class);
+                Constructor<EventLoopGroup> constructor = (Constructor) eventLoopGroupClass()
+                        .getDeclaredConstructor(Integer.TYPE, ThreadFactory.class);
 
                 return constructor.newInstance(nThreads, threadFactory);
             } catch (ReflectiveOperationException e) {
@@ -284,6 +291,7 @@ public class KqueueProvider {
             checkForKqueueLibrary();
             return new DomainSocketAddress(socketPath);
         }
+
     }
 
     @SuppressWarnings("unchecked")
@@ -295,4 +303,5 @@ public class KqueueProvider {
             throw new NoClassDefFoundError(name);
         }
     }
+
 }

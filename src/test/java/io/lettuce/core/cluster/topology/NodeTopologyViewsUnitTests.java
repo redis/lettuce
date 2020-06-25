@@ -62,7 +62,8 @@ class NodeTopologyViewsUnitTests {
 
         String viewByLocalhost = "1 127.0.0.1:6479 master - 0 1401258245007 2 connected 8000-11999\n";
 
-        assertThatThrownBy(() -> new NodeTopologyView(localhost, viewByLocalhost, "", 0).getOwnPartition()).isInstanceOf(
-                IllegalStateException.class);
+        assertThatThrownBy(() -> new NodeTopologyView(localhost, viewByLocalhost, "", 0).getOwnPartition())
+                .isInstanceOf(IllegalStateException.class);
     }
+
 }

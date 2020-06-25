@@ -35,4 +35,5 @@ public class ScoredValueScanCursor<V> extends ScanCursor {
     public List<ScoredValue<V>> getValues() {
         return values;
     }
+
 }

@@ -39,6 +39,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 class ParameterBinder {
 
     private static final byte[] MINUS_BYTES = { '-' };
+
     private static final byte[] PLUS_BYTES = { '+' };
 
     /**
@@ -189,8 +190,8 @@ class ParameterBinder {
         if (argument instanceof ScoredValue) {
 
             ScoredValue<V> scoredValue = (ScoredValue<V>) argument;
-            V value = scoredValue.getValueOrElseThrow(() -> new IllegalArgumentException(
-                    "Cannot bind empty ScoredValue to a Redis command."));
+            V value = scoredValue.getValueOrElseThrow(
+                    () -> new IllegalArgumentException("Cannot bind empty ScoredValue to a Redis command."));
 
             args.add(scoredValue.getScore());
             args.addValue(value);
@@ -200,8 +201,8 @@ class ParameterBinder {
         if (argument instanceof KeyValue) {
 
             KeyValue<K, V> keyValue = (KeyValue<K, V>) argument;
-            V value = keyValue.getValueOrElseThrow(() -> new IllegalArgumentException(
-                    "Cannot bind empty KeyValue to a Redis command."));
+            V value = keyValue
+                    .getValueOrElseThrow(() -> new IllegalArgumentException("Cannot bind empty KeyValue to a Redis command."));
 
             args.addKey(keyValue.getKey());
             args.addValue(value);
@@ -211,8 +212,8 @@ class ParameterBinder {
         if (argument instanceof Value) {
 
             Value<V> valueWrapper = (Value<V>) argument;
-            V value = valueWrapper.getValueOrElseThrow(() -> new IllegalArgumentException(
-                    "Cannot bind empty Value to a Redis command."));
+            V value = valueWrapper
+                    .getValueOrElseThrow(() -> new IllegalArgumentException("Cannot bind empty Value to a Redis command."));
 
             args.addValue(value);
             return;
@@ -276,8 +277,8 @@ class ParameterBinder {
 
         Range.Boundary<? extends Number> lower = range.getLower();
 
-        if (lower.getValue() == null || lower.getValue() instanceof Double
-                && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
+        if (lower.getValue() == null
+                || lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
             return "-inf";
         }
 
@@ -292,8 +293,8 @@ class ParameterBinder {
 
         Range.Boundary<? extends Number> upper = range.getUpper();
 
-        if (upper.getValue() == null || upper.getValue() instanceof Double
-                && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
+        if (upper.getValue() == null
+                || upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
             return "+inf";
         }
 
@@ -343,4 +344,5 @@ class ParameterBinder {
         }
         return Arrays.asList((Object[]) argument);
     }
+
 }

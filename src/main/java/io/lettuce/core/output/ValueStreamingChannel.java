@@ -29,7 +29,8 @@ public interface ValueStreamingChannel<V> {
     /**
      * Called on every incoming value.
      *
-     * @param value the value
+     * @param value the value.
      */
     void onValue(V value);
+
 }

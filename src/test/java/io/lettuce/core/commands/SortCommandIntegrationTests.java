@@ -114,4 +114,5 @@ public class SortCommandIntegrationTests extends TestSupport {
         assertThat(redis.sortStore("one", desc(), "two")).isEqualTo(3);
         assertThat(redis.lrange("two", 0, -1)).isEqualTo(list("3", "2", "1"));
     }
+
 }

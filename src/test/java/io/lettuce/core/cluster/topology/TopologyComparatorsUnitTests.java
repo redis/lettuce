@@ -39,7 +39,9 @@ import io.lettuce.core.internal.LettuceLists;
 class TopologyComparatorsUnitTests {
 
     private RedisClusterNodeSnapshot node1 = createNode("1");
+
     private RedisClusterNodeSnapshot node2 = createNode("2");
+
     private RedisClusterNodeSnapshot node3 = createNode("3");
 
     private static RedisClusterNodeSnapshot createNode(String nodeId) {
@@ -363,4 +365,5 @@ class TopologyComparatorsUnitTests {
 
         assertThat(result).containsExactly(expectation.toArray(new RedisClusterNodeSnapshot[expectation.size()]));
     }
+
 }

@@ -23,6 +23,7 @@ import io.lettuce.core.dynamic.output.CommandOutputFactoryResolver;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
+ *
  * @author Mark Paluch
  * @since 5.0
  */
@@ -48,4 +49,5 @@ class AsyncExecutableCommandLookupStrategy extends ExecutableCommandLookupStrate
 
         return new AsyncExecutableCommand(method, commandFactory, connection);
     }
+
 }

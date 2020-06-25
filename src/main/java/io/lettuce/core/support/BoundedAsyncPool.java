@@ -43,26 +43,31 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
 
     private static final CompletableFuture<Void> COMPLETED = CompletableFuture.completedFuture(null);
 
-    private static final IllegalStateException POOL_SHUTDOWN = unknownStackTrace(new IllegalStateException(
-            "AsyncPool is closed"), BoundedAsyncPool.class, "acquire()");
+    private static final IllegalStateException POOL_SHUTDOWN = unknownStackTrace(
+            new IllegalStateException("AsyncPool is closed"), BoundedAsyncPool.class, "acquire()");
 
-    private static final NoSuchElementException POOL_EXHAUSTED = unknownStackTrace(
-            new NoSuchElementException("Pool exhausted"), BoundedAsyncPool.class, "acquire()");
+    private static final NoSuchElementException POOL_EXHAUSTED = unknownStackTrace(new NoSuchElementException("Pool exhausted"),
+            BoundedAsyncPool.class, "acquire()");
 
-    private static final IllegalStateException NOT_PART_OF_POOL = unknownStackTrace(new IllegalStateException(
-            "Returned object not currently part of this pool"), BoundedAsyncPool.class, "release()");
+    private static final IllegalStateException NOT_PART_OF_POOL = unknownStackTrace(
+            new IllegalStateException("Returned object not currently part of this pool"), BoundedAsyncPool.class, "release()");
 
     private final int maxTotal;
+
     private final int maxIdle;
+
     private final int minIdle;
 
     private final AsyncObjectFactory<T> factory;
 
     private final Queue<T> cache;
+
     private final Queue<T> all;
 
     private final AtomicInteger objectCount = new AtomicInteger();
+
     private final AtomicInteger objectsInCreationCount = new AtomicInteger();
+
     private final AtomicInteger idleCount = new AtomicInteger();
 
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
@@ -73,8 +78,8 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
      * Create a new {@link BoundedAsyncPool} given {@link BasePoolConfig} and {@link AsyncObjectFactory}. The factory creates
      * idle objects upon construction and requires {@link #closeAsync() termination} once it's no longer in use.
      *
-     * @param factory must not be {@literal null}.
-     * @param poolConfig must not be {@literal null}.
+     * @param factory must not be {@code null}.
+     * @param poolConfig must not be {@code null}.
      */
     public BoundedAsyncPool(AsyncObjectFactory<T> factory, BoundedPoolConfig poolConfig) {
 
@@ -200,72 +205,68 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
             return;
         }
 
-        factory.create().whenComplete(
-                (o, t) -> {
+        factory.create().whenComplete((o, t) -> {
 
-                    if (t != null) {
-                        objectsInCreationCount.decrementAndGet();
-                        res.completeExceptionally(new IllegalStateException("Cannot allocate object", t));
-                        return;
-                    }
+            if (t != null) {
+                objectsInCreationCount.decrementAndGet();
+                res.completeExceptionally(new IllegalStateException("Cannot allocate object", t));
+                return;
+            }
 
-                    if (isTestOnCreate()) {
+            if (isTestOnCreate()) {
 
-                        factory.validate(o).whenComplete(
-                                (state, throwable) -> {
-
-                                    try {
-
-                                        if (isPoolActive() && state != null && state) {
-
-                                            objectCount.incrementAndGet();
-                                            all.add(o);
-
-                                            completeAcquire(res, o);
-                                            return;
-                                        }
-
-                                        if (!isPoolActive()) {
-                                            rejectPoolClosed(res, o);
-                                            return;
-                                        }
-
-                                        factory.destroy(o).whenComplete(
-                                                (v, th) -> res.completeExceptionally(new IllegalStateException(
-                                                        "Cannot allocate object: Validation failed", throwable)));
-                                    } catch (Exception e) {
-                                        factory.destroy(o).whenComplete(
-                                                (v, th) -> res.completeExceptionally(new IllegalStateException(
-                                                        "Cannot allocate object: Validation failed", throwable)));
-                                    } finally {
-                                        objectsInCreationCount.decrementAndGet();
-                                    }
-                                });
-
-                        return;
-                    }
+                factory.validate(o).whenComplete((state, throwable) -> {
 
                     try {
 
-                        if (isPoolActive()) {
+                        if (isPoolActive() && state != null && state) {
+
                             objectCount.incrementAndGet();
                             all.add(o);
 
                             completeAcquire(res, o);
-                        } else {
-                            rejectPoolClosed(res, o);
+                            return;
                         }
 
+                        if (!isPoolActive()) {
+                            rejectPoolClosed(res, o);
+                            return;
+                        }
+
+                        factory.destroy(o).whenComplete((v, th) -> res.completeExceptionally(
+                                new IllegalStateException("Cannot allocate object: Validation failed", throwable)));
                     } catch (Exception e) {
-
-                        objectCount.decrementAndGet();
-                        all.remove(o);
-
-                        factory.destroy(o).whenComplete((v, th) -> res.completeExceptionally(e));
+                        factory.destroy(o).whenComplete((v, th) -> res.completeExceptionally(
+                                new IllegalStateException("Cannot allocate object: Validation failed", throwable)));
                     } finally {
                         objectsInCreationCount.decrementAndGet();
                     }
                 });
+
+                return;
+            }
+
+            try {
+
+                if (isPoolActive()) {
+                    objectCount.incrementAndGet();
+                    all.add(o);
+
+                    completeAcquire(res, o);
+                } else {
+                    rejectPoolClosed(res, o);
+                }
+
+            } catch (Exception e) {
+
+                objectCount.decrementAndGet();
+                all.remove(o);
+
+                factory.destroy(o).whenComplete((v, th) -> res.completeExceptionally(e));
+            } finally {
+                objectsInCreationCount.decrementAndGet();
+            }
+        });
     }
 
     private void completeAcquire(CompletableFuture<T> res, T o) {
@@ -449,4 +450,5 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
     enum State {
         ACTIVE, TERMINATING, TERMINATED;
     }
+
 }

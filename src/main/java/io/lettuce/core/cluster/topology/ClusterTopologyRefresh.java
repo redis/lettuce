@@ -47,6 +47,7 @@ public class ClusterTopologyRefresh {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterTopologyRefresh.class);
 
     private final NodeConnectionFactory nodeConnectionFactory;
+
     private final ClientResources clientResources;
 
     public ClusterTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, ClientResources clientResources) {
@@ -58,10 +59,10 @@ public class ClusterTopologyRefresh {
      * Load partition views from a collection of {@link RedisURI}s and return the view per {@link RedisURI}. Partitions contain
      * an ordered list of {@link RedisClusterNode}s. The sort key is latency. Nodes with lower latency come first.
      *
-     * @param seed collection of {@link RedisURI}s
-     * @param connectTimeout connect timeout
-     * @param discovery {@literal true} to discover additional nodes
-     * @return mapping between {@link RedisURI} and {@link Partitions}
+     * @param seed collection of {@link RedisURI}s.
+     * @param connectTimeout connect timeout.
+     * @param discovery {@code true} to discover additional nodes.
+     * @return mapping between {@link RedisURI} and {@link Partitions}.
      */
     public Map<RedisURI, Partitions> loadViews(Iterable<RedisURI> seed, Duration connectTimeout, boolean discovery) {
 
@@ -311,11 +312,11 @@ public class ClusterTopologyRefresh {
     }
 
     /**
-     * Resolve a {@link RedisURI} from a map of cluster views by {@link Partitions} as key
+     * Resolve a {@link RedisURI} from a map of cluster views by {@link Partitions} as key.
      *
-     * @param map the map
-     * @param partitions the key
-     * @return a {@link RedisURI} or null
+     * @param map the map.
+     * @param partitions the key.
+     * @return a {@link RedisURI} or null.
      */
     public RedisURI getViewedBy(Map<RedisURI, Partitions> map, Partitions partitions) {
 
@@ -355,4 +356,5 @@ public class ClusterTopologyRefresh {
         RedisURI redisURI = redisURIs.iterator().next();
         return redisURI.getTimeout().toNanos();
     }
+
 }

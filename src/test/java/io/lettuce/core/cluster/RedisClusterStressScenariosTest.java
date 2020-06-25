@@ -44,17 +44,21 @@ public class RedisClusterStressScenariosTest extends TestSupport {
     private static final String host = TestSettings.hostAddr();
 
     private static RedisClient client;
+
     private static RedisClusterClient clusterClient;
 
     private Logger log = LogManager.getLogger(getClass());
 
     private StatefulRedisConnection<String, String> redis5;
+
     private StatefulRedisConnection<String, String> redis6;
 
     private RedisCommands<String, String> redissync5;
+
     private RedisCommands<String, String> redissync6;
 
     protected String key = "key";
+
     protected String value = "value";
 
     @Rule

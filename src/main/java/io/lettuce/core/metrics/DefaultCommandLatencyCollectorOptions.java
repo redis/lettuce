@@ -27,18 +27,27 @@ import io.lettuce.core.internal.LettuceAssert;
 public class DefaultCommandLatencyCollectorOptions implements CommandLatencyCollectorOptions {
 
     public static final TimeUnit DEFAULT_TARGET_UNIT = TimeUnit.MICROSECONDS;
+
     public static final double[] DEFAULT_TARGET_PERCENTILES = new double[] { 50.0, 90.0, 95.0, 99.0, 99.9 };
+
     public static final boolean DEFAULT_RESET_LATENCIES_AFTER_EVENT = true;
+
     public static final boolean DEFAULT_LOCAL_DISTINCTION = false;
+
     public static final boolean DEFAULT_ENABLED = true;
 
     private static final DefaultCommandLatencyCollectorOptions DISABLED = builder().disable().build();
 
     private final TimeUnit targetUnit;
+
     private final double[] targetPercentiles;
+
     private final boolean resetLatenciesAfterEvent;
+
     private final boolean localDistinction;
+
     private final boolean enabled;
+
     private final Builder builder;
 
     protected DefaultCommandLatencyCollectorOptions(Builder builder) {
@@ -53,7 +62,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
     /**
      * Create a new {@link DefaultCommandLatencyCollectorOptions} instance using default settings.
      *
-     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} instance using default settings
+     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} instance using default settings.
      */
     public static DefaultCommandLatencyCollectorOptions create() {
         return builder().build();
@@ -62,7 +71,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
     /**
      * Create a {@link DefaultCommandLatencyCollectorOptions} instance with disabled event emission.
      *
-     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} with disabled event emission
+     * @return a new instance of {@link DefaultCommandLatencyCollectorOptions} with disabled event emission.
      */
     public static DefaultCommandLatencyCollectorOptions disabled() {
         return DISABLED;
@@ -84,8 +93,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
      * current {@link DefaultCommandLatencyCollectorOptions}.
      *
      * @return a a {@link CommandLatencyCollectorOptions.Builder} to create new {@link DefaultCommandLatencyCollectorOptions}
-     *         whose settings are replicated from the current {@link DefaultCommandLatencyCollectorOptions}
-     *
+     *         whose settings are replicated from the current {@link DefaultCommandLatencyCollectorOptions}.
      * @since 5.1
      */
     @Override
@@ -99,9 +107,13 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
     public static class Builder implements CommandLatencyCollectorOptions.Builder {
 
         private TimeUnit targetUnit = DEFAULT_TARGET_UNIT;
+
         private double[] targetPercentiles = DEFAULT_TARGET_PERCENTILES;
+
         private boolean resetLatenciesAfterEvent = DEFAULT_RESET_LATENCIES_AFTER_EVENT;
+
         private boolean localDistinction = DEFAULT_LOCAL_DISTINCTION;
+
         private boolean enabled = DEFAULT_ENABLED;
 
         private Builder() {
@@ -134,7 +146,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
          * Set the target unit for the latencies. Defaults to {@link TimeUnit#MILLISECONDS}. See
          * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_TARGET_UNIT}.
          *
-         * @param targetUnit the target unit, must not be {@literal null}
+         * @param targetUnit the target unit, must not be {@code null}
          * @return this {@link Builder}.
          */
         @Override
@@ -148,7 +160,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
          * Sets the emitted percentiles. Defaults to 50.0, 90.0, 95.0, 99.0, 99.9} . See
          * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_TARGET_PERCENTILES}.
          *
-         * @param targetPercentiles the percentiles which should be emitted, must not be {@literal null}
+         * @param targetPercentiles the percentiles which should be emitted, must not be {@code null}
          * @return this {@link Builder}.
          */
         @Override
@@ -159,10 +171,10 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         }
 
         /**
-         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@literal true}.
-         * See {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
+         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}. See
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
          *
-         * @param resetLatenciesAfterEvent {@literal true} if the recorded latencies should be reset once the metrics event was
+         * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
          *        emitted
          * @return this {@link Builder}.
          */
@@ -173,13 +185,13 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         }
 
         /**
-         * Enables per connection metrics tracking insead of per host/port. If {@literal true}, multiple connections to the same
+         * Enables per connection metrics tracking insead of per host/port. If {@code true}, multiple connections to the same
          * host/connection point will be recorded separately which allows to inspect every connection individually. If
-         * {@literal false}, multiple connections to the same host/connection point will be recorded together. This allows a
-         * consolidated view on one particular service. Defaults to {@literal false}. See
+         * {@code false}, multiple connections to the same host/connection point will be recorded together. This allows a
+         * consolidated view on one particular service. Defaults to {@code false}. See
          * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_LOCAL_DISTINCTION}.
          *
-         * @param localDistinction {@literal true} if latencies are recorded distinct on local level (per connection)
+         * @param localDistinction {@code true} if latencies are recorded distinct on local level (per connection)
          * @return this {@link Builder}.
          */
         @Override
@@ -195,6 +207,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         public DefaultCommandLatencyCollectorOptions build() {
             return new DefaultCommandLatencyCollectorOptions(this);
         }
+
     }
 
     @Override

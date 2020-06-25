@@ -70,4 +70,5 @@ class SocketOptionsUnitTests {
         assertThat(sut.isTcpNoDelay()).isFalse();
         assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofSeconds(10));
     }
+
 }

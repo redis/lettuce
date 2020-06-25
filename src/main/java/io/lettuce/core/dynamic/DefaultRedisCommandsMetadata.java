@@ -41,7 +41,7 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
     /**
      * Create {@link DefaultRedisCommandsMetadata} given a {@link Class command interface}.
      *
-     * @param apiInterface must not be {@literal null}.
+     * @param apiInterface must not be {@code null}.
      */
     DefaultRedisCommandsMetadata(Class<?> apiInterface) {
         this.apiInterface = apiInterface;
@@ -93,10 +93,10 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
      * {@code DefaultFoo}. In this case, the method may be {@code DefaultFoo.bar()}. This enables attributes on that method to
      * be found.
      *
-     * @param method the method to be invoked, which may come from an interface
+     * @param method the method to be invoked, which may come from an interface.
      * @param targetClass the target class for the current invocation. May be {@code null} or may not even implement the method.
      * @return the specific target method, or the original method if the {@code targetClass} doesn't implement it or is
-     *         {@code null}
+     *         {@code null}.
      */
     public static Method getMostSpecificMethod(Method method, Class<?> targetClass) {
 
@@ -117,8 +117,8 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
     /**
      * Determine whether the given method is overridable in the given target class.
      *
-     * @param method the method to check
-     * @param targetClass the target class to check against
+     * @param method the method to check.
+     * @param targetClass the target class to check against.
      */
     private static boolean isOverridable(Method method, Class<?> targetClass) {
 
@@ -134,8 +134,8 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
     /**
      * Determine the name of the package of the given class, e.g. "java.lang" for the {@code java.lang.String} class.
      *
-     * @param clazz the class
-     * @return the package name, or the empty String if the class is defined in the default package
+     * @param clazz the class.
+     * @return the package name, or the empty String if the class is defined in the default package.
      */
     private static String getPackageName(Class<?> clazz) {
 
@@ -147,8 +147,8 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
      * Determine the name of the package of the given fully-qualified class name, e.g. "java.lang" for the
      * {@code java.lang.String} class name.
      *
-     * @param fqClassName the fully-qualified class name
-     * @return the package name, or the empty String if the class is defined in the default package
+     * @param fqClassName the fully-qualified class name.
+     * @return the package name, or the empty String if the class is defined in the default package.
      */
     private static String getPackageName(String fqClassName) {
 

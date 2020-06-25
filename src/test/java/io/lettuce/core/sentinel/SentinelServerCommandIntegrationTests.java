@@ -43,7 +43,9 @@ import io.lettuce.test.settings.TestSettings;
 public class SentinelServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;
+
     private StatefulRedisSentinelConnection<String, String> connection;
+
     private RedisSentinelCommands<String, String> sentinel;
 
     @Inject
@@ -58,7 +60,8 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
         this.sentinel = getSyncConnection(this.connection);
     }
 
-    protected RedisSentinelCommands<String, String> getSyncConnection(StatefulRedisSentinelConnection<String, String> connection) {
+    protected RedisSentinelCommands<String, String> getSyncConnection(
+            StatefulRedisSentinelConnection<String, String> connection) {
         return connection.sync();
     }
 
@@ -124,4 +127,5 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
         assertThat(sentinel.info().contains("redis_version")).isTrue();
         assertThat(sentinel.info("server").contains("redis_version")).isTrue();
     }
+
 }

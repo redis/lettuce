@@ -40,9 +40,10 @@ public interface CompositeArgument {
      * Implementing classes are required to implement this method. Depending on the command nature and configured arguments,
      * this method may contribute arguments but is not required to add arguments if none are specified.
      *
-     * @param args the command arguments, must not be {@literal null}.
+     * @param args the command arguments, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      */
     <K, V> void build(CommandArgs<K, V> args);
+
 }

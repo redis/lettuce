@@ -32,6 +32,7 @@ class PartitionsUnitTests {
 
     private RedisClusterNode node1 = new RedisClusterNode(RedisURI.create("localhost", 6379), "a", true, "", 0, 0, 0,
             Arrays.asList(1, 2, 3), new HashSet<>());
+
     private RedisClusterNode node2 = new RedisClusterNode(RedisURI.create("localhost", 6380), "b", true, "", 0, 0, 0,
             Arrays.asList(4, 5, 6), new HashSet<>());
 
@@ -344,4 +345,5 @@ class PartitionsUnitTests {
 
         assertThat(partitions.toString()).startsWith("Partitions [");
     }
+
 }

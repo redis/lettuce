@@ -48,7 +48,7 @@ public interface DnsResolver {
     /**
      * Returns the IP address for the specified host name.
      *
-     * @param host the hostname, must not be empty or {@literal null}.
+     * @param host the hostname, must not be empty or {@code null}.
      * @return array of one or more {@link InetAddress adresses}. An empty array indicates that DNS resolution is not supported
      *         by this {@link DnsResolver} and should happen by netty, see
      *         {@link java.net.InetSocketAddress#createUnresolved(String, int)}.
@@ -56,4 +56,5 @@ public interface DnsResolver {
      *         {@link InetAddress} instance
      */
     InetAddress[] resolve(String host) throws UnknownHostException;
+
 }

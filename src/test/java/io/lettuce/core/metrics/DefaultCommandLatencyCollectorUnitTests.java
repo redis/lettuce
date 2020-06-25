@@ -114,8 +114,8 @@ class DefaultCommandLatencyCollectorUnitTests {
         assertThat(metrics.getFirstResponse().getMax()).isBetween(290000L, 310000L);
         assertThat(metrics.getCompletion().getPercentiles()).containsKey(50.0d);
 
-        assertThat(metrics.getFirstResponse().getPercentiles().get(50d)).isLessThanOrEqualTo(
-                metrics.getCompletion().getPercentiles().get(50d));
+        assertThat(metrics.getFirstResponse().getPercentiles().get(50d))
+                .isLessThanOrEqualTo(metrics.getCompletion().getPercentiles().get(50d));
 
         assertThat(metrics.getTimeUnit()).isEqualTo(MICROSECONDS);
 
@@ -127,8 +127,8 @@ class DefaultCommandLatencyCollectorUnitTests {
     @Test
     void verifyCummulativeMetrics() {
 
-        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.builder()
-                .resetLatenciesAfterEvent(false).build());
+        sut = new DefaultCommandLatencyCollector(
+                DefaultCommandLatencyCollectorOptions.builder().resetLatenciesAfterEvent(false).build());
 
         setupData();
 
@@ -146,4 +146,5 @@ class DefaultCommandLatencyCollectorUnitTests {
         sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, CommandType.BGSAVE, MILLISECONDS.toNanos(300),
                 MILLISECONDS.toNanos(1000));
     }
+
 }

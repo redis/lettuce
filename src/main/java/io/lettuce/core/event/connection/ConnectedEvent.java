@@ -24,7 +24,9 @@ import java.net.SocketAddress;
  * @since 3.4
  */
 public class ConnectedEvent extends ConnectionEventSupport {
+
     public ConnectedEvent(SocketAddress local, SocketAddress remote) {
         super(local, remote);
     }
+
 }

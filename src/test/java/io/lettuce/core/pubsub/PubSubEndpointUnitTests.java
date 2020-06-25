@@ -95,19 +95,23 @@ class PubSubEndpointUnitTests {
         AtomicInteger notified = new AtomicInteger();
 
         sut.addListener(new RedisPubSubAdapter<byte[], byte[]>() {
+
             @Override
             public void message(byte[] channel, byte[] message) {
 
                 notified.incrementAndGet();
                 throw new UnsupportedOperationException();
             }
+
         });
 
         sut.addListener(new RedisPubSubAdapter<byte[], byte[]>() {
+
             @Override
             public void message(byte[] channel, byte[] message) {
                 notified.incrementAndGet();
             }
+
         });
 
         sut.notifyMessage(createMessage("message", "channel1", ByteArrayCodec.INSTANCE));
@@ -124,4 +128,5 @@ class PubSubEndpointUnitTests {
 
         return output;
     }
+
 }

@@ -42,6 +42,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 class ProtectedModeTests {
 
     private static MockTcpServer server;
+
     private static RedisClient client;
 
     @BeforeAll
@@ -51,6 +52,7 @@ class ProtectedModeTests {
 
         server.addHandler(() -> {
             return new ChannelInboundHandlerAdapter() {
+
                 @Override
                 public void channelActive(ChannelHandlerContext ctx) {
 
@@ -64,6 +66,7 @@ class ProtectedModeTests {
                         ctx.close();
                     });
                 }
+
             };
         });
 
@@ -121,8 +124,8 @@ class ProtectedModeTests {
     void pingBeforeConnectFailsOnPing() {
 
         client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
-        assertThatThrownBy(() -> client.connect()).isInstanceOf(RedisConnectionException.class).hasCauseInstanceOf(
-                RedisConnectionException.class);
+        assertThatThrownBy(() -> client.connect()).isInstanceOf(RedisConnectionException.class)
+                .hasCauseInstanceOf(RedisConnectionException.class);
     }
 
     private static String getMessage() {
@@ -140,4 +143,5 @@ class ProtectedModeTests {
                 + "things in order for the server to start accepting connections from the outside.";
 
     }
+
 }

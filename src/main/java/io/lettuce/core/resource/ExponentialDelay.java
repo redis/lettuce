@@ -39,8 +39,11 @@ import java.util.concurrent.TimeUnit;
 class ExponentialDelay extends Delay {
 
     private final Duration lower;
+
     private final Duration upper;
+
     private final int powersOf;
+
     private final TimeUnit targetTimeUnit;
 
     ExponentialDelay(Duration lower, Duration upper, int powersOf, TimeUnit targetTimeUnit) {
@@ -69,7 +72,7 @@ class ExponentialDelay extends Delay {
     /**
      * Apply bounds to the given {@code delay}.
      *
-     * @param delay the delay
+     * @param delay the delay.
      * @return the delay normalized to its lower and upper bounds.
      */
     protected Duration applyBounds(Duration delay) {
@@ -94,4 +97,5 @@ class ExponentialDelay extends Delay {
             return 1L << (attempt - 1);
         }
     }
+
 }

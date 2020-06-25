@@ -52,10 +52,13 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             .newUpdater(DefaultCommandLatencyCollector.class, PauseDetectorWrapper.class, "pauseDetectorWrapper");
 
     private static final boolean LATENCY_UTILS_AVAILABLE = isPresent("org.LatencyUtils.PauseDetector");
+
     private static final boolean HDR_UTILS_AVAILABLE = isPresent("org.HdrHistogram.Histogram");
+
     private static final PauseDetectorWrapper GLOBAL_PAUSE_DETECTOR = PauseDetectorWrapper.create();
 
     private static final long MIN_LATENCY = 1000;
+
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
 
     private final CommandLatencyCollectorOptions options;
@@ -78,11 +81,11 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     /**
      * Record the command latency per {@code connectionPoint} and {@code commandType}.
      *
-     * @param local the local address
-     * @param remote the remote address
-     * @param commandType the command type
-     * @param firstResponseLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the first response
-     * @param completionLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the command completion
+     * @param local the local address.
+     * @param remote the remote address.
+     * @param commandType the command type.
+     * @param firstResponseLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the first response.
+     * @param completionLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the command completion.
      */
     public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
             long firstResponseLatency, long completionLatency) {
@@ -212,7 +215,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     }
 
     /**
-     * Returns {@literal true} if HdrUtils and LatencyUtils are available on the class path.
+     * Returns {@code true} if HdrUtils and LatencyUtils are available on the class path.
      *
      * @return
      */
@@ -232,6 +235,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     public static CommandLatencyCollector disabled() {
 
         return new CommandLatencyCollector() {
+
             @Override
             public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
                     long firstResponseLatency, long completionLatency) {
@@ -250,12 +254,14 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             public boolean isEnabled() {
                 return false;
             }
+
         };
     }
 
     private static class Latencies {
 
         private final LatencyStats firstResponse;
+
         private final LatencyStats completion;
 
         Latencies(PauseDetector pauseDetector) {
@@ -275,11 +281,13 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             firstResponse.stop();
             completion.stop();
         }
+
     }
 
     private static class CummulativeLatencies extends Latencies {
 
         private final Histogram firstResponse;
+
         private final Histogram completion;
 
         CummulativeLatencies(PauseDetector pauseDetector) {
@@ -302,6 +310,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             completion.add(super.getFirstResponseHistogram());
             return completion;
         }
+
     }
 
     /**
@@ -313,6 +322,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          * No-operation {@link PauseDetectorWrapper} implementation.
          */
         PauseDetectorWrapper NO_OP = new PauseDetectorWrapper() {
+
             @Override
             public void release() {
             }
@@ -320,6 +330,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             @Override
             public void retain() {
             }
+
         };
 
         static PauseDetectorWrapper create() {
@@ -340,6 +351,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          * Release reference to {@link PauseDetectorWrapper} and decrement reference counter.
          */
         void release();
+
     }
 
     /**
@@ -350,9 +362,11 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         private static final AtomicLong instanceCounter = new AtomicLong();
 
         private final AtomicLong counter = new AtomicLong();
+
         private final Object mutex = new Object();
 
         private volatile PauseDetector pauseDetector;
+
         private volatile Thread shutdownHook;
 
         /**
@@ -384,10 +398,12 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                             TimeUnit.MILLISECONDS.toNanos(10), 3);
 
                     shutdownHook = new Thread("ShutdownHook for SimplePauseDetector") {
+
                         @Override
                         public void run() {
                             pauseDetector.shutdown();
                         }
+
                     };
 
                     this.pauseDetector = pauseDetector;
@@ -422,5 +438,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                 }
             }
         }
+
     }
+
 }

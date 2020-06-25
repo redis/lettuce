@@ -27,7 +27,9 @@ import java.util.Objects;
 public class StreamMessage<K, V> {
 
     private final K stream;
+
     private final String id;
+
     private final Map<K, V> body;
 
     /**
@@ -53,7 +55,7 @@ public class StreamMessage<K, V> {
     }
 
     /**
-     * @return the message body. Can be {@literal null} for commands that do not return the message body.
+     * @return the message body. Can be {@code null} for commands that do not return the message body.
      */
     public Map<K, V> getBody() {
         return body;
@@ -78,4 +80,5 @@ public class StreamMessage<K, V> {
     public String toString() {
         return String.format("StreamMessage[%s:%s]%s", stream, id, body);
     }
+
 }

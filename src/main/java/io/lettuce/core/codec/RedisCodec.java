@@ -24,7 +24,6 @@ import java.nio.ByteBuffer;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
  * @author Will Glozer
  * @author Mark Paluch
  * @author Dimitris Mandalidis
@@ -34,8 +33,8 @@ public interface RedisCodec<K, V> {
     /**
      * Returns a composite {@link RedisCodec} that uses {@code keyCodec} for keys and {@code valueCodec} for values.
      *
-     * @param <K> the type of the key
-     * @param <V> the type of the value
+     * @param <K> the type of the key.
+     * @param <V> the type of the value.
      * @param keyCodec the codec to encode/decode the keys.
      * @param valueCodec the codec to encode/decode the values.
      * @return a composite {@link RedisCodec}.
@@ -48,36 +47,32 @@ public interface RedisCodec<K, V> {
     /**
      * Decode the key output by redis.
      *
-     * @param bytes Raw bytes of the key, must not be {@literal null}.
-     *
-     * @return The decoded key, may be {@literal null}.
+     * @param bytes Raw bytes of the key, must not be {@code null}.
+     * @return The decoded key, may be {@code null}.
      */
     K decodeKey(ByteBuffer bytes);
 
     /**
      * Decode the value output by redis.
      *
-     * @param bytes Raw bytes of the value, must not be {@literal null}.
-     *
-     * @return The decoded value, may be {@literal null}.
+     * @param bytes Raw bytes of the value, must not be {@code null}.
+     * @return The decoded value, may be {@code null}.
      */
     V decodeValue(ByteBuffer bytes);
 
     /**
      * Encode the key for output to redis.
      *
-     * @param key the key, may be {@literal null}.
-     *
-     * @return The encoded key, never {@literal null}.
+     * @param key the key, may be {@code null}.
+     * @return The encoded key, never {@code null}.
      */
     ByteBuffer encodeKey(K key);
 
     /**
      * Encode the value for output to redis.
      *
-     * @param value the value, may be {@literal null}.
-     *
-     * @return The encoded value, never {@literal null}.
+     * @param value the value, may be {@code null}.
+     * @return The encoded value, never {@code null}.
      */
     ByteBuffer encodeValue(V value);
 

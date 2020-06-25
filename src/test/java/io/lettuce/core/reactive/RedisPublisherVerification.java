@@ -49,6 +49,7 @@ import io.lettuce.test.settings.TestSettings;
 public class RedisPublisherVerification extends PublisherVerification<String> {
 
     private static RedisClient client;
+
     private static StatefulRedisConnection<String, String> connection;
 
     public RedisPublisherVerification() {

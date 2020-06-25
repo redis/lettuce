@@ -40,10 +40,13 @@ import io.lettuce.core.protocol.*;
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";
+
     private static final String MUST_NOT_BE_EMPTY = "must not be empty";
+
     private static final String MUST_NOT_BE_NULL = "must not be null";
 
     private static final byte[] MINUS_BYTES = { '-' };
+
     private static final byte[] PLUS_BYTES = { '+' };
 
     RedisCommandBuilder(RedisCodec<K, V> codec) {
@@ -680,10 +683,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(lngLatMember, "LngLatMember " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(lngLatMember, "LngLatMember " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(lngLatMember, "LngLatMember " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
-        LettuceAssert
-                .isTrue(lngLatMember.length % 3 == 0,
-                        "LngLatMember.length must be a multiple of 3 and contain a "
-                                + "sequence of longitude1, latitude1, member1, longitude2, latitude2, member2, ... longitudeN, latitudeN, memberN");
+        LettuceAssert.isTrue(lngLatMember.length % 3 == 0, "LngLatMember.length must be a multiple of 3 and contain a "
+                + "sequence of longitude1, latitude1, member1, longitude2, latitude2, member2, ... longitudeN, latitudeN, memberN");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
@@ -757,8 +758,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
         geoArgs.build(args);
 
-        return createCommand(commandType, new GeoWithinListOutput<>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(),
-                geoArgs.isWithCoordinates()), args);
+        return createCommand(commandType,
+                new GeoWithinListOutput<>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(), geoArgs.isWithCoordinates()),
+                args);
     }
 
     Command<K, V, Long> georadius(K key, double longitude, double latitude, double distance, String unit,
@@ -798,8 +800,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(member).add(distance).add(unit);
         geoArgs.build(args);
 
-        return createCommand(commandType, new GeoWithinListOutput<>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(),
-                geoArgs.isWithCoordinates()), args);
+        return createCommand(commandType,
+                new GeoWithinListOutput<>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(), geoArgs.isWithCoordinates()),
+                args);
     }
 
     Command<K, V, Long> georadiusbymember(K key, V member, double distance, String unit,
@@ -2702,11 +2705,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGEBYSCORE, new ValueStreamingOutput<>(codec, channel), args);
     }
 
-    Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count) {
+    Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
+            long count) {
         return zrangebyscore(channel, key, string(min), string(max), offset, count);
     }
 
-    Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count) {
+    Command<K, V, Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
+            long count) {
         notNullKey(key);
         notNullMinMax(min, max);
         LettuceAssert.notNull(channel, "ScoredValueStreamingChannel " + MUST_NOT_BE_NULL);
@@ -3051,8 +3056,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZREVRANGEBYSCORE, new ScoredValueStreamingOutput<>(codec, channel), args);
     }
 
-    Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
-            Range<? extends Number> range, Limit limit) {
+    Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit) {
         notNullKey(key);
         notNullRange(range);
         notNullLimit(limit);
@@ -3234,8 +3239,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         Boundary<? extends Number> upper = range.getUpper();
 
-        if (upper.getValue() == null || upper.getValue() instanceof Double
-                && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
+        if (upper.getValue() == null
+                || upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
             return "+inf";
         }
 
@@ -3250,8 +3255,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         Boundary<? extends Number> lower = range.getLower();
 
-        if (lower.getValue() == null || lower.getValue() instanceof Double
-                && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
+        if (lower.getValue() == null
+                || lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
             return "-inf";
         }
 
@@ -3288,4 +3293,5 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     private static void notNullRange(Range<?> range) {
         LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
     }
+
 }

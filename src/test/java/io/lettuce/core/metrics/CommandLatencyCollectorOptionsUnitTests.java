@@ -29,10 +29,11 @@ class CommandLatencyCollectorOptionsUnitTests {
     @Test
     void testBuilder() {
 
-        CommandLatencyCollectorOptions sut = CommandLatencyCollectorOptions.builder()
-                .targetUnit(TimeUnit.HOURS).targetPercentiles(new double[] { 1, 2, 3 }).build();
+        CommandLatencyCollectorOptions sut = CommandLatencyCollectorOptions.builder().targetUnit(TimeUnit.HOURS)
+                .targetPercentiles(new double[] { 1, 2, 3 }).build();
 
         assertThat(sut.targetPercentiles()).hasSize(3);
         assertThat(sut.targetUnit()).isEqualTo(TimeUnit.HOURS);
     }
+
 }

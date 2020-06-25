@@ -28,5 +28,7 @@ class Constants {
             "RedisTransactionalCommands" };
 
     public static final File TEMPLATES = new File("src/main/templates");
+
     public static final File SOURCES = new File("src/main/java");
+
 }

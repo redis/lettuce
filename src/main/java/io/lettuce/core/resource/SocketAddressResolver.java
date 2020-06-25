@@ -36,7 +36,7 @@ public class SocketAddressResolver {
     /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver}.
      *
-     * @param dnsResolver must not be {@literal null}.
+     * @param dnsResolver must not be {@code null}.
      * @since 5.1
      */
     protected SocketAddressResolver(DnsResolver dnsResolver) {
@@ -49,7 +49,7 @@ public class SocketAddressResolver {
     /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver}.
      *
-     * @param dnsResolver must not be {@literal null}.
+     * @param dnsResolver must not be {@code null}.
      * @return the {@link SocketAddressResolver}.
      * @since 5.1
      */
@@ -60,7 +60,7 @@ public class SocketAddressResolver {
     /**
      * Resolve a {@link RedisURI} to a {@link SocketAddress}.
      *
-     * @param redisURI must not be {@literal null}.
+     * @param redisURI must not be {@code null}.
      * @return the resolved {@link SocketAddress}.
      * @since 5.1
      */
@@ -74,8 +74,8 @@ public class SocketAddressResolver {
     /**
      * Resolves a {@link io.lettuce.core.RedisURI} to a {@link java.net.SocketAddress}.
      *
-     * @param redisURI must not be {@literal null}.
-     * @param dnsResolver must not be {@literal null}.
+     * @param redisURI must not be {@code null}.
+     * @param dnsResolver must not be {@code null}.
      * @return the resolved {@link SocketAddress}.
      */
     public static SocketAddress resolve(RedisURI redisURI, DnsResolver dnsResolver) {
@@ -96,4 +96,5 @@ public class SocketAddressResolver {
             return redisURI.getResolvedAddress();
         }
     }
+
 }

@@ -64,6 +64,7 @@ class PartitionsConsensusImpl {
 
             return votedList.get(0).partitions;
         }
+
     }
 
     /**
@@ -103,16 +104,20 @@ class PartitionsConsensusImpl {
 
             return votedList.get(0).partitions;
         }
+
     }
 
     static final class VotedPartitions {
 
         final int votes;
+
         final Partitions partitions;
 
         public VotedPartitions(int votes, Partitions partitions) {
             this.votes = votes;
             this.partitions = partitions;
         }
+
     }
+
 }

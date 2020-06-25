@@ -47,4 +47,5 @@ public class MapScanOutput<K, V> extends ScanOutput<K, V, MapScanCursor<K, V>> {
         output.getMap().put(key, value);
         key = null;
     }
+
 }

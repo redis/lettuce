@@ -58,8 +58,8 @@ public class LettuceClassUtils {
      * Determine whether the {@link Class} identified by the supplied name is present and can be loaded. Will return
      * {@code false} if either the class or one of its dependencies is not present or cannot be loaded.
      *
-     * @param className the name of the class to check
-     * @return whether the specified class is present
+     * @param className the name of the class to check.
+     * @return whether the specified class is present.
      */
     public static boolean isPresent(String className) {
         try {
@@ -117,7 +117,7 @@ public class LettuceClassUtils {
      * Return the default ClassLoader to use: typically the thread context ClassLoader, if available; the ClassLoader that
      * loaded the ClassUtils class will be used as fallback.
      *
-     * @return the default ClassLoader (never <code>null</code>)
+     * @return the default ClassLoader (never <code>null</code>).
      * @see java.lang.Thread#getContextClassLoader()
      */
     private static ClassLoader getDefaultClassLoader() {
@@ -138,9 +138,9 @@ public class LettuceClassUtils {
      * Check if the right-hand side type may be assigned to the left-hand side type, assuming setting by reflection. Considers
      * primitive wrapper classes as assignable to the corresponding primitive types.
      *
-     * @param lhsType the target type
-     * @param rhsType the value type that should be assigned to the target type
-     * @return if the target type is assignable from the value type
+     * @param lhsType the target type.
+     * @param rhsType the value type that should be assigned to the target type.
+     * @return if the target type is assignable from the value type.
      */
     public static boolean isAssignable(Class<?> lhsType, Class<?> rhsType) {
 
@@ -164,4 +164,5 @@ public class LettuceClassUtils {
         }
         return false;
     }
+
 }

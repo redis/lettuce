@@ -30,4 +30,5 @@ public class HashClusterCommandIntegrationTests extends HashCommandIntegrationTe
     public HashClusterCommandIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         super(ClusterTestUtil.redisCommandsOverCluster(connection));
     }
+
 }

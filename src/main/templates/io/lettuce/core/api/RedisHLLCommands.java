@@ -28,9 +28,8 @@ public interface RedisHLLCommands<K, V> {
     /**
      * Adds the specified elements to the specified HyperLogLog.
      *
-     * @param key the key
-     * @param values the values
-     *
+     * @param key the key.
+     * @param values the values.
      * @return Long integer-reply specifically:
      *
      *         1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.
@@ -40,9 +39,8 @@ public interface RedisHLLCommands<K, V> {
     /**
      * Merge N different HyperLogLogs into a single one.
      *
-     * @param destkey the destination key
-     * @param sourcekeys the source key
-     *
+     * @param destkey the destination key.
+     * @param sourcekeys the source key.
      * @return String simple-string-reply The command just returns {@code OK}.
      */
     String pfmerge(K destkey, K... sourcekeys);
@@ -50,8 +48,7 @@ public interface RedisHLLCommands<K, V> {
     /**
      * Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s).
      *
-     * @param keys the keys
-     *
+     * @param keys the keys.
      * @return Long integer-reply specifically:
      *
      *         The approximated number of unique elements observed via {@code PFADD}.

@@ -26,6 +26,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 /**
+ *
  * @author Mark Paluch
  */
 class AsyncConnections {
@@ -37,7 +38,7 @@ class AsyncConnections {
     }
 
     /**
-     * Add a connection for a {@link RedisURI}
+     * Add a connection for a {@link RedisURI}.
      *
      * @param redisURI
      * @param connection
@@ -47,6 +48,7 @@ class AsyncConnections {
     }
 
     /**
+     *
      * @return a set of {@link RedisURI} for which {@link Connections} has a connection.
      */
     public Set<RedisURI> connectedNodes() {
@@ -54,6 +56,7 @@ class AsyncConnections {
     }
 
     /**
+     *
      * @return the {@link Connections}.
      * @throws RedisConnectionException if no connection could be established.
      */
@@ -85,8 +88,8 @@ class AsyncConnections {
 
             for (Throwable exception : exceptions) {
                 if (collector == null) {
-                    collector = new RedisConnectionException("Unable to establish a connection to Redis Cluster at "
-                            + this.futures.keySet(), exception);
+                    collector = new RedisConnectionException(
+                            "Unable to establish a connection to Redis Cluster at " + this.futures.keySet(), exception);
                 } else {
                     collector.addSuppressed(exception);
                 }
@@ -99,6 +102,7 @@ class AsyncConnections {
     }
 
     /**
+     *
      * @return the {@link Connections}.
      */
     public Connections optionalGet(long timeout, TimeUnit timeUnit) throws InterruptedException {
@@ -119,4 +123,5 @@ class AsyncConnections {
 
         return connections;
     }
+
 }

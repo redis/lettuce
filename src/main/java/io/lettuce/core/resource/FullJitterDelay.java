@@ -37,7 +37,9 @@ import java.util.concurrent.TimeUnit;
 class FullJitterDelay extends ExponentialDelay {
 
     private final Duration upper;
+
     private final long base;
+
     private final TimeUnit targetTimeUnit;
 
     FullJitterDelay(Duration lower, Duration upper, long base, TimeUnit targetTimeUnit) {
@@ -55,4 +57,5 @@ class FullJitterDelay extends ExponentialDelay {
         long delay = temp / 2 + randomBetween(0, temp / 2);
         return applyBounds(Duration.ofNanos(targetTimeUnit.toNanos(delay)));
     }
+
 }

@@ -39,12 +39,15 @@ import io.netty.util.CharsetUtil;
 public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder<String, String> {
 
     public static final StringCodec UTF8 = new StringCodec(LettuceCharsets.UTF8);
+
     public static final StringCodec ASCII = new StringCodec(LettuceCharsets.ASCII);
 
     private static final byte[] EMPTY = new byte[0];
 
     private final Charset charset;
+
     private final boolean ascii;
+
     private final boolean utf8;
 
     /**
@@ -58,7 +61,7 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
     /**
      * Creates a new {@link StringCodec} for the given {@link Charset} that encodes and decodes keys and values.
      *
-     * @param charset must not be {@literal null}.
+     * @param charset must not be {@code null}.
      */
     public StringCodec(Charset charset) {
 
@@ -175,4 +178,5 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
 
         return buffer;
     }
+
 }

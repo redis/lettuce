@@ -41,4 +41,5 @@ public class KeyStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
         channel.onKey(bytes == null ? null : codec.decodeKey(bytes));
         output = output.longValue() + 1;
     }
+
 }

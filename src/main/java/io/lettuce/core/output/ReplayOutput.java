@@ -95,6 +95,7 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
          * @param target
          */
         protected abstract void replay(CommandOutput<?, ?, ?> target);
+
     }
 
     abstract static class BulkStringSupport extends Signal {
@@ -113,6 +114,7 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
                 this.message = null;
             }
         }
+
     }
 
     public static class BulkString extends BulkStringSupport {
@@ -125,6 +127,7 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         protected void replay(CommandOutput<?, ?, ?> target) {
             target.set(message);
         }
+
     }
 
     static class Integer extends Signal {
@@ -139,6 +142,7 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         protected void replay(CommandOutput<?, ?, ?> target) {
             target.set(message);
         }
+
     }
 
     public static class ErrorBytes extends BulkStringSupport {
@@ -151,6 +155,7 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         protected void replay(CommandOutput<?, ?, ?> target) {
             target.setError(message);
         }
+
     }
 
     static class ErrorString extends Signal {
@@ -165,6 +170,7 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         protected void replay(CommandOutput<?, ?, ?> target) {
             target.setError(message);
         }
+
     }
 
     static class Multi extends Signal {
@@ -179,6 +185,7 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         protected void replay(CommandOutput<?, ?, ?> target) {
             target.multi(count);
         }
+
     }
 
     static class Complete extends Signal {
@@ -193,5 +200,7 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         protected void replay(CommandOutput<?, ?, ?> target) {
             target.complete(depth);
         }
+
     }
+
 }

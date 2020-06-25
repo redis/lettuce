@@ -36,7 +36,9 @@ class RedisClientNodeConnectionFactory implements NodeConnectionFactory {
     }
 
     @Override
-    public <K, V> CompletableFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
+    public <K, V> CompletableFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI) {
         return client.connectAsync(codec, redisURI).toCompletableFuture();
     }
+
 }

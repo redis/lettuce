@@ -253,4 +253,5 @@ class DefaultClientResourcesUnitTests {
         copyTimer.stop();
         timer.stop();
     }
+
 }

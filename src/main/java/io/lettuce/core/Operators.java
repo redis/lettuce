@@ -54,7 +54,9 @@ class Operators {
      * as a {@link BiFunction BiFunction&lt;Throwable, Object, Throwable&gt;}.
      */
     private static final String KEY_ON_OPERATOR_ERROR = "reactor.onOperatorError.local";
+
     private static final Field onOperatorErrorHook = findOnOperatorErrorHookField();
+
     private static final Supplier<Queue<Object>> queueSupplier = getQueueSupplier();
 
     private static Field findOnOperatorErrorHookField() {
@@ -93,10 +95,9 @@ class Operators {
     /**
      * Cap an addition to Long.MAX_VALUE
      *
-     * @param a left operand
-     * @param b right operand
-     *
-     * @return Addition result or Long.MAX_VALUE if overflow
+     * @param a left operand.
+     * @param b right operand.
+     * @return Addition result or Long.MAX_VALUE if overflow.
      */
     static long addCap(long a, long b) {
 
@@ -110,11 +111,11 @@ class Operators {
     /**
      * Concurrent addition bound to Long.MAX_VALUE. Any concurrent write will "happen before" this operation.
      *
-     * @param <T> the parent instance type
-     * @param updater current field updater
-     * @param instance current instance to update
-     * @param toAdd delta to add
-     * @return {@literal true} if the operation succeeded.
+     * @param <T> the parent instance type.
+     * @param updater current field updater.
+     * @param instance current instance to update.
+     * @param toAdd delta to add.
+     * @return {@code true} if the operation succeeded.
      * @since 5.0.1
      */
     public static <T> boolean request(AtomicLongFieldUpdater<T> updater, T instance, long toAdd) {
@@ -131,11 +132,11 @@ class Operators {
     /**
      * Concurrent addition bound to Long.MAX_VALUE. Any concurrent write will "happen before" this operation.
      *
-     * @param <T> the parent instance type
-     * @param updater current field updater
-     * @param instance current instance to update
-     * @param toAdd delta to add
-     * @return value before addition or Long.MAX_VALUE
+     * @param <T> the parent instance type.
+     * @param updater current field updater.
+     * @param instance current instance to update.
+     * @param toAdd delta to add.
+     * @return value before addition or Long.MAX_VALUE.
      */
     static <T> long addCap(AtomicLongFieldUpdater<T> updater, T instance, long toAdd) {
 
@@ -153,10 +154,10 @@ class Operators {
     }
 
     /**
-     * Evaluate if a request is strictly positive otherwise {@link #reportBadRequest(long)}
+     * Evaluate if a request is strictly positive otherwise {@link #reportBadRequest(long)}.
      *
-     * @param n the request value
-     * @return true if valid
+     * @param n the request value.
+     * @return {@code true} if valid.
      */
     static boolean validate(long n) {
 
@@ -170,8 +171,7 @@ class Operators {
     /**
      * Log an {@link IllegalArgumentException} if the request is null or negative.
      *
-     * @param n the failing demand
-     *
+     * @param n the failing demand.
      * @see Exceptions#nullOrNegativeRequestException(long)
      */
     static void reportBadRequest(long n) {
@@ -182,8 +182,8 @@ class Operators {
     }
 
     /**
-     * @param elements the invalid requested demand
      *
+     * @param elements the invalid requested demand.
      * @return a new {@link IllegalArgumentException} with a cause message abiding to reactive stream specification rule 3.9.
      */
     static IllegalArgumentException nullOrNegativeRequestException(long elements) {
@@ -196,11 +196,11 @@ class Operators {
      * {@link Exceptions#throwIfFatal(Throwable)}. Takes an additional signal, which can be added as a suppressed exception if
      * it is a {@link Throwable} and the default {@link Hooks#onOperatorError(BiFunction) hook} is in place.
      *
-     * @param subscription the linked operator parent {@link Subscription}
-     * @param error the callback or operator error
-     * @param dataSignal the value (onNext or onError) signal processed during failure
-     * @param context a context that might hold a local error consumer
-     * @return mapped {@link Throwable}
+     * @param subscription the linked operator parent {@link Subscription}.
+     * @param error the callback or operator error.
+     * @param dataSignal the value (onNext or onError) signal processed during failure.
+     * @param context a context that might hold a local error consumer.
+     * @return mapped {@link Throwable}.
      */
     static Throwable onOperatorError(@Nullable Subscription subscription, Throwable error, @Nullable Object dataSignal,
             Context context) {
@@ -250,4 +250,5 @@ class Operators {
             return null;
         }
     }
+
 }

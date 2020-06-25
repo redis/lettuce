@@ -396,4 +396,5 @@ public class HashCommandIntegrationTests extends TestSupport {
 
         redis.hmset(key, expect);
     }
+
 }

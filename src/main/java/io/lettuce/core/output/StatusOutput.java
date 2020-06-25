@@ -40,4 +40,5 @@ public class StatusOutput<K, V> extends CommandOutput<K, V, String> {
     public void set(ByteBuffer bytes) {
         output = OK.equals(bytes) ? "OK" : decodeAscii(bytes);
     }
+
 }

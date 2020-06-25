@@ -41,4 +41,5 @@ public class ConnectToElastiCacheMaster {
         connection.close();
         redisClient.shutdown();
     }
+
 }

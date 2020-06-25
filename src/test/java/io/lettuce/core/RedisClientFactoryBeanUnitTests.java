@@ -173,4 +173,5 @@ class RedisClientFactoryBeanUnitTests {
         assertThat(sentinelUri2.getPort()).isEqualTo(1234);
         assertThat(redisURI.getSentinelMasterId()).isEqualTo("myMaster");
     }
+
 }

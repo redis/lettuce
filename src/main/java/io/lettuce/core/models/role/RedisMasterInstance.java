@@ -31,6 +31,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class RedisMasterInstance implements RedisInstance, Serializable {
 
     private long replicationOffset;
+
     private List<ReplicationPartner> replicas = Collections.emptyList();
 
     public RedisMasterInstance() {
@@ -40,7 +41,7 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
      * Constructs a {@link RedisMasterInstance}
      *
      * @param replicationOffset the replication offset
-     * @param replicas list of replicas, must not be {@literal null} but may be empty
+     * @param replicas list of replicas, must not be {@code null} but may be empty
      */
     public RedisMasterInstance(long replicationOffset, List<ReplicationPartner> replicas) {
         LettuceAssert.notNull(replicas, "Replicas must not be null");
@@ -50,7 +51,7 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
 
     /**
      *
-     * @return always {@link io.lettuce.core.models.role.RedisInstance.Role#MASTER}
+     * @return always {@link io.lettuce.core.models.role.RedisInstance.Role#MASTER}.
      */
     @Override
     public Role getRole() {
@@ -93,4 +94,5 @@ public class RedisMasterInstance implements RedisInstance, Serializable {
         sb.append(']');
         return sb.toString();
     }
+
 }

@@ -18,6 +18,7 @@ package io.lettuce.core.codec;
 import java.nio.ByteBuffer;
 
 /**
+ *
  * @author Mark Paluch
  *         <ul>
  *         <li>Name: XMODEM (also known as ZMODEM or CRC-16/ACORN)</li>
@@ -62,8 +63,8 @@ public class CRC16 {
     /**
      * Create a CRC16 checksum from the bytes.
      *
-     * @param bytes input bytes
-     * @return CRC16 as integer value
+     * @param bytes input bytes.
+     * @return CRC16 as integer value.
      */
     public static int crc16(byte[] bytes) {
         return crc16(bytes, 0, bytes.length);
@@ -72,8 +73,8 @@ public class CRC16 {
     /**
      * Create a CRC16 checksum from the bytes.
      *
-     * @param bytes input bytes
-     * @return CRC16 as integer value
+     * @param bytes input bytes.
+     * @return CRC16 as integer value.
      */
     public static int crc16(byte[] bytes, int off, int len) {
 
@@ -90,8 +91,8 @@ public class CRC16 {
     /**
      * Create a CRC16 checksum from the bytes.
      *
-     * @param bytes input bytes
-     * @return CRC16 as integer value
+     * @param bytes input bytes.
+     * @return CRC16 as integer value.
      * @since 4.4
      */
     public static int crc16(ByteBuffer bytes) {
@@ -108,4 +109,5 @@ public class CRC16 {
     private static int doCrc(byte b, int crc) {
         return ((crc << 8) ^ LOOKUP_TABLE[((crc >>> 8) ^ (b & 0xFF)) & 0xFF]);
     }
+
 }

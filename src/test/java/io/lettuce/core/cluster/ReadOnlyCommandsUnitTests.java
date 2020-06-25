@@ -41,4 +41,5 @@ class ReadOnlyCommandsUnitTests {
             assertThat(readOnlyCommand.name()).isEqualTo(CommandType.valueOf(readOnlyCommand.name()).name());
         }
     }
+
 }

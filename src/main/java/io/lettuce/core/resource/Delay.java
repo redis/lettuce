@@ -38,8 +38,11 @@ import io.lettuce.core.internal.LettuceAssert;
 public abstract class Delay {
 
     private static Duration DEFAULT_LOWER_BOUND = Duration.ZERO;
+
     private static Duration DEFAULT_UPPER_BOUND = Duration.ofSeconds(30);
+
     private static int DEFAULT_POWER_OF = 2;
+
     private static TimeUnit DEFAULT_TIMEUNIT = TimeUnit.MILLISECONDS;
 
     /**
@@ -56,6 +59,7 @@ public abstract class Delay {
          * Reset this delay state. Resetting prepares a stateful delay for its next usage.
          */
         void reset();
+
     }
 
     /**
@@ -92,10 +96,10 @@ public abstract class Delay {
     /**
      * Creates a new {@link ConstantDelay}.
      *
-     * @param delay the delay, must be greater or equal to 0
+     * @param delay the delay, must be greater or equal to 0.
      * @param timeUnit the unit of the delay.
      * @return a created {@link ConstantDelay}.
-     * @deprecated since 5.0, use {@link #constant(Duration)}
+     * @deprecated since 5.0, use {@link #constant(Duration)}.
      */
     @Deprecated
     public static Delay constant(int delay, TimeUnit timeUnit) {
@@ -119,10 +123,10 @@ public abstract class Delay {
      * Creates a new {@link ExponentialDelay} on with custom boundaries and factor (eg. with upper 9000, lower 0, powerOf 10: 1,
      * 10, 100, 1000, 9000, 9000, 9000, ...).
      *
-     * @param lower the lower boundary, must be non-negative
-     * @param upper the upper boundary, must be greater than the lower boundary
+     * @param lower the lower boundary, must be non-negative.
+     * @param upper the upper boundary, must be greater than the lower boundary.
      * @param powersOf the base for exponential growth (eg. powers of 2, powers of 10, etc...), must be non-negative and greater
-     *        than 1
+     *        than 1.
      * @param targetTimeUnit the unit of the delay.
      * @return a created {@link ExponentialDelay}.
      * @since 5.0
@@ -143,11 +147,11 @@ public abstract class Delay {
      * Creates a new {@link ExponentialDelay} on with custom boundaries and factor (eg. with upper 9000, lower 0, powerOf 10: 1,
      * 10, 100, 1000, 9000, 9000, 9000, ...).
      *
-     * @param lower the lower boundary, must be non-negative
-     * @param upper the upper boundary, must be greater than the lower boundary
+     * @param lower the lower boundary, must be non-negative.
+     * @param upper the upper boundary, must be greater than the lower boundary.
      * @param unit the unit of the delay.
      * @param powersOf the base for exponential growth (eg. powers of 2, powers of 10, etc...), must be non-negative and greater
-     *        than 1
+     *        than 1.
      * @return a created {@link ExponentialDelay}.
      */
     public static Delay exponential(long lower, long upper, TimeUnit unit, int powersOf) {
@@ -172,9 +176,9 @@ public abstract class Delay {
     /**
      * Creates a new {@link EqualJitterDelay}.
      *
-     * @param lower the lower boundary, must be non-negative
-     * @param upper the upper boundary, must be greater than the lower boundary
-     * @param base the base, must be greater or equal to 1
+     * @param lower the lower boundary, must be non-negative.
+     * @param upper the upper boundary, must be greater than the lower boundary.
+     * @param base the base, must be greater or equal to 1.
      * @param targetTimeUnit the unit of the delay.
      * @return a created {@link EqualJitterDelay}.
      * @since 5.0
@@ -194,9 +198,9 @@ public abstract class Delay {
     /**
      * Creates a new {@link EqualJitterDelay}.
      *
-     * @param lower the lower boundary, must be non-negative
-     * @param upper the upper boundary, must be greater than the lower boundary
-     * @param base the base, must be greater or equal to 1
+     * @param lower the lower boundary, must be non-negative.
+     * @param upper the upper boundary, must be greater than the lower boundary.
+     * @param base the base, must be greater or equal to 1.
      * @param unit the unit of the delay.
      * @return a created {@link EqualJitterDelay}.
      */
@@ -222,9 +226,9 @@ public abstract class Delay {
     /**
      * Creates a new {@link FullJitterDelay}.
      *
-     * @param lower the lower boundary, must be non-negative
-     * @param upper the upper boundary, must be greater than the lower boundary
-     * @param base the base, must be greater or equal to 1
+     * @param lower the lower boundary, must be non-negative.
+     * @param upper the upper boundary, must be greater than the lower boundary.
+     * @param base the base, must be greater or equal to 1.
      * @param targetTimeUnit the unit of the delay.
      * @return a created {@link FullJitterDelay}.
      * @since 5.0
@@ -244,9 +248,9 @@ public abstract class Delay {
     /**
      * Creates a new {@link FullJitterDelay}.
      *
-     * @param lower the lower boundary, must be non-negative
-     * @param upper the upper boundary, must be greater than the lower boundary
-     * @param base the base, must be greater or equal to 1
+     * @param lower the lower boundary, must be non-negative.
+     * @param upper the upper boundary, must be greater than the lower boundary.
+     * @param base the base, must be greater or equal to 1.
      * @param unit the unit of the delay.
      * @return a created {@link FullJitterDelay}.
      */
@@ -272,9 +276,9 @@ public abstract class Delay {
     /**
      * Creates a {@link Supplier} that constructs new {@link DecorrelatedJitterDelay} instances.
      *
-     * @param lower the lower boundary, must be non-negative
-     * @param upper the upper boundary, must be greater than the lower boundary
-     * @param base the base, must be greater or equal to 0
+     * @param lower the lower boundary, must be non-negative.
+     * @param upper the upper boundary, must be greater than the lower boundary.
+     * @param base the base, must be greater or equal to 0.
      * @param targetTimeUnit the unit of the delay.
      * @return a new {@link Supplier} of {@link DecorrelatedJitterDelay}.
      * @since 5.0
@@ -295,9 +299,9 @@ public abstract class Delay {
     /**
      * Creates a {@link Supplier} that constructs new {@link DecorrelatedJitterDelay} instances.
      *
-     * @param lower the lower boundary, must be non-negative
-     * @param upper the upper boundary, must be greater than the lower boundary
-     * @param base the base, must be greater or equal to 0
+     * @param lower the lower boundary, must be non-negative.
+     * @param upper the upper boundary, must be greater than the lower boundary.
+     * @param base the base, must be greater or equal to 0.
      * @param unit the unit of the delay.
      * @return a new {@link Supplier} of {@link DecorrelatedJitterDelay}.
      */
@@ -317,7 +321,7 @@ public abstract class Delay {
      *
      * @param min
      * @param max
-     * @return a random value
+     * @return a random value.
      * @see ThreadLocalRandom#nextLong(long, long)
      */
     protected static long randomBetween(long min, long max) {
@@ -339,4 +343,5 @@ public abstract class Delay {
 
         return calculatedValue;
     }
+
 }

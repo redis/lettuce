@@ -34,8 +34,11 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
     public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";
 
     private char[] password = new char[0];
+
     private URI uri;
+
     private RedisURI redisURI;
+
     private ClientResources clientResources;
 
     @Override
@@ -54,7 +57,7 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
      * Set the URI for connecting Redis. The URI follows the URI conventions. See {@link RedisURI} for URL schemes. Either the
      * URI of the RedisURI must be set in order to connect to Redis.
      *
-     * @param uri the URI
+     * @param uri the URI.
      */
     public void setUri(URI uri) {
         this.uri = uri;
@@ -68,7 +71,7 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
      * Set the RedisURI for connecting Redis. See {@link RedisURI} for URL schemes. Either the URI of the RedisURI must be set
      * in order to connect to Redis.
      *
-     * @param redisURI the RedisURI
+     * @param redisURI the RedisURI.
      */
     public void setRedisURI(RedisURI redisURI) {
         this.redisURI = redisURI;
@@ -82,7 +85,7 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
      * Sets the password to use for a Redis connection. If the password is set, it has higher precedence than the password
      * provided within the URI meaning the password from the URI is replaced by this one.
      *
-     * @param password the password
+     * @param password the password.
      */
     public void setPassword(String password) {
 
@@ -101,7 +104,7 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
      * Set shared client resources to reuse across different client instances. If not set, each client instance will provide
      * their own {@link ClientResources} instance.
      *
-     * @param clientResources the client resources
+     * @param clientResources the client resources.
      */
     public void setClientResources(ClientResources clientResources) {
         this.clientResources = clientResources;
@@ -111,4 +114,5 @@ public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T
     public boolean isSingleton() {
         return true;
     }
+
 }

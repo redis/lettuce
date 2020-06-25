@@ -30,7 +30,7 @@ public interface MethodInterceptor {
      * Implement this method to perform extra treatments before and after the invocation. Polite implementations would certainly
      * like to invoke {@link MethodInvocation#proceed()}.
      *
-     * @param invocation the method invocation
+     * @param invocation the method invocation.
      * @return the result of the call to {@link MethodInvocation#proceed()}, might be intercepted by the interceptor.
      * @throws Throwable if the interceptors or the target-object throws an exception.
      */

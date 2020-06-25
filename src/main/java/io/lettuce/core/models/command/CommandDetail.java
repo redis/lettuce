@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.Set;
 
 /**
+ *
  * @author Mark Paluch
  * @since 3.0
  */
@@ -26,10 +27,15 @@ import java.util.Set;
 public class CommandDetail implements Serializable {
 
     private String name;
+
     private int arity;
+
     private Set<Flag> flags;
+
     private int firstKeyPosition;
+
     private int lastKeyPosition;
+
     private int keyStepCount;
 
     public CommandDetail() {
@@ -38,9 +44,9 @@ public class CommandDetail implements Serializable {
     /**
      * Constructs a {@link CommandDetail}
      *
-     * @param name name of the command, must not be {@literal null}
+     * @param name name of the command, must not be {@code null}
      * @param arity command arity specification
-     * @param flags set of flags, must not be {@literal null} but may be empty
+     * @param flags set of flags, must not be {@code null} but may be empty
      * @param firstKeyPosition position of first key in argument list
      * @param lastKeyPosition position of last key in argument list
      * @param keyStepCount step count for locating repeating keys
@@ -187,4 +193,5 @@ public class CommandDetail implements Serializable {
          */
         MOVABLEKEYS;
     }
+
 }

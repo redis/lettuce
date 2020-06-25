@@ -37,12 +37,15 @@ import io.lettuce.core.resource.ClientResources;
 class MasterSlaveChannelWriter implements RedisChannelWriter {
 
     private MasterSlaveConnectionProvider<?, ?> masterSlaveConnectionProvider;
+
     private final ClientResources clientResources;
 
     private boolean closed = false;
+
     private boolean inTransaction;
 
-    MasterSlaveChannelWriter(MasterSlaveConnectionProvider<?, ?> masterSlaveConnectionProvider, ClientResources clientResources) {
+    MasterSlaveChannelWriter(MasterSlaveConnectionProvider<?, ?> masterSlaveConnectionProvider,
+            ClientResources clientResources) {
         this.masterSlaveConnectionProvider = masterSlaveConnectionProvider;
         this.clientResources = clientResources;
     }
@@ -248,7 +251,7 @@ class MasterSlaveChannelWriter implements RedisChannelWriter {
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
      *
-     * @param readFrom the read from setting, must not be {@literal null}
+     * @param readFrom the read from setting, must not be {@code null}.
      */
     public void setReadFrom(ReadFrom readFrom) {
         masterSlaveConnectionProvider.setReadFrom(readFrom);
@@ -257,7 +260,7 @@ class MasterSlaveChannelWriter implements RedisChannelWriter {
     /**
      * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
      *
-     * @return the read from setting
+     * @return the read from setting.
      */
     public ReadFrom getReadFrom() {
         return masterSlaveConnectionProvider.getReadFrom();
@@ -274,4 +277,5 @@ class MasterSlaveChannelWriter implements RedisChannelWriter {
     private boolean isEndTransaction(ProtocolKeyword command) {
         return command.name().equals("EXEC") || command.name().equals("DISCARD");
     }
+
 }

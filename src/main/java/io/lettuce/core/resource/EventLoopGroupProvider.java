@@ -27,8 +27,8 @@ import io.netty.util.concurrent.Future;
  * instances open can exhaust the number of open files.
  * <p>
  * Usually, the default settings are sufficient. However, customizing might be useful for some special cases where multiple
- * {@link io.lettuce.core.RedisClient} or {@link io.lettuce.core.cluster.RedisClusterClient} instances are needed
- * that share one or more event loop groups.
+ * {@link io.lettuce.core.RedisClient} or {@link io.lettuce.core.cluster.RedisClusterClient} instances are needed that share one
+ * or more event loop groups.
  * </p>
  * <p>
  * The {@link EventLoopGroupProvider} allows to allocate and release instances implementing {@link EventExecutorGroup}. The
@@ -48,8 +48,8 @@ public interface EventLoopGroupProvider {
      * instance. Call the {@link #release(EventExecutorGroup, long, long, TimeUnit)} to release an individual instance or
      * {@link #shutdown(long, long, TimeUnit)} method to free the all resources.
      *
-     * @param type class of the {@link EventLoopGroup}, must not be {@literal null}
-     * @param <T> type of the {@link EventLoopGroup}
+     * @param type class of the {@link EventLoopGroup}, must not be {@code null}.
+     * @param <T> type of the {@link EventLoopGroup}.
      * @return the {@link EventLoopGroup}.
      */
     <T extends EventLoopGroup> T allocate(Class<T> type);
@@ -63,13 +63,13 @@ public interface EventLoopGroupProvider {
     int threadPoolSize();
 
     /**
-     * Release a {@code eventLoopGroup} instance. The method will shutdown/terminate the {@link EventExecutorGroup} if it is no longer
-     * needed.
+     * Release a {@code eventLoopGroup} instance. The method will shutdown/terminate the {@link EventExecutorGroup} if it is no
+     * longer needed.
      *
-     * @param eventLoopGroup the eventLoopGroup instance, must not be {@literal null}
-     * @param quietPeriod the quiet period
-     * @param timeout the timeout
-     * @param unit time unit for the quiet period/the timeout
+     * @param eventLoopGroup the eventLoopGroup instance, must not be {@code null}.
+     * @param quietPeriod the quiet period.
+     * @param timeout the timeout.
+     * @param unit time unit for the quiet period/the timeout.
      * @return a close future to synchronize the called for shutting down.
      */
     Future<Boolean> release(EventExecutorGroup eventLoopGroup, long quietPeriod, long timeout, TimeUnit unit);
@@ -77,10 +77,11 @@ public interface EventLoopGroupProvider {
     /**
      * Shutdown the provider and release all instances.
      *
-     * @param quietPeriod the quiet period
-     * @param timeout the timeout
-     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
+     * @param quietPeriod the quiet period.
+     * @param timeout the timeout.
+     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}.
      * @return a close future to synchronize the called for shutting down.
      */
     Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit);
+
 }

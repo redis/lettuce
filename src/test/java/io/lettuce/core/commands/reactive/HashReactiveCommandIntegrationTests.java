@@ -30,4 +30,5 @@ class HashReactiveCommandIntegrationTests extends HashCommandIntegrationTests {
     HashReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

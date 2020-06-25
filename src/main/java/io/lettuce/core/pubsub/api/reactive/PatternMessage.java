@@ -23,7 +23,9 @@ package io.lettuce.core.pubsub.api.reactive;
 public class PatternMessage<K, V> {
 
     private final K pattern;
+
     private final K channel;
+
     private final V message;
 
     /**
@@ -39,26 +41,24 @@ public class PatternMessage<K, V> {
     }
 
     /**
-     *
-     * @return the pattern
+     * @return the pattern.
      */
     public K getPattern() {
         return pattern;
     }
 
     /**
-     *
-     * @return the channel
+     * @return the channel.
      */
     public K getChannel() {
         return channel;
     }
 
     /**
-     *
-     * @return the message
+     * @return the message.
      */
     public V getMessage() {
         return message;
     }
+
 }

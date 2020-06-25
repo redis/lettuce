@@ -48,9 +48,10 @@ abstract class PartitionsConsensus {
     /**
      * Determine the {@link Partitions} to be used by {@link RedisClusterClient}.
      *
-     * @param current the currently used topology view, must not be {@literal null}.
-     * @param topologyViews the newly retrieved views, must not be {@literal null}.
+     * @param current the currently used topology view, must not be {@code null}.
+     * @param topologyViews the newly retrieved views, must not be {@code null}.
      * @return the resulting {@link Partitions} to be used by {@link RedisClusterClient}.
      */
     abstract Partitions getPartitions(Partitions current, Map<RedisURI, Partitions> topologyViews);
+
 }

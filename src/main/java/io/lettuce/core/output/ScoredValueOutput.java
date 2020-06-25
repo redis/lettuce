@@ -49,4 +49,5 @@ public class ScoredValueOutput<K, V> extends CommandOutput<K, V, ScoredValue<V>>
         output = ScoredValue.just(score, value);
         value = null;
     }
+
 }

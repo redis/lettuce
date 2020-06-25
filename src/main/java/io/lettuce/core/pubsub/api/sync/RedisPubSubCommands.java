@@ -31,28 +31,28 @@ public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
     /**
      * Listen for messages published to channels matching the given patterns.
      *
-     * @param patterns the patterns
+     * @param patterns the patterns.
      */
     void psubscribe(K... patterns);
 
     /**
      * Stop listening for messages posted to channels matching the given patterns.
      *
-     * @param patterns the patterns
+     * @param patterns the patterns.
      */
     void punsubscribe(K... patterns);
 
     /**
      * Listen for messages published to the given channels.
      *
-     * @param channels the channels
+     * @param channels the channels.
      */
     void subscribe(K... channels);
 
     /**
      * Stop listening for messages posted to the given channels.
      *
-     * @param channels the channels
+     * @param channels the channels.
      */
     void unsubscribe(K... channels);
 
@@ -60,4 +60,5 @@ public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisPubSubConnection<K, V> getStatefulConnection();
+
 }

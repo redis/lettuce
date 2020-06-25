@@ -35,25 +35,24 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
      * <ul>
      * <li>{@code proxy.hashCode()} delegates to {@link AbstractInvocationHandler#hashCode}
      * <li>{@code proxy.toString()} delegates to {@link AbstractInvocationHandler#toString}
-     * <li>{@code proxy.equals(argument)} returns true if:
+     * <li>{@code proxy.equals(argument)} returns {@code true} if:
      * <ul>
      * <li>{@code proxy} and {@code argument} are of the same type
-     * <li>and {@link AbstractInvocationHandler#equals} returns true for the {@link InvocationHandler} of {@code argument}
+     * <li>and {@link AbstractInvocationHandler#equals} returns {@code true} for the {@link InvocationHandler} of
+     * {@code argument}
      * </ul>
      * <li>other method calls are dispatched to {@link #handleInvocation}.
      * </ul>
      *
-     * @param proxy the proxy instance that the method was invoked on
-     *
+     * @param proxy the proxy instance that the method was invoked on.
      * @param method the {@code Method} instance corresponding to the interface method invoked on the proxy instance. The
      *        declaring class of the {@code Method} object will be the interface that the method was declared in, which may be a
      *        superinterface of the proxy interface that the proxy class inherits the method through.
-     *
      * @param args an array of objects containing the values of the arguments passed in the method invocation on the proxy
      *        instance, or {@code null} if interface method takes no arguments. Arguments of primitive types are wrapped in
      *        instances of the appropriate primitive wrapper class, such as {@code java.lang.Integer} or
      *        {@code java.lang.Boolean}.
-     * @return the invocation result value
+     * @return the invocation result value.
      * @throws Throwable the exception to throw from the method invocation on the proxy instance.
      */
     @Override
@@ -87,27 +86,25 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
      * <p>
      * Unlike {@link #invoke}, {@code args} will never be null. When the method has no parameter, an empty array is passed in.
      *
-     * @param proxy the proxy instance that the method was invoked on
-     *
+     * @param proxy the proxy instance that the method was invoked on.
      * @param method the {@code Method} instance corresponding to the interface method invoked on the proxy instance. The
      *        declaring class of the {@code Method} object will be the interface that the method was declared in, which may be a
      *        superinterface of the proxy interface that the proxy class inherits the method through.
-     *
      * @param args an array of objects containing the values of the arguments passed in the method invocation on the proxy
      *        instance, or {@code null} if interface method takes no arguments. Arguments of primitive types are wrapped in
      *        instances of the appropriate primitive wrapper class, such as {@code java.lang.Integer} or
      *        {@code java.lang.Boolean}.
-     * @return the invocation result value
+     * @return the invocation result value.
      * @throws Throwable the exception to throw from the method invocation on the proxy instance.
      */
     protected abstract Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable;
 
     /**
      * By default delegates to {@link Object#equals} so instances are only equal if they are identical.
-     * {@code proxy.equals(argument)} returns true if:
+     * {@code proxy.equals(argument)} returns {@code true} if:
      * <ul>
      * <li>{@code proxy} and {@code argument} are of the same type
-     * <li>and this method returns true for the {@link InvocationHandler} of {@code argument}
+     * <li>and this method returns {@code true} for the {@link InvocationHandler} of {@code argument}
      * </ul>
      * <p>
      * Subclasses can override this method to provide custom equality.
@@ -144,18 +141,19 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
 
     private static boolean isProxyOfSameInterfaces(Object arg, Class<?> proxyClass) {
         return proxyClass.isInstance(arg)
-        // Equal proxy instances should mostly be instance of proxyClass
-        // Under some edge cases (such as the proxy of JDK types serialized and then deserialized)
-        // the proxy type may not be the same.
-        // We first check isProxyClass() so that the common case of comparing with non-proxy objects
-        // is efficient.
-                || (Proxy.isProxyClass(arg.getClass()) && Arrays.equals(arg.getClass().getInterfaces(),
-                        proxyClass.getInterfaces()));
+                // Equal proxy instances should mostly be instance of proxyClass
+                // Under some edge cases (such as the proxy of JDK types serialized and then deserialized)
+                // the proxy type may not be the same.
+                // We first check isProxyClass() so that the common case of comparing with non-proxy objects
+                // is efficient.
+                || (Proxy.isProxyClass(arg.getClass())
+                        && Arrays.equals(arg.getClass().getInterfaces(), proxyClass.getInterfaces()));
     }
 
     protected static class MethodTranslator {
 
         private static final WeakHashMap<Class<?>, MethodTranslator> TRANSLATOR_MAP = new WeakHashMap<>(32);
+
         private final Map<Method, Method> map;
 
         private MethodTranslator(Class<?> delegate, Class<?>... methodSources) {
@@ -235,5 +233,7 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
             }
             throw new IllegalStateException("Cannot find source method " + key);
         }
+
     }
+
 }

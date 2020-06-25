@@ -43,21 +43,22 @@ public interface NodeSelectionSupport<API, CMD> {
     /**
      * Obtain the connection/commands to a particular node.
      *
-     * @param index index of the node
-     * @return the connection/commands object
+     * @param index index of the node.
+     * @return the connection/commands object.
      */
     API commands(int index);
 
     /**
      * Get the {@link RedisClusterNode}.
      *
-     * @param index index of the cluster node
-     * @return the cluster node
+     * @param index index of the cluster node.
+     * @return the cluster node.
      */
     RedisClusterNode node(int index);
 
     /**
-     * @return map of {@link RedisClusterNode} and the connection/commands objects
+     * @return map of {@link RedisClusterNode} and the connection/commands objects.
      */
     Map<RedisClusterNode, API> asMap();
+
 }

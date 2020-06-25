@@ -42,8 +42,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list. In
      * contrast to the {@link RedisAdvancedClusterCommands}, node-connections do not route commands to other cluster nodes
      *
-     * @param nodeId the node Id
-     * @return a connection to the requested cluster node
+     * @param nodeId the node Id.
+     * @return a connection to the requested cluster node.
      */
     RedisClusterCommands<K, V> getConnection(String nodeId);
 
@@ -53,9 +53,9 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * connections are verified by default for cluster membership, see
      * {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
      *
-     * @param host the host
-     * @param port the port
-     * @return a connection to the requested cluster node
+     * @param host the host.
+     * @param port the port.
+     * @return a connection to the requested cluster node.
      */
     RedisClusterCommands<K, V> getConnection(String host, int port);
 
@@ -77,7 +77,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Select all replicas.
      *
      * @return API with synchronous executed commands on a selection of replica cluster nodes.
-     * @deprecated since 5.2, use {@link #replicas()}
+     * @deprecated since 5.2, use {@link #replicas()}.
      */
     @Deprecated
     default NodeSelection<K, V> slaves() {
@@ -87,9 +87,9 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Select all replicas.
      *
-     * @param predicate Predicate to filter nodes
+     * @param predicate Predicate to filter nodes.
      * @return API with synchronous executed commands on a selection of replica cluster nodes.
-     * @deprecated since 5.2, use {@link #replicas(Predicate)}
+     * @deprecated since 5.2, use {@link #replicas(Predicate)}.
      */
     @Deprecated
     default NodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
@@ -110,7 +110,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Select all replicas.
      *
-     * @param predicate Predicate to filter nodes
+     * @param predicate Predicate to filter nodes.
      * @return API with synchronous executed commands on a selection of replica cluster nodes.
      * @since 5.2
      */
@@ -132,8 +132,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Select replica nodes by a predicate and keeps a static selection. Replica connections operate in {@literal READONLY}
      * mode. The set of nodes within the {@link NodeSelectionSupport} does not change when the cluster view changes.
      *
-     * @param predicate Predicate to filter nodes
-     * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}
+     * @param predicate Predicate to filter nodes.
+     * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}.
      */
     NodeSelection<K, V> readonly(Predicate<RedisClusterNode> predicate);
 
@@ -141,25 +141,25 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Select nodes by a predicate and keeps a static selection. The set of nodes within the {@link NodeSelectionSupport} does
      * not change when the cluster view changes.
      *
-     * @param predicate Predicate to filter nodes
-     * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}
+     * @param predicate Predicate to filter nodes.
+     * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}.
      */
     NodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate);
 
     /**
-     * Select nodes by a predicate
+     * Select nodes by a predicate.
      *
-     * @param predicate Predicate to filter nodes
+     * @param predicate Predicate to filter nodes.
      * @param dynamic Defines, whether the set of nodes within the {@link NodeSelectionSupport} can change when the cluster view
      *        changes.
-     * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}
+     * @return API with synchronous executed commands on a selection of cluster nodes matching {@code predicate}.
      */
     NodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, boolean dynamic);
 
     /**
      * Delete one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
      *
-     * @param keys the keys
+     * @param keys the keys.
      * @return Long integer-reply The number of keys that were removed.
      * @see RedisKeyCommands#del(Object[])
      */
@@ -168,7 +168,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Unlink one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
      *
-     * @param keys the keys
+     * @param keys the keys.
      * @return Long integer-reply The number of keys that were removed.
      * @see RedisKeyCommands#unlink(Object[])
      */
@@ -178,8 +178,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Determine how many keys exist with pipelining. Cross-slot keys will result in multiple calls to the particular cluster
      * nodes.
      *
-     * @param keys the keys
-     * @return Long integer-reply specifically: Number of existing keys
+     * @param keys the keys.
+     * @return Long integer-reply specifically: Number of existing keys.
      */
     Long exists(K... keys);
 
@@ -187,7 +187,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
      * cluster nodes.
      *
-     * @param keys the key
+     * @param keys the key.
      * @return List&lt;V&gt; array-reply list of values at the specified keys.
      * @see RedisStringCommands#mget(Object[])
      */
@@ -197,7 +197,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular
      * cluster nodes.
      *
-     * @param map the map
+     * @param map the map.
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      * @see RedisStringCommands#mset(Map)
      */
@@ -207,7 +207,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Set multiple keys to multiple values, only if none of the keys exist with pipelining. Cross-slot keys will result in
      * multiple calls to the particular cluster nodes.
      *
-     * @param map the null
+     * @param map the null.
      * @return Boolean integer-reply specifically:
      *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
@@ -218,7 +218,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Set the current connection name on all known cluster nodes with pipelining.
      *
-     * @param name the client name
+     * @param name the client name.
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      * @see RedisServerCommands#clientSetname(Object)
      */
@@ -227,7 +227,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Remove all keys from all databases on all cluster masters with pipelining.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      * @see RedisServerCommands#flushall()
      */
     String flushall();
@@ -235,7 +235,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Remove all keys from the current database on all cluster masters with pipelining.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      * @see RedisServerCommands#flushdb()
      */
     String flushdb();
@@ -243,7 +243,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Return the number of keys in the selected database on all cluster masters.
      *
-     * @return Long integer-reply
+     * @return Long integer-reply.
      * @see RedisServerCommands#dbsize()
      */
     Long dbsize();
@@ -251,7 +251,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Find all keys matching the given pattern on all cluster masters.
      *
-     * @param pattern the pattern type: patternkey (pattern)
+     * @param pattern the pattern type: patternkey (pattern).
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
      * @see RedisKeyCommands#keys(Object)
      */
@@ -260,8 +260,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Find all keys matching the given pattern on all cluster masters.
      *
-     * @param channel the channel
-     * @param pattern the pattern
+     * @param channel the channel.
+     * @param pattern the pattern.
      * @return Long array-reply list of keys matching {@code pattern}.
      * @see RedisKeyCommands#keys(KeyStreamingChannel, Object)
      */
@@ -270,7 +270,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Return a random key from the keyspace on a random master.
      *
-     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@code null} when the database is empty.
      * @see RedisKeyCommands#randomkey()
      */
     K randomkey();
@@ -278,7 +278,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Remove all the scripts from the script cache on all cluster nodes.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      * @see RedisScriptingCommands#scriptFlush()
      */
     String scriptFlush();
@@ -294,7 +294,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
      *
-     * @param save {@literal true} force save operation
+     * @param save {@code true} force save operation.
      * @see RedisServerCommands#shutdown(boolean)
      */
     void shutdown(boolean save);
@@ -310,7 +310,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Incrementally iterate the keys space over the whole Cluster.
      *
-     * @param scanArgs scan arguments
+     * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyCommands#scan(ScanArgs)
      */
@@ -321,7 +321,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
      *        {@link #scan()} call.
-     * @param scanArgs scan arguments
+     * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyCommands#scan(ScanCursor, ScanArgs)
      */
@@ -340,7 +340,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Incrementally iterate the keys space over the whole Cluster.
      *
-     * @param channel streaming channel that receives a call for every key
+     * @param channel streaming channel that receives a call for every key.
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyCommands#scan(KeyStreamingChannel)
      */
@@ -349,8 +349,8 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Incrementally iterate the keys space over the whole Cluster.
      *
-     * @param channel streaming channel that receives a call for every key
-     * @param scanArgs scan arguments
+     * @param channel streaming channel that receives a call for every key.
+     * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyCommands#scan(KeyStreamingChannel, ScanArgs)
      */
@@ -359,10 +359,10 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Incrementally iterate the keys space over the whole Cluster.
      *
-     * @param channel streaming channel that receives a call for every key
+     * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
      *        {@link #scan()} call.
-     * @param scanArgs scan arguments
+     * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
      */
@@ -371,7 +371,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Incrementally iterate the keys space over the whole Cluster.
      *
-     * @param channel streaming channel that receives a call for every key
+     * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
      *        {@link #scan()} call.
      * @return StreamScanCursor scan cursor.
@@ -383,8 +383,9 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Touch one or more keys with pipelining. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
      * Cross-slot keys will result in multiple calls to the particular cluster nodes.
      *
-     * @param keys the keys
+     * @param keys the keys.
      * @return Long integer-reply the number of found keys.
      */
     Long touch(K... keys);
+
 }

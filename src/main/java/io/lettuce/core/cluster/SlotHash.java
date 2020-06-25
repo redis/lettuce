@@ -51,8 +51,8 @@ public class SlotHash {
     /**
      * Calculate the slot from the given key.
      *
-     * @param key the key
-     * @return slot
+     * @param key the key.
+     * @return slot.
      */
     public static final int getSlot(String key) {
         return getSlot(key.getBytes());
@@ -61,8 +61,8 @@ public class SlotHash {
     /**
      * Calculate the slot from the given key.
      *
-     * @param key the key
-     * @return slot
+     * @param key the key.
+     * @return slot.
      */
     public static int getSlot(byte[] key) {
         return getSlot(ByteBuffer.wrap(key));
@@ -71,8 +71,8 @@ public class SlotHash {
     /**
      * Calculate the slot from the given key.
      *
-     * @param key the key
-     * @return slot
+     * @param key the key.
+     * @return slot.
      */
     public static int getSlot(ByteBuffer key) {
 
@@ -116,12 +116,11 @@ public class SlotHash {
     /**
      * Partition keys by slot-hash. The resulting map honors order of the keys.
      *
-     * @param codec codec to encode the key
-     * @param keys iterable of keys
+     * @param codec codec to encode the key.
+     * @param keys iterable of keys.
      * @param <K> Key type.
      * @param <V> Value type.
      * @result map between slot-hash and an ordered list of keys.
-     *
      */
     static <K, V> Map<Integer, List<K>> partition(RedisCodec<K, V> codec, Iterable<K> keys) {
 
@@ -140,7 +139,7 @@ public class SlotHash {
     /**
      * Create mapping between the Key and hash slot.
      *
-     * @param partitioned map partitioned by slothash and keys
+     * @param partitioned map partitioned by slothash and keys.
      * @param <K>
      */
     static <K> Map<K, Integer> getSlots(Map<Integer, ? extends Iterable<K>> partitioned) {
@@ -154,4 +153,5 @@ public class SlotHash {
 
         return result;
     }
+
 }

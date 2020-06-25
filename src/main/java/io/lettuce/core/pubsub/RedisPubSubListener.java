@@ -23,6 +23,7 @@ package io.lettuce.core.pubsub;
  * @author Will Glozer
  */
 public interface RedisPubSubListener<K, V> {
+
     /**
      * Message received from a channel subscription.
      *
@@ -34,16 +35,16 @@ public interface RedisPubSubListener<K, V> {
     /**
      * Message received from a pattern subscription.
      *
-     * @param pattern Pattern
-     * @param channel Channel
-     * @param message Message
+     * @param pattern Pattern.
+     * @param channel Channel.
+     * @param message Message.
      */
     void message(K pattern, K channel, V message);
 
     /**
      * Subscribed to a channel.
      *
-     * @param channel Channel
+     * @param channel Channel.
      * @param count Subscription count.
      */
     void subscribed(K channel, long count);
@@ -59,7 +60,7 @@ public interface RedisPubSubListener<K, V> {
     /**
      * Unsubscribed from a channel.
      *
-     * @param channel Channel
+     * @param channel Channel.
      * @param count Subscription count.
      */
     void unsubscribed(K channel, long count);
@@ -67,8 +68,9 @@ public interface RedisPubSubListener<K, V> {
     /**
      * Unsubscribed from a pattern.
      *
-     * @param pattern Channel
+     * @param pattern Channel.
      * @param count Subscription count.
      */
     void punsubscribed(K pattern, long count);
+
 }

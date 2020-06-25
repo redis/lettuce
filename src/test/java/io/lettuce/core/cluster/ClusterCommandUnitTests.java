@@ -46,8 +46,9 @@ class ClusterCommandUnitTests {
     private RedisChannelWriter writerMock;
 
     private ClusterCommand<String, String, String> sut;
-    private Command<String, String, String> command = new Command<>(CommandType.TYPE,
-            new StatusOutput<>(StringCodec.UTF8), null);
+
+    private Command<String, String, String> command = new Command<>(CommandType.TYPE, new StatusOutput<>(StringCodec.UTF8),
+            null);
 
     @BeforeEach
     void before() {
@@ -116,4 +117,5 @@ class ClusterCommandUnitTests {
         assertThat(sut.isCompleted()).isTrue();
         assertThat(someList.size()).describedAs("Inner listener has to add one element").isEqualTo(1);
     }
+
 }

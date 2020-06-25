@@ -52,10 +52,13 @@ class MasterReplicaTest extends AbstractRedisClientTest {
             .withClientName("my-client").withDatabase(5).build();
 
     private StatefulRedisMasterReplicaConnection<String, String> connection;
+
     private RedisAsyncCommands<String, String> connectionToNode1;
+
     private RedisAsyncCommands<String, String> connectionToNode2;
 
     private RedisURI master;
+
     private RedisURI replica;
 
     @BeforeEach
@@ -73,13 +76,14 @@ class MasterReplicaTest extends AbstractRedisClientTest {
         if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node1;
             replica = node2;
-        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
+        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
+                && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node2;
             replica = node1;
         } else {
-            assumeTrue(false, String.format(
-                    "Cannot run the test because I don't have a distinct master and replica but %s and %s", node1Instance,
-                    node2Instance));
+            assumeTrue(false,
+                    String.format("Cannot run the test because I don't have a distinct master and replica but %s and %s",
+                            node1Instance, node2Instance));
         }
 
         connectionToNode1.configSet("requirepass", passwd);
@@ -166,10 +170,12 @@ class MasterReplicaTest extends AbstractRedisClientTest {
     void noReplicaForRead() {
 
         connection.setReadFrom(new ReadFrom() {
+
             @Override
             public List<RedisNodeDescription> select(Nodes nodes) {
                 return Collections.emptyList();
             }
+
         });
 
         assertThatThrownBy(() -> replicaCall(connection)).isInstanceOf(RedisException.class);
@@ -188,4 +194,5 @@ class MasterReplicaTest extends AbstractRedisClientTest {
     static String replicaCall(StatefulRedisMasterReplicaConnection<String, String> connection) {
         return connection.sync().info("replication");
     }
+
 }

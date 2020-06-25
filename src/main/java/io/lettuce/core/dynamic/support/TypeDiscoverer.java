@@ -26,13 +26,17 @@ import io.lettuce.core.internal.LettuceAssert;
 class TypeDiscoverer<S> implements TypeInformation<S> {
 
     private final Type type;
+
     private final Map<TypeVariable<?>, Type> typeVariableMap;
+
     private final int hashCode;
 
     private boolean componentTypeResolved = false;
+
     private TypeInformation<?> componentType;
 
     private boolean valueTypeResolved = false;
+
     private TypeInformation<?> valueType;
 
     private Class<S> resolvedType;
@@ -40,8 +44,8 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
     /**
      * Creates a new {@link TypeDiscoverer} for the given type and type variable map.
      *
-     * @param type must not be {@literal null}.
-     * @param typeVariableMap must not be {@literal null}.
+     * @param type must not be {@code null}.
+     * @param typeVariableMap must not be {@code null}.
      */
     protected TypeDiscoverer(Type type, Map<TypeVariable<?>, Type> typeVariableMap) {
 
@@ -385,5 +389,7 @@ class TypeDiscoverer<S> implements TypeInformation<S> {
         public Object getSource() {
             return this.typeVariableMap;
         }
+
     }
+
 }

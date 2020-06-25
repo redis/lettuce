@@ -39,4 +39,5 @@ interface ExecutableCommand {
      * @return
      */
     CommandMethod getCommandMethod();
+
 }

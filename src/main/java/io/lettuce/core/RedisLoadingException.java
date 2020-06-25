@@ -42,4 +42,5 @@ public class RedisLoadingException extends RedisCommandExecutionException {
     public RedisLoadingException(String msg, Throwable cause) {
         super(msg, cause);
     }
+
 }

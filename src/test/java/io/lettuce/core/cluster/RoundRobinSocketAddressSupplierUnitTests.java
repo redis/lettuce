@@ -43,9 +43,13 @@ import io.lettuce.core.resource.SocketAddressResolver;
 class RoundRobinSocketAddressSupplierUnitTests {
 
     private static RedisURI hap1 = new RedisURI("127.0.0.1", 1, Duration.ofSeconds(1));
+
     private static RedisURI hap2 = new RedisURI("127.0.0.1", 2, Duration.ofSeconds(1));
+
     private static RedisURI hap3 = new RedisURI("127.0.0.1", 3, Duration.ofSeconds(1));
+
     private static RedisURI hap4 = new RedisURI("127.0.0.1", 4, Duration.ofSeconds(1));
+
     private static Partitions partitions;
 
     @Mock
@@ -119,4 +123,5 @@ class RoundRobinSocketAddressSupplierUnitTests {
         assertThat(sut.get()).isEqualTo(hap2.getResolvedAddress());
         assertThat(sut.get()).isEqualTo(hap1.getResolvedAddress());
     }
+
 }

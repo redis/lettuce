@@ -29,7 +29,9 @@ import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
 public class DefaultEventPublisherOptions implements EventPublisherOptions {
 
     public static final long DEFAULT_EMIT_INTERVAL = 10;
+
     public static final TimeUnit DEFAULT_EMIT_INTERVAL_UNIT = TimeUnit.MINUTES;
+
     public static final Duration DEFAULT_EMIT_INTERVAL_DURATION = Duration.ofMinutes(DEFAULT_EMIT_INTERVAL);
 
     private static final DefaultEventPublisherOptions DISABLED = new Builder().eventEmitInterval(Duration.ZERO).build();
@@ -103,6 +105,7 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
         public DefaultEventPublisherOptions build() {
             return new DefaultEventPublisherOptions(this);
         }
+
     }
 
     @Override
@@ -113,7 +116,7 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
     /**
      * Create a new {@link DefaultEventPublisherOptions} using default settings.
      *
-     * @return a new instance of a default {@link DefaultEventPublisherOptions} instance
+     * @return a new instance of a default {@link DefaultEventPublisherOptions} instance.
      */
     public static DefaultEventPublisherOptions create() {
         return new Builder().build();
@@ -122,9 +125,10 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
     /**
      * Create a disabled {@link DefaultEventPublisherOptions} using default settings.
      *
-     * @return a new instance of a default {@link DefaultEventPublisherOptions} instance with disabled event emission
+     * @return a new instance of a default {@link DefaultEventPublisherOptions} instance with disabled event emission.
      */
     public static DefaultEventPublisherOptions disabled() {
         return DISABLED;
     }
+
 }

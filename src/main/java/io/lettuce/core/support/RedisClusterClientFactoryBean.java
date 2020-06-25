@@ -45,6 +45,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<RedisClusterClient> {
 
     private boolean verifyPeer = false;
+
     private Collection<RedisURI> redisURIs;
 
     @Override
@@ -120,4 +121,5 @@ public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<Red
     public void setVerifyPeer(boolean verifyPeer) {
         this.verifyPeer = verifyPeer;
     }
+
 }

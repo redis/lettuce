@@ -38,7 +38,9 @@ import io.lettuce.core.internal.LettuceAssert;
 public class AnnotationCommandSegmentFactory implements CommandSegmentFactory {
 
     private static final Pattern SPACE = Pattern.compile("\\s");
+
     private static final String INDEX_BASED_PARAM_START = "?";
+
     private static final String NAME_BASED_PARAM_START = ":";
 
     @Override
@@ -225,5 +227,7 @@ public class AnnotationCommandSegmentFactory implements CommandSegmentFactory {
 
             return false;
         }
+
     }
+
 }

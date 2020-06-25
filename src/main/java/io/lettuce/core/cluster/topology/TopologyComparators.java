@@ -39,12 +39,13 @@ public class TopologyComparators {
      * {@link RedisURI RedisURIs}s not contained in {@code fixedOrder} are ordered after the fixed sorting and sorted wihin the
      * block by comparing {@link RedisURI}.
      *
-     * @param clusterNodes the sorting input
-     * @param fixedOrder the fixed order part
-     * @return List containing {@link RedisClusterNode}s ordered by {@code fixedOrder} and {@link RedisURI}
+     * @param clusterNodes the sorting input.
+     * @param fixedOrder the fixed order part.
+     * @return List containing {@link RedisClusterNode}s ordered by {@code fixedOrder} and {@link RedisURI}.
      * @see #sortByUri(Iterable)
      */
-    public static List<RedisClusterNode> predefinedSort(Iterable<RedisClusterNode> clusterNodes, Iterable<RedisURI> fixedOrder) {
+    public static List<RedisClusterNode> predefinedSort(Iterable<RedisClusterNode> clusterNodes,
+            Iterable<RedisURI> fixedOrder) {
 
         LettuceAssert.notNull(clusterNodes, "Cluster nodes must not be null");
         LettuceAssert.notNull(fixedOrder, "Fixed order must not be null");
@@ -72,7 +73,7 @@ public class TopologyComparators {
      * Sort partitions by RedisURI.
      *
      * @param clusterNodes
-     * @return List containing {@link RedisClusterNode}s ordered by {@link RedisURI}
+     * @return List containing {@link RedisClusterNode}s ordered by {@link RedisURI}.
      */
     public static List<RedisClusterNode> sortByUri(Iterable<RedisClusterNode> clusterNodes) {
 
@@ -87,7 +88,7 @@ public class TopologyComparators {
      * Sort partitions by client count.
      *
      * @param clusterNodes
-     * @return List containing {@link RedisClusterNode}s ordered by client count
+     * @return List containing {@link RedisClusterNode}s ordered by client count.
      */
     public static List<RedisClusterNode> sortByClientCount(Iterable<RedisClusterNode> clusterNodes) {
 
@@ -102,7 +103,7 @@ public class TopologyComparators {
      * Sort partitions by latency.
      *
      * @param clusterNodes
-     * @return List containing {@link RedisClusterNode}s ordered by latency
+     * @return List containing {@link RedisClusterNode}s ordered by latency.
      */
     public static List<RedisClusterNode> sortByLatency(Iterable<RedisClusterNode> clusterNodes) {
 
@@ -116,7 +117,7 @@ public class TopologyComparators {
      *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
+     * @return {@code true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
      */
     public static boolean isChanged(Partitions o1, Partitions o2) {
 
@@ -138,7 +139,7 @@ public class TopologyComparators {
      *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
+     * @return {@code true} if {@code MASTER} or {@code SLAVE} flags changed or the responsible slots changed.
      */
     static boolean essentiallyEqualsTo(RedisClusterNode o1, RedisClusterNode o2) {
 
@@ -171,6 +172,7 @@ public class TopologyComparators {
     }
 
     static class PredefinedRedisClusterNodeComparator implements Comparator<RedisClusterNode> {
+
         private final List<RedisURI> fixedOrder;
 
         public PredefinedRedisClusterNodeComparator(List<RedisURI> fixedOrder) {
@@ -185,6 +187,7 @@ public class TopologyComparators {
 
             return Integer.compare(index1, index2);
         }
+
     }
 
     /**
@@ -217,6 +220,7 @@ public class TopologyComparators {
 
             return 0;
         }
+
     }
 
     /**
@@ -249,6 +253,7 @@ public class TopologyComparators {
 
             return 0;
         }
+
     }
 
     /**
@@ -273,6 +278,7 @@ public class TopologyComparators {
 
             return h1.compareToIgnoreCase(h2);
         }
+
     }
 
     /**
@@ -287,30 +293,36 @@ public class TopologyComparators {
          * Sort by latency.
          */
         BY_LATENCY {
+
             @Override
             void sort(Partitions partitions) {
                 partitions.getPartitions().sort(TopologyComparators.LatencyComparator.INSTANCE);
             }
+
         },
 
         /**
          * Do not sort.
          */
         NONE {
+
             @Override
             void sort(Partitions partitions) {
 
             }
+
         },
 
         /**
          * Randomize nodes.
          */
         RANDOMIZE {
+
             @Override
             void sort(Partitions partitions) {
                 Collections.shuffle(partitions.getPartitions());
             }
+
         };
 
         abstract void sort(Partitions partitions);
@@ -331,5 +343,7 @@ public class TopologyComparators {
 
             return BY_LATENCY;
         }
+
     }
+
 }

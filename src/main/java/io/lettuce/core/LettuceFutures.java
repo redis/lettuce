@@ -40,7 +40,7 @@ public class LettuceFutures {
      *
      * @param timeout maximum time to wait for futures to complete.
      * @param futures futures to wait for.
-     * @return {@literal true} if all futures complete in time, otherwise {@literal false}
+     * @return {@code true} if all futures complete in time, otherwise {@code false}.
      * @since 5.0
      */
     public static boolean awaitAll(Duration timeout, Future<?>... futures) {
@@ -55,7 +55,7 @@ public class LettuceFutures {
      * @param timeout maximum time to wait for futures to complete.
      * @param unit unit of time for the timeout.
      * @param futures futures to wait for.
-     * @return {@literal true} if all futures complete in time, otherwise {@literal false}
+     * @return {@code true} if all futures complete in time, otherwise {@code false}.
      */
     public static boolean awaitAll(long timeout, TimeUnit unit, Future<?>... futures) {
 
@@ -105,11 +105,10 @@ public class LettuceFutures {
      * Wait until futures are complete or the supplied timeout is reached. Commands are canceled if the timeout is reached but
      * the command is not finished. A {@code timeout} value of zero or less indicates to not time out.
      *
-     * @param cmd command to wait for
-     * @param timeout maximum time to wait for futures to complete
-     * @param unit unit of time for the timeout
-     * @param <T> Result type
-     *
+     * @param cmd command to wait for.
+     * @param timeout maximum time to wait for futures to complete.
+     * @param unit unit of time for the timeout.
+     * @param <T> Result type.
      * @return Result of the command.
      */
     public static <T> T awaitOrCancel(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
@@ -141,4 +140,5 @@ public class LettuceFutures {
             throw ExceptionFactory.createExecutionException(null, e);
         }
     }
+
 }

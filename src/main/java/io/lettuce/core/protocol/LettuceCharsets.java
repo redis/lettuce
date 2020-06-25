@@ -49,8 +49,8 @@ public class LettuceCharsets {
     /**
      * Create a ByteBuffer from a string using ASCII encoding.
      *
-     * @param s the string
-     * @return ByteBuffer
+     * @param s the string.
+     * @return ByteBuffer.
      */
     public static ByteBuffer buffer(String s) {
         return ByteBuffer.wrap(s.getBytes(ASCII));

@@ -27,7 +27,7 @@ public interface CommandLatencyCollectorOptions {
     /**
      * Create a new {@link CommandLatencyCollectorOptions} instance using default settings.
      *
-     * @return a new instance of {@link CommandLatencyCollectorOptions} instance using default settings
+     * @return a new instance of {@link CommandLatencyCollectorOptions} instance using default settings.
      * @since 5.1
      */
     static CommandLatencyCollectorOptions create() {
@@ -37,7 +37,7 @@ public interface CommandLatencyCollectorOptions {
     /**
      * Create a {@link CommandLatencyCollectorOptions} instance with disabled event emission.
      *
-     * @return a new instance of {@link CommandLatencyCollectorOptions} with disabled event emission
+     * @return a new instance of {@link CommandLatencyCollectorOptions} with disabled event emission.
      * @since 5.1
      */
     static CommandLatencyCollectorOptions disabled() {
@@ -59,8 +59,7 @@ public interface CommandLatencyCollectorOptions {
      * {@link CommandLatencyCollectorOptions}.
      *
      * @return a a {@link CommandLatencyCollectorOptions.Builder} to create new {@link CommandLatencyCollectorOptions} whose
-     *         settings are replicated from the current {@link CommandLatencyCollectorOptions}
-     *
+     *         settings are replicated from the current {@link CommandLatencyCollectorOptions}.
      * @since 5.1
      */
     CommandLatencyCollectorOptions.Builder mutate();
@@ -68,38 +67,38 @@ public interface CommandLatencyCollectorOptions {
     /**
      * Returns the target {@link TimeUnit} for the emitted latencies.
      *
-     * @return the target {@link TimeUnit} for the emitted latencies
+     * @return the target {@link TimeUnit} for the emitted latencies.
      */
     TimeUnit targetUnit();
 
     /**
      * Returns the percentiles which should be exposed in the metric.
      *
-     * @return the percentiles which should be exposed in the metric
+     * @return the percentiles which should be exposed in the metric.
      */
     double[] targetPercentiles();
 
     /**
      * Returns whether the latencies should be reset once an event is emitted.
      *
-     * @return {@literal true} if the latencies should be reset once an event is emitted.
+     * @return {@code true} if the latencies should be reset once an event is emitted.
      */
     boolean resetLatenciesAfterEvent();
 
     /**
-     * Returns whether to distinct latencies on local level. If {@literal true}, multiple connections to the same
-     * host/connection point will be recorded separately which allows to inspect every connection individually. If
-     * {@literal false}, multiple connections to the same host/connection point will be recorded together. This allows a
-     * consolidated view on one particular service.
+     * Returns whether to distinct latencies on local level. If {@code true}, multiple connections to the same host/connection
+     * point will be recorded separately which allows to inspect every connection individually. If {@code false}, multiple
+     * connections to the same host/connection point will be recorded together. This allows a consolidated view on one
+     * particular service.
      *
-     * @return {@literal true} if latencies are recorded distinct on local level (per connection)
+     * @return {@code true} if latencies are recorded distinct on local level (per connection).
      */
     boolean localDistinction();
 
     /**
      * Returns whether the latency collector is enabled.
      *
-     * @return {@literal true} if the latency collector is enabled
+     * @return {@code true} if the latency collector is enabled.
      */
     boolean isEnabled();
 
@@ -125,22 +124,22 @@ public interface CommandLatencyCollectorOptions {
         Builder enable();
 
         /**
-         * Enables per connection metrics tracking insead of per host/port. If {@literal true}, multiple connections to the same
+         * Enables per connection metrics tracking insead of per host/port. If {@code true}, multiple connections to the same
          * host/connection point will be recorded separately which allows to inspect every connection individually. If
-         * {@literal false}, multiple connections to the same host/connection point will be recorded together. This allows a
-         * consolidated view on one particular service. Defaults to {@literal false}. See
+         * {@code false}, multiple connections to the same host/connection point will be recorded together. This allows a
+         * consolidated view on one particular service. Defaults to {@code false}. See
          * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_LOCAL_DISTINCTION}.
          *
-         * @param localDistinction {@literal true} if latencies are recorded distinct on local level (per connection).
+         * @param localDistinction {@code true} if latencies are recorded distinct on local level (per connection).
          * @return this {@link Builder}.
          */
         Builder localDistinction(boolean localDistinction);
 
         /**
-         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@literal true}.
-         * See {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
+         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}. See
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
          *
-         * @param resetLatenciesAfterEvent {@literal true} if the recorded latencies should be reset once the metrics event was
+         * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
          *        emitted.
          *
          * @return this {@link Builder}.
@@ -151,7 +150,7 @@ public interface CommandLatencyCollectorOptions {
          * Sets the emitted percentiles. Defaults to 50.0, 90.0, 95.0, 99.0, 99.9}. See
          * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_TARGET_PERCENTILES}.
          *
-         * @param targetPercentiles the percentiles which should be emitted, must not be {@literal null}.
+         * @param targetPercentiles the percentiles which should be emitted, must not be {@code null}.
          *
          * @return this {@link Builder}.
          */
@@ -161,7 +160,7 @@ public interface CommandLatencyCollectorOptions {
          * Set the target unit for the latencies. Defaults to {@link TimeUnit#MILLISECONDS}. See
          * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_TARGET_UNIT}.
          *
-         * @param targetUnit the target unit, must not be {@literal null}.
+         * @param targetUnit the target unit, must not be {@code null}.
          * @return this {@link Builder}.
          *
          */
@@ -171,5 +170,7 @@ public interface CommandLatencyCollectorOptions {
          * @return a new instance of {@link CommandLatencyCollectorOptions}.
          */
         CommandLatencyCollectorOptions build();
+
     }
+
 }

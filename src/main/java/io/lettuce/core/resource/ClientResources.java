@@ -80,7 +80,7 @@ public interface ClientResources {
         /**
          * Sets the {@link CommandLatencyCollector} that can that can be used across different instances of the RedisClient.
          *
-         * @param commandLatencyCollector the command latency collector, must not be {@literal null}.
+         * @param commandLatencyCollector the command latency collector, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder commandLatencyCollector(CommandLatencyCollector commandLatencyCollector);
@@ -89,7 +89,7 @@ public interface ClientResources {
          * Sets the {@link CommandLatencyCollectorOptions} that can that can be used across different instances of the
          * RedisClient. The options are only effective if no {@code commandLatencyCollector} is provided.
          *
-         * @param commandLatencyCollectorOptions the command latency collector options, must not be {@literal null}.
+         * @param commandLatencyCollectorOptions the command latency collector options, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder commandLatencyCollectorOptions(CommandLatencyCollectorOptions commandLatencyCollectorOptions);
@@ -98,7 +98,7 @@ public interface ClientResources {
          * Sets the {@link EventPublisherOptions} to publish command latency metrics using the {@link EventBus}.
          *
          * @param commandLatencyPublisherOptions the {@link EventPublisherOptions} to publish command latency metrics using the
-         *        {@link EventBus}, must not be {@literal null}.
+         *        {@link EventBus}, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder commandLatencyPublisherOptions(EventPublisherOptions commandLatencyPublisherOptions);
@@ -116,7 +116,7 @@ public interface ClientResources {
          * Sets the {@link SocketAddressResolver} that is used to resolve {@link io.lettuce.core.RedisURI} to
          * {@link java.net.SocketAddress}. Defaults to {@link SocketAddressResolver} using the configured {@link DnsResolver}.
          *
-         * @param socketAddressResolver the socket address resolver, must not be {@literal null}.
+         * @param socketAddressResolver the socket address resolver, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          * @since 5.1
          */
@@ -126,7 +126,7 @@ public interface ClientResources {
          * Sets the {@link DnsResolver} that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
          * {@link DnsResolvers#JVM_DEFAULT}
          *
-         * @param dnsResolver the DNS resolver, must not be {@literal null}.
+         * @param dnsResolver the DNS resolver, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          * @since 4.3
          */
@@ -135,7 +135,7 @@ public interface ClientResources {
         /**
          * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
          *
-         * @param eventBus the event bus, must not be {@literal null}.
+         * @param eventBus the event bus, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder eventBus(EventBus eventBus);
@@ -146,7 +146,7 @@ public interface ClientResources {
          * {@link EventExecutorGroup} instance will not be shut down when shutting down the client resources. You have to take
          * care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
-         * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@literal null}.
+         * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup);
@@ -157,7 +157,7 @@ public interface ClientResources {
          * {@link EventLoopGroupProvider} instance will not be shut down when shutting down the client resources. You have to
          * take care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
-         * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@literal null}.
+         * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder eventLoopGroupProvider(EventLoopGroupProvider eventLoopGroupProvider);
@@ -174,7 +174,7 @@ public interface ClientResources {
         /**
          * Sets the {@link NettyCustomizer} instance to customize netty components during connection.
          *
-         * @param nettyCustomizer the netty customizer instance, must not be {@literal null}.
+         * @param nettyCustomizer the netty customizer instance, must not be {@code null}.
          * @return this
          * @since 4.4
          */
@@ -184,7 +184,7 @@ public interface ClientResources {
          * Sets the stateless reconnect {@link Delay} to delay reconnect attempts. Defaults to binary exponential delay capped
          * at {@literal 30 SECONDS}. {@code reconnectDelay} must be a stateless {@link Delay}.
          *
-         * @param reconnectDelay the reconnect delay, must not be {@literal null}.
+         * @param reconnectDelay the reconnect delay, must not be {@code null}.
          * @return this
          * @since 4.3
          */
@@ -194,7 +194,7 @@ public interface ClientResources {
          * Sets the stateful reconnect {@link Supplier} to delay reconnect attempts. Defaults to binary exponential delay capped
          * at {@literal 30 SECONDS}.
          *
-         * @param reconnectDelay the reconnect delay, must not be {@literal null}.
+         * @param reconnectDelay the reconnect delay, must not be {@code null}.
          * @return this
          * @since 4.3
          */
@@ -206,7 +206,7 @@ public interface ClientResources {
          * shutting down the client resources. You have to take care of that. This is an advanced configuration that should only
          * be used if you know what you are doing.
          *
-         * @param timer the shared {@link Timer}, must not be {@literal null}.
+         * @param timer the shared {@link Timer}, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          * @since 4.3
          */
@@ -215,7 +215,7 @@ public interface ClientResources {
         /**
          * Sets the {@link Tracing} instance to trace Redis calls.
          *
-         * @param tracing the tracer infrastructure instance, must not be {@literal null}.
+         * @param tracing the tracer infrastructure instance, must not be {@code null}.
          * @return this
          * @since 5.1
          */
@@ -225,6 +225,7 @@ public interface ClientResources {
          * @return a new instance of {@link DefaultClientResources}.
          */
         ClientResources build();
+
     }
 
     /**
@@ -232,8 +233,7 @@ public interface ClientResources {
      * {@link ClientResources}.
      *
      * @return a {@link ClientResources.Builder} to create new {@link ClientResources} whose settings are replicated from the
-     *         current {@link ClientResources}
-     *
+     *         current {@link ClientResources}.
      * @since 5.1
      */
     Builder mutate();
@@ -248,10 +248,10 @@ public interface ClientResources {
     /**
      * Shutdown the {@link ClientResources}.
      *
-     * @param quietPeriod the quiet period as described in the documentation
+     * @param quietPeriod the quiet period as described in the documentation.
      * @param timeout the maximum amount of time to wait until the executor is shutdown regardless if a task was submitted
-     *        during the quiet period
-     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}
+     *        during the quiet period.
+     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}.
      * @return eventually the success/failure of the shutdown without errors.
      */
     Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit);
@@ -264,8 +264,8 @@ public interface ClientResources {
      * You can use {@link DefaultEventLoopGroupProvider} as default implementation or implement an own
      * {@link EventLoopGroupProvider} to share existing {@link io.netty.channel.EventLoopGroup EventLoopGroup's} with lettuce.
      *
-     * @return the {@link EventLoopGroupProvider} which provides access to the particular
-     *         {@link io.netty.channel.EventLoopGroup event loop groups}
+     * @return the {@link EventLoopGroupProvider} which provides access to the particular {@link io.netty.channel.EventLoopGroup
+     *         event loop groups}.
      */
     EventLoopGroupProvider eventLoopGroupProvider();
 
@@ -273,7 +273,7 @@ public interface ClientResources {
      * Returns the computation pool used for internal operations. Such tasks are periodic Redis Cluster and Redis Sentinel
      * topology updates and scheduling of connection reconnection by {@link io.lettuce.core.protocol.ConnectionWatchdog}.
      *
-     * @return the computation pool used for internal operations
+     * @return the computation pool used for internal operations.
      */
     EventExecutorGroup eventExecutorGroup();
 
@@ -305,7 +305,7 @@ public interface ClientResources {
     /**
      * Returns the event bus used to publish events.
      *
-     * @return the event bus
+     * @return the event bus.
      */
     EventBus eventBus();
 
@@ -319,7 +319,7 @@ public interface ClientResources {
     /**
      * Returns the {@link CommandLatencyCollector}.
      *
-     * @return the command latency collector
+     * @return the command latency collector.
      */
     CommandLatencyCollector commandLatencyCollector();
 
@@ -362,4 +362,5 @@ public interface ClientResources {
      * @since 5.1
      */
     Tracing tracing();
+
 }

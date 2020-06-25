@@ -45,7 +45,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Asynchronously save the dataset to disk.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     Mono<String> bgsave();
 
@@ -59,7 +59,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Set the current connection name.
      *
-     * @param name the client name
+     * @param name the client name.
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      */
     Mono<String> clientSetname(K name);
@@ -67,16 +67,16 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Kill the connection of a client identified by ip:port.
      *
-     * @param addr ip:port
-     * @return String simple-string-reply {@code OK} if the connection exists and has been closed
+     * @param addr ip:port.
+     * @return String simple-string-reply {@code OK} if the connection exists and has been closed.
      */
     Mono<String> clientKill(String addr);
 
     /**
-     * Kill connections of clients which are filtered by {@code killArgs}
+     * Kill connections of clients which are filtered by {@code killArgs}.
      *
-     * @param killArgs args for the kill operation
-     * @return Long integer-reply number of killed connections
+     * @param killArgs args for the kill operation.
+     * @return Long integer-reply number of killed connections.
      */
     Mono<Long> clientKill(KillArgs killArgs);
 
@@ -93,7 +93,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Stop processing commands from clients for some time.
      *
-     * @param timeout the timeout value in milliseconds
+     * @param timeout the timeout value in milliseconds.
      * @return String simple-string-reply The command returns OK or an error if the timeout is invalid.
      */
     Mono<String> clientPause(long timeout);
@@ -117,23 +117,23 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Returns an array reply of details about all Redis commands.
      *
-     * @return Object array-reply
+     * @return Object array-reply.
      */
     Flux<Object> command();
 
     /**
      * Returns an array reply of details about the requested commands.
      *
-     * @param commands the commands to query for
-     * @return Object array-reply
+     * @param commands the commands to query for.
+     * @return Object array-reply.
      */
     Flux<Object> commandInfo(String... commands);
 
     /**
      * Returns an array reply of details about the requested commands.
      *
-     * @param commands the commands to query for
-     * @return Object array-reply
+     * @param commands the commands to query for.
+     * @return Object array-reply.
      */
     Flux<Object> commandInfo(CommandType... commands);
 
@@ -147,8 +147,8 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Get the value of a configuration parameter.
      *
-     * @param parameter name of the parameter
-     * @return Map&lt;String, String&gt; bulk-string-reply
+     * @param parameter name of the parameter.
+     * @return Map&lt;String, String&gt; bulk-string-reply.
      */
     Mono<Map<String, String>> configGet(String parameter);
 
@@ -170,8 +170,8 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Set a configuration parameter to the given value.
      *
-     * @param parameter the parameter name
-     * @param value the parameter value
+     * @param parameter the parameter name.
+     * @param value the parameter value.
      * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
      */
     Mono<String> configSet(String parameter, String value);
@@ -179,31 +179,31 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Return the number of keys in the selected database.
      *
-     * @return Long integer-reply
+     * @return Long integer-reply.
      */
     Mono<Long> dbsize();
 
     /**
-     * Crash and recover
+     * Crash and recover.
      *
-     * @param delay optional delay in milliseconds
-     * @return String simple-string-reply
+     * @param delay optional delay in milliseconds.
+     * @return String simple-string-reply.
      */
     Mono<String> debugCrashAndRecover(Long delay);
 
     /**
      * Get debugging information about the internal hash-table state.
      *
-     * @param db the database number
-     * @return String simple-string-reply
+     * @param db the database number.
+     * @return String simple-string-reply.
      */
     Mono<String> debugHtstats(int db);
 
     /**
      * Get debugging information about a key.
      *
-     * @param key the key
-     * @return String simple-string-reply
+     * @param key the key.
+     * @return String simple-string-reply.
      */
     Mono<String> debugObject(K key);
 
@@ -231,44 +231,44 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Restart the server gracefully.
      *
-     * @param delay optional delay in milliseconds
-     * @return String simple-string-reply
+     * @param delay optional delay in milliseconds.
+     * @return String simple-string-reply.
      */
     Mono<String> debugRestart(Long delay);
 
     /**
      * Get debugging information about the internal SDS length.
      *
-     * @param key the key
-     * @return String simple-string-reply
+     * @param key the key.
+     * @return String simple-string-reply.
      */
     Mono<String> debugSdslen(K key);
 
     /**
      * Remove all keys from all databases.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     Mono<String> flushall();
 
     /**
      * Remove all keys asynchronously from all databases.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     Mono<String> flushallAsync();
 
     /**
      * Remove all keys from the current database.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     Mono<String> flushdb();
 
     /**
      * Remove all keys asynchronously from the current database.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     Mono<String> flushdbAsync();
 
@@ -282,7 +282,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Get information and statistics about the server.
      *
-     * @param section the section type: string
+     * @param section the section type: string.
      * @return String bulk-string-reply as a collection of text lines.
      */
     Mono<String> info(String section);
@@ -312,38 +312,38 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Synchronously save the dataset to disk and then shut down the server.
      *
-     * @param save {@literal true} force save operation
+     * @param save {@code true} force save operation.
      */
     Mono<Void> shutdown(boolean save);
 
     /**
      * Make the server a replica of another instance, or promote it as master.
      *
-     * @param host the host type: string
-     * @param port the port type: string
-     * @return String simple-string-reply
+     * @param host the host type: string.
+     * @param port the port type: string.
+     * @return String simple-string-reply.
      */
     Mono<String> slaveof(String host, int port);
 
     /**
      * Promote server as master.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     Mono<String> slaveofNoOne();
 
     /**
      * Read the slow log.
      *
-     * @return Object deeply nested multi bulk replies
+     * @return Object deeply nested multi bulk replies.
      */
     Flux<Object> slowlogGet();
 
     /**
      * Read the slow log.
      *
-     * @param count the count
-     * @return Object deeply nested multi bulk replies
+     * @param count the count.
+     * @return Object deeply nested multi bulk replies.
      */
     Flux<Object> slowlogGet(int count);
 
@@ -371,4 +371,5 @@ public interface RedisServerReactiveCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     Flux<V> time();
+
 }

@@ -35,9 +35,13 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 class KnownMajorityPartitionsConsensusUnitTests {
 
     private RedisClusterNode node1 = createNode(1);
+
     private RedisClusterNode node2 = createNode(2);
+
     private RedisClusterNode node3 = createNode(3);
+
     private RedisClusterNode node4 = createNode(4);
+
     private RedisClusterNode node5 = createNode(5);
 
     @Test
@@ -135,4 +139,5 @@ class KnownMajorityPartitionsConsensusUnitTests {
 
         assertThat(Arrays.asList(partitions1, partitions2, partitions3)).contains(result);
     }
+
 }

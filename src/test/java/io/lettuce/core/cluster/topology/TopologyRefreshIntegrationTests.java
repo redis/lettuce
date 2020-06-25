@@ -68,10 +68,13 @@ import io.netty.util.concurrent.ScheduledFuture;
 class TopologyRefreshIntegrationTests extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();
+
     private final RedisClient client;
 
     private RedisClusterClient clusterClient;
+
     private RedisCommands<String, String> redis1;
+
     private RedisCommands<String, String> redis2;
 
     @Inject
@@ -81,8 +84,8 @@ class TopologyRefreshIntegrationTests extends TestSupport {
 
     @BeforeEach
     void openConnection() {
-        clusterClient = RedisClusterClient.create(client.getResources(), RedisURI.Builder
-                .redis(host, ClusterTestSettings.port1).build());
+        clusterClient = RedisClusterClient.create(client.getResources(),
+                RedisURI.Builder.redis(host, ClusterTestSettings.port1).build());
         redis1 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1).build()).sync();
         redis2 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port2).build()).sync();
     }
@@ -107,8 +110,8 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         AtomicBoolean clusterTopologyRefreshActivated = (AtomicBoolean) ReflectionTestUtils.getField(clusterClient,
                 "clusterTopologyRefreshActivated");
 
-        AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = (AtomicReference) ReflectionTestUtils.getField(
-                clusterClient, "clusterTopologyRefreshFuture");
+        AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = (AtomicReference) ReflectionTestUtils
+                .getField(clusterClient, "clusterTopologyRefreshFuture");
 
         assertThat(clusterTopologyRefreshActivated.get()).isTrue();
         assertThat((Future) clusterTopologyRefreshFuture.get()).isNotNull();
@@ -341,4 +344,5 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         }
         clusterConnection.getStatefulConnection().close();
     }
+
 }

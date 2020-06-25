@@ -31,8 +31,8 @@ public class CommandCreationException extends RedisException {
     /**
      * Create a new {@link CommandCreationException} given {@link CommandMethod} and a message.
      *
-     * @param commandMethod must not be {@literal null}.
-     * @param msg must not be {@literal null}.
+     * @param commandMethod must not be {@code null}.
+     * @param msg must not be {@code null}.
      */
     public CommandCreationException(CommandMethod commandMethod, String msg) {
 
@@ -41,9 +41,11 @@ public class CommandCreationException extends RedisException {
     }
 
     /**
+     *
      * @return the offending {@link CommandMethod}.
      */
     public CommandMethod getCommandMethod() {
         return commandMethod;
     }
+
 }

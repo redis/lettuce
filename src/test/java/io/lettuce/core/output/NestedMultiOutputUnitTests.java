@@ -34,4 +34,5 @@ class NestedMultiOutputUnitTests {
         output.setError(buffer("Oops!"));
         assertThat(output.getError()).isNotNull();
     }
+
 }

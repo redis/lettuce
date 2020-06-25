@@ -45,4 +45,5 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
     public StatefulRedisConnection<K, V> getStatefulConnection() {
         return (StatefulRedisConnection<K, V>) super.getConnection();
     }
+
 }

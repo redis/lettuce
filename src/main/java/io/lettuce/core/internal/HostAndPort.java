@@ -29,11 +29,12 @@ public class HostAndPort {
     private static final int NO_PORT = -1;
 
     public final String hostText;
+
     public final int port;
 
     /**
      *
-     * @param hostText must not be empty or {@literal null}.
+     * @param hostText must not be empty or {@code null}.
      * @param port
      */
     private HostAndPort(String hostText, int port) {
@@ -44,11 +45,11 @@ public class HostAndPort {
     }
 
     /**
-     * Create a {@link HostAndPort} of {@code host} and {@code port}
+     * Create a {@link HostAndPort} of {@code host} and {@code port}.
      *
-     * @param host the hostname
-     * @param port a valid port
-     * @return the {@link HostAndPort} of {@code host} and {@code port}
+     * @param host the hostname.
+     * @param port a valid port.
+     * @return the {@link HostAndPort} of {@code host} and {@code port}.
      */
     public static HostAndPort of(String host, int port) {
 
@@ -108,7 +109,7 @@ public class HostAndPort {
      * Temporary workaround until Redis provides IPv6 addresses in bracket notation. Allows parsing of {@code 1.2.3.4:6479} and
      * {@code dead:beef:dead:beef:affe::1:6379} into host and port. We assume the last item after the colon is a port.
      *
-     * @param hostAndPortPart the string containing the host and port
+     * @param hostAndPortPart the string containing the host and port.
      * @return the parsed {@link HostAndPort}.
      */
     public static HostAndPort parseCompat(String hostAndPortPart) {
@@ -130,7 +131,7 @@ public class HostAndPort {
 
     /**
      *
-     * @return {@literal true} if has a port.
+     * @return {@code true} if has a port.
      */
     public boolean hasPort() {
         return port != NO_PORT;
@@ -212,8 +213,8 @@ public class HostAndPort {
 
     /**
      *
-     * @param port the port number
-     * @return {@literal true} for valid port numbers.
+     * @param port the port number.
+     * @return {@code true} for valid port numbers.
      */
     private static boolean isValidPort(int port) {
         return port >= 0 && port <= 65535;
@@ -229,4 +230,5 @@ public class HostAndPort {
         }
         return sb.toString();
     }
+
 }

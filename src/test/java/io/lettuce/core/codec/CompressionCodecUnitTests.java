@@ -29,9 +29,12 @@ import org.junit.jupiter.api.Test;
 class CompressionCodecUnitTests {
 
     private String key = "key";
+
     private byte[] keyGzipBytes = new byte[] { 31, -117, 8, 0, 0, 0, 0, 0, 0, 0, -53, 78, -83, 4, 0, -87, -85, -112, -118, 3, 0,
             0, 0 };
+
     private byte[] keyDeflateBytes = new byte[] { 120, -100, -53, 78, -83, 4, 0, 2, -121, 1, 74 };
+
     private String value = "value";
 
     @Test
@@ -72,8 +75,7 @@ class CompressionCodecUnitTests {
         RedisCodec<String, String> sut = CompressionCodec.valueCompressor(StringCodec.UTF8,
                 CompressionCodec.CompressionType.DEFLATE);
 
-        assertThatThrownBy(() -> sut.decodeValue(ByteBuffer.wrap(keyGzipBytes)))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> sut.decodeValue(ByteBuffer.wrap(keyGzipBytes))).isInstanceOf(IllegalStateException.class);
     }
 
     private String toString(ByteBuffer buffer) {
@@ -86,4 +88,5 @@ class CompressionCodecUnitTests {
         buffer.get(bytes);
         return bytes;
     }
+
 }

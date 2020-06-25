@@ -39,4 +39,5 @@ public class RedisConnectionStateAdapter implements RedisConnectionStateListener
     public void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
         // empty adapter method
     }
+
 }

@@ -27,10 +27,11 @@ public class CommandMethodSyntaxException extends CommandCreationException {
     /**
      * Create a new {@link CommandMethodSyntaxException} given {@link CommandMethod} and a message.
      *
-     * @param commandMethod must not be {@literal null}.
-     * @param msg must not be {@literal null}.
+     * @param commandMethod must not be {@code null}.
+     * @param msg must not be {@code null}.
      */
     public CommandMethodSyntaxException(CommandMethod commandMethod, String msg) {
         super(commandMethod, msg);
     }
+
 }

@@ -36,6 +36,7 @@ public class ScanCursor {
     public static final ScanCursor INITIAL = new ImmutableScanCursor("0", false);
 
     private String cursor;
+
     private boolean finished;
 
     /**
@@ -57,16 +58,16 @@ public class ScanCursor {
 
     /**
      *
-     * @return cursor id
+     * @return cursor id.
      */
     public String getCursor() {
         return cursor;
     }
 
     /**
-     * Set the cursor
+     * Set the cursor.
      *
-     * @param cursor the cursor id
+     * @param cursor the cursor id.
      */
     public void setCursor(String cursor) {
         LettuceAssert.notEmpty(cursor, "Cursor must not be empty");
@@ -76,7 +77,7 @@ public class ScanCursor {
 
     /**
      *
-     * @return true if the scan operation of this cursor is finished.
+     * @return {@code true} if the scan operation of this cursor is finished.
      */
     public boolean isFinished() {
         return finished;
@@ -89,8 +90,8 @@ public class ScanCursor {
     /**
      * Creates a Scan-Cursor reference.
      *
-     * @param cursor the cursor id
-     * @return ScanCursor
+     * @param cursor the cursor id.
+     * @return ScanCursor.
      */
     public static ScanCursor of(String cursor) {
         ScanCursor scanCursor = new ScanCursor();
@@ -113,5 +114,7 @@ public class ScanCursor {
         public void setFinished(boolean finished) {
             throw new UnsupportedOperationException("setFinished not supported on " + getClass().getSimpleName());
         }
+
     }
+
 }

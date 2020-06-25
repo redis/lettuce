@@ -46,10 +46,11 @@ class DefaultCommandLatencyCollectorOptionsUnitTests {
     @Test
     void testBuilder() {
 
-        DefaultCommandLatencyCollectorOptions sut = DefaultCommandLatencyCollectorOptions.builder()
-                .targetUnit(TimeUnit.HOURS).targetPercentiles(new double[] { 1, 2, 3 }).build();
+        DefaultCommandLatencyCollectorOptions sut = DefaultCommandLatencyCollectorOptions.builder().targetUnit(TimeUnit.HOURS)
+                .targetPercentiles(new double[] { 1, 2, 3 }).build();
 
         assertThat(sut.targetPercentiles()).hasSize(3);
         assertThat(sut.targetUnit()).isEqualTo(TimeUnit.HOURS);
     }
+
 }

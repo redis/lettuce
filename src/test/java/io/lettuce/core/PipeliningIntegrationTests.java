@@ -41,6 +41,7 @@ import io.lettuce.test.LettuceExtension;
 class PipeliningIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final StatefulRedisConnection<String, String> connection;
 
     @Inject
@@ -123,4 +124,5 @@ class PipeliningIntegrationTests extends TestSupport {
     String key(int i) {
         return key + "-" + i;
     }
+
 }

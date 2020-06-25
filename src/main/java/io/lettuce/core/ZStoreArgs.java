@@ -42,6 +42,7 @@ public class ZStoreArgs implements CompositeArgument {
     }
 
     private List<Double> weights;
+
     private Aggregate aggregate;
 
     /**
@@ -106,14 +107,15 @@ public class ZStoreArgs implements CompositeArgument {
         public static ZStoreArgs max() {
             return new ZStoreArgs().max();
         }
+
     }
 
     /**
      * Specify a multiplication factor for each input sorted set.
      *
-     * @param weights must not be {@literal null}.
+     * @param weights must not be {@code null}.
      * @return {@code this} {@link ZStoreArgs}.
-     * @deprecated use {@link #weights(double...)}
+     * @deprecated use {@link #weights(double...)}.
      */
     @Deprecated
     public static ZStoreArgs weights(long[] weights) {
@@ -126,7 +128,7 @@ public class ZStoreArgs implements CompositeArgument {
     /**
      * Specify a multiplication factor for each input sorted set.
      *
-     * @param weights must not be {@literal null}.
+     * @param weights must not be {@code null}.
      * @return {@code this} {@link ZStoreArgs}.
      */
     public ZStoreArgs weights(double... weights) {
@@ -210,4 +212,5 @@ public class ZStoreArgs implements CompositeArgument {
             }
         }
     }
+
 }

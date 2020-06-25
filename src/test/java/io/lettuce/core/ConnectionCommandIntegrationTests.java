@@ -43,6 +43,7 @@ import io.lettuce.test.WithPassword;
 class ConnectionCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -56,19 +57,19 @@ class ConnectionCommandIntegrationTests extends TestSupport {
 
         WithPassword.run(client, () -> {
             RedisCommands<String, String> connection = client.connect().sync();
-                try {
-                    connection.ping();
-                    fail("Server doesn't require authentication");
-                } catch (RedisException e) {
-                    assertThat(e.getMessage()).isEqualTo("NOAUTH Authentication required.");
-                    assertThat(connection.auth(passwd)).isEqualTo("OK");
-                    assertThat(connection.set(key, value)).isEqualTo("OK");
-                }
+            try {
+                connection.ping();
+                fail("Server doesn't require authentication");
+            } catch (RedisException e) {
+                assertThat(e.getMessage()).isEqualTo("NOAUTH Authentication required.");
+                assertThat(connection.auth(passwd)).isEqualTo("OK");
+                assertThat(connection.set(key, value)).isEqualTo("OK");
+            }
 
-                RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
-                RedisCommands<String, String> authConnection = client.connect(redisURI).sync();
-                authConnection.ping();
-                authConnection.getStatefulConnection().close();
+            RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
+            RedisCommands<String, String> authConnection = client.connect(redisURI).sync();
+            authConnection.ping();
+            authConnection.getStatefulConnection().close();
         });
 
     }
@@ -105,12 +106,12 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         WithPassword.run(client, () -> {
 
             RedisCommands<String, String> connection = client.connect().sync();
-                assertThat(connection.auth(passwd)).isEqualTo("OK");
-                assertThat(connection.set(key, value)).isEqualTo("OK");
-                connection.quit();
+            assertThat(connection.auth(passwd)).isEqualTo("OK");
+            assertThat(connection.set(key, value)).isEqualTo("OK");
+            connection.quit();
 
             Delay.delay(Duration.ofMillis(100));
-                assertThat(connection.get(key)).isEqualTo(value);
+            assertThat(connection.get(key)).isEqualTo(value);
 
             connection.getStatefulConnection().close();
         });
@@ -173,4 +174,5 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         assertThat(LettuceStrings.string(Double.POSITIVE_INFINITY)).isEqualTo("+inf");
         assertThat(LettuceStrings.string(Double.NEGATIVE_INFINITY)).isEqualTo("-inf");
     }
+
 }

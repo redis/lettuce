@@ -72,8 +72,8 @@ class CommandHandlerUnitTests {
 
     private CommandHandler sut;
 
-    private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<>(
-            StringCodec.UTF8), null);
+    private final Command<String, String, String> command = new Command<>(CommandType.APPEND,
+            new StatusOutput<>(StringCodec.UTF8), null);
 
     @Mock
     private ChannelHandlerContext context;
@@ -373,8 +373,8 @@ class CommandHandlerUnitTests {
     @Test
     void shouldWriteActiveCommandsInBatch() throws Exception {
 
-        Command<String, String, String> anotherCommand = new Command<>(CommandType.APPEND,
-                new StatusOutput<>(StringCodec.UTF8), null);
+        Command<String, String, String> anotherCommand = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8),
+                null);
 
         List<Command<String, String, String>> commands = Arrays.asList(command, anotherCommand);
         when(promise.isVoid()).thenReturn(true);
@@ -388,7 +388,8 @@ class CommandHandlerUnitTests {
     @SuppressWarnings("unchecked")
     void shouldWriteActiveCommandsInMixedBatch() throws Exception {
 
-        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8), null);
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8),
+                null);
         command.cancel();
         when(promise.isVoid()).thenReturn(true);
 
@@ -489,4 +490,5 @@ class CommandHandlerUnitTests {
         assertThat(internalBuffer.writerIndex()).isEqualTo(0);
         sut.channelUnregistered(context);
     }
+
 }

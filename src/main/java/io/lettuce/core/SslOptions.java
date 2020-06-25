@@ -50,18 +50,27 @@ public class SslOptions {
     public static final SslProvider DEFAULT_SSL_PROVIDER = SslProvider.JDK;
 
     private final String keyStoreType;
+
     private final SslProvider sslProvider;
+
     private final URL keystore;
+
     private final char[] keystorePassword;
+
     private final URL truststore;
+
     private final char[] truststorePassword;
+
     private final String[] protocols;
+
     private final String[] cipherSuites;
 
     private final Consumer<SslContextBuilder> sslContextBuilderCustomizer;
+
     private final Supplier<SSLParameters> sslParametersSupplier;
 
     private final KeystoreAction keymanager;
+
     private final KeystoreAction trustmanager;
 
     protected SslOptions(Builder builder) {
@@ -99,10 +108,10 @@ public class SslOptions {
     }
 
     /**
-     * Create a copy of {@literal options}
+     * Create a copy of {@literal options}.
      *
-     * @param options the original
-     * @return A new instance of {@link SslOptions} containing the values of {@literal options}
+     * @param options the original.
+     * @return A new instance of {@link SslOptions} containing the values of {@literal options}.
      */
     public static SslOptions copyOf(SslOptions options) {
         return new SslOptions(options);
@@ -134,18 +143,27 @@ public class SslOptions {
         private SslProvider sslProvider = DEFAULT_SSL_PROVIDER;
 
         private String keyStoreType;
+
         private URL keystore;
+
         private char[] keystorePassword = new char[0];
+
         private URL truststore;
+
         private char[] truststorePassword = new char[0];
+
         private String[] protocols = null;
+
         private String[] cipherSuites = null;
+
         private Consumer<SslContextBuilder> sslContextBuilderCustomizer = contextBuilder -> {
 
         };
+
         private Supplier<SSLParameters> sslParametersSupplier = SSLParameters::new;
 
         private KeystoreAction keymanager = KeystoreAction.NO_OP;
+
         private KeystoreAction trustmanager = KeystoreAction.NO_OP;
 
         private Builder() {
@@ -203,7 +221,7 @@ public class SslOptions {
         /**
          * Sets the KeyStore type. Defaults to {@link KeyStore#getDefaultType()} if not set.
          *
-         * @param keyStoreType the keystore type to use, must not be {@literal null}.
+         * @param keyStoreType the keystore type to use, must not be {@code null}.
          * @return {@code this}
          * @since 5.3
          */
@@ -219,7 +237,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The keystore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param keystore the keystore file, must not be {@literal null}.
+         * @param keystore the keystore file, must not be {@code null}.
          * @return {@code this}
          * @since 4.4
          */
@@ -232,7 +250,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The keystore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param keystore the keystore file, must not be {@literal null}.
+         * @param keystore the keystore file, must not be {@code null}.
          * @param keystorePassword the keystore password. May be empty to omit password and the keystore integrity check.
          * @return {@code this}
          * @since 4.4
@@ -251,7 +269,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The keystore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param keystore the keystore URL, must not be {@literal null}.
+         * @param keystore the keystore URL, must not be {@code null}.
          * @return {@code this}
          * @since 4.4
          */
@@ -264,7 +282,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The keystore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param keystore the keystore file, must not be {@literal null}.
+         * @param keystore the keystore file, must not be {@code null}.
          * @return {@code this}
          * @since 4.4
          */
@@ -283,7 +301,7 @@ public class SslOptions {
          *
          * @param keyCertChainFile an X.509 certificate chain file in PEM format.
          * @param keyFile a PKCS#8 private key file in PEM format.
-         * @param keyPassword the password of the {@code keyFile}, or {@literal null} if it's not password-protected.
+         * @param keyPassword the password of the {@code keyFile}, or {@code null} if it's not password-protected.
          * @return {@code this}
          * @since 5.3
          */
@@ -307,7 +325,7 @@ public class SslOptions {
          *
          * @param keyCertChain an {@link Resource} for a X.509 certificate chain in PEM format.
          * @param key an {@link Resource} for a PKCS#8 private key in PEM format.
-         * @param keyPassword the password of the {@code keyFile}, or {@literal null} if it's not password-protected.
+         * @param keyPassword the password of the {@code keyFile}, or {@code null} if it's not password-protected.
          * @return {@code this}
          * @since 5.3
          * @see Resource
@@ -350,7 +368,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The keystore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param resource the provider that opens a {@link InputStream} to the keystore file, must not be {@literal null}.
+         * @param resource the provider that opens a {@link InputStream} to the keystore file, must not be {@code null}.
          * @param keystorePassword the keystore password. May be empty to omit password and the keystore integrity check.
          * @return {@code this}
          * @since 5.3
@@ -391,7 +409,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The truststore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param truststore the truststore file, must not be {@literal null}.
+         * @param truststore the truststore file, must not be {@code null}.
          * @return {@code this}
          */
         public Builder truststore(File truststore) {
@@ -403,7 +421,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The truststore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param truststore the truststore file, must not be {@literal null}.
+         * @param truststore the truststore file, must not be {@code null}.
          * @param truststorePassword the truststore password. May be empty to omit password and the truststore integrity check.
          * @return {@code this}
          */
@@ -421,7 +439,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The truststore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param truststore the truststore file, must not be {@literal null}.
+         * @param truststore the truststore file, must not be {@code null}.
          * @return {@code this}
          */
         public Builder truststore(URL truststore) {
@@ -433,7 +451,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The truststore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param truststore the truststore file, must not be {@literal null}.
+         * @param truststore the truststore file, must not be {@code null}.
          * @param truststorePassword the truststore password. May be empty to omit password and the truststore integrity check.
          * @return {@code this}
          */
@@ -510,7 +528,7 @@ public class SslOptions {
          * {@link java.security.KeyStore} which is {@link KeyStore#getDefaultType()} by default. The truststore is reloaded on
          * each connection attempt that allows to replace certificates during runtime.
          *
-         * @param resource the provider that opens a {@link InputStream} to the keystore file, must not be {@literal null}.
+         * @param resource the provider that opens a {@link InputStream} to the keystore file, must not be {@code null}.
          * @param truststorePassword the truststore password. May be empty to omit password and the truststore integrity check.
          * @return {@code this}
          */
@@ -568,6 +586,7 @@ public class SslOptions {
         public SslOptions build() {
             return new SslOptions(this);
         }
+
     }
 
     /**
@@ -623,8 +642,7 @@ public class SslOptions {
      * Returns a builder to create new {@link SslOptions} whose settings are replicated from the current {@link SslOptions}.
      *
      * @return a {@link SslOptions.Builder} to create new {@link SslOptions} whose settings are replicated from the current
-     *         {@link SslOptions}
-     *
+     *         {@link SslOptions}.
      * @since 5.3
      */
     public SslOptions.Builder mutate() {
@@ -649,6 +667,7 @@ public class SslOptions {
     }
 
     /**
+     *
      * @return the configured {@link SslProvider}.
      */
     @Deprecated
@@ -657,6 +676,7 @@ public class SslOptions {
     }
 
     /**
+     *
      * @return the keystore {@link URL}.
      * @deprecated since 5.3, {@link javax.net.ssl.KeyManager} is configured via {@link #createSslContextBuilder()}.
      */
@@ -666,20 +686,23 @@ public class SslOptions {
     }
 
     /**
-     * @return the set of protocols
+     *
+     * @return the set of protocols.
      */
     public String[] getProtocols() {
         return protocols;
     }
 
     /**
-     * @return the set of cipher suites
+     *
+     * @return the set of cipher suites.
      */
     public String[] getCipherSuites() {
         return cipherSuites;
     }
 
     /**
+     *
      * @return the password for the keystore. May be empty.
      * @deprecated since 5.3, {@link javax.net.ssl.KeyManager} is configured via {@link #createSslContextBuilder()}.
      */
@@ -689,6 +712,7 @@ public class SslOptions {
     }
 
     /**
+     *
      * @return the truststore {@link URL}.
      * @deprecated since 5.3, {@link javax.net.ssl.TrustManager} is configured via {@link #createSslContextBuilder()}.
      */
@@ -698,6 +722,7 @@ public class SslOptions {
     }
 
     /**
+     *
      * @return the password for the truststore. May be empty.
      * @deprecated since 5.3, {@link javax.net.ssl.TrustManager} is configured via {@link #createSslContextBuilder()}.
      */
@@ -757,6 +782,7 @@ public class SslOptions {
         };
 
         void accept(SslContextBuilder sslContextBuilder, String keyStoreType) throws IOException, GeneralSecurityException;
+
     }
 
     /**
@@ -801,5 +827,7 @@ public class SslOptions {
          * @throws IOException
          */
         InputStream get() throws IOException;
+
     }
+
 }

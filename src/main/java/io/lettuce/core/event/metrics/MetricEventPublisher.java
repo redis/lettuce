@@ -31,9 +31,9 @@ public interface MetricEventPublisher {
     void emitMetricsEvent();
 
     /**
-     * Returns {@literal true} if the metric collector is enabled.
+     * Returns {@code true} if the metric collector is enabled.
      *
-     * @return {@literal true} if the metric collector is enabled
+     * @return {@code true} if the metric collector is enabled.
      */
     boolean isEnabled();
 
@@ -41,4 +41,5 @@ public interface MetricEventPublisher {
      * Shut down the event publisher.
      */
     void shutdown();
+
 }

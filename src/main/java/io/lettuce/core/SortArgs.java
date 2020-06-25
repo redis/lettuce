@@ -37,15 +37,20 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class SortArgs implements CompositeArgument {
 
     private String by;
+
     private Limit limit = Limit.unlimited();
+
     private List<String> get;
+
     private CommandKeyword order;
+
     private boolean alpha;
 
     /**
      * Builder entry points for {@link SortArgs}.
      */
     public static class Builder {
+
         /**
          * Utility constructor.
          */
@@ -55,7 +60,7 @@ public class SortArgs implements CompositeArgument {
         /**
          * Creates new {@link SortArgs} setting {@literal PATTERN}.
          *
-         * @param pattern must not be {@literal null}.
+         * @param pattern must not be {@code null}.
          * @return new {@link SortArgs} with {@literal PATTERN} set.
          * @see SortArgs#by(String)
          */
@@ -78,7 +83,7 @@ public class SortArgs implements CompositeArgument {
         /**
          * Creates new {@link SortArgs} setting {@literal GET}.
          *
-         * @param pattern must not be {@literal null}.
+         * @param pattern must not be {@code null}.
          * @return new {@link SortArgs} with {@literal GET} set.
          * @see SortArgs#by(String)
          */
@@ -115,6 +120,7 @@ public class SortArgs implements CompositeArgument {
         public static SortArgs alpha() {
             return new SortArgs().alpha();
         }
+
     }
 
     /**
@@ -146,7 +152,7 @@ public class SortArgs implements CompositeArgument {
     /**
      * Limit the number of returned elements.
      *
-     * @param limit must not be {@literal null}.
+     * @param limit must not be {@code null}.
      * @return {@code this} {@link SortArgs}.
      */
     public SortArgs limit(Limit limit) {
@@ -160,7 +166,7 @@ public class SortArgs implements CompositeArgument {
     /**
      * Retrieve external keys during sort. {@literal GET} supports {@code #} and {@code *} wildcards.
      *
-     * @param pattern must not be {@literal null}.
+     * @param pattern must not be {@code null}.
      * @return {@code this} {@link SortArgs}.
      */
     public SortArgs get(String pattern) {
@@ -244,4 +250,5 @@ public class SortArgs implements CompositeArgument {
             args.addKey(store);
         }
     }
+
 }

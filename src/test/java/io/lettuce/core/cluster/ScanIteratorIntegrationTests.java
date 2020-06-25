@@ -44,6 +44,7 @@ import io.lettuce.test.LettuceExtension;
 class ScanIteratorIntegrationTests extends TestSupport {
 
     private final StatefulRedisClusterConnection<String, String> connection;
+
     private final RedisClusterCommands<String, String> redis;
 
     @Inject
@@ -266,4 +267,5 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         assertThat(values).containsAll(values);
     }
+
 }

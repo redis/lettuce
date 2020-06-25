@@ -30,6 +30,7 @@ import io.lettuce.core.resource.DefaultClientResources;
 public class ClientResourcesFactoryBean extends AbstractFactoryBean<ClientResources> {
 
     private int ioThreadPoolSize = DefaultClientResources.DEFAULT_IO_THREADS;
+
     private int computationThreadPoolSize = DefaultClientResources.DEFAULT_COMPUTATION_THREADS;
 
     public int getIoThreadPoolSize() {
@@ -39,7 +40,7 @@ public class ClientResourcesFactoryBean extends AbstractFactoryBean<ClientResour
     /**
      * Sets the thread pool size (number of threads to use) for I/O operations (default value is the number of CPUs).
      *
-     * @param ioThreadPoolSize the thread pool size
+     * @param ioThreadPoolSize the thread pool size.
      */
     public void setIoThreadPoolSize(int ioThreadPoolSize) {
         this.ioThreadPoolSize = ioThreadPoolSize;
@@ -52,7 +53,7 @@ public class ClientResourcesFactoryBean extends AbstractFactoryBean<ClientResour
     /**
      * Sets the thread pool size (number of threads to use) for computation operations (default value is the number of CPUs).
      *
-     * @param computationThreadPoolSize the thread pool size
+     * @param computationThreadPoolSize the thread pool size.
      */
     public void setComputationThreadPoolSize(int computationThreadPoolSize) {
         this.computationThreadPoolSize = computationThreadPoolSize;
@@ -78,4 +79,5 @@ public class ClientResourcesFactoryBean extends AbstractFactoryBean<ClientResour
     public boolean isSingleton() {
         return true;
     }
+
 }

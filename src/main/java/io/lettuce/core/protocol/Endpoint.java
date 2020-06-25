@@ -35,21 +35,21 @@ public interface Endpoint {
     /**
      * Notify about channel activation.
      *
-     * @param channel the channel
+     * @param channel the channel.
      */
     void notifyChannelActive(Channel channel);
 
     /**
      * Notify about channel deactivation.
      *
-     * @param channel the channel
+     * @param channel the channel.
      */
     void notifyChannelInactive(Channel channel);
 
     /**
-     * Notify about an exception occured in channel/command processing
+     * Notify about an exception occurred in channel/command processing.
      *
-     * @param t the Exception
+     * @param t the Exception.
      */
     void notifyException(Throwable t);
 

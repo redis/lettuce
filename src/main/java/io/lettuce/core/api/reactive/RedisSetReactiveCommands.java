@@ -37,8 +37,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Add one or more members to a set.
      *
-     * @param key the key
-     * @param members the member type: value
+     * @param key the key.
+     * @param members the member type: value.
      * @return Long integer-reply the number of elements that were added to the set, not including all the elements already
      *         present into the set.
      */
@@ -47,8 +47,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Get the number of members in a set.
      *
-     * @param key the key
-     * @return Long integer-reply the cardinality (number of elements) of the set, or {@literal false} if {@code key} does not
+     * @param key the key.
+     * @return Long integer-reply the cardinality (number of elements) of the set, or {@code false} if {@code key} does not
      *         exist.
      */
     Mono<Long> scard(K key);
@@ -56,7 +56,7 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Subtract multiple sets.
      *
-     * @param keys the key
+     * @param keys the key.
      * @return V array-reply list with members of the resulting set.
      */
     Flux<V> sdiff(K... keys);
@@ -64,8 +64,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Subtract multiple sets.
      *
-     * @param channel the channel
-     * @param keys the keys
+     * @param channel the channel.
+     * @param keys the keys.
      * @return Long count of members of the resulting set.
      */
     Mono<Long> sdiff(ValueStreamingChannel<V> channel, K... keys);
@@ -73,8 +73,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Subtract multiple sets and store the resulting set in a key.
      *
-     * @param destination the destination type: key
-     * @param keys the key
+     * @param destination the destination type: key.
+     * @param keys the key.
      * @return Long integer-reply the number of elements in the resulting set.
      */
     Mono<Long> sdiffstore(K destination, K... keys);
@@ -82,7 +82,7 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Intersect multiple sets.
      *
-     * @param keys the key
+     * @param keys the key.
      * @return V array-reply list with members of the resulting set.
      */
     Flux<V> sinter(K... keys);
@@ -90,8 +90,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Intersect multiple sets.
      *
-     * @param channel the channel
-     * @param keys the keys
+     * @param channel the channel.
+     * @param keys the keys.
      * @return Long count of members of the resulting set.
      */
     Mono<Long> sinter(ValueStreamingChannel<V> channel, K... keys);
@@ -99,8 +99,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Intersect multiple sets and store the resulting set in a key.
      *
-     * @param destination the destination type: key
-     * @param keys the key
+     * @param destination the destination type: key.
+     * @param keys the key.
      * @return Long integer-reply the number of elements in the resulting set.
      */
     Mono<Long> sinterstore(K destination, K... keys);
@@ -108,24 +108,24 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Determine if a given value is a member of a set.
      *
-     * @param key the key
-     * @param member the member type: value
+     * @param key the key.
+     * @param member the member type: value.
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the element is a member of the set. {@literal false} if the element is not a member of the
-     *         set, or if {@code key} does not exist.
+     *         {@code true} if the element is a member of the set. {@code false} if the element is not a member of the set, or
+     *         if {@code key} does not exist.
      */
     Mono<Boolean> sismember(K key, V member);
 
     /**
      * Move a member from one set to another.
      *
-     * @param source the source key
-     * @param destination the destination type: key
-     * @param member the member type: value
+     * @param source the source key.
+     * @param destination the destination type: key.
+     * @param member the member type: value.
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the element is moved. {@literal false} if the element is not a member of {@code source} and no
+     *         {@code true} if the element is moved. {@code false} if the element is not a member of {@code source} and no
      *         operation was performed.
      */
     Mono<Boolean> smove(K source, K destination, V member);
@@ -133,7 +133,7 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Get all the members in a set.
      *
-     * @param key the key
+     * @param key the key.
      * @return V array-reply all elements of the set.
      */
     Flux<V> smembers(K key);
@@ -141,8 +141,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Get all the members in a set.
      *
-     * @param channel the channel
-     * @param key the keys
+     * @param channel the channel.
+     * @param key the keys.
      * @return Long count of members of the resulting set.
      */
     Mono<Long> smembers(ValueStreamingChannel<V> channel, K key);
@@ -150,46 +150,45 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Remove and return a random member from a set.
      *
-     * @param key the key
-     * @return V bulk-string-reply the removed element, or {@literal null} when {@code key} does not exist.
+     * @param key the key.
+     * @return V bulk-string-reply the removed element, or {@code null} when {@code key} does not exist.
      */
     Mono<V> spop(K key);
 
     /**
      * Remove and return one or multiple random members from a set.
      *
-     * @param key the key
-     * @param count number of members to pop
-     * @return V bulk-string-reply the removed element, or {@literal null} when {@code key} does not exist.
+     * @param key the key.
+     * @param count number of members to pop.
+     * @return V bulk-string-reply the removed element, or {@code null} when {@code key} does not exist.
      */
     Flux<V> spop(K key, long count);
 
     /**
      * Get one random member from a set.
      *
-     * @param key the key
-     *
+     * @param key the key.
      * @return V bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply with the
-     *         randomly selected element, or {@literal null} when {@code key} does not exist.
+     *         randomly selected element, or {@code null} when {@code key} does not exist.
      */
     Mono<V> srandmember(K key);
 
     /**
      * Get one or multiple random members from a set.
      *
-     * @param key the key
-     * @param count the count type: long
-     * @return V bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply
-     *         with the randomly selected element, or {@literal null} when {@code key} does not exist.
+     * @param key the key.
+     * @param count the count type: long.
+     * @return V bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply with the
+     *         randomly selected element, or {@code null} when {@code key} does not exist.
      */
     Flux<V> srandmember(K key, long count);
 
     /**
      * Get one or multiple random members from a set.
      *
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
-     * @param count the count
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
+     * @param count the count.
      * @return Long count of members of the resulting set.
      */
     Mono<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count);
@@ -197,8 +196,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Remove one or more members from a set.
      *
-     * @param key the key
-     * @param members the member type: value
+     * @param key the key.
+     * @param members the member type: value.
      * @return Long integer-reply the number of members that were removed from the set, not including non existing members.
      */
     Mono<Long> srem(K key, V... members);
@@ -206,7 +205,7 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Add multiple sets.
      *
-     * @param keys the key
+     * @param keys the key.
      * @return V array-reply list with members of the resulting set.
      */
     Flux<V> sunion(K... keys);
@@ -214,8 +213,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Add multiple sets.
      *
-     * @param channel streaming channel that receives a call for every value
-     * @param keys the keys
+     * @param channel streaming channel that receives a call for every value.
+     * @param keys the keys.
      * @return Long count of members of the resulting set.
      */
     Mono<Long> sunion(ValueStreamingChannel<V> channel, K... keys);
@@ -223,8 +222,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Add multiple sets and store the resulting set in a key.
      *
-     * @param destination the destination type: key
-     * @param keys the key
+     * @param destination the destination type: key.
+     * @param keys the key.
      * @return Long integer-reply the number of elements in the resulting set.
      */
     Mono<Long> sunionstore(K destination, K... keys);
@@ -232,7 +231,7 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Incrementally iterate Set elements.
      *
-     * @param key the key
+     * @param key the key.
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
     Mono<ValueScanCursor<V>> sscan(K key);
@@ -240,8 +239,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Incrementally iterate Set elements.
      *
-     * @param key the key
-     * @param scanArgs scan arguments
+     * @param key the key.
+     * @param scanArgs scan arguments.
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
     Mono<ValueScanCursor<V>> sscan(K key, ScanArgs scanArgs);
@@ -249,9 +248,9 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Incrementally iterate Set elements.
      *
-     * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
-     * @param scanArgs scan arguments
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
     Mono<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
@@ -259,8 +258,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Incrementally iterate Set elements.
      *
-     * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return ValueScanCursor&lt;V&gt; scan cursor.
      */
     Mono<ValueScanCursor<V>> sscan(K key, ScanCursor scanCursor);
@@ -268,8 +267,8 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Incrementally iterate Set elements.
      *
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
      * @return StreamScanCursor scan cursor.
      */
     Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key);
@@ -277,9 +276,9 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Incrementally iterate Set elements.
      *
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
-     * @param scanArgs scan arguments
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
+     * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
     Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
@@ -287,10 +286,10 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Incrementally iterate Set elements.
      *
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
-     * @param scanArgs scan arguments
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
     Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
@@ -298,10 +297,11 @@ public interface RedisSetReactiveCommands<K, V> {
     /**
      * Incrementally iterate Set elements.
      *
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
      */
     Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
+
 }

@@ -41,21 +41,29 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class RedisStateMachine {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisStateMachine.class);
+
     private static final ByteBuffer QUEUED = buffer("QUEUED");
 
     static class State {
+
         enum Type {
             SINGLE, ERROR, INTEGER, BULK, MULTI, BYTES
         }
 
         Type type = null;
+
         int count = -1;
+
     }
 
     private final State[] stack = new State[32];
+
     private final boolean debugEnabled = logger.isDebugEnabled();
+
     private final LongProcessor longProcessor = new LongProcessor();
+
     private final ByteBuf responseElementBuffer = PooledByteBufAllocator.DEFAULT.buffer(1024);
+
     private final AtomicBoolean closed = new AtomicBoolean();
 
     private int stackElements;
@@ -71,7 +79,7 @@ public class RedisStateMachine {
      *
      * @param buffer Buffer containing data from the server.
      * @param output Current command output.
-     * @return true if a complete response was read.
+     * @return {@code true} if a complete response was read.
      */
     public boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output) {
         return decode(buffer, null, output);
@@ -81,9 +89,9 @@ public class RedisStateMachine {
      * Attempt to decode a redis response and return a flag indicating whether a complete response was read.
      *
      * @param buffer Buffer containing data from the server.
-     * @param command the command itself
+     * @param command the command itself.
      * @param output Current command output.
-     * @return true if a complete response was read.
+     * @return {@code true} if a complete response was read.
      */
     public boolean decode(ByteBuf buffer, RedisCommand<?, ?, ?> command, CommandOutput<?, ?, ?> output) {
         int length, end;
@@ -330,6 +338,7 @@ public class RedisStateMachine {
     }
 
     /**
+     *
      * @param stack
      * @return number of stack elements.
      */
@@ -338,8 +347,9 @@ public class RedisStateMachine {
     }
 
     /**
+     *
      * @param stack
-     * @return true if the stack is empty.
+     * @return {@code true} if the stack is empty.
      */
     private boolean isEmpty(State[] stack) {
         return stackElements == 0;
@@ -429,7 +439,9 @@ public class RedisStateMachine {
     static class LongProcessor implements ByteProcessor {
 
         long result;
+
         boolean negative;
+
         boolean first;
 
         public long getValue(ByteBuf buffer, int start, int end) {
@@ -468,5 +480,7 @@ public class RedisStateMachine {
 
             return true;
         }
+
     }
+
 }

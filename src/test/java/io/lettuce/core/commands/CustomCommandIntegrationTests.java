@@ -61,8 +61,8 @@ public class CustomCommandIntegrationTests extends TestSupport {
     @Test
     void dispatchSet() {
 
-        String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(
-                StringCodec.UTF8).addKey(key).addValue(value));
+        String response = redis.dispatch(MyCommands.SET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key).addValue(value));
 
         assertThat(response).isEqualTo("OK");
     }
@@ -79,17 +79,16 @@ public class CustomCommandIntegrationTests extends TestSupport {
     void dispatchShouldFailForWrongDataType() {
 
         redis.hset(key, key, value);
-        assertThatThrownBy(
-                () -> redis.dispatch(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
-                        new CommandArgs<>(StringCodec.UTF8).addKey(key))).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> redis.dispatch(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key))).isInstanceOf(RedisCommandExecutionException.class);
     }
 
     @Test
     void dispatchTransactions() {
 
         redis.multi();
-        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(
-                StringCodec.UTF8).addKey(key).addValue(value));
+        String response = redis.dispatch(CommandType.SET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key).addValue(value));
 
         TransactionResult exec = redis.exec();
 
@@ -166,6 +165,7 @@ public class CustomCommandIntegrationTests extends TestSupport {
     }
 
     public enum MyCommands implements ProtocolKeyword {
+
         PING, SET, INFO;
 
         private final byte name[];
@@ -179,5 +179,7 @@ public class CustomCommandIntegrationTests extends TestSupport {
         public byte[] getBytes() {
             return name;
         }
+
     }
+
 }

@@ -48,14 +48,21 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements StatefulRedisConnection<K, V> {
 
     protected final RedisCodec<K, V> codec;
+
     protected final RedisCommands<K, V> sync;
+
     protected final RedisAsyncCommandsImpl<K, V> async;
+
     protected final RedisReactiveCommandsImpl<K, V> reactive;
 
     protected MultiOutput<K, V> multi;
+
     private char[] password;
+
     private int db;
+
     private boolean readOnly;
+
     private String clientName;
 
     /**
@@ -83,7 +90,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     /**
      * Create a new instance of {@link RedisCommands}. Can be overriden to extend.
      *
-     * @return a new instance
+     * @return a new instance.
      */
     protected RedisCommands<K, V> newRedisSyncCommandsImpl() {
         return syncHandler(async(), RedisCommands.class, RedisClusterCommands.class);
@@ -92,7 +99,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     /**
      * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overriden to extend.
      *
-     * @return a new instance
+     * @return a new instance.
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
         return new RedisAsyncCommandsImpl<>(this, codec);
@@ -106,7 +113,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     /**
      * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
      *
-     * @return a new instance
+     * @return a new instance.
      */
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisReactiveCommandsImpl<>(this, codec);
@@ -282,4 +289,5 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         dispatch((RedisCommand) async);
     }
+
 }

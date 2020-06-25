@@ -40,9 +40,8 @@ import io.lettuce.core.internal.LettuceSets;
 @RunWith(Parameterized.class)
 public class CreateAsyncApi {
 
-    private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault",
-            "digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands",
-            "flushCommands");
+    private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
+            "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
 
     private CompilationUnitFactory factory;
 
@@ -111,4 +110,5 @@ public class CreateAsyncApi {
     public void createInterface() throws Exception {
         factory.createInterface();
     }
+
 }

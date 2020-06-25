@@ -26,6 +26,7 @@ import io.lettuce.core.dynamic.support.TypeInformation;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
+ *
  * @author Mark Paluch
  */
 class ConversionService {
@@ -133,5 +134,7 @@ class ConversionService {
         public String toString() {
             return (this.sourceType.getName() + " -> " + this.targetType.getName());
         }
+
     }
+
 }

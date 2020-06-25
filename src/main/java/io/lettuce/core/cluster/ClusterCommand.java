@@ -20,15 +20,18 @@ import io.lettuce.core.protocol.*;
 import io.netty.buffer.ByteBuf;
 
 /**
+ *
  * @author Mark Paluch
  * @since 3.0
  */
 class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCommand<K, V, T> {
 
     private int redirections;
+
     private final int maxRedirections;
 
     private final RedisChannelWriter retry;
+
     private boolean completed;
 
     /**
@@ -130,4 +133,5 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
         sb.append(']');
         return sb.toString();
     }
+
 }

@@ -26,7 +26,6 @@ import io.lettuce.core.codec.RedisCodec;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
  * @author Will Glozer
  */
 public class ValueSetOutput<K, V> extends CommandOutput<K, V, Set<V>> {
@@ -50,4 +49,5 @@ public class ValueSetOutput<K, V> extends CommandOutput<K, V, Set<V>> {
             initialized = true;
         }
     }
+
 }

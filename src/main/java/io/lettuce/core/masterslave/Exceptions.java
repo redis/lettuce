@@ -32,7 +32,7 @@ class Exceptions {
     /**
      * Prepare an unchecked {@link RuntimeException} that will bubble upstream if thrown by an operator.
      *
-     * @param t the root cause
+     * @param t the root cause.
      * @return an unchecked exception that should choose bubbling up over error callback path.
      */
     public static RuntimeException bubble(Throwable t) {
@@ -57,4 +57,5 @@ class Exceptions {
 
         return new RedisException(t);
     }
+
 }

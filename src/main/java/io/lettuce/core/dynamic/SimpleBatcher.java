@@ -39,8 +39,11 @@ import io.lettuce.core.protocol.RedisCommand;
 class SimpleBatcher implements Batcher {
 
     private final StatefulConnection<Object, Object> connection;
+
     private final int batchSize;
+
     private final BlockingQueue<RedisCommand<Object, Object, Object>> queue = new LinkedBlockingQueue<>();
+
     private final AtomicBoolean flushing = new AtomicBoolean();
 
     public SimpleBatcher(StatefulConnection<Object, Object> connection, int batchSize) {
@@ -169,4 +172,5 @@ class SimpleBatcher implements Batcher {
 
         return batch;
     }
+
 }

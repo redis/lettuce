@@ -24,6 +24,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 class RedisClusterNodeSnapshot extends RedisClusterNode {
 
     private Long latencyNs;
+
     private Integer connectedClients;
 
     public RedisClusterNodeSnapshot() {
@@ -48,4 +49,5 @@ class RedisClusterNodeSnapshot extends RedisClusterNode {
     void setConnectedClients(Integer connectedClients) {
         this.connectedClients = connectedClients;
     }
+
 }

@@ -78,7 +78,6 @@ class ConnectionFutureUnitTests {
         Throwable t = new Throwable();
         foo.completeExceptionally(t);
 
-
         assertThat(transformed.toCompletableFuture()).isDone();
         assertThat(transformed.toCompletableFuture()).isCompletedExceptionally();
 
@@ -121,7 +120,8 @@ class ConnectionFutureUnitTests {
 
         assertThat(transformed2.toCompletableFuture()).isDone();
         assertThat(transformed2.toCompletableFuture()).isCompletedExceptionally();
-        assertThatThrownBy(transformed2::join).hasCauseInstanceOf(IllegalStateException.class).hasRootCauseInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(transformed2::join).hasCauseInstanceOf(IllegalStateException.class)
+                .hasRootCauseInstanceOf(IllegalArgumentException.class);
     }
+
 }

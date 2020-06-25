@@ -40,10 +40,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class MasterSlaveTopologyRefresh {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterSlaveTopologyRefresh.class);
+
     private static final StringCodec CODEC = StringCodec.UTF8;
 
     private final NodeConnectionFactory nodeConnectionFactory;
+
     private final TopologyProvider topologyProvider;
+
     private ScheduledExecutorService eventExecutors;
 
     MasterSlaveTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
@@ -62,8 +65,8 @@ class MasterSlaveTopologyRefresh {
      * Load master replica nodes. Result contains an ordered list of {@link RedisNodeDescription}s. The sort key is the latency.
      * Nodes with lower latency come first.
      *
-     * @param seed collection of {@link RedisURI}s
-     * @return mapping between {@link RedisURI} and {@link Partitions}
+     * @param seed collection of {@link RedisURI}s.
+     * @return mapping between {@link RedisURI} and {@link Partitions}.
      */
     public Mono<List<RedisNodeDescription>> getNodes(RedisURI seed) {
 
@@ -73,19 +76,17 @@ class MasterSlaveTopologyRefresh {
             addPasswordIfNeeded(nodes, seed);
         });
 
-        return initialNodes
-                .map(this::getConnections)
+        return initialNodes.map(this::getConnections)
                 .flatMap(asyncConnections -> asyncConnections.asMono(seed.getTimeout(), eventExecutors))
-                .flatMap(
-                        connections -> {
+                .flatMap(connections -> {
 
-                            Requests requests = connections.requestPing();
+                    Requests requests = connections.requestPing();
 
-                            CompletionStage<List<RedisNodeDescription>> nodes = requests.getOrTimeout(seed.getTimeout(),
-                                    eventExecutors);
+                    CompletionStage<List<RedisNodeDescription>> nodes = requests.getOrTimeout(seed.getTimeout(),
+                            eventExecutors);
 
-                            return Mono.fromCompletionStage(nodes).flatMap(it -> ResumeAfter.close(connections).thenEmit(it));
-                        });
+                    return Mono.fromCompletionStage(nodes).flatMap(it -> ResumeAfter.close(connections).thenEmit(it));
+                });
     }
 
     /*
@@ -144,4 +145,5 @@ class MasterSlaveTopologyRefresh {
             }
         }
     }
+
 }

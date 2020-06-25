@@ -52,7 +52,7 @@ public class Value<V> implements Serializable {
 
     /**
      *
-     * @param value the value, may be {@literal null}.
+     * @param value the value, may be {@code null}.
      */
     protected Value(V value) {
         this.value = value;
@@ -62,10 +62,10 @@ public class Value<V> implements Serializable {
      * Creates a {@link Value} from an {@link Optional}. The resulting value contains the value from the {@link Optional} if a
      * value is present. Value is empty if the {@link Optional} is empty.
      *
-     * @param optional the optional. May be empty but never {@literal null}.
+     * @param optional the optional. May be empty but never {@code null}.
      * @param <T>
      * @param <V>
-     * @return the {@link Value}
+     * @return the {@link Value}.
      */
     public static <T extends V, V> Value<V> from(Optional<T> optional) {
 
@@ -81,10 +81,10 @@ public class Value<V> implements Serializable {
     /**
      * Creates a {@link Value} from a {@code value}. The resulting value contains the value if the {@code value} is not null.
      *
-     * @param value the value. May be {@literal null}.
+     * @param value the value. May be {@code null}.
      * @param <T>
      * @param <V>
-     * @return the {@link Value}
+     * @return the {@link Value}.
      */
     public static <T extends V, V> Value<V> fromNullable(T value) {
 
@@ -99,7 +99,7 @@ public class Value<V> implements Serializable {
      * Returns an empty {@code Value} instance. No value is present for this instance.
      *
      * @param <V>
-     * @return the {@link Value}
+     * @return the {@link Value}.
      */
     public static <V> Value<V> empty() {
         return (Value<V>) EMPTY;
@@ -108,10 +108,10 @@ public class Value<V> implements Serializable {
     /**
      * Creates a {@link Value} from a {@code value}. The resulting value contains the value.
      *
-     * @param value the value. Must not be {@literal null}.
+     * @param value the value. Must not be {@code null}.
      * @param <T>
      * @param <V>
-     * @return the {@link Value}
+     * @return the {@link Value}.
      */
     public static <T extends V, V> Value<V> just(T value) {
 
@@ -146,9 +146,8 @@ public class Value<V> implements Serializable {
     /**
      * If a value is present in this {@code Value}, returns the value, otherwise throws {@code NoSuchElementException}.
      *
-     * @return the non-null value held by this {@code Optional}
+     * @return the non-null value held by this {@code Optional}.
      * @throws NoSuchElementException if there is no value present
-     *
      * @see Value#hasValue()
      */
     public V getValue() {
@@ -163,7 +162,7 @@ public class Value<V> implements Serializable {
     /**
      * Return {@code true} if there is a value present, otherwise {@code false}.
      *
-     * @return {@code true} if there is a value present, otherwise {@code false}
+     * @return {@code true} if there is a value present, otherwise {@code false}.
      */
     public boolean hasValue() {
         return value != null;
@@ -172,8 +171,8 @@ public class Value<V> implements Serializable {
     /**
      * Return the value if present, otherwise invoke {@code other} and return the result of that invocation.
      *
-     * @param otherSupplier a {@code Supplier} whose result is returned if no value is present. Must not be {@literal null}.
-     * @return the value if present otherwise the result of {@code other.get()}
+     * @param otherSupplier a {@code Supplier} whose result is returned if no value is present. Must not be {@code null}.
+     * @return the value if present otherwise the result of {@code other.get()}.
      * @throws NullPointerException if value is not present and {@code other} is null
      */
     public V getValueOrElseGet(Supplier<V> otherSupplier) {
@@ -189,8 +188,8 @@ public class Value<V> implements Serializable {
     /**
      * Return the value if present, otherwise return {@code other}.
      *
-     * @param other the value to be returned if there is no value present, may be null
-     * @return the value, if present, otherwise {@code other}
+     * @param other the value to be returned if there is no value present, may be null.
+     * @return the value, if present, otherwise {@code other}.
      */
     public V getValueOrElse(V other) {
 
@@ -204,9 +203,9 @@ public class Value<V> implements Serializable {
     /**
      * Return the contained value, if present, otherwise throw an exception to be created by the provided supplier.
      *
-     * @param <X> Type of the exception to be thrown
-     * @param exceptionSupplier The supplier which will return the exception to be thrown, must not be {@literal null}.
-     * @return the present value
+     * @param <X> Type of the exception to be thrown.
+     * @param exceptionSupplier The supplier which will return the exception to be thrown, must not be {@code null}.
+     * @return the present value.
      * @throws X if there is no value present
      */
     public <X extends Throwable> V getValueOrElseThrow(Supplier<? extends X> exceptionSupplier) throws X {
@@ -224,9 +223,9 @@ public class Value<V> implements Serializable {
      * Returns a {@link Value} consisting of the results of applying the given function to the value of this element. Mapping is
      * performed only if a {@link #hasValue() value is present}.
      *
-     * @param <R> The element type of the new value
-     * @param mapper a stateless function to apply to each element
-     * @return the new {@link Value}
+     * @param <R> The element type of the new value.
+     * @param mapper a stateless function to apply to each element.
+     * @return the new {@link Value}.
      */
     @SuppressWarnings("unchecked")
     public <R> Value<R> map(Function<? super V, ? extends R> mapper) {
@@ -243,7 +242,7 @@ public class Value<V> implements Serializable {
     /**
      * If a value is present, invoke the specified {@link java.util.function.Consumer} with the value, otherwise do nothing.
      *
-     * @param consumer block to be executed if a value is present, must not be {@literal null}.
+     * @param consumer block to be executed if a value is present, must not be {@code null}.
      */
     public void ifHasValue(Consumer<? super V> consumer) {
 
@@ -257,7 +256,7 @@ public class Value<V> implements Serializable {
     /**
      * If no value is present, invoke the specified {@link Runnable}, otherwise do nothing.
      *
-     * @param runnable block to be executed if no value value is present, must not be {@literal null}.
+     * @param runnable block to be executed if no value value is present, must not be {@code null}.
      */
     public void ifEmpty(Runnable runnable) {
 
@@ -290,4 +289,5 @@ public class Value<V> implements Serializable {
         }
         return Stream.empty();
     }
+
 }

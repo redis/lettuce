@@ -189,4 +189,5 @@ class ClusterDistributionChannelWriterUnitTests {
             verify(clusterNodeEndpoint, never()).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
         }
     }
+
 }

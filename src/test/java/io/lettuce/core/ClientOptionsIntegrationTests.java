@@ -198,8 +198,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
         List<RedisFuture<String>> pings = new ArrayList<>();
         for (int i = 0; i < 11; i++) {
 
-            AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.PING,
-                    new StatusOutput<>(StringCodec.UTF8)));
+            AsyncCommand<String, String, String> command = new AsyncCommand<>(
+                    new Command<>(CommandType.PING, new StatusOutput<>(StringCodec.UTF8)));
             pings.add(command);
             buffer.add(command);
         }
@@ -242,8 +242,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Test
     void disconnectedRejectCommands() {
 
-        client.setOptions(ClientOptions.builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
-                .build());
+        client.setOptions(
+                ClientOptions.builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).build());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
 
@@ -303,8 +303,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
                 client.connect(redisURI);
                 fail("Missing RedisConnectionException");
             } catch (RedisException e) {
-                assertThat(e).isInstanceOf(RedisConnectionException.class).hasRootCauseInstanceOf(
-                        RedisCommandTimeoutException.class);
+                assertThat(e).isInstanceOf(RedisConnectionException.class)
+                        .hasRootCauseInstanceOf(RedisCommandTimeoutException.class);
             }
         }
     }
@@ -330,26 +330,24 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Test
     void pingBeforeConnectWithAuthenticationTimeout() {
 
-        WithPassword.run(
-                client,
-                () -> {
+        WithPassword.run(client, () -> {
 
-                    client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+            client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
-                    try (ServerSocket serverSocket = new ServerSocket(0)) {
+            try (ServerSocket serverSocket = new ServerSocket(0)) {
 
-                        RedisURI redisURI = RedisURI.Builder.redis(TestSettings.host(), serverSocket.getLocalPort())
-                                .withPassword(passwd).withTimeout(Duration.ofMillis(500)).build();
+                RedisURI redisURI = RedisURI.Builder.redis(TestSettings.host(), serverSocket.getLocalPort())
+                        .withPassword(passwd).withTimeout(Duration.ofMillis(500)).build();
 
-                        try {
-                            client.connect(redisURI);
-                            fail("Missing RedisConnectionException");
-                        } catch (RedisException e) {
-                            assertThat(e).isInstanceOf(RedisConnectionException.class).hasRootCauseInstanceOf(
-                                    RedisCommandTimeoutException.class);
-                        }
-                    }
-                });
+                try {
+                    client.connect(redisURI);
+                    fail("Missing RedisConnectionException");
+                } catch (RedisException e) {
+                    assertThat(e).isInstanceOf(RedisConnectionException.class)
+                            .hasRootCauseInstanceOf(RedisCommandTimeoutException.class);
+                }
+            }
+        });
     }
 
     @Test
@@ -393,21 +391,19 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Test
     void pingBeforeConnectWithSslAndAuthenticationFails() {
 
-        WithPassword.run(
-                client,
-                () -> {
+        WithPassword.run(client, () -> {
 
-                    client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
-                    RedisURI redisURI = RedisURI.Builder.redis(host, 6443).withVerifyPeer(false).withSsl(true).build();
+            client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+            RedisURI redisURI = RedisURI.Builder.redis(host, 6443).withVerifyPeer(false).withSsl(true).build();
 
-                    try {
-                        client.connect(redisURI);
-                        fail("Missing RedisConnectionException");
-                    } catch (RedisException e) {
-                        assertThat(e).isInstanceOf(RedisConnectionException.class).hasRootCauseInstanceOf(
-                                RedisCommandExecutionException.class);
-                    }
-                });
+            try {
+                client.connect(redisURI);
+                fail("Missing RedisConnectionException");
+            } catch (RedisException e) {
+                assertThat(e).isInstanceOf(RedisConnectionException.class)
+                        .hasRootCauseInstanceOf(RedisCommandExecutionException.class);
+            }
+        });
     }
 
     @Test
@@ -473,9 +469,9 @@ class ClientOptionsIntegrationTests extends TestSupport {
         redisConnection.async().set("key1", "value1");
         redisConnection.async().set("key2", "value2");
 
-        RedisFuture<String> sleep = (RedisFuture<String>) controlConnection.dispatch(new AsyncCommand<>(new Command<>(
-                CommandType.DEBUG, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).add("SLEEP")
-                        .add(2))));
+        RedisFuture<String> sleep = (RedisFuture<String>) controlConnection
+                .dispatch(new AsyncCommand<>(new Command<>(CommandType.DEBUG, new StatusOutput<>(StringCodec.UTF8),
+                        new CommandArgs<>(StringCodec.UTF8).add("SLEEP").add(2))));
 
         sleep.await(100, TimeUnit.MILLISECONDS);
 
@@ -505,46 +501,45 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Test
     void authenticatedPingBeforeConnectWithQueuedCommandsAndReconnect() {
 
-        WithPassword.run(
-                client,
-                () -> {
+        WithPassword.run(client, () -> {
 
-                    RedisURI redisURI = RedisURI.Builder.redis(host, port).withPassword(passwd).withDatabase(5).build();
-                    StatefulRedisConnection<String, String> controlConnection = client.connect(redisURI);
+            RedisURI redisURI = RedisURI.Builder.redis(host, port).withPassword(passwd).withDatabase(5).build();
+            StatefulRedisConnection<String, String> controlConnection = client.connect(redisURI);
 
-                    client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+            client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
 
-                    StatefulRedisConnection<String, String> redisConnection = client.connect(redisURI);
-                    redisConnection.async().set("key1", "value1");
-                    redisConnection.async().set("key2", "value2");
+            StatefulRedisConnection<String, String> redisConnection = client.connect(redisURI);
+            redisConnection.async().set("key1", "value1");
+            redisConnection.async().set("key2", "value2");
 
-                    RedisFuture<String> sleep = (RedisFuture<String>) controlConnection.dispatch(new AsyncCommand<>(
-                            new Command<>(CommandType.DEBUG, new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(
-                                    StringCodec.UTF8).add("SLEEP").add(2))));
+            RedisFuture<String> sleep = (RedisFuture<String>) controlConnection
+                    .dispatch(new AsyncCommand<>(new Command<>(CommandType.DEBUG, new StatusOutput<>(StringCodec.UTF8),
+                            new CommandArgs<>(StringCodec.UTF8).add("SLEEP").add(2))));
 
-                    sleep.await(100, TimeUnit.MILLISECONDS);
+            sleep.await(100, TimeUnit.MILLISECONDS);
 
-                    Channel channel = getChannel(redisConnection);
-                    ConnectionWatchdog connectionWatchdog = getConnectionWatchdog(redisConnection);
-                    connectionWatchdog.setReconnectSuspended(true);
+            Channel channel = getChannel(redisConnection);
+            ConnectionWatchdog connectionWatchdog = getConnectionWatchdog(redisConnection);
+            connectionWatchdog.setReconnectSuspended(true);
 
-                    Futures.await(channel.close());
-                    Futures.await(sleep);
+            Futures.await(channel.close());
+            Futures.await(sleep);
 
-                    redisConnection.async().get(key).cancel(true);
+            redisConnection.async().get(key).cancel(true);
 
-                    RedisFuture<String> getFuture1 = redisConnection.async().get("key1");
-                    RedisFuture<String> getFuture2 = redisConnection.async().get("key2");
-                    getFuture1.await(100, TimeUnit.MILLISECONDS);
+            RedisFuture<String> getFuture1 = redisConnection.async().get("key1");
+            RedisFuture<String> getFuture2 = redisConnection.async().get("key2");
+            getFuture1.await(100, TimeUnit.MILLISECONDS);
 
-                    connectionWatchdog.setReconnectSuspended(false);
-                    connectionWatchdog.scheduleReconnect();
+            connectionWatchdog.setReconnectSuspended(false);
+            connectionWatchdog.scheduleReconnect();
 
-                    assertThat(Futures.get(getFuture1)).isEqualTo("value1");
-                    assertThat(Futures.get(getFuture2)).isEqualTo("value2");
+            assertThat(Futures.get(getFuture1)).isEqualTo("value1");
+            assertThat(Futures.get(getFuture2)).isEqualTo("value2");
 
-                    controlConnection.close();
-                    redisConnection.close();
-                });
+            controlConnection.close();
+            redisConnection.close();
+        });
     }
+
 }

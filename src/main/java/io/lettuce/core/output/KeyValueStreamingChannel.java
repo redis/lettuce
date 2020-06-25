@@ -29,8 +29,9 @@ public interface KeyValueStreamingChannel<K, V> extends StreamingChannel {
     /**
      * Called on every incoming key/value pair.
      *
-     * @param key the key
-     * @param value the value
+     * @param key the key.
+     * @param value the value.
      */
     void onKeyValue(K key, V value);
+
 }

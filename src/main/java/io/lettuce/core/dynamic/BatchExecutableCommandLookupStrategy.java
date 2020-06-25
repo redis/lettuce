@@ -29,6 +29,7 @@ import io.lettuce.core.dynamic.parameter.ExecutionSpecificParameters;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
+ *
  * @author Mark Paluch
  * @since 5.0
  */
@@ -37,6 +38,7 @@ class BatchExecutableCommandLookupStrategy extends ExecutableCommandLookupStrate
     private final Set<Class<?>> SYNCHRONOUS_RETURN_TYPES = new HashSet<Class<?>>(Arrays.asList(Void.class, Void.TYPE));
 
     private final Batcher batcher;
+
     private final StatefulConnection<Object, Object> connection;
 
     public BatchExecutableCommandLookupStrategy(List<RedisCodec<?, ?>> redisCodecs,
@@ -65,8 +67,8 @@ class BatchExecutableCommandLookupStrategy extends ExecutableCommandLookupStrate
         ExecutionSpecificParameters parameters = (ExecutionSpecificParameters) method.getParameters();
 
         if (parameters.hasTimeoutIndex()) {
-            throw new IllegalArgumentException(String.format(
-                    "Timeout and batching is not supported, offending command method %s ", method));
+            throw new IllegalArgumentException(
+                    String.format("Timeout and batching is not supported, offending command method %s ", method));
         }
 
         if (isForceFlush(method)) {
@@ -83,6 +85,7 @@ class BatchExecutableCommandLookupStrategy extends ExecutableCommandLookupStrate
                 public CommandMethod getCommandMethod() {
                     return method;
                 }
+
             };
         }
 
@@ -92,7 +95,8 @@ class BatchExecutableCommandLookupStrategy extends ExecutableCommandLookupStrate
             return new BatchExecutableCommand(method, commandFactory, batcher, connection);
         }
 
-        throw new IllegalArgumentException(String.format(
-                "Batching command method %s must declare either a Future or void return type", method));
+        throw new IllegalArgumentException(
+                String.format("Batching command method %s must declare either a Future or void return type", method));
     }
+
 }

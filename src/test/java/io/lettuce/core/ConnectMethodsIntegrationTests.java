@@ -32,6 +32,7 @@ import io.lettuce.test.LettuceExtension;
 class ConnectMethodsIntegrationTests {
 
     private final RedisClient redisClient;
+
     private final RedisClusterClient clusterClient;
 
     @Inject

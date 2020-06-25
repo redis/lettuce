@@ -46,7 +46,9 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         implements StatefulRedisClusterPubSubConnection<K, V> {
 
     private final PubSubClusterEndpoint<K, V> endpoint;
+
     private volatile Partitions partitions;
+
     private volatile RedisState state;
 
     /**
@@ -180,7 +182,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     /**
      * Add a new {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     @Override
     public void addListener(RedisClusterPubSubListener<K, V> listener) {
@@ -190,7 +192,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     /**
      * Remove an existing {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     @Override
     public void removeListener(RedisClusterPubSubListener<K, V> listener) {
@@ -214,4 +216,5 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         }
         return null;
     }
+
 }

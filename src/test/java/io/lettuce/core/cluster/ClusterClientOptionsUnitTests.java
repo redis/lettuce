@@ -57,13 +57,13 @@ class ClusterClientOptionsUnitTests {
         assertThat(clusterClientOptions.getRequestQueueSize()).isEqualTo(clusterClientOptions.getRequestQueueSize());
         assertThat(clusterClientOptions.isAutoReconnect()).isEqualTo(clusterClientOptions.isAutoReconnect());
         assertThat(clusterClientOptions.isCloseStaleConnections()).isEqualTo(clusterClientOptions.isCloseStaleConnections());
-        assertThat(clusterClientOptions.isCancelCommandsOnReconnectFailure()).isEqualTo(
-                clusterClientOptions.isCancelCommandsOnReconnectFailure());
-        assertThat(clusterClientOptions.isPingBeforeActivateConnection()).isEqualTo(
-                clusterClientOptions.isPingBeforeActivateConnection());
+        assertThat(clusterClientOptions.isCancelCommandsOnReconnectFailure())
+                .isEqualTo(clusterClientOptions.isCancelCommandsOnReconnectFailure());
+        assertThat(clusterClientOptions.isPingBeforeActivateConnection())
+                .isEqualTo(clusterClientOptions.isPingBeforeActivateConnection());
         assertThat(clusterClientOptions.isPublishOnScheduler()).isEqualTo(clusterClientOptions.isPublishOnScheduler());
-        assertThat(clusterClientOptions.isSuspendReconnectOnProtocolFailure()).isEqualTo(
-                clusterClientOptions.isSuspendReconnectOnProtocolFailure());
+        assertThat(clusterClientOptions.isSuspendReconnectOnProtocolFailure())
+                .isEqualTo(clusterClientOptions.isSuspendReconnectOnProtocolFailure());
         assertThat(clusterClientOptions.mutate()).isNotNull();
     }
 
@@ -86,4 +86,5 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
         assertThat(options.mutate()).isNotSameAs(copy.mutate());
     }
+
 }

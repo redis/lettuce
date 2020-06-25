@@ -56,11 +56,17 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
 
     private final Object mutex = new Object();
+
     private final StatefulConnection<K, V> connection;
+
     private final RedisCodec<K, V> codec;
+
     private final RedisCommandBuilder<K, V> commandBuilder;
+
     private final ClientResources clientResources;
+
     private final boolean tracingEnabled;
+
     private EventExecutorGroup scheduler;
 
     /**
@@ -407,9 +413,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
         if (tracingEnabled) {
 
-            return withTraceContext().flatMapMany(
-                    it -> Flux.from(new RedisPublisher<>(decorate(commandSupplier, it), connection, dissolve, getScheduler()
-                            .next())));
+            return withTraceContext().flatMapMany(it -> Flux
+                    .from(new RedisPublisher<>(decorate(commandSupplier, it), connection, dissolve, getScheduler().next())));
         }
 
         return Flux.from(new RedisPublisher<>(commandSupplier, connection, dissolve, getScheduler().next()));
@@ -430,9 +435,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
         if (tracingEnabled) {
 
-            return withTraceContext().flatMap(
-                    it -> Mono.from(new RedisPublisher<>(decorate(commandSupplier, it), connection, false, getScheduler()
-                            .next())));
+            return withTraceContext().flatMap(it -> Mono
+                    .from(new RedisPublisher<>(decorate(commandSupplier, it), connection, false, getScheduler().next())));
         }
 
         return Mono.from(new RedisPublisher<>(commandSupplier, connection, false, getScheduler().next()));
@@ -660,8 +664,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, Unit unit, GeoArgs geoArgs) {
-        return createDissolvingFlux(() -> commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name(),
-                geoArgs));
+        return createDissolvingFlux(
+                () -> commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name(), geoArgs));
     }
 
     @Override
@@ -671,26 +675,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     protected Flux<V> georadius_ro(K key, double longitude, double latitude, double distance, Unit unit) {
-        return createDissolvingFlux(() -> commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance,
-                unit.name()));
+        return createDissolvingFlux(
+                () -> commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance, unit.name()));
     }
 
     protected Flux<GeoWithin<V>> georadius_ro(K key, double longitude, double latitude, double distance, Unit unit,
             GeoArgs geoArgs) {
-        return createDissolvingFlux(() -> commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance,
-                unit.name(), geoArgs));
+        return createDissolvingFlux(
+                () -> commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance, unit.name(), geoArgs));
     }
 
     @Override
     public Flux<V> georadiusbymember(K key, V member, double distance, Unit unit) {
-        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance,
-                unit.name()));
+        return createDissolvingFlux(
+                () -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance, unit.name()));
     }
 
     @Override
     public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, Unit unit, GeoArgs geoArgs) {
-        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance,
-                unit.name(), geoArgs));
+        return createDissolvingFlux(
+                () -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance, unit.name(), geoArgs));
     }
 
     @Override
@@ -699,13 +703,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     protected Flux<V> georadiusbymember_ro(K key, V member, double distance, Unit unit) {
-        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance,
-                unit.name()));
+        return createDissolvingFlux(
+                () -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance, unit.name()));
     }
 
     protected Flux<GeoWithin<V>> georadiusbymember_ro(K key, V member, double distance, Unit unit, GeoArgs geoArgs) {
-        return createDissolvingFlux(() -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance,
-                unit.name(), geoArgs));
+        return createDissolvingFlux(
+                () -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance, unit.name(), geoArgs));
     }
 
     @Override
@@ -828,7 +832,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+    public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
         return createMono(() -> commandBuilder.hscanStreaming(channel, key, scanCursor, scanArgs));
     }
 
@@ -1622,8 +1627,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public Flux<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, long minIdleTime, String... messageIds) {
-        return createDissolvingFlux(() -> commandBuilder.xclaim(key, consumer, XClaimArgs.Builder.minIdleTime(minIdleTime),
-                messageIds));
+        return createDissolvingFlux(
+                () -> commandBuilder.xclaim(key, consumer, XClaimArgs.Builder.minIdleTime(minIdleTime), messageIds));
     }
 
     @Override
@@ -2139,12 +2144,14 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count) {
+    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
+            long count) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
     @Override
-    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count) {
+    public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
+            long count) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
@@ -2252,7 +2259,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+    public Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
         return createMono(() -> commandBuilder.zscanStreaming(channel, key, scanCursor, scanArgs));
     }
 
@@ -2275,4 +2283,5 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Mono<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return createMono(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
     }
+
 }

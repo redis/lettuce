@@ -26,8 +26,11 @@ import java.time.Duration;
 public class PendingMessage {
 
     private final String id;
+
     private final String consumer;
+
     private final long msSinceLastDelivery;
+
     private final long redeliveryCount;
 
     public PendingMessage(String id, String consumer, long msSinceLastDelivery, long redeliveryCount) {
@@ -57,4 +60,5 @@ public class PendingMessage {
     public long getRedeliveryCount() {
         return redeliveryCount;
     }
+
 }

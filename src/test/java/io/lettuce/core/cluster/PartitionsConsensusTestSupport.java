@@ -49,4 +49,5 @@ class PartitionsConsensusTestSupport {
 
         return partitionsMap;
     }
+
 }

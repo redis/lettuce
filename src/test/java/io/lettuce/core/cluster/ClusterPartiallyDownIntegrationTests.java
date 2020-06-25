@@ -47,13 +47,19 @@ class ClusterPartiallyDownIntegrationTests extends TestSupport {
     private static ClientResources clientResources;
 
     private static int port1 = 7579;
+
     private static int port2 = 7580;
+
     private static int port3 = 7581;
+
     private static int port4 = 7582;
 
     private static final RedisURI URI_1 = RedisURI.create(TestSettings.host(), port1);
+
     private static final RedisURI URI_2 = RedisURI.create(TestSettings.host(), port2);
+
     private static final RedisURI URI_3 = RedisURI.create(TestSettings.host(), port3);
+
     private static final RedisURI URI_4 = RedisURI.create(TestSettings.host(), port4);
 
     private RedisClusterClient redisClusterClient;
@@ -134,4 +140,5 @@ class ClusterPartiallyDownIntegrationTests extends TestSupport {
             assertThat(e).hasRootCauseInstanceOf(IOException.class);
         }
     }
+
 }

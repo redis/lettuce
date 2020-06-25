@@ -29,6 +29,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 
 /**
+ *
  * @author Mark Paluch
  * @author Christian Weitendorf
  * @author Xujs
@@ -36,6 +37,7 @@ import io.lettuce.core.protocol.CommandType;
 class Connections {
 
     private final Map<RedisURI, StatefulRedisConnection<String, String>> connections;
+
     private volatile boolean closed = false;
 
     public Connections() {
@@ -47,7 +49,7 @@ class Connections {
     }
 
     /**
-     * Add a connection for a {@link RedisURI}
+     * Add a connection for a {@link RedisURI}.
      *
      * @param redisURI
      * @param connection
@@ -71,7 +73,8 @@ class Connections {
     }
 
     /**
-     * @return {@literal true} if no connections present.
+     *
+     * @return {@code true} if no connections present.
      */
     public boolean isEmpty() {
         synchronized (this.connections) {
@@ -81,7 +84,6 @@ class Connections {
 
     /*
      * Initiate {@code CLUSTER NODES} on all connections and return the {@link Requests}.
-     *
      * @return the {@link Requests}.
      */
     public Requests requestTopology() {
@@ -106,7 +108,6 @@ class Connections {
 
     /*
      * Initiate {@code INFO CLIENTS} on all connections and return the {@link Requests}.
-     *
      * @return the {@link Requests}.
      */
     public Requests requestClients() {
@@ -192,4 +193,5 @@ class Connections {
 
         return new Connections(result);
     }
+
 }

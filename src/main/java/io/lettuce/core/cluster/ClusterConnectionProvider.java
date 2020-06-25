@@ -95,13 +95,13 @@ interface ClusterConnectionProvider extends Closeable {
     /**
      * Update partitions.
      *
-     * @param partitions the new partitions
+     * @param partitions the new partitions.
      */
     void setPartitions(Partitions partitions);
 
     /**
-     * Disable or enable auto-flush behavior. Default is {@literal true}. If autoFlushCommands is disabled, multiple commands
-     * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
+     * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands can
+     * be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
      *
      * @param autoFlush state of autoFlush.
@@ -118,18 +118,19 @@ interface ClusterConnectionProvider extends Closeable {
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
      *
-     * @param readFrom the read from setting, must not be {@literal null}
+     * @param readFrom the read from setting, must not be {@code null}.
      */
     void setReadFrom(ReadFrom readFrom);
 
     /**
      * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
      *
-     * @return the read from setting
+     * @return the read from setting.
      */
     ReadFrom getReadFrom();
 
     enum Intent {
         READ, WRITE;
     }
+
 }

@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
  * @author Mark Paluch
  */
 public class TestSettings {
+
     private TestSettings() {
 
     }
@@ -125,4 +126,5 @@ public class TestSettings {
     public static int sslPort(int offset) {
         return sslPort() + offset;
     }
+
 }

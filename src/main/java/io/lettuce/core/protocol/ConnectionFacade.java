@@ -39,4 +39,5 @@ public interface ConnectionFacade {
      * Reset the connection state.
      */
     void reset();
+
 }

@@ -36,7 +36,9 @@ import io.lettuce.core.internal.LettuceFactories;
 public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     private final Deque<List<Object>> stack;
+
     private int depth;
+
     private boolean initialized;
 
     public NestedMultiOutput(RedisCodec<K, V> codec) {
@@ -97,4 +99,5 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         output = a;
         this.depth++;
     }
+
 }

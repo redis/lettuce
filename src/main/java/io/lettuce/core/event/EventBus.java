@@ -35,7 +35,8 @@ public interface EventBus {
     /**
      * Publish a {@link Event} to the bus.
      *
-     * @param event the event to publish
+     * @param event the event to publish.
      */
     void publish(Event event);
+
 }

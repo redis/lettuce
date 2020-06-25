@@ -44,6 +44,7 @@ import io.lettuce.test.resource.FastShutdown;
 class ClientIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -232,4 +233,5 @@ class ClientIntegrationTests extends TestSupport {
 
         connection.close();
     }
+
 }

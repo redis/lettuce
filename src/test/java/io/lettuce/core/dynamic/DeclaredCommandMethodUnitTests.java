@@ -67,5 +67,7 @@ class DeclaredCommandMethodUnitTests {
         Future<String> getFuture();
 
         Flux<String> getFlux();
+
     }
+
 }

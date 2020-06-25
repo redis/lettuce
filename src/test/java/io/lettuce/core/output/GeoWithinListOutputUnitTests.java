@@ -104,4 +104,5 @@ class GeoWithinListOutputUnitTests {
 
         assertThat(sut.get()).contains(new GeoWithin<>("key", null, null, new GeoCoordinates(1.234, 4.567)));
     }
+
 }

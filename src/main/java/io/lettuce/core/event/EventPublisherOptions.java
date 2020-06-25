@@ -27,7 +27,8 @@ public interface EventPublisherOptions {
     /**
      * Returns the interval for emit metrics.
      *
-     * @return the interval for emit metrics
+     * @return the interval for emit metrics.
      */
     Duration eventEmitInterval();
+
 }

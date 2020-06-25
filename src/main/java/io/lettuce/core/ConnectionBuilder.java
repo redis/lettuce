@@ -40,23 +40,38 @@ public class ConnectionBuilder {
 
     private static final RedisCommandBuilder<String, String> INITIALIZING_CMD_BUILDER = new RedisCommandBuilder<>(
             StringCodec.UTF8);
+
     private static final Supplier<AsyncCommand<?, ?, ?>> PING_COMMAND_SUPPLIER = () -> new AsyncCommand<>(
             INITIALIZING_CMD_BUILDER.ping());
 
     private Mono<SocketAddress> socketAddressSupplier;
+
     private ConnectionEvents connectionEvents;
+
     private RedisChannelHandler<?, ?> connection;
+
     private Endpoint endpoint;
+
     private Supplier<CommandHandler> commandHandlerSupplier;
+
     private ChannelGroup channelGroup;
+
     private Timer timer;
+
     private Bootstrap bootstrap;
+
     private ClientOptions clientOptions;
+
     private Duration timeout;
+
     private ClientResources clientResources;
+
     private char[] password;
+
     private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
+
     private ConnectionWatchdog connectionWatchdog;
+
     private Supplier<AsyncCommand<?, ?, ?>> pingCommandSupplier = PlainChannelInitializer.NO_PING;
 
     public static ConnectionBuilder connectionBuilder() {
@@ -89,6 +104,7 @@ public class ConnectionBuilder {
     }
 
     /**
+     *
      * @deprecated since 5.2. PING during connection handshake becomes mandatory with RESP3. This method will be removed with
      *             Lettuce 6.
      */
@@ -98,6 +114,7 @@ public class ConnectionBuilder {
     }
 
     /**
+     *
      * @deprecated since 5.2. PING during connection handshake becomes mandatory with RESP3. This method will be removed with
      *             Lettuce 6.
      */
@@ -237,4 +254,5 @@ public class ConnectionBuilder {
     Supplier<AsyncCommand<?, ?, ?>> getPingCommandSupplier() {
         return pingCommandSupplier;
     }
+
 }

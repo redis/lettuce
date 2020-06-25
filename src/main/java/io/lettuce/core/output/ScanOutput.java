@@ -51,4 +51,5 @@ public abstract class ScanOutput<K, V, T extends ScanCursor> extends CommandOutp
     }
 
     protected abstract void setOutput(ByteBuffer bytes);
+
 }

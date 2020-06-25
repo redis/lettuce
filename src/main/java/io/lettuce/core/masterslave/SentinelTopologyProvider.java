@@ -49,16 +49,19 @@ public class SentinelTopologyProvider implements TopologyProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(SentinelTopologyProvider.class);
 
     private final String masterId;
+
     private final RedisClient redisClient;
+
     private final RedisURI sentinelUri;
+
     private final Duration timeout;
 
     /**
      * Creates a new {@link SentinelTopologyProvider}.
      *
      * @param masterId must not be empty
-     * @param redisClient must not be {@literal null}.
-     * @param sentinelUri must not be {@literal null}.
+     * @param redisClient must not be {@code null}.
+     * @param sentinelUri must not be {@code null}.
      */
     public SentinelTopologyProvider(String masterId, RedisClient redisClient, RedisURI sentinelUri) {
 

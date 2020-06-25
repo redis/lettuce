@@ -33,4 +33,5 @@ interface MasterSlaveConnector<K, V> {
      * @return Future that is notified about the connection progress.
      */
     CompletableFuture<StatefulRedisMasterSlaveConnection<K, V>> connectAsync();
+
 }

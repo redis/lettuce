@@ -35,4 +35,5 @@ public class BitStringCodec extends Utf8StringCodec {
         }
         return bits.toString();
     }
+
 }

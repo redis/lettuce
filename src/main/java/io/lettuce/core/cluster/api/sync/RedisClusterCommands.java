@@ -37,7 +37,7 @@ public interface RedisClusterCommands<K, V>
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
      *
-     * @param timeout the timeout value
+     * @param timeout the timeout value.
      * @since 5.0
      */
     void setTimeout(Duration timeout);
@@ -45,8 +45,8 @@ public interface RedisClusterCommands<K, V>
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
      *
-     * @param timeout the timeout value
-     * @param unit the unit of the timeout value
+     * @param timeout the timeout value.
+     * @param unit the unit of the timeout value.
      * @deprecated since 5.0, use {@link #setTimeout(Duration)}.
      */
     @Deprecated
@@ -55,8 +55,8 @@ public interface RedisClusterCommands<K, V>
     /**
      * Authenticate to the server.
      *
-     * @param password the password
-     * @return String simple-string-reply
+     * @param password the password.
+     * @return String simple-string-reply.
      */
     String auth(String password);
 
@@ -73,33 +73,33 @@ public interface RedisClusterCommands<K, V>
      * Meet another cluster node to include the node into the cluster. The command starts the cluster handshake and returns with
      * {@literal OK} when the node was added to the cluster.
      *
-     * @param ip IP address of the host
+     * @param ip IP address of the host.
      * @param port port number.
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String clusterMeet(String ip, int port);
 
     /**
      * Blacklist and remove the cluster node from the cluster.
      *
-     * @param nodeId the node Id
-     * @return String simple-string-reply
+     * @param nodeId the node Id.
+     * @return String simple-string-reply.
      */
     String clusterForget(String nodeId);
 
     /**
      * Adds slots to the cluster node. The current node will become the master for the specified slots.
      *
-     * @param slots one or more slots from {@literal 0} to {@literal 16384}
-     * @return String simple-string-reply
+     * @param slots one or more slots from {@literal 0} to {@literal 16384}.
+     * @return String simple-string-reply.
      */
     String clusterAddSlots(int... slots);
 
     /**
      * Removes slots from the cluster node.
      *
-     * @param slots one or more slots from {@literal 0} to {@literal 16384}
-     * @return String simple-string-reply
+     * @param slots one or more slots from {@literal 0} to {@literal 16384}.
+     * @return String simple-string-reply.
      */
     String clusterDelSlots(int... slots);
 
@@ -107,17 +107,17 @@ public interface RedisClusterCommands<K, V>
      * Assign a slot to a node. The command migrates the specified slot from the current node to the specified node in
      * {@code nodeId}
      *
-     * @param slot the slot
-     * @param nodeId the id of the node that will become the master for the slot
-     * @return String simple-string-reply
+     * @param slot the slot.
+     * @param nodeId the id of the node that will become the master for the slot.
+     * @return String simple-string-reply.
      */
     String clusterSetSlotNode(int slot, String nodeId);
 
     /**
      * Clears migrating / importing state from the slot.
      *
-     * @param slot the slot
-     * @return String simple-string-reply
+     * @param slot the slot.
+     * @return String simple-string-reply.
      */
     String clusterSetSlotStable(int slot);
 
@@ -125,18 +125,18 @@ public interface RedisClusterCommands<K, V>
      * Flag a slot as {@literal MIGRATING} (outgoing) towards the node specified in {@code nodeId}. The slot must be handled by
      * the current node in order to be migrated.
      *
-     * @param slot the slot
-     * @param nodeId the id of the node is targeted to become the master for the slot
-     * @return String simple-string-reply
+     * @param slot the slot.
+     * @param nodeId the id of the node is targeted to become the master for the slot.
+     * @return String simple-string-reply.
      */
     String clusterSetSlotMigrating(int slot, String nodeId);
 
     /**
      * Flag a slot as {@literal IMPORTING} (incoming) from the node specified in {@code nodeId}.
      *
-     * @param slot the slot
-     * @param nodeId the id of the node is the master of the slot
-     * @return String simple-string-reply
+     * @param slot the slot.
+     * @param nodeId the id of the node is the master of the slot.
+     * @return String simple-string-reply.
      */
     String clusterSetSlotImporting(int slot, String nodeId);
 
@@ -150,7 +150,7 @@ public interface RedisClusterCommands<K, V>
     /**
      * Obtain the nodeId for the currently connected node.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String clusterMyId();
 
@@ -158,7 +158,7 @@ public interface RedisClusterCommands<K, V>
      * Obtain details about all cluster nodes. Can be parsed using
      * {@link io.lettuce.core.cluster.models.partitions.ClusterPartitionParser#parse}
      *
-     * @return String bulk-string-reply as a collection of text lines
+     * @return String bulk-string-reply as a collection of text lines.
      */
     String clusterNodes();
 
@@ -166,7 +166,7 @@ public interface RedisClusterCommands<K, V>
      * List replicas for a certain node identified by its {@code nodeId}. Can be parsed using
      * {@link io.lettuce.core.cluster.models.partitions.ClusterPartitionParser#parse}
      *
-     * @param nodeId node id of the master node
+     * @param nodeId node id of the master node.
      * @return List&lt;String&gt; array-reply list of replicas. The command returns data in the same format as
      *         {@link #clusterNodes()} but one line per replica.
      */
@@ -175,16 +175,16 @@ public interface RedisClusterCommands<K, V>
     /**
      * Retrieve the list of keys within the {@code slot}.
      *
-     * @param slot the slot
-     * @param count maximal number of keys
-     * @return List&lt;K&gt; array-reply list of keys
+     * @param slot the slot.
+     * @param count maximal number of keys.
+     * @return List&lt;K&gt; array-reply list of keys.
      */
     List<K> clusterGetKeysInSlot(int slot, int count);
 
     /**
      * Returns the number of keys in the specified Redis Cluster hash {@code slot}.
      *
-     * @param slot the slot
+     * @param slot the slot.
      * @return Integer reply: The number of keys in the specified hash slot, or an error if the hash slot is invalid.
      */
     Long clusterCountKeysInSlot(int slot);
@@ -194,7 +194,7 @@ public interface RedisClusterCommands<K, V>
      * promote a {@literal PFAIL} state, that means a node is not reachable, to a {@literal FAIL} state, that means that the
      * majority of masters in the cluster agreed within a window of time that the node is not reachable.
      *
-     * @param nodeId the node id
+     * @param nodeId the node id.
      * @return Integer reply: The number of active failure reports for the node.
      */
     Long clusterCountFailureReports(String nodeId);
@@ -223,7 +223,7 @@ public interface RedisClusterCommands<K, V>
      * <li>The node current config epoch is zero.</li>
      * </ul>
      *
-     * @param configEpoch the config epoch
+     * @param configEpoch the config epoch.
      * @return String simple-string-reply: {@code OK} or an error if the operation fails.
      */
     String clusterSetConfigEpoch(long configEpoch);
@@ -239,23 +239,23 @@ public interface RedisClusterCommands<K, V>
      * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to
      * actually send the command to the target instance. See the Redis Cluster specification for more information.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String asking();
 
     /**
      * Turn this node into a replica of the node with the id {@code nodeId}.
      *
-     * @param nodeId master node id
-     * @return String simple-string-reply
+     * @param nodeId master node id.
+     * @return String simple-string-reply.
      */
     String clusterReplicate(String nodeId);
 
     /**
      * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
      *
-     * @param force do not coordinate with master if {@literal true}
-     * @return String simple-string-reply
+     * @param force do not coordinate with master if {@code true}.
+     * @return String simple-string-reply.
      */
     String clusterFailover(boolean force);
 
@@ -271,15 +271,15 @@ public interface RedisClusterCommands<K, V>
      * <li>If the node was a replica, the whole data set is flushed away</li>
      * </ul>
      *
-     * @param hard {@literal true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
-     * @return String simple-string-reply
+     * @param hard {@code true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0.
+     * @return String simple-string-reply.
      */
     String clusterReset(boolean hard);
 
     /**
      * Delete all the slots associated with the specified node. The number of deleted slots is returned.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String clusterFlushslots();
 
@@ -287,14 +287,15 @@ public interface RedisClusterCommands<K, V>
      * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running
      * write queries.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String readOnly();
 
     /**
      * Resets readOnly flag.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String readWrite();
+
 }

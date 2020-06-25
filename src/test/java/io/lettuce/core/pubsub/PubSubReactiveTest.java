@@ -51,15 +51,21 @@ import io.lettuce.test.resource.TestClientResources;
 class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
     private RedisPubSubReactiveCommands<String, String> pubsub;
+
     private RedisPubSubReactiveCommands<String, String> pubsub2;
 
     private BlockingQueue<String> channels;
+
     private BlockingQueue<String> patterns;
+
     private BlockingQueue<String> messages;
+
     private BlockingQueue<Long> counts;
 
     private String channel = "channel0";
+
     private String pattern = "channel*";
+
     private String message = "msg!";
 
     @BeforeEach
@@ -362,6 +368,7 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
         final BlockingQueue<Long> localCounts = LettuceFactories.newBlockingQueue();
 
         RedisPubSubAdapter<String, String> adapter = new RedisPubSubAdapter<String, String>() {
+
             @Override
             public void subscribed(String channel, long count) {
                 super.subscribed(channel, count);
@@ -373,6 +380,7 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
                 super.unsubscribed(channel, count);
                 localCounts.add(count);
             }
+
         };
 
         pubsub.getStatefulConnection().addListener(adapter);
@@ -455,4 +463,5 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
     <T> List<T> all(Flux<T> flux) {
         return flux.collectList().block();
     }
+
 }

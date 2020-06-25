@@ -64,6 +64,7 @@ class InvocationProxyFactoryUnitTests {
     private interface TargetWithBooleanMethod {
 
         Boolean someMethod();
+
     }
 
     private static class ReturnValue implements MethodInterceptor {
@@ -78,11 +79,13 @@ class InvocationProxyFactoryUnitTests {
         public Object invoke(MethodInvocation invocation) {
             return value;
         }
+
     }
 
     private interface TargetWithStringMethod {
 
         String run();
+
     }
 
     private static class StringAppendingMethodInterceptor implements MethodInterceptor {
@@ -97,5 +100,7 @@ class InvocationProxyFactoryUnitTests {
         public Object invoke(MethodInvocation invocation) throws Throwable {
             return invocation.proceed().toString() + toAppend;
         }
+
     }
+
 }

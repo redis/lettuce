@@ -32,7 +32,7 @@ public abstract class CommandSegment {
     /**
      * Create a constant {@link CommandSegment}.
      *
-     * @param content must not be empty or {@literal null}.
+     * @param content must not be empty or {@code null}.
      * @return the {@link CommandSegment}.
      */
     public static CommandSegment constant(String content) {
@@ -42,7 +42,7 @@ public abstract class CommandSegment {
     /**
      * Create a named parameter reference {@link CommandSegment}.
      *
-     * @param name must not be empty or {@literal null}.
+     * @param name must not be empty or {@code null}.
      * @return
      */
     public static CommandSegment namedParameter(String name) {
@@ -55,7 +55,7 @@ public abstract class CommandSegment {
 
     /**
      *
-     * @return the command segment in its {@link String representation}
+     * @return the command segment in its {@link String representation}.
      */
     public abstract String asString();
 
@@ -69,6 +69,7 @@ public abstract class CommandSegment {
     public abstract boolean canConsume(Parameter parameter);
 
     /**
+     *
      * @param parametersAccessor
      * @return
      */
@@ -108,6 +109,7 @@ public abstract class CommandSegment {
         public ArgumentContribution contribute(MethodParametersAccessor parametersAccessor) {
             return new ArgumentContribution(-1, asString());
         }
+
     }
 
     private static class NamedParameter extends CommandSegment {
@@ -137,6 +139,7 @@ public abstract class CommandSegment {
             int index = parametersAccessor.resolveParameterIndex(name);
             return new ArgumentContribution(index, parametersAccessor.getBindableValue(index));
         }
+
     }
 
     private static class IndexedParameter extends CommandSegment {
@@ -163,11 +166,13 @@ public abstract class CommandSegment {
         public ArgumentContribution contribute(MethodParametersAccessor parametersAccessor) {
             return new ArgumentContribution(index, parametersAccessor.getBindableValue(index));
         }
+
     }
 
     public static class ArgumentContribution {
 
         private final int parameterIndex;
+
         private final Object value;
 
         ArgumentContribution(int parameterIndex, Object value) {
@@ -182,5 +187,7 @@ public abstract class CommandSegment {
         public Object getValue() {
             return value;
         }
+
     }
+
 }

@@ -67,14 +67,21 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public abstract class AbstractRedisClient {
 
     protected static final PooledByteBufAllocator BUF_ALLOCATOR = PooledByteBufAllocator.DEFAULT;
+
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClient.class);
 
     protected final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
+
     protected final ConnectionEvents connectionEvents = new ConnectionEvents();
+
     protected final Set<Closeable> closeableResources = ConcurrentHashMap.newKeySet();
+
     protected final EventExecutorGroup genericWorkerPool;
+
     protected final HashedWheelTimer timer;
+
     protected final ChannelGroup channels;
+
     protected final ClientResources clientResources;
 
     protected volatile ClientOptions clientOptions = ClientOptions.builder().build();
@@ -82,13 +89,14 @@ public abstract class AbstractRedisClient {
     protected Duration timeout = RedisURI.DEFAULT_TIMEOUT_DURATION;
 
     private final boolean sharedResources;
+
     private final AtomicBoolean shutdown = new AtomicBoolean();
 
     /**
      * Create a new instance with client resources.
      *
-     * @param clientResources the client resources. If {@literal null}, the client will create a new dedicated instance of
-     *        client resources and keep track of them.
+     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of client
+     *        resources and keep track of them.
      */
     protected AbstractRedisClient(ClientResources clientResources) {
 
@@ -109,7 +117,7 @@ public abstract class AbstractRedisClient {
      * Set the default timeout for connections created by this client. The timeout applies to connection attempts and
      * non-blocking commands.
      *
-     * @param timeout default connection timeout, must not be {@literal null}.
+     * @param timeout default connection timeout, must not be {@code null}.
      * @since 5.0
      */
     public void setDefaultTimeout(Duration timeout) {
@@ -136,9 +144,9 @@ public abstract class AbstractRedisClient {
     /**
      * Populate connection builder with necessary resources.
      *
-     * @param socketAddressSupplier address supplier for initial connect and re-connect
-     * @param connectionBuilder connection builder to configure the connection
-     * @param redisURI URI of the Redis instance
+     * @param socketAddressSupplier address supplier for initial connect and re-connect.
+     * @param connectionBuilder connection builder to configure the connection.
+     * @param redisURI URI of the Redis instance.
      */
     protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
             RedisURI redisURI) {
@@ -268,7 +276,7 @@ public abstract class AbstractRedisClient {
     /**
      * Connect and initialize a channel from {@link ConnectionBuilder}.
      *
-     * @param connectionBuilder must not be {@literal null}.
+     * @param connectionBuilder must not be {@code null}.
      * @return the {@link ConnectionFuture} to synchronize the connection process.
      * @since 4.4
      */
@@ -538,7 +546,7 @@ public abstract class AbstractRedisClient {
      * connection, the listener will be notified. The corresponding netty channel handler (async connection) is passed on the
      * event.
      *
-     * @param listener must not be {@literal null}
+     * @param listener must not be {@code null}.
      */
     public void addListener(RedisConnectionStateListener listener) {
         LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
@@ -548,7 +556,7 @@ public abstract class AbstractRedisClient {
     /**
      * Removes a listener.
      *
-     * @param listener must not be {@literal null}
+     * @param listener must not be {@code null}.
      */
     public void removeListener(RedisConnectionStateListener listener) {
 
@@ -560,7 +568,7 @@ public abstract class AbstractRedisClient {
      * Returns the {@link ClientOptions} which are valid for that client. Connections inherit the current options at the moment
      * the connection is created. Changes to options will not affect existing connections.
      *
-     * @return the {@link ClientOptions} for this client
+     * @return the {@link ClientOptions} for this client.
      */
     public ClientOptions getOptions() {
         return clientOptions;
@@ -569,7 +577,7 @@ public abstract class AbstractRedisClient {
     /**
      * Set the {@link ClientOptions} for the client.
      *
-     * @param clientOptions client options for the client and connections that are created after setting the options
+     * @param clientOptions client options for the client and connections that are created after setting the options.
      */
     protected void setOptions(ClientOptions clientOptions) {
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
@@ -599,4 +607,5 @@ public abstract class AbstractRedisClient {
 
         return promise;
     }
+
 }

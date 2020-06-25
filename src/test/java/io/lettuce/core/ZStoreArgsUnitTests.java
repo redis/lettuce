@@ -44,4 +44,5 @@ class ZStoreArgsUnitTests {
 
         assertThat(args.toString()).doesNotContain("WEIGHTS");
     }
+
 }

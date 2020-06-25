@@ -44,7 +44,9 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 class AutodiscoveryConnector<K, V> implements MasterSlaveConnector<K, V> {
 
     private final RedisClient redisClient;
+
     private final RedisCodec<K, V> codec;
+
     private final RedisURI redisURI;
 
     private final Map<RedisURI, StatefulRedisConnection<?, ?>> initialConnections = new ConcurrentHashMap<>();
@@ -59,18 +61,16 @@ class AutodiscoveryConnector<K, V> implements MasterSlaveConnector<K, V> {
     public CompletableFuture<StatefulRedisMasterSlaveConnection<K, V>> connectAsync() {
 
         ConnectionFuture<StatefulRedisConnection<K, V>> initialConnection = redisClient.connectAsync(codec, redisURI);
-        Mono<StatefulRedisMasterSlaveConnection<K, V>> connect = Mono
-                .fromCompletionStage(initialConnection)
-                .flatMap(
-                        nodeConnection -> {
+        Mono<StatefulRedisMasterSlaveConnection<K, V>> connect = Mono.fromCompletionStage(initialConnection)
+                .flatMap(nodeConnection -> {
 
-                            initialConnections.put(redisURI, nodeConnection);
+                    initialConnections.put(redisURI, nodeConnection);
 
-                            TopologyProvider topologyProvider = new MasterSlaveTopologyProvider(nodeConnection, redisURI);
+                    TopologyProvider topologyProvider = new MasterSlaveTopologyProvider(nodeConnection, redisURI);
 
-                            return Mono.fromCompletionStage(topologyProvider.getNodesAsync()).flatMap(
-                                    nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
-                        }).flatMap(connectionAndUri -> {
+                    return Mono.fromCompletionStage(topologyProvider.getNodesAsync())
+                            .flatMap(nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
+                }).flatMap(connectionAndUri -> {
                     return initializeConnection(codec, connectionAndUri);
                 });
 
@@ -123,8 +123,8 @@ class AutodiscoveryConnector<K, V> implements MasterSlaveConnector<K, V> {
 
             connectionProvider.setKnownNodes(nodes);
 
-            MasterSlaveChannelWriter channelWriter = new MasterSlaveChannelWriter(connectionProvider, redisClient
-                    .getResources());
+            MasterSlaveChannelWriter channelWriter = new MasterSlaveChannelWriter(connectionProvider,
+                    redisClient.getResources());
 
             StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(
                     channelWriter, codec, redisURI.getTimeout());
@@ -144,8 +144,8 @@ class AutodiscoveryConnector<K, V> implements MasterSlaveConnector<K, V> {
     private static RedisNodeDescription getConnectedNode(RedisURI redisURI, List<RedisNodeDescription> nodes) {
 
         Optional<RedisNodeDescription> first = findFirst(nodes, n -> equals(redisURI, n));
-        return first.orElseThrow(() -> new IllegalStateException("Cannot lookup node descriptor for connected node at "
-                + redisURI));
+        return first.orElseThrow(
+                () -> new IllegalStateException("Cannot lookup node descriptor for connected node at " + redisURI));
     }
 
     private static Optional<RedisNodeDescription> findFirst(List<RedisNodeDescription> nodes,
@@ -156,4 +156,5 @@ class AutodiscoveryConnector<K, V> implements MasterSlaveConnector<K, V> {
     private static boolean equals(RedisURI redisURI, RedisNodeDescription node) {
         return node.getUri().getHost().equals(redisURI.getHost()) && node.getUri().getPort() == redisURI.getPort();
     }
+
 }

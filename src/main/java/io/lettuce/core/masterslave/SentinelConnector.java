@@ -41,7 +41,9 @@ class SentinelConnector<K, V> implements MasterSlaveConnector<K, V> {
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SentinelConnector.class);
 
     private final RedisClient redisClient;
+
     private final RedisCodec<K, V> codec;
+
     private final RedisURI redisURI;
 
     SentinelConnector(RedisClient redisClient, RedisCodec<K, V> codec, RedisURI redisURI) {
@@ -85,6 +87,7 @@ class SentinelConnector<K, V> implements MasterSlaveConnector<K, V> {
             public CompletableFuture<Void> closeAsync() {
                 return CompletableFuture.allOf(super.closeAsync(), sentinelTopologyRefresh.closeAsync());
             }
+
         };
 
         StatefulRedisMasterSlaveConnectionImpl<K, V> connection = new StatefulRedisMasterSlaveConnectionImpl<>(channelWriter,
@@ -120,4 +123,5 @@ class SentinelConnector<K, V> implements MasterSlaveConnector<K, V> {
             }
         };
     }
+
 }

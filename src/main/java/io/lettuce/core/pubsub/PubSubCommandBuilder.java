@@ -93,4 +93,5 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     <T> Command<K, V, T> pubSubCommand(CommandType type, CommandOutput<K, V, T> output, K... keys) {
         return new Command<>(type, output, new PubSubCommandArgs<>(codec).addKeys(keys));
     }
+
 }

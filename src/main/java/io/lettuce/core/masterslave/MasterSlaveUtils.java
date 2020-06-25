@@ -31,7 +31,7 @@ class MasterSlaveUtils {
      *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the URIs are changed.
+     * @return {@code true} if {@code MASTER} or {@code SLAVE} flags changed or the URIs are changed.
      */
     static boolean isChanged(Collection<RedisNodeDescription> o1, Collection<RedisNodeDescription> o2) {
 
@@ -53,7 +53,7 @@ class MasterSlaveUtils {
      *
      * @param nodes
      * @param lookupUri
-     * @return the {@link RedisNodeDescription} or {@literal null}
+     * @return the {@link RedisNodeDescription} or {@code null}.
      */
     static RedisNodeDescription findNodeByUri(Collection<RedisNodeDescription> nodes, RedisURI lookupUri) {
         return findNodeByHostAndPort(nodes, lookupUri.getHost(), lookupUri.getPort());
@@ -65,7 +65,7 @@ class MasterSlaveUtils {
      * @param nodes
      * @param host
      * @param port
-     * @return the {@link RedisNodeDescription} or {@literal null}
+     * @return the {@link RedisNodeDescription} or {@code null}.
      */
     static RedisNodeDescription findNodeByHostAndPort(Collection<RedisNodeDescription> nodes, String host, int port) {
         for (RedisNodeDescription node : nodes) {
@@ -82,7 +82,7 @@ class MasterSlaveUtils {
      *
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
-     * @return {@literal true} if {@code MASTER} or {@code SLAVE} flags changed or the URI changed.
+     * @return {@code true} if {@code MASTER} or {@code SLAVE} flags changed or the URI changed.
      */
     static boolean essentiallyEqualsTo(RedisNodeDescription o1, RedisNodeDescription o2) {
 
@@ -123,6 +123,7 @@ class MasterSlaveUtils {
 
             return h1.compareToIgnoreCase(h2);
         }
+
     }
 
 }

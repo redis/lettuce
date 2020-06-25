@@ -48,9 +48,11 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
     private StatefulRedisMasterReplicaConnection<String, String> connection;
 
     private RedisURI master;
+
     private RedisURI slave;
 
     private RedisAsyncCommands<String, String> connectionToNode1;
+
     private RedisAsyncCommands<String, String> connectionToNode2;
 
     @BeforeEach
@@ -68,13 +70,14 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
         if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node1;
             slave = node2;
-        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
+        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
+                && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
             master = node2;
             slave = node1;
         } else {
-            assumeTrue(false, String.format(
-                    "Cannot run the test because I don't have a distinct master and slave but %s and %s", node1Instance,
-                    node2Instance));
+            assumeTrue(false,
+                    String.format("Cannot run the test because I don't have a distinct master and slave but %s and %s",
+                            node1Instance, node2Instance));
         }
 
         connectionToNode1.configSet("requirepass", passwd);

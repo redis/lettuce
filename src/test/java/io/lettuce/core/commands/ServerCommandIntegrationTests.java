@@ -60,6 +60,7 @@ import io.lettuce.test.settings.TestSettings;
 public class ServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -431,4 +432,5 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
         return !info.contains("aof_rewrite_in_progress:1") && !info.contains("rdb_bgsave_in_progress:1");
     }
+
 }

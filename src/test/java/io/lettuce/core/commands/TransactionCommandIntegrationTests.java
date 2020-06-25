@@ -38,6 +38,7 @@ import io.lettuce.test.LettuceExtension;
 public class TransactionCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -137,16 +138,17 @@ public class TransactionCommandIntegrationTests extends TestSupport {
 
     @Test
     void execWithoutMulti() {
-        assertThatThrownBy(redis::exec).isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(
-                "ERR EXEC without MULTI");
+        assertThatThrownBy(redis::exec).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR EXEC without MULTI");
     }
 
     @Test
     void multiCalledTwiceShouldFail() {
 
         redis.multi();
-        assertThatThrownBy(redis::multi).isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(
-                "ERR MULTI calls can not be nested");
+        assertThatThrownBy(redis::multi).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR MULTI calls can not be nested");
         redis.discard();
     }
+
 }

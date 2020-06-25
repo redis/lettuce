@@ -35,6 +35,7 @@ import io.lettuce.core.internal.LettuceAssert;
 class SharedLock {
 
     private final AtomicLong writers = new AtomicLong();
+
     private volatile Thread exclusiveLockOwner;
 
     /**
@@ -72,7 +73,7 @@ class SharedLock {
     /**
      * Execute a {@link Runnable} guarded by an exclusive lock.
      *
-     * @param runnable the runnable, must not be {@literal null}.
+     * @param runnable the runnable, must not be {@code null}.
      */
     void doExclusive(Runnable runnable) {
 
@@ -87,9 +88,9 @@ class SharedLock {
     /**
      * Retrieve a value produced by a {@link Supplier} guarded by an exclusive lock.
      *
-     * @param supplier the {@link Supplier}, must not be {@literal null}.
-     * @param <T> the return type
-     * @return the return value
+     * @param supplier the {@link Supplier}, must not be {@code null}.
+     * @param <T> the return type.
+     * @return the return value.
      */
     <T> T doExclusive(Supplier<T> supplier) {
 
@@ -140,4 +141,5 @@ class SharedLock {
             }
         }
     }
+
 }

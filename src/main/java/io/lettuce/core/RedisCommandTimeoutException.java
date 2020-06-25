@@ -47,4 +47,5 @@ public class RedisCommandTimeoutException extends RedisException {
     public RedisCommandTimeoutException(Throwable cause) {
         super(cause);
     }
+
 }

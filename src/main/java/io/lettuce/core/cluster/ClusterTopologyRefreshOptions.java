@@ -30,24 +30,40 @@ import io.lettuce.core.internal.LettuceAssert;
 public class ClusterTopologyRefreshOptions {
 
     public static final boolean DEFAULT_PERIODIC_REFRESH_ENABLED = false;
+
     public static final long DEFAULT_REFRESH_PERIOD = 60;
+
     public static final TimeUnit DEFAULT_REFRESH_PERIOD_UNIT = TimeUnit.SECONDS;
+
     public static final Duration DEFAULT_REFRESH_PERIOD_DURATION = Duration.ofSeconds(DEFAULT_REFRESH_PERIOD);
+
     public static final boolean DEFAULT_DYNAMIC_REFRESH_SOURCES = true;
+
     public static final Set<RefreshTrigger> DEFAULT_ADAPTIVE_REFRESH_TRIGGERS = Collections.emptySet();
+
     public static final long DEFAULT_ADAPTIVE_REFRESH_TIMEOUT = 30;
+
     public static final TimeUnit DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_UNIT = TimeUnit.SECONDS;
+
     public static final Duration DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_DURATION = Duration
             .ofSeconds(DEFAULT_ADAPTIVE_REFRESH_TIMEOUT);
+
     public static final int DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS = 5;
+
     public static final boolean DEFAULT_CLOSE_STALE_CONNECTIONS = true;
 
     private final boolean periodicRefreshEnabled;
+
     private final Duration refreshPeriod;
+
     private final boolean closeStaleConnections;
+
     private final boolean dynamicRefreshSources;
+
     private final Set<RefreshTrigger> adaptiveRefreshTriggers;
+
     private final Duration adaptiveRefreshTimeout;
+
     private final int refreshTriggersReconnectAttempts;
 
     protected ClusterTopologyRefreshOptions(Builder builder) {
@@ -75,8 +91,8 @@ public class ClusterTopologyRefreshOptions {
     /**
      * Create a copy of {@literal options}.
      *
-     * @param options the original
-     * @return A new instance of {@link ClusterTopologyRefreshOptions} containing the values of {@literal options}
+     * @param options the original.
+     * @return A new instance of {@link ClusterTopologyRefreshOptions} containing the values of {@literal options}.
      */
     public static ClusterTopologyRefreshOptions copyOf(ClusterTopologyRefreshOptions options) {
         return new ClusterTopologyRefreshOptions(options);
@@ -115,11 +131,17 @@ public class ClusterTopologyRefreshOptions {
     public static class Builder {
 
         private boolean periodicRefreshEnabled = DEFAULT_PERIODIC_REFRESH_ENABLED;
+
         private Duration refreshPeriod = DEFAULT_REFRESH_PERIOD_DURATION;
+
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
+
         private boolean dynamicRefreshSources = DEFAULT_DYNAMIC_REFRESH_SOURCES;
+
         private Set<RefreshTrigger> adaptiveRefreshTriggers = new HashSet<>(DEFAULT_ADAPTIVE_REFRESH_TRIGGERS);
+
         private Duration adaptiveRefreshTimeout = DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_DURATION;
+
         private int refreshTriggersReconnectAttempts = DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS;
 
         private Builder() {
@@ -127,7 +149,7 @@ public class ClusterTopologyRefreshOptions {
 
         /**
          * Enables periodic cluster topology updates. The client starts updating the cluster topology in the intervals of
-         * {@link Builder#refreshPeriod}. Defaults to {@literal false}. See {@link #DEFAULT_PERIODIC_REFRESH_ENABLED}.
+         * {@link Builder#refreshPeriod}. Defaults to {@code false}. See {@link #DEFAULT_PERIODIC_REFRESH_ENABLED}.
          *
          * @return {@code this}
          */
@@ -137,9 +159,9 @@ public class ClusterTopologyRefreshOptions {
 
         /**
          * Enable regular cluster topology updates. The client starts updating the cluster topology in the intervals of
-         * {@link Builder#refreshPeriod}. Defaults to {@literal false}. See {@link #DEFAULT_PERIODIC_REFRESH_ENABLED}.
+         * {@link Builder#refreshPeriod}. Defaults to {@code false}. See {@link #DEFAULT_PERIODIC_REFRESH_ENABLED}.
          *
-         * @param enabled {@literal true} enable regular cluster topology updates or {@literal false} to disable auto-updating
+         * @param enabled {@code true} enable regular cluster topology updates or {@code false} to disable auto-updating
          * @return {@code this}
          */
         public Builder enablePeriodicRefresh(boolean enabled) {
@@ -166,7 +188,7 @@ public class ClusterTopologyRefreshOptions {
          * {@link #refreshPeriod(long, TimeUnit)} and {@link #enablePeriodicRefresh()}.
          *
          * @param refreshPeriod period for triggering topology updates, must be greater {@literal 0}
-         * @param refreshPeriodUnit unit for {@code refreshPeriod}, must not be {@literal null}
+         * @param refreshPeriodUnit unit for {@code refreshPeriod}, must not be {@code null}
          * @return {@code this}
          * @deprecated since 5.0, use {@link #enablePeriodicRefresh(Duration)}.
          */
@@ -197,7 +219,7 @@ public class ClusterTopologyRefreshOptions {
          * {@link #DEFAULT_REFRESH_PERIOD_UNIT}.
          *
          * @param refreshPeriod period for triggering topology updates, must be greater {@literal 0}
-         * @param refreshPeriodUnit unit for {@code refreshPeriod}, must not be {@literal null}
+         * @param refreshPeriodUnit unit for {@code refreshPeriod}, must not be {@code null}
          * @return {@code this}
          * @deprecated since 5.0, use {@link #refreshPeriod(Duration)}.
          */
@@ -211,11 +233,11 @@ public class ClusterTopologyRefreshOptions {
         }
 
         /**
-         * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@literal true}. Comes
-         * only into effect if {@link #isPeriodicRefreshEnabled()} is {@literal true}. See
+         * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@code true}. Comes only
+         * into effect if {@link #isPeriodicRefreshEnabled()} is {@code true}. See
          * {@link ClusterTopologyRefreshOptions#DEFAULT_CLOSE_STALE_CONNECTIONS}.
          *
-         * @param closeStaleConnections {@literal true} if stale connections are cleaned up after cluster topology updates
+         * @param closeStaleConnections {@code true} if stale connections are cleaned up after cluster topology updates
          * @return {@code this}
          */
         public Builder closeStaleConnections(boolean closeStaleConnections) {
@@ -226,12 +248,11 @@ public class ClusterTopologyRefreshOptions {
         /**
          * Discover cluster nodes from topology and use the discovered nodes as source for the cluster topology. Using dynamic
          * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node.If
-         * set to {@literal false}, only the initial seed nodes will be used as sources for topology discovery and the number of
+         * set to {@code false}, only the initial seed nodes will be used as sources for topology discovery and the number of
          * clients will be obtained only for the initial seed nodes. This can be useful when using Redis Cluster with many
-         * nodes. Defaults to {@literal true}. See {@link ClusterTopologyRefreshOptions#DEFAULT_DYNAMIC_REFRESH_SOURCES}.
+         * nodes. Defaults to {@code true}. See {@link ClusterTopologyRefreshOptions#DEFAULT_DYNAMIC_REFRESH_SOURCES}.
          *
-         * @param dynamicRefreshSources {@literal true} to discover and query all cluster nodes for obtaining the cluster
-         *        topology
+         * @param dynamicRefreshSources {@code true} to discover and query all cluster nodes for obtaining the cluster topology
          * @return {@code this}
          */
         public Builder dynamicRefreshSources(boolean dynamicRefreshSources) {
@@ -331,13 +352,14 @@ public class ClusterTopologyRefreshOptions {
         public ClusterTopologyRefreshOptions build() {
             return new ClusterTopologyRefreshOptions(this);
         }
+
     }
 
     /**
      * Flag, whether regular cluster topology updates are updated. The client starts updating the cluster topology in the
-     * intervals of {@link #getRefreshPeriod()}. Defaults to {@literal false}.
+     * intervals of {@link #getRefreshPeriod()}. Defaults to {@code false}.
      *
-     * @return {@literal true} it the cluster topology view is updated periodically
+     * @return {@code true} it the cluster topology view is updated periodically.
      */
     public boolean isPeriodicRefreshEnabled() {
         return periodicRefreshEnabled;
@@ -346,17 +368,17 @@ public class ClusterTopologyRefreshOptions {
     /**
      * Period between the regular cluster topology updates. Defaults to {@literal 60}.
      *
-     * @return the period between the regular cluster topology updates
+     * @return the period between the regular cluster topology updates.
      */
     public Duration getRefreshPeriod() {
         return refreshPeriod;
     }
 
     /**
-     * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@literal true}. Comes only
-     * into effect if {@link #isPeriodicRefreshEnabled()} is {@literal true}.
+     * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@code true}. Comes only into
+     * effect if {@link #isPeriodicRefreshEnabled()} is {@code true}.
      *
-     * @return {@literal true} if stale connections are cleaned up after cluster topology updates
+     * @return {@code true} if stale connections are cleaned up after cluster topology updates.
      */
     public boolean isCloseStaleConnections() {
         return closeStaleConnections;
@@ -365,10 +387,10 @@ public class ClusterTopologyRefreshOptions {
     /**
      * Discover cluster nodes from topology and use the discovered nodes as source for the cluster topology. Using dynamic
      * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node.If set
-     * to {@literal false}, only the initial seed nodes will be used as sources for topology discovery and the number of clients
+     * to {@code false}, only the initial seed nodes will be used as sources for topology discovery and the number of clients
      * will be obtained only for the initial seed nodes. This can be useful when using Redis Cluster with many nodes.
      *
-     * @return {@literal true} if dynamic refresh sources are enabled
+     * @return {@code true} if dynamic refresh sources are enabled.
      */
     public boolean useDynamicRefreshSources() {
         return dynamicRefreshSources;
@@ -380,7 +402,7 @@ public class ClusterTopologyRefreshOptions {
      * triggered refreshes are rate-limited using a timeout since events can happen on a large scale. Adaptive refresh triggers
      * are disabled by default.
      *
-     * @return the set of {@link RefreshTrigger triggers}
+     * @return the set of {@link RefreshTrigger triggers}.
      */
     public Set<RefreshTrigger> getAdaptiveRefreshTriggers() {
         return adaptiveRefreshTriggers;
@@ -389,7 +411,7 @@ public class ClusterTopologyRefreshOptions {
     /**
      * Timeout between adaptive cluster topology updates. Defaults to {@literal 30}.
      *
-     * @return the period between the regular cluster topology updates
+     * @return the period between the regular cluster topology updates.
      */
     public Duration getAdaptiveRefreshTimeout() {
         return adaptiveRefreshTimeout;
@@ -400,7 +422,7 @@ public class ClusterTopologyRefreshOptions {
      * a refresh if the reconnect process tries at least {@code refreshTriggersReconnectAttempts}. See
      * {@link #DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS}.
      *
-     * @return umber of reconnect attempts for a connection before a n adaptive topology refresh is triggered
+     * @return umber of reconnect attempts for a connection before a n adaptive topology refresh is triggered.
      */
     public int getRefreshTriggersReconnectAttempts() {
         return refreshTriggersReconnectAttempts;
@@ -440,4 +462,5 @@ public class ClusterTopologyRefreshOptions {
          */
         UNKNOWN_NODE
     }
+
 }

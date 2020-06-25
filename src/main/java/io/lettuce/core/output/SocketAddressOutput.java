@@ -46,4 +46,5 @@ public class SocketAddressOutput<K, V> extends CommandOutput<K, V, SocketAddress
         int port = Integer.parseInt(decodeAscii(bytes));
         output = InetSocketAddress.createUnresolved(hostname, port);
     }
+
 }

@@ -28,6 +28,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class Range<T> {
 
     private Boundary<T> lower;
+
     private Boundary<T> upper;
 
     private Range(Boundary<T> lower, Boundary<T> upper) {
@@ -43,10 +44,10 @@ public class Range<T> {
      * Create a new range from {@code lower} and {@code upper} boundary values. Both values are included (greater than or equals
      * and less than or equals).
      *
-     * @param lower lower boundary, must not be {@literal null}.
-     * @param upper upper boundary, must not be {@literal null}.
-     * @param <T> value type
-     * @return new {@link Range}
+     * @param lower lower boundary, must not be {@code null}.
+     * @param upper upper boundary, must not be {@code null}.
+     * @param <T> value type.
+     * @return new {@link Range}.
      */
     public static <T> Range<T> create(T lower, T upper) {
 
@@ -61,10 +62,10 @@ public class Range<T> {
     /**
      * Create a new range from {@code lower} and {@code upper} boundaries.
      *
-     * @param lower lower boundary, must not be {@literal null}.
-     * @param upper upper boundary, must not be {@literal null}.
+     * @param lower lower boundary, must not be {@code null}.
+     * @param upper upper boundary, must not be {@code null}.
      * @param <T> value type.
-     * @return new {@link Range}
+     * @return new {@link Range}.
      */
     public static <T> Range<T> from(Boundary<T> lower, Boundary<T> upper) {
         return new Range<T>(lower, upper);
@@ -171,6 +172,7 @@ public class Range<T> {
         private static final Boundary<?> UNBOUNDED = new Boundary<>(null, true);
 
         private final T value;
+
         private final boolean including;
 
         private Boundary(T value, boolean including) {
@@ -193,7 +195,7 @@ public class Range<T> {
          * Create a {@link Boundary} based on the {@code value} that includes the value when comparing ranges. Greater or
          * equals, less or equals. but not Greater or equal, less or equal to {@code value}.
          *
-         * @param value must not be {@literal null}.
+         * @param value must not be {@code null}.
          * @param <T> value type.
          * @return the {@link Boundary}.
          */
@@ -208,7 +210,7 @@ public class Range<T> {
          * Create a {@link Boundary} based on the {@code value} that excludes the value when comparing ranges. Greater or less
          * to {@code value} but not greater or equal, less or equal.
          *
-         * @param value must not be {@literal null}.
+         * @param value must not be {@code null}.
          * @param <T> value type.
          * @return the {@link Boundary}.
          */
@@ -227,7 +229,7 @@ public class Range<T> {
         }
 
         /**
-         * @return {@literal true} if the boundary includes the value.
+         * @return {@code true} if the boundary includes the value.
          */
         public boolean isIncluding() {
             return including;
@@ -265,5 +267,7 @@ public class Range<T> {
             sb.append(value);
             return sb.toString();
         }
+
     }
+
 }

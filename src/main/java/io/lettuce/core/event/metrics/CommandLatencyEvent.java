@@ -49,4 +49,5 @@ public class CommandLatencyEvent implements Event {
         sb.append(latencies);
         return sb.toString();
     }
+
 }

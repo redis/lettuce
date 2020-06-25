@@ -36,7 +36,7 @@ public abstract class Futures {
     /**
      * Create a composite {@link CompletableFuture} is composed from the given {@code futures}.
      *
-     * @param futures must not be {@literal null}.
+     * @param futures must not be {@code null}.
      * @return the composed {@link CompletableFuture}.
      * @since 5.1.1
      */
@@ -51,7 +51,7 @@ public abstract class Futures {
     /**
      * Create a {@link CompletableFuture} that is completed exceptionally with {@code throwable}.
      *
-     * @param throwable must not be {@literal null}.
+     * @param throwable must not be {@code null}.
      * @return the exceptionally completed {@link CompletableFuture}.
      */
     public static <T> CompletableFuture<T> failed(Throwable throwable) {
@@ -103,4 +103,5 @@ public abstract class Futures {
             target.completeExceptionally(future.cause());
         }
     }
+
 }

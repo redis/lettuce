@@ -225,12 +225,12 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
      * If the receiver implements the interface then the result is the receiver or a proxy for the receiver. If the receiver is
      * a wrapper and the wrapped object implements the interface then the result is the wrapped object or a proxy for the
      * wrapped object. Otherwise return the the result of calling <code>unwrap</code> recursively on the wrapped object or a
-     * proxy for that result. If the receiver is not a wrapper and does not implement the interface, then an {@literal null} is
+     * proxy for that result. If the receiver is not a wrapper and does not implement the interface, then an {@code null} is
      * returned.
      *
      * @param wrapped
      * @param iface A Class defining an interface that the result must implement.
-     * @return the unwrapped instance or {@literal null}.
+     * @return the unwrapped instance or {@code null}.
      * @since 5.1
      */
     @SuppressWarnings("unchecked")
@@ -285,4 +285,5 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
 
         return toHash != null ? toHash.hashCode() : 0;
     }
+
 }

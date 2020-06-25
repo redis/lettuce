@@ -36,7 +36,9 @@ import io.lettuce.test.ReactiveSyncInvocationHandler;
 public class TransactionReactiveCommandIntegrationTests extends TransactionCommandIntegrationTests {
 
     private final RedisClient client;
+
     private final RedisReactiveCommands<String, String> commands;
+
     private final StatefulRedisConnection<String, String> connection;
 
     @Inject
@@ -143,4 +145,5 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
 
         }).verifyComplete();
     }
+
 }

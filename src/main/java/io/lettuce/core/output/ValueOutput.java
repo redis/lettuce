@@ -24,7 +24,6 @@ import io.lettuce.core.codec.RedisCodec;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
  * @author Will Glozer
  * @author Mark Paluch
  */
@@ -38,4 +37,5 @@ public class ValueOutput<K, V> extends CommandOutput<K, V, V> {
     public void set(ByteBuffer bytes) {
         output = (bytes == null) ? null : codec.decodeValue(bytes);
     }
+
 }

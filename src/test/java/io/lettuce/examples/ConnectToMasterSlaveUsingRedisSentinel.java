@@ -41,4 +41,5 @@ public class ConnectToMasterSlaveUsingRedisSentinel {
         connection.close();
         redisClient.shutdown();
     }
+
 }

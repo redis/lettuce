@@ -45,20 +45,31 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 class CompilationUnitFactory {
 
     private File templateFile;
+
     private File sources;
+
     private File target;
+
     private String targetPackage;
+
     private String targetName;
 
     private Function<String, String> typeDocFunction;
+
     private Map<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>> methodReturnTypeMutation;
+
     private Predicate<MethodDeclaration> methodFilter;
+
     private Supplier<List<String>> importSupplier;
+
     private Consumer<ClassOrInterfaceDeclaration> typeMutator;
+
     private Function<Comment, Comment> methodCommentMutator;
 
     private CompilationUnit template;
+
     private CompilationUnit result = new CompilationUnit();
+
     private ClassOrInterfaceDeclaration resultType;
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
@@ -97,13 +108,13 @@ class CompilationUnitFactory {
         if (!templateTypeDeclaration.getTypeParameters().isEmpty()) {
             resultType.setTypeParameters(new NodeList<>());
             for (TypeParameter typeParameter : templateTypeDeclaration.getTypeParameters()) {
-                resultType.getTypeParameters().add(
-                        new TypeParameter(typeParameter.getName().getIdentifier(), typeParameter.getTypeBound()));
+                resultType.getTypeParameters()
+                        .add(new TypeParameter(typeParameter.getName().getIdentifier(), typeParameter.getTypeBound()));
             }
         }
 
-        resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().orElse(null)
-                .getContent())));
+        resultType.setComment(
+                new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().orElse(null).getContent())));
         result.setComment(template.getComment().orElse(null));
 
         result.setImports(new NodeList<>());
@@ -213,5 +224,7 @@ class CompilationUnitFactory {
 
             return null;
         }
+
     }
+
 }

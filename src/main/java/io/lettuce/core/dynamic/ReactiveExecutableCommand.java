@@ -26,7 +26,9 @@ import io.lettuce.core.AbstractRedisReactiveCommands;
 class ReactiveExecutableCommand implements ExecutableCommand {
 
     private final CommandMethod commandMethod;
+
     private final ReactiveCommandSegmentCommandFactory commandFactory;
+
     private final AbstractRedisReactiveCommands<Object, Object> redisReactiveCommands;
 
     ReactiveExecutableCommand(CommandMethod commandMethod, ReactiveCommandSegmentCommandFactory commandFactory,
@@ -59,4 +61,5 @@ class ReactiveExecutableCommand implements ExecutableCommand {
     public CommandMethod getCommandMethod() {
         return commandMethod;
     }
+
 }

@@ -39,7 +39,9 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 class StaticMasterSlaveConnector<K, V> implements MasterSlaveConnector<K, V> {
 
     private final RedisClient redisClient;
+
     private final RedisCodec<K, V> codec;
+
     private final Iterable<RedisURI> redisURIs;
 
     StaticMasterSlaveConnector(RedisClient redisClient, RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
@@ -84,4 +86,5 @@ class StaticMasterSlaveConnector<K, V> implements MasterSlaveConnector<K, V> {
 
         return Mono.just(connection);
     }
+
 }

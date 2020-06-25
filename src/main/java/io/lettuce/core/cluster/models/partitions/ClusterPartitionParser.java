@@ -35,7 +35,9 @@ public class ClusterPartitionParser {
     public static final String CONNECTED = "connected";
 
     private static final String TOKEN_SLOT_IN_TRANSITION = "[";
+
     private static final char TOKEN_NODE_SEPARATOR = '\n';
+
     private static final Map<String, RedisClusterNode.NodeFlag> FLAG_MAPPING;
 
     static {
@@ -63,7 +65,7 @@ public class ClusterPartitionParser {
     /**
      * Parse partition lines into Partitions object.
      *
-     * @param nodes output of CLUSTER NODES
+     * @param nodes output of CLUSTER NODES.
      * @return the partitions object.
      */
     public static Partitions parse(String nodes) {

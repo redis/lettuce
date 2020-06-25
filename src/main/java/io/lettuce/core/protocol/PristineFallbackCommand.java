@@ -33,6 +33,7 @@ import io.netty.buffer.ByteBuf;
 class PristineFallbackCommand implements RedisCommand<String, String, List<String>> {
 
     private final CommandOutput<String, String, List<String>> output;
+
     private volatile boolean complete;
 
     PristineFallbackCommand() {
@@ -102,5 +103,7 @@ class PristineFallbackCommand implements RedisCommand<String, String, List<Strin
         public void set(long integer) {
             output.add("" + integer);
         }
+
     }
+
 }

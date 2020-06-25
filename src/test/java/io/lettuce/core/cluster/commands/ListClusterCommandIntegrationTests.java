@@ -39,7 +39,6 @@ class ListClusterCommandIntegrationTests extends ListCommandIntegrationTests {
         this.redis = connection.sync();
     }
 
-
     // re-implementation because keys have to be on the same slot
     @Test
     void brpoplpush() {
@@ -77,4 +76,5 @@ class ListClusterCommandIntegrationTests extends ListCommandIntegrationTests {
         assertThat(redis.lrange("UKPDHs8Zlp", 0, -1)).isEqualTo(list("1"));
         assertThat(redis.lrange("br7EPz9bbj", 0, -1)).isEqualTo(list("2", "3", "4"));
     }
+
 }

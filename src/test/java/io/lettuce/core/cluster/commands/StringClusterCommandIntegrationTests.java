@@ -67,4 +67,5 @@ class StringClusterCommandIntegrationTests extends StringCommandIntegrationTests
 
         assertThat(count.intValue()).isEqualTo(2);
     }
+
 }

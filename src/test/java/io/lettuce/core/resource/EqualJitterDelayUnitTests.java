@@ -31,14 +31,14 @@ class EqualJitterDelayUnitTests {
 
     @Test
     void shouldNotCreateIfLowerBoundIsNegative() {
-        assertThatThrownBy(() -> Delay.equalJitter(-1, 100, 1, TimeUnit.MILLISECONDS)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> Delay.equalJitter(-1, 100, 1, TimeUnit.MILLISECONDS))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void shouldNotCreateIfLowerBoundIsSameAsUpperBound() {
-        assertThatThrownBy(() -> Delay.equalJitter(100, 100, 1, TimeUnit.MILLISECONDS)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> Delay.equalJitter(100, 100, 1, TimeUnit.MILLISECONDS))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -81,4 +81,5 @@ class EqualJitterDelayUnitTests {
         assertThat(delay.createDelay(17).toMillis()).isBetween(0L, 30000L);
         assertThat(delay.createDelay(Integer.MAX_VALUE).toMillis()).isBetween(0L, 30000L);
     }
+
 }

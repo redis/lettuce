@@ -79,4 +79,5 @@ public class NumericCommandIntegrationTests extends TestSupport {
         assertThat(redis.incrbyfloat(key, 3.0)).isEqualTo(3.0, offset(0.1));
         assertThat(redis.incrbyfloat(key, 0.2)).isEqualTo(3.2, offset(0.1));
     }
+
 }

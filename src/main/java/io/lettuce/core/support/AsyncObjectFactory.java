@@ -31,7 +31,7 @@ public interface AsyncObjectFactory<T> {
     /**
      * Create an instance that can be served by the pool and wrap it in a {@link PooledObject} to be managed by the pool.
      *
-     * @return a {@code PooledObject} wrapping an instance that can be served by the pool
+     * @return a {@code PooledObject} wrapping an instance that can be served by the pool.
      */
     CompletableFuture<T> create();
 
@@ -44,7 +44,7 @@ public interface AsyncObjectFactory<T> {
      * Also, an implementation must take in to consideration that instances lost to the garbage collector may never be
      * destroyed.
      *
-     * @param object a {@code PooledObject} wrapping the instance to be destroyed
+     * @param object a {@code PooledObject} wrapping the instance to be destroyed.
      * @see #validate
      */
     CompletableFuture<Void> destroy(T object);
@@ -52,9 +52,9 @@ public interface AsyncObjectFactory<T> {
     /**
      * Ensures that the instance is safe to be returned by the pool.
      *
-     * @param object a {@code PooledObject} wrapping the instance to be validated
-     *
-     * @return {@literal false} if {@code object} is not valid and should be dropped from the pool, {@literal true} otherwise.
+     * @param object a {@code PooledObject} wrapping the instance to be validated.
+     * @return {@code false} if {@code object} is not valid and should be dropped from the pool, {@code true} otherwise.
      */
     CompletableFuture<Boolean> validate(T object);
+
 }

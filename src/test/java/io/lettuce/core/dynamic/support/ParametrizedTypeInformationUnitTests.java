@@ -108,6 +108,7 @@ class ParametrizedTypeInformationUnitTests {
         List<?> anything();
 
         List<? extends Number> numberOrSubtype();
+
     }
 
     private static interface ListOfNumber extends List<Number> {
@@ -137,4 +138,5 @@ class ParametrizedTypeInformationUnitTests {
     private static interface ListOfInteger extends List<Integer> {
 
     }
+
 }

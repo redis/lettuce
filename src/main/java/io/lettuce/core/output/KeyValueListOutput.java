@@ -29,15 +29,17 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
  * @author Mark Paluch
  */
-public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<K, V>>> implements
-        StreamingOutput<KeyValue<K, V>> {
+public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<K, V>>>
+        implements StreamingOutput<KeyValue<K, V>> {
 
     private boolean initialized;
+
     private Subscriber<KeyValue<K, V>> subscriber;
+
     private Iterable<K> keys;
+
     private Iterator<K> keyIterator;
 
     public KeyValueListOutput(RedisCodec<K, V> codec, Iterable<K> keys) {
@@ -75,4 +77,5 @@ public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<
     public Subscriber<KeyValue<K, V>> getSubscriber() {
         return subscriber;
     }
+
 }

@@ -27,14 +27,12 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 class RedisMasterSlaveNode implements RedisNodeDescription {
 
     private final RedisURI redisURI;
+
     private final Role role;
 
     RedisMasterSlaveNode(String host, int port, RedisURI seed, Role role) {
 
-        RedisURI.Builder builder = RedisURI.Builder
-                .redis(host, port)
-                .withSsl(seed.isSsl())
-                .withVerifyPeer(seed.isVerifyPeer())
+        RedisURI.Builder builder = RedisURI.Builder.redis(host, port).withSsl(seed.isSsl()).withVerifyPeer(seed.isVerifyPeer())
                 .withStartTls(seed.isStartTls());
         if (seed.getPassword() != null && seed.getPassword().length != 0) {
             builder.withPassword(new String(seed.getPassword()));
@@ -90,4 +88,5 @@ class RedisMasterSlaveNode implements RedisNodeDescription {
         sb.append(']');
         return sb.toString();
     }
+
 }

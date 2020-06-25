@@ -45,14 +45,18 @@ import io.lettuce.test.resource.TestClientResources;
 class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
     private static final int CLUSTER_PORT_SSL_1 = 7443;
+
     private static final int CLUSTER_PORT_SSL_2 = 7444;
+
     private static final int CLUSTER_PORT_SSL_3 = 7445;
 
     private static final String SLOT_1_KEY = "8HMdi";
+
     private static final String SLOT_16352_KEY = "UyAa4KqoWgPGKa";
 
-    private static RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared")
-            .withSsl(true).withVerifyPeer(false).build();
+    private static RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared").withSsl(true)
+            .withVerifyPeer(false).build();
+
     private static RedisClusterClient redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
     @BeforeEach
@@ -171,4 +175,5 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
         redisClient.reloadPartitions();
         redisClient.reloadPartitions();
     }
+
 }

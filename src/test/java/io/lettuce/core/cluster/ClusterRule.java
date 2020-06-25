@@ -44,7 +44,9 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 public class ClusterRule implements TestRule {
 
     private RedisClusterClient clusterClient;
+
     private int[] ports;
+
     private Map<Integer, RedisAsyncCommands<String, String>> connectionCache = new HashMap<>();
 
     public ClusterRule(RedisClusterClient clusterClient, int... ports) {
@@ -52,8 +54,8 @@ public class ClusterRule implements TestRule {
         this.ports = ports;
 
         for (int port : ports) {
-            RedisAsyncCommands<String, String> connection = clusterClient.connectToNode(
-                    new InetSocketAddress("localhost", port)).async();
+            RedisAsyncCommands<String, String> connection = clusterClient
+                    .connectToNode(new InetSocketAddress("localhost", port)).async();
             connectionCache.put(port, connection);
         }
     }
@@ -62,13 +64,16 @@ public class ClusterRule implements TestRule {
     public Statement apply(final Statement base, Description description) {
 
         final Statement beforeCluster = new Statement() {
+
             @Override
             public void evaluate() {
                 flushdb();
             }
+
         };
 
         return new Statement() {
+
             @Override
             public void evaluate() throws Throwable {
                 beforeCluster.evaluate();
@@ -76,6 +81,7 @@ public class ClusterRule implements TestRule {
                 base.evaluate();
 
             }
+
         };
     }
 
@@ -164,8 +170,8 @@ public class ClusterRule implements TestRule {
         }
     }
 
-    private void await(List<Future<?>> futures, boolean ignoreExecutionException) throws InterruptedException,
-            java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
+    private void await(List<Future<?>> futures, boolean ignoreExecutionException)
+            throws InterruptedException, java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
         for (Future<?> future : futures) {
             try {
                 future.get(10, TimeUnit.SECONDS);
@@ -176,4 +182,5 @@ public class ClusterRule implements TestRule {
             }
         }
     }
+
 }

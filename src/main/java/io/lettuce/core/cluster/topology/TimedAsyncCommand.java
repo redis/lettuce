@@ -22,14 +22,15 @@ import io.netty.buffer.ByteBuf;
 /**
  * Timed command that records the time at which the command was encoded and completed.
  *
- * @param <K> Key type
- * @param <V> Value type
- * @param <T> Result type
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @param <T> Result type.
  * @author Mark Paluch
  */
 class TimedAsyncCommand<K, V, T> extends AsyncCommand<K, V, T> {
 
     long encodedAtNs = -1;
+
     long completedAtNs = -1;
 
     public TimedAsyncCommand(RedisCommand<K, V, T> command) {
@@ -57,4 +58,5 @@ class TimedAsyncCommand<K, V, T> extends AsyncCommand<K, V, T> {
         }
         return completedAtNs - encodedAtNs;
     }
+
 }

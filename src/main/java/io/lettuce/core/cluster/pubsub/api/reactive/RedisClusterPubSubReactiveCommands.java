@@ -60,14 +60,14 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
     /**
      * Select all replicas.
      *
-     * @param predicate Predicate to filter nodes
+     * @param predicate Predicate to filter nodes.
      * @return API with asynchronous executed commands on a selection of replica cluster nodes.
      * @deprecated since 5.2, use {@link #replicas()}.
      */
     @Deprecated
     default PubSubReactiveNodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
-        return nodes(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+        return nodes(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
     }
 
     /**
@@ -83,13 +83,13 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
     /**
      * Select all replicas.
      *
-     * @param predicate Predicate to filter nodes
+     * @param predicate Predicate to filter nodes.
      * @return API with asynchronous executed commands on a selection of replica cluster nodes.
      * @since 5.2
      */
     default PubSubReactiveNodeSelection<K, V> replicas(Predicate<RedisClusterNode> predicate) {
-        return nodes(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
+        return nodes(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -104,8 +104,9 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
     /**
      * Select nodes by a predicate.
      *
-     * @param predicate Predicate to filter nodes
-     * @return API with asynchronous executed commands on a selection of cluster nodes matching {@code predicate}
+     * @param predicate Predicate to filter nodes.
+     * @return API with asynchronous executed commands on a selection of cluster nodes matching {@code predicate}.
      */
     PubSubReactiveNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate);
+
 }

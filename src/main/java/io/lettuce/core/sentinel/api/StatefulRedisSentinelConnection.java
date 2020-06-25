@@ -54,4 +54,5 @@ public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnectio
      * @return the reactive API for the underlying connection.
      */
     RedisSentinelReactiveCommands<K, V> reactive();
+
 }

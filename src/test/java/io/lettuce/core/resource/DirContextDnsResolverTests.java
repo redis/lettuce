@@ -192,4 +192,5 @@ class DirContextDnsResolverTests {
         assertThat(resolved[0]).isInstanceOf(Inet6Address.class);
         assertThat(resolved[0].getHostAddress()).isEqualTo("2a00:1450:4001:816:0:0:0:200e");
     }
+
 }

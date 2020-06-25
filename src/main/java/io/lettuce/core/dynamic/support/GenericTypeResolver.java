@@ -45,10 +45,10 @@ public abstract class GenericTypeResolver {
      * Resolve the type arguments of the given generic interface against the given target class which is assumed to implement
      * the generic interface and possibly declare concrete types for its type variables.
      *
-     * @param clazz the target class to check against
-     * @param genericIfc the generic interface or superclass to resolve the type argument from
+     * @param clazz the target class to check against.
+     * @param genericIfc the generic interface or superclass to resolve the type argument from.
      * @return the resolved type of each argument, with the array size matching the number of actual type arguments, or
-     *         {@code null} if not resolvable
+     *         {@code null} if not resolvable.
      */
     public static Class<?>[] resolveTypeArguments(Class<?> clazz, Class<?> genericIfc) {
         ResolvableType type = ResolvableType.forClass(clazz).as(genericIfc);
@@ -82,4 +82,5 @@ public abstract class GenericTypeResolver {
             }
         }
     }
+
 }

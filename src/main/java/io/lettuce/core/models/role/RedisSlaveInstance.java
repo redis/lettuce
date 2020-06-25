@@ -27,7 +27,9 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 @SuppressWarnings("serial")
 public class RedisSlaveInstance implements RedisInstance, Serializable {
+
     private ReplicationPartner master;
+
     private State state;
 
     public RedisSlaveInstance() {
@@ -36,8 +38,8 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     /**
      * Constructs a {@link RedisSlaveInstance}
      *
-     * @param master master for the replication, must not be {@literal null}
-     * @param state replica state, must not be {@literal null}
+     * @param master master for the replication, must not be {@code null}
+     * @param state replica state, must not be {@code null}
      */
     RedisSlaveInstance(ReplicationPartner master, State state) {
         LettuceAssert.notNull(master, "Master must not be null");
@@ -47,8 +49,7 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     }
 
     /**
-     *
-     * @return always {@link io.lettuce.core.models.role.RedisInstance.Role#SLAVE}
+     * @return always {@link io.lettuce.core.models.role.RedisInstance.Role#SLAVE}.
      */
     @Override
     public Role getRole() {
@@ -115,4 +116,5 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
         sb.append(']');
         return sb.toString();
     }
+
 }

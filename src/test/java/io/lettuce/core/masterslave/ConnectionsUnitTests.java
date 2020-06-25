@@ -61,4 +61,5 @@ class ConnectionsUnitTests {
 
         verify(connection1).closeAsync();
     }
+
 }

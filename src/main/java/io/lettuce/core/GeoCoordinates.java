@@ -25,13 +25,14 @@ import io.lettuce.core.internal.LettuceAssert;
 public class GeoCoordinates {
 
     private final Number x;
+
     private final Number y;
 
     /**
      * Creates new {@link GeoCoordinates}.
      *
-     * @param x the longitude, must not be {@literal null}.
-     * @param y the latitude, must not be {@literal null}.
+     * @param x the longitude, must not be {@code null}.
+     * @param y the latitude, must not be {@code null}.
      */
     public GeoCoordinates(Number x, Number y) {
 
@@ -45,8 +46,8 @@ public class GeoCoordinates {
     /**
      * Creates new {@link GeoCoordinates}.
      *
-     * @param x the longitude, must not be {@literal null}.
-     * @param y the latitude, must not be {@literal null}.
+     * @param x the longitude, must not be {@code null}.
+     * @param y the latitude, must not be {@code null}.
      * @return {@link GeoCoordinates}.
      */
     public static GeoCoordinates create(Number x, Number y) {
@@ -94,4 +95,5 @@ public class GeoCoordinates {
     public String toString() {
         return String.format("(%s, %s)", getX(), getY());
     }
+
 }

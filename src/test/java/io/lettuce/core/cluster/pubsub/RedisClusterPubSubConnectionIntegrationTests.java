@@ -54,10 +54,13 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     private final RedisClusterClient clusterClient;
 
     private final PubSubTestListener connectionListener = new PubSubTestListener();
+
     private final PubSubTestListener nodeListener = new PubSubTestListener();
 
     private StatefulRedisClusterConnection<String, String> connection;
+
     private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection;
+
     private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection2;
 
     @Inject
@@ -156,8 +159,8 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
 
-        StatefulRedisPubSubConnection<String, String> node = Futures.get(pubSubConnection.getConnectionAsync(partition
-                .getNodeId()));
+        StatefulRedisPubSubConnection<String, String> node = Futures
+                .get(pubSubConnection.getConnectionAsync(partition.getNodeId()));
 
         assertThat(node.sync().ping()).isEqualTo("PONG");
     }
@@ -168,8 +171,8 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
 
         RedisURI uri = partition.getUri();
-        StatefulRedisPubSubConnection<String, String> node = Futures.get(pubSubConnection.getConnectionAsync(uri.getHost(),
-                uri.getPort()));
+        StatefulRedisPubSubConnection<String, String> node = Futures
+                .get(pubSubConnection.getConnectionAsync(uri.getHost(), uri.getPort()));
 
         assertThat(node.sync().ping()).isEqualTo("PONG");
     }
@@ -288,6 +291,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
             public void message(RedisClusterNode node, String pattern, String channel, String message) {
                 nodes.add(node);
             }
+
         });
 
         PubSubNodeSelection<String, String> masters = pubSubConnection.sync().masters();
@@ -317,4 +321,5 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         throw new IllegalStateException("No other nodes than " + nodeId + " available");
     }
+
 }

@@ -98,4 +98,5 @@ class MasterSlaveUtilsUnitTests {
         assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, replica), Arrays.asList(newmaster, newslave))).isTrue();
         assertThat(MasterSlaveUtils.isChanged(Arrays.asList(master, replica), Arrays.asList(newslave, newmaster))).isTrue();
     }
+
 }

@@ -60,4 +60,5 @@ class DefaultEventBusUnitTests {
         assertThat(arrayQueue.take()).isEqualTo(event);
         disposable1.dispose();
     }
+
 }

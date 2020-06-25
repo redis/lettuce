@@ -29,12 +29,14 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
+ *
  * @author Mark Paluch
  */
 class AsyncConnections {
 
     private final Map<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> connections = new TreeMap<>(
             MasterSlaveUtils.RedisURIComparator.INSTANCE);
+
     private final List<RedisNodeDescription> nodeList;
 
     AsyncConnections(List<RedisNodeDescription> nodeList) {
@@ -42,7 +44,7 @@ class AsyncConnections {
     }
 
     /**
-     * Add a connection for a {@link RedisURI}
+     * Add a connection for a {@link RedisURI}.
      *
      * @param redisURI
      * @param connection
@@ -72,4 +74,5 @@ class AsyncConnections {
 
         return Mono.fromCompletionStage(connections.getOrTimeout(timeout, timeoutExecutor));
     }
+
 }

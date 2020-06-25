@@ -35,7 +35,7 @@ class GeoCoordinatesListOutputUnitTests {
 
     @Test
     void setIntegerShouldFail() {
-        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -48,4 +48,5 @@ class GeoCoordinatesListOutputUnitTests {
 
         assertThat(sut.get()).contains(new GeoCoordinates(1.234, 4.567));
     }
+
 }

@@ -174,4 +174,5 @@ class CommandArgsUnitTests {
 
         assertThat(buffer.toString(LettuceCharsets.ASCII)).isEqualTo(expected.toString(LettuceCharsets.ASCII));
     }
+
 }

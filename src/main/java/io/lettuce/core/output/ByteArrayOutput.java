@@ -40,4 +40,5 @@ public class ByteArrayOutput<K, V> extends CommandOutput<K, V, byte[]> {
             bytes.get(output);
         }
     }
+
 }

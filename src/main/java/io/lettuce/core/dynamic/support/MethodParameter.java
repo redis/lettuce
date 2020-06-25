@@ -133,7 +133,7 @@ public class MethodParameter {
      * <p>
      * Note: Either Method or Constructor is available.
      *
-     * @return the Method, or {@code null} if none
+     * @return the Method, or {@code null} if none.
      */
     public Method getMethod() {
         return this.method;
@@ -144,7 +144,7 @@ public class MethodParameter {
      * <p>
      * Note: Either Method or Constructor is available.
      *
-     * @return the Constructor, or {@code null} if none
+     * @return the Constructor, or {@code null} if none.
      */
     public Constructor<?> getConstructor() {
         return this.constructor;
@@ -153,7 +153,7 @@ public class MethodParameter {
     /**
      * Returns the wrapped member.
      *
-     * @return the Method or Constructor as Member
+     * @return the Method or Constructor as Member.
      */
     public Member getMember() {
         // NOTE: no ternary expression to retain JDK <8 compatibility even when using
@@ -169,7 +169,7 @@ public class MethodParameter {
     /**
      * Returns the wrapped annotated element.
      *
-     * @return the Method or Constructor as AnnotatedElement
+     * @return the Method or Constructor as AnnotatedElement.
      */
     public AnnotatedElement getAnnotatedElement() {
         // NOTE: no ternary expression to retain JDK <8 compatibility even when using
@@ -192,7 +192,7 @@ public class MethodParameter {
     /**
      * Return the index of the method/constructor parameter.
      *
-     * @return the parameter index (-1 in case of the return type)
+     * @return the parameter index (-1 in case of the return type).
      */
     public int getParameterIndex() {
         return this.parameterIndex;
@@ -228,7 +228,7 @@ public class MethodParameter {
     /**
      * Set the type index for the current nesting level.
      *
-     * @param typeIndex the corresponding type index (or {@code null} for the default type index)
+     * @param typeIndex the corresponding type index (or {@code null} for the default type index).
      * @see #getNestingLevel()
      */
     public void setTypeIndexForCurrentLevel(int typeIndex) {
@@ -238,7 +238,7 @@ public class MethodParameter {
     /**
      * Return the type index for the current nesting level.
      *
-     * @return the corresponding type index, or {@code null} if none specified (indicating the default type index)
+     * @return the corresponding type index, or {@code null} if none specified (indicating the default type index).
      * @see #getNestingLevel()
      */
     public Integer getTypeIndexForCurrentLevel() {
@@ -248,8 +248,8 @@ public class MethodParameter {
     /**
      * Return the type index for the specified nesting level.
      *
-     * @param nestingLevel the nesting level to check
-     * @return the corresponding type index, or {@code null} if none specified (indicating the default type index)
+     * @param nestingLevel the nesting level to check.
+     * @return the corresponding type index, or {@code null} if none specified (indicating the default type index).
      */
     public Integer getTypeIndexForLevel(int nestingLevel) {
         return getTypeIndexesPerLevel().get(nestingLevel);
@@ -286,7 +286,7 @@ public class MethodParameter {
     /**
      * Return the type of the method/constructor parameter.
      *
-     * @return the parameter type (never {@code null})
+     * @return the parameter type (never {@code null}).
      */
     public Class<?> getParameterType() {
         if (this.parameterType == null) {
@@ -303,7 +303,7 @@ public class MethodParameter {
     /**
      * Return the generic type of the method/constructor parameter.
      *
-     * @return the parameter type (never {@code null})
+     * @return the parameter type (never {@code null}).
      */
     public Type getGenericParameterType() {
         if (this.genericParameterType == null) {
@@ -320,7 +320,7 @@ public class MethodParameter {
     /**
      * Return the nested type of the method/constructor parameter.
      *
-     * @return the parameter type (never {@code null})
+     * @return the parameter type (never {@code null}).
      * @see #getNestingLevel()
      */
     public Class<?> getNestedParameterType() {
@@ -350,7 +350,7 @@ public class MethodParameter {
     /**
      * Return the nested generic type of the method/constructor parameter.
      *
-     * @return the parameter type (never {@code null})
+     * @return the parameter type (never {@code null}).
      * @see #getNestingLevel()
      */
     public Type getNestedGenericParameterType() {
@@ -379,8 +379,8 @@ public class MethodParameter {
     /**
      * Return the method/constructor annotation of the given type, if available.
      *
-     * @param annotationType the annotation type to look for
-     * @return the annotation object, or {@code null} if not found
+     * @param annotationType the annotation type to look for.
+     * @return the annotation object, or {@code null} if not found.
      */
     public <A extends Annotation> A getMethodAnnotation(Class<A> annotationType) {
         return adaptAnnotation(getAnnotatedElement().getAnnotation(annotationType));
@@ -405,8 +405,8 @@ public class MethodParameter {
     /**
      * Return the parameter annotation of the given type, if available.
      *
-     * @param annotationType the annotation type to look for
-     * @return the annotation object, or {@code null} if not found
+     * @param annotationType the annotation type to look for.
+     * @return the annotation object, or {@code null} if not found.
      */
     @SuppressWarnings("unchecked")
     public <T extends Annotation> T getParameterAnnotation(Class<T> annotationType) {
@@ -420,14 +420,14 @@ public class MethodParameter {
     }
 
     /**
-     * Return true if the parameter has at least one annotation, false if it has none.
+     * Return {@code true} if the parameter has at least one annotation, {@code false} if it has none.
      */
     public boolean hasParameterAnnotations() {
         return (getParameterAnnotations().length != 0);
     }
 
     /**
-     * Return true if the parameter has the given annotation type, and false if it doesn't.
+     * Return {@code true} if the parameter has the given annotation type, and {@code false} if it doesn't.
      */
     public <T extends Annotation> boolean hasParameterAnnotation(Class<T> annotationType) {
         return (getParameterAnnotation(annotationType) != null);
@@ -447,7 +447,7 @@ public class MethodParameter {
      * Return the name of the method/constructor parameter.
      *
      * @return the parameter name (may be {@code null} if no parameter name metadata is contained in the class file or no
-     *         {@link #initParameterNameDiscovery ParameterNameDiscoverer} has been set to begin with)
+     *         {@link #initParameterNameDiscovery ParameterNameDiscoverer} has been set to begin with).
      */
     public String getParameterName() {
         ParameterNameDiscoverer discoverer = this.parameterNameDiscoverer;
@@ -467,8 +467,8 @@ public class MethodParameter {
      * <p>
      * The default implementation simply returns the given annotation as-is.
      *
-     * @param annotation the annotation about to be returned
-     * @return the post-processed annotation (or simply the original one)
+     * @param annotation the annotation about to be returned.
+     * @return the post-processed annotation (or simply the original one).
      */
     protected <A extends Annotation> A adaptAnnotation(A annotation) {
         return annotation;
@@ -479,8 +479,8 @@ public class MethodParameter {
      * <p>
      * The default implementation simply returns the given annotation array as-is.
      *
-     * @param annotations the annotation array about to be returned
-     * @return the post-processed annotation array (or simply the original one)
+     * @param annotations the annotation array about to be returned.
+     * @return the post-processed annotation array (or simply the original one).
      */
     protected Annotation[] adaptAnnotationArray(Annotation[] annotations) {
         return annotations;
@@ -508,9 +508,9 @@ public class MethodParameter {
      * <p>
      * This is a convenience constructor for scenarios where a Method or Constructor reference is treated in a generic fashion.
      *
-     * @param methodOrConstructor the Method or Constructor to specify a parameter for
-     * @param parameterIndex the index of the parameter
-     * @return the corresponding MethodParameter instance
+     * @param methodOrConstructor the Method or Constructor to specify a parameter for.
+     * @param parameterIndex the index of the parameter.
+     * @return the corresponding MethodParameter instance.
      */
     public static MethodParameter forMethodOrConstructor(Object methodOrConstructor, int parameterIndex) {
         if (methodOrConstructor instanceof Method) {

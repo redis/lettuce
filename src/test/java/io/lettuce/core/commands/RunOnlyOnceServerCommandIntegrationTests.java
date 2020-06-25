@@ -47,7 +47,9 @@ import io.lettuce.test.settings.TestSettings;
 class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final StatefulRedisConnection<String, String> connection;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -108,8 +110,8 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
         String result = redis.migrate("localhost", TestSettings.port(2), 0, 10, MigrateArgs.Builder.keys(key).copy().replace());
         assertThat(result).isEqualTo("OK");
 
-        result = redis.migrate("localhost", TestSettings.port(2), 0, 10, MigrateArgs.Builder
-                .keys(Arrays.asList("key1", "key2")).replace());
+        result = redis.migrate("localhost", TestSettings.port(2), 0, 10,
+                MigrateArgs.Builder.keys(Arrays.asList("key1", "key2")).replace());
         assertThat(result).isEqualTo("OK");
     }
 
@@ -136,4 +138,5 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
             commands.getStatefulConnection().close();
         }
     }
+
 }

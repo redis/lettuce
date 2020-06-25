@@ -44,9 +44,11 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEventLoopGroupProvider.class);
 
     private final Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
+
     private final Map<ExecutorService, Long> refCounter = new ConcurrentHashMap<>(2);
 
     private final int numberOfThreads;
+
     private final ThreadFactoryProvider threadFactoryProvider;
 
     private volatile boolean shutdownCalled = false;
@@ -140,7 +142,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     /**
      * Customization hook for {@link EventLoopGroup} creation.
-     * 
+     *
      * @param <T>
      * @param type requested event loop group type.
      * @param numberOfThreads number of threads to create.
@@ -162,10 +164,10 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * <li>KqueueEventLoopGroup</li>
      * </ul>
      *
-     * @param type the type
-     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}
-     * @param <T> type parameter
-     * @return a new instance of a {@link EventExecutorGroup}
+     * @param type the type.
+     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}.
+     * @param <T> type parameter.
+     * @return a new instance of a {@link EventExecutorGroup}.
      * @throws IllegalArgumentException if the {@code type} is not supported.
      */
     public static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads) {
@@ -181,10 +183,10 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * <li>KqueueEventLoopGroup</li>
      * </ul>
      *
-     * @param type the type
-     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}
-     * @param <T> type parameter
-     * @return a new instance of a {@link EventExecutorGroup}
+     * @param type the type.
+     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}.
+     * @param <T> type parameter.
+     * @return a new instance of a {@link EventExecutorGroup}.
      * @throws IllegalArgumentException if the {@code type} is not supported.
      * @since 5.3
      */
@@ -279,18 +281,19 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     /**
      * Interface to provide a custom {@link java.util.concurrent.ThreadFactory}. Implementations are asked through
      * {@link #getThreadFactory(String)} to provide a thread factory for a given pool name.
-     * 
+     *
      * @since 5.3
      */
     public interface ThreadFactoryProvider {
 
         /**
          * Return a {@link ThreadFactory} for the given {@code poolName}.
-         * 
+         *
          * @param poolName a descriptive pool name. Typically used as prefix for thread names.
          * @return the {@link ThreadFactory}.
          */
         ThreadFactory getThreadFactory(String poolName);
+
     }
 
     enum DefaultThreadFactoryProvider implements ThreadFactoryProvider {
@@ -301,5 +304,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         public ThreadFactory getThreadFactory(String poolName) {
             return new DefaultThreadFactory(poolName, true);
         }
+
     }
+
 }

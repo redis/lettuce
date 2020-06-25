@@ -38,7 +38,9 @@ import io.lettuce.core.protocol.CommandArgs;
 public class ScanArgs implements CompositeArgument {
 
     private Long count;
+
     private String match;
+
     private Charset charset;
 
     /**
@@ -73,12 +75,13 @@ public class ScanArgs implements CompositeArgument {
         public static ScanArgs matches(String matches) {
             return new ScanArgs().match(matches);
         }
+
     }
 
     /**
      * Set the match filter. Uses {@link StandardCharsets#UTF_8 UTF-8} to encode {@code match}.
      *
-     * @param match the filter, must not be {@literal null}.
+     * @param match the filter, must not be {@code null}.
      * @return {@literal this} {@link ScanArgs}.
      */
     public ScanArgs match(String match) {
@@ -88,8 +91,8 @@ public class ScanArgs implements CompositeArgument {
     /**
      * Set the match filter along the given {@link Charset}.
      *
-     * @param match the filter, must not be {@literal null}.
-     * @param charset the charset for match, must not be {@literal null}.
+     * @param match the filter, must not be {@code null}.
+     * @param charset the charset for match, must not be {@code null}.
      * @return {@literal this} {@link ScanArgs}.
      * @since 5.3.1
      */
@@ -104,9 +107,9 @@ public class ScanArgs implements CompositeArgument {
     }
 
     /**
-     * Limit the scan by count
+     * Limit the scan by count.
      *
-     * @param count number of elements to scan
+     * @param count number of elements to scan.
      * @return {@literal this} {@link ScanArgs}.
      */
     public ScanArgs limit(long count) {
@@ -125,4 +128,5 @@ public class ScanArgs implements CompositeArgument {
             args.add(COUNT).add(count);
         }
     }
+
 }

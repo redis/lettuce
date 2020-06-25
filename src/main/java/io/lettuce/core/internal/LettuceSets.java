@@ -40,8 +40,8 @@ public final class LettuceSets {
     /**
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the set should contain, must not be {@literal null}.
-     * @param <T> the element type
+     * @param elements the elements that the set should contain, must not be {@code null}.
+     * @param <T> the element type.
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
     public static <T> Set<T> newHashSet(Collection<? extends T> elements) {
@@ -55,8 +55,8 @@ public final class LettuceSets {
     /**
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the set should contain, must not be {@literal null}.
-     * @param <T> the element type
+     * @param elements the elements that the set should contain, must not be {@code null}.
+     * @param <T> the element type.
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
     @SuppressWarnings("unchecked")
@@ -77,8 +77,8 @@ public final class LettuceSets {
     /**
      * Creates a new {@code HashSet} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the set should contain, must not be {@literal null}.
-     * @param <T> the element type
+     * @param elements the elements that the set should contain, must not be {@code null}.
+     * @param <T> the element type.
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
     @SafeVarargs
@@ -94,12 +94,13 @@ public final class LettuceSets {
     /**
      * Creates a new unmodifiable {@code HashSet} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the set should contain, must not be {@literal null}.
-     * @param <T> the element type
+     * @param elements the elements that the set should contain, must not be {@code null}.
+     * @param <T> the element type.
      * @return a new {@code HashSet} containing all elements from {@code elements}.
      */
     @SafeVarargs
     public static <T> Set<T> unmodifiableSet(T... elements) {
         return Collections.unmodifiableSet(newHashSet(elements));
     }
+
 }

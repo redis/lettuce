@@ -36,7 +36,7 @@ public interface AsyncExecutions<T> extends Iterable<CompletableFuture<T>>, Comp
 
     /**
      *
-     * @return map between {@link RedisClusterNode} and the {@link CompletionStage}
+     * @return map between {@link RedisClusterNode} and the {@link CompletionStage}.
      */
     Map<RedisClusterNode, CompletableFuture<T>> asMap();
 
@@ -48,12 +48,13 @@ public interface AsyncExecutions<T> extends Iterable<CompletableFuture<T>>, Comp
 
     /**
      *
-     * @param redisClusterNode the node
-     * @return the completion stage for this node
+     * @param redisClusterNode the node.
+     * @return the completion stage for this node.
      */
     CompletionStage<T> get(RedisClusterNode redisClusterNode);
 
     /**
+     *
      * @return array of futures.
      */
     CompletableFuture<T>[] futures();
@@ -71,9 +72,11 @@ public interface AsyncExecutions<T> extends Iterable<CompletableFuture<T>>, Comp
     <R, A> CompletionStage<R> thenCollect(Collector<? super T, A, R> collector);
 
     /**
-     * @return a sequential {@code Stream} over the {@link CompletionStage CompletionStages} in this collection
+     *
+     * @return a sequential {@code Stream} over the {@link CompletionStage CompletionStages} in this collection.
      */
     default Stream<CompletableFuture<T>> stream() {
         return StreamSupport.stream(spliterator(), false);
     }
+
 }

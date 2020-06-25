@@ -65,7 +65,7 @@ public class BitFieldArgs implements CompositeArgument {
         /**
          * Create a new {@code GET} subcommand.
          *
-         * @param bitFieldType the bit field type, must not be {@literal null}.
+         * @param bitFieldType the bit field type, must not be {@code null}.
          * @param offset bitfield offset
          * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
          */
@@ -76,8 +76,8 @@ public class BitFieldArgs implements CompositeArgument {
         /**
          * Create a new {@code GET} subcommand.
          *
-         * @param bitFieldType the bit field type, must not be {@literal null}.
-         * @param offset bitfield offset, must not be {@literal null}.
+         * @param bitFieldType the bit field type, must not be {@code null}.
+         * @param offset bitfield offset, must not be {@code null}.
          * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
          * @since 4.3
          */
@@ -88,7 +88,7 @@ public class BitFieldArgs implements CompositeArgument {
         /**
          * Create a new {@code SET} subcommand.
          *
-         * @param bitFieldType the bit field type, must not be {@literal null}.
+         * @param bitFieldType the bit field type, must not be {@code null}.
          * @param offset bitfield offset
          * @param value the value
          * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
@@ -100,8 +100,8 @@ public class BitFieldArgs implements CompositeArgument {
         /**
          * Create a new {@code SET} subcommand.
          *
-         * @param bitFieldType the bit field type, must not be {@literal null}.
-         * @param offset bitfield offset, must not be {@literal null}.
+         * @param bitFieldType the bit field type, must not be {@code null}.
+         * @param offset bitfield offset, must not be {@code null}.
          * @param value the value
          * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
          * @since 4.3
@@ -113,7 +113,7 @@ public class BitFieldArgs implements CompositeArgument {
         /**
          * Create a new {@code INCRBY} subcommand.
          *
-         * @param bitFieldType the bit field type, must not be {@literal null}.
+         * @param bitFieldType the bit field type, must not be {@code null}.
          * @param offset bitfield offset
          * @param value the value
          * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value} .
@@ -125,8 +125,8 @@ public class BitFieldArgs implements CompositeArgument {
         /**
          * Create a new {@code INCRBY} subcommand.
          *
-         * @param bitFieldType the bit field type, must not be {@literal null}.
-         * @param offset bitfield offset, must not be {@literal null}.
+         * @param bitFieldType the bit field type, must not be {@code null}.
+         * @param offset bitfield offset, must not be {@code null}.
          * @param value the value
          * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value} .
          * @since 4.3
@@ -138,12 +138,13 @@ public class BitFieldArgs implements CompositeArgument {
         /**
          * Adds a new {@code OVERFLOW} subcommand.
          *
-         * @param overflowType type of overflow, must not be {@literal null}.
+         * @param overflowType type of overflow, must not be {@code null}.
          * @return a new {@code OVERFLOW} subcommand for the given {@code overflowType}.
          */
         public static BitFieldArgs overflow(OverflowType overflowType) {
             return new BitFieldArgs().overflow(overflowType);
         }
+
     }
 
     /**
@@ -195,7 +196,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@link SubCommand} to the {@code BITFIELD} execution.
      *
-     * @param subCommand must not be {@literal null}.
+     * @param subCommand must not be {@code null}.
      */
     private BitFieldArgs addSubCommand(SubCommand subCommand) {
 
@@ -217,7 +218,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code GET} subcommand using offset {@code 0}.
      *
-     * @param bitFieldType the bit field type, must not be {@literal null}.
+     * @param bitFieldType the bit field type, must not be {@code null}.
      * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      */
     public BitFieldArgs get(BitFieldType bitFieldType) {
@@ -227,8 +228,8 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code GET} subcommand.
      *
-     * @param bitFieldType the bit field type, must not be {@literal null}.
-     * @param offset bitfield offset
+     * @param bitFieldType the bit field type, must not be {@code null}.
+     * @param offset bitfield offset.
      * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      */
     public BitFieldArgs get(BitFieldType bitFieldType, int offset) {
@@ -238,8 +239,8 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code GET} subcommand.
      *
-     * @param bitFieldType the bit field type, must not be {@literal null}.
-     * @param offset bitfield offset
+     * @param bitFieldType the bit field type, must not be {@code null}.
+     * @param offset bitfield offset.
      * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      * @since 4.3
      */
@@ -253,7 +254,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code GET} subcommand using the field type of the previous command.
      *
-     * @param offset bitfield offset
+     * @param offset bitfield offset.
      * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      * @throws IllegalStateException if no previous field type was found
      */
@@ -264,7 +265,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code SET} subcommand using offset {@code 0} and the field type of the previous command.
      *
-     * @param value the value
+     * @param value the value.
      * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
@@ -275,8 +276,8 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code SET} subcommand using offset {@code 0}.
      *
-     * @param bitFieldType the bit field type, must not be {@literal null}.
-     * @param value the value
+     * @param bitFieldType the bit field type, must not be {@code null}.
+     * @param value the value.
      * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs set(BitFieldType bitFieldType, long value) {
@@ -286,8 +287,8 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code SET} subcommand using the field type of the previous command.
      *
-     * @param offset bitfield offset
-     * @param value the value
+     * @param offset bitfield offset.
+     * @param value the value.
      * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
@@ -298,9 +299,9 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code SET} subcommand.
      *
-     * @param bitFieldType the bit field type, must not be {@literal null}.
-     * @param offset bitfield offset
-     * @param value the value
+     * @param bitFieldType the bit field type, must not be {@code null}.
+     * @param offset bitfield offset.
+     * @param value the value.
      * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs set(BitFieldType bitFieldType, int offset, long value) {
@@ -310,9 +311,9 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code SET} subcommand.
      *
-     * @param bitFieldType the bit field type, must not be {@literal null}.
-     * @param offset bitfield offset, must not be {@literal null}.
-     * @param value the value
+     * @param bitFieldType the bit field type, must not be {@code null}.
+     * @param offset bitfield offset, must not be {@code null}.
+     * @param value the value.
      * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @since 4.3
      */
@@ -326,7 +327,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code INCRBY} subcommand using offset {@code 0} and the field type of the previous command.
      *
-     * @param value the value
+     * @param value the value.
      * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
@@ -337,8 +338,8 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code INCRBY} subcommand using offset {@code 0}.
      *
-     * @param bitFieldType the bit field type, must not be {@literal null}.
-     * @param value the value
+     * @param bitFieldType the bit field type, must not be {@code null}.
+     * @param value the value.
      * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs incrBy(BitFieldType bitFieldType, long value) {
@@ -348,8 +349,8 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code INCRBY} subcommand using the field type of the previous command.
      *
-     * @param offset bitfield offset
-     * @param value the value
+     * @param offset bitfield offset.
+     * @param value the value.
      * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
      */
@@ -360,9 +361,9 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code INCRBY} subcommand.
      *
-     * @param bitFieldType the bit field type, must not be {@literal null}.
-     * @param offset bitfield offset
-     * @param value the value
+     * @param bitFieldType the bit field type, must not be {@code null}.
+     * @param offset bitfield offset.
+     * @param value the value.
      * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
     public BitFieldArgs incrBy(BitFieldType bitFieldType, int offset, long value) {
@@ -372,9 +373,9 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code INCRBY} subcommand.
      *
-     * @param bitFieldType the bit field type, must not be {@literal null}.
-     * @param offset bitfield offset, must not be {@literal null}.
-     * @param value the value
+     * @param bitFieldType the bit field type, must not be {@code null}.
+     * @param offset bitfield offset, must not be {@code null}.
+     * @param value the value.
      * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @since 4.3
      */
@@ -388,7 +389,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code OVERFLOW} subcommand.
      *
-     * @param overflowType type of overflow, must not be {@literal null}.
+     * @param overflowType type of overflow, must not be {@code null}.
      * @return a new {@code OVERFLOW} subcommand for the given {@code overflowType}.
      */
     public BitFieldArgs overflow(OverflowType overflowType) {
@@ -424,8 +425,11 @@ public class BitFieldArgs implements CompositeArgument {
     private static class Set extends SubCommand {
 
         private final BitFieldType bitFieldType;
+
         private final boolean bitOffset;
+
         private final long offset;
+
         private final long value;
 
         private Set(BitFieldType bitFieldType, boolean bitOffset, int offset, long value) {
@@ -452,6 +456,7 @@ public class BitFieldArgs implements CompositeArgument {
 
             args.add(value);
         }
+
     }
 
     /**
@@ -460,7 +465,9 @@ public class BitFieldArgs implements CompositeArgument {
     private static class Get extends SubCommand {
 
         private final BitFieldType bitFieldType;
+
         private final boolean bitOffset;
+
         private final int offset;
 
         private Get(BitFieldType bitFieldType, boolean bitOffset, int offset) {
@@ -484,6 +491,7 @@ public class BitFieldArgs implements CompositeArgument {
                 args.add(offset);
             }
         }
+
     }
 
     /**
@@ -492,8 +500,11 @@ public class BitFieldArgs implements CompositeArgument {
     private static class IncrBy extends SubCommand {
 
         private final BitFieldType bitFieldType;
+
         private final boolean bitOffset;
+
         private final long offset;
+
         private final long value;
 
         private IncrBy(BitFieldType bitFieldType, boolean offsetWidthMultiplier, int offset, long value) {
@@ -521,6 +532,7 @@ public class BitFieldArgs implements CompositeArgument {
             args.add(value);
 
         }
+
     }
 
     /**
@@ -540,13 +552,16 @@ public class BitFieldArgs implements CompositeArgument {
         <K, V> void build(CommandArgs<K, V> args) {
             args.add("OVERFLOW").add(overflowType);
         }
+
     }
 
     /**
      * Base class for bitfield subcommands.
      */
     private abstract static class SubCommand {
+
         abstract <K, V> void build(CommandArgs<K, V> args);
+
     }
 
     public <K, V> void build(CommandArgs<K, V> args) {
@@ -573,6 +588,7 @@ public class BitFieldArgs implements CompositeArgument {
         public byte[] getBytes() {
             return bytes;
         }
+
     }
 
     /**
@@ -581,6 +597,7 @@ public class BitFieldArgs implements CompositeArgument {
     public static class BitFieldType {
 
         private final boolean signed;
+
         private final int bits;
 
         private BitFieldType(boolean signed, int bits) {
@@ -599,7 +616,7 @@ public class BitFieldArgs implements CompositeArgument {
 
         /**
          *
-         * @return {@literal true} if the bitfield type is signed.
+         * @return {@code true} if the bitfield type is signed.
          */
         public boolean isSigned() {
             return signed;
@@ -621,6 +638,7 @@ public class BitFieldArgs implements CompositeArgument {
         public String toString() {
             return asString();
         }
+
     }
 
     /**
@@ -632,6 +650,7 @@ public class BitFieldArgs implements CompositeArgument {
     public static class Offset {
 
         private final boolean multiplyByTypeWidth;
+
         private final int offset;
 
         private Offset(boolean multiplyByTypeWidth, int offset) {
@@ -641,7 +660,7 @@ public class BitFieldArgs implements CompositeArgument {
         }
 
         /**
-         * @return {@literal true} if the offset should be multiplied by integer width that is represented with a leading hash (
+         * @return {@code true} if the offset should be multiplied by integer width that is represented with a leading hash (
          *         {@code #}) when constructing the command
          */
         public boolean isMultiplyByTypeWidth() {
@@ -660,5 +679,7 @@ public class BitFieldArgs implements CompositeArgument {
         public String toString() {
             return (multiplyByTypeWidth ? "#" : "") + offset;
         }
+
     }
+
 }

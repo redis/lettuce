@@ -39,4 +39,5 @@ public interface ReactiveExecutions<T> {
      * @return collection of nodes on which the command was executed.
      */
     Collection<RedisClusterNode> nodes();
+
 }

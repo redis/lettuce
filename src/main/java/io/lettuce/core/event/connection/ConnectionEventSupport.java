@@ -20,12 +20,14 @@ import java.net.SocketAddress;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
+ *
  * @author Mark Paluch
  * @since 3.4
  */
 abstract class ConnectionEventSupport implements ConnectionEvent {
 
     private final SocketAddress local;
+
     private final SocketAddress remote;
 
     ConnectionEventSupport(SocketAddress local, SocketAddress remote) {
@@ -39,7 +41,7 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
     /**
      * Returns the local address.
      *
-     * @return the local address
+     * @return the local address.
      */
     public SocketAddress localAddress() {
         return local;
@@ -48,7 +50,7 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
     /**
      * Returns the remote address.
      *
-     * @return the remote address
+     * @return the remote address.
      */
     public SocketAddress remoteAddress() {
         return remote;
@@ -64,4 +66,5 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
         sb.append(']');
         return sb.toString();
     }
+
 }

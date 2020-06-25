@@ -28,6 +28,7 @@ import io.lettuce.core.internal.LettuceAssert;
 class ComposedRedisCodec<K, V> implements RedisCodec<K, V> {
 
     private final RedisCodec<K, ?> keyCodec;
+
     private final RedisCodec<?, V> valueCodec;
 
     ComposedRedisCodec(RedisCodec<K, ?> keyCodec, RedisCodec<?, V> valueCodec) {
@@ -56,4 +57,5 @@ class ComposedRedisCodec<K, V> implements RedisCodec<K, V> {
     public ByteBuffer encodeValue(V value) {
         return valueCodec.encodeValue(value);
     }
+
 }

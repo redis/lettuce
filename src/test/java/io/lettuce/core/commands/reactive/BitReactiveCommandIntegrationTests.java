@@ -105,10 +105,11 @@ class BitReactiveCommandIntegrationTests extends BitCommandIntegrationTests {
     @Test
     void bitfieldOverflow() {
 
-        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.overflow(FAIL).set(signed(8), 9, 5)
-                .incrBy(signed(8), Integer.MAX_VALUE);
+        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.overflow(FAIL).set(signed(8), 9, 5).incrBy(signed(8),
+                Integer.MAX_VALUE);
 
         StepVerifier.create(reactive.bitfield(key, bitFieldArgs)).expectNext(Value.just(0L)).expectNext(Value.empty())
                 .verifyComplete();
     }
+
 }

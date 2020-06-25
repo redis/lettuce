@@ -96,10 +96,11 @@ public class RedisConnectionException extends RedisException {
 
     /**
      * @param error the error message.
-     * @return {@literal true} if the {@code error} message indicates Redis protected mode.
+     * @return {@code true} if the {@code error} message indicates Redis protected mode.
      * @since 5.0.1
      */
     public static boolean isProtectedMode(String error) {
         return error != null && error.startsWith("DENIED");
     }
+
 }

@@ -58,4 +58,5 @@ class TimeoutOptionsUnitTests {
         assertThat(timeoutOptions.isApplyConnectionTimeout()).isFalse();
         assertThat(source.getTimeout(null)).isEqualTo(TimeUnit.MINUTES.toNanos(1));
     }
+
 }

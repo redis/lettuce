@@ -36,12 +36,11 @@ public class ConnectToMasterSlaveUsingElastiCacheCluster {
         // Syntax: redis://[password@]host[:port][/databaseNumber]
         RedisClient redisClient = RedisClient.create();
 
-        List<RedisURI> nodes = Arrays.asList(RedisURI.create("redis://host1"),
-                RedisURI.create("redis://host2"),
+        List<RedisURI> nodes = Arrays.asList(RedisURI.create("redis://host1"), RedisURI.create("redis://host2"),
                 RedisURI.create("redis://host3"));
 
-        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave
-                .connect(redisClient, StringCodec.UTF8, nodes);
+        StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
+                nodes);
         connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
 
         System.out.println("Connected to Redis");
@@ -49,4 +48,5 @@ public class ConnectToMasterSlaveUsingElastiCacheCluster {
         connection.close();
         redisClient.shutdown();
     }
+
 }

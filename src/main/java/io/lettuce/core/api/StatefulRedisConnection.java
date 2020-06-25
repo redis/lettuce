@@ -59,4 +59,5 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * @return the reactive API for the underlying connection.
      */
     RedisReactiveCommands<K, V> reactive();
+
 }

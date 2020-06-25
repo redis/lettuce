@@ -37,9 +37,13 @@ import io.lettuce.core.resource.ClientResources;
 abstract class AbstractCdiBean<T> implements Bean<T> {
 
     protected final Bean<RedisURI> redisURIBean;
+
     protected final Bean<ClientResources> clientResourcesBean;
+
     protected final BeanManager beanManager;
+
     protected final Set<Annotation> qualifiers;
+
     protected final String name;
 
     public AbstractCdiBean(Bean<RedisURI> redisURIBean, Bean<ClientResources> clientResourcesBean, BeanManager beanManager,
@@ -100,4 +104,5 @@ abstract class AbstractCdiBean<T> implements Bean<T> {
     public Set<InjectionPoint> getInjectionPoints() {
         return Collections.emptySet();
     }
+
 }

@@ -41,16 +41,23 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     private RedisURI uri;
+
     private String nodeId;
 
     private boolean connected;
+
     private String slaveOf;
+
     private long pingSentTimestamp;
+
     private long pongReceivedTimestamp;
+
     private long configEpoch;
 
     private BitSet slots;
+
     private final Set<NodeFlag> flags = EnumSet.noneOf(NodeFlag.class);
+
     private final List<RedisURI> aliases = new ArrayList<>();
 
     public RedisClusterNode() {
@@ -110,10 +117,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * Create a new instance of {@link RedisClusterNode} by passing the {@code nodeId}
+     * Create a new instance of {@link RedisClusterNode} by passing the {@code nodeId}.
      *
-     * @param nodeId the nodeId
-     * @return a new instance of {@link RedisClusterNode}
+     * @param nodeId the nodeId.
+     * @return a new instance of {@link RedisClusterNode}.
      */
     public static RedisClusterNode of(String nodeId) {
 
@@ -142,7 +149,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the connection point details. Usually the host/ip/port where a particular Redis Cluster node server is running.
      *
-     * @param uri the {@link RedisURI}, must not be {@literal null}
+     * @param uri the {@link RedisURI}, must not be {@code null}.
      */
     public void setUri(RedisURI uri) {
 
@@ -157,7 +164,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets {@code nodeId}.
      *
-     * @param nodeId the {@code nodeId}
+     * @param nodeId the {@code nodeId}.
      */
     public void setNodeId(String nodeId) {
         LettuceAssert.notNull(nodeId, "NodeId must not be null");
@@ -172,7 +179,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * Sets the {@code connected} flag. The {@code connected} flag describes whether the node which provided details about the
      * node is connected to the particular {@link RedisClusterNode}.
      *
-     * @param connected the {@code connected} flag
+     * @param connected the {@code connected} flag.
      */
     public void setConnected(boolean connected) {
         this.connected = connected;
@@ -185,7 +192,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the replication source.
      *
-     * @param slaveOf the replication source, can be {@literal null}
+     * @param slaveOf the replication source, can be {@code null}.
      */
     public void setSlaveOf(String slaveOf) {
         this.slaveOf = slaveOf;
@@ -198,7 +205,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the last {@code pingSentTimestamp}.
      *
-     * @param pingSentTimestamp the last {@code pingSentTimestamp}
+     * @param pingSentTimestamp the last {@code pingSentTimestamp}.
      */
     public void setPingSentTimestamp(long pingSentTimestamp) {
         this.pingSentTimestamp = pingSentTimestamp;
@@ -211,7 +218,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the last {@code pongReceivedTimestamp}.
      *
-     * @param pongReceivedTimestamp the last {@code pongReceivedTimestamp}
+     * @param pongReceivedTimestamp the last {@code pongReceivedTimestamp}.
      */
     public void setPongReceivedTimestamp(long pongReceivedTimestamp) {
         this.pongReceivedTimestamp = pongReceivedTimestamp;
@@ -224,7 +231,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the {@code configEpoch}.
      *
-     * @param configEpoch the {@code configEpoch}
+     * @param configEpoch the {@code configEpoch}.
      */
     public void setConfigEpoch(long configEpoch) {
         this.configEpoch = configEpoch;
@@ -280,7 +287,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#MASTER}. The list is empty if this node is not
      * a master or the node is not responsible for any slots at all.
      *
-     * @param slots list of slots, must not be {@literal null} but may be empty
+     * @param slots list of slots, must not be {@code null} but may be empty.
      */
     public void setSlots(List<Integer> slots) {
 
@@ -307,10 +314,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * Return {@literal true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
+     * Return {@code true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
      *
      * @param other the node to compare with.
-     * @return {@literal true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
+     * @return {@code true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
      */
     public boolean hasSameSlotsAs(RedisClusterNode other) {
 
@@ -346,8 +353,9 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * @param nodeFlag the node flag
-     * @return true if the {@linkplain NodeFlag} is contained within the flags.
+     *
+     * @param nodeFlag the node flag.
+     * @return {@code true} if the {@linkplain NodeFlag} is contained within the flags.
      */
     public boolean is(NodeFlag nodeFlag) {
         return getFlags().contains(nodeFlag);
@@ -356,7 +364,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Add an alias to {@link RedisClusterNode}.
      *
-     * @param alias must not be {@literal null}.
+     * @param alias must not be {@code null}.
      */
     public void addAlias(RedisURI alias) {
 
@@ -369,8 +377,9 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * @param slot the slot hash
-     * @return true if the slot is contained within the handled slots.
+     *
+     * @param slot the slot hash.
+     * @return {@code true} if the slot is contained within the handled slots.
      */
     public boolean hasSlot(int slot) {
         return slot <= SlotHash.SLOT_COUNT && this.slots != null && this.slots.get(slot);
@@ -379,7 +388,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Returns the {@link Role} of the Redis Cluster node based on the {@link #getFlags() flags}.
      *
-     * @return the Redis Cluster node role
+     * @return the Redis Cluster node role.
      */
     @Override
     public Role getRole() {
@@ -435,4 +444,5 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     public enum NodeFlag {
         NOFLAGS, MYSELF, SLAVE, REPLICA, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }
+
 }

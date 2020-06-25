@@ -43,4 +43,5 @@ public class PartitionSelectorException extends PartitionException {
     public Partitions getPartitions() {
         return partitions;
     }
+
 }

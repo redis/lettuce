@@ -39,68 +39,67 @@ public interface RedisSentinelCommands<K, V> {
     /**
      * Return the ip and port number of the master with that name.
      *
-     * @param key the key
-     * @return SocketAddress;
+     * @param key the key.
+     * @return SocketAddress.
      */
     SocketAddress getMasterAddrByName(K key);
 
     /**
      * Enumerates all the monitored masters and their states.
      *
-     * @return Map&lt;K, V&gt;&gt;
+     * @return Map&lt;K, V&gt;&gt;.
      */
     List<Map<K, V>> masters();
 
     /**
      * Show the state and info of the specified master.
      *
-     * @param key the key
-     * @return Map&lt;K, V&gt;
+     * @param key the key.
+     * @return Map&lt;K, V&gt;.
      */
     Map<K, V> master(K key);
 
     /**
      * Provides a list of replicas for the master with the specified name.
      *
-     * @param key the key
-     * @return List&lt;Map&lt;K, V&gt;&gt;
+     * @param key the key.
+     * @return List&lt;Map&lt;K, V&gt;&gt;.
      */
     List<Map<K, V>> slaves(K key);
 
     /**
      * This command will reset all the masters with matching name.
      *
-     * @param key the key
-     * @return Long
+     * @param key the key.
+     * @return Long.
      */
     Long reset(K key);
 
     /**
      * Perform a failover.
      *
-     * @param key the master id
-     * @return String
+     * @param key the master id.
+     * @return String.
      */
     String failover(K key);
 
     /**
      * This command tells the Sentinel to start monitoring a new master with the specified name, ip, port, and quorum.
      *
-     * @param key the key
-     * @param ip the IP address
-     * @param port the port
-     * @param quorum the quorum count
-     * @return String
+     * @param key the key.
+     * @param ip the IP address.
+     * @param port the port.
+     * @param quorum the quorum count.
+     * @return String.
      */
     String monitor(K key, String ip, int port, int quorum);
 
     /**
      * Multiple option / value pairs can be specified (or none at all).
      *
-     * @param key the key
-     * @param option the option
-     * @param value the value
-     *
+     * @param key the key.
+     * @param option the option.
+     * @param value the value.
      * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
     String set(K key, String option, V value);
@@ -108,8 +107,8 @@ public interface RedisSentinelCommands<K, V> {
     /**
      * remove the specified master.
      *
-     * @param key the key
-     * @return String
+     * @param key the key.
+     * @return String.
      */
     String remove(K key);
 
@@ -123,7 +122,7 @@ public interface RedisSentinelCommands<K, V> {
     /**
      * Set the current connection name.
      *
-     * @param name the client name
+     * @param name the client name.
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      */
     String clientSetname(K name);
@@ -131,23 +130,23 @@ public interface RedisSentinelCommands<K, V> {
     /**
      * Kill the connection of a client identified by ip:port.
      *
-     * @param addr ip:port
-     * @return String simple-string-reply {@code OK} if the connection exists and has been closed
+     * @param addr ip:port.
+     * @return String simple-string-reply {@code OK} if the connection exists and has been closed.
      */
     String clientKill(String addr);
 
     /**
-     * Kill connections of clients which are filtered by {@code killArgs}
+     * Kill connections of clients which are filtered by {@code killArgs}.
      *
-     * @param killArgs args for the kill operation
-     * @return Long integer-reply number of killed connections
+     * @param killArgs args for the kill operation.
+     * @return Long integer-reply number of killed connections.
      */
     Long clientKill(KillArgs killArgs);
 
     /**
      * Stop processing commands from clients for some time.
      *
-     * @param timeout the timeout value in milliseconds
+     * @param timeout the timeout value in milliseconds.
      * @return String simple-string-reply The command returns OK or an error if the timeout is invalid.
      */
     String clientPause(long timeout);
@@ -170,7 +169,7 @@ public interface RedisSentinelCommands<K, V> {
     /**
      * Get information and statistics about the server.
      *
-     * @param section the section type: string
+     * @param section the section type: string.
      * @return String bulk-string-reply as a collection of text lines.
      */
     String info(String section);
@@ -178,17 +177,17 @@ public interface RedisSentinelCommands<K, V> {
     /**
      * Ping the server.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String ping();
 
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
      *
-     * @param type the command, must not be {@literal null}.
-     * @param output the command output, must not be {@literal null}.
-     * @param <T> response type
-     * @return the command response
+     * @param type the command, must not be {@code null}.
+     * @param output the command output, must not be {@code null}.
+     * @param <T> response type.
+     * @return the command response.
      * @since 5.2
      */
     <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
@@ -196,22 +195,25 @@ public interface RedisSentinelCommands<K, V> {
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
      *
-     * @param type the command, must not be {@literal null}.
-     * @param output the command output, must not be {@literal null}.
-     * @param args the command arguments, must not be {@literal null}.
-     * @param <T> response type
-     * @return the command response
+     * @param type the command, must not be {@code null}.
+     * @param output the command output, must not be {@code null}.
+     * @param args the command arguments, must not be {@code null}.
+     * @param <T> response type.
+     * @return the command response.
      * @since 5.2
      */
     <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
     /**
-     * @return true if the connection is open (connected and not closed).
+     *
+     * @return {@code true} if the connection is open (connected and not closed).
      */
     boolean isOpen();
 
     /**
+     *
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
 }

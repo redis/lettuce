@@ -61,13 +61,14 @@ public class XGroupCreateArgs {
         public static XGroupCreateArgs mkstream(boolean mkstream) {
             return new XGroupCreateArgs().mkstream(mkstream);
         }
+
     }
 
     /**
      * Make a stream if it does not exists.
      *
-     * @param mkstream whether to apply {@literal MKSTREAM}
-     * @return {@code this}
+     * @param mkstream whether to apply {@literal MKSTREAM}.
+     * @return {@code this}.
      */
     public XGroupCreateArgs mkstream(boolean mkstream) {
 
@@ -81,4 +82,5 @@ public class XGroupCreateArgs {
             args.add("MKSTREAM");
         }
     }
+
 }

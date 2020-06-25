@@ -25,14 +25,18 @@ import io.lettuce.core.dynamic.segment.AnnotationCommandSegmentFactory;
 import io.lettuce.core.dynamic.segment.CommandSegments;
 
 /**
+ *
  * @author Mark Paluch
  * @since 5.0
  */
 abstract class ExecutableCommandLookupStrategySupport implements ExecutableCommandLookupStrategy {
 
     private final List<RedisCodec<?, ?>> redisCodecs;
+
     private final CommandOutputFactoryResolver commandOutputFactoryResolver;
+
     private final CommandFactoryResolver commandFactoryResolver;
+
     private final CommandMethodVerifier commandMethodVerifier;
 
     public ExecutableCommandLookupStrategySupport(List<RedisCodec<?, ?>> redisCodecs,
@@ -52,6 +56,7 @@ abstract class ExecutableCommandLookupStrategySupport implements ExecutableComma
     class DefaultCommandFactoryResolver implements CommandFactoryResolver {
 
         final AnnotationCommandSegmentFactory commandSegmentFactory = new AnnotationCommandSegmentFactory();
+
         final AnnotationRedisCodecResolver codecResolver;
 
         DefaultCommandFactoryResolver() {
@@ -75,5 +80,7 @@ abstract class ExecutableCommandLookupStrategySupport implements ExecutableComma
 
             return new CommandSegmentCommandFactory(commandSegments, commandMethod, codec, outputFactoryResolver);
         }
+
     }
+
 }

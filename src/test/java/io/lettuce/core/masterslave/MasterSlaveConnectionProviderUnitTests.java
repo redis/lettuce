@@ -68,8 +68,8 @@ class MasterSlaveConnectionProviderUnitTests {
         nodeConnectionMock = (StatefulRedisConnection) channelHandlerMock;
         sut = new MasterSlaveConnectionProvider<>(clientMock, StringCodec.UTF8, RedisURI.create("localhost", 1),
                 Collections.emptyMap());
-        sut.setKnownNodes(Arrays.asList(new RedisMasterSlaveNode("localhost", 1, RedisURI.create("localhost", 1),
-                RedisInstance.Role.MASTER)));
+        sut.setKnownNodes(Arrays
+                .asList(new RedisMasterSlaveNode("localhost", 1, RedisURI.create("localhost", 1), RedisInstance.Role.MASTER)));
     }
 
     @Test
@@ -87,4 +87,5 @@ class MasterSlaveConnectionProviderUnitTests {
 
         verify(channelHandlerMock).closeAsync();
     }
+
 }

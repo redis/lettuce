@@ -98,7 +98,6 @@ class MasterSlaveTopologyProviderUnitTests {
         List<RedisNodeDescription> result = sut.getNodesFromInfo(info);
         assertThat(result).hasSize(2);
 
-
         RedisNodeDescription replica = result.get(0);
         assertThat(replica.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
 
@@ -152,8 +151,7 @@ class MasterSlaveTopologyProviderUnitTests {
     void shouldParseIPv6SlaveAddress() {
 
         String info = "# Replication\r\n" + "role:master\r\n"
-                + "slave0:ip=::20f8:1400:0:0,port=6483,state=online,offset=56276,lag=0\r\n"
-                + "master_repl_offset:56276\r\n"
+                + "slave0:ip=::20f8:1400:0:0,port=6483,state=online,offset=56276,lag=0\r\n" + "master_repl_offset:56276\r\n"
                 + "repl_backlog_active:1\r\n";
 
         List<RedisNodeDescription> result = sut.getNodesFromInfo(info);
@@ -165,4 +163,5 @@ class MasterSlaveTopologyProviderUnitTests {
         assertThat(slave1.getUri().getHost()).isEqualTo("::20f8:1400:0:0");
         assertThat(slave1.getUri().getPort()).isEqualTo(6483);
     }
+
 }

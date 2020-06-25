@@ -450,4 +450,5 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.xgroupSetid(StreamOffset.latest(key), "group")).isEqualTo("OK");
     }
+
 }

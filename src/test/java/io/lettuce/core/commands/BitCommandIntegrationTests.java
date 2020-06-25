@@ -49,6 +49,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 public class BitCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     protected RedisCommands<String, String> bitstring;

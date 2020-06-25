@@ -30,4 +30,5 @@ class BitTxCommandIntegrationTests extends BitCommandIntegrationTests {
     BitTxCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         super(client, TxSyncInvocationHandler.sync(connection));
     }
+
 }

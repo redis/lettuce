@@ -32,12 +32,15 @@ import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 /**
  * @author Mark Paluch
  */
-public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements
-        StatefulRedisSentinelConnection<K, V> {
+public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandler<K, V>
+        implements StatefulRedisSentinelConnection<K, V> {
 
     protected final RedisCodec<K, V> codec;
+
     protected final RedisSentinelCommands<K, V> sync;
+
     protected final RedisSentinelAsyncCommands<K, V> async;
+
     protected final RedisSentinelReactiveCommands<K, V> reactive;
 
     private String clientName;
@@ -96,4 +99,5 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
 
         dispatch((RedisCommand) async);
     }
+
 }

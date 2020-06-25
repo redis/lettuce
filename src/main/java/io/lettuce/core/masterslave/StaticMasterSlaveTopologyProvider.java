@@ -48,6 +48,7 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(StaticMasterSlaveTopologyProvider.class);
 
     private final RedisClient redisClient;
+
     private final Iterable<RedisURI> redisURIs;
 
     public StaticMasterSlaveTopologyProvider(RedisClient redisClient, Iterable<RedisURI> redisURIs) {
@@ -79,19 +80,16 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
         List<StatefulRedisConnection<String, String>> connections = new CopyOnWriteArrayList<>();
 
         Flux<RedisURI> uris = Flux.fromIterable(redisURIs);
-        Mono<List<RedisNodeDescription>> nodes = uris
-                .flatMap(uri -> getNodeDescription(connections, uri))
-                .collectList()
-                .flatMap(
-                        (nodeDescriptions) -> {
+        Mono<List<RedisNodeDescription>> nodes = uris.flatMap(uri -> getNodeDescription(connections, uri)).collectList()
+                .flatMap((nodeDescriptions) -> {
 
-                            if (nodeDescriptions.isEmpty()) {
-                                return Mono.error(new RedisConnectionException(String.format(
-                                        "Failed to connect to at least one node in %s", redisURIs)));
-                            }
+                    if (nodeDescriptions.isEmpty()) {
+                        return Mono.error(new RedisConnectionException(
+                                String.format("Failed to connect to at least one node in %s", redisURIs)));
+                    }
 
-                            return Mono.just(nodeDescriptions);
-                        });
+                    return Mono.just(nodeDescriptions);
+                });
 
         return nodes.toFuture();
     }
@@ -122,4 +120,5 @@ public class StaticMasterSlaveTopologyProvider implements TopologyProvider {
         return connection.reactive().role().collectList().map(RoleParser::parse)
                 .map(it -> new RedisMasterSlaveNode(uri.getHost(), uri.getPort(), uri, it.getRole()));
     }
+
 }

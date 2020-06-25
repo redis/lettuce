@@ -45,15 +45,19 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class MasterSlaveConnectionProvider<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterSlaveConnectionProvider.class);
+
     private final boolean debugEnabled = logger.isDebugEnabled();
 
     private final RedisURI initialRedisUri;
+
     private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, CompletionStage<StatefulRedisConnection<K, V>>> connectionProvider;
 
     private List<RedisNodeDescription> knownNodes = new ArrayList<>();
 
     private boolean autoFlushCommands = true;
+
     private final Object stateLock = new Object();
+
     private ReadFrom readFrom;
 
     MasterSlaveConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
@@ -77,7 +81,7 @@ public class MasterSlaveConnectionProvider<K, V> {
      * {@link io.lettuce.core.masterslave.MasterSlaveConnectionProvider.Intent#READ} intentions lookup one or more read
      * candidates using the {@link ReadFrom} setting.
      *
-     * @param intent command intent
+     * @param intent command intent.
      * @return the connection.
      */
     public StatefulRedisConnection<K, V> getConnection(Intent intent) {
@@ -106,7 +110,7 @@ public class MasterSlaveConnectionProvider<K, V> {
      * {@link io.lettuce.core.masterslave.MasterSlaveConnectionProvider.Intent#READ} intentions lookup one or more read
      * candidates using the {@link ReadFrom} setting.
      *
-     * @param intent command intent
+     * @param intent command intent.
      * @return the connection.
      * @throws RedisException if the host is not part of the cluster
      */
@@ -118,6 +122,7 @@ public class MasterSlaveConnectionProvider<K, V> {
 
         if (readFrom != null && intent == Intent.READ) {
             List<RedisNodeDescription> selection = readFrom.select(new ReadFrom.Nodes() {
+
                 @Override
                 public List<RedisNodeDescription> getNodes() {
                     return knownNodes;
@@ -127,6 +132,7 @@ public class MasterSlaveConnectionProvider<K, V> {
                 public Iterator<RedisNodeDescription> iterator() {
                     return knownNodes.iterator();
                 }
+
             });
 
             if (selection.isEmpty()) {
@@ -166,6 +172,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     /**
+     *
      * @return number of connections.
      */
     protected long getConnectionCount() {
@@ -175,7 +182,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     /**
      * Retrieve a set of PoolKey's for all pooled connections that are within the pool but not within the {@link Partitions}.
      *
-     * @return Set of {@link ConnectionKey}s
+     * @return Set of {@link ConnectionKey}s.
      */
     private Set<ConnectionKey> getStaleConnectionKeys() {
 
@@ -186,7 +193,8 @@ public class MasterSlaveConnectionProvider<K, V> {
 
         for (ConnectionKey connectionKey : map.keySet()) {
 
-            if (connectionKey.host != null && findNodeByHostAndPort(knownNodes, connectionKey.host, connectionKey.port) != null) {
+            if (connectionKey.host != null
+                    && findNodeByHostAndPort(knownNodes, connectionKey.host, connectionKey.port) != null) {
                 continue;
             }
             stale.add(connectionKey);
@@ -260,6 +268,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     /**
+     *
      * @return all connections that are connected.
      */
     @Deprecated
@@ -271,6 +280,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     /**
+     *
      * @param knownNodes
      */
     public void setKnownNodes(Collection<RedisNodeDescription> knownNodes) {
@@ -284,6 +294,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     }
 
     /**
+     *
      * @return the current read-from setting.
      */
     public ReadFrom getReadFrom() {
@@ -309,10 +320,11 @@ public class MasterSlaveConnectionProvider<K, V> {
         throw new RedisException(String.format("Master is currently unknown: %s", knownNodes));
     }
 
-    class DefaultMasterSlaveNodeConnectionFactory implements
-            Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> {
+    class DefaultMasterSlaveNodeConnectionFactory
+            implements Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> {
 
         private final RedisClient redisClient;
+
         private final RedisCodec<K, V> redisCodec;
 
         DefaultMasterSlaveNodeConnectionFactory(RedisClient redisClient, RedisCodec<K, V> redisCodec) {
@@ -346,6 +358,7 @@ public class MasterSlaveConnectionProvider<K, V> {
 
             return connectionFuture;
         }
+
     }
 
     private static ConnectionKey toConnectionKey(RedisURI redisURI) {
@@ -358,6 +371,7 @@ public class MasterSlaveConnectionProvider<K, V> {
     static class ConnectionKey {
 
         private final String host;
+
         private final int port;
 
         ConnectionKey(String host, int port) {
@@ -386,9 +400,11 @@ public class MasterSlaveConnectionProvider<K, V> {
             result = 31 * result + port;
             return result;
         }
+
     }
 
     enum Intent {
         READ, WRITE;
     }
+
 }

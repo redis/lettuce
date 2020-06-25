@@ -43,12 +43,17 @@ import io.lettuce.core.resource.ClientResources;
 class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
     private final RedisChannelWriter defaultWriter;
+
     private final ClusterEventListener clusterEventListener;
+
     private final int executionLimit;
 
     private ClusterConnectionProvider clusterConnectionProvider;
+
     private AsyncClusterConnectionProvider asyncClusterConnectionProvider;
+
     private boolean closed = false;
+
     private volatile Partitions partitions;
 
     ClusterDistributionChannelWriter(ClientOptions clientOptions, RedisChannelWriter defaultWriter,
@@ -424,7 +429,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
      *
-     * @param readFrom the read from setting, must not be {@literal null}
+     * @param readFrom the read from setting, must not be {@code null}.
      */
     public void setReadFrom(ReadFrom readFrom) {
         clusterConnectionProvider.setReadFrom(readFrom);
@@ -433,7 +438,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     /**
      * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
      *
-     * @return the read from setting
+     * @return the read from setting.
      */
     public ReadFrom getReadFrom() {
         return clusterConnectionProvider.getReadFrom();
@@ -442,8 +447,11 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     static class SlotIntent {
 
         final int slotHash;
+
         final Intent intent;
+
         private static final SlotIntent[] READ;
+
         private static final SlotIntent[] WRITE;
 
         static {
@@ -492,5 +500,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             result = 31 * result + intent.hashCode();
             return result;
         }
+
     }
+
 }

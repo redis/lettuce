@@ -73,8 +73,8 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      *
      * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
-     * @param nodeId the node Id
-     * @return a connection to the requested cluster node
+     * @param nodeId the node Id.
+     * @return a connection to the requested cluster node.
      * @throws RedisException if the requested node identified by {@code nodeId} is not part of the cluster
      */
     StatefulRedisConnection<K, V> getConnection(String nodeId);
@@ -91,7 +91,7 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      *
      * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
-     * @param nodeId the node Id
+     * @param nodeId the node Id.
      * @return {@link CompletableFuture} to indicate success or failure to connect to the requested cluster node.
      * @throws RedisException if the requested node identified by {@code nodeId} is not part of the cluster
      * @since 5.0
@@ -108,9 +108,9 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * <p>
      * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
-     * @param host the host
-     * @param port the port
-     * @return a connection to the requested cluster node
+     * @param host the host.
+     * @param port the port.
+     * @return a connection to the requested cluster node.
      * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
      */
     StatefulRedisConnection<K, V> getConnection(String host, int port);
@@ -125,8 +125,8 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * <p>
      * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
-     * @param host the host
-     * @param port the port
+     * @param host the host.
+     * @param port the port.
      * @return {@link CompletableFuture} to indicate success or failure to connect to the requested cluster node.
      * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
      * @since 5.0
@@ -137,24 +137,27 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
      *
-     * @param readFrom the read from setting, must not be {@literal null}
+     * @param readFrom the read from setting, must not be {@code null}.
      */
     void setReadFrom(ReadFrom readFrom);
 
     /**
      * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
      *
-     * @return the read from setting
+     * @return the read from setting.
      */
     ReadFrom getReadFrom();
 
     /**
+     *
      * @return Known partitions for this connection.
      */
     Partitions getPartitions();
 
     /**
+     *
      * @return the underlying {@link RedisChannelWriter}.
      */
     RedisChannelWriter getChannelWriter();
+
 }

@@ -30,4 +30,5 @@ class StreamReactiveCommandIntegrationTests extends StreamCommandIntegrationTest
     StreamReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

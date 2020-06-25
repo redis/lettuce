@@ -42,4 +42,5 @@ public class RedisBusyException extends RedisCommandExecutionException {
     public RedisBusyException(String msg, Throwable cause) {
         super(msg, cause);
     }
+
 }

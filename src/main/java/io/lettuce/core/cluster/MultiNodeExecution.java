@@ -46,8 +46,8 @@ class MultiNodeExecution {
     /**
      * Aggregate (sum) results of the {@link RedisFuture}s.
      *
-     * @param executions mapping of a key to the future
-     * @return future producing an aggregation result
+     * @param executions mapping of a key to the future.
+     * @return future producing an aggregation result.
      */
     protected static RedisFuture<Long> aggregateAsync(Map<?, ? extends CompletionStage<Long>> executions) {
 
@@ -67,47 +67,47 @@ class MultiNodeExecution {
     /**
      * Returns the result of the first {@link RedisFuture} and guarantee that all futures are finished.
      *
-     * @param executions mapping of a key to the future
-     * @param <T> result type
+     * @param executions mapping of a key to the future.
+     * @param <T> result type.
      * @return future returning the first result.
      */
     protected static <T> RedisFuture<T> firstOfAsync(Map<?, ? extends CompletionStage<T>> executions) {
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             // make sure, that all futures are executed before returning the result.
-                for (CompletionStage<T> future : executions.values()) {
-                    execute(() -> future.toCompletableFuture().get());
-                }
-                for (CompletionStage<T> future : executions.values()) {
-                    return execute(() -> future.toCompletableFuture().get());
-                }
-                return null;
-            });
+            for (CompletionStage<T> future : executions.values()) {
+                execute(() -> future.toCompletableFuture().get());
+            }
+            for (CompletionStage<T> future : executions.values()) {
+                return execute(() -> future.toCompletableFuture().get());
+            }
+            return null;
+        });
     }
 
     /**
      * Returns the result of the last {@link RedisFuture} and guarantee that all futures are finished.
      *
-     * @param executions mapping of a key to the future
-     * @param <T> result type
+     * @param executions mapping of a key to the future.
+     * @param <T> result type.
      * @return future returning the first result.
      */
     static <T> RedisFuture<T> lastOfAsync(Map<?, ? extends CompletionStage<T>> executions) {
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             // make sure, that all futures are executed before returning the result.
-                T result = null;
-                for (CompletionStage<T> future : executions.values()) {
-                    result = execute(() -> future.toCompletableFuture().get());
-                }
-                return result;
-            });
+            T result = null;
+            for (CompletionStage<T> future : executions.values()) {
+                result = execute(() -> future.toCompletableFuture().get());
+            }
+            return result;
+        });
     }
 
     /**
      * Returns always {@literal OK} and guarantee that all futures are finished.
      *
-     * @param executions mapping of a key to the future
+     * @param executions mapping of a key to the future.
      * @return future returning the first result.
      */
     static RedisFuture<String> alwaysOkOfAsync(Map<?, ? extends CompletionStage<String>> executions) {
@@ -134,4 +134,5 @@ class MultiNodeExecution {
             }
         }
     }
+
 }

@@ -66,4 +66,5 @@ class LettuceFuturesUnitTests {
 
         assertThat(Thread.currentThread().isInterrupted()).isTrue();
     }
+
 }

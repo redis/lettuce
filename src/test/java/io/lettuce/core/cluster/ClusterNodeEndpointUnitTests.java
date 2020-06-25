@@ -49,8 +49,8 @@ import io.lettuce.test.Futures;
 @ExtendWith(MockitoExtension.class)
 class ClusterNodeEndpointUnitTests {
 
-    private AsyncCommand<String, String, String> command = new AsyncCommand<>(new Command<>(CommandType.APPEND,
-            new StatusOutput<>(StringCodec.UTF8), null));
+    private AsyncCommand<String, String, String> command = new AsyncCommand<>(
+            new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8), null));
 
     private Queue<RedisCommand<String, String, ?>> disconnectedBuffer;
 
@@ -160,4 +160,5 @@ class ClusterNodeEndpointUnitTests {
         sut = new ClusterNodeEndpoint(clientOptions, clientResources, clusterChannelWriter);
         disconnectedBuffer = (Queue) ReflectionTestUtils.getField(sut, "disconnectedBuffer");
     }
+
 }

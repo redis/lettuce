@@ -25,8 +25,8 @@ import io.lettuce.core.dynamic.domain.Timeout;
  * <p>
  * Parameters: Parameters can be referenced by their name {@code :myArg} or index {@code ?0}. Additional, not referenced
  * parameters are appended to the command in the order of their appearance. Declared parameters are matched against
- * {@link io.lettuce.core.codec.RedisCodec} for codec resolution. Additional parameter types such as {@link Timeout}
- * control execution behavior and are not added to command arguments.
+ * {@link io.lettuce.core.codec.RedisCodec} for codec resolution. Additional parameter types such as {@link Timeout} control
+ * execution behavior and are not added to command arguments.
  * <p>
  * Usage:
  *
@@ -58,4 +58,5 @@ public @interface Command {
      * Command string.
      */
     String value();
+
 }

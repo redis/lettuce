@@ -51,4 +51,5 @@ class ConnectionEventsTriggeredIntegrationTests extends TestSupport {
 
         client.shutdown();
     }
+
 }

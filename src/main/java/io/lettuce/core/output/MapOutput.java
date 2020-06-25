@@ -26,7 +26,6 @@ import io.lettuce.core.codec.RedisCodec;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
  * @author Will Glozer
  * @author Mark Paluch
  */
@@ -72,4 +71,5 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
             output = new LinkedHashMap<>(count / 2, 1);
         }
     }
+
 }

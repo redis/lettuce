@@ -72,4 +72,5 @@ class ServerReactiveCommandIntegrationTests extends ServerCommandIntegrationTest
         reactive.migrate("host", 1234, "key", 1, 10);
         assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
     }
+
 }

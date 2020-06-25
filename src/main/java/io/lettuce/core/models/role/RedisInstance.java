@@ -25,7 +25,7 @@ public interface RedisInstance {
 
     /**
      *
-     * @return Redis instance role, see {@link io.lettuce.core.models.role.RedisInstance.Role}
+     * @return Redis instance role, see {@link io.lettuce.core.models.role.RedisInstance.Role}.
      */
     Role getRole();
 
@@ -35,4 +35,5 @@ public interface RedisInstance {
     public enum Role {
         MASTER, SLAVE, SENTINEL;
     }
+
 }

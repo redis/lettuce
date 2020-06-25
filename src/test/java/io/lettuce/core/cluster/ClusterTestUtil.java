@@ -90,9 +90,9 @@ public class ClusterTestUtil {
             StatefulRedisClusterConnection<String, String> connection) {
         StatefulRedisClusterConnectionImpl clusterConnection = (StatefulRedisClusterConnectionImpl) connection;
 
-        InvocationHandler h = new RoutingInvocationHandler(connection.async(),
-                clusterConnection.syncInvocationHandler());
+        InvocationHandler h = new RoutingInvocationHandler(connection.async(), clusterConnection.syncInvocationHandler());
         return (RedisCommands<String, String>) Proxy.newProxyInstance(ClusterTestUtil.class.getClassLoader(),
                 new Class[] { RedisCommands.class }, h);
     }
+
 }

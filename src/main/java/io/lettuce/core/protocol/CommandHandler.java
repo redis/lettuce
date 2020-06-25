@@ -66,39 +66,57 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             "Broken pipe", "Connection timed out");
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
+
     private static final AtomicLong COMMAND_HANDLER_COUNTER = new AtomicLong();
 
     private final ClientOptions clientOptions;
+
     private final ClientResources clientResources;
+
     private final Endpoint endpoint;
 
     private final ArrayDeque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
+
     private final long commandHandlerId = COMMAND_HANDLER_COUNTER.incrementAndGet();
 
     private final RedisStateMachine rsm = new RedisStateMachine();
+
     private final boolean traceEnabled = logger.isTraceEnabled();
+
     private final boolean debugEnabled = logger.isDebugEnabled();
+
     private final boolean latencyMetricsEnabled;
+
     private final boolean tracingEnabled;
+
     private final boolean includeCommandArgsInSpanTags;
+
     private final float discardReadBytesRatio;
+
     private final boolean boundedQueues;
+
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
     Channel channel;
+
     private ByteBuf buffer;
+
     private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
+
     private String logPrefix;
+
     private PristineFallbackCommand fallbackCommand;
+
     private boolean pristine;
+
     private Tracing.Endpoint tracedEndpoint;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}
-     * @param clientResources client resources for this connection, must not be {@literal null}
-     * @param endpoint must not be {@literal null}.
+     * @param clientOptions client options for this connection, must not be {@code null}
+     * @param clientResources client resources for this connection, must not be {@code null}
+     * @param endpoint must not be {@code null}.
      */
     public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Endpoint endpoint) {
 
@@ -146,6 +164,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
+     *
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelRegistered(io.netty.channel.ChannelHandlerContext)
      */
     @Override
@@ -169,6 +188,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
+     *
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelUnregistered(io.netty.channel.ChannelHandlerContext)
      */
     @Override
@@ -196,6 +216,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
+     *
      * @see io.netty.channel.ChannelInboundHandlerAdapter#userEventTriggered(io.netty.channel.ChannelHandlerContext, Object)
      */
     @Override
@@ -232,7 +253,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             try {
                 command.completeExceptionally(cause);
             } catch (Exception ex) {
-                logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(), ex);
+                logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(),
+                        ex);
             }
         }
 
@@ -257,6 +279,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
+     *
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelActive(io.netty.channel.ChannelHandlerContext)
      */
     @Override
@@ -299,6 +322,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
+     *
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelInactive(io.netty.channel.ChannelHandlerContext)
      */
     @Override
@@ -338,6 +362,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
+     *
      * @see io.netty.channel.ChannelDuplexHandler#write(io.netty.channel.ChannelHandlerContext, java.lang.Object,
      *      io.netty.channel.ChannelPromise)
      */
@@ -429,8 +454,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             if (isWriteable(command) && !deduplicated.add(command)) {
                 deduplicated.remove(command);
-                command.completeExceptionally(new RedisException(
-                        "Attempting to write duplicate command that is already enqueued: " + command));
+                command.completeExceptionally(
+                        new RedisException("Attempting to write duplicate command that is already enqueued: " + command));
             }
         }
 
@@ -527,6 +552,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
+     *
      * @see io.netty.channel.ChannelInboundHandlerAdapter#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
      */
     @Override
@@ -720,7 +746,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * Consume a response without having a command on the stack.
      *
      * @param buffer
-     * @return {@literal true} if the buffer decode was successful. {@literal false} if the buffer was not decoded.
+     * @return {@code true} if the buffer decode was successful. {@code false} if the buffer was not decoded.
      */
     private boolean consumeResponse(ByteBuf buffer) {
 
@@ -779,13 +805,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
 
-        if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null && remote() != null) {
+        if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null
+                && remote() != null) {
 
             long firstResponseLatency = withLatency.getFirstResponse() - withLatency.getSent();
             long completionLatency = nanoTime() - withLatency.getSent();
 
-            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType,
-                    firstResponseLatency, completionLatency);
+            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
+                    completionLatency);
         }
     }
 
@@ -877,6 +904,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 }
             }
         }
+
     }
 
     enum EnableAutoRead {
@@ -889,14 +917,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     static class AddToStack implements GenericFutureListener<Future<Void>> {
 
         private static final Recycler<AddToStack> RECYCLER = new Recycler<AddToStack>() {
+
             @Override
             protected AddToStack newObject(Handle<AddToStack> handle) {
                 return new AddToStack(handle);
             }
+
         };
 
         private final Recycler.Handle<AddToStack> handle;
+
         private ArrayDeque<Object> stack;
+
         private RedisCommand<?, ?, ?> command;
 
         AddToStack(Recycler.Handle<AddToStack> handle) {
@@ -941,5 +973,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             handle.recycle(this);
         }
+
     }
+
 }

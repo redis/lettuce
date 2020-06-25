@@ -48,24 +48,33 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SentinelTopologyRefresh.class);
+
     private static final StringCodec CODEC = new StringCodec(LettuceCharsets.ASCII);
+
     private static final Set<String> PROCESSING_CHANNELS = new HashSet<>(
             Arrays.asList("failover-end", "failover-end-for-timeout"));
 
     private final Map<RedisURI, ConnectionFuture<StatefulRedisPubSubConnection<String, String>>> pubSubConnections = new ConcurrentHashMap<>();
+
     private final RedisClient redisClient;
+
     private final List<RedisURI> sentinels;
+
     private final List<Runnable> refreshRunnables = new CopyOnWriteArrayList<>();
+
     private final RedisPubSubAdapter<String, String> adapter = new RedisPubSubAdapter<String, String>() {
 
         @Override
         public void message(String pattern, String channel, String message) {
             SentinelTopologyRefresh.this.processMessage(pattern, channel, message);
         }
+
     };
 
     private final PubSubMessageActionScheduler topologyRefresh;
+
     private final PubSubMessageActionScheduler sentinelReconnect;
+
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
     private volatile boolean closed = false;
@@ -155,8 +164,8 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
         SentinelTopologyRefreshConnections collector = collectConnections(connectionFutures);
 
-        CompletionStage<SentinelTopologyRefreshConnections> completionStage = collector.getOrTimeout(timeout, redisClient
-                .getResources().eventExecutorGroup());
+        CompletionStage<SentinelTopologyRefreshConnections> completionStage = collector.getOrTimeout(timeout,
+                redisClient.getResources().eventExecutorGroup());
 
         return completionStage.whenComplete((aVoid, throwable) -> {
 
@@ -269,7 +278,9 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
     private static class PubSubMessageActionScheduler {
 
         private final TimedSemaphore timedSemaphore = new TimedSemaphore();
+
         private final EventExecutorGroup eventExecutors;
+
         private final MessagePredicate filter;
 
         PubSubMessageActionScheduler(EventExecutorGroup eventExecutors, MessagePredicate filter) {
@@ -308,6 +319,7 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
             return true;
         }
+
     }
 
     /**
@@ -320,6 +332,7 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
         private final AtomicReference<Timeout> timeoutRef = new AtomicReference<>();
 
         private final int timeout = 5;
+
         private final TimeUnit timeUnit = TimeUnit.SECONDS;
 
         /**
@@ -344,12 +357,14 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
                 timeoutConsumer.accept(timeout);
             }
         }
+
     }
 
     interface MessagePredicate extends BiPredicate<String, String> {
 
         @Override
         boolean test(String message, String channel);
+
     }
 
     /**
@@ -359,8 +374,9 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
     private static class TopologyRefreshMessagePredicate implements MessagePredicate {
 
         private final String masterId;
-        private Set<String> TOPOLOGY_CHANGE_CHANNELS = new HashSet<>(Arrays.asList("+slave", "+sdown", "-sdown",
-                "fix-slave-config", "+convert-to-slave", "+role-change"));
+
+        private Set<String> TOPOLOGY_CHANGE_CHANNELS = new HashSet<>(
+                Arrays.asList("+slave", "+sdown", "-sdown", "fix-slave-config", "+convert-to-slave", "+role-change"));
 
         TopologyRefreshMessagePredicate(String masterId) {
             this.masterId = masterId;
@@ -390,6 +406,7 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
             return PROCESSING_CHANNELS.contains(channel);
         }
+
     }
 
     /**
@@ -413,5 +430,7 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
             return false;
         }
+
     }
+
 }

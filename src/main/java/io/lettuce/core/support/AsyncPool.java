@@ -64,4 +64,5 @@ public interface AsyncPool<T> extends Closeable, AsyncCloseable {
 
     @Override
     CompletableFuture<Void> closeAsync();
+
 }

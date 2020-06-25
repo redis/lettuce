@@ -40,6 +40,7 @@ import io.lettuce.core.protocol.CommandType;
 class ParameterBinderUnitTests {
 
     private ParameterBinder binder = new ParameterBinder();
+
     private CommandSegments segments = new CommandSegments(Collections.singletonList(CommandSegment.constant("set")));
 
     @Test
@@ -152,22 +153,21 @@ class ParameterBinderUnitTests {
     @Test
     void bindsValueRangeCorrectly() {
 
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(MyCommands.class, "valueRange",
-                Range.class));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(MyCommands.class, "valueRange", Range.class));
 
         CommandArgs<String, String> args = bind(commandMethod,
                 Range.from(Range.Boundary.including("lower"), Range.Boundary.excluding("upper")));
 
-        assertThat(args.toCommandString()).isEqualTo(
-                String.format("%s %s", Base64Utils.encodeToString("[lower".getBytes()),
-                        Base64Utils.encodeToString("(upper".getBytes())));
+        assertThat(args.toCommandString()).isEqualTo(String.format("%s %s", Base64Utils.encodeToString("[lower".getBytes()),
+                Base64Utils.encodeToString("(upper".getBytes())));
     }
 
     @Test
     void bindsUnboundedValueRangeCorrectly() {
 
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(MyCommands.class, "valueRange",
-                Range.class));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(MyCommands.class, "valueRange", Range.class));
 
         CommandArgs<String, String> args = bind(commandMethod, Range.unbounded());
 
@@ -192,8 +192,8 @@ class ParameterBinderUnitTests {
     }
 
     private CommandArgs<String, String> bind(Object object) {
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(MyCommands.class, "justObject",
-                Object.class));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(MyCommands.class, "justObject", Object.class));
         return bind(commandMethod, object);
     }
 
@@ -212,5 +212,7 @@ class ParameterBinderUnitTests {
         void justObject(Object object);
 
         void valueRange(@io.lettuce.core.dynamic.annotation.Value Range<String> value);
+
     }
+
 }

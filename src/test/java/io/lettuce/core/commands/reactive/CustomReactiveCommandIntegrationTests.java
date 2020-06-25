@@ -52,8 +52,8 @@ class CustomReactiveCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
 
-        Flux<String> flux = reactive.dispatch(CommandType.GET, new ValueOutput<>(StringCodec.UTF8), new CommandArgs<>(
-                StringCodec.UTF8).addKey(key));
+        Flux<String> flux = reactive.dispatch(CommandType.GET, new ValueOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key));
 
         StepVerifier.create(flux).expectNext(value).verifyComplete();
     }
@@ -64,9 +64,10 @@ class CustomReactiveCommandIntegrationTests extends TestSupport {
         redis.rpush(key, "a", "b", "c");
         RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
 
-        Flux<String> flux = reactive.dispatch(CommandType.LRANGE, new ValueListOutput<>(StringCodec.UTF8), new CommandArgs<>(
-                StringCodec.UTF8).addKey(key).add(0).add(-1));
+        Flux<String> flux = reactive.dispatch(CommandType.LRANGE, new ValueListOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key).add(0).add(-1));
 
         StepVerifier.create(flux).expectNext("a", "b", "c").verifyComplete();
     }
+
 }

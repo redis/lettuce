@@ -34,7 +34,7 @@ public class CommonsPool2ConfigConverter {
      * Converts {@link GenericObjectPoolConfig} properties to an immutable {@link BoundedPoolConfig}. Applies max total, min/max
      * idle and test on borrow/create/release configuration.
      *
-     * @param config must not be {@literal null}.
+     * @param config must not be {@code null}.
      * @return the converted {@link BoundedPoolConfig}.
      */
     public static BoundedPoolConfig bounded(GenericObjectPoolConfig<?> config) {
@@ -50,4 +50,5 @@ public class CommonsPool2ConfigConverter {
                 .testOnRelease(config.getTestOnReturn()) //
                 .build();
     }
+
 }

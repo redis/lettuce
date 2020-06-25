@@ -93,4 +93,5 @@ class CommandDetailParserUnitTests {
 
         assertThat(commandDetail.toString()).contains(CommandDetail.class.getSimpleName());
     }
+
 }

@@ -64,4 +64,5 @@ public class SpringIntegrationTests {
         assertThat(redisClusterClient1).isNotNull();
         assertThat(redisClusterClient2).isNotNull();
     }
+
 }

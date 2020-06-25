@@ -38,10 +38,15 @@ import io.lettuce.core.protocol.RedisCommand;
 class BatchExecutableCommand implements ExecutableCommand {
 
     private final CommandMethod commandMethod;
+
     private final CommandFactory commandFactory;
+
     private final Batcher batcher;
+
     private final StatefulConnection<Object, Object> connection;
+
     private final ExecutionSpecificParameters parameters;
+
     private final boolean async;
 
     BatchExecutableCommand(CommandMethod commandMethod, CommandFactory commandFactory, Batcher batcher,
@@ -113,4 +118,5 @@ class BatchExecutableCommand implements ExecutableCommand {
     public CommandMethod getCommandMethod() {
         return commandMethod;
     }
+
 }

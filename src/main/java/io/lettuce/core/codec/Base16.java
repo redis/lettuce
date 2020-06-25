@@ -21,8 +21,11 @@ package io.lettuce.core.codec;
  * @author Will Glozer
  */
 public class Base16 {
+
     private static final char[] upper = "0123456789ABCDEF".toCharArray();
+
     private static final char[] lower = "0123456789abcdef".toCharArray();
+
     private static final byte[] decode = new byte[128];
 
     static {
@@ -45,7 +48,6 @@ public class Base16 {
      *
      * @param src Bytes to encode.
      * @param upper Use upper or lowercase chars.
-     *
      * @return Encoded chars.
      */
     public static char[] encode(byte[] src, boolean upper) {
@@ -60,4 +62,5 @@ public class Base16 {
 
         return dst;
     }
+
 }

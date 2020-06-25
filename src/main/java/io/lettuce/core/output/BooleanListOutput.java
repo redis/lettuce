@@ -32,6 +32,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class BooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> implements StreamingOutput<Boolean> {
 
     private boolean initialized;
+
     private Subscriber<Boolean> subscriber;
 
     public BooleanListOutput(RedisCodec<K, V> codec) {
@@ -63,4 +64,5 @@ public class BooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> 
     public Subscriber<Boolean> getSubscriber() {
         return subscriber;
     }
+
 }

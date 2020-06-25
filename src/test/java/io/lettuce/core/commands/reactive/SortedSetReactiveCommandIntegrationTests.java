@@ -30,4 +30,5 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     SortedSetReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

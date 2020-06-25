@@ -45,4 +45,5 @@ public class RedisAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, 
     public StatefulRedisConnection<K, V> getStatefulConnection() {
         return (StatefulRedisConnection<K, V>) super.getConnection();
     }
+
 }

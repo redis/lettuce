@@ -125,4 +125,5 @@ class MasterSlaveTopologyRefreshUnitTests {
 
         assertThat(nodes).hasSize(1).containsOnly(MASTER);
     }
+
 }

@@ -42,11 +42,17 @@ import io.lettuce.core.internal.LettuceAssert;
 public class DeclaredCommandMethod implements CommandMethod {
 
     private final Method method;
+
     private final ResolvableType returnType;
+
     private final List<Class<?>> arguments = new ArrayList<>();
+
     private final ExecutionSpecificParameters parameters;
+
     private final ResolvableType actualReturnType;
+
     private final boolean futureExecution;
+
     private final boolean reactiveExecution;
 
     /**
@@ -102,6 +108,7 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
+     *
      * @return the method {@link Parameters}.
      */
     @Override
@@ -110,6 +117,7 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
+     *
      * @return the {@link Method}.
      */
     @Override
@@ -118,6 +126,7 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
+     *
      * @return declared {@link Method} return {@link TypeInformation}.
      */
     @Override
@@ -126,6 +135,7 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
+     *
      * @return the actual {@link Method} return {@link TypeInformation} after unwrapping.
      */
     @Override
@@ -137,7 +147,7 @@ public class DeclaredCommandMethod implements CommandMethod {
      * Lookup a method annotation.
      *
      * @param annotationClass the annotation class.
-     * @return the annotation object or {@literal null} if not found.
+     * @return the annotation object or {@code null} if not found.
      */
     @Override
     public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
@@ -145,8 +155,9 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
+     *
      * @param annotationClass the annotation class.
-     * @return {@literal true} if the method is annotated with {@code annotationClass}.
+     * @return {@code true} if the method is annotated with {@code annotationClass}.
      */
     @Override
     public boolean hasAnnotation(Class<? extends Annotation> annotationClass) {
@@ -154,6 +165,7 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
+     *
      * @return the method name.
      */
     @Override
@@ -162,7 +174,8 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
-     * @return {@literal true} if the method uses asynchronous execution declaring {@link Future} as result type.
+     *
+     * @return {@code true} if the method uses asynchronous execution declaring {@link Future} as result type.
      */
     @Override
     public boolean isFutureExecution() {
@@ -170,7 +183,8 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
-     * @return {@literal true} if the method uses reactive execution declaring {@link Publisher} as result type.
+     *
+     * @return {@code true} if the method uses reactive execution declaring {@link Publisher} as result type.
      */
     @Override
     public boolean isReactiveExecution() {
@@ -178,7 +192,8 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
-     * @return {@literal true} if the method defines a {@link io.lettuce.core.dynamic.batch.CommandBatching} argument.
+     *
+     * @return {@code true} if the method defines a {@link io.lettuce.core.dynamic.batch.CommandBatching} argument.
      */
     @Override
     public boolean isBatchExecution() {
@@ -215,4 +230,5 @@ public class DeclaredCommandMethod implements CommandMethod {
     public String toString() {
         return method.toGenericString();
     }
+
 }

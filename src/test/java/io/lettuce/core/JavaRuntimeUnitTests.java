@@ -44,4 +44,5 @@ class JavaRuntimeUnitTests {
     void testNotPresentClass() {
         assertThat(LettuceClassUtils.isPresent("total.fancy.class.name")).isFalse();
     }
+
 }

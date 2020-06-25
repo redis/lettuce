@@ -442,6 +442,7 @@ class DefaultEndpointUnitTests {
     static class MTCConcurrentConcurrentWrite extends MultithreadedTestCase {
 
         private final Command<String, String, String> command;
+
         private TestableEndpoint handler;
 
         MTCConcurrentConcurrentWrite(Command<String, String, String> command, ClientResources clientResources) {
@@ -461,6 +462,7 @@ class DefaultEndpointUnitTests {
                     waitForTick(3);
                     super.writeToBuffer(command);
                 }
+
             };
         }
 
@@ -475,6 +477,7 @@ class DefaultEndpointUnitTests {
             waitForTick(1);
             handler.write(command);
         }
+
     }
 
     static class TestableEndpoint extends DefaultEndpoint {
@@ -488,5 +491,7 @@ class DefaultEndpointUnitTests {
         TestableEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
             super(clientOptions, clientResources);
         }
+
     }
+
 }

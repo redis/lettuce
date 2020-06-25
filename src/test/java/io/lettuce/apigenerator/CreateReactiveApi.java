@@ -146,24 +146,20 @@ public class CreateReactiveApi {
         };
     }
 
+    private String getResultType(MethodDeclaration method, ClassOrInterfaceDeclaration classOfMethod) {
 
-
-    private String getResultType(MethodDeclaration method,
-            ClassOrInterfaceDeclaration classOfMethod) {
-
-        if(RESULT_SPEC.containsKey(method.getName())){
+        if (RESULT_SPEC.containsKey(method.getName())) {
             return RESULT_SPEC.get(method.getName());
         }
 
         String key = classOfMethod.getName() + "." + method.getName();
 
-        if(RESULT_SPEC.containsKey(key)){
+        if (RESULT_SPEC.containsKey(key)) {
             return RESULT_SPEC.get(key);
         }
 
         return null;
     }
-
 
     /**
      * Supply additional imports.
@@ -178,4 +174,5 @@ public class CreateReactiveApi {
     public void createInterface() throws Exception {
         factory.createInterface();
     }
+
 }

@@ -28,7 +28,9 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 @SuppressWarnings("serial")
 public class RoleParser {
+
     protected static final Map<String, RedisInstance.Role> ROLE_MAPPING;
+
     protected static final Map<String, RedisSlaveInstance.State> SLAVE_STATE_MAPPING;
 
     static {
@@ -42,8 +44,7 @@ public class RoleParser {
         Map<String, RedisSlaveInstance.State> replicas = new HashMap<>();
         replicas.put("connect", RedisSlaveInstance.State.CONNECT);
         replicas.put("connected", RedisSlaveInstance.State.CONNECTED);
-        replicas.put("connecting",
-            RedisSlaveInstance.State.CONNECTING);
+        replicas.put("connecting", RedisSlaveInstance.State.CONNECTING);
         replicas.put("sync", RedisSlaveInstance.State.SYNC);
 
         SLAVE_STATE_MAPPING = Collections.unmodifiableMap(replicas);
@@ -60,7 +61,7 @@ public class RoleParser {
      * Parse the output of the Redis ROLE command and convert to a RedisInstance.
      *
      * @param roleOutput output of the Redis ROLE command.
-     * @return RedisInstance
+     * @return RedisInstance.
      */
     public static RedisInstance parse(List<?> roleOutput) {
         LettuceAssert.isTrue(roleOutput != null && !roleOutput.isEmpty(), "Empty role output");
@@ -208,4 +209,5 @@ public class RoleParser {
         }
         return replicationOffset;
     }
+
 }

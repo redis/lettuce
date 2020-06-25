@@ -63,18 +63,18 @@ class MasterSlaveChannelWriterUnitTests {
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mset = new Command<>(CommandType.MSET, null);
 
-        assertThat(MasterSlaveChannelWriter.getIntent(Arrays.asList(set, mset))).isEqualTo(
-                MasterSlaveConnectionProvider.Intent.WRITE);
+        assertThat(MasterSlaveChannelWriter.getIntent(Arrays.asList(set, mset)))
+                .isEqualTo(MasterSlaveConnectionProvider.Intent.WRITE);
 
-        assertThat(MasterSlaveChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(
-                MasterSlaveConnectionProvider.Intent.WRITE);
+        assertThat(MasterSlaveChannelWriter.getIntent(Collections.singletonList(set)))
+                .isEqualTo(MasterSlaveConnectionProvider.Intent.WRITE);
     }
 
     @Test
     void shouldReturnDefaultIntentForNoCommands() {
 
-        assertThat(MasterSlaveChannelWriter.getIntent(Collections.emptyList())).isEqualTo(
-                MasterSlaveConnectionProvider.Intent.WRITE);
+        assertThat(MasterSlaveChannelWriter.getIntent(Collections.emptyList()))
+                .isEqualTo(MasterSlaveConnectionProvider.Intent.WRITE);
     }
 
     @Test
@@ -83,11 +83,11 @@ class MasterSlaveChannelWriterUnitTests {
         RedisCommand<String, String, String> get = new Command<>(CommandType.GET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(MasterSlaveChannelWriter.getIntent(Arrays.asList(get, mget))).isEqualTo(
-                MasterSlaveConnectionProvider.Intent.READ);
+        assertThat(MasterSlaveChannelWriter.getIntent(Arrays.asList(get, mget)))
+                .isEqualTo(MasterSlaveConnectionProvider.Intent.READ);
 
-        assertThat(MasterSlaveChannelWriter.getIntent(Collections.singletonList(get))).isEqualTo(
-                MasterSlaveConnectionProvider.Intent.READ);
+        assertThat(MasterSlaveChannelWriter.getIntent(Collections.singletonList(get)))
+                .isEqualTo(MasterSlaveConnectionProvider.Intent.READ);
     }
 
     @Test
@@ -96,11 +96,11 @@ class MasterSlaveChannelWriterUnitTests {
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(MasterSlaveChannelWriter.getIntent(Arrays.asList(set, mget))).isEqualTo(
-                MasterSlaveConnectionProvider.Intent.WRITE);
+        assertThat(MasterSlaveChannelWriter.getIntent(Arrays.asList(set, mget)))
+                .isEqualTo(MasterSlaveConnectionProvider.Intent.WRITE);
 
-        assertThat(MasterSlaveChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(
-                MasterSlaveConnectionProvider.Intent.WRITE);
+        assertThat(MasterSlaveChannelWriter.getIntent(Collections.singletonList(set)))
+                .isEqualTo(MasterSlaveConnectionProvider.Intent.WRITE);
     }
 
     @Test
@@ -108,8 +108,8 @@ class MasterSlaveChannelWriterUnitTests {
 
         MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
-                CompletableFuture.completedFuture(connection));
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class)))
+                .thenReturn(CompletableFuture.completedFuture(connection));
 
         writer.write(mockCommand(CommandType.MULTI));
         writer.write(mockCommand(CommandType.GET));
@@ -123,8 +123,8 @@ class MasterSlaveChannelWriterUnitTests {
 
         MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
-                CompletableFuture.completedFuture(connection));
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class)))
+                .thenReturn(CompletableFuture.completedFuture(connection));
 
         List<Command<String, String, String>> commands = Arrays.asList(mockCommand(CommandType.MULTI),
                 mockCommand(CommandType.GET), mockCommand(CommandType.EXEC));
@@ -139,8 +139,8 @@ class MasterSlaveChannelWriterUnitTests {
 
         MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
-                CompletableFuture.completedFuture(connection));
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class)))
+                .thenReturn(CompletableFuture.completedFuture(connection));
 
         writer.write(mockCommand(CommandType.MULTI));
         writer.write(mockCommand(CommandType.EXEC));
@@ -155,8 +155,8 @@ class MasterSlaveChannelWriterUnitTests {
 
         MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
-                CompletableFuture.completedFuture(connection));
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class)))
+                .thenReturn(CompletableFuture.completedFuture(connection));
 
         writer.write(mockCommand(CommandType.MULTI));
         writer.write(mockCommand(CommandType.DISCARD));
@@ -171,8 +171,8 @@ class MasterSlaveChannelWriterUnitTests {
 
         MasterSlaveChannelWriter writer = new MasterSlaveChannelWriter(connectionProvider, clientResources);
 
-        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class))).thenReturn(
-                CompletableFuture.completedFuture(connection));
+        when(connectionProvider.getConnectionAsync(any(MasterSlaveConnectionProvider.Intent.class)))
+                .thenReturn(CompletableFuture.completedFuture(connection));
 
         List<Command<String, String, String>> commands = Arrays.asList(mockCommand(CommandType.MULTI),
                 mockCommand(CommandType.EXEC));
@@ -187,4 +187,5 @@ class MasterSlaveChannelWriterUnitTests {
     private static Command<String, String, String> mockCommand(CommandType multi) {
         return new Command<>(multi, new StatusOutput<>(StringCodec.UTF8));
     }
+
 }

@@ -20,10 +20,10 @@ package io.lettuce.core.tracing;
  *
  * @author Mark Paluch
  * @since 5.1
- *
  */
 public interface TraceContext {
 
     TraceContext EMPTY = new TraceContext() {
     };
+
 }

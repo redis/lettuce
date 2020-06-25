@@ -139,4 +139,5 @@ class MasterReplicaConnectionWrapper<K, V> implements StatefulRedisMasterReplica
     public void flushCommands() {
         delegate.flushCommands();
     }
+
 }

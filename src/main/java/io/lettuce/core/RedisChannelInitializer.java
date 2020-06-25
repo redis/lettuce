@@ -31,4 +31,5 @@ public interface RedisChannelInitializer extends ChannelHandler {
      * @return future to synchronize channel initialization. Returns a new future for every reconnect.
      */
     CompletableFuture<Boolean> channelInitialized();
+
 }

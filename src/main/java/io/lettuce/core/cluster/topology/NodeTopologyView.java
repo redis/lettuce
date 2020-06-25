@@ -32,13 +32,17 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 class NodeTopologyView {
 
     private static final Pattern NUMBER = Pattern.compile("(\\d+)");
+
     private final boolean available;
+
     private final RedisURI redisURI;
 
     private Partitions partitions;
+
     private final int connectedClients;
 
     private final long latency;
+
     private final String clusterNodes;
 
     private final String clientList;
@@ -157,4 +161,5 @@ class NodeTopologyView {
     void setPartitions(Partitions partitions) {
         this.partitions = partitions;
     }
+
 }

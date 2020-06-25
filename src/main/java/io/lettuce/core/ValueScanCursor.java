@@ -35,4 +35,5 @@ public class ValueScanCursor<V> extends ScanCursor {
     public List<V> getValues() {
         return values;
     }
+
 }

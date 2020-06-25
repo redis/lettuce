@@ -35,11 +35,12 @@ public interface NodeConnectionFactory {
     /**
      * Connects to a {@link SocketAddress} with the given {@link RedisCodec} asynchronously.
      *
-     * @param codec must not be {@literal null}.
-     * @param redisURI must not be {@literal null}.
+     * @param codec must not be {@code null}.
+     * @param redisURI must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
-     * @return a new {@link StatefulRedisConnection}
+     * @return a new {@link StatefulRedisConnection}.
      */
     <K, V> CompletableFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec, RedisURI redisURI);
+
 }

@@ -33,6 +33,7 @@ import io.lettuce.core.codec.RedisCodec;
 public class KeyValueScoredValueOutput<K, V> extends CommandOutput<K, V, KeyValue<K, ScoredValue<V>>> {
 
     private K key;
+
     private V value;
 
     public KeyValueScoredValueOutput(RedisCodec<K, V> codec) {

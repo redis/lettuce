@@ -35,11 +35,17 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PubSubEndpoint.class);
+
     private static final Set<String> ALLOWED_COMMANDS_SUBSCRIBED;
+
     private static final Set<String> SUBSCRIBE_COMMANDS;
+
     private final List<RedisPubSubListener<K, V>> listeners = new CopyOnWriteArrayList<>();
+
     private final Set<Wrapper<K>> channels;
+
     private final Set<Wrapper<K>> patterns;
+
     private volatile boolean subscribeWritten = false;
 
     static {
@@ -61,8 +67,8 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}
-     * @param clientResources client resources for this connection, must not be {@literal null}.
+     * @param clientOptions client options for this connection, must not be {@code null}
+     * @param clientResources client resources for this connection, must not be {@code null}.
      */
     public PubSubEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
 
@@ -75,7 +81,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     /**
      * Add a new {@link RedisPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     public void addListener(RedisPubSubListener<K, V> listener) {
         listeners.add(listener);
@@ -84,7 +90,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     /**
      * Remove an existing {@link RedisPubSubListener listener}..
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     public void removeListener(RedisPubSubListener<K, V> listener) {
         listeners.remove(listener);
@@ -153,8 +159,8 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
         if (!ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name())) {
 
-            throw new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s", command
-                    .getType().name(), ALLOWED_COMMANDS_SUBSCRIBED));
+            throw new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
+                    command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED));
         }
     }
 
@@ -282,5 +288,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
             sb.append(']');
             return sb.toString();
         }
+
     }
+
 }

@@ -55,7 +55,9 @@ import io.lettuce.core.internal.LettuceAssert;
 public class BraveTracing implements Tracing {
 
     private final BraveTracer tracer;
+
     private final BraveTracingOptions tracingOptions;
+
     private final boolean includeCommandArgsInSpanTags;
 
     /**
@@ -76,7 +78,7 @@ public class BraveTracing implements Tracing {
     /**
      * Create a new {@link BraveTracing} instance.
      *
-     * @param tracing must not be {@literal null}.
+     * @param tracing must not be {@code null}.
      * @return the {@link BraveTracing}.
      */
     public static BraveTracing create(brave.Tracing tracing) {
@@ -101,11 +103,15 @@ public class BraveTracing implements Tracing {
     public static class Builder {
 
         private brave.Tracing tracing;
+
         private String serviceName = "redis";
+
         private Consumer<zipkin2.Endpoint.Builder> endpointCustomizer = it -> {
         };
+
         private Consumer<brave.Span> spanCustomizer = it -> {
         };
+
         private boolean includeCommandArgsInSpanTags = true;
 
         private Builder() {
@@ -114,7 +120,7 @@ public class BraveTracing implements Tracing {
         /**
          * Sets the {@link Tracing}.
          *
-         * @param tracing the Brave {@link brave.Tracing} object, must not be {@literal null}.
+         * @param tracing the Brave {@link brave.Tracing} object, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         public Builder tracing(brave.Tracing tracing) {
@@ -128,7 +134,7 @@ public class BraveTracing implements Tracing {
         /**
          * Sets the name used in the {@link zipkin2.Endpoint}.
          *
-         * @param serviceName the name for the {@link zipkin2.Endpoint}, must not be {@literal null}.
+         * @param serviceName the name for the {@link zipkin2.Endpoint}, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         public Builder serviceName(String serviceName) {
@@ -165,7 +171,7 @@ public class BraveTracing implements Tracing {
          * {@link zipkin2.Endpoint.Builder}. The customizer is invoked before {@link zipkin2.Endpoint.Builder#build() building}
          * the endpoint.
          *
-         * @param endpointCustomizer must not be {@literal null}.
+         * @param endpointCustomizer must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         public Builder endpointCustomizer(Consumer<zipkin2.Endpoint.Builder> endpointCustomizer) {
@@ -180,7 +186,7 @@ public class BraveTracing implements Tracing {
          * Sets an {@link brave.Span} customizer to customize the {@link brave.Span}. The customizer is invoked before
          * {@link Span#finish()} finishing} the span.
          *
-         * @param spanCustomizer must not be {@literal null}.
+         * @param spanCustomizer must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         public Builder spanCustomizer(Consumer<brave.Span> spanCustomizer) {
@@ -200,6 +206,7 @@ public class BraveTracing implements Tracing {
 
             return new BraveTracing(this);
         }
+
     }
 
     @Override
@@ -247,6 +254,7 @@ public class BraveTracing implements Tracing {
     static class BraveTracer extends Tracer {
 
         private final brave.Tracing tracing;
+
         private final BraveTracingOptions tracingOptions;
 
         BraveTracer(brave.Tracing tracing, BraveTracingOptions tracingOptions) {
@@ -272,8 +280,8 @@ public class BraveTracing implements Tracing {
                 return nextSpan();
             }
 
-            return postProcessSpan(tracing.tracer()
-                    .nextSpan(TraceContextOrSamplingFlags.create(braveTraceContext.traceContext)));
+            return postProcessSpan(
+                    tracing.tracer().nextSpan(TraceContextOrSamplingFlags.create(braveTraceContext.traceContext)));
         }
 
         private Span postProcessSpan(brave.Span span) {
@@ -284,6 +292,7 @@ public class BraveTracing implements Tracing {
 
             return new BraveSpan(span.kind(brave.Span.Kind.CLIENT), this.tracingOptions);
         }
+
     }
 
     /**
@@ -292,6 +301,7 @@ public class BraveTracing implements Tracing {
     static class BraveSpan extends Tracer.Span {
 
         private final brave.Span span;
+
         private final BraveTracingOptions tracingOptions;
 
         BraveSpan(Span span, BraveTracingOptions tracingOptions) {
@@ -357,6 +367,7 @@ public class BraveTracing implements Tracing {
         public brave.Span getSpan() {
             return span;
         }
+
     }
 
     /**
@@ -369,6 +380,7 @@ public class BraveTracing implements Tracing {
         public BraveEndpoint(zipkin2.Endpoint endpoint) {
             this.endpoint = endpoint;
         }
+
     }
 
     /**
@@ -385,9 +397,11 @@ public class BraveTracing implements Tracing {
         public static BraveTraceContext create(brave.propagation.TraceContext traceContext) {
             return new BraveTraceContext(traceContext);
         }
+
     }
 
     enum BraveTraceContextProvider implements TraceContextProvider {
+
         INSTANCE;
 
         @Override
@@ -419,6 +433,7 @@ public class BraveTracing implements Tracing {
                         return new BraveTraceContext(it.get(brave.propagation.TraceContext.class));
                     });
         }
+
     }
 
     /**
@@ -430,7 +445,9 @@ public class BraveTracing implements Tracing {
     static class BraveTracingOptions {
 
         private final String serviceName;
+
         private final Consumer<zipkin2.Endpoint.Builder> endpointCustomizer;
+
         private final Consumer<brave.Span> spanCustomizer;
 
         BraveTracingOptions(String serviceName, Consumer<zipkin2.Endpoint.Builder> endpointCustomizer,
@@ -447,5 +464,7 @@ public class BraveTracing implements Tracing {
         void customizeSpan(brave.Span span) {
             this.spanCustomizer.accept(span);
         }
+
     }
+
 }

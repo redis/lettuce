@@ -48,7 +48,6 @@ public class RedisStateIntegrationTests {
     @Test
     void shouldDiscoverCommands() {
 
-
         List<CommandDetail> commandDetails = CommandDetailParser.parse(redis.command());
         RedisState state = new RedisState(commandDetails);
 
@@ -64,5 +63,7 @@ public class RedisStateIntegrationTests {
         public byte[] getBytes() {
             return name().getBytes();
         }
+
     }
+
 }

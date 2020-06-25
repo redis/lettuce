@@ -25,6 +25,7 @@ import io.lettuce.core.output.ScoredValueStreamingChannel;
  * @since 3.0
  */
 public class ScoredValueStreamingAdapter<T> implements ScoredValueStreamingChannel<T> {
+
     private List<ScoredValue<T>> list = new ArrayList<>();
 
     @Override
@@ -35,4 +36,5 @@ public class ScoredValueStreamingAdapter<T> implements ScoredValueStreamingChann
     public List<ScoredValue<T>> getList() {
         return list;
     }
+
 }

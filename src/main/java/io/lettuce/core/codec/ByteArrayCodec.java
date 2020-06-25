@@ -28,6 +28,7 @@ import io.netty.buffer.ByteBuf;
 public class ByteArrayCodec implements RedisCodec<byte[], byte[]>, ToByteBufEncoder<byte[], byte[]> {
 
     public static final ByteArrayCodec INSTANCE = new ByteArrayCodec();
+
     private static final byte[] EMPTY = new byte[0];
 
     @Override
@@ -90,4 +91,5 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]>, ToByteBufEnco
         buffer.get(b);
         return b;
     }
+
 }

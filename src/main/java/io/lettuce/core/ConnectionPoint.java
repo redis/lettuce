@@ -25,21 +25,22 @@ public interface ConnectionPoint {
     /**
      * Returns the host that should represent the hostname or IPv4/IPv6 literal.
      *
-     * @return the hostname/IP address
+     * @return the hostname/IP address.
      */
     String getHost();
 
     /**
      * Get the current port number.
      *
-     * @return the port number
+     * @return the port number.
      */
     int getPort();
 
     /**
      * Get the socket path.
      *
-     * @return path to a Unix Domain Socket
+     * @return path to a Unix Domain Socket.
      */
     String getSocket();
+
 }

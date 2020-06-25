@@ -36,12 +36,19 @@ public class Parameter {
             new StandardReflectionParameterNameDiscoverer(), new AnnotationParameterNameDiscoverer());
 
     private final Method method;
+
     private final String name;
+
     private final int parameterIndex;
+
     private final TypeInformation<?> typeInformation;
+
     private final MethodParameter methodParameter;
+
     private final Map<Class<? extends Annotation>, Annotation> annotationCache = new ConcurrentHashMap<>();
+
     private final Set<Class<? extends Annotation>> absentCache = ConcurrentHashMap.newKeySet();
+
     private final List<Annotation> annotations;
 
     public Parameter(Method method, int parameterIndex) {
@@ -66,8 +73,8 @@ public class Parameter {
     /**
      * Return the parameter annotation of the given type, if available.
      *
-     * @param annotationType the annotation type to look for
-     * @return the annotation object, or {@code null} if not found
+     * @param annotationType the annotation type to look for.
+     * @return the annotation object, or {@code null} if not found.
      */
     @SuppressWarnings("unchecked")
     public <A extends Annotation> A findAnnotation(Class<A> annotationType) {
@@ -122,7 +129,7 @@ public class Parameter {
     /**
      * Check whether the parameter is assignable to {@code target}.
      *
-     * @param target must not be {@literal null}.
+     * @param target must not be {@code null}.
      * @return
      */
     public boolean isAssignableTo(Class<?> target) {
@@ -134,23 +141,26 @@ public class Parameter {
 
     /**
      *
-     * @return {@literal true} if the parameter is a special parameter.
+     * @return {@code true} if the parameter is a special parameter.
      */
     public boolean isSpecialParameter() {
         return false;
     }
 
     /**
-     * @return {@literal true} if the {@link Parameter} can be bound to a command.
+     *
+     * @return {@code true} if the {@link Parameter} can be bound to a command.
      */
     boolean isBindable() {
         return !isSpecialParameter();
     }
 
     /**
-     * @return the parameter name or {@literal null} if not available.
+     *
+     * @return the parameter name or {@code null} if not available.
      */
     public String getName() {
         return name;
     }
+
 }

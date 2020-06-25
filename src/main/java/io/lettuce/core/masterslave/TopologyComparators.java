@@ -61,6 +61,7 @@ class TopologyComparators {
 
             return 0;
         }
+
     }
 
     /**
@@ -75,30 +76,36 @@ class TopologyComparators {
          * Sort by latency.
          */
         BY_LATENCY {
+
             @Override
             void sort(List<RedisNodeDescription> nodes, Comparator<? super RedisNodeDescription> latencyComparator) {
                 nodes.sort(latencyComparator);
             }
+
         },
 
         /**
          * Do not sort.
          */
         NONE {
+
             @Override
             void sort(List<RedisNodeDescription> nodes, Comparator<? super RedisNodeDescription> latencyComparator) {
 
             }
+
         },
 
         /**
          * Randomize nodes.
          */
         RANDOMIZE {
+
             @Override
             void sort(List<RedisNodeDescription> nodes, Comparator<? super RedisNodeDescription> latencyComparator) {
                 Collections.shuffle(nodes);
             }
+
         };
 
         abstract void sort(List<RedisNodeDescription> nodes, Comparator<? super RedisNodeDescription> latencyComparator);
@@ -119,5 +126,7 @@ class TopologyComparators {
 
             return BY_LATENCY;
         }
+
     }
+
 }

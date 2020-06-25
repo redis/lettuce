@@ -44,6 +44,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 class ReactiveStreamingOutputIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
+
     private final RedisReactiveCommands<String, String> reactive;
 
     @Inject
@@ -97,16 +98,12 @@ class ReactiveStreamingOutputIntegrationTests extends TestSupport {
         redis.geoadd(key, 50, 20, "value1");
         redis.geoadd(key, 50, 21, "value2");
 
-        StepVerifier
-                .create(reactive.georadius(key, 50, 20, 1000, Unit.km, new GeoArgs().withHash()))
-                .recordWith(ArrayList::new)
-                .expectNextCount(2)
-                .consumeRecordedWith(
-                        values -> {
-                            assertThat(values).hasSize(2).contains(new GeoWithin<>("value1", null, 3542523898362974L, null),
-                                    new GeoWithin<>("value2", null, 3542609801095198L, null));
+        StepVerifier.create(reactive.georadius(key, 50, 20, 1000, Unit.km, new GeoArgs().withHash())).recordWith(ArrayList::new)
+                .expectNextCount(2).consumeRecordedWith(values -> {
+                    assertThat(values).hasSize(2).contains(new GeoWithin<>("value1", null, 3542523898362974L, null),
+                            new GeoWithin<>("value2", null, 3542609801095198L, null));
 
-                        }).verifyComplete();
+                }).verifyComplete();
     }
 
     @Test
@@ -118,4 +115,5 @@ class ReactiveStreamingOutputIntegrationTests extends TestSupport {
 
         StepVerifier.create(reactive.geopos(key, "value1", "value2")).expectNextCount(2).verifyComplete();
     }
+
 }

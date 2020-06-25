@@ -183,4 +183,5 @@ class HostAndPortUnitTests {
         assertThat(hostAndPort.getPort()).isEqualTo(expectPort);
 
     }
+
 }

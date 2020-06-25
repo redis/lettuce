@@ -48,4 +48,5 @@ public class ListSubscriber<T> extends Subscriber<T> {
     public void onNext(Collection<T> outputTarget, T t) {
         outputTarget.add(t);
     }
+
 }

@@ -37,4 +37,5 @@ public class ValueScanOutput<K, V> extends ScanOutput<K, V, ValueScanCursor<V>> 
     protected void setOutput(ByteBuffer bytes) {
         output.getValues().add(bytes == null ? null : codec.decodeValue(bytes));
     }
+
 }
