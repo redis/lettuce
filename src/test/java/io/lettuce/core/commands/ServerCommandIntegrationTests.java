@@ -54,6 +54,8 @@ import io.lettuce.test.condition.RedisConditions;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisServerCommands}.
+ *
  * @author Will Glozer
  * @author Mark Paluch
  * @author Zhang Jessey
@@ -278,25 +280,25 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
         List<Object> result = redis.command();
 
-        assertThat(result.size()).isGreaterThan(100);
+        assertThat(result).hasSizeGreaterThan(100);
 
         List<CommandDetail> commands = CommandDetailParser.parse(result);
         assertThat(commands).hasSameSizeAs(result);
     }
 
     @Test
-    void commandInfo() {
+    public void commandInfo() {
 
         List<Object> result = redis.commandInfo(CommandType.GETRANGE, CommandType.SET);
 
-        assertThat(result.size()).isEqualTo(2);
+        assertThat(result).hasSize(2);
 
         List<CommandDetail> commands = CommandDetailParser.parse(result);
         assertThat(commands).hasSameSizeAs(result);
 
         result = redis.commandInfo("a missing command");
 
-        assertThat(result.size()).isEqualTo(0);
+        assertThat(result).hasSize(1).containsNull();
     }
 
     @Test
@@ -309,7 +311,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
         redis.get(key);
         redis.get(key);
         assertThat(redis.configResetstat()).isEqualTo("OK");
-        assertThat(redis.info().contains("keyspace_misses:0")).isTrue();
+        assertThat(redis.info()).contains("keyspace_misses:0");
     }
 
     @Test
@@ -419,8 +421,8 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
     @Test
     void info() {
-        assertThat(redis.info().contains("redis_version")).isTrue();
-        assertThat(redis.info("server").contains("redis_version")).isTrue();
+        assertThat(redis.info()).contains("redis_version");
+        assertThat(redis.info("server")).contains("redis_version");
     }
 
     @Test
