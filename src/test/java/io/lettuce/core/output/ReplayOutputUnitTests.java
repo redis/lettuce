@@ -18,6 +18,7 @@ package io.lettuce.core.output;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
@@ -62,8 +63,7 @@ class ReplayOutputUnitTests {
 
         replay.replay(target);
 
-        assertThat(target.get().get(0)).isEqualTo(Collections.singletonList("foo"));
-        assertThat(target.get().get(1)).isEqualTo(Collections.singletonList("bar"));
+        assertThat(target.get().get(0)).isEqualTo(Arrays.asList("foo", Collections.singletonList("bar")));
     }
 
     @Test
