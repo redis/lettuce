@@ -314,6 +314,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
             client.connect(redisUri);
             fail("Missing Exception");
         } catch (Exception e) {
+            Wait.untilEquals(false, ref.get()::isRegistered).waitOrTimeout();
             assertThat(ref.get().isOpen()).isFalse();
             Wait.untilEquals(false, () -> ref.get().isRegistered()).waitOrTimeout();
         } finally {
