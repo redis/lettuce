@@ -277,7 +277,7 @@ public interface RedisHashCommands<K, V> {
      */
     Long hstrlen(K key, K field);
 
-        /**
+    /**
      * Get all the values in a hash.
      *
      * @param key the key.
@@ -293,4 +293,5 @@ public interface RedisHashCommands<K, V> {
      * @return Long count of the keys.
      */
     Long hvals(ValueStreamingChannel<V> channel, K key);
+
 }

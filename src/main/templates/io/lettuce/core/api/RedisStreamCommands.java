@@ -323,4 +323,5 @@ public interface RedisStreamCommands<K, V> {
      * @return simple-reply number of removed entries.
      */
     Long xtrim(K key, boolean approximateTrimming, long count);
+
 }

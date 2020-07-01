@@ -88,7 +88,7 @@ public interface RedisStringCommands<K, V> {
      */
     Long bitpos(K key, boolean state);
 
-        /**
+    /**
      * Find first bit set or clear in a string.
      *
      * @param key the key.
@@ -384,4 +384,5 @@ public interface RedisStringCommands<K, V> {
      * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */
     Long strlen(K key);
+
 }

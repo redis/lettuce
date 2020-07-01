@@ -30,7 +30,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface BaseRedisCommands<K, V>  {
+public interface BaseRedisCommands<K, V> {
 
     /**
      * Post a message to a channel.
@@ -173,4 +173,5 @@ public interface BaseRedisCommands<K, V>  {
      * achieve batching. No-op if channel is not connected.
      */
     void flushCommands();
+
 }

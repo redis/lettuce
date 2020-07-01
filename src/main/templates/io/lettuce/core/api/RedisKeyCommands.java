@@ -275,7 +275,7 @@ public interface RedisKeyCommands<K, V> {
      * @return String simple-string-reply The command returns OK on success.
      * @since 5.1
      */
-    String restore(K key,  byte[] value, RestoreArgs args);
+    String restore(K key, byte[] value, RestoreArgs args);
 
     /**
      * Sort the elements in a list, set or sorted set.
@@ -414,4 +414,5 @@ public interface RedisKeyCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
+
 }

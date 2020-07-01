@@ -95,7 +95,8 @@ public interface RedisGeoCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result.
      */
-    Long georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    Long georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the

@@ -303,4 +303,5 @@ public interface RedisSetCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
+
 }

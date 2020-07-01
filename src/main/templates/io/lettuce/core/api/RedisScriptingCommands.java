@@ -114,4 +114,5 @@ public interface RedisScriptingCommands<K, V> {
      * @return the SHA1 value.
      */
     String digest(V script);
+
 }

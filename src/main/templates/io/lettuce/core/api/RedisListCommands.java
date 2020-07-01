@@ -266,4 +266,5 @@ public interface RedisListCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      */
     Long rpushx(K key, V... values);
+
 }
