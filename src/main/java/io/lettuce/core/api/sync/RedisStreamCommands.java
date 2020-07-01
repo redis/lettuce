@@ -20,6 +20,8 @@ import java.util.Map;
 
 import io.lettuce.core.*;
 import io.lettuce.core.XReadArgs.StreamOffset;
+import io.lettuce.core.models.stream.PendingMessage;
+import io.lettuce.core.models.stream.PendingMessages;
 
 /**
  * Synchronous executed commands for Streams.
@@ -87,7 +89,7 @@ public interface RedisStreamCommands<K, V> {
      * @param consumer consumer identified by group name and consumer key.
      * @param minIdleTime
      * @param messageIds message Id's to claim.
-     * @return simple-reply the {@link StreamMessage}
+     * @return simple-reply the {@link StreamMessage}.
      */
     List<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, long minIdleTime, String... messageIds);
 
@@ -101,7 +103,7 @@ public interface RedisStreamCommands<K, V> {
      * @param consumer consumer identified by group name and consumer key.
      * @param args
      * @param messageIds message Id's to claim.
-     * @return simple-reply the {@link StreamMessage}
+     * @return simple-reply the {@link StreamMessage}.
      */
     List<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, XClaimArgs args, String... messageIds);
 
@@ -158,7 +160,7 @@ public interface RedisStreamCommands<K, V> {
      *
      * @param streamOffset name of the stream containing the offset to set.
      * @param group name of the consumer group.
-     * @return simple-reply OK
+     * @return simple-reply OK.
      */
     String xgroupSetid(StreamOffset<K> streamOffset, K group);
 
@@ -205,7 +207,7 @@ public interface RedisStreamCommands<K, V> {
      * @param group name of the consumer group.
      * @return List&lt;Object&gt; array-reply list pending entries.
      */
-    List<Object> xpending(K key, K group);
+    PendingMessages xpending(K key, K group);
 
     /**
      * Read pending messages from a stream within a specific {@link Range}.
@@ -216,7 +218,7 @@ public interface RedisStreamCommands<K, V> {
      * @param limit must not be {@code null}.
      * @return List&lt;Object&gt; array-reply list with members of the resulting stream.
      */
-    List<Object> xpending(K key, K group, Range<String> range, Limit limit);
+    List<PendingMessage> xpending(K key, K group, Range<String> range, Limit limit);
 
     /**
      * Read pending messages from a stream within a specific {@link Range}.
@@ -227,7 +229,7 @@ public interface RedisStreamCommands<K, V> {
      * @param limit must not be {@code null}.
      * @return List&lt;Object&gt; array-reply list with members of the resulting stream.
      */
-    List<Object> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit);
+    List<PendingMessage> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit);
 
     /**
      * Read messages from a stream within a specific {@link Range}.

@@ -18,11 +18,15 @@ package io.lettuce.core.api;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.Consumer;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
 import io.lettuce.core.StreamMessage;
+import io.lettuce.core.XAddArgs;
 import io.lettuce.core.XClaimArgs;
 import io.lettuce.core.XReadArgs.StreamOffset;
+import io.lettuce.core.models.stream.PendingMessage;
+import io.lettuce.core.models.stream.PendingMessages;
 
 /**
  * ${intent} for Streams.
@@ -207,7 +211,7 @@ public interface RedisStreamCommands<K, V> {
  * @param group name of the consumer group.
  * @return List&lt;Object&gt; array-reply list pending entries.
  */
-    List<Object> xpending(K key, K group);
+    PendingMessages xpending(K key, K group);
 
     /**
  * Read pending messages from a stream within a specific {@link Range}.
@@ -218,7 +222,7 @@ public interface RedisStreamCommands<K, V> {
  * @param limit must not be {@code null}.
  * @return List&lt;Object&gt; array-reply list with members of the resulting stream.
  */
-    List<Object> xpending(K key, K group, Range<String> range, Limit limit);
+    List<PendingMessage> xpending(K key, K group, Range<String> range, Limit limit);
 
     /**
  * Read pending messages from a stream within a specific {@link Range}.
@@ -229,7 +233,7 @@ public interface RedisStreamCommands<K, V> {
  * @param limit must not be {@code null}.
  * @return List&lt;Object&gt; array-reply list with members of the resulting stream.
  */
-    List<Object> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit);
+    List<PendingMessage> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit);
 
     /**
  * Read messages from a stream within a specific {@link Range}.

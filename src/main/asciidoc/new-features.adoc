@@ -13,6 +13,7 @@
 * Removal of deprecated API including timeout methods accepting `TimeUnit`.
 Use methods accepting `Duration` instead.
 * Lots of internal refinements.
+* `xpending` methods return now `List<PendingMessage>` and `PendingMessages`
 
 [[new-features.5-3-0]]
 == What's new in Lettuce 5.3

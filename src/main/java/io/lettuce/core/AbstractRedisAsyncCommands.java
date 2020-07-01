@@ -31,6 +31,8 @@ import io.lettuce.core.api.async.*;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.stream.PendingMessage;
+import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.*;
 
@@ -1646,17 +1648,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<List<Object>> xpending(K key, K group) {
-        return dispatch(commandBuilder.xpending(key, group, Range.unbounded(), Limit.unlimited()));
+    public RedisFuture<PendingMessages> xpending(K key, K group) {
+        return dispatch(commandBuilder.xpending(key, group));
     }
 
     @Override
-    public RedisFuture<List<Object>> xpending(K key, K group, Range<String> range, Limit limit) {
+    public RedisFuture<List<PendingMessage>> xpending(K key, K group, Range<String> range, Limit limit) {
         return dispatch(commandBuilder.xpending(key, group, range, limit));
     }
 
     @Override
-    public RedisFuture<List<Object>> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
+    public RedisFuture<List<PendingMessage>> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
         return dispatch(commandBuilder.xpending(key, consumer, range, limit));
     }
 

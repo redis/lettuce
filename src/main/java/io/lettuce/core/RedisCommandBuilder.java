@@ -27,6 +27,8 @@ import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.stream.PendingMessage;
+import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.*;
 
@@ -2326,7 +2328,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XLEN, new IntegerOutput<>(codec), args);
     }
 
-    public Command<K, V, List<Object>> xpending(K key, K group, Range<String> range, Limit limit) {
+    public Command<K, V, PendingMessages> xpending(K key, K group) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group);
+
+        return createCommand(XPENDING, new PendingMessagesOutput<>(codec), args);
+    }
+
+    public Command<K, V, List<PendingMessage>> xpending(K key, K group, Range<String> range, Limit limit) {
         notNullKey(key);
         LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
@@ -2334,20 +2345,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group);
 
-        if (limit.isLimited() || !range.getLower().equals(Boundary.unbounded())
-                || !range.getUpper().equals(Boundary.unbounded())) {
-            args.add(getLowerValue(range)).add(getUpperValue(range));
+        args.add(getLowerValue(range)).add(getUpperValue(range));
+        args.add(limit.isLimited() ? limit.getCount() : Long.MAX_VALUE);
 
-            if (!limit.isLimited()) {
-                throw new IllegalArgumentException("Limit must be set using Range queries with XPENDING");
-            }
-            args.add(limit.getCount());
-        }
-
-        return createCommand(XPENDING, new NestedMultiOutput<>(codec), args);
+        return createCommand(XPENDING, new PendingMessageListOutput<>(codec), args);
     }
 
-    public Command<K, V, List<Object>> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
+    public Command<K, V, List<PendingMessage>> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
         notNullKey(key);
         LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
@@ -2360,7 +2364,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.add(limit.isLimited() ? limit.getCount() : Long.MAX_VALUE);
         args.addKey(consumer.name);
 
-        return createCommand(XPENDING, new NestedMultiOutput<>(codec), args);
+        return createCommand(XPENDING, new PendingMessageListOutput<>(codec), args);
     }
 
     public Command<K, V, List<StreamMessage<K, V>>> xrange(K key, Range<String> range, Limit limit) {

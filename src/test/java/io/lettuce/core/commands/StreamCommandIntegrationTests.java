@@ -33,6 +33,7 @@ import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.PendingMessage;
+import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.models.stream.PendingParser;
 import io.lettuce.core.output.NestedMultiOutput;
 import io.lettuce.core.protocol.CommandArgs;
@@ -328,8 +329,9 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
-        List<Object> pendingEntries = redis.xpending(key, "group");
-        assertThat(pendingEntries).hasSize(4).containsSequence(1L, id, id);
+        PendingMessages pendingEntries = redis.xpending(key, "group");
+        assertThat(pendingEntries.getCount()).isEqualTo(1);
+        assertThat(pendingEntries.getMessageIds()).isEqualTo(Range.create(id, id));
     }
 
     @Test
@@ -340,29 +342,40 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
-        List<Object> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
+        List<PendingMessage> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
 
-        List<PendingMessage> pendingMessages = PendingParser.parseRange(pendingEntries);
-        assertThat(pendingMessages).hasSize(1);
-
-        PendingMessage message = pendingMessages.get(0);
+        PendingMessage message = pendingEntries.get(0);
         assertThat(message.getId()).isEqualTo(id);
         assertThat(message.getConsumer()).isEqualTo("consumer1");
         assertThat(message.getRedeliveryCount()).isEqualTo(1);
     }
 
     @Test
-    void xpendingUnlimited() {
+    void xpendingGroup() {
 
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
         String id = redis.xadd(key, Collections.singletonMap("key", "value"));
 
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
-        List<Object> pendingEntries = redis.xpending(key, Consumer.from("group", "consumer1"), Range.unbounded(),
-                Limit.unlimited());
+        PendingMessages pendingMessages = redis.xpending(key, "group");
 
-        List<PendingMessage> pendingMessages = PendingParser.parseRange(pendingEntries);
+        assertThat(pendingMessages.getCount()).isEqualTo(1);
+        assertThat(pendingMessages.getMessageIds()).isEqualTo(Range.create(id, id));
+        assertThat(pendingMessages.getConsumerMessageCount()).containsEntry("consumer1", 1L);
+        assertThat(pendingMessages.getCount()).isEqualTo(1);
+    }
+
+    @Test
+    void xpendingExtended() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        List<PendingMessage> pendingMessages = redis.xpending(key, "group", Range.unbounded(), Limit.unlimited());
+
         assertThat(pendingMessages).hasSize(1);
 
         PendingMessage message = pendingMessages.get(0);
@@ -383,7 +396,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
         Long ackd = redis.xack(key, "group", messages.get(0).getId());
         assertThat(ackd).isEqualTo(1);
 
-        List<Object> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
+        List<PendingMessage> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
         assertThat(pendingEntries).isEmpty();
     }
 
@@ -420,11 +433,10 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(claimedMessages).hasSize(1).contains(messages.get(0));
 
-        List<Object> xpending = redis.xpending(key, Consumer.from("group", "consumer2"), Range.unbounded(), Limit.from(10));
+        List<PendingMessage> pendingMessages = redis.xpending(key, Consumer.from("group", "consumer2"), Range.unbounded(),
+                Limit.from(10));
 
-        List<PendingMessage> pendingMessages = PendingParser.parseRange(xpending);
         PendingMessage message = pendingMessages.get(0);
-
         assertThat(message.getMsSinceLastDelivery()).isBetween(50000L, 80000L);
     }
 

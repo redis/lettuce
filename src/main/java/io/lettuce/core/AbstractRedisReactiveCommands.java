@@ -23,6 +23,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import io.lettuce.core.models.stream.PendingMessage;
+import io.lettuce.core.models.stream.PendingMessages;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.GeoArgs.Unit;
@@ -1723,17 +1725,17 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Flux<Object> xpending(K key, K group) {
-        return xpending(key, group, Range.unbounded(), Limit.unlimited());
+    public Mono<PendingMessages> xpending(K key, K group) {
+        return createMono(() -> commandBuilder.xpending(key, group));
     }
 
     @Override
-    public Flux<Object> xpending(K key, K group, Range<String> range, Limit limit) {
+    public Flux<PendingMessage> xpending(K key, K group, Range<String> range, Limit limit) {
         return createDissolvingFlux(() -> commandBuilder.xpending(key, group, range, limit));
     }
 
     @Override
-    public Flux<Object> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
+    public Flux<PendingMessage> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit) {
         return createDissolvingFlux(() -> commandBuilder.xpending(key, consumer, range, limit));
     }
 
