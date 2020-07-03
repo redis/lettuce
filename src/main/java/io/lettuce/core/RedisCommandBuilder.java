@@ -15,7 +15,7 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.LettuceStrings.string;
+import static io.lettuce.core.internal.LettuceStrings.string;
 import static io.lettuce.core.protocol.CommandKeyword.*;
 import static io.lettuce.core.protocol.CommandType.*;
 

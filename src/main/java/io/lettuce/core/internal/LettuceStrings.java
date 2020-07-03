@@ -1,11 +1,11 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core;
+package io.lettuce.core.internal;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Iterator;
 
+import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.Base16;
 
 /**
@@ -94,32 +95,6 @@ public class LettuceStrings {
         }
 
         return Double.parseDouble(s);
-    }
-
-    /**
-     * Create SHA1 digest from Lua script.
-     *
-     * @param script the script
-     * @return the Base16 encoded SHA1 value
-     */
-    public static String digest(byte[] script) {
-        return digest(ByteBuffer.wrap(script));
-    }
-
-    /**
-     * Create SHA1 digest from Lua script.
-     *
-     * @param script the script
-     * @return the Base16 encoded SHA1 value
-     */
-    public static String digest(ByteBuffer script) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA1");
-            md.update(script);
-            return new String(Base16.encode(md.digest(), false));
-        } catch (NoSuchAlgorithmException e) {
-            throw new RedisException("JVM does not support SHA1");
-        }
     }
 
     /**

@@ -33,7 +33,7 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.InitialDirContext;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**

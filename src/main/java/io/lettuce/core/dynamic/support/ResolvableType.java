@@ -19,7 +19,7 @@ import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.dynamic.support.TypeWrapper.MethodParameterTypeProvider;
 import io.lettuce.core.dynamic.support.TypeWrapper.TypeProvider;
 import io.lettuce.core.internal.LettuceAssert;

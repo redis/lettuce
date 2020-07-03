@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;

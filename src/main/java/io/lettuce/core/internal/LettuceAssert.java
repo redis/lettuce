@@ -18,8 +18,6 @@ package io.lettuce.core.internal;
 import java.util.Collection;
 import java.util.function.Supplier;
 
-import io.lettuce.core.LettuceStrings;
-
 /**
  * Assertion utility class that assists in validating arguments. This class is part of the internal API and may change without
  * further notice.

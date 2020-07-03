@@ -26,7 +26,6 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisCommandInterruptedException;
 import io.lettuce.core.RedisException;
@@ -73,8 +72,8 @@ public class AsyncCommandUnitTests {
     @Test
     void awaitAllCompleted() {
         sut.complete();
-        assertThat(LettuceFutures.awaitAll(-1, TimeUnit.MILLISECONDS, sut)).isTrue();
-        assertThat(LettuceFutures.awaitAll(0, TimeUnit.MILLISECONDS, sut)).isTrue();
+        assertThat(Futures.awaitAll(-1, TimeUnit.MILLISECONDS, sut)).isTrue();
+        assertThat(Futures.awaitAll(0, TimeUnit.MILLISECONDS, sut)).isTrue();
         assertThat(Futures.await(5, TimeUnit.MILLISECONDS, sut)).isTrue();
     }
 
@@ -87,21 +86,21 @@ public class AsyncCommandUnitTests {
     void awaitReturnsCompleted() {
         sut.getOutput().set(StandardCharsets.US_ASCII.encode("one"));
         sut.complete();
-        assertThat(LettuceFutures.awaitOrCancel(sut, -1, TimeUnit.NANOSECONDS)).isEqualTo("one");
-        assertThat(LettuceFutures.awaitOrCancel(sut, 0, TimeUnit.NANOSECONDS)).isEqualTo("one");
-        assertThat(LettuceFutures.awaitOrCancel(sut, 1, TimeUnit.NANOSECONDS)).isEqualTo("one");
+        assertThat(Futures.awaitOrCancel(sut, -1, TimeUnit.NANOSECONDS)).isEqualTo("one");
+        assertThat(Futures.awaitOrCancel(sut, 0, TimeUnit.NANOSECONDS)).isEqualTo("one");
+        assertThat(Futures.awaitOrCancel(sut, 1, TimeUnit.NANOSECONDS)).isEqualTo("one");
     }
 
     @Test
     void awaitWithExecutionException() {
         sut.completeExceptionally(new RedisException("error"));
-        assertThatThrownBy(() -> LettuceFutures.awaitOrCancel(sut, 1, TimeUnit.SECONDS)).isInstanceOf(RedisException.class);
+        assertThatThrownBy(() -> Futures.awaitOrCancel(sut, 1, TimeUnit.SECONDS)).isInstanceOf(RedisException.class);
     }
 
     @Test
     void awaitWithCancelledCommand() {
         sut.cancel();
-        assertThatThrownBy(() -> LettuceFutures.awaitOrCancel(sut, 5, TimeUnit.SECONDS))
+        assertThatThrownBy(() -> Futures.awaitOrCancel(sut, 5, TimeUnit.SECONDS))
                 .isInstanceOf(CancellationException.class);
     }
 

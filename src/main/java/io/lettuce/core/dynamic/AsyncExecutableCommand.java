@@ -17,9 +17,7 @@ package io.lettuce.core.dynamic;
 
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
-import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.dynamic.domain.Timeout;
 import io.lettuce.core.dynamic.parameter.ExecutionSpecificParameters;

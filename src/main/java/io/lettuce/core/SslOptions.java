@@ -34,6 +34,7 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManagerFactory;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceStrings;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;

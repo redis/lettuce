@@ -30,6 +30,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.codec.Base16;
+import io.lettuce.core.internal.LettuceStrings;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 import io.lettuce.core.*;
@@ -291,7 +293,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
         String script = "return true";
 
-        String sha = LettuceStrings.digest(script.getBytes());
+        String sha = Base16.digest(script.getBytes());
 
         StepVerifier.create(commands.scriptExists(sha)).expectNext(false).verifyComplete();
 

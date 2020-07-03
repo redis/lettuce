@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.dynamic.CommandMethod;
 import io.lettuce.core.dynamic.annotation.Command;
 import io.lettuce.core.dynamic.annotation.CommandNaming;

@@ -18,7 +18,7 @@ package io.lettuce.core.output;
 import java.nio.ByteBuffer;
 
 import io.lettuce.core.KeyValue;
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.codec.RedisCodec;
 

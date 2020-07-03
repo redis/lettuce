@@ -17,12 +17,13 @@ package io.lettuce.core;
 
 import static io.lettuce.core.protocol.CommandType.*;
 
-import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import io.lettuce.core.codec.Base16;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import reactor.core.publisher.Flux;
@@ -538,7 +539,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     @Override
     public String digest(byte[] script) {
-        return LettuceStrings.digest(script);
+        return Base16.digest(script);
     }
 
     @Override

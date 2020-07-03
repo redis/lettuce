@@ -35,6 +35,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.Timeout;
 import io.netty.util.concurrent.EventExecutorGroup;

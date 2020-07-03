@@ -41,6 +41,8 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.codec.Base16;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.KeysAndValues;
 import io.lettuce.test.LettuceExtension;
@@ -389,7 +391,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         String script = "return true";
 
-        String sha = LettuceStrings.digest(script.getBytes());
+        String sha = Base16.digest(script.getBytes());
         assertThat(sync.scriptExists(sha)).contains(false);
 
         String returnedSha = sync.scriptLoad(script);

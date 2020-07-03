@@ -22,7 +22,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.ToByteBufEncoder;

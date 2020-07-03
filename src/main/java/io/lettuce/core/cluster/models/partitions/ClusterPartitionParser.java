@@ -17,7 +17,7 @@ package io.lettuce.core.cluster.models.partitions;
 
 import java.util.*;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.SlotHash;

@@ -32,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.*;
 import io.lettuce.test.condition.EnabledOnCommand;

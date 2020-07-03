@@ -25,12 +25,9 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.lettuce.core.internal.*;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.Transports.NativeTransports;
-import io.lettuce.core.internal.AsyncCloseable;
-import io.lettuce.core.internal.Exceptions;
-import io.lettuce.core.internal.Futures;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;

@@ -15,8 +15,8 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.LettuceStrings.isEmpty;
-import static io.lettuce.core.LettuceStrings.isNotEmpty;
+import static io.lettuce.core.internal.LettuceStrings.isEmpty;
+import static io.lettuce.core.internal.LettuceStrings.isNotEmpty;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
+import io.lettuce.core.internal.LettuceStrings;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, client name,

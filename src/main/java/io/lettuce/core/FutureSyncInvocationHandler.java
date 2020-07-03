@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.AbstractInvocationHandler;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.TimeoutProvider;
 import io.lettuce.core.protocol.RedisCommand;
 
@@ -68,7 +69,7 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
                 long timeout = getTimeoutNs(command);
 
-                return LettuceFutures.awaitOrCancel(command, timeout, TimeUnit.NANOSECONDS);
+                return Futures.awaitOrCancel(command, timeout, TimeUnit.NANOSECONDS);
             }
 
             return result;

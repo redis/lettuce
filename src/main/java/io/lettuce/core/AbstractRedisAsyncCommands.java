@@ -17,20 +17,20 @@ package io.lettuce.core;
 
 import static io.lettuce.core.protocol.CommandType.*;
 
-import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.async.*;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
@@ -469,7 +469,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
 
     @Override
     public String digest(byte[] script) {
-        return LettuceStrings.digest(script);
+        return Base16.digest(script);
     }
 
     @Override

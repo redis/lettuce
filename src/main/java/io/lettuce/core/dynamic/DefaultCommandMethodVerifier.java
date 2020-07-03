@@ -26,6 +26,7 @@ import io.lettuce.core.dynamic.segment.CommandSegment;
 import io.lettuce.core.dynamic.segment.CommandSegments;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.command.CommandDetail;
 
 /**

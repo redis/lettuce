@@ -20,7 +20,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 
 /**
  * Base class for all types that include parametrization of some kind. Crucial as we have to take note of the parent class we

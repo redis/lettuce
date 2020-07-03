@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import java.util.List;
 
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**

@@ -15,8 +15,8 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.LettuceStrings.isEmpty;
-import static io.lettuce.core.LettuceStrings.isNotEmpty;
+import static io.lettuce.core.internal.LettuceStrings.isEmpty;
+import static io.lettuce.core.internal.LettuceStrings.isNotEmpty;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -29,15 +29,13 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
-import io.lettuce.core.internal.ExceptionFactory;
+import io.lettuce.core.internal.*;
 import io.lettuce.core.masterreplica.MasterReplica;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.ExceptionFactory;
-import io.lettuce.core.internal.Futures;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;

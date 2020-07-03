@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;

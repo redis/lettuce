@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.support;
 
-import static io.lettuce.core.LettuceStrings.isNotEmpty;
+import static io.lettuce.core.internal.LettuceStrings.isNotEmpty;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;

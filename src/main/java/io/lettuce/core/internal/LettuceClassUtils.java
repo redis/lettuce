@@ -18,8 +18,6 @@ package io.lettuce.core.internal;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import io.lettuce.core.JavaRuntime;
-
 /**
  * Miscellaneous class utility methods. Mainly for internal use within the framework.
  *
@@ -129,7 +127,7 @@ public class LettuceClassUtils {
         }
         if (cl == null) {
             // No thread context class loader -> use class loader of this class.
-            cl = JavaRuntime.class.getClassLoader();
+            cl = LettuceClassUtils.class.getClassLoader();
         }
         return cl;
     }
