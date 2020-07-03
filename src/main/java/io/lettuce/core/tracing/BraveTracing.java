@@ -17,12 +17,15 @@ package io.lettuce.core.tracing;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import reactor.core.publisher.Mono;
 import brave.Span;
 import brave.propagation.TraceContextOrSamplingFlags;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CompleteableCommand;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * {@link Tracing} integration with OpenZipkin's Brave {@link brave.Tracer}. This implementation creates Brave
@@ -71,7 +74,7 @@ public class BraveTracing implements Tracing {
         LettuceAssert.notNull(builder.serviceName, "Service name must not be null");
 
         this.tracingOptions = new BraveTracingOptions(builder.serviceName, builder.endpointCustomizer, builder.spanCustomizer);
-        this.tracer = new BraveTracer(builder.tracing, this.tracingOptions);
+        this.tracer = new BraveTracer(builder.tracing, this.tracingOptions, builder.includeCommandArgsInSpanTags);
         this.includeCommandArgsInSpanTags = builder.includeCommandArgsInSpanTags;
     }
 
@@ -109,7 +112,7 @@ public class BraveTracing implements Tracing {
         private Consumer<zipkin2.Endpoint.Builder> endpointCustomizer = it -> {
         };
 
-        private Consumer<brave.Span> spanCustomizer = it -> {
+        private BiConsumer<RedisCommand<Object, Object, Object>, Span> spanCustomizer = (command, span) -> {
         };
 
         private boolean includeCommandArgsInSpanTags = true;
@@ -193,6 +196,22 @@ public class BraveTracing implements Tracing {
 
             LettuceAssert.notNull(spanCustomizer, "Span customizer must not be null!");
 
+            this.spanCustomizer = (command, span) -> spanCustomizer.accept(span);
+            return this;
+        }
+
+        /**
+         * Sets an {@link brave.Span} customizer to customize the {@link brave.Span} based on the underlying
+         * {@link RedisCommand}. The customizer is invoked before {@link Span#finish()} finishing} the span.
+         *
+         * @param spanCustomizer must not be {@code null}.
+         * @return {@code this} {@link Builder}.
+         * @since 6.0
+         */
+        public Builder spanCustomizer(BiConsumer<RedisCommand<Object, Object, Object>, brave.Span> spanCustomizer) {
+
+            LettuceAssert.notNull(spanCustomizer, "Span customizer must not be null!");
+
             this.spanCustomizer = spanCustomizer;
             return this;
         }
@@ -257,9 +276,12 @@ public class BraveTracing implements Tracing {
 
         private final BraveTracingOptions tracingOptions;
 
-        BraveTracer(brave.Tracing tracing, BraveTracingOptions tracingOptions) {
+        private final boolean includeCommandArgsInSpanTags;
+
+        BraveTracer(brave.Tracing tracing, BraveTracingOptions tracingOptions, boolean includeCommandArgsInSpanTags) {
             this.tracing = tracing;
             this.tracingOptions = tracingOptions;
+            this.includeCommandArgsInSpanTags = includeCommandArgsInSpanTags;
         }
 
         @Override
@@ -290,7 +312,7 @@ public class BraveTracing implements Tracing {
                 return NoOpTracing.NoOpSpan.INSTANCE;
             }
 
-            return new BraveSpan(span.kind(brave.Span.Kind.CLIENT), this.tracingOptions);
+            return new BraveSpan(span.kind(brave.Span.Kind.CLIENT), this.tracingOptions, includeCommandArgsInSpanTags);
         }
 
     }
@@ -304,15 +326,47 @@ public class BraveTracing implements Tracing {
 
         private final BraveTracingOptions tracingOptions;
 
-        BraveSpan(Span span, BraveTracingOptions tracingOptions) {
+        private final boolean includeCommandArgsInSpanTags;
+
+        BraveSpan(Span span, BraveTracingOptions tracingOptions, boolean includeCommandArgsInSpanTags) {
             this.span = span;
             this.tracingOptions = tracingOptions;
+            this.includeCommandArgsInSpanTags = includeCommandArgsInSpanTags;
         }
 
         @Override
-        public BraveSpan start() {
+        public BraveSpan start(RedisCommand<?, ?, ?> command) {
+
+            span.name(command.getType().name());
+
+            if (includeCommandArgsInSpanTags && command.getArgs() != null) {
+                span.tag("redis.args", command.getArgs().toCommandString());
+            }
+
+            if (command instanceof CompleteableCommand) {
+                CompleteableCommand<?> completeableCommand = (CompleteableCommand<?>) command;
+                completeableCommand.onComplete((o, throwable) -> {
+
+                    if (command.getOutput() != null) {
+
+                        String error = command.getOutput().getError();
+                        if (error != null) {
+                            span.tag("error", error);
+                        } else if (throwable != null) {
+                            span.tag("exception", throwable.toString());
+                            span.error(throwable);
+                        }
+                    }
+
+                    span.finish();
+                });
+            } else {
+                throw new IllegalArgumentException("Command " + command
+                        + " must implement CompleteableCommand to attach Span completion to command completion");
+            }
 
             span.start();
+            this.tracingOptions.customizeSpan(command, span);
 
             return this;
         }
@@ -352,7 +406,14 @@ public class BraveTracing implements Tracing {
         @Override
         public BraveSpan remoteEndpoint(Endpoint endpoint) {
 
-            span.remoteEndpoint(BraveEndpoint.class.cast(endpoint).endpoint);
+            zipkin2.Endpoint zkEndpoint = BraveEndpoint.class.cast(endpoint).endpoint;
+
+            if (zkEndpoint.serviceName() != null) {
+                span.remoteServiceName(zkEndpoint.serviceName());
+            }
+
+            String ip = zkEndpoint.ipv6() != null ? zkEndpoint.ipv6() : zkEndpoint.ipv4();
+            span.remoteIpAndPort(ip, zkEndpoint.portAsInt());
 
             return this;
         }
@@ -360,7 +421,6 @@ public class BraveTracing implements Tracing {
         @Override
         public void finish() {
 
-            this.tracingOptions.customizeSpan(span);
             span.finish();
         }
 
@@ -448,10 +508,10 @@ public class BraveTracing implements Tracing {
 
         private final Consumer<zipkin2.Endpoint.Builder> endpointCustomizer;
 
-        private final Consumer<brave.Span> spanCustomizer;
+        private final BiConsumer<RedisCommand<Object, Object, Object>, brave.Span> spanCustomizer;
 
         BraveTracingOptions(String serviceName, Consumer<zipkin2.Endpoint.Builder> endpointCustomizer,
-                Consumer<Span> spanCustomizer) {
+                BiConsumer<RedisCommand<Object, Object, Object>, brave.Span> spanCustomizer) {
             this.serviceName = serviceName;
             this.endpointCustomizer = endpointCustomizer;
             this.spanCustomizer = spanCustomizer;
@@ -461,8 +521,9 @@ public class BraveTracing implements Tracing {
             this.endpointCustomizer.accept(builder);
         }
 
-        void customizeSpan(brave.Span span) {
-            this.spanCustomizer.accept(span);
+        @SuppressWarnings("unchecked")
+        void customizeSpan(RedisCommand<?, ?, ?> command, brave.Span span) {
+            this.spanCustomizer.accept((RedisCommand<Object, Object, Object>) command, span);
         }
 
     }

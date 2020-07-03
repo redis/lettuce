@@ -15,6 +15,8 @@
  */
 package io.lettuce.core.tracing;
 
+import io.lettuce.core.protocol.RedisCommand;
+
 /**
  * Tracing abstraction to create {@link Span}s to capture latency and behavior of Redis commands.
  *
@@ -48,9 +50,10 @@ public abstract class Tracer {
         /**
          * Starts the span with.
          *
+         * @param command the underlying command.
          * @return {@literal this} {@link Span}.
          */
-        public abstract Span start();
+        public abstract Span start(RedisCommand<?, ?, ?> command);
 
         /**
          * Sets the name for this {@link Span}.

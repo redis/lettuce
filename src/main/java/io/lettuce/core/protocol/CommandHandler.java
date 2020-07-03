@@ -90,8 +90,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final boolean tracingEnabled;
 
-    private final boolean includeCommandArgsInSpanTags;
-
     private final float discardReadBytesRatio;
 
     private final boolean boundedQueues;
@@ -138,7 +136,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         Tracing tracing = clientResources.tracing();
 
         this.tracingEnabled = tracing.isEnabled();
-        this.includeCommandArgsInSpanTags = tracing.includeCommandArgsInSpanTags();
 
         float bufferUsageRatio = clientOptions.getBufferUsageRatio();
         this.discardReadBytesRatio = bufferUsageRatio / (bufferUsageRatio + 1);
@@ -402,35 +399,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             TraceContext context = provider.getTraceContext();
 
             Tracer.Span span = tracer.nextSpan(context);
-            span.name(command.getType().name());
-
-            if (includeCommandArgsInSpanTags && command.getArgs() != null) {
-                span.tag("redis.args", command.getArgs().toCommandString());
-            }
-
-            span.remoteEndpoint(tracedEndpoint);
-            span.start();
+            span.remoteEndpoint(tracedEndpoint).start(command);
 
             if (traced != null) {
                 traced.setSpan(span);
             }
-
-            CompleteableCommand<?> completeableCommand = (CompleteableCommand<?>) command;
-            completeableCommand.onComplete((o, throwable) -> {
-
-                if (command.getOutput() != null) {
-
-                    String error = command.getOutput().getError();
-                    if (error != null) {
-                        span.tag("error", error);
-                    } else if (throwable != null) {
-                        span.tag("exception", throwable.toString());
-                        span.error(throwable);
-                    }
-                }
-
-                span.finish();
-            });
         }
 
         ctx.write(command, promise);

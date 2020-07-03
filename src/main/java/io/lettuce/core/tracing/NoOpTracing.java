@@ -15,6 +15,8 @@
  */
 package io.lettuce.core.tracing;
 
+import io.lettuce.core.protocol.RedisCommand;
+
 import java.net.SocketAddress;
 
 /**
@@ -87,7 +89,7 @@ enum NoOpTracing implements Tracing, TraceContextProvider, TracerProvider {
         static final NoOpSpan INSTANCE = new NoOpSpan();
 
         @Override
-        public Tracer.Span start() {
+        public Tracer.Span start(RedisCommand<?, ?, ?> command) {
             return this;
         }
 
