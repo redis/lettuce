@@ -21,7 +21,9 @@ import static io.lettuce.core.internal.LettuceClassUtils.isPresent;
  * Utility to determine which Java runtime is used.
  *
  * @author Mark Paluch
+ * @deprecated since 5.3.2, this class will be removed with Lettuce 6.
  */
+@Deprecated
 public class JavaRuntime {
 
     /**

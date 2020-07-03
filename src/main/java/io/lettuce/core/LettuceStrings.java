@@ -28,7 +28,9 @@ import io.lettuce.core.codec.Base16;
  *
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated since 5.3.2, this class will move into {@code io.lettuce.core.internal} with Lettuce 6.
  */
+@Deprecated
 public class LettuceStrings {
 
     /**
