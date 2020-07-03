@@ -1,6 +1,6 @@
 :auto-reconnect-link: <<client-options,auto-reconnection>>
-:client-options-link: <<client-options>>
-:client-resources-link: <<client-resources>>
+:client-options-link: <<client-options,client options>>
+:client-resources-link: <<client-resources,client resources>>
 
 :custom-commands-command-output-link: <<custom-commands.outputs>>
 :custom-commands-command-exec-model-link: <<custom-commands.synchronous-asynchronous-and-reactive,Custom commands>>
@@ -35,6 +35,21 @@ include::{ext-doc}/Streaming-API.asciidoc[leveloffset=+1]
 [[events]]
 === Events
 include::{ext-doc}/Connection-Events.asciidoc[leveloffset=+2]
+
+[[observability]]
+=== Observability
+
+The following section explains Lettuces metrics and tracing capabilities.
+
+[[observability.metrics]]
+==== Metrics
+
+include::{ext-doc}/Command-Latency-Metrics.asciidoc[leveloffset=+2]
+
+[[observability.tracing]]
+==== Tracing
+
+include::{ext-doc}/Tracing.asciidoc[leveloffset=+2]
 
 === Pipelining and command flushing
 
