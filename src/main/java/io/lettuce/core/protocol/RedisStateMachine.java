@@ -51,57 +51,67 @@ public class RedisStateMachine {
 
     static class State {
 
-        enum Type {
+        /**
+         * Callback interface to handle a {@link State}.
+         */
+        @FunctionalInterface
+        interface StateHandler {
+
+            Result handle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+                    Consumer<Exception> errorHandler);
+        }
+
+        enum Type implements StateHandler {
 
             /**
              * First byte: {@code +}.
              */
-            SINGLE('+'),
+            SINGLE('+', RedisStateMachine::handleSingle),
 
             /**
              * First byte: {@code -}.
              */
-            ERROR('-'),
+            ERROR('-', RedisStateMachine::handleError),
 
             /**
              * First byte: {@code :}.
              */
-            INTEGER(':'),
+            INTEGER(':', RedisStateMachine::handleInteger),
 
             /**
              * First byte: {@code ,}.
              *
              * @since 6.0/RESP3
              */
-            FLOAT(','),
+            FLOAT(',', RedisStateMachine::handleFloat),
 
             /**
              * First byte: {@code #}.
              *
              * @since 6.0/RESP3
              */
-            BOOLEAN('#'),
+            BOOLEAN('#', RedisStateMachine::handleBoolean),
 
             /**
              * First byte: {@code !}.
              *
              * @since 6.0/RESP3
              */
-            BULK_ERROR('!'),
+            BULK_ERROR('!', RedisStateMachine::handleBulkError),
 
             /**
              * First byte: {@code =}.
              *
              * @since 6.0/RESP3
              */
-            VERBATIM('='), VERBATIM_STRING('='),
+            VERBATIM('=', RedisStateMachine::handleBulkAndVerbatim), VERBATIM_STRING('=', RedisStateMachine::handleVerbatim),
 
             /**
              * First byte: {@code (}.
              *
              * @since 6.0/RESP3
              */
-            BIG_NUMBER('('),
+            BIG_NUMBER('(', RedisStateMachine::handleBigNumber),
 
             /**
              * First byte: {@code %}.
@@ -109,7 +119,7 @@ public class RedisStateMachine {
              * @see #HELLO_V3
              * @since 6.0/RESP3
              */
-            MAP('%'),
+            MAP('%', RedisStateMachine::handleMap),
 
             /**
              * First byte: {@code ~}.
@@ -117,14 +127,14 @@ public class RedisStateMachine {
              * @see #MULTI
              * @since 6.0/RESP3
              */
-            SET('~'),
+            SET('~', RedisStateMachine::handleSet),
 
             /**
              * First byte: {@code |}.
              *
              * @since 6.0/RESP3
              */
-            ATTRIBUTE('|'),
+            ATTRIBUTE('|', RedisStateMachine::handleAttribute),
 
             /**
              * First byte: {@code >}.
@@ -132,7 +142,7 @@ public class RedisStateMachine {
              * @see #MULTI
              * @since 6.0/RESP3
              */
-            PUSH('>'),
+            PUSH('>', RedisStateMachine::handlePushAndMulti),
 
             /**
              * First byte: {@code @}.
@@ -140,19 +150,19 @@ public class RedisStateMachine {
              * @see #MAP
              * @since 6.0/RESP3
              */
-            HELLO_V3('@'),
+            HELLO_V3('@', RedisStateMachine::handleHelloV3),
 
             /**
              * First byte: {@code _}.
              *
              * @since 6.0/RESP3
              */
-            NULL('_'),
+            NULL('_', RedisStateMachine::handleNull),
 
             /**
              * First byte: {@code $}.
              */
-            BULK('$'),
+            BULK('$', RedisStateMachine::handleBulkAndVerbatim),
 
             /**
              * First byte: {@code *}.
@@ -160,14 +170,26 @@ public class RedisStateMachine {
              * @see #SET
              * @see #MAP
              */
-            MULTI('*'), BYTES('*');
+            MULTI('*', RedisStateMachine::handlePushAndMulti), BYTES('*', RedisStateMachine::handleBytes);
 
             final byte marker;
 
-            Type(char marker) {
+            private final StateHandler behavior;
+
+            Type(char marker, StateHandler behavior) {
                 this.marker = (byte) marker;
+                this.behavior = behavior;
             }
 
+            @Override
+			public Result handle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+                    Consumer<Exception> errorHandler) {
+                return behavior.handle(rsm, state, buffer, output, errorHandler);
+            }
+        }
+
+        enum Result {
+            NORMAL_END, BREAK_LOOP, CONTINUE_LOOP
         }
 
         Type type = null;
@@ -241,9 +263,6 @@ public class RedisStateMachine {
      */
     public boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
 
-        int length, end;
-        ByteBuffer bytes;
-
         buffer.touch("RedisStateMachine.decode(…)");
 
         if (isEmpty(stack)) {
@@ -254,9 +273,28 @@ public class RedisStateMachine {
             return isEmpty(stack);
         }
 
+        boolean resp3Indicator = doDecode(buffer, output, errorHandler);
+
+        if (debugEnabled) {
+            logger.debug("Decode done, empty stack: {}", isEmpty(stack));
+        }
+
+        if (isDiscoverProtocol()) {
+            if (resp3Indicator) {
+                setProtocolVersion(ProtocolVersion.RESP3);
+            } else {
+                setProtocolVersion(ProtocolVersion.RESP2);
+            }
+        }
+
+        return isEmpty(stack);
+    }
+
+    private boolean doDecode(ByteBuf buffer, CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+
         boolean resp3Indicator = false;
 
-        loop:
+        State.Result result;
 
         while (!isEmpty(stack)) {
             State state = peek(stack);
@@ -274,163 +312,251 @@ public class RedisStateMachine {
                 buffer.markReaderIndex();
             }
 
-            switch (state.type) {
-                case SINGLE:
-                    if ((bytes = readLine(buffer)) == null) {
-                        break loop;
-                    }
-
-                    if (!QUEUED.equals(bytes)) {
-                        safeSetSingle(output, bytes, errorHandler);
-                    }
-                    break;
-
-                case BIG_NUMBER:
-                    if ((bytes = readLine(buffer)) == null) {
-                        break loop;
-                    }
-
-                    safeSetBigNumber(output, bytes, errorHandler);
-                    break;
-                case ERROR:
-                    if ((bytes = readLine(buffer)) == null) {
-                        break loop;
-                    }
-                    safeSetError(output, bytes, errorHandler);
-                    break;
-                case NULL:
-                    if ((bytes = readLine(buffer)) == null) {
-                        break loop;
-                    }
-                    safeSet(output, null, errorHandler);
-                    break;
-                case INTEGER:
-                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
-                        break loop;
-                    }
-                    long integer = readLong(buffer, buffer.readerIndex(), end);
-                    safeSet(output, integer, errorHandler);
-                    break;
-                case BOOLEAN:
-                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
-                        break loop;
-                    }
-                    boolean value = readBoolean(buffer);
-                    safeSet(output, value, errorHandler);
-                    break;
-                case FLOAT:
-                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
-                        break loop;
-                    }
-                    double f = readFloat(buffer, buffer.readerIndex(), end);
-                    safeSet(output, f, errorHandler);
-                    break;
-                case BULK:
-                case VERBATIM:
-                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
-                        break loop;
-                    }
-                    length = (int) readLong(buffer, buffer.readerIndex(), end);
-                    if (length == NOT_FOUND) {
-                        safeSet(output, null, errorHandler);
-                    } else {
-                        state.type = state.type == VERBATIM ? VERBATIM_STRING : BYTES;
-                        state.count = length + TERMINATOR_LENGTH;
-                        buffer.markReaderIndex();
-                        continue loop;
-                    }
-                    break;
-                case BULK_ERROR:
-                    if ((end = findLineEnd(buffer)) == NOT_FOUND) {
-                        break loop;
-                    }
-                    length = (int) readLong(buffer, buffer.readerIndex(), end);
-                    if (length == NOT_FOUND) {
-                        safeSetError(output, null, errorHandler);
-                    } else {
-                        state.type = BYTES;
-                        state.count = length + TERMINATOR_LENGTH;
-                        buffer.markReaderIndex();
-                        continue loop;
-                    }
-                    break;
-                case HELLO_V3:
-                case PUSH:
-                case MULTI:
-                case SET:
-                case MAP:
-
-                    if (state.count == NOT_FOUND) {
-                        if ((end = findLineEnd(buffer)) == NOT_FOUND) {
-                            break loop;
-                        }
-                        length = (int) readLong(buffer, buffer.readerIndex(), end);
-                        state.count = length;
-                        buffer.markReaderIndex();
-
-                        switch (state.type) {
-                            case MULTI:
-                            case PUSH:
-                                safeMultiArray(output, state.count, errorHandler);
-                                break;
-                            case MAP:
-                                safeMultiMap(output, state.count, errorHandler);
-                                state.count = length * 2;
-                                break;
-                            case SET:
-                                safeMultiSet(output, state.count, errorHandler);
-                                break;
-                        }
-                    }
-
-                    if (state.count <= 0) {
-                        break;
-                    }
-
-                    state.count--;
-                    addFirst(stack, new State());
-
-                    continue loop;
-
-                case VERBATIM_STRING:
-                    if ((bytes = readBytes(buffer, state.count)) == null) {
-                        break loop;
-                    }
-                    // skip txt: and mkd:
-                    bytes.position(bytes.position() + 4);
-                    safeSet(output, bytes, errorHandler);
-                    break;
-                case BYTES:
-                    if ((bytes = readBytes(buffer, state.count)) == null) {
-                        break loop;
-                    }
-                    safeSet(output, bytes, errorHandler);
-                    break;
-                case ATTRIBUTE:
-                    throw new RedisProtocolException("Not implemented");
-                default:
-                    throw new RedisProtocolException("State " + state.type + " not supported");
+            result = state.type.handle(this, state, buffer, output, errorHandler);
+            if (State.Result.BREAK_LOOP.equals(result)) {
+                break;
+            } else if (State.Result.CONTINUE_LOOP.equals(result)) {
+                continue;
             }
-
             buffer.markReaderIndex();
             remove(stack);
 
             output.complete(size(stack));
         }
 
-        if (debugEnabled) {
-            logger.debug("Decode done, empty stack: {}", isEmpty(stack));
+        return resp3Indicator;
+    }
+
+    private static State.Result handleSingle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        ByteBuffer bytes;
+
+        if ((bytes = rsm.readLine(buffer)) == null) {
+            return State.Result.BREAK_LOOP;
         }
 
-        if (isDiscoverProtocol()) {
-            if (resp3Indicator) {
-                setProtocolVersion(ProtocolVersion.RESP3);
-            } else {
-                setProtocolVersion(ProtocolVersion.RESP2);
+        if (!QUEUED.equals(bytes)) {
+            rsm.safeSetSingle(output, bytes, errorHandler);
+        }
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleBigNumber(RedisStateMachine rsm, State state, ByteBuf buffer,
+            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+        ByteBuffer bytes;
+
+        if ((bytes = rsm.readLine(buffer)) == null) {
+            return State.Result.BREAK_LOOP;
+        }
+
+        rsm.safeSetBigNumber(output, bytes, errorHandler);
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleError(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        ByteBuffer bytes;
+
+        if ((bytes = rsm.readLine(buffer)) == null) {
+            return State.Result.BREAK_LOOP;
+        }
+        rsm.safeSetError(output, bytes, errorHandler);
+
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleNull(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        if (rsm.readLine(buffer) == null) {
+            return State.Result.BREAK_LOOP;
+        }
+        rsm.safeSet(output, null, errorHandler);
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleInteger(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        int end;
+
+        if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
+            return State.Result.BREAK_LOOP;
+        }
+        long integer = rsm.readLong(buffer, buffer.readerIndex(), end);
+        rsm.safeSet(output, integer, errorHandler);
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleBoolean(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        if (rsm.findLineEnd(buffer) == NOT_FOUND) {
+            return State.Result.BREAK_LOOP;
+        }
+        boolean value = rsm.readBoolean(buffer);
+        rsm.safeSet(output, value, errorHandler);
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleFloat(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        int end;
+
+        if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
+            return State.Result.BREAK_LOOP;
+        }
+        double f = rsm.readFloat(buffer, buffer.readerIndex(), end);
+        rsm.safeSet(output, f, errorHandler);
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleBulkAndVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
+            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+        int length;
+        int end;
+
+        if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
+            return State.Result.BREAK_LOOP;
+        }
+        length = (int) rsm.readLong(buffer, buffer.readerIndex(), end);
+        if (length == NOT_FOUND) {
+            rsm.safeSet(output, null, errorHandler);
+        } else {
+            state.type = state.type == VERBATIM ? VERBATIM_STRING : BYTES;
+            state.count = length + TERMINATOR_LENGTH;
+            buffer.markReaderIndex();
+            return State.Result.CONTINUE_LOOP;
+        }
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleBulkError(RedisStateMachine rsm, State state, ByteBuf buffer,
+            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+        int length;
+        int end;
+
+        if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
+            return State.Result.BREAK_LOOP;
+        }
+        length = (int) rsm.readLong(buffer, buffer.readerIndex(), end);
+        if (length == NOT_FOUND) {
+            rsm.safeSetError(output, null, errorHandler);
+        } else {
+            state.type = BYTES;
+            state.count = length + TERMINATOR_LENGTH;
+            buffer.markReaderIndex();
+            return State.Result.CONTINUE_LOOP;
+        }
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleHelloV3(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        int end;
+
+        if (state.count == NOT_FOUND) {
+            if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
+                return State.Result.BREAK_LOOP;
             }
+            readAndMarkReadIdx(rsm, state, buffer, end);
         }
 
-        return isEmpty(stack);
+        return returnDependStateCount(rsm, state);
+    }
+
+    private static State.Result handlePushAndMulti(RedisStateMachine rsm, State state, ByteBuf buffer,
+            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+        int end;
+
+        if (state.count == NOT_FOUND) {
+            if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
+                return State.Result.BREAK_LOOP;
+            }
+            readAndMarkReadIdx(rsm, state, buffer, end);
+
+            rsm.safeMultiArray(output, state.count, errorHandler);
+        }
+
+        return returnDependStateCount(rsm, state);
+    }
+
+    private static State.Result handleMap(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        int length;
+        int end;
+
+        if (state.count == NOT_FOUND) {
+            if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
+                return State.Result.BREAK_LOOP;
+            }
+            length = readAndMarkReadIdx(rsm, state, buffer, end);
+
+            rsm.safeMultiMap(output, state.count, errorHandler);
+            state.count = length * 2;
+        }
+
+        return returnDependStateCount(rsm, state);
+    }
+
+    private static State.Result handleSet(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        int end;
+
+        if (state.count == NOT_FOUND) {
+            if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
+                return State.Result.BREAK_LOOP;
+            }
+            readAndMarkReadIdx(rsm, state, buffer, end);
+
+            rsm.safeMultiSet(output, state.count, errorHandler);
+        }
+
+        return returnDependStateCount(rsm, state);
+    }
+
+    private static int readAndMarkReadIdx(RedisStateMachine rsm, State state, ByteBuf buffer, int end) {
+        int length = (int) rsm.readLong(buffer, buffer.readerIndex(), end);
+        state.count = length;
+        buffer.markReaderIndex();
+        return length;
+    }
+
+    private static State.Result returnDependStateCount(RedisStateMachine rsm, State state) {
+        if (state.count <= 0) {
+            return State.Result.NORMAL_END;
+        }
+
+        state.count--;
+        rsm.addFirst(rsm.stack, new State());
+
+        return State.Result.CONTINUE_LOOP;
+    }
+
+    private static State.Result handleVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
+            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+        ByteBuffer bytes;
+
+        if ((bytes = rsm.readBytes(buffer, state.count)) == null) {
+            return State.Result.BREAK_LOOP;
+        }
+        // skip txt: and mkd:
+        bytes.position(bytes.position() + 4);
+        rsm.safeSet(output, bytes, errorHandler);
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleBytes(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
+        ByteBuffer bytes;
+
+        if ((bytes = rsm.readBytes(buffer, state.count)) == null) {
+            return State.Result.BREAK_LOOP;
+        }
+        rsm.safeSet(output, bytes, errorHandler);
+        return State.Result.NORMAL_END;
+    }
+
+    private static State.Result handleAttribute(RedisStateMachine rsm, State state, ByteBuf buffer,
+            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+        throw new RedisProtocolException("Not implemented");
     }
 
     /**
