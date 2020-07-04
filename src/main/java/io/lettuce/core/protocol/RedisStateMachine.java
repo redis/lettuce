@@ -49,6 +49,8 @@ public class RedisStateMachine {
 
     private static final int NOT_FOUND = -1;
 
+    private final static State.Type[] MAP_BYTE_TO_TYPE = createMapByteToTypeArray();
+
     static class State {
 
         /**
@@ -586,43 +588,36 @@ public class RedisStateMachine {
         return getType(buffer.readerIndex(), buffer.readByte());
     }
 
-    private State.Type getType(int index, byte b) {
+    private static State.Type[] createMapByteToTypeArray() {
+        State.Type[] array = new State.Type[Byte.MAX_VALUE + 1];
+        Arrays.fill(array, null);
+		
+        array['+'] = SINGLE;
+        array['-'] = ERROR;
+        array[':'] = INTEGER;
+        array[','] = FLOAT;
+        array['#'] = BOOLEAN;
+        array['='] = VERBATIM;
+        array['('] = BIG_NUMBER;
+        array['%'] = MAP;
+        array['~'] = SET;
+        array['|'] = ATTRIBUTE;
+        array['@'] = HELLO_V3;
+        array['$'] = BULK;
+        array['*'] = MULTI;
+        array['>'] = PUSH;
+        array['_'] = NULL;
+		
+        return array;
+    }
 
-        switch (b) {
-            case '+':
-                return SINGLE;
-            case '-':
-                return ERROR;
-            case ':':
-                return INTEGER;
-            case ',':
-                return FLOAT;
-            case '#':
-                return BOOLEAN;
-            case '=':
-                return VERBATIM;
-            case '(':
-                return BIG_NUMBER;
-            case '%':
-                return MAP;
-            case '~':
-                return SET;
-            case '|':
-                return ATTRIBUTE;
-            case '@':
-                return HELLO_V3;
-            case '$':
-                return BULK;
-            case '*':
-                return MULTI;
-            case '>':
-                return PUSH;
-            case '_':
-                return NULL;
-            default:
-                throw new RedisProtocolException("Invalid first byte: " + b + " (" + new String(new byte[] { b }) + ")"
-                        + " at buffer index " + index + " decoding using " + getProtocolVersion());
+    private State.Type getType(int index, byte b) {
+        State.Type type = MAP_BYTE_TO_TYPE[b];
+        if (type == null) {
+            throw new RedisProtocolException("Invalid first byte: " + b + " (" + new String(new byte[] { b }) + ")"
+                    + " at buffer index " + index + " decoding using " + getProtocolVersion());
         }
+        return type;
     }
 
     private long readLong(ByteBuf buffer, int start, int end) {
