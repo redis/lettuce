@@ -93,12 +93,10 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
     }
 
     private static boolean isNonTxControlMethod(String methodName, Object[] args) {
-        return !methodName.equals("exec")
-                && !methodName.equals("multi")
-                && !methodName.equals("discard")
-                && !(methodName.equals("dispatch") && args.length > 0 && args[0] == CommandType.MULTI)
-                && !(methodName.equals("dispatch") && args.length > 0 && args[0] == CommandType.EXEC)
-                && !(methodName.equals("dispatch") && args.length > 0 && args[0] == CommandType.DISCARD);
+        return !methodName.equals("exec") && !methodName.equals("multi") && !methodName.equals("discard") && !(methodName
+                .equals("dispatch") && args.length > 0 && args[0] == CommandType.MULTI) && !(methodName
+                .equals("dispatch") && args.length > 0 && args[0] == CommandType.EXEC) && !(methodName
+                .equals("dispatch") && args.length > 0 && args[0] == CommandType.DISCARD);
     }
 
 }
