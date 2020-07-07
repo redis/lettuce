@@ -24,6 +24,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.TimeoutProvider;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
@@ -63,7 +64,7 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
                 RedisFuture<?> command = (RedisFuture<?>) result;
 
-                if (isNonTxControlMethod(method.getName()) && isTransactionActive(connection)) {
+                if (isNonTxControlMethod(method.getName(), args) && isTransactionActive(connection)) {
                     return null;
                 }
 
@@ -91,8 +92,13 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
         return connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti();
     }
 
-    private static boolean isNonTxControlMethod(String methodName) {
-        return !methodName.equals("exec") && !methodName.equals("multi") && !methodName.equals("discard");
+    private static boolean isNonTxControlMethod(String methodName, Object[] args) {
+        return !methodName.equals("exec")
+                && !methodName.equals("multi")
+                && !methodName.equals("discard")
+                && !(methodName.equals("dispatch") && args.length > 0 && args[0] == CommandType.MULTI)
+                && !(methodName.equals("dispatch") && args.length > 0 && args[0] == CommandType.EXEC)
+                && !(methodName.equals("dispatch") && args.length > 0 && args[0] == CommandType.DISCARD);
     }
 
 }
