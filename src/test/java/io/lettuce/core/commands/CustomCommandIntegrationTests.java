@@ -98,6 +98,14 @@ public class CustomCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void dispatchMulti() {
+        String response = redis.dispatch(CommandType.MULTI, new StatusOutput<>(StringCodec.UTF8));
+        assertThat(response).isEqualTo("OK");
+        TransactionResult exec = redis.exec();
+        assertThat(exec).isEmpty();
+    }
+
+    @Test
     void standaloneAsyncPing() {
 
         RedisCommand<String, String, String> command = new Command<>(MyCommands.PING, new StatusOutput<>(StringCodec.UTF8),
