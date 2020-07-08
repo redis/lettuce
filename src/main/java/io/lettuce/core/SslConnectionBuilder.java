@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -112,6 +113,10 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             SSLEngine sslEngine = initializeSSLEngine(channel.alloc());
             SslHandler sslHandler = new SslHandler(sslEngine, startTls);
+            Duration sslHandshakeTimeout = sslOptions.getSslHandshakeTimeout();
+            if (sslHandshakeTimeout != null) {
+                sslHandler.setHandshakeTimeoutMillis(sslHandshakeTimeout.toMillis());
+            }
             channel.pipeline().addLast(sslHandler);
 
             for (ChannelHandler handler : handlers.get()) {
