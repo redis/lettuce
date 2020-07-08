@@ -181,6 +181,10 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             }
 
             SslHandler sslHandler = new SslHandler(sslEngine, startTls);
+            Duration sslHandshakeTimeout = sslOptions.getSslHandshakeTimeout();
+            if (sslHandshakeTimeout != null) {
+                sslHandler.setHandshakeTimeoutMillis(sslHandshakeTimeout.toMillis());
+            }
             channel.pipeline().addLast(sslHandler);
 
             if (channel.pipeline().get("channelActivator") == null) {

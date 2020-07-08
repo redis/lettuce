@@ -25,6 +25,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -73,6 +74,8 @@ public class SslOptions {
 
     private final KeystoreAction trustmanager;
 
+    private final Duration sslHandshakeTimeout;
+
     protected SslOptions(Builder builder) {
         this.keyStoreType = builder.keyStoreType;
         this.sslProvider = builder.sslProvider;
@@ -88,6 +91,7 @@ public class SslOptions {
         this.sslParametersSupplier = builder.sslParametersSupplier;
         this.keymanager = builder.keymanager;
         this.trustmanager = builder.trustmanager;
+        this.sslHandshakeTimeout = builder.sslHandshakeTimeout;
     }
 
     protected SslOptions(SslOptions original) {
@@ -105,6 +109,7 @@ public class SslOptions {
         this.sslParametersSupplier = original.sslParametersSupplier;
         this.keymanager = original.keymanager;
         this.trustmanager = original.trustmanager;
+        this.sslHandshakeTimeout = original.sslHandshakeTimeout;
     }
 
     /**
@@ -165,6 +170,8 @@ public class SslOptions {
         private KeystoreAction keymanager = KeystoreAction.NO_OP;
 
         private KeystoreAction trustmanager = KeystoreAction.NO_OP;
+
+        private Duration sslHandshakeTimeout = null;
 
         private Builder() {
         }
@@ -579,6 +586,18 @@ public class SslOptions {
         }
 
         /**
+         * Sets a timeout for the SSL handshake.
+         *
+         * @param timeout {@link Duration}.
+         * @return {@code this}
+         */
+        public Builder sslHandshakeTimeout(Duration timeout) {
+
+            this.sslHandshakeTimeout = timeout;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link SslOptions}
          *
          * @return new instance of {@link SslOptions}
@@ -662,6 +681,7 @@ public class SslOptions {
         builder.sslParametersSupplier = this.sslParametersSupplier;
         builder.keymanager = this.keymanager;
         builder.trustmanager = this.trustmanager;
+        builder.sslHandshakeTimeout = this.sslHandshakeTimeout;
 
         return builder;
     }
@@ -729,6 +749,13 @@ public class SslOptions {
     @Deprecated
     public char[] getTruststorePassword() {
         return Arrays.copyOf(truststorePassword, truststorePassword.length);
+    }
+
+    /**
+     * @return the SSL handshake timeout
+     */
+    public Duration getSslHandshakeTimeout() {
+        return sslHandshakeTimeout;
     }
 
     private static KeyManagerFactory createKeyManagerFactory(InputStream inputStream, char[] storePassword, String keyStoreType)
