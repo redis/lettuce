@@ -49,7 +49,13 @@ public class RedisStateMachine {
 
     private static final int NOT_FOUND = -1;
 
-    private final static State.Type[] MAP_BYTE_TO_TYPE = createMapByteToTypeArray();
+    private final static State.Type[] TYPE_BY_BYTE_MARKER = new State.Type[Byte.MAX_VALUE + 1];
+
+    static {
+        for (State.Type type : values()) {
+            TYPE_BY_BYTE_MARKER[type.marker] = type;
+        }
+    }
 
     static class State {
 
@@ -61,6 +67,7 @@ public class RedisStateMachine {
 
             Result handle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
                     Consumer<Exception> errorHandler);
+
         }
 
         enum Type implements StateHandler {
@@ -184,7 +191,7 @@ public class RedisStateMachine {
             }
 
             @Override
-			public Result handle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            public Result handle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
                     Consumer<Exception> errorHandler) {
                 return behavior.handle(rsm, state, buffer, output, errorHandler);
             }
@@ -585,38 +592,14 @@ public class RedisStateMachine {
     }
 
     private State.Type readReplyType(ByteBuf buffer) {
-        return getType(buffer.readerIndex(), buffer.readByte());
-    }
+        byte b = buffer.readByte();
+        State.Type type = TYPE_BY_BYTE_MARKER[b];
 
-    private static State.Type[] createMapByteToTypeArray() {
-        State.Type[] array = new State.Type[Byte.MAX_VALUE + 1];
-        Arrays.fill(array, null);
-		
-        array['+'] = SINGLE;
-        array['-'] = ERROR;
-        array[':'] = INTEGER;
-        array[','] = FLOAT;
-        array['#'] = BOOLEAN;
-        array['='] = VERBATIM;
-        array['('] = BIG_NUMBER;
-        array['%'] = MAP;
-        array['~'] = SET;
-        array['|'] = ATTRIBUTE;
-        array['@'] = HELLO_V3;
-        array['$'] = BULK;
-        array['*'] = MULTI;
-        array['>'] = PUSH;
-        array['_'] = NULL;
-		
-        return array;
-    }
-
-    private State.Type getType(int index, byte b) {
-        State.Type type = MAP_BYTE_TO_TYPE[b];
         if (type == null) {
             throw new RedisProtocolException("Invalid first byte: " + b + " (" + new String(new byte[] { b }) + ")"
-                    + " at buffer index " + index + " decoding using " + getProtocolVersion());
+                    + " at buffer index " + buffer.readerIndex() + " decoding using " + getProtocolVersion());
         }
+
         return type;
     }
 
