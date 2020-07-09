@@ -394,6 +394,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
      * one time.
      *
      * @return the cap on the total number of object instances managed by the pool.
+     * @see BoundedPoolConfig#getMaxTotal()
      */
     public int getMaxTotal() {
         return maxTotal;
@@ -407,6 +408,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
      * a good starting point.
      *
      * @return the maximum number of "idle" instances that can be held in the pool.
+     * @see BoundedPoolConfig#getMaxIdle()
      */
     public int getMaxIdle() {
         return maxIdle;
@@ -420,6 +422,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
      * {@code maxIdle} will be used instead.
      *
      * @return The minimum number of objects.
+     * @see BoundedPoolConfig#getMinIdle()
      */
     public int getMinIdle() {
 
