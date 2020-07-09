@@ -53,6 +53,9 @@ public class RedisStateMachine {
 
     static {
         for (State.Type type : values()) {
+            if (type == BYTES) {
+                continue;
+            }
             TYPE_BY_BYTE_MARKER[type.marker] = type;
         }
     }
@@ -336,7 +339,7 @@ public class RedisStateMachine {
         return resp3Indicator;
     }
 
-    private static State.Result handleSingle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleSingle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         ByteBuffer bytes;
 
@@ -350,7 +353,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleBigNumber(RedisStateMachine rsm, State state, ByteBuf buffer,
+    static State.Result handleBigNumber(RedisStateMachine rsm, State state, ByteBuf buffer,
             CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
         ByteBuffer bytes;
 
@@ -362,7 +365,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleError(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleError(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         ByteBuffer bytes;
 
@@ -374,7 +377,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleNull(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleNull(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         if (rsm.readLine(buffer) == null) {
             return State.Result.BREAK_LOOP;
@@ -383,7 +386,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleInteger(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleInteger(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         int end;
 
@@ -395,7 +398,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleBoolean(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleBoolean(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         if (rsm.findLineEnd(buffer) == NOT_FOUND) {
             return State.Result.BREAK_LOOP;
@@ -405,7 +408,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleFloat(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleFloat(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         int end;
 
@@ -417,7 +420,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleBulkAndVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
+    static State.Result handleBulkAndVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
             CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
         int length;
         int end;
@@ -437,7 +440,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleBulkError(RedisStateMachine rsm, State state, ByteBuf buffer,
+    static State.Result handleBulkError(RedisStateMachine rsm, State state, ByteBuf buffer,
             CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
         int length;
         int end;
@@ -457,7 +460,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleHelloV3(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleHelloV3(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         int end;
 
@@ -471,7 +474,7 @@ public class RedisStateMachine {
         return returnDependStateCount(rsm, state);
     }
 
-    private static State.Result handlePushAndMulti(RedisStateMachine rsm, State state, ByteBuf buffer,
+    static State.Result handlePushAndMulti(RedisStateMachine rsm, State state, ByteBuf buffer,
             CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
         int end;
 
@@ -487,7 +490,7 @@ public class RedisStateMachine {
         return returnDependStateCount(rsm, state);
     }
 
-    private static State.Result handleMap(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleMap(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         int length;
         int end;
@@ -505,7 +508,7 @@ public class RedisStateMachine {
         return returnDependStateCount(rsm, state);
     }
 
-    private static State.Result handleSet(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleSet(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         int end;
 
@@ -521,14 +524,14 @@ public class RedisStateMachine {
         return returnDependStateCount(rsm, state);
     }
 
-    private static int readAndMarkReadIdx(RedisStateMachine rsm, State state, ByteBuf buffer, int end) {
+    static int readAndMarkReadIdx(RedisStateMachine rsm, State state, ByteBuf buffer, int end) {
         int length = (int) rsm.readLong(buffer, buffer.readerIndex(), end);
         state.count = length;
         buffer.markReaderIndex();
         return length;
     }
 
-    private static State.Result returnDependStateCount(RedisStateMachine rsm, State state) {
+    static State.Result returnDependStateCount(RedisStateMachine rsm, State state) {
         if (state.count <= 0) {
             return State.Result.NORMAL_END;
         }
@@ -539,7 +542,7 @@ public class RedisStateMachine {
         return State.Result.CONTINUE_LOOP;
     }
 
-    private static State.Result handleVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
+    static State.Result handleVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
             CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
         ByteBuffer bytes;
 
@@ -552,7 +555,7 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    private static State.Result handleBytes(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+    static State.Result handleBytes(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
             Consumer<Exception> errorHandler) {
         ByteBuffer bytes;
 

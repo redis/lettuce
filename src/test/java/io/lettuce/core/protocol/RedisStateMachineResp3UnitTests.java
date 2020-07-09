@@ -99,7 +99,7 @@ class RedisStateMachineResp3UnitTests {
     void errorWithoutLineBreak() {
         assertThat(rsm.decode(buffer("-ERR"), output)).isFalse();
         assertThat(rsm.decode(buffer("\r\n"), output)).isTrue();
-        assertThat(output.getError()).isEqualTo("");
+        assertThat(output.getError()).isEmpty();
     }
 
     @Test
@@ -184,8 +184,8 @@ class RedisStateMachineResp3UnitTests {
         ByteBuf buffer = buffer("*2\r\n$3\r\nABC\r\n*0\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get().get(0)).isEqualTo("ABC");
-        assertThat(output.get().get(1)).isEqualTo(Arrays.asList());
-        assertThat(output.get().size()).isEqualTo(2);
+        assertThat(output.get().get(1)).isEqualTo(Collections.emptyList());
+        assertThat(output.get()).hasSize(2);
     }
 
     @Test
@@ -193,9 +193,9 @@ class RedisStateMachineResp3UnitTests {
         CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<>(codec);
         ByteBuf buffer = buffer("*2\r\n*0\r\n$3\r\nABC\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
-        assertThat(output.get().get(0)).isEqualTo(Arrays.asList());
+        assertThat(output.get().get(0)).isEqualTo(Collections.emptyList());
         assertThat(output.get().get(1)).isEqualTo("ABC");
-        assertThat(output.get().size()).isEqualTo(2);
+        assertThat(output.get()).hasSize(2);
     }
 
     @Test
@@ -205,7 +205,7 @@ class RedisStateMachineResp3UnitTests {
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get().get(0)).isEqualTo(Arrays.asList("AB", "XY"));
         assertThat(output.get().get(1)).isEqualTo(Collections.emptyList());
-        assertThat(output.get().size()).isEqualTo(2);
+        assertThat(output.get()).hasSize(2);
     }
 
     @Test
