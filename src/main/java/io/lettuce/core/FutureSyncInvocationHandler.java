@@ -24,6 +24,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.TimeoutProvider;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
@@ -31,6 +32,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * sync class which just delegates every request.
  *
  * @author Mark Paluch
+ * @author Tz Zhuo
  * @since 3.0
  */
 class FutureSyncInvocationHandler extends AbstractInvocationHandler {
@@ -64,7 +66,7 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
                 RedisFuture<?> command = (RedisFuture<?>) result;
 
-                if (isNonTxControlMethod(method.getName(), args) && isTransactionActive(connection)) {
+                if (!isTxControlMethod(method.getName(), args) && isTransactionActive(connection)) {
                     return null;
                 }
 
@@ -92,11 +94,22 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
         return connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti();
     }
 
-    private static boolean isNonTxControlMethod(String methodName, Object[] args) {
-        return !methodName.equals("exec") && !methodName.equals("multi") && !methodName.equals("discard") && !(methodName
-                .equals("dispatch") && args.length > 0 && args[0] == CommandType.MULTI) && !(methodName
-                .equals("dispatch") && args.length > 0 && args[0] == CommandType.EXEC) && !(methodName
-                .equals("dispatch") && args.length > 0 && args[0] == CommandType.DISCARD);
+    private static boolean isTxControlMethod(String methodName, Object[] args) {
+
+        if (methodName.equals("exec") || methodName.equals("multi") || methodName.equals("discard")) {
+            return true;
+        }
+
+        if (methodName.equals("dispatch") && args.length > 0 && args[0] instanceof ProtocolKeyword) {
+
+            ProtocolKeyword keyword = (ProtocolKeyword) args[0];
+            if (keyword.name().equals(CommandType.MULTI.name()) || keyword.name().equals(CommandType.EXEC.name())
+                    || keyword.name().equals(CommandType.DISCARD.name())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }
