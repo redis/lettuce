@@ -153,8 +153,8 @@ public class BoundedPoolConfig extends BasePoolConfig {
 
         /**
          * Configures the maximum number of objects that can be allocated by the pool (checked out to clients, or idle awaiting
-         * checkout) at a given time. When negative, there is no limit to the number of objects that can be managed by
-         * the pool at one time.
+         * checkout) at a given time. When negative, there is no limit to the number of objects that can be managed by the pool
+         * at one time.
          *
          * @param maxTotal maximum number of objects that can be allocated by the pool.
          * @return {@code this} {@link Builder}.
@@ -182,8 +182,8 @@ public class BoundedPoolConfig extends BasePoolConfig {
         }
 
         /**
-         * Configures the minimum number of idle objects to maintain in the pool. If this is the case, an attempt is
-         * made to ensure that the pool has the required minimum number of instances during idle object eviction runs.
+         * Configures the minimum number of idle objects to maintain in the pool. If this is the case, an attempt is made to
+         * ensure that the pool has the required minimum number of instances during idle object eviction runs.
          *
          * @param minIdle minimum number of idle objects to maintain in the pool.
          * @return {@code this} {@link Builder}.
