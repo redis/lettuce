@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.Collections;
 
 import javax.net.ssl.SSLParameters;
@@ -39,6 +40,14 @@ class SslOptionsUnitTests {
 
         assertThat(options.createSSLParameters()).isNotNull();
         assertThat(options.createSslContextBuilder()).isNotNull();
+    }
+
+    @Test
+    void shouldConfigureSslHandshakeTimeout() {
+
+        SslOptions options = SslOptions.builder().handshakeTimeout(Duration.ofSeconds(1)).build();
+
+        assertThat(options.getHandshakeTimeout()).isEqualTo(Duration.ofSeconds(1));
     }
 
     @Test

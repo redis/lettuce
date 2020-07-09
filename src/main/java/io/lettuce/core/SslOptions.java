@@ -44,6 +44,7 @@ import io.netty.handler.ssl.SslProvider;
  *
  * @author Mark Paluch
  * @author Amin Mohtashami
+ * @author Felipe Ruiz
  * @since 4.3
  */
 public class SslOptions {
@@ -74,11 +75,12 @@ public class SslOptions {
 
     private final KeystoreAction trustmanager;
 
-    private final Duration sslHandshakeTimeout;
+    private final Duration handshakeTimeout;
 
     protected SslOptions(Builder builder) {
         this.keyStoreType = builder.keyStoreType;
         this.sslProvider = builder.sslProvider;
+        this.handshakeTimeout = builder.sslHandshakeTimeout;
         this.keystore = builder.keystore;
         this.keystorePassword = builder.keystorePassword;
         this.truststore = builder.truststore;
@@ -91,12 +93,12 @@ public class SslOptions {
         this.sslParametersSupplier = builder.sslParametersSupplier;
         this.keymanager = builder.keymanager;
         this.trustmanager = builder.trustmanager;
-        this.sslHandshakeTimeout = builder.sslHandshakeTimeout;
     }
 
     protected SslOptions(SslOptions original) {
         this.keyStoreType = original.keyStoreType;
         this.sslProvider = original.getSslProvider();
+        this.handshakeTimeout = original.handshakeTimeout;
         this.keystore = original.keystore;
         this.keystorePassword = original.keystorePassword;
         this.truststore = original.getTruststore();
@@ -109,7 +111,6 @@ public class SslOptions {
         this.sslParametersSupplier = original.sslParametersSupplier;
         this.keymanager = original.keymanager;
         this.trustmanager = original.trustmanager;
-        this.sslHandshakeTimeout = original.sslHandshakeTimeout;
     }
 
     /**
@@ -171,7 +172,7 @@ public class SslOptions {
 
         private KeystoreAction trustmanager = KeystoreAction.NO_OP;
 
-        private Duration sslHandshakeTimeout = null;
+        private Duration sslHandshakeTimeout = Duration.ofSeconds(10);
 
         private Builder() {
         }
@@ -222,6 +223,21 @@ public class SslOptions {
 
             this.sslProvider = sslProvider;
 
+            return this;
+        }
+
+        /**
+         * Sets a timeout for the SSL handshake.
+         *
+         * @param timeout {@link Duration}.
+         * @return {@code this}
+         * @since 5.3.2
+         */
+        public Builder handshakeTimeout(Duration timeout) {
+
+            LettuceAssert.notNull(timeout, "SSL Handshake Timeout must not be null");
+
+            this.sslHandshakeTimeout = timeout;
             return this;
         }
 
@@ -586,18 +602,6 @@ public class SslOptions {
         }
 
         /**
-         * Sets a timeout for the SSL handshake.
-         *
-         * @param timeout {@link Duration}.
-         * @return {@code this}
-         */
-        public Builder sslHandshakeTimeout(Duration timeout) {
-
-            this.sslHandshakeTimeout = timeout;
-            return this;
-        }
-
-        /**
          * Create a new instance of {@link SslOptions}
          *
          * @return new instance of {@link SslOptions}
@@ -681,13 +685,12 @@ public class SslOptions {
         builder.sslParametersSupplier = this.sslParametersSupplier;
         builder.keymanager = this.keymanager;
         builder.trustmanager = this.trustmanager;
-        builder.sslHandshakeTimeout = this.sslHandshakeTimeout;
+        builder.sslHandshakeTimeout = this.handshakeTimeout;
 
         return builder;
     }
 
     /**
-     *
      * @return the configured {@link SslProvider}.
      */
     @Deprecated
@@ -696,7 +699,6 @@ public class SslOptions {
     }
 
     /**
-     *
      * @return the keystore {@link URL}.
      * @deprecated since 5.3, {@link javax.net.ssl.KeyManager} is configured via {@link #createSslContextBuilder()}.
      */
@@ -706,7 +708,6 @@ public class SslOptions {
     }
 
     /**
-     *
      * @return the set of protocols.
      */
     public String[] getProtocols() {
@@ -714,7 +715,6 @@ public class SslOptions {
     }
 
     /**
-     *
      * @return the set of cipher suites.
      */
     public String[] getCipherSuites() {
@@ -722,7 +722,14 @@ public class SslOptions {
     }
 
     /**
-     *
+     * @return the SSL handshake timeout
+     * @since 5.3.2
+     */
+    public Duration getHandshakeTimeout() {
+        return handshakeTimeout;
+    }
+
+    /**
      * @return the password for the keystore. May be empty.
      * @deprecated since 5.3, {@link javax.net.ssl.KeyManager} is configured via {@link #createSslContextBuilder()}.
      */
@@ -732,7 +739,6 @@ public class SslOptions {
     }
 
     /**
-     *
      * @return the truststore {@link URL}.
      * @deprecated since 5.3, {@link javax.net.ssl.TrustManager} is configured via {@link #createSslContextBuilder()}.
      */
@@ -749,13 +755,6 @@ public class SslOptions {
     @Deprecated
     public char[] getTruststorePassword() {
         return Arrays.copyOf(truststorePassword, truststorePassword.length);
-    }
-
-    /**
-     * @return the SSL handshake timeout
-     */
-    public Duration getSslHandshakeTimeout() {
-        return sslHandshakeTimeout;
     }
 
     private static KeyManagerFactory createKeyManagerFactory(InputStream inputStream, char[] storePassword, String keyStoreType)
@@ -827,7 +826,7 @@ public class SslOptions {
          * @param url the URL to obtain the {@link InputStream} from.
          * @return a {@link Resource} that opens a connection to the URL and obtains the {@link InputStream} for it.
          */
-        public static Resource from(URL url) {
+        static Resource from(URL url) {
 
             LettuceAssert.notNull(url, "URL must not be null");
 
@@ -840,7 +839,7 @@ public class SslOptions {
          * @param file the File to obtain the {@link InputStream} from.
          * @return a {@link Resource} that obtains the {@link FileInputStream} for the given {@link File}.
          */
-        public static Resource from(File file) {
+        static Resource from(File file) {
 
             LettuceAssert.notNull(file, "File must not be null");
 
