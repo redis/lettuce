@@ -43,6 +43,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
  *
  * @author Mark Paluch
  * @author Amin Mohtashami
+ * @author Felipe Ruiz
  */
 public class SslConnectionBuilder extends ConnectionBuilder {
 
@@ -113,10 +114,9 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             SSLEngine sslEngine = initializeSSLEngine(channel.alloc());
             SslHandler sslHandler = new SslHandler(sslEngine, startTls);
-            Duration sslHandshakeTimeout = sslOptions.getSslHandshakeTimeout();
-            if (sslHandshakeTimeout != null) {
-                sslHandler.setHandshakeTimeoutMillis(sslHandshakeTimeout.toMillis());
-            }
+            Duration sslHandshakeTimeout = sslOptions.getHandshakeTimeout();
+            sslHandler.setHandshakeTimeoutMillis(sslHandshakeTimeout.toMillis());
+
             channel.pipeline().addLast(sslHandler);
 
             for (ChannelHandler handler : handlers.get()) {
