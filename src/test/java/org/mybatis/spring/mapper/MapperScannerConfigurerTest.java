@@ -385,6 +385,14 @@ class MapperScannerConfigurerTest {
     assertTrue(DummyMapperFactoryBean.getMapperCount() > 0);
   }
 
+  @Test
+  void testMapperBeanAttribute() {
+    startContext();
+
+    assertThat(applicationContext.getBeanDefinition("annotatedMapper").getAttribute(ClassPathMapperScanner.FACTORY_BEAN_OBJECT_TYPE))
+        .isEqualTo(AnnotatedMapper.class.getName());
+  }
+
   private void setupSqlSessionFactory(String name) {
     GenericBeanDefinition definition = new GenericBeanDefinition();
     definition.setBeanClass(SqlSessionFactoryBean.class);

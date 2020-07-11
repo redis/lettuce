@@ -57,6 +57,9 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClassPathMapperScanner.class);
 
+  // Copy of FactoryBean#OBJECT_TYPE_ATTRIBUTE which was added in Spring 5.2
+  static final String FACTORY_BEAN_OBJECT_TYPE = "factoryBeanObjectType";
+
   private boolean addToConfig = true;
 
   private boolean lazyInitialization;
@@ -233,6 +236,10 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
       definition.setBeanClass(this.mapperFactoryBeanClass);
 
       definition.getPropertyValues().add("addToConfig", this.addToConfig);
+
+      // Attribute for MockitoPostProcessor
+      // https://github.com/mybatis/spring-boot-starter/issues/475
+      definition.setAttribute(FACTORY_BEAN_OBJECT_TYPE, beanClassName);
 
       boolean explicitFactoryUsed = false;
       if (StringUtils.hasText(this.sqlSessionFactoryBeanName)) {
