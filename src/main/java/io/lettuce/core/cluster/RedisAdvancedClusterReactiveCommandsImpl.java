@@ -364,7 +364,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<String> scriptKill() {
-        Map<String, Publisher<String>> publishers = executeOnNodes(RedisScriptingReactiveCommands::scriptFlush, ALL_NODES);
+        Map<String, Publisher<String>> publishers = executeOnNodes(RedisScriptingReactiveCommands::scriptKill, ALL_NODES);
         return Flux.merge(publishers.values()).onErrorReturn("OK").last();
     }
 
