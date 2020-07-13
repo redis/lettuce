@@ -49,6 +49,8 @@ import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Integration tests for {@link StatefulRedisClusterConnection}.
+ * 
  * @author Mark Paluch
  */
 @SuppressWarnings("rawtypes")
@@ -383,7 +385,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
     @Test
     void scriptKill() {
-        assertThat(sync.scriptKill()).isEqualTo("OK");
+        assertThatThrownBy(sync::scriptKill).hasMessageContaining("NOTBUSY");
     }
 
     @Test
