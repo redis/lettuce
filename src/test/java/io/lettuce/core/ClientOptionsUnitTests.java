@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.lettuce.core.protocol.RatioReadBytesDiscardPolicy;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.protocol.ProtocolVersion;
@@ -62,5 +63,6 @@ class ClientOptionsUnitTests {
         assertThat(sut.isSuspendReconnectOnProtocolFailure()).isEqualTo(false);
         assertThat(sut.getDisconnectedBehavior()).isEqualTo(ClientOptions.DisconnectedBehavior.DEFAULT);
         assertThat(sut.getBufferUsageRatio()).isEqualTo(ClientOptions.DEFAULT_BUFFER_USAGE_RATIO);
+        assertThat(sut.getReadBytesDiscardPolicy()).isInstanceOf(RatioReadBytesDiscardPolicy.class);
     }
 }
