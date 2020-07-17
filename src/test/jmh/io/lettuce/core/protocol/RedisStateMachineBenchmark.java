@@ -82,7 +82,7 @@ public class RedisStateMachineBenchmark {
 
     @Benchmark
     public void measureDecode() {
-        stateMachine.decode(masterBuffer, byteArrayCommand, byteArrayCommand.getOutput());
+        stateMachine.decode(masterBuffer, byteArrayCommand.getOutput());
         masterBuffer.readerIndex(0);
     }
 
