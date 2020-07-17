@@ -18,7 +18,10 @@ package io.lettuce.core;
 import java.io.Serializable;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.RatioReadBytesDiscardPolicy;
+import io.lettuce.core.protocol.ReadBytesDiscardPolicy;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -51,7 +54,7 @@ public class ClientOptions implements Serializable {
     private final SocketOptions socketOptions;
     private final SslOptions sslOptions;
     private final TimeoutOptions timeoutOptions;
-    private final int bufferUsageRatio;
+    private final ReadBytesDiscardPolicy readBytesDiscardPolicy;
 
     protected ClientOptions(Builder builder) {
         this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
@@ -64,7 +67,7 @@ public class ClientOptions implements Serializable {
         this.socketOptions = builder.socketOptions;
         this.sslOptions = builder.sslOptions;
         this.timeoutOptions = builder.timeoutOptions;
-        this.bufferUsageRatio = builder.bufferUsageRatio;
+        this.readBytesDiscardPolicy = builder.readBytesDiscardPolicy;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -78,7 +81,7 @@ public class ClientOptions implements Serializable {
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
         this.timeoutOptions = original.getTimeoutOptions();
-        this.bufferUsageRatio = original.getBufferUsageRatio();
+        this.readBytesDiscardPolicy = original.getReadBytesDiscardPolicy();
     }
 
     /**
@@ -124,7 +127,7 @@ public class ClientOptions implements Serializable {
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
         private SslOptions sslOptions = DEFAULT_SSL_OPTIONS;
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
-        private int bufferUsageRatio = DEFAULT_BUFFER_USAGE_RATIO;
+        private ReadBytesDiscardPolicy readBytesDiscardPolicy = new RatioReadBytesDiscardPolicy(DEFAULT_BUFFER_USAGE_RATIO);
 
         protected Builder() {
         }
@@ -273,17 +276,28 @@ public class ClientOptions implements Serializable {
          * E.g. setting {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75
          * percent. See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
          *
-         * @param bufferUsageRatio must greater between 0 and 2^31-1, typically a value between 1 and 10 representing 50% to
+         * @param bufferUsageRatio must be between 0 and 2^31-1, typically a value between 1 and 10 representing 50% to
          *        90%.
          * @return {@code this}
          * @since 5.2
+         * @deprecated Calls to {@link ByteBuf#discardReadBytes()} are controlled by corresponding
+         * policies ({@link ReadBytesDiscardPolicy}), {@link RatioReadBytesDiscardPolicy} is one of which.
+         * Please use {@link #readBytesDiscardPolicy(ReadBytesDiscardPolicy)}
          */
         public Builder bufferUsageRatio(int bufferUsageRatio) {
+            this.readBytesDiscardPolicy = new RatioReadBytesDiscardPolicy(bufferUsageRatio);
+            return this;
+        }
 
-            LettuceAssert.isTrue(bufferUsageRatio > 0 && bufferUsageRatio < Integer.MAX_VALUE,
-                    "BufferUsageRatio must grater than 0");
-
-            this.bufferUsageRatio = bufferUsageRatio;
+        /**
+         * Sets the policy managing calls to {@link ByteBuf#discardReadBytes()}
+         * for {@link io.lettuce.core.protocol.CommandHandler#buffer}
+         *
+         * @param readBytesDiscardPolicy the policy to use in {@link io.lettuce.core.protocol.CommandHandler}
+         * @return {@code this}
+         */
+        public Builder readBytesDiscardPolicy(ReadBytesDiscardPolicy readBytesDiscardPolicy) {
+            this.readBytesDiscardPolicy = readBytesDiscardPolicy;
             return this;
         }
 
@@ -433,11 +447,21 @@ public class ClientOptions implements Serializable {
      * during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}. E.g. setting
      * {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75 percent.
      *
-     * @return the buffer usage ratio.
+     * @return the buffer usage ratio, greater than zero if {@link RatioReadBytesDiscardPolicy} is used and zero otherwise
      * @since 5.2
+     *
+     * @deprecated Calls to {@link ByteBuf#discardReadBytes()} are controlled by corresponding
+     * policies ({@link ReadBytesDiscardPolicy}), {@link RatioReadBytesDiscardPolicy} is one of which
      */
     public int getBufferUsageRatio() {
-        return bufferUsageRatio;
+        if (readBytesDiscardPolicy instanceof RatioReadBytesDiscardPolicy) {
+            return ((RatioReadBytesDiscardPolicy) readBytesDiscardPolicy).getBufferUsageRatio();
+        }
+        return 0;
+    }
+
+    public ReadBytesDiscardPolicy getReadBytesDiscardPolicy() {
+        return readBytesDiscardPolicy;
     }
 
     /**
