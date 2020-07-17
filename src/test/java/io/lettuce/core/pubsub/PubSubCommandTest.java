@@ -217,6 +217,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
 
         redis.publish(channel, message);
         assertThat(messages.take()).isEqualTo(message);
+        Wait.untilTrue(() -> messageRef.get() != null).waitOrTimeout();
 
         PushMessage pushMessage = messageRef.get();
         assertThat(pushMessage).isNotNull();

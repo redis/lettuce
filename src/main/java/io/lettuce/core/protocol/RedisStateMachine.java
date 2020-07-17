@@ -53,9 +53,16 @@ public class RedisStateMachine {
 
     static {
         for (State.Type type : values()) {
-            if (type == BYTES) {
+
+            if (type == BYTES || type == VERBATIM_STRING) {
                 continue;
             }
+
+            if (TYPE_BY_BYTE_MARKER[type.marker] != null) {
+                throw new IllegalStateException("Cannot overwrite message marker assignment for '"
+                        + new String(new byte[] { type.marker }) + "' with " + type);
+            }
+
             TYPE_BY_BYTE_MARKER[type.marker] = type;
         }
     }
