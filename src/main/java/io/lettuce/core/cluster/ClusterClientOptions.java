@@ -24,6 +24,7 @@ import io.lettuce.core.SslOptions;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ProtocolVersion;
+import io.lettuce.core.protocol.ReadBytesDiscardPolicy;
 
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
@@ -115,7 +116,8 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         Builder builder = new Builder();
-        builder.autoReconnect(clientOptions.isAutoReconnect()).bufferUsageRatio(clientOptions.getBufferUsageRatio())
+        builder.autoReconnect(clientOptions.isAutoReconnect())
+                .readBytesDiscardPolicy(clientOptions.getReadBytesDiscardPolicy())
                 .cancelCommandsOnReconnectFailure(clientOptions.isCancelCommandsOnReconnectFailure())
                 .disconnectedBehavior(clientOptions.getDisconnectedBehavior()).scriptCharset(clientOptions.getScriptCharset())
                 .publishOnScheduler(clientOptions.isPublishOnScheduler())
@@ -266,6 +268,12 @@ public class ClusterClientOptions extends ClientOptions {
             return this;
         }
 
+        @Override
+        public Builder readBytesDiscardPolicy(ReadBytesDiscardPolicy readBytesDiscardPolicy) {
+            super.readBytesDiscardPolicy(readBytesDiscardPolicy);
+            return this;
+        }
+
         /**
          * Create a new instance of {@link ClusterClientOptions}
          *
@@ -290,7 +298,8 @@ public class ClusterClientOptions extends ClientOptions {
 
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
+        builder.autoReconnect(isAutoReconnect())
+                .readBytesDiscardPolicy(getReadBytesDiscardPolicy())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .disconnectedBehavior(getDisconnectedBehavior()).scriptCharset(getScriptCharset())
                 .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())

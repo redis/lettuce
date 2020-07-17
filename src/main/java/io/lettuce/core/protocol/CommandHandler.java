@@ -90,7 +90,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final boolean tracingEnabled;
 
-    private final float discardReadBytesRatio;
+    private final ReadBytesDiscardPolicy readBytesDiscardPolicy;
 
     private final boolean boundedQueues;
 
@@ -137,8 +137,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         this.tracingEnabled = tracing.isEnabled();
 
-        float bufferUsageRatio = clientOptions.getBufferUsageRatio();
-        this.discardReadBytesRatio = bufferUsageRatio / (bufferUsageRatio + 1);
+        this.readBytesDiscardPolicy = clientOptions.getReadBytesDiscardPolicy();
     }
 
     public Queue<RedisCommand<?, ?, ?>> getStack() {
@@ -588,7 +587,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
                 try {
                     if (!decode(ctx, buffer, pushOutput)) {
-                        discardReadBytesIfNecessary(buffer);
+                        readBytesDiscardPolicy.discardReadBytesIfNecessary(buffer);
                         return;
                     }
 
@@ -613,7 +612,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
                 try {
                     if (!decode(ctx, buffer, command)) {
-                        discardReadBytesIfNecessary(buffer);
+                        readBytesDiscardPolicy.discardReadBytesIfNecessary(buffer);
                         return;
                     }
                 } catch (Exception e) {
@@ -644,7 +643,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         }
 
-        discardReadBytesIfNecessary(buffer);
+        readBytesDiscardPolicy.discardReadBytesIfNecessary(buffer);
     }
 
     protected void notifyPushListeners(PushMessage notification) {
@@ -927,20 +926,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private static long nanoTime() {
         return System.nanoTime();
-    }
-
-    /**
-     * Try to discard read bytes when buffer usage reach a higher usage ratio.
-     *
-     * @param buffer
-     */
-    private void discardReadBytesIfNecessary(ByteBuf buffer) {
-
-        float usedRatio = (float) buffer.readerIndex() / buffer.capacity();
-
-        if (usedRatio >= discardReadBytesRatio && buffer.refCnt() != 0) {
-            buffer.discardReadBytes();
-        }
     }
 
     public enum LifecycleState {

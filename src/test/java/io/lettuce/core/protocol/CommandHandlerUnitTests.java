@@ -40,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -505,5 +506,29 @@ class CommandHandlerUnitTests {
         assertThat(internalBuffer.readerIndex()).isEqualTo(0);
         assertThat(internalBuffer.writerIndex()).isEqualTo(0);
         sut.channelUnregistered(context);
+    }
+
+    @Test
+    void shouldCallPolicyToDiscardReadBytes() throws Exception {
+        ReadBytesDiscardPolicy policy = Mockito.mock(ReadBytesDiscardPolicy.class);
+
+        CommandHandler commandHandler = new CommandHandler(ClientOptions.builder().readBytesDiscardPolicy(policy).build(),
+                clientResources, endpoint);
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        channelPromise.setSuccess();
+
+        commandHandler.channelRegistered(context);
+        commandHandler.channelActive(context);
+
+        commandHandler.getStack().add(new Command<>(CommandType.PING, new StatusOutput<>(StringCodec.UTF8)));
+
+        ByteBuf msg = context.alloc().buffer(100);
+        msg.writeBytes("*1\r\n+OK\r\n".getBytes());
+
+        commandHandler.channelRead(context, msg);
+        commandHandler.channelUnregistered(context);
+
+        verify(policy).discardReadBytesIfNecessary(any());
     }
 }
