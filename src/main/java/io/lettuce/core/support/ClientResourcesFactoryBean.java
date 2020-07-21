@@ -26,7 +26,9 @@ import io.lettuce.core.resource.DefaultClientResources;
  * for a Redis Client.
  *
  * @author Mark Paluch
+ * @deprecated since 5.3, use Lettuce through Spring Data Redis. This class will be removed with Lettuce 6.
  */
+@Deprecated
 public class ClientResourcesFactoryBean extends AbstractFactoryBean<ClientResources> {
 
     private int ioThreadPoolSize = DefaultClientResources.DEFAULT_IO_THREADS;

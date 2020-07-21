@@ -28,7 +28,9 @@ import io.lettuce.core.resource.ClientResources;
  *
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated since 5.3, use Lettuce through Spring Data Redis. This class will be removed with Lettuce 6.
  */
+@Deprecated
 public abstract class LettuceFactoryBeanSupport<T> extends AbstractFactoryBean<T> {
 
     public static final String URI_SCHEME_REDIS_SENTINEL = "redis-sentinel";

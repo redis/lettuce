@@ -41,7 +41,9 @@ import io.lettuce.core.internal.LettuceAssert;
  * @see ClientResourcesFactoryBean
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated since 5.3, use Lettuce through Spring Data Redis. This class will be removed with Lettuce 6.
  */
+@Deprecated
 public class RedisClusterClientFactoryBean extends LettuceFactoryBeanSupport<RedisClusterClient> {
 
     private boolean verifyPeer = false;

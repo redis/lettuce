@@ -34,7 +34,9 @@ import io.lettuce.core.RedisURI;
  * @see ClientResourcesFactoryBean
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated since 5.3, use Lettuce through Spring Data Redis. This class will be removed with Lettuce 6.
  */
+@Deprecated
 public class RedisClientFactoryBean extends LettuceFactoryBeanSupport<RedisClient> {
 
     @Override
