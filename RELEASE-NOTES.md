@@ -1,14 +1,14 @@
-Lettuce 5.3.1 RELEASE NOTES
+Lettuce 5.3.2 RELEASE NOTES
 ===========================
 
-The Lettuce team is pleased to announce the Lettuce 5.3.1 service release! 
-This release ships with 10 tickets fixed along of dependency upgrades.
-Most notable changes are fixes around `PauseDetector` acquisition which may cause infinite loops during metrics logging and therefore command timeouts.
+The Lettuce team is pleased to announce the Lettuce 5.3.2 service release! 
+This release ships with 15 tickets fixed along with dependency upgrades. 
+Most notable enhancement of this release is that Lettuce ships with configuration files for an improved experience when compiling applications to Graal Native Images which make use of Lettuce.
  
 Find the full changelog at the end of this document.
 
-Thanks to all contributors who made Lettuce 5.3.1.RELEASE possible.
-Lettuce requires a minimum of Java 8 to build and run and is compatible with Java 14. It is tested continuously against the latest Redis source-build.
+Thanks to all contributors who made Lettuce 5.3.2.RELEASE possible.
+Lettuce requires a minimum of Java 8 to build and run and is compatible with Java 16. It is tested continuously against the latest Redis source-build.
 
 If you need any support, meet Lettuce at
 
@@ -17,23 +17,29 @@ or lettuce-redis-client-users@googlegroups.com
 * Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
 * Join the chat at https://gitter.im/lettuce-io/Lobby for general discussion
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/5.3.1.RELEASE/reference/
-* Javadoc: https://lettuce.io/core/5.3.1.RELEASE/api/
+* Documentation: https://lettuce.io/core/5.3.2.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/5.3.2.RELEASE/api/
 
 Enhancements
 ------------
-* Add template method for EventLoopGroup creation #1273 (Thanks to @konstantin-grits)
-* Add charset option to ScanArgs.match(…) #1285 (Thanks to @gejun123456)
+* Add support for STRALGO #1280
+* Allow for more customisation of the tracing span #1303 (Thanks to @JaidenAshmore)
+* Support for GraalVM Native Images #1316 (Thanks to @ilopmar)
+* Add support for LPOS #1320
+* reduce method(decode)'s bytecode size #1324 (Thanks to @hellyguo)
+* SSL handshake doesn't respect timeouts #1326 (Thanks to @feliperuiz)
 
 Fixes
 -----
-* PauseDetector acquisition hang in DefaultCommandLatencyCollector #1300 (Thanks to @ackerL)
-* NullPointerException thrown during AbstractRedisAsyncCommands.flushCommands #1301 (Thanks to @mruki)
-* xpending(K, Consumer, Range, Limit) fails with ERR syntax error using Limit.unlimited() #1302 (Thanks to @nagaran1)
-* Remove duplicated command on asking #1304 (Thanks to @koisyu)
+* Write race condition while migrating/importing a slot #1218 (Thanks to @phyok)
+* ArrayOutput stops response parsing on empty nested arrays #1327 (Thanks to @TheCycoONE)
+* Synchronous dispatch of MULTI returns null #1335 (Thanks to @tzxyz)
+* RedisAdvancedClusterAsyncCommandsImpl scriptKill is incorrectly calling scriptFlush #1340 (Thanks to @azhukayak)
+* RedisAdvancedClusterAsyncCommands.scriptKill now calls scriptKill instead of scriptFlush #1341 (Thanks to @dengliming)
 
 Other
 -----
-* Replace io.lettuce.core.resource.Futures utility with Netty's PromiseCombiner #1283
-* Upgrade dependencies #1305
-* Add FAQ section to reference docs #1307
+* Remove JavaRuntime class and move LettuceStrings to internal package #1329
+* Consistently use Javadoc wording in BoundedPoolConfig.Builder #1337 (Thanks to @maestroua)
+* Upgrade to Reactor Core 3.3.8.RELEASE #1353
+* Upgrade to netty 4.1.51.Final #1354
