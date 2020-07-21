@@ -18,18 +18,18 @@ package io.lettuce.core.dynamic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Base64;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.util.Base64Utils;
-import org.springframework.util.ReflectionUtils;
 
 import io.lettuce.core.*;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.dynamic.segment.CommandSegment;
 import io.lettuce.core.dynamic.segment.CommandSegments;
+import io.lettuce.core.dynamic.support.ReflectionUtils;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 
@@ -159,8 +159,8 @@ class ParameterBinderUnitTests {
                 Range.from(Range.Boundary.including("lower"), Range.Boundary.excluding("upper")));
 
         assertThat(args.toCommandString()).isEqualTo(
-                String.format("%s %s", Base64Utils.encodeToString("[lower".getBytes()),
-                        Base64Utils.encodeToString("(upper".getBytes())));
+                String.format("%s %s", Base64.getEncoder().encodeToString("[lower".getBytes()),
+                        Base64.getEncoder().encodeToString("(upper".getBytes())));
     }
 
     @Test
@@ -172,7 +172,8 @@ class ParameterBinderUnitTests {
         CommandArgs<String, String> args = bind(commandMethod, Range.unbounded());
 
         assertThat(args.toCommandString()).isEqualTo(
-                String.format("%s %s", Base64Utils.encodeToString("-".getBytes()), Base64Utils.encodeToString("+".getBytes())));
+                String.format("%s %s", Base64.getEncoder().encodeToString("-".getBytes()),
+                        Base64.getEncoder().encodeToString("+".getBytes())));
     }
 
     @Test
@@ -192,7 +193,8 @@ class ParameterBinderUnitTests {
     }
 
     private CommandArgs<String, String> bind(Object object) {
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(MyCommands.class, "justObject",
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(MyCommands.class, "justObject",
                 Object.class));
         return bind(commandMethod, object);
     }

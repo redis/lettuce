@@ -24,7 +24,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector.PauseDetectorWrapper;
 import io.lettuce.core.protocol.CommandType;

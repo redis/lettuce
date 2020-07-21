@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Comparator;
@@ -33,7 +34,9 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.platform.commons.util.ReflectionUtils;
+
+import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -161,7 +164,9 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
             ReconnectionListener reconnectionListener = events::offer;
 
-            ReflectionTestUtils.setField(connectionWatchdog, "reconnectionListener", reconnectionListener);
+            Field field = ConnectionWatchdog.class.getDeclaredField("reconnectionListener");
+            field.setAccessible(true);
+            field.set(connectionWatchdog, reconnectionListener);
 
             redisUri.setPort(TestSettings.nonexistentPort());
 

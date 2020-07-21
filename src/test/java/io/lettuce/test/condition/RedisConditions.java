@@ -23,13 +23,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
-
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.command.CommandDetail;
 import io.lettuce.core.models.command.CommandDetailParser;
 
@@ -149,18 +148,19 @@ public class RedisConditions {
          */
         Version(int... parts) {
 
-            Assert.notNull(parts, "Parts must not be null!");
-            Assert.isTrue(parts.length > 0 && parts.length < 5, String.format("Invalid parts length. 0 < %s < 5", parts.length));
+            LettuceAssert.notNull(parts, "Parts must not be null!");
+            LettuceAssert.isTrue(parts.length > 0 && parts.length < 5,
+                    String.format("Invalid parts length. 0 < %s < 5", parts.length));
 
             this.major = parts[0];
             this.minor = parts.length > 1 ? parts[1] : 0;
             this.bugfix = parts.length > 2 ? parts[2] : 0;
             this.build = parts.length > 3 ? parts[3] : 0;
 
-            Assert.isTrue(major >= 0, "Major version must be greater or equal zero!");
-            Assert.isTrue(minor >= 0, "Minor version must be greater or equal zero!");
-            Assert.isTrue(bugfix >= 0, "Bugfix version must be greater or equal zero!");
-            Assert.isTrue(build >= 0, "Build version must be greater or equal zero!");
+            LettuceAssert.isTrue(major >= 0, "Major version must be greater or equal zero!");
+            LettuceAssert.isTrue(minor >= 0, "Minor version must be greater or equal zero!");
+            LettuceAssert.isTrue(bugfix >= 0, "Bugfix version must be greater or equal zero!");
+            LettuceAssert.isTrue(build >= 0, "Build version must be greater or equal zero!");
         }
 
         /**
@@ -171,7 +171,7 @@ public class RedisConditions {
          */
         public static Version parse(String version) {
 
-            Assert.hasText(version, "Version must not be null o empty!");
+            LettuceAssert.notEmpty(version, "Version must not be null o empty!");
 
             String[] parts = version.trim().split("\\.");
             int[] intParts = new int[parts.length];
@@ -180,7 +180,7 @@ public class RedisConditions {
 
                 String input = i == parts.length - 1 ? parts[i].replaceAll("\\D.*", "") : parts[i];
 
-                if (StringUtils.hasText(input)) {
+                if (LettuceStrings.isNotEmpty(input)) {
                     try {
                         intParts[i] = Integer.parseInt(input);
                     } catch (IllegalArgumentException o_O) {
@@ -330,7 +330,7 @@ public class RedisConditions {
                 digits.add(build);
             }
 
-            return StringUtils.collectionToDelimitedString(digits, ".");
+            return digits.stream().map(Object::toString).collect(Collectors.joining("."));
         }
     }
 }

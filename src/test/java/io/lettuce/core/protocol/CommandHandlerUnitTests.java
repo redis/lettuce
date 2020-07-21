@@ -43,7 +43,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
@@ -55,6 +54,7 @@ import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import io.lettuce.test.Delay;
+import io.lettuce.test.ReflectionTestUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -184,7 +184,7 @@ class CommandHandlerUnitTests {
         assertThat(stack).isEmpty();
         command.get();
 
-        assertThat(ReflectionTestUtils.getField(command, "exception")).isNotNull();
+        assertThat((Object) ReflectionTestUtils.getField(command, "exception")).isNotNull();
     }
 
     @Test
@@ -462,7 +462,7 @@ class CommandHandlerUnitTests {
 
         // set the command handler buffer capacity to 30, make it easy to test
         ByteBuf internalBuffer = context.alloc().buffer(30);
-        ReflectionTestUtils.setField(sut, "buffer", internalBuffer);
+        sut.setBuffer(internalBuffer);
 
         // mock a multi reply, which will reach the buffer usage ratio
         ByteBuf msg = context.alloc().buffer(100);
@@ -491,7 +491,7 @@ class CommandHandlerUnitTests {
 
         // set the command handler buffer capacity to 30, make it easy to test
         ByteBuf internalBuffer = context.alloc().buffer(30);
-        ReflectionTestUtils.setField(sut, "buffer", internalBuffer);
+        sut.setBuffer(internalBuffer);
 
         // mock a multi reply, which will reach the buffer usage ratio
         ByteBuf msg = context.alloc().buffer(100);

@@ -25,7 +25,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
+import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.protocol.AsyncCommand;
 import zipkin2.Span;

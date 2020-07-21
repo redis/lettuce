@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.Closeable;
+import java.lang.reflect.Field;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,10 +31,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.test.ReflectionTestUtils;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
@@ -52,7 +53,7 @@ class RedisClientUnitTests {
     AsyncCloseable asyncCloseable;
 
     @Test
-    void shutdownShouldDeferResourcesShutdown() {
+    void shutdownShouldDeferResourcesShutdown() throws Exception {
 
         when(clientResources.eventExecutorGroup()).thenReturn(ImmediateEventExecutor.INSTANCE);
 
@@ -60,7 +61,10 @@ class RedisClientUnitTests {
         when(asyncCloseable.closeAsync()).thenReturn(completableFuture);
 
         RedisClient redisClient = RedisClient.create(clientResources, "redis://foo");
-        ReflectionTestUtils.setField(redisClient, "sharedResources", false);
+
+        Field field = AbstractRedisClient.class.getDeclaredField("sharedResources");
+        field.setAccessible(true);
+        field.set(redisClient, false);
 
         Set<AsyncCloseable> closeableResources = (Set) ReflectionTestUtils.getField(redisClient, "closeableResources");
         closeableResources.add(asyncCloseable);
@@ -73,7 +77,7 @@ class RedisClientUnitTests {
     }
 
     @Test
-    void shutdownShutsDownResourcesAfterChannels() {
+    void shutdownShutsDownResourcesAfterChannels() throws Exception {
 
         when(clientResources.eventExecutorGroup()).thenReturn(ImmediateEventExecutor.INSTANCE);
 
@@ -81,7 +85,10 @@ class RedisClientUnitTests {
         when(asyncCloseable.closeAsync()).thenReturn(completableFuture);
 
         RedisClient redisClient = RedisClient.create(clientResources, "redis://foo");
-        ReflectionTestUtils.setField(redisClient, "sharedResources", false);
+
+        Field field = AbstractRedisClient.class.getDeclaredField("sharedResources");
+        field.setAccessible(true);
+        field.set(redisClient, false);
 
         Set<AsyncCloseable> closeableResources = (Set) ReflectionTestUtils.getField(redisClient, "closeableResources");
         closeableResources.add(asyncCloseable);

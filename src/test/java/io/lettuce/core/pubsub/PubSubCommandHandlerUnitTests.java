@@ -33,7 +33,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.codec.StringCodec;
@@ -45,6 +44,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
+import io.lettuce.test.ReflectionTestUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -118,7 +118,7 @@ class PubSubCommandHandlerUnitTests {
 
         sut.channelRead(context, responseBytes(":1000\r\n"));
 
-        assertThat(ReflectionTestUtils.getField(command, "exception")).isInstanceOf(IllegalStateException.class);
+        assertThat((Object) ReflectionTestUtils.getField(command, "exception")).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

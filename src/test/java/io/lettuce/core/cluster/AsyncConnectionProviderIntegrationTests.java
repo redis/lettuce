@@ -28,12 +28,11 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.util.SocketUtils;
-import org.springframework.util.StopWatch;
 
 import reactor.core.publisher.Mono;
 import io.lettuce.core.ConnectionFuture;
@@ -71,7 +70,7 @@ class AsyncConnectionProviderIntegrationTests {
     @BeforeEach
     void before() throws Exception {
 
-        serverSocket = new ServerSocket(SocketUtils.findAvailableTcpPort(), 1);
+        serverSocket = new ServerSocket(9393, 1);
 
         client = RedisClusterClient.create(resources, "redis://localhost");
         client.setOptions(ClusterClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build());
@@ -153,7 +152,7 @@ class AsyncConnectionProviderIntegrationTests {
 
         stopWatch.stop();
 
-        assertThat(stopWatch.getLastTaskTimeMillis()).isBetween(0L, 1200L);
+        assertThat(TimeUnit.NANOSECONDS.toMillis(stopWatch.getNanoTime())).isBetween(0L, 1200L);
 
         sut.close();
 
@@ -199,7 +198,7 @@ class AsyncConnectionProviderIntegrationTests {
 
         stopWatch.stop();
 
-        assertThat(stopWatch.getLastTaskTimeMillis()).isBetween(0L, 1300L);
+        assertThat(TimeUnit.NANOSECONDS.toMillis(stopWatch.getNanoTime())).isBetween(0L, 1300L);
 
         sut.close();
         socket.close();

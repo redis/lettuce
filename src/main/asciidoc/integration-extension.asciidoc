@@ -8,8 +8,3 @@ include::{ext-doc}/Codecs.asciidoc[leveloffset=+1]
 [[cdi-support]]
 === CDI Support
 include::{ext-doc}/CDI-Support.asciidoc[leveloffset=+1]
-
-[[spring-support]]
-=== Spring Support
-include::{ext-doc}/Spring-Support.asciidoc[leveloffset=+1]
-

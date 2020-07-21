@@ -36,7 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
+import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;

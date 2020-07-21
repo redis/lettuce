@@ -24,7 +24,7 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.util.ReflectionTestUtils;
+import io.lettuce.test.ReflectionTestUtils;
 
 import reactor.core.Disposable;
 import io.lettuce.core.api.StatefulRedisConnection;

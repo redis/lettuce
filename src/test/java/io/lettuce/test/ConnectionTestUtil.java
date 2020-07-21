@@ -18,7 +18,7 @@ package io.lettuce.test;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Queue;
 
-import org.springframework.test.util.ReflectionTestUtils;
+import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;

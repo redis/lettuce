@@ -152,6 +152,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
+    void setBuffer(ByteBuf buffer) {
+        this.buffer = buffer;
+    }
+
     @Override
     public Collection<RedisCommand<?, ?, ?>> drainQueue() {
         return drainCommands(stack);
