@@ -199,6 +199,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Mono<String> flushallAsync() {
+
+        Map<String, Publisher<String>> publishers = executeOnUpstream(RedisServerReactiveCommands::flushallAsync);
+        return Flux.merge(publishers.values()).last();
+    }
+
+    @Override
     public Mono<String> flushdb() {
 
         Map<String, Publisher<String>> publishers = executeOnUpstream(RedisServerReactiveCommands::flushdb);

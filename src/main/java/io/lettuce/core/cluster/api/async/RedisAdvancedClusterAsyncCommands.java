@@ -246,6 +246,14 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<String> flushall();
 
     /**
+     * Remove all keys asynchronously from all databases on all cluster upstream nodes with pipelining.
+     *
+     * @return String simple-string-reply
+     * @see RedisServerAsyncCommands#flushallAsync()
+     */
+    RedisFuture<String> flushallAsync();
+
+    /**
      * Remove all keys from the current database on all cluster upstream nodes with pipelining.
      *
      * @return String simple-string-reply
