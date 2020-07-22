@@ -19,6 +19,7 @@ import static io.lettuce.test.LettuceExtension.Connection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -339,6 +340,24 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         Long dbsize = sync.dbsize();
         assertThat(dbsize).isEqualTo(0);
+    }
+
+    @Test
+    void flushallAsync() throws InterruptedException {
+
+        writeKeysToTwoNodes();
+
+        assertThat(sync.flushallAsync()).isEqualTo("OK");
+
+        // This is hacky, but by its nature FLUSHALL ASYNC doesn't give us a mechanism to know when it's done
+        boolean bothKeysCleared = false;
+        final Instant deadline = Instant.now().plusSeconds(1);
+
+        while (!bothKeysCleared && Instant.now().isBefore(deadline)) {
+            bothKeysCleared = sync.get(KEY_ON_NODE_1) == null && sync.get(KEY_ON_NODE_2) == null;
+        }
+
+        assertThat(bothKeysCleared).isTrue();
     }
 
     @Test

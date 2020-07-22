@@ -140,6 +140,14 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     Mono<String> flushall();
 
     /**
+     * Remove all keys asynchronously from all databases on all cluster upstream nodes with pipelining.
+     *
+     * @return String simple-string-reply
+     * @see RedisServerReactiveCommands#flushallAsync()
+     */
+    Mono<String> flushallAsync();
+
+    /**
      * Remove all keys from the current database on all cluster masters with pipelining.
      *
      * @return String simple-string-reply.

@@ -209,6 +209,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
+    public RedisFuture<String> flushallAsync() {
+        return MultiNodeExecution.firstOfAsync(executeOnMasters(RedisServerAsyncCommands::flushallAsync));
+    }
+
+    @Override
     public RedisFuture<String> flushdb() {
         return MultiNodeExecution.firstOfAsync(executeOnMasters(RedisServerAsyncCommands::flushdb));
     }
