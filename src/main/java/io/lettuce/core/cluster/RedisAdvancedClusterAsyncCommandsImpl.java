@@ -58,6 +58,7 @@ import io.lettuce.core.protocol.CommandType;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Jon Chambers
  * @since 3.3
  */
 @SuppressWarnings("unchecked")

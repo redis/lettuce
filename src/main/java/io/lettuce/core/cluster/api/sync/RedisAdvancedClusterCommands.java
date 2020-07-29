@@ -28,13 +28,13 @@ import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.core.cluster.pubsub.api.async.PubSubAsyncNodeSelection;
 import io.lettuce.core.output.KeyStreamingChannel;
 
 /**
  * Advanced synchronous and thread-safe Redis Cluster API.
  *
  * @author Mark Paluch
+ * @author Jon Chambers
  * @since 4.0
  */
 public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands<K, V> {
@@ -249,6 +249,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @return String simple-string-reply
      * @see RedisServerCommands#flushallAsync()
+     * @since 6.0
      */
     String flushallAsync();
 
