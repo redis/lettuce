@@ -18,6 +18,7 @@ package io.lettuce.core.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.protocol.LettuceCharsets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.util.CharsetUtil;
 
 /**
  * @author Mark Paluch
@@ -118,4 +120,13 @@ class StringCodecUnitTests {
         assertThat(new StringCodec(StandardCharsets.ISO_8859_1).estimateSize(teststring)).isEqualTo(teststring.length());
     }
 
+    @Test
+    public void calculateStringSize() {
+        assertThat(new StringCodec(StandardCharsets.UTF_8).calculateStringBytes(teststring, false))
+            .isEqualTo(teststring.length() * 3);
+        assertThat(new StringCodec(StandardCharsets.US_ASCII).calculateStringBytes(teststring, false))
+            .isEqualTo(teststring.length());
+        assertThat(new StringCodec(StandardCharsets.ISO_8859_1).calculateStringBytes(teststring, false))
+            .isEqualTo(teststring.length());
+    }
 }
