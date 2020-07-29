@@ -39,16 +39,6 @@ class PartitionAccessor {
         return get(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER));
     }
 
-    List<RedisClusterNode> getReplicas() {
-        return get(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
-
-    }
-
-    List<RedisClusterNode> getReplicas(RedisClusterNode master) {
-        return get(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)
-                && master.getNodeId().equals(redisClusterNode.getSlaveOf()));
-    }
-
     List<RedisClusterNode> getReadCandidates(RedisClusterNode master) {
         return get(redisClusterNode -> redisClusterNode.getNodeId().equals(master.getNodeId())
                 || (redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)
