@@ -48,20 +48,21 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </p>
  * {@link DefaultClientResources} allow to configure:
  * <ul>
+ * <li>a {@code commandLatencyCollector} which is a provided instance of {@link io.lettuce.core.metrics.CommandLatencyCollector}
+ * .</li>
  * <li>the {@code ioThreadPoolSize}, alternatively</li>
  * <li>a {@code eventLoopGroupProvider} which is a provided instance of {@link EventLoopGroupProvider}. Higher precedence than
  * {@code ioThreadPoolSize}.</li>
  * <li>computationThreadPoolSize</li>
  * <li>a {@code eventExecutorGroup} which is a provided instance of {@link EventExecutorGroup}. Higher precedence than
  * {@code computationThreadPoolSize}.</li>
+ *
  * <li>an {@code eventBus} which is a provided instance of {@link EventBus}.</li>
- * <li>a {@code commandLatencyCollector} which is a provided instance of {@link io.lettuce.core.metrics.CommandLatencyCollector}
- * .</li>
  * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
+ * <li>a {@code nettyCustomizer} that is a provided instance of {@link NettyCustomizer}.</li>
  * <li>a {@code socketAddressResolver} which is a provided instance of {@link SocketAddressResolver}.</li>
  * <li>a {@code timer} that is a provided instance of {@link io.netty.util.HashedWheelTimer}.</li>
- * <li>a {@code nettyCustomizer} that is a provided instance of {@link NettyCustomizer}.</li>
- * <li>a {@code tracerProvider} that is a provided instance of {@link TracerProvider}.</li>
+ * <li>a {@code tracing} that is a provided instance of {@link Tracing}.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -107,6 +108,16 @@ public class DefaultClientResources implements ClientResources {
         }
     }
 
+    private final CommandLatencyCollector commandLatencyCollector;
+
+    private final boolean sharedCommandLatencyCollector;
+
+    private final EventPublisherOptions commandLatencyPublisherOptions;
+
+    private final DnsResolver dnsResolver;
+
+    private final EventBus eventBus;
+
     private final boolean sharedEventLoopGroupProvider;
 
     private final EventLoopGroupProvider eventLoopGroupProvider;
@@ -115,27 +126,17 @@ public class DefaultClientResources implements ClientResources {
 
     private final EventExecutorGroup eventExecutorGroup;
 
-    private final Timer timer;
-
-    private final boolean sharedTimer;
-
-    private final EventBus eventBus;
-
-    private final CommandLatencyCollector commandLatencyCollector;
-
-    private final boolean sharedCommandLatencyCollector;
-
-    private final EventPublisherOptions commandLatencyPublisherOptions;
-
     private final MetricEventPublisher metricEventPublisher;
 
-    private final DnsResolver dnsResolver;
-
-    private final SocketAddressResolver socketAddressResolver;
+    private final NettyCustomizer nettyCustomizer;
 
     private final Supplier<Delay> reconnectDelay;
 
-    private final NettyCustomizer nettyCustomizer;
+    private final SocketAddressResolver socketAddressResolver;
+
+    private final Timer timer;
+
+    private final boolean sharedTimer;
 
     private final Tracing tracing;
 
@@ -259,148 +260,43 @@ public class DefaultClientResources implements ClientResources {
      */
     public static class Builder implements ClientResources.Builder {
 
-        private boolean sharedEventLoopGroupProvider;
-
-        private boolean sharedEventExecutor;
-
-        private boolean sharedTimer;
-
-        private boolean sharedCommandLatencyCollector;
-
-        private int ioThreadPoolSize = DEFAULT_IO_THREADS;
-
-        private int computationThreadPoolSize = DEFAULT_COMPUTATION_THREADS;
-
-        private EventExecutorGroup eventExecutorGroup;
-
-        private EventLoopGroupProvider eventLoopGroupProvider;
-
-        private Timer timer;
-
-        private EventBus eventBus;
-
         private CommandLatencyCollectorOptions commandLatencyCollectorOptions = DefaultCommandLatencyCollectorOptions.create();
 
         private CommandLatencyCollector commandLatencyCollector;
 
         private EventPublisherOptions commandLatencyPublisherOptions = DefaultEventPublisherOptions.create();
 
+        private boolean sharedCommandLatencyCollector;
+
+        private int computationThreadPoolSize = DEFAULT_COMPUTATION_THREADS;
+
         private DnsResolver dnsResolver = DnsResolvers.UNRESOLVED;
+
+        private EventBus eventBus;
+
+        private EventExecutorGroup eventExecutorGroup;
+
+        private boolean sharedEventExecutor;
+
+        private boolean sharedEventLoopGroupProvider;
+
+        private EventLoopGroupProvider eventLoopGroupProvider;
+
+        private int ioThreadPoolSize = DEFAULT_IO_THREADS;
+
+        private NettyCustomizer nettyCustomizer = DEFAULT_NETTY_CUSTOMIZER;
 
         private SocketAddressResolver socketAddressResolver;
 
         private Supplier<Delay> reconnectDelay = DEFAULT_RECONNECT_DELAY;
 
-        private NettyCustomizer nettyCustomizer = DEFAULT_NETTY_CUSTOMIZER;
+        private boolean sharedTimer;
+
+        private Timer timer;
 
         private Tracing tracing = Tracing.disabled();
 
         private Builder() {
-        }
-
-        /**
-         * Sets the thread pool size (number of threads to use) for I/O operations (default value is the number of CPUs). The
-         * thread pool size is only effective if no {@code eventLoopGroupProvider} is provided.
-         *
-         * @param ioThreadPoolSize the thread pool size, must be greater {@code 0}.
-         * @return {@code this} {@link Builder}.
-         */
-        @Override
-        public Builder ioThreadPoolSize(int ioThreadPoolSize) {
-
-            LettuceAssert.isTrue(ioThreadPoolSize > 0, "I/O thread pool size must be greater zero");
-
-            this.ioThreadPoolSize = ioThreadPoolSize;
-            return this;
-        }
-
-        /**
-         * Sets a shared {@link EventLoopGroupProvider event executor provider} that can be used across different instances of
-         * {@link io.lettuce.core.RedisClient} and {@link io.lettuce.core.cluster.RedisClusterClient}. The provided
-         * {@link EventLoopGroupProvider} instance will not be shut down when shutting down the client resources. You have to
-         * take care of that. This is an advanced configuration that should only be used if you know what you are doing.
-         *
-         * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@code null}.
-         * @return {@code this} {@link Builder}.
-         */
-        @Override
-        public Builder eventLoopGroupProvider(EventLoopGroupProvider eventLoopGroupProvider) {
-
-            LettuceAssert.notNull(eventLoopGroupProvider, "EventLoopGroupProvider must not be null");
-
-            this.sharedEventLoopGroupProvider = true;
-            this.eventLoopGroupProvider = eventLoopGroupProvider;
-            return this;
-        }
-
-        /**
-         * Sets the thread pool size (number of threads to use) for computation operations (default value is the number of
-         * CPUs). The thread pool size is only effective if no {@code eventExecutorGroup} is provided.
-         *
-         * @param computationThreadPoolSize the thread pool size, must be greater {@code 0}.
-         * @return {@code this} {@link Builder}.
-         */
-        @Override
-        public Builder computationThreadPoolSize(int computationThreadPoolSize) {
-
-            LettuceAssert.isTrue(computationThreadPoolSize > 0, "Computation thread pool size must be greater zero");
-
-            this.computationThreadPoolSize = computationThreadPoolSize;
-            return this;
-        }
-
-        /**
-         * Sets a shared {@link EventExecutorGroup event executor group} that can be used across different instances of
-         * {@link io.lettuce.core.RedisClient} and {@link io.lettuce.core.cluster.RedisClusterClient}. The provided
-         * {@link EventExecutorGroup} instance will not be shut down when shutting down the client resources. You have to take
-         * care of that. This is an advanced configuration that should only be used if you know what you are doing.
-         *
-         * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@code null}.
-         * @return {@code this} {@link Builder}.
-         */
-        @Override
-        public Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup) {
-
-            LettuceAssert.notNull(eventExecutorGroup, "EventExecutorGroup must not be null");
-
-            this.sharedEventExecutor = true;
-            this.eventExecutorGroup = eventExecutorGroup;
-            return this;
-        }
-
-        /**
-         * Sets a shared {@link Timer} that can be used across different instances of {@link io.lettuce.core.RedisClient} and
-         * {@link io.lettuce.core.cluster.RedisClusterClient} The provided {@link Timer} instance will not be shut down when
-         * shutting down the client resources. You have to take care of that. This is an advanced configuration that should only
-         * be used if you know what you are doing.
-         *
-         * @param timer the shared {@link Timer}, must not be {@code null}.
-         * @return {@code this} {@link Builder}.
-         * @since 4.3
-         */
-        @Override
-        public Builder timer(Timer timer) {
-
-            LettuceAssert.notNull(timer, "Timer must not be null");
-
-            this.sharedTimer = true;
-            this.timer = timer;
-            return this;
-        }
-
-        /**
-         * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
-         *
-         * @param eventBus the event bus, must not be {@code null}.
-         * @return {@code this} {@link Builder}.
-         */
-        @Override
-        public Builder eventBus(EventBus eventBus) {
-
-            LettuceAssert.notNull(eventBus, "EventBus must not be null");
-
-            this.eventBus = eventBus;
-            return this;
         }
 
         /**
@@ -452,19 +348,18 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the {@link SocketAddressResolver} that is used to resolve {@link io.lettuce.core.RedisURI} to
-         * {@link java.net.SocketAddress}. Defaults to {@link SocketAddressResolver} using the configured {@link DnsResolver}.
+         * Sets the thread pool size (number of threads to use) for computation operations (default value is the number of
+         * CPUs). The thread pool size is only effective if no {@code eventExecutorGroup} is provided.
          *
-         * @param socketAddressResolver the socket address resolver, must not be {@code null}.
-         * @return {@code this} {@link ClientResources.Builder}.
-         * @since 5.1
+         * @param computationThreadPoolSize the thread pool size, must be greater {@code 0}.
+         * @return {@code this} {@link Builder}.
          */
         @Override
-        public ClientResources.Builder socketAddressResolver(SocketAddressResolver socketAddressResolver) {
+        public Builder computationThreadPoolSize(int computationThreadPoolSize) {
 
-            LettuceAssert.notNull(socketAddressResolver, "SocketAddressResolver must not be null");
+            LettuceAssert.isTrue(computationThreadPoolSize > 0, "Computation thread pool size must be greater zero");
 
-            this.socketAddressResolver = socketAddressResolver;
+            this.computationThreadPoolSize = computationThreadPoolSize;
             return this;
         }
 
@@ -482,6 +377,91 @@ public class DefaultClientResources implements ClientResources {
             LettuceAssert.notNull(dnsResolver, "DnsResolver must not be null");
 
             this.dnsResolver = dnsResolver;
+            return this;
+        }
+
+        /**
+         * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
+         *
+         * @param eventBus the event bus, must not be {@code null}.
+         * @return {@code this} {@link Builder}.
+         */
+        @Override
+        public Builder eventBus(EventBus eventBus) {
+
+            LettuceAssert.notNull(eventBus, "EventBus must not be null");
+
+            this.eventBus = eventBus;
+            return this;
+        }
+
+        /**
+         * Sets a shared {@link EventLoopGroupProvider event executor provider} that can be used across different instances of
+         * {@link io.lettuce.core.RedisClient} and {@link io.lettuce.core.cluster.RedisClusterClient}. The provided
+         * {@link EventLoopGroupProvider} instance will not be shut down when shutting down the client resources. You have to
+         * take care of that. This is an advanced configuration that should only be used if you know what you are doing.
+         *
+         * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@code null}.
+         * @return {@code this} {@link Builder}.
+         */
+        @Override
+        public Builder eventLoopGroupProvider(EventLoopGroupProvider eventLoopGroupProvider) {
+
+            LettuceAssert.notNull(eventLoopGroupProvider, "EventLoopGroupProvider must not be null");
+
+            this.sharedEventLoopGroupProvider = true;
+            this.eventLoopGroupProvider = eventLoopGroupProvider;
+            return this;
+        }
+
+        /**
+         * Sets a shared {@link EventExecutorGroup event executor group} that can be used across different instances of
+         * {@link io.lettuce.core.RedisClient} and {@link io.lettuce.core.cluster.RedisClusterClient}. The provided
+         * {@link EventExecutorGroup} instance will not be shut down when shutting down the client resources. You have to take
+         * care of that. This is an advanced configuration that should only be used if you know what you are doing.
+         *
+         * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@code null}.
+         * @return {@code this} {@link Builder}.
+         */
+        @Override
+        public Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup) {
+
+            LettuceAssert.notNull(eventExecutorGroup, "EventExecutorGroup must not be null");
+
+            this.sharedEventExecutor = true;
+            this.eventExecutorGroup = eventExecutorGroup;
+            return this;
+        }
+
+        /**
+         * Sets the {@link NettyCustomizer} instance to customize netty components during connection.
+         *
+         * @param nettyCustomizer the netty customizer instance, must not be {@code null}.
+         * @return this
+         * @since 4.4
+         */
+        @Override
+        public Builder nettyCustomizer(NettyCustomizer nettyCustomizer) {
+
+            LettuceAssert.notNull(nettyCustomizer, "NettyCustomizer must not be null");
+
+            this.nettyCustomizer = nettyCustomizer;
+            return this;
+        }
+
+        /**
+         * Sets the thread pool size (number of threads to use) for I/O operations (default value is the number of CPUs). The
+         * thread pool size is only effective if no {@code eventLoopGroupProvider} is provided.
+         *
+         * @param ioThreadPoolSize the thread pool size, must be greater {@code 0}.
+         * @return {@code this} {@link Builder}.
+         */
+        @Override
+        public Builder ioThreadPoolSize(int ioThreadPoolSize) {
+
+            LettuceAssert.isTrue(ioThreadPoolSize > 0, "I/O thread pool size must be greater zero");
+
+            this.ioThreadPoolSize = ioThreadPoolSize;
             return this;
         }
 
@@ -520,18 +500,39 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the {@link NettyCustomizer} instance to customize netty components during connection.
+         * Sets the {@link SocketAddressResolver} that is used to resolve {@link io.lettuce.core.RedisURI} to
+         * {@link java.net.SocketAddress}. Defaults to {@link SocketAddressResolver} using the configured {@link DnsResolver}.
          *
-         * @param nettyCustomizer the netty customizer instance, must not be {@code null}.
-         * @return this
-         * @since 4.4
+         * @param socketAddressResolver the socket address resolver, must not be {@code null}.
+         * @return {@code this} {@link ClientResources.Builder}.
+         * @since 5.1
          */
         @Override
-        public Builder nettyCustomizer(NettyCustomizer nettyCustomizer) {
+        public ClientResources.Builder socketAddressResolver(SocketAddressResolver socketAddressResolver) {
 
-            LettuceAssert.notNull(nettyCustomizer, "NettyCustomizer must not be null");
+            LettuceAssert.notNull(socketAddressResolver, "SocketAddressResolver must not be null");
 
-            this.nettyCustomizer = nettyCustomizer;
+            this.socketAddressResolver = socketAddressResolver;
+            return this;
+        }
+
+        /**
+         * Sets a shared {@link Timer} that can be used across different instances of {@link io.lettuce.core.RedisClient} and
+         * {@link io.lettuce.core.cluster.RedisClusterClient} The provided {@link Timer} instance will not be shut down when
+         * shutting down the client resources. You have to take care of that. This is an advanced configuration that should only
+         * be used if you know what you are doing.
+         *
+         * @param timer the shared {@link Timer}, must not be {@code null}.
+         * @return {@code this} {@link Builder}.
+         * @since 4.3
+         */
+        @Override
+        public Builder timer(Timer timer) {
+
+            LettuceAssert.notNull(timer, "Timer must not be null");
+
+            this.sharedTimer = true;
+            this.timer = timer;
             return this;
         }
 
@@ -582,11 +583,11 @@ public class DefaultClientResources implements ClientResources {
 
         Builder builder = new Builder();
 
-        builder.eventExecutorGroup(eventExecutorGroup()).timer(timer()).eventBus(eventBus())
-                .commandLatencyCollector(commandLatencyCollector())
+        builder.commandLatencyCollector(commandLatencyCollector())
                 .commandLatencyPublisherOptions(commandLatencyPublisherOptions()).dnsResolver(dnsResolver())
-                .socketAddressResolver(socketAddressResolver()).reconnectDelay(reconnectDelay)
-                .nettyCustomizer(nettyCustomizer()).tracing(tracing());
+                .eventBus(eventBus()).eventExecutorGroup(eventExecutorGroup()).reconnectDelay(reconnectDelay)
+                .socketAddressResolver(socketAddressResolver()).nettyCustomizer(nettyCustomizer()).timer(timer())
+                .tracing(tracing());
 
         builder.sharedCommandLatencyCollector = sharedEventLoopGroupProvider;
         builder.sharedEventExecutor = sharedEventExecutor;
@@ -661,6 +662,31 @@ public class DefaultClientResources implements ClientResources {
     }
 
     @Override
+    public CommandLatencyCollector commandLatencyCollector() {
+        return commandLatencyCollector;
+    }
+
+    @Override
+    public EventPublisherOptions commandLatencyPublisherOptions() {
+        return commandLatencyPublisherOptions;
+    }
+
+    @Override
+    public int computationThreadPoolSize() {
+        return LettuceLists.newList(eventExecutorGroup.iterator()).size();
+    }
+
+    @Override
+    public DnsResolver dnsResolver() {
+        return dnsResolver;
+    }
+
+    @Override
+    public EventBus eventBus() {
+        return eventBus;
+    }
+
+    @Override
     public EventLoopGroupProvider eventLoopGroupProvider() {
         return eventLoopGroupProvider;
     }
@@ -676,38 +702,8 @@ public class DefaultClientResources implements ClientResources {
     }
 
     @Override
-    public int computationThreadPoolSize() {
-        return LettuceLists.newList(eventExecutorGroup.iterator()).size();
-    }
-
-    @Override
-    public EventBus eventBus() {
-        return eventBus;
-    }
-
-    @Override
-    public Timer timer() {
-        return timer;
-    }
-
-    @Override
-    public CommandLatencyCollector commandLatencyCollector() {
-        return commandLatencyCollector;
-    }
-
-    @Override
-    public EventPublisherOptions commandLatencyPublisherOptions() {
-        return commandLatencyPublisherOptions;
-    }
-
-    @Override
-    public DnsResolver dnsResolver() {
-        return dnsResolver;
-    }
-
-    @Override
-    public SocketAddressResolver socketAddressResolver() {
-        return socketAddressResolver;
+    public NettyCustomizer nettyCustomizer() {
+        return nettyCustomizer;
     }
 
     @Override
@@ -716,8 +712,13 @@ public class DefaultClientResources implements ClientResources {
     }
 
     @Override
-    public NettyCustomizer nettyCustomizer() {
-        return nettyCustomizer;
+    public SocketAddressResolver socketAddressResolver() {
+        return socketAddressResolver;
+    }
+
+    @Override
+    public Timer timer() {
+        return timer;
     }
 
     @Override

@@ -34,21 +34,21 @@ import io.lettuce.core.resource.ClientResources;
 @SuppressWarnings("serial")
 public class ClientOptions implements Serializable {
 
+    public static final boolean DEFAULT_AUTO_RECONNECT = true;
+
+    public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
+
+    public static final boolean DEFAULT_CANCEL_CMD_RECONNECT_FAIL = false;
+
+    public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
+
+    public static final boolean DEFAULT_PUBLISH_ON_SCHEDULER = false;
+
     public static final boolean DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION = true;
 
     public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = ProtocolVersion.newestSupported();
 
-    public static final boolean DEFAULT_AUTO_RECONNECT = true;
-
-    public static final boolean DEFAULT_CANCEL_CMD_RECONNECT_FAIL = false;
-
-    public static final boolean DEFAULT_PUBLISH_ON_SCHEDULER = false;
-
-    public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
-
     public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
-
-    public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
 
     public static final Charset DEFAULT_SCRIPT_CHARSET = StandardCharsets.UTF_8;
 
@@ -56,13 +56,9 @@ public class ClientOptions implements Serializable {
 
     public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
 
+    public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
+
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
-
-    public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
-
-    private final boolean pingBeforeActivateConnection;
-
-    private final ProtocolVersion protocolVersion;
 
     private final boolean autoReconnect;
 
@@ -70,13 +66,15 @@ public class ClientOptions implements Serializable {
 
     private final DecodeBufferPolicy decodeBufferPolicy;
 
+    private final DisconnectedBehavior disconnectedBehavior;
+
     private final boolean publishOnScheduler;
 
-    private final boolean suspendReconnectOnProtocolFailure;
+    private final boolean pingBeforeActivateConnection;
+
+    private final ProtocolVersion protocolVersion;
 
     private final int requestQueueSize;
-
-    private final DisconnectedBehavior disconnectedBehavior;
 
     private final Charset scriptCharset;
 
@@ -84,38 +82,40 @@ public class ClientOptions implements Serializable {
 
     private final SslOptions sslOptions;
 
+    private final boolean suspendReconnectOnProtocolFailure;
+
     private final TimeoutOptions timeoutOptions;
 
 
     protected ClientOptions(Builder builder) {
-        this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
-        this.protocolVersion = builder.protocolVersion;
+        this.autoReconnect = builder.autoReconnect;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
-        this.publishOnScheduler = builder.publishOnScheduler;
-        this.autoReconnect = builder.autoReconnect;
-        this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
-        this.requestQueueSize = builder.requestQueueSize;
         this.disconnectedBehavior = builder.disconnectedBehavior;
+        this.publishOnScheduler = builder.publishOnScheduler;
+        this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
+        this.protocolVersion = builder.protocolVersion;
+        this.requestQueueSize = builder.requestQueueSize;
         this.scriptCharset = builder.scriptCharset;
         this.socketOptions = builder.socketOptions;
         this.sslOptions = builder.sslOptions;
+        this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         this.timeoutOptions = builder.timeoutOptions;
     }
 
     protected ClientOptions(ClientOptions original) {
-        this.pingBeforeActivateConnection = original.isPingBeforeActivateConnection();
-        this.protocolVersion = original.getConfiguredProtocolVersion();
         this.autoReconnect = original.isAutoReconnect();
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
-        this.publishOnScheduler = original.isPublishOnScheduler();
-        this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
-        this.requestQueueSize = original.getRequestQueueSize();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
+        this.publishOnScheduler = original.isPublishOnScheduler();
+        this.pingBeforeActivateConnection = original.isPingBeforeActivateConnection();
+        this.protocolVersion = original.getConfiguredProtocolVersion();
+        this.requestQueueSize = original.getRequestQueueSize();
         this.scriptCharset = original.getScriptCharset();
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
+        this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
         this.timeoutOptions = original.getTimeoutOptions();
     }
 
@@ -152,23 +152,21 @@ public class ClientOptions implements Serializable {
      */
     public static class Builder {
 
-        private boolean pingBeforeActivateConnection = DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION;
-
-        private ProtocolVersion protocolVersion;
-
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
 
         private DecodeBufferPolicy decodeBufferPolicy = DecodeBufferPolicies.ratio(DEFAULT_BUFFER_USAGE_RATIO);
 
+        private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
+
+        private boolean pingBeforeActivateConnection = DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION;
+
+        private ProtocolVersion protocolVersion;
+
         private boolean publishOnScheduler = DEFAULT_PUBLISH_ON_SCHEDULER;
 
-        private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
-
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
-
-        private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
 
         private Charset scriptCharset = DEFAULT_SCRIPT_CHARSET;
 
@@ -176,37 +174,11 @@ public class ClientOptions implements Serializable {
 
         private SslOptions sslOptions = DEFAULT_SSL_OPTIONS;
 
+        private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
+
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
 
-
         protected Builder() {
-        }
-
-        /**
-         * Sets the {@literal PING} before activate connection flag. Defaults to {@code true}. See
-         * {@link #DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION}. This option has no effect unless forcing to use the RESP 2 protocol
-         * version.
-         *
-         * @param pingBeforeActivateConnection true/false
-         * @return {@code this}
-         */
-        public Builder pingBeforeActivateConnection(boolean pingBeforeActivateConnection) {
-            this.pingBeforeActivateConnection = pingBeforeActivateConnection;
-            return this;
-        }
-
-        /**
-         * Sets the {@link ProtocolVersion} to use. Defaults to {@literal RESP3}. See {@link #DEFAULT_PROTOCOL_VERSION}.
-         *
-         * @param protocolVersion version to use.
-         * @return {@code this}
-         * @since 6.0
-         * @see ProtocolVersion#newestSupported()
-         */
-        public Builder protocolVersion(ProtocolVersion protocolVersion) {
-
-            this.protocolVersion = protocolVersion;
-            return this;
         }
 
         /**
@@ -218,18 +190,6 @@ public class ClientOptions implements Serializable {
          */
         public Builder autoReconnect(boolean autoReconnect) {
             this.autoReconnect = autoReconnect;
-            return this;
-        }
-
-        /**
-         * Suspends reconnect when reconnects run into protocol failures (SSL verification, PING before connect fails). Defaults
-         * to {@code false}. See {@link #DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL}.
-         *
-         * @param suspendReconnectOnProtocolFailure true/false
-         * @return {@code this}
-         */
-        public Builder suspendReconnectOnProtocolFailure(boolean suspendReconnectOnProtocolFailure) {
-            this.suspendReconnectOnProtocolFailure = suspendReconnectOnProtocolFailure;
             return this;
         }
 
@@ -279,6 +239,47 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to {@code true}. See
+         * {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
+         *
+         * @param disconnectedBehavior must not be {@code null}.
+         * @return {@code this}
+         */
+        public Builder disconnectedBehavior(DisconnectedBehavior disconnectedBehavior) {
+
+            LettuceAssert.notNull(disconnectedBehavior, "DisconnectedBehavior must not be null");
+            this.disconnectedBehavior = disconnectedBehavior;
+            return this;
+        }
+
+        /**
+         * Sets the {@literal PING} before activate connection flag. Defaults to {@code true}. See
+         * {@link #DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION}. This option has no effect unless forcing to use the RESP 2 protocol
+         * version.
+         *
+         * @param pingBeforeActivateConnection true/false
+         * @return {@code this}
+         */
+        public Builder pingBeforeActivateConnection(boolean pingBeforeActivateConnection) {
+            this.pingBeforeActivateConnection = pingBeforeActivateConnection;
+            return this;
+        }
+
+        /**
+         * Sets the {@link ProtocolVersion} to use. Defaults to {@literal RESP3}. See {@link #DEFAULT_PROTOCOL_VERSION}.
+         *
+         * @param protocolVersion version to use.
+         * @return {@code this}
+         * @since 6.0
+         * @see ProtocolVersion#newestSupported()
+         */
+        public Builder protocolVersion(ProtocolVersion protocolVersion) {
+
+            this.protocolVersion = protocolVersion;
+            return this;
+        }
+
+        /**
          * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
          * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
          * <p>
@@ -313,19 +314,6 @@ public class ClientOptions implements Serializable {
             return this;
         }
 
-        /**
-         * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to {@code true}.
-         * See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
-         *
-         * @param disconnectedBehavior must not be {@code null}.
-         * @return {@code this}
-         */
-        public Builder disconnectedBehavior(DisconnectedBehavior disconnectedBehavior) {
-
-            LettuceAssert.notNull(disconnectedBehavior, "DisconnectedBehavior must not be null");
-            this.disconnectedBehavior = disconnectedBehavior;
-            return this;
-        }
 
         /**
          * Sets the Lua script {@link Charset} to use to encode {@link String scripts} to {@code byte[]}. Defaults to
@@ -370,6 +358,18 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Suspends reconnect when reconnects run into protocol failures (SSL verification, PING before connect fails). Defaults
+         * to {@code false}. See {@link #DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL}.
+         *
+         * @param suspendReconnectOnProtocolFailure true/false
+         * @return {@code this}
+         */
+        public Builder suspendReconnectOnProtocolFailure(boolean suspendReconnectOnProtocolFailure) {
+            this.suspendReconnectOnProtocolFailure = suspendReconnectOnProtocolFailure;
+            return this;
+        }
+
+        /**
          * Sets the {@link TimeoutOptions} to expire and cancel commands. See {@link #DEFAULT_TIMEOUT_OPTIONS}.
          *
          * @param timeoutOptions must not be {@code null}.
@@ -408,48 +408,15 @@ public class ClientOptions implements Serializable {
 
         builder.autoReconnect(isAutoReconnect())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .decodeBufferPolicy(getDecodeBufferPolicy())
-                .disconnectedBehavior(getDisconnectedBehavior()).scriptCharset(getScriptCharset())
+                .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
                 .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
                 .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
-                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
 
-    /**
-     * Enables initial {@literal PING} barrier before any connection is usable. If {@code true} (default is {@code true}
-     * ), every connection and reconnect will issue a {@literal PING} command and awaits its response before the connection is
-     * activated and enabled for use. If the check fails, the connect/reconnect is treated as failure. This option has no effect
-     * unless forcing to use the RESP 2 protocol version.
-     *
-     * @return {@code true} if {@literal PING} barrier is enabled.
-     */
-    public boolean isPingBeforeActivateConnection() {
-        return pingBeforeActivateConnection;
-    }
-
-    /**
-     * Returns the {@link ProtocolVersion} to use.
-     *
-     * @return the {@link ProtocolVersion} to use.
-     */
-    public ProtocolVersion getProtocolVersion() {
-
-        ProtocolVersion protocolVersion = getConfiguredProtocolVersion();
-        return protocolVersion == null ? DEFAULT_PROTOCOL_VERSION : protocolVersion;
-    }
-
-    /**
-     * Returns the configured {@link ProtocolVersion}. May return {@code null} if unconfigured.
-     *
-     * @return the {@link ProtocolVersion} to use. May be {@code null}.
-     * @since 6.0
-     */
-    public ProtocolVersion getConfiguredProtocolVersion() {
-        return protocolVersion;
-    }
 
     /**
      * Controls auto-reconnect behavior on connections. If auto-reconnect is {@code true} (default), it is enabled. As soon
@@ -485,6 +452,75 @@ public class ClientOptions implements Serializable {
     }
 
     /**
+     * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are discarded
+     * during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}. E.g. setting
+     * {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75 percent.
+     *
+     * @return zero.
+     * @since 5.2
+     *
+     * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
+     */
+    @Deprecated
+    public int getBufferUsageRatio() {
+        return 0;
+    }
+
+    /**
+     * Behavior for command invocation when connections are in a disconnected state. Defaults to
+     * {@link DisconnectedBehavior#DEFAULT true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
+     *
+     * @return the behavior for command invocation when connections are in a disconnected state
+     */
+    public DisconnectedBehavior getDisconnectedBehavior() {
+        return disconnectedBehavior;
+    }
+
+    /**
+     * Request queue size for a connection. This value applies per connection. The command invocation will throw a
+     * {@link RedisException} if the queue size is exceeded and a new command is requested. Defaults to
+     * {@link Integer#MAX_VALUE}.
+     *
+     * @return the request queue size.
+     */
+    public int getRequestQueueSize() {
+        return requestQueueSize;
+    }
+
+    /**
+     * Enables initial {@literal PING} barrier before any connection is usable. If {@code true} (default is {@code true} ),
+     * every connection and reconnect will issue a {@literal PING} command and awaits its response before the connection is
+     * activated and enabled for use. If the check fails, the connect/reconnect is treated as failure. This option has no effect
+     * unless forcing to use the RESP 2 protocol version.
+     *
+     * @return {@code true} if {@literal PING} barrier is enabled.
+     */
+    public boolean isPingBeforeActivateConnection() {
+        return pingBeforeActivateConnection;
+    }
+
+    /**
+     * Returns the {@link ProtocolVersion} to use.
+     *
+     * @return the {@link ProtocolVersion} to use.
+     */
+    public ProtocolVersion getProtocolVersion() {
+
+        ProtocolVersion protocolVersion = getConfiguredProtocolVersion();
+        return protocolVersion == null ? DEFAULT_PROTOCOL_VERSION : protocolVersion;
+    }
+
+    /**
+     * Returns the configured {@link ProtocolVersion}. May return {@code null} if unconfigured.
+     *
+     * @return the {@link ProtocolVersion} to use. May be {@code null}.
+     * @since 6.0
+     */
+    public ProtocolVersion getConfiguredProtocolVersion() {
+        return protocolVersion;
+    }
+
+    /**
      * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
      * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
      * <p>
@@ -500,6 +536,7 @@ public class ClientOptions implements Serializable {
         return publishOnScheduler;
     }
 
+
     /**
      * If this flag is {@code true} the reconnect will be suspended on protocol errors. Protocol errors are errors while SSL
      * negotiation or when PING before connect fails.
@@ -508,27 +545,6 @@ public class ClientOptions implements Serializable {
      */
     public boolean isSuspendReconnectOnProtocolFailure() {
         return suspendReconnectOnProtocolFailure;
-    }
-
-    /**
-     * Request queue size for a connection. This value applies per connection. The command invocation will throw a
-     * {@link RedisException} if the queue size is exceeded and a new command is requested. Defaults to
-     * {@link Integer#MAX_VALUE}.
-     *
-     * @return the request queue size.
-     */
-    public int getRequestQueueSize() {
-        return requestQueueSize;
-    }
-
-    /**
-     * Behavior for command invocation when connections are in a disconnected state. Defaults to
-     * {@link DisconnectedBehavior#DEFAULT true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
-     *
-     * @return the behavior for command invocation when connections are in a disconnected state
-     */
-    public DisconnectedBehavior getDisconnectedBehavior() {
-        return disconnectedBehavior;
     }
 
     /**
@@ -567,21 +583,6 @@ public class ClientOptions implements Serializable {
      */
     public TimeoutOptions getTimeoutOptions() {
         return timeoutOptions;
-    }
-
-    /**
-     * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are discarded
-     * during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}. E.g. setting
-     * {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75 percent.
-     *
-     * @return zero.
-     * @since 5.2
-     *
-     * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
-     */
-    @Deprecated
-    public int getBufferUsageRatio() {
-        return 0;
     }
 
     /**
