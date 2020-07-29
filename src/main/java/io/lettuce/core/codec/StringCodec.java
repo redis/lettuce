@@ -99,7 +99,7 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
         }
 
         CharsetEncoder encoder = CharsetUtil.encoder(charset);
-        int length = (int) ((double) str.length() * encoder.maxBytesPerChar());
+        int length = str.length() * (int) encoder.maxBytesPerChar();
         target.ensureWritable(length);
         try {
             final ByteBuffer dstBuf = target.nioBuffer(0, length);
@@ -165,7 +165,7 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
         }
 
         CharsetEncoder encoder = CharsetUtil.encoder(charset);
-        ByteBuffer buffer = ByteBuffer.allocate((int) (encoder.maxBytesPerChar() * key.length()));
+        ByteBuffer buffer = ByteBuffer.allocate((int) encoder.maxBytesPerChar() * key.length());
 
         ByteBuf byteBuf = Unpooled.wrappedBuffer(buffer);
         byteBuf.clear();
