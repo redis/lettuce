@@ -19,7 +19,6 @@ import static io.lettuce.test.LettuceExtension.Connection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,17 +41,15 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.test.Futures;
-import io.lettuce.test.KeysAndValues;
-import io.lettuce.test.LettuceExtension;
-import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.*;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
 /**
  * Integration tests for {@link StatefulRedisClusterConnection}.
- * 
+ *
  * @author Mark Paluch
+ * @author Jon Chambers
  */
 @SuppressWarnings("rawtypes")
 @ExtendWith(LettuceExtension.class)
@@ -343,21 +340,17 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void flushallAsync() throws InterruptedException {
+    void flushallAsync() {
 
         writeKeysToTwoNodes();
 
         assertThat(sync.flushallAsync()).isEqualTo("OK");
 
-        // This is hacky, but by its nature FLUSHALL ASYNC doesn't give us a mechanism to know when it's done
-        boolean bothKeysCleared = false;
-        final Instant deadline = Instant.now().plusSeconds(1);
+        Wait.untilTrue(() -> sync.get(KEY_ON_NODE_1) == null).waitOrTimeout();
+        Wait.untilTrue(() -> sync.get(KEY_ON_NODE_2) == null).waitOrTimeout();
 
-        while (!bothKeysCleared && Instant.now().isBefore(deadline)) {
-            bothKeysCleared = sync.get(KEY_ON_NODE_1) == null && sync.get(KEY_ON_NODE_2) == null;
-        }
-
-        assertThat(bothKeysCleared).isTrue();
+        assertThat(sync.get(KEY_ON_NODE_1)).isNull();
+        assertThat(sync.get(KEY_ON_NODE_2)).isNull();
     }
 
     @Test

@@ -32,6 +32,7 @@ import io.lettuce.core.output.KeyStreamingChannel;
  * Advanced reactive and thread-safe Redis Cluster API.
  *
  * @author Mark Paluch
+ * @author Jon Chambers
  * @since 5.0
  */
 public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisClusterReactiveCommands<K, V> {
@@ -144,6 +145,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *
      * @return String simple-string-reply
      * @see RedisServerReactiveCommands#flushallAsync()
+     * @since 5.3.3
      */
     Mono<String> flushallAsync();
 

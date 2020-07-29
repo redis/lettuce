@@ -34,6 +34,7 @@ import io.lettuce.core.output.KeyStreamingChannel;
  * Advanced asynchronous and thread-safe Redis Cluster API.
  *
  * @author Mark Paluch
+ * @author Jon Chambers
  * @since 4.0
  */
 public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsyncCommands<K, V> {
@@ -239,6 +240,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *
      * @return String simple-string-reply
      * @see RedisServerAsyncCommands#flushallAsync()
+     * @since 5.3.3
      */
     RedisFuture<String> flushallAsync();
 
