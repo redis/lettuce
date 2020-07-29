@@ -23,8 +23,8 @@ import io.lettuce.core.SocketOptions;
 import io.lettuce.core.SslOptions;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.ProtocolVersion;
-import io.lettuce.core.protocol.ReadBytesDiscardPolicy;
 
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
@@ -117,7 +117,7 @@ public class ClusterClientOptions extends ClientOptions {
 
         Builder builder = new Builder();
         builder.autoReconnect(clientOptions.isAutoReconnect())
-                .readBytesDiscardPolicy(clientOptions.getReadBytesDiscardPolicy())
+                .decodeBufferPolicy(clientOptions.getDecodeBufferPolicy())
                 .cancelCommandsOnReconnectFailure(clientOptions.isCancelCommandsOnReconnectFailure())
                 .disconnectedBehavior(clientOptions.getDisconnectedBehavior()).scriptCharset(clientOptions.getScriptCharset())
                 .publishOnScheduler(clientOptions.isPublishOnScheduler())
@@ -221,6 +221,12 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         @Override
+        public Builder decodeBufferPolicy(DecodeBufferPolicy decodeBufferPolicy) {
+            super.decodeBufferPolicy(decodeBufferPolicy);
+            return this;
+        }
+
+        @Override
         public Builder publishOnScheduler(boolean publishOnScheduler) {
             super.publishOnScheduler(publishOnScheduler);
             return this;
@@ -262,15 +268,16 @@ public class ClusterClientOptions extends ClientOptions {
             return this;
         }
 
+        /**
+         * @param bufferUsageRatio the buffer usage ratio. Must be between {@code 0} and {@code 2^31-1}, typically a value
+         *        between 1 and 10 representing 50% to 90%.
+         * @return {@code this}
+         * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
+         */
         @Override
+        @Deprecated
         public Builder bufferUsageRatio(int bufferUsageRatio) {
             super.bufferUsageRatio(bufferUsageRatio);
-            return this;
-        }
-
-        @Override
-        public Builder readBytesDiscardPolicy(ReadBytesDiscardPolicy readBytesDiscardPolicy) {
-            super.readBytesDiscardPolicy(readBytesDiscardPolicy);
             return this;
         }
 
@@ -299,8 +306,8 @@ public class ClusterClientOptions extends ClientOptions {
         Builder builder = new Builder();
 
         builder.autoReconnect(isAutoReconnect())
-                .readBytesDiscardPolicy(getReadBytesDiscardPolicy())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
+                .decodeBufferPolicy(getDecodeBufferPolicy())
                 .disconnectedBehavior(getDisconnectedBehavior()).scriptCharset(getScriptCharset())
                 .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
                 .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())

@@ -90,7 +90,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final boolean tracingEnabled;
 
-    private final ReadBytesDiscardPolicy readBytesDiscardPolicy;
+    private final DecodeBufferPolicy decodeBufferPolicy;
 
     private final boolean boundedQueues;
 
@@ -137,7 +137,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         this.tracingEnabled = tracing.isEnabled();
 
-        this.readBytesDiscardPolicy = clientOptions.getReadBytesDiscardPolicy();
+        this.decodeBufferPolicy = clientOptions.getDecodeBufferPolicy();
     }
 
     public Queue<RedisCommand<?, ?, ?>> getStack() {
@@ -587,7 +587,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
                 try {
                     if (!decode(ctx, buffer, pushOutput)) {
-                        readBytesDiscardPolicy.discardReadBytesIfNecessary(buffer);
+                        decodeBufferPolicy.afterPartialDecode(buffer);
                         return;
                     }
 
@@ -612,7 +612,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
                 try {
                     if (!decode(ctx, buffer, command)) {
-                        readBytesDiscardPolicy.discardReadBytesIfNecessary(buffer);
+                        decodeBufferPolicy.afterPartialDecode(buffer);
                         return;
                     }
                 } catch (Exception e) {
@@ -640,10 +640,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 }
                 afterDecode(ctx, command);
             }
-
         }
 
-        readBytesDiscardPolicy.discardReadBytesIfNecessary(buffer);
+        decodeBufferPolicy.afterDecoding(buffer);
     }
 
     protected void notifyPushListeners(PushMessage notification) {
@@ -855,6 +854,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * @param command
      */
     protected void afterDecode(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
+        decodeBufferPolicy.afterCommandDecoded(buffer);
     }
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {

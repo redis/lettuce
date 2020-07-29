@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,53 +15,52 @@
  */
 package io.lettuce.core.protocol;
 
-import io.netty.buffer.ByteBuf;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import io.netty.buffer.ByteBuf;
 
-@ExtendWith({MockitoExtension.class})
-class RatioReadBytesDiscardPolicyTest {
+/**
+ * Unit tests for {@link RatioDecodeBufferPolicy}.
+ *
+ * @author Shaphan
+ */
+@ExtendWith(MockitoExtension.class)
+class RatioDecodeBufferPolicyTest {
+
     @Mock
-    private ByteBuf buffer;
+    ByteBuf buffer;
 
-    private RatioReadBytesDiscardPolicy policy = new RatioReadBytesDiscardPolicy(3);
+    RatioDecodeBufferPolicy policy = new RatioDecodeBufferPolicy(3);
 
     @Test
     void shouldNotDiscardReadBytesWhenDidntReachUsageRatio() {
-        when(buffer.readerIndex()).thenReturn(7);
+
         when(buffer.capacity()).thenReturn(10);
 
-        policy.discardReadBytesIfNecessary(buffer);
+        policy.afterCommandDecoded(buffer);
 
+        verify(buffer).capacity();
+        verify(buffer).readerIndex();
         verifyNoMoreInteractions(buffer);
     }
 
     @Test
     void shouldDiscardReadBytesWhenReachedUsageRatio() {
-        when(buffer.refCnt()).thenReturn(1);
+
         when(buffer.readerIndex()).thenReturn(9);
         when(buffer.capacity()).thenReturn(10);
 
-        policy.discardReadBytesIfNecessary(buffer);
+        policy.afterCommandDecoded(buffer);
 
+        verify(buffer).capacity();
+        verify(buffer).readerIndex();
         verify(buffer).discardReadBytes();
-    }
-
-    @Test
-    void shouldNotDiscardReadBytesWhenReachedUsageRatioButBufferReleased() {
-        when(buffer.refCnt()).thenReturn(0);
-        when(buffer.readerIndex()).thenReturn(9);
-        when(buffer.capacity()).thenReturn(10);
-
-        policy.discardReadBytesIfNecessary(buffer);
-
-        verifyNoMoreInteractions(buffer);
     }
 }

@@ -20,11 +20,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.DecodeBufferPolicies;
+import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.ProtocolVersion;
-import io.lettuce.core.protocol.RatioReadBytesDiscardPolicy;
-import io.lettuce.core.protocol.ReadBytesDiscardPolicy;
 import io.lettuce.core.resource.ClientResources;
-import io.netty.buffer.ByteBuf;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -69,6 +68,8 @@ public class ClientOptions implements Serializable {
 
     private final boolean cancelCommandsOnReconnectFailure;
 
+    private final DecodeBufferPolicy decodeBufferPolicy;
+
     private final boolean publishOnScheduler;
 
     private final boolean suspendReconnectOnProtocolFailure;
@@ -85,12 +86,12 @@ public class ClientOptions implements Serializable {
 
     private final TimeoutOptions timeoutOptions;
 
-    private final ReadBytesDiscardPolicy readBytesDiscardPolicy;
 
     protected ClientOptions(Builder builder) {
         this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
         this.protocolVersion = builder.protocolVersion;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
+        this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.publishOnScheduler = builder.publishOnScheduler;
         this.autoReconnect = builder.autoReconnect;
         this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
@@ -100,7 +101,6 @@ public class ClientOptions implements Serializable {
         this.socketOptions = builder.socketOptions;
         this.sslOptions = builder.sslOptions;
         this.timeoutOptions = builder.timeoutOptions;
-        this.readBytesDiscardPolicy = builder.readBytesDiscardPolicy;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -108,6 +108,7 @@ public class ClientOptions implements Serializable {
         this.protocolVersion = original.getConfiguredProtocolVersion();
         this.autoReconnect = original.isAutoReconnect();
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
+        this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.publishOnScheduler = original.isPublishOnScheduler();
         this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
         this.requestQueueSize = original.getRequestQueueSize();
@@ -116,7 +117,6 @@ public class ClientOptions implements Serializable {
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
         this.timeoutOptions = original.getTimeoutOptions();
-        this.readBytesDiscardPolicy = original.getReadBytesDiscardPolicy();
     }
 
     /**
@@ -160,6 +160,8 @@ public class ClientOptions implements Serializable {
 
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
 
+        private DecodeBufferPolicy decodeBufferPolicy = DecodeBufferPolicies.ratio(DEFAULT_BUFFER_USAGE_RATIO);
+
         private boolean publishOnScheduler = DEFAULT_PUBLISH_ON_SCHEDULER;
 
         private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
@@ -176,7 +178,6 @@ public class ClientOptions implements Serializable {
 
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
 
-        private ReadBytesDiscardPolicy readBytesDiscardPolicy = new RatioReadBytesDiscardPolicy(DEFAULT_BUFFER_USAGE_RATIO);
 
         protected Builder() {
         }
@@ -241,6 +242,39 @@ public class ClientOptions implements Serializable {
          */
         public Builder cancelCommandsOnReconnectFailure(boolean cancelCommandsOnReconnectFailure) {
             this.cancelCommandsOnReconnectFailure = cancelCommandsOnReconnectFailure;
+            return this;
+        }
+
+        /**
+         * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are
+         * discarded during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}.
+         * E.g. setting {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75
+         * percent. See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
+         *
+         * @param bufferUsageRatio the buffer usage ratio. Must be between {@code 0} and {@code 2^31-1}, typically a value
+         *        between 1 and 10 representing 50% to 90%.
+         * @return {@code this}
+         * @since 5.2
+         * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
+         */
+        @Deprecated
+        public Builder bufferUsageRatio(int bufferUsageRatio) {
+            this.decodeBufferPolicy = DecodeBufferPolicies.ratio(bufferUsageRatio);
+            return this;
+        }
+
+        /**
+         * Set the policy to discard read bytes from the decoding aggregation buffer to reclaim memory.
+         *
+         * @param policy the policy to use in {@link io.lettuce.core.protocol.CommandHandler}
+         * @return {@code this}
+         * @since 6.0
+         * @see DecodeBufferPolicies
+         */
+        public Builder decodeBufferPolicy(DecodeBufferPolicy policy) {
+
+            LettuceAssert.notNull(policy, "DecodeBufferPolicy must not be null");
+            this.decodeBufferPolicy = policy;
             return this;
         }
 
@@ -350,37 +384,6 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are
-         * discarded during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}.
-         * E.g. setting {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75
-         * percent. See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
-         *
-         * @param bufferUsageRatio must be between 0 and 2^31-1, typically a value between 1 and 10 representing 50% to
-         *        90%.
-         * @return {@code this}
-         * @since 5.2
-         * @deprecated Calls to {@link ByteBuf#discardReadBytes()} are controlled by corresponding
-         * policies ({@link ReadBytesDiscardPolicy}), {@link RatioReadBytesDiscardPolicy} is one of which.
-         * Please use {@link #readBytesDiscardPolicy(ReadBytesDiscardPolicy)}
-         */
-        public Builder bufferUsageRatio(int bufferUsageRatio) {
-            this.readBytesDiscardPolicy = new RatioReadBytesDiscardPolicy(bufferUsageRatio);
-            return this;
-        }
-
-        /**
-         * Sets the policy managing calls to {@link ByteBuf#discardReadBytes()}
-         * for {@link io.lettuce.core.protocol.CommandHandler#buffer}
-         *
-         * @param readBytesDiscardPolicy the policy to use in {@link io.lettuce.core.protocol.CommandHandler}
-         * @return {@code this}
-         */
-        public Builder readBytesDiscardPolicy(ReadBytesDiscardPolicy readBytesDiscardPolicy) {
-            this.readBytesDiscardPolicy = readBytesDiscardPolicy;
-            return this;
-        }
-
-        /**
          * Create a new instance of {@link ClientOptions}.
          *
          * @return new instance of {@link ClientOptions}
@@ -403,8 +406,9 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
+        builder.autoReconnect(isAutoReconnect())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
+                .decodeBufferPolicy(getDecodeBufferPolicy())
                 .disconnectedBehavior(getDisconnectedBehavior()).scriptCharset(getScriptCharset())
                 .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
                 .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
@@ -468,6 +472,16 @@ public class ClientOptions implements Serializable {
      */
     public boolean isCancelCommandsOnReconnectFailure() {
         return cancelCommandsOnReconnectFailure;
+    }
+
+    /**
+     * Returns the {@link DecodeBufferPolicy} used to reclaim memory.
+     *
+     * @return the {@link DecodeBufferPolicy}.
+     * @since 6.0
+     */
+    public DecodeBufferPolicy getDecodeBufferPolicy() {
+        return decodeBufferPolicy;
     }
 
     /**
@@ -560,21 +574,14 @@ public class ClientOptions implements Serializable {
      * during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}. E.g. setting
      * {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75 percent.
      *
-     * @return the buffer usage ratio, greater than zero if {@link RatioReadBytesDiscardPolicy} is used and zero otherwise
+     * @return zero.
      * @since 5.2
      *
-     * @deprecated Calls to {@link ByteBuf#discardReadBytes()} are controlled by corresponding
-     * policies ({@link ReadBytesDiscardPolicy}), {@link RatioReadBytesDiscardPolicy} is one of which
+     * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
      */
+    @Deprecated
     public int getBufferUsageRatio() {
-        if (readBytesDiscardPolicy instanceof RatioReadBytesDiscardPolicy) {
-            return ((RatioReadBytesDiscardPolicy) readBytesDiscardPolicy).getBufferUsageRatio();
-        }
         return 0;
-    }
-
-    public ReadBytesDiscardPolicy getReadBytesDiscardPolicy() {
-        return readBytesDiscardPolicy;
     }
 
     /**

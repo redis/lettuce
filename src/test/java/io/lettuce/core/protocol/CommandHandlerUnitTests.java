@@ -40,7 +40,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -63,9 +62,12 @@ import io.netty.channel.*;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
+ * Unit tests for {@link CommandHandler}.
+ *
  * @author Mark Paluch
  * @author Jongyeol Choi
  * @author Gavin Cook
+ * @author Shaphan
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -510,9 +512,10 @@ class CommandHandlerUnitTests {
 
     @Test
     void shouldCallPolicyToDiscardReadBytes() throws Exception {
-        ReadBytesDiscardPolicy policy = Mockito.mock(ReadBytesDiscardPolicy.class);
 
-        CommandHandler commandHandler = new CommandHandler(ClientOptions.builder().readBytesDiscardPolicy(policy).build(),
+        DecodeBufferPolicy policy = mock(DecodeBufferPolicy.class);
+
+        CommandHandler commandHandler = new CommandHandler(ClientOptions.builder().decodeBufferPolicy(policy).build(),
                 clientResources, endpoint);
 
         ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
@@ -529,6 +532,6 @@ class CommandHandlerUnitTests {
         commandHandler.channelRead(context, msg);
         commandHandler.channelUnregistered(context);
 
-        verify(policy).discardReadBytesIfNecessary(any());
+        verify(policy).afterCommandDecoded(any());
     }
 }

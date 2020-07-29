@@ -26,6 +26,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.ReplayOutput;
 import io.lettuce.core.protocol.CommandHandler;
+import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.buffer.ByteBuf;
@@ -56,6 +57,8 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
 
     private final Deque<ReplayOutput<K, V>> queue = new ArrayDeque<>();
 
+    private final DecodeBufferPolicy decodeBufferPolicy;
+
     private ResponseHeaderReplayOutput<K, V> replay;
 
     private PubSubOutput<K, V> output;
@@ -75,6 +78,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
 
         this.endpoint = endpoint;
         this.codec = codec;
+        this.decodeBufferPolicy = clientOptions.getDecodeBufferPolicy();
         this.output = new PubSubOutput<>(codec);
     }
 
@@ -94,6 +98,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
         if (output.type() != null && !output.isCompleted()) {
 
             if (!super.decode(buffer, output)) {
+                decodeBufferPolicy.afterPartialDecode(buffer);
                 return;
             }
 
@@ -118,6 +123,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
         while (super.getStack().isEmpty() && buffer.isReadable()) {
 
             if (!super.decode(buffer, output)) {
+                decodeBufferPolicy.afterPartialDecode(buffer);
                 return;
             }
 
@@ -125,8 +131,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
             output = new PubSubOutput<>(codec);
         }
 
-        buffer.discardReadBytes();
-
+        decodeBufferPolicy.afterDecoding(buffer);
     }
 
     @Override
@@ -274,6 +279,8 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
     @Override
     @SuppressWarnings("unchecked")
     protected void afterDecode(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
+
+        super.afterDecode(ctx, command);
 
         if (command.getOutput() instanceof PubSubOutput) {
             doNotifyMessage((PubSubOutput) command.getOutput());

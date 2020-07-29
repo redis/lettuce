@@ -17,12 +17,11 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lettuce.core.protocol.RatioReadBytesDiscardPolicy;
+import java.nio.charset.StandardCharsets;
+
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.protocol.ProtocolVersion;
-
-import java.nio.charset.StandardCharsets;
 
 /**
  * Unit tests for {@link ClientOptions}.
@@ -57,12 +56,10 @@ class ClientOptionsUnitTests {
     }
 
     void checkAssertions(ClientOptions sut) {
-        assertThat(sut.isAutoReconnect()).isEqualTo(true);
-        assertThat(sut.isCancelCommandsOnReconnectFailure()).isEqualTo(false);
+        assertThat(sut.isAutoReconnect()).isTrue();
+        assertThat(sut.isCancelCommandsOnReconnectFailure()).isFalse();
         assertThat(sut.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
-        assertThat(sut.isSuspendReconnectOnProtocolFailure()).isEqualTo(false);
+        assertThat(sut.isSuspendReconnectOnProtocolFailure()).isFalse();
         assertThat(sut.getDisconnectedBehavior()).isEqualTo(ClientOptions.DisconnectedBehavior.DEFAULT);
-        assertThat(sut.getBufferUsageRatio()).isEqualTo(ClientOptions.DEFAULT_BUFFER_USAGE_RATIO);
-        assertThat(sut.getReadBytesDiscardPolicy()).isInstanceOf(RatioReadBytesDiscardPolicy.class);
     }
 }
