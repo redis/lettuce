@@ -41,6 +41,8 @@ import io.lettuce.test.resource.TestClientResources;
 import io.netty.channel.group.ChannelGroup;
 
 /**
+ * Integration tests for {@link BoundedAsyncPool}.
+ *
  * @author Mark Paluch
  */
 class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
@@ -70,6 +72,28 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
 
         BoundedAsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
                 .createBoundedObjectPool(() -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
+
+        borrowAndReturn(pool);
+        borrowAndClose(pool);
+        borrowAndCloseAsync(pool);
+
+        Futures.await(pool.release(Futures.get(pool.acquire()).sync().getStatefulConnection()));
+        Futures.await(pool.release(Futures.get(pool.acquire()).async().getStatefulConnection()));
+
+        assertThat(channels).hasSize(1);
+
+        pool.close();
+
+        assertThat(channels).isEmpty();
+    }
+
+    @Test
+    void asyncPoolWithAsyncCreationWorkWithWrappedConnections() {
+
+        BoundedAsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
+                .createBoundedObjectPoolAsync(() -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create(),
+                        true)
+                .toCompletableFuture().join();
 
         borrowAndReturn(pool);
         borrowAndClose(pool);
