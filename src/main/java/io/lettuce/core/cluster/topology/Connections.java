@@ -27,6 +27,8 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  *
@@ -35,6 +37,8 @@ import io.lettuce.core.protocol.CommandType;
  * @author Xujs
  */
 class Connections {
+
+    private final static InternalLogger LOG = InternalLoggerFactory.getInstance(Connections.class);
 
     private final Map<RedisURI, StatefulRedisConnection<String, String>> connections;
 
@@ -187,7 +191,17 @@ class Connections {
             synchronized (discoveredConnections.connections) {
 
                 result.putAll(this.connections);
-                result.putAll(discoveredConnections.connections);
+
+                for (RedisURI redisURI : discoveredConnections.connections.keySet()) {
+
+                    StatefulRedisConnection<String, String> existing = result.put(redisURI,
+                            discoveredConnections.connections.get(redisURI));
+
+                    if (existing != null) {
+                        LOG.error("Duplicate topology refresh connection for " + redisURI);
+                        existing.closeAsync();
+                    }
+                }
             }
         }
 
