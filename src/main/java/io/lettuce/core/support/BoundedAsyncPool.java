@@ -20,9 +20,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 
@@ -77,11 +79,26 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
     /**
      * Create a new {@link BoundedAsyncPool} given {@link BasePoolConfig} and {@link AsyncObjectFactory}. The factory creates
      * idle objects upon construction and requires {@link #closeAsync() termination} once it's no longer in use.
+     * <p>
+     * Please note that pre-initialization cannot be awaited when using this constructor. Please use
+     * {@link #create(AsyncObjectFactory, BoundedPoolConfig)} instead.
      *
      * @param factory must not be {@code null}.
      * @param poolConfig must not be {@code null}.
      */
     public BoundedAsyncPool(AsyncObjectFactory<T> factory, BoundedPoolConfig poolConfig) {
+        this(factory, poolConfig, true);
+    }
+
+    /**
+     * Create a new {@link BoundedAsyncPool} given {@link BasePoolConfig} and {@link AsyncObjectFactory}.
+     *
+     * @param factory must not be {@code null}.
+     * @param poolConfig must not be {@code null}.
+     * @param createIdle whether to pre-initialize the pool.
+     * @since 5.3.2
+     */
+    BoundedAsyncPool(AsyncObjectFactory<T> factory, BoundedPoolConfig poolConfig, boolean createIdle) {
 
         super(poolConfig);
 
@@ -96,19 +113,53 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
         this.cache = new ConcurrentLinkedQueue<>();
         this.all = new ConcurrentLinkedQueue<>();
 
-        createIdle();
+        if (createIdle) {
+            createIdle();
+        }
     }
 
-    private void createIdle() {
+    /**
+     * Create and initialize {@link BoundedAsyncPool} asynchronously.
+     *
+     * @param factory must not be {@code null}.
+     * @param poolConfig must not be {@code null}.
+     * @param <T> object type that is managed by the pool.
+     * @return a {@link CompletionStage} that completes with the {@link BoundedAsyncPool} when created and pre-initialized
+     *         successfully. Completes exceptionally if the pool initialization failed.
+     * @since 5.3.3
+     */
+    public static <T> CompletionStage<BoundedAsyncPool<T>> create(AsyncObjectFactory<T> factory, BoundedPoolConfig poolConfig) {
+
+        BoundedAsyncPool<T> pool = new BoundedAsyncPool<>(factory, poolConfig, false);
+
+        CompletableFuture<BoundedAsyncPool<T>> future = new CompletableFuture<>();
+
+        pool.createIdle().whenComplete((v, throwable) -> {
+
+            if (throwable == null) {
+                future.complete(pool);
+            } else {
+                pool.closeAsync().whenComplete((v1, throwable1) -> {
+                    future.completeExceptionally(new RedisConnectionException("Could not create pool", throwable));
+                });
+            }
+        });
+
+        return future;
+    }
+
+    @SuppressWarnings("rawtypes")
+    CompletableFuture<Void> createIdle() {
 
         int potentialIdle = getMinIdle() - getIdle();
         if (potentialIdle <= 0 || !isPoolActive()) {
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
         int totalLimit = getAvailableCapacity();
         int toCreate = Math.min(Math.max(0, totalLimit), potentialIdle);
 
+        CompletableFuture[] futures = new CompletableFuture[toCreate];
         for (int i = 0; i < toCreate; i++) {
 
             if (getAvailableCapacity() <= 0) {
@@ -116,6 +167,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
             }
 
             CompletableFuture<T> future = new CompletableFuture<>();
+            futures[i] = future;
             makeObject0(future);
 
             future.thenAccept(it -> {
@@ -128,6 +180,8 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
                 }
             });
         }
+
+        return CompletableFuture.allOf(futures);
     }
 
     private int getAvailableCapacity() {

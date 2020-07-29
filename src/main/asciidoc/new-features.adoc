@@ -16,6 +16,7 @@ Use methods accepting `Duration` instead.
 * `xpending` methods return now `List<PendingMessage>` and `PendingMessages`
 * Spring support removed.
 Use Spring Data Redis for a seamless Spring integration with Lettuce.
+* `AsyncConnectionPoolSupport.createBoundedObjectPool(…)` methods are now blocking to await pool initialization.
 
 [[new-features.5-3-0]]
 == What's new in Lettuce 5.3

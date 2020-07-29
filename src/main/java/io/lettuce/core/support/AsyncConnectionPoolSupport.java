@@ -21,7 +21,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.support.ConnectionWrapping.HasTargetConnection;
 import io.lettuce.core.support.ConnectionWrapping.Origin;
@@ -79,8 +81,12 @@ public abstract class AsyncConnectionPoolSupport {
     }
 
     /**
-     * Creates a new {@link BoundedAsyncPool} using the {@link Supplier}. Allocated instances are wrapped and must not be
-     * returned with {@link AsyncPool#release(Object)}.
+     * Create and initialize asynchronously a new {@link BoundedAsyncPool} using the {@link Supplier}. Allocated instances are
+     * wrapped and must not be returned with {@link AsyncPool#release(Object)}.
+     * <p>
+     * Since Lettuce 6, this method is blocking as it awaits pool initialization (creation of idle connections).Use
+     * {@link #createBoundedObjectPoolAsync(Supplier, BoundedPoolConfig)} to obtain a {@link CompletionStage} for non-blocking
+     * synchronization.
      *
      * @param connectionSupplier must not be {@code null}.
      * @param config must not be {@code null}.
@@ -93,7 +99,11 @@ public abstract class AsyncConnectionPoolSupport {
     }
 
     /**
-     * Creates a new {@link BoundedAsyncPool} using the {@link Supplier}.
+     * Create and initialize asynchronously a new {@link BoundedAsyncPool} using the {@link Supplier}.
+     * <p>
+     * Since Lettuce 6, this method is blocking as it awaits pool initialization (creation of idle connections).Use
+     * {@link #createBoundedObjectPoolAsync(Supplier, BoundedPoolConfig, boolean)} to obtain a {@link CompletionStage} for
+     * non-blocking synchronization.
      *
      * @param connectionSupplier must not be {@code null}.
      * @param config must not be {@code null}.
@@ -103,8 +113,64 @@ public abstract class AsyncConnectionPoolSupport {
      * @param <T> connection type.
      * @return the connection pool.
      */
-    @SuppressWarnings("unchecked")
     public static <T extends StatefulConnection<?, ?>> BoundedAsyncPool<T> createBoundedObjectPool(
+            Supplier<CompletionStage<T>> connectionSupplier, BoundedPoolConfig config, boolean wrapConnections) {
+
+        try {
+            return createBoundedObjectPoolAsync(connectionSupplier, config, wrapConnections).toCompletableFuture().join();
+        } catch (Exception e) {
+            throw Exceptions.bubble(Exceptions.unwrap(e));
+        }
+    }
+
+    /**
+     * Create and initialize asynchronously a new {@link BoundedAsyncPool} using the {@link Supplier}. Allocated instances are
+     * wrapped and must not be returned with {@link AsyncPool#release(Object)}.
+     *
+     * @param connectionSupplier must not be {@code null}.
+     * @param config must not be {@code null}.
+     * @param <T> connection type.
+     * @return {@link CompletionStage} emitting the connection pool upon completion.
+     * @since 5.3.3
+     */
+    public static <T extends StatefulConnection<?, ?>> CompletionStage<BoundedAsyncPool<T>> createBoundedObjectPoolAsync(
+            Supplier<CompletionStage<T>> connectionSupplier, BoundedPoolConfig config) {
+        return createBoundedObjectPoolAsync(connectionSupplier, config, true);
+    }
+
+    /**
+     * Create and initialize asynchronously a new {@link BoundedAsyncPool} using the {@link Supplier}.
+     *
+     * @param connectionSupplier must not be {@code null}.
+     * @param config must not be {@code null}.
+     * @param wrapConnections {@code false} to return direct connections that need to be returned to the pool using
+     *        {@link AsyncPool#release(Object)}. {@code true} to return wrapped connection that are returned to the pool when
+     *        invoking {@link StatefulConnection#close()}/{@link StatefulConnection#closeAsync()}.
+     * @param <T> connection type.
+     * @return {@link CompletionStage} emitting the connection pool upon completion.
+     * @since 5.3.3
+     */
+    public static <T extends StatefulConnection<?, ?>> CompletionStage<BoundedAsyncPool<T>> createBoundedObjectPoolAsync(
+            Supplier<CompletionStage<T>> connectionSupplier, BoundedPoolConfig config, boolean wrapConnections) {
+
+        BoundedAsyncPool<T> pool = doCreatePool(connectionSupplier, config, wrapConnections);
+        CompletableFuture<BoundedAsyncPool<T>> future = new CompletableFuture<>();
+
+        pool.createIdle().whenComplete((v, throwable) -> {
+
+            if (throwable == null) {
+                future.complete(pool);
+            } else {
+                pool.closeAsync().whenComplete((v1, throwable1) -> {
+                    future.completeExceptionally(new RedisConnectionException("Could not create pool", throwable));
+                });
+            }
+        });
+
+        return future;
+    }
+
+    protected static <T extends StatefulConnection<?, ?>> BoundedAsyncPool<T> doCreatePool(
             Supplier<CompletionStage<T>> connectionSupplier, BoundedPoolConfig config, boolean wrapConnections) {
 
         LettuceAssert.notNull(connectionSupplier, "Connection supplier must not be null");
@@ -112,7 +178,7 @@ public abstract class AsyncConnectionPoolSupport {
 
         AtomicReference<Origin<T>> poolRef = new AtomicReference<>();
 
-        BoundedAsyncPool<T> pool = new BoundedAsyncPool<T>(new RedisPooledObjectFactory<T>(connectionSupplier), config) {
+        BoundedAsyncPool<T> pool = new BoundedAsyncPool<T>(new RedisPooledObjectFactory<T>(connectionSupplier), config, false) {
 
             @Override
             public CompletableFuture<T> acquire() {
@@ -127,6 +193,7 @@ public abstract class AsyncConnectionPoolSupport {
             }
 
             @Override
+            @SuppressWarnings("unchecked")
             public CompletableFuture<Void> release(T object) {
 
                 if (wrapConnections && object instanceof HasTargetConnection) {
@@ -139,7 +206,6 @@ public abstract class AsyncConnectionPoolSupport {
         };
 
         poolRef.set(new AsyncPoolWrapper<>(pool));
-
         return pool;
     }
 
@@ -169,7 +235,6 @@ public abstract class AsyncConnectionPoolSupport {
         public CompletableFuture<Boolean> validate(T object) {
             return CompletableFuture.completedFuture(object.isOpen());
         }
-
     }
 
     private static class AsyncPoolWrapper<T> implements Origin<T> {
