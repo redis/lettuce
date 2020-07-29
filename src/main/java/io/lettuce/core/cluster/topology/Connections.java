@@ -30,6 +30,8 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * @author Mark Paluch
@@ -37,6 +39,8 @@ import io.lettuce.core.resource.ClientResources;
  * @author Xujs
  */
 class Connections {
+
+    private final static InternalLogger LOG = InternalLoggerFactory.getInstance(Connections.class);
 
     private final ClientResources clientResources;
 

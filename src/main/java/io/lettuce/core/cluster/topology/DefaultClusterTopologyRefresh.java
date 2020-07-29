@@ -25,7 +25,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -358,24 +361,15 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         return !eventExecutors.isShuttingDown();
     }
 
-    private static <E> Set<E> difference(Set<E> set1, Set<E> set2) {
+    private static Set<RedisURI> difference(Set<RedisURI> allKnown, Set<RedisURI> seed) {
 
-        Set<E> result = new HashSet<>(set1.size());
+       Set<RedisURI> result = new TreeSet<>(TopologyComparators.RedisURIComparator.INSTANCE);
 
-        for (E e1 : set1) {
-            if (!set2.contains(e1)) {
-                result.add(e1);
+        for (RedisURI e : allKnown) {
+            if (!seed.contains(e)) {
+                result.add(e);
             }
         }
-
-        List<E> list = new ArrayList<>(set2.size());
-        for (E e : set2) {
-            if (!set1.contains(e)) {
-                list.add(e);
-            }
-        }
-
-        result.addAll(list);
 
         return result;
     }
@@ -405,10 +399,14 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
 
     static class ConnectionTracker {
 
-        private Map<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> connections = new LinkedHashMap<>();
+        private final Map<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> connections = new LinkedHashMap<>();
 
         public void addConnection(RedisURI uri, CompletableFuture<StatefulRedisConnection<String, String>> future) {
-            connections.put(uri, future);
+            CompletableFuture<StatefulRedisConnection<String, String>> existing = connections.put(uri, future);
+
+            if(existing != null){
+                System.out.println("faiiil!1");
+            }
         }
 
         @SuppressWarnings("rawtypes")
