@@ -98,9 +98,9 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
             return;
         }
 
-        CharsetEncoder encoder = CharsetUtil.encoder(charset);
-        int length = (int) ((double) str.length() * encoder.maxBytesPerChar());
+        int length = calculateStringBytes(str, false);
         target.ensureWritable(length);
+        CharsetEncoder encoder = CharsetUtil.encoder(charset);
         try {
             final ByteBuffer dstBuf = target.nioBuffer(0, length);
             final int pos = dstBuf.position();
@@ -122,8 +122,7 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
     public int estimateSize(Object keyOrValue) {
 
         if (keyOrValue instanceof String) {
-            CharsetEncoder encoder = CharsetUtil.encoder(charset);
-            return (int) (encoder.averageBytesPerChar() * ((String) keyOrValue).length());
+            return calculateStringBytes((String) keyOrValue, true);
         }
         return 0;
     }
@@ -164,8 +163,7 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
             return ByteBuffer.wrap(EMPTY);
         }
 
-        CharsetEncoder encoder = CharsetUtil.encoder(charset);
-        ByteBuffer buffer = ByteBuffer.allocate((int) (encoder.maxBytesPerChar() * key.length()));
+        ByteBuffer buffer = ByteBuffer.allocate(calculateStringBytes(key, false));
 
         ByteBuf byteBuf = Unpooled.wrappedBuffer(buffer);
         byteBuf.clear();
@@ -174,5 +172,20 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
 
         return buffer;
     }
-
+    
+    /**
+     * Calculate either the maximum number of bytes a string may occupy in a given character set or
+     * the average number of bytes it may hold.
+     * @param encoder the character set encoder (from which char to byte count association is inferred)
+     * @param value the actual value (must be not null)
+     * @param estimate whether the caller needs for an estimation or an actual value needed by buffer allocation
+     * @return the calculated string byte count
+     */
+    int calculateStringBytes(String value, boolean estimate) {
+        CharsetEncoder encoder = CharsetUtil.encoder(charset);
+        if (estimate) {
+            return (int) (encoder.averageBytesPerChar() * value.length());
+        }
+        return (int) encoder.maxBytesPerChar() * value.length();
+    }
 }
