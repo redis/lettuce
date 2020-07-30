@@ -18,7 +18,6 @@ package io.lettuce.core.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
@@ -26,10 +25,12 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.protocol.LettuceCharsets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.util.CharsetUtil;
 
 /**
+ * Unit tests for {@link StringCodec}.
+ *
  * @author Mark Paluch
+ * @author Dimitris Mandalidis
  */
 class StringCodecUnitTests {
 
@@ -121,12 +122,13 @@ class StringCodecUnitTests {
     }
 
     @Test
-    public void calculateStringSize() {
-        assertThat(new StringCodec(StandardCharsets.UTF_8).calculateStringBytes(teststring, false))
+    void sizeOf() {
+
+        assertThat(new StringCodec(StandardCharsets.UTF_8).sizeOf(teststring, false))
             .isEqualTo(teststring.length() * 3);
-        assertThat(new StringCodec(StandardCharsets.US_ASCII).calculateStringBytes(teststring, false))
+        assertThat(new StringCodec(StandardCharsets.US_ASCII).sizeOf(teststring, false))
             .isEqualTo(teststring.length());
-        assertThat(new StringCodec(StandardCharsets.ISO_8859_1).calculateStringBytes(teststring, false))
+        assertThat(new StringCodec(StandardCharsets.ISO_8859_1).sizeOf(teststring, false))
             .isEqualTo(teststring.length());
     }
 }

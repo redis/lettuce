@@ -34,6 +34,7 @@ import io.netty.util.CharsetUtil;
  * {@link Charset}. It accepts provided {@link ByteBuf buffers} so it does not need to allocate buffers during encoding.
  *
  * @author Mark Paluch
+ * @author Dimitris Mandalidis
  * @since 4.3
  */
 public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder<String, String> {
@@ -45,6 +46,10 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
     private static final byte[] EMPTY = new byte[0];
 
     private final Charset charset;
+
+    private final float averageBytesPerChar;
+
+    private final float maxBytesPerChar;
 
     private final boolean ascii;
 
@@ -69,6 +74,10 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
 
         this.charset = charset;
 
+        CharsetEncoder encoder = CharsetUtil.encoder(charset);
+        this.averageBytesPerChar = encoder.averageBytesPerChar();
+        this.maxBytesPerChar = encoder.maxBytesPerChar();
+
         if (charset.name().equals("UTF-8")) {
             utf8 = true;
             ascii = false;
@@ -86,47 +95,11 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
         encode(key, target);
     }
 
-    public void encode(String str, ByteBuf target) {
-
-        if (str == null) {
-            return;
-        }
-
-        if (utf8) {
-            ByteBufUtil.writeUtf8(target, str);
-            return;
-        }
-
-        if (ascii) {
-            ByteBufUtil.writeAscii(target, str);
-            return;
-        }
-
-        int length = calculateStringBytes(str, false);
-        target.ensureWritable(length);
-        CharsetEncoder encoder = CharsetUtil.encoder(charset);
-        try {
-            final ByteBuffer dstBuf = target.nioBuffer(0, length);
-            final int pos = dstBuf.position();
-            CoderResult cr = encoder.encode(CharBuffer.wrap(str), dstBuf, true);
-            if (!cr.isUnderflow()) {
-                cr.throwException();
-            }
-            cr = encoder.flush(dstBuf);
-            if (!cr.isUnderflow()) {
-                cr.throwException();
-            }
-            target.writerIndex(target.writerIndex() + dstBuf.position() - pos);
-        } catch (CharacterCodingException x) {
-            throw new IllegalStateException(x);
-        }
-    }
-
     @Override
     public int estimateSize(Object keyOrValue) {
 
         if (keyOrValue instanceof String) {
-            return calculateStringBytes((String) keyOrValue, true);
+            return sizeOf((String) keyOrValue, true);
         }
         return 0;
     }
@@ -163,11 +136,12 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
      * @return
      */
     private ByteBuffer encodeAndAllocateBuffer(String key) {
+
         if (key == null) {
             return ByteBuffer.wrap(EMPTY);
         }
 
-        ByteBuffer buffer = ByteBuffer.allocate(calculateStringBytes(key, false));
+        ByteBuffer buffer = ByteBuffer.allocate(sizeOf(key, false));
 
         ByteBuf byteBuf = Unpooled.wrappedBuffer(buffer);
         byteBuf.clear();
@@ -176,20 +150,55 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
 
         return buffer;
     }
-    
+
+    public void encode(String str, ByteBuf target) {
+
+        if (str == null) {
+            return;
+        }
+
+        if (utf8) {
+            ByteBufUtil.writeUtf8(target, str);
+            return;
+        }
+
+        if (ascii) {
+            ByteBufUtil.writeAscii(target, str);
+            return;
+        }
+
+        CharsetEncoder encoder = CharsetUtil.encoder(charset);
+        int length = sizeOf(str, false);
+        target.ensureWritable(length);
+
+        try {
+            ByteBuffer dstBuf = target.nioBuffer(0, length);
+            int pos = dstBuf.position();
+
+            CoderResult cr = encoder.encode(CharBuffer.wrap(str), dstBuf, true);
+            if (!cr.isUnderflow()) {
+                cr.throwException();
+            }
+            cr = encoder.flush(dstBuf);
+            if (!cr.isUnderflow()) {
+                cr.throwException();
+            }
+            target.writerIndex(target.writerIndex() + dstBuf.position() - pos);
+        } catch (CharacterCodingException x) {
+            throw new IllegalStateException(x);
+        }
+    }
+
     /**
      * Calculate either the maximum number of bytes a string may occupy in a given character set or
      * the average number of bytes it may hold.
-     * @param encoder the character set encoder (from which char to byte count association is inferred)
-     * @param value the actual value (must be not null)
-     * @param estimate whether the caller needs for an estimation or an actual value needed by buffer allocation
-     * @return the calculated string byte count
      */
-    int calculateStringBytes(String value, boolean estimate) {
-        CharsetEncoder encoder = CharsetUtil.encoder(charset);
+    int sizeOf(String value, boolean estimate) {
+
         if (estimate) {
-            return (int) (encoder.averageBytesPerChar() * value.length());
+            return (int) (averageBytesPerChar * value.length());
         }
-        return (int) encoder.maxBytesPerChar() * value.length();
+
+        return (int) (maxBytesPerChar * value.length());
     }
 }
