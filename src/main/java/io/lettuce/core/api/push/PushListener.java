@@ -16,11 +16,14 @@
 package io.lettuce.core.api.push;
 
 /**
- * Interface to be implemented by push message listeners. Requires Redis 6+ using RESP3.
+ * Interface to be implemented by push message listeners that are interested in listening to {@link PushMessage}. Requires Redis
+ * 6+ using RESP3.
  *
  * @author Mark Paluch
  * @since 6.0
+ * @see PushMessage
  */
+@FunctionalInterface
 public interface PushListener {
 
     /**

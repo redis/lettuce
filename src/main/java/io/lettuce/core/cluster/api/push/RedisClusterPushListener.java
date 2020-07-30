@@ -19,11 +19,15 @@ import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 
 /**
- * Interface to be implemented by push message listeners.
+ * Interface to be implemented by push message listeners that are interested in listening to {@link PushMessage} using Redis
+ * Cluster.
  *
  * @author Mark Paluch
  * @since 6.0
+ * @see PushMessage
+ * @see io.lettuce.core.api.push.PushListener
  */
+@FunctionalInterface
 public interface RedisClusterPushListener {
 
     /**
