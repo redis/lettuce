@@ -601,7 +601,18 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         }
 
         return closeFuture;
+    }
 
+    /**
+     * Disconnect the channel.
+     */
+    public void disconnect() {
+
+        Channel channel = this.channel;
+
+        if (channel != null && channel.isOpen()) {
+            channel.disconnect();
+        }
     }
 
     private Channel getOpenChannel() {

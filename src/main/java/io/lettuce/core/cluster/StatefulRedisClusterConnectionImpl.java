@@ -72,7 +72,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     private final ClusterConnectionState connectionState = new ClusterConnectionState();
 
-    private Partitions partitions;
+    private volatile Partitions partitions;
 
     private volatile CommandSet commandSet;
 
@@ -189,6 +189,13 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port);
     }
 
+    @Override
+    public void activated() {
+        super.activated();
+
+        async.clusterMyId().thenAccept(connectionState::setNodeId);
+    }
+
     ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {
         return (ClusterDistributionChannelWriter) super.getChannelWriter();
     }
@@ -258,7 +265,19 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     public void setPartitions(Partitions partitions) {
+
+        LettuceAssert.notNull(partitions, "Partitions must not be null");
+
         this.partitions = partitions;
+
+        String nodeId = connectionState.getNodeId();
+        if (nodeId != null && expireStaleConnections()) {
+
+            if (partitions.getPartitionByNodeId(nodeId) == null) {
+                getClusterDistributionChannelWriter().disconnectDefaultEndpoint();
+            }
+        }
+
         getClusterDistributionChannelWriter().setPartitions(partitions);
     }
 
@@ -283,6 +302,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     static class ClusterConnectionState extends ConnectionState {
 
+        private volatile String nodeId;
+
         @Override
         protected void setUserNamePassword(List<char[]> args) {
             super.setUserNamePassword(args);
@@ -298,6 +319,26 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             super.setReadOnly(readOnly);
         }
 
+        public String getNodeId() {
+            return nodeId;
+        }
+
+        public void setNodeId(String nodeId) {
+            this.nodeId = nodeId;
+        }
+
+    }
+
+    private boolean expireStaleConnections() {
+
+        ClusterClientOptions options = getClusterClientOptions();
+        return options == null || options.isCloseStaleConnections();
+    }
+
+    private ClusterClientOptions getClusterClientOptions() {
+
+        ClientOptions options = getOptions();
+        return options instanceof ClusterClientOptions ? (ClusterClientOptions) options : null;
     }
 
 }

@@ -16,6 +16,7 @@
 package io.lettuce.core.cluster;
 
 import static io.lettuce.core.cluster.ClusterTestSettings.createSlots;
+import static io.lettuce.core.cluster.ClusterTestSettings.port5;
 import static io.lettuce.core.cluster.ClusterTestUtil.getNodeId;
 import static io.lettuce.core.cluster.ClusterTestUtil.getOwnPartition;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -346,7 +347,73 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
-    public void expireStaleNodeIdConnections() throws Exception {
+    public void expireStaleDefaultConnection() {
+
+        ClusterSetup.setup2Masters(clusterRule);
+
+        RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(host, port5).build());
+        redisClusterClient.setOptions(ClusterClientOptions.builder()
+                .topologyRefreshOptions(ClusterTopologyRefreshOptions.builder().dynamicRefreshSources(false).build()).build());
+
+        StatefulRedisClusterConnectionImpl<String, String> connection = (StatefulRedisClusterConnectionImpl<String, String>) redisClusterClient
+                .connect();
+        String firstMaster = connection.sync().clusterMyId();
+
+        RedisClusterNode firstMasterNode = connection.getPartitions().getPartitionByNodeId(firstMaster);
+
+        assertThat(firstMasterNode.getUri().getPort()).isEqualTo(port5);
+
+        redis2.clusterForget(redis1.clusterMyId());
+        redis1.clusterForget(redis2.clusterMyId());
+
+        Partitions partitions = ClusterPartitionParser.parse(redis2.clusterNodes());
+        connection.setPartitions(partitions);
+
+        Wait.untilTrue(connection::isOpen).waitOrTimeout();
+
+        String secondMaster = connection.sync().clusterMyId();
+        assertThat(secondMaster).isEqualTo(redis2.clusterMyId());
+        connection.close();
+
+        FastShutdown.shutdown(redisClusterClient);
+    }
+
+    @Test
+    public void expireStaleDefaultPubSubConnection() {
+
+        ClusterSetup.setup2Masters(clusterRule);
+
+        RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(host, port5).build());
+        redisClusterClient.setOptions(ClusterClientOptions.builder()
+                .topologyRefreshOptions(ClusterTopologyRefreshOptions.builder().dynamicRefreshSources(false).build()).build());
+
+        StatefulRedisClusterPubSubConnectionImpl<String, String> connection = (StatefulRedisClusterPubSubConnectionImpl<String, String>) redisClusterClient
+                .connectPubSub();
+        String firstMaster = connection.sync().clusterMyId();
+
+        RedisClusterNode firstMasterNode = connection.getPartitions().getPartitionByNodeId(firstMaster);
+
+        assertThat(firstMasterNode.getUri().getPort()).isEqualTo(port5);
+
+        redis2.clusterForget(redis1.clusterMyId());
+        redis1.clusterForget(redis2.clusterMyId());
+
+        Partitions partitions = ClusterPartitionParser.parse(redis2.clusterNodes());
+        connection.setPartitions(partitions);
+
+        Wait.untilTrue(connection::isOpen).waitOrTimeout();
+
+        String secondMaster = connection.sync().clusterMyId();
+        assertThat(secondMaster).isEqualTo(redis2.clusterMyId());
+        connection.close();
+
+        FastShutdown.shutdown(redisClusterClient);
+    }
+
+    @Test
+    public void expireStaleNodeIdConnections() {
 
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
@@ -379,7 +446,6 @@ public class RedisClusterSetupTest extends TestSupport {
         Wait.untilEquals(1, () -> clusterConnectionProvider.getConnectionCount()).waitOrTimeout();
 
         clusterConnection.getStatefulConnection().close();
-
     }
 
     private void assertRoutedExecution(RedisClusterAsyncCommands<String, String> clusterConnection) {

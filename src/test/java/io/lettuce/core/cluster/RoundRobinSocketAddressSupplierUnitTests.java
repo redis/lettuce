@@ -74,7 +74,7 @@ class RoundRobinSocketAddressSupplierUnitTests {
     @Test
     void noOffset() {
 
-        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
+        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(() -> partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);
 
         assertThat(sut.get()).isEqualTo(addr1);
@@ -88,7 +88,7 @@ class RoundRobinSocketAddressSupplierUnitTests {
     @Test
     void partitionTableChangesNewNode() {
 
-        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
+        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(() -> partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);
 
         assertThat(sut.get()).isEqualTo(addr1);
@@ -106,7 +106,7 @@ class RoundRobinSocketAddressSupplierUnitTests {
     @Test
     void partitionTableChangesNodeRemoved() {
 
-        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
+        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(() -> partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);
 
         assertThat(sut.get()).isEqualTo(addr1);

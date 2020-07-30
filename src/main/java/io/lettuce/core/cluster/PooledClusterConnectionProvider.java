@@ -64,6 +64,8 @@ class PooledClusterConnectionProvider<K, V>
 
     private final RedisClusterClient redisClusterClient;
 
+    private final ClusterClientOptions options;
+
     private final ClusterNodeConnectionFactory<K, V> connectionFactory;
 
     private final RedisChannelWriter clusterWriter;
@@ -85,6 +87,7 @@ class PooledClusterConnectionProvider<K, V>
 
         this.redisCodec = redisCodec;
         this.redisClusterClient = redisClusterClient;
+        this.options = redisClusterClient.getClusterClientOptions();
         this.clusterWriter = clusterWriter;
         this.clusterEventListener = clusterEventListener;
         this.connectionFactory = new NodeConnectionPostProcessor(getConnectionFactory(redisClusterClient));
@@ -517,9 +520,13 @@ class PooledClusterConnectionProvider<K, V>
 
         resetFastConnectionCache();
 
-        if (redisClusterClient.expireStaleConnections()) {
+        if (expireStaleConnections()) {
             closeStaleConnections();
         }
+    }
+
+    private boolean expireStaleConnections() {
+        return options == null || options.isCloseStaleConnections();
     }
 
     /**

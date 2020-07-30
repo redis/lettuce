@@ -380,6 +380,10 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         return Futures.allOf(futures);
     }
 
+    public void disconnectDefaultEndpoint() {
+        ((DefaultEndpoint) defaultWriter).disconnect();
+    }
+
     @Override
     public void setConnectionFacade(ConnectionFacade redisChannelHandler) {
         defaultWriter.setConnectionFacade(redisChannelHandler);

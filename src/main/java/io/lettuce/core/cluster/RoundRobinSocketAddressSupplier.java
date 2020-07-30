@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
@@ -35,15 +36,15 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RoundRobinSocketAddressSupplier.class);
 
-    private final Collection<RedisClusterNode> partitions;
+    private final Supplier<Partitions> partitions;
 
     private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction;
 
     private final ClientResources clientResources;
 
-    private RoundRobin<RedisClusterNode> roundRobin;
+    private final RoundRobin<RedisClusterNode> roundRobin;
 
-    public RoundRobinSocketAddressSupplier(Collection<RedisClusterNode> partitions,
+    public RoundRobinSocketAddressSupplier(Supplier<Partitions> partitions,
             Function<? extends Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction,
             ClientResources clientResources) {
 
@@ -54,21 +55,22 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
         this.roundRobin = new RoundRobin<>();
         this.sortFunction = (Function) sortFunction;
         this.clientResources = clientResources;
-        resetRoundRobin();
+        resetRoundRobin(partitions.get());
     }
 
     @Override
     public SocketAddress get() {
 
+        Partitions partitions = this.partitions.get();
         if (!roundRobin.isConsistent(partitions)) {
-            resetRoundRobin();
+            resetRoundRobin(partitions);
         }
 
         RedisClusterNode redisClusterNode = roundRobin.next();
         return getSocketAddress(redisClusterNode);
     }
 
-    protected void resetRoundRobin() {
+    protected void resetRoundRobin(Partitions partitions) {
         roundRobin.rebuild(sortFunction.apply(partitions));
     }
 

@@ -606,8 +606,6 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         logger.debug("connectCluster(" + initialUris + ")");
 
-        Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
-
         DefaultEndpoint endpoint = new DefaultEndpoint(getClusterClientOptions(), getResources());
         RedisChannelWriter writer = endpoint;
 
@@ -630,7 +628,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(getClusterClientOptions(), getResources(),
                 endpoint);
-
+        Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(connection::getPartitions,
+                TopologyComparators::sortByClientCount);
         Mono<StatefulRedisClusterConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
 
@@ -690,8 +689,6 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         logger.debug("connectClusterPubSub(" + initialUris + ")");
 
-        Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(TopologyComparators::sortByClientCount);
-
         PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<>(getClusterClientOptions(), getResources());
         RedisChannelWriter writer = endpoint;
 
@@ -713,7 +710,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
                 getResources(), codec, endpoint);
-
+        Mono<SocketAddress> socketAddressSupplier = getSocketAddressSupplier(connection::getPartitions,
+                TopologyComparators::sortByClientCount);
         Mono<StatefulRedisClusterPubSubConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
 
@@ -1027,11 +1025,12 @@ public class RedisClusterClient extends AbstractRedisClient {
      *        parameter but create a new collection with the desired order, must not be {@code null}.
      * @return {@link Supplier} for {@link SocketAddress connection points}.
      */
-    protected Mono<SocketAddress> getSocketAddressSupplier(Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
+    protected Mono<SocketAddress> getSocketAddressSupplier(Supplier<Partitions> partitionsSupplier,
+            Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
 
         LettuceAssert.notNull(sortFunction, "Sort function must not be null");
 
-        final RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitions,
+        RoundRobinSocketAddressSupplier socketAddressSupplier = new RoundRobinSocketAddressSupplier(partitionsSupplier,
                 sortFunction, getResources());
 
         return Mono.defer(() -> {
@@ -1136,10 +1135,6 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     ClusterClientOptions getClusterClientOptions() {
         return (ClusterClientOptions) getOptions();
-    }
-
-    boolean expireStaleConnections() {
-        return getClusterClientOptions() == null || getClusterClientOptions().isCloseStaleConnections();
     }
 
     protected static <T> CompletableFuture<T> transformAsyncConnectionException(CompletionStage<T> future,
