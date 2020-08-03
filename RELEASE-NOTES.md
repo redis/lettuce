@@ -15,7 +15,7 @@ Server-assisted Client-side caching support
 
 Redis can notify clients about cache invalidations when you use Redis as a read-through cache.
 That is when applications keep a local copy of the cached value and use Redis to back up the local cache before.
-When a cache values gets changed (that were fetched from Redis), then Redis notifies interested clients so they can invalidate their cache and potentially fetch the changed value.
+When a cache values gets changed (that were fetched from Redis), then Redis notifies interested clients so they can invalidate their near-cache and potentially fetch the changed value.
 
 Redis 6 allows for tracking clients and sending push messages using RESP3 push messages.
 Lettuce provides a `CacheFrontend` that can be used to interact with a cache.
