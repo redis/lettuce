@@ -161,3 +161,4 @@ Other
 * Upgrade to netty 4.1.51.Final #1354
 * Consistently translate execution exceptions #1370
 * Upgrade to RxJava 3.0.5 #1374
+* Upgrade to Commons Pool 2.8.1 #1375
