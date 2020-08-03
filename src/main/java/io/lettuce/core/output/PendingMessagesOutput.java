@@ -87,7 +87,10 @@ public class PendingMessagesOutput<K, V> extends CommandOutput<K, V, PendingMess
     public void complete(int depth) {
 
         if (depth == 0) {
-            output = new PendingMessages(count, Range.create(messageIdsFrom, messageIdsTo), consumerMessageCount);
+
+            Range<String> range = messageIdsFrom != null && messageIdsTo != null ? Range.create(messageIdsFrom, messageIdsTo)
+                    : Range.unbounded();
+            output = new PendingMessages(count == null ? 0 : count, range, consumerMessageCount);
         }
     }
 

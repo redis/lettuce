@@ -149,6 +149,7 @@ Fixes
 * RedisAdvancedClusterAsyncCommands.scriptKill now calls scriptKill instead of scriptFlush #1341 (Thanks to @dengliming)
 * Lingering topology refresh connections when using dynamic refresh sources #1342 (Thanks to @tpf1994)
 * Wrong cast in StringCodec may lead to IndexOutOfBoundsException #1367 (Thanks to @dmandalidis)
+* xpending(key, group) fails without pending messages #1378
 
 Other
 -----
