@@ -128,6 +128,16 @@ public class Range<T> {
     }
 
     /**
+     * Return whether this {@link Range} is unbounded (i.e. upper and lower bounds are unbounded).
+     *
+     * @return whether this {@link Range} is unbounded
+     * @since 6.0
+     */
+    public boolean isUnbounded() {
+        return lower.isUnbounded() && upper.isUnbounded();
+    }
+
+    /**
      * @return the lower boundary.
      */
     public Boundary<T> getLower() {
@@ -235,6 +245,22 @@ public class Range<T> {
             return including;
         }
 
+        /**
+         * @return {@code true} if the bound is unbounded.
+         * @since 6.0
+         */
+        public boolean isUnbounded() {
+            return this == UNBOUNDED;
+        }
+
+        /**
+         * @return {@code true} if the bound is unbounded.
+         * @since 6.0
+         */
+        public boolean isBounded() {
+            return this != UNBOUNDED;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o)
@@ -249,6 +275,7 @@ public class Range<T> {
         public int hashCode() {
             return Objects.hash(value, including);
         }
+
 
         @Override
         public String toString() {

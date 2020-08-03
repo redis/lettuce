@@ -61,4 +61,42 @@ public class PendingMessage {
         return redeliveryCount;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof PendingMessage))
+            return false;
+
+        PendingMessage that = (PendingMessage) o;
+
+        if (msSinceLastDelivery != that.msSinceLastDelivery)
+            return false;
+        if (redeliveryCount != that.redeliveryCount)
+            return false;
+        if (id != null ? !id.equals(that.id) : that.id != null)
+            return false;
+        return consumer != null ? consumer.equals(that.consumer) : that.consumer == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (consumer != null ? consumer.hashCode() : 0);
+        result = 31 * result + (int) (msSinceLastDelivery ^ (msSinceLastDelivery >>> 32));
+        result = 31 * result + (int) (redeliveryCount ^ (redeliveryCount >>> 32));
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [id='").append(id).append('\'');
+        sb.append(", consumer='").append(consumer).append('\'');
+        sb.append(", msSinceLastDelivery=").append(msSinceLastDelivery);
+        sb.append(", redeliveryCount=").append(redeliveryCount);
+        sb.append(']');
+        return sb.toString();
+    }
 }

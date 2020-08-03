@@ -22,6 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 /**
+ * Unit tests for {@link Range}.
+ *
  * @author Mark Paluch
  */
 class RangeUnitTests {
@@ -33,8 +35,11 @@ class RangeUnitTests {
 
         assertThat(unbounded.getLower().isIncluding()).isTrue();
         assertThat(unbounded.getLower().getValue()).isNull();
+        assertThat(unbounded.getLower().isUnbounded()).isTrue();
         assertThat(unbounded.getUpper().isIncluding()).isTrue();
         assertThat(unbounded.getUpper().getValue()).isNull();
+        assertThat(unbounded.getUpper().isUnbounded()).isTrue();
+        assertThat(unbounded.isUnbounded()).isTrue();
     }
 
     @Test
@@ -44,8 +49,11 @@ class RangeUnitTests {
 
         assertThat(range.getLower().isIncluding()).isTrue();
         assertThat(range.getLower().getValue()).isEqualTo("ze");
+        assertThat(range.getLower().isBounded()).isTrue();
         assertThat(range.getUpper().isIncluding()).isTrue();
         assertThat(range.getUpper().getValue()).isEqualTo("ro");
+        assertThat(range.getUpper().isBounded()).isTrue();
+        assertThat(range.isUnbounded()).isFalse();
     }
 
     @Test

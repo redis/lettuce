@@ -52,4 +52,39 @@ public class PendingMessages {
         return consumerMessageCount;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof PendingMessages))
+            return false;
+
+        PendingMessages that = (PendingMessages) o;
+
+        if (count != that.count)
+            return false;
+        if (messageIds != null ? !messageIds.equals(that.messageIds) : that.messageIds != null)
+            return false;
+        return consumerMessageCount != null ? consumerMessageCount.equals(that.consumerMessageCount)
+                : that.consumerMessageCount == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (count ^ (count >>> 32));
+        result = 31 * result + (messageIds != null ? messageIds.hashCode() : 0);
+        result = 31 * result + (consumerMessageCount != null ? consumerMessageCount.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [count=").append(count);
+        sb.append(", messageIds=").append(messageIds);
+        sb.append(", consumerMessageCount=").append(consumerMessageCount);
+        sb.append(']');
+        return sb.toString();
+    }
 }
