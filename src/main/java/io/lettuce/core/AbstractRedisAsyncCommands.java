@@ -1613,7 +1613,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<Boolean> xgroupDelconsumer(K key, Consumer<K> consumer) {
+    public RedisFuture<Long> xgroupDelconsumer(K key, Consumer<K> consumer) {
         return dispatch(commandBuilder.xgroupDelconsumer(key, consumer));
     }
 

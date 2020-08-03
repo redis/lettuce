@@ -496,8 +496,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
-        assertThat(redis.xgroupDelconsumer(key, Consumer.from("group", "consumer1"))).isTrue();
-        assertThat(redis.xgroupDelconsumer(key, Consumer.from("group", "consumer1"))).isFalse();
+        assertThat(redis.xgroupDelconsumer(key, Consumer.from("group", "consumer1"))).isOne();
+        assertThat(redis.xgroupDelconsumer(key, Consumer.from("group", "consumer1"))).isZero();
     }
 
     @Test

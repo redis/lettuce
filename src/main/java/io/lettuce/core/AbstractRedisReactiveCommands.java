@@ -1691,7 +1691,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<Boolean> xgroupDelconsumer(K key, Consumer<K> consumer) {
+    public Mono<Long> xgroupDelconsumer(K key, Consumer<K> consumer) {
         return createMono(() -> commandBuilder.xgroupDelconsumer(key, consumer));
     }
 

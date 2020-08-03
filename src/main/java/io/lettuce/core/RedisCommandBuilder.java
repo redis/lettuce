@@ -2267,14 +2267,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XGROUP, new StatusOutput<>(codec), args);
     }
 
-    public Command<K, V, Boolean> xgroupDelconsumer(K key, Consumer<K> consumer) {
+    public Command<K, V, Long> xgroupDelconsumer(K key, Consumer<K> consumer) {
         notNullKey(key);
         LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add("DELCONSUMER").addKey(key).addKey(consumer.getGroup())
                 .addKey(consumer.getName());
 
-        return createCommand(XGROUP, new BooleanOutput<>(codec), args);
+        return createCommand(XGROUP, new IntegerOutput<>(codec), args);
     }
 
     public Command<K, V, Boolean> xgroupDestroy(K key, K group) {

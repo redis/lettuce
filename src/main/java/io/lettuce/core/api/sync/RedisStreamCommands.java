@@ -142,9 +142,9 @@ public interface RedisStreamCommands<K, V> {
      *
      * @param key the stream key.
      * @param consumer consumer identified by group name and consumer key.
-     * @return simple-reply {@code true} if successful.
+     * @return Long integer-reply number of pending messages.
      */
-    Boolean xgroupDelconsumer(K key, Consumer<K> consumer);
+    Long xgroupDelconsumer(K key, Consumer<K> consumer);
 
     /**
      * Destroy a consumer group.
@@ -323,5 +323,4 @@ public interface RedisStreamCommands<K, V> {
      * @return simple-reply number of removed entries.
      */
     Long xtrim(K key, boolean approximateTrimming, long count);
-
 }

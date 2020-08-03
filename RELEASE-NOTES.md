@@ -111,6 +111,7 @@ With this release, we took the opportunity to introduce a series of changes that
 * Remove JavaRuntime class and move LettuceStrings to internal package #1329
 * Remove Spring support classes #1358
 * Replace io.lettuce.core.resource.Futures utility with Netty's PromiseCombiner #1283
+* XGROUP DELCONSUMER should return pending message count #1377 (xgroupDelconsumer(…) now returns `Long`)
 
 Commands
 -----------------------------
