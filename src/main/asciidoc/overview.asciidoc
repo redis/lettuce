@@ -49,7 +49,7 @@ There are a few support options available:
 
 * Lettuce on Stackoverflow http://stackoverflow.com/questions/tagged/lettuce[Stackoverflow] is a tag for all Lettuce users to share information and help each other.Note that registration is needed *only* for posting.
 * Get in touch with the community on https://gitter.im/lettuce-io/Lobby[Gitter].
-* Google Group: https://groups.google.com/d/forum/lettuce-redis-client-users[lettuce-redis-client-users] or mailto:lettuce-redis-client-users@googlegroups.com[lettuce-redis-client-users@googlegroups.com].
+* Google Group: https://groups.google.com/g/lettuce-redis-client-users[lettuce-redis-client-users] or mailto:lettuce-redis-client-users@googlegroups.com[lettuce-redis-client-users@googlegroups.com].
 * Report bugs (or ask questions) in Github issues https://github.com/lettuce-io/lettuce-core/issues.
 
 [[overview.development]]

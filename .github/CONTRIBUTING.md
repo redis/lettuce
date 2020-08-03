@@ -61,7 +61,7 @@ If you have a question, then check one of the following places first as GitHub i
 
 **Communication**
 
-* Google Group/Mailing List (General discussion, announcements and releases): [lettuce-redis-client-users](https://groups.google.com/d/forum/lettuce-redis-client-users) or [lettuce-redis-client-users@googlegroups.com](mailto:lettuce-redis-client-users@googlegroups.com)
+* Google Group/Mailing List (General discussion, announcements and releases): [lettuce-redis-client-users](https://groups.google.com/g/lettuce-redis-client-users) or [lettuce-redis-client-users@googlegroups.com](mailto:lettuce-redis-client-users@googlegroups.com)
 * Stack Overflow (Questions): [Questions about Lettuce](https://stackoverflow.com/questions/tagged/lettuce)
 * Gitter (General discussion): [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
