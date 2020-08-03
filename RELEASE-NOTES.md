@@ -160,3 +160,4 @@ Other
 * Upgrade to Reactor Core 3.3.8.RELEASE #1353
 * Upgrade to netty 4.1.51.Final #1354
 * Consistently translate execution exceptions #1370
+* Upgrade to RxJava 3.0.5 #1374
