@@ -604,6 +604,15 @@ public class RedisClient extends AbstractRedisClient {
         super.setOptions(clientOptions);
     }
 
+    /**
+     * Returns the {@link RedisURI} which are valid for that client
+     *
+     * @return the {@link RedisURI} for this client
+     */
+    public RedisURI getRedisURI() {
+        return redisURI;
+    }
+
     // -------------------------------------------------------------------------
     // Implementation hooks and helper methods
     // -------------------------------------------------------------------------
