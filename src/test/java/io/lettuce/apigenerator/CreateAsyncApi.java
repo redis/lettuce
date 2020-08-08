@@ -15,6 +15,13 @@
  */
 package io.lettuce.apigenerator;
 
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.type.Type;
+import io.lettuce.core.internal.LettuceSets;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,15 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.type.Type;
-
-import io.lettuce.core.internal.LettuceSets;
 
 /**
  * Create async API based on the templates.
@@ -40,18 +38,16 @@ import io.lettuce.core.internal.LettuceSets;
 @RunWith(Parameterized.class)
 public class CreateAsyncApi {
 
-    private Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault",
-            "digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands",
-            "flushCommands");
+    public static final Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
 
-    private CompilationUnitFactory factory;
+    private final CompilationUnitFactory factory;
 
     @Parameterized.Parameters(name = "Create {0}")
     public static List<Object[]> arguments() {
         List<Object[]> result = new ArrayList<>();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
-            result.add(new Object[] { templateName });
+            result.add(new Object[]{templateName});
         }
 
         return result;

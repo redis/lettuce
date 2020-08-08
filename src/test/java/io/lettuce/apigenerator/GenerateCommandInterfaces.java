@@ -24,8 +24,16 @@ import org.junit.runners.Suite;
  * @author Mark Paluch
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({ CreateAsyncApi.class, CreateSyncApi.class, CreateReactiveApi.class,
-        CreateAsyncNodeSelectionClusterApi.class, CreateSyncNodeSelectionClusterApi.class })
+@Suite.SuiteClasses({
+        CreateAsyncApi.class,
+        CreateSyncApi.class,
+        CreateReactiveApi.class,
+        CreateAsyncNodeSelectionClusterApi.class,
+        CreateSyncNodeSelectionClusterApi.class,
+        CreateKotlinCoroutinesApi.class,
+        CreateKotlinCoroutinesAsyncImplementation.class,
+        CreateKotlinCoroutinesReactiveImplementation.class,
+})
 public class GenerateCommandInterfaces {
 
 }

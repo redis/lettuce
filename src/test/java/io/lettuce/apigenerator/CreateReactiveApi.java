@@ -15,21 +15,19 @@
  */
 package io.lettuce.apigenerator;
 
-import java.io.File;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.type.Type;
-
 import io.lettuce.core.internal.LettuceSets;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.io.File;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Create reactive API based on the templates.
@@ -39,12 +37,9 @@ import io.lettuce.core.internal.LettuceSets;
 @RunWith(Parameterized.class)
 public class CreateReactiveApi {
 
-    private static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
-            "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
-
-    private static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "dispatch");
-
-    private static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield");
+    public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+    public static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "dispatch");
+    public static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield");
 
     private static final Map<String, String> RESULT_SPEC;
 
@@ -57,21 +52,20 @@ public class CreateReactiveApi {
         RESULT_SPEC = resultSpec;
     }
 
-    private CompilationUnitFactory factory;
+    private final CompilationUnitFactory factory;
 
     @Parameterized.Parameters(name = "Create {0}")
     public static List<Object[]> arguments() {
         List<Object[]> result = new ArrayList<>();
 
         for (String templateName : Constants.TEMPLATE_NAMES) {
-            result.add(new Object[] { templateName });
+            result.add(new Object[]{templateName});
         }
 
         return result;
     }
 
     /**
-     *
      * @param templateName
      */
     public CreateReactiveApi(String templateName) {
@@ -147,17 +141,16 @@ public class CreateReactiveApi {
     }
 
 
-
     private String getResultType(MethodDeclaration method,
-            ClassOrInterfaceDeclaration classOfMethod) {
+                                 ClassOrInterfaceDeclaration classOfMethod) {
 
-        if(RESULT_SPEC.containsKey(method.getName())){
+        if (RESULT_SPEC.containsKey(method.getName())) {
             return RESULT_SPEC.get(method.getName());
         }
 
         String key = classOfMethod.getName() + "." + method.getName();
 
-        if(RESULT_SPEC.containsKey(key)){
+        if (RESULT_SPEC.containsKey(key)) {
             return RESULT_SPEC.get(key);
         }
 

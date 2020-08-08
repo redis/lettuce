@@ -1,0 +1,38 @@
+= Kotlin API
+
+=== Suspendable API based on either reactive or async operations
+
+Example for retrieving commands and using it:
+
+[source,kt]
+----
+val cmd1: RedisSuspendableCommands<String, String> = connection.async().asSuspendable()
+val cmd2: RedisSuspendableCommands<String, String> = connection.reactive().asSuspendable()
+
+val foo1 = cmd1.set("foo", "bar")
+val foo2 = cmd2.keys("fo*")
+----
+
+=== Extensions for existing APIs
+
+==== Transactions DSL
+
+Example for sync:
+
+[source,kt]
+----
+val result: TransactionResult? = connection.sync().multi {
+    set("foo", "bar")
+    get("foo")
+}
+----
+
+Example for async with coroutines:
+
+[source,kt]
+----
+val result: TransactionResult? = connection.async().multi {
+    set("foo", "bar").await()
+    get("foo").await()
+}
+----
