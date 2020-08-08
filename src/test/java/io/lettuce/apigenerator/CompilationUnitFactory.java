@@ -102,8 +102,7 @@ class CompilationUnitFactory {
             }
         }
 
-        resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().orElse(null)
-                .getContent())));
+        resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().get().getContent())));
         result.setComment(template.getComment().orElse(null));
 
         result.setImports(new NodeList<>());
