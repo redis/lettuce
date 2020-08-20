@@ -177,7 +177,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative</artifactId>
-            <version>2.0.30.Final</version>
+            <version>2.0.33.Final</version>
             <classifier>${os.detected.classifier}</classifier>
             <optional>true</optional>
         </dependency>
@@ -691,6 +691,17 @@
     </build>
 
     <profiles>
+
+        <profile>
+            <activation>
+                <os>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.detected.classifier>linux-aarch64-fedora</os.detected.classifier>
+            </properties>
+        </profile>
 
         <profile>
             <id>ci</id>
