@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.function.LongFunction;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
@@ -626,15 +627,15 @@ public class RedisURI implements Serializable, ConnectionPoint {
      */
     public URI toURI() {
         try {
-            return URI.create(createUriString());
+            return URI.create(createUriString(false));
         } catch (Exception e) {
             throw new IllegalStateException("Cannot render URI for " + toString(), e);
         }
     }
 
-    private String createUriString() {
+    private String createUriString(boolean maskCredentials) {
         String scheme = getScheme();
-        String authority = getAuthority(scheme);
+        String authority = getAuthority(scheme, maskCredentials);
         String queryString = getQueryString();
         String uri = scheme + "://" + authority;
 
@@ -723,7 +724,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         return builder.build();
     }
 
-    private String getAuthority(String scheme) {
+    private String getAuthority(String scheme, boolean maskCredentials) {
 
         String authority = null;
 
@@ -755,7 +756,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         if (password != null && password.length != 0) {
-            authority = urlEncode(new String(password)) + "@" + authority;
+            authority = urlEncode(
+                    maskCredentials ? IntStream.range(0, password.length).mapToObj(ignore -> "*").collect(Collectors.joining())
+                            : new String(password))
+                    + "@" + authority;
         }
         if (username != null) {
             authority = urlEncode(username) + ":" + authority;
@@ -848,7 +852,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      */
     @Override
     public String toString() {
-        return createUriString();
+        return createUriString(true);
     }
 
     @Override
