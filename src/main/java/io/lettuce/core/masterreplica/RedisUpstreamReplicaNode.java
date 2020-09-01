@@ -32,19 +32,7 @@ class RedisUpstreamReplicaNode implements RedisNodeDescription {
 
     RedisUpstreamReplicaNode(String host, int port, RedisURI seed, Role role) {
 
-        RedisURI.Builder builder = RedisURI.Builder.redis(host, port).withSsl(seed.isSsl()).withVerifyPeer(seed.isVerifyPeer())
-                .withStartTls(seed.isStartTls());
-        if (seed.getPassword() != null && seed.getPassword().length != 0) {
-            builder.withPassword(seed.getPassword());
-        }
-
-        if (seed.getClientName() != null) {
-            builder.withClientName(seed.getClientName());
-        }
-
-        builder.withDatabase(seed.getDatabase());
-
-        this.redisURI = builder.build();
+        this.redisURI = RedisURI.builder(seed).withHost(host).withPort(port).build();
         this.role = role;
     }
 

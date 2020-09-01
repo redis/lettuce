@@ -47,7 +47,7 @@ class UpstreamReplicaTopologyRefresh {
 
     private final TopologyProvider topologyProvider;
 
-    private ScheduledExecutorService eventExecutors;
+    private final ScheduledExecutorService eventExecutors;
 
     UpstreamReplicaTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
         this(new RedisClientNodeConnectionFactory(client), client.getResources().eventExecutorGroup(), topologyProvider);
@@ -73,7 +73,7 @@ class UpstreamReplicaTopologyRefresh {
         CompletableFuture<List<RedisNodeDescription>> future = topologyProvider.getNodesAsync();
 
         Mono<List<RedisNodeDescription>> initialNodes = Mono.fromFuture(future).doOnNext(nodes -> {
-            addPasswordIfNeeded(nodes, seed);
+            applyAuthenticationCredentials(nodes, seed);
         });
 
         return initialNodes.map(this::getConnections)
@@ -137,12 +137,10 @@ class UpstreamReplicaTopologyRefresh {
         return connections;
     }
 
-    private static void addPasswordIfNeeded(List<RedisNodeDescription> nodes, RedisURI seed) {
+    private static void applyAuthenticationCredentials(List<RedisNodeDescription> nodes, RedisURI seed) {
 
-        if (seed.getPassword() != null && seed.getPassword().length != 0) {
-            for (RedisNodeDescription node : nodes) {
-                node.getUri().setPassword(new String(seed.getPassword()));
-            }
+        for (RedisNodeDescription node : nodes) {
+            node.getUri().applyAuthentication(seed);
         }
     }
 

@@ -38,6 +38,7 @@ import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.test.WithPassword;
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
 /**
@@ -181,6 +182,21 @@ class UpstreamReplicaTest extends AbstractRedisClientTest {
         assertThat(connection.sync().clientGetname()).isEqualTo(masterURI.getClientName());
 
         connection.close();
+    }
+
+    @Test
+    @EnabledOnCommand("ACL")
+    void testConnectToReplicaWithAcl() {
+
+        connection.close();
+
+        RedisURI replicaUri = RedisURI.Builder.redis(host, TestSettings.port(900 + 6)).withAuthentication("default", passwd)
+                .build();
+        connection = MasterReplica.connect(client, StringCodec.UTF8, replicaUri);
+
+        RedisCommands<String, String> sync = connection.sync();
+
+        assertThat(sync.ping()).isEqualTo("PONG");
     }
 
     static String replicaCall(StatefulRedisMasterReplicaConnection<String, String> connection) {

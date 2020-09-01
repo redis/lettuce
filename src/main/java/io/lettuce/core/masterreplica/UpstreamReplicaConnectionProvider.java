@@ -322,17 +322,7 @@ class UpstreamReplicaConnectionProvider<K, V> {
         @Override
         public ConnectionFuture<StatefulRedisConnection<K, V>> apply(ConnectionKey key) {
 
-            RedisURI.Builder builder = RedisURI.Builder.redis(key.host, key.port).withSsl(initialRedisUri.isSsl())
-                    .withVerifyPeer(initialRedisUri.isVerifyPeer()).withStartTls(initialRedisUri.isStartTls());
-
-            if (initialRedisUri.getPassword() != null && initialRedisUri.getPassword().length != 0) {
-                builder.withPassword(initialRedisUri.getPassword());
-            }
-
-            if (initialRedisUri.getClientName() != null) {
-                builder.withClientName(initialRedisUri.getClientName());
-            }
-            builder.withDatabase(initialRedisUri.getDatabase());
+            RedisURI.Builder builder = RedisURI.builder(initialRedisUri).withHost(key.host).withPort(key.port);
 
             ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = redisClient.connectAsync(redisCodec,
                     builder.build());

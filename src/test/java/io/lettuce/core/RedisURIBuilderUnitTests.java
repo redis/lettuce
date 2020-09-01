@@ -24,7 +24,6 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
 /**
@@ -274,5 +273,76 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getHost()).isNull();
         assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.isSsl()).isFalse();
+    }
+
+    @Test
+    void shouldApplySslSettings() {
+
+        RedisURI source = new RedisURI();
+        source.setSsl(true);
+        source.setVerifyPeer(false);
+        source.setStartTls(true);
+
+        RedisURI target = RedisURI.builder().withHost("localhost").withSsl(source).build();
+
+        assertThat(target.isSsl()).isTrue();
+        assertThat(target.isVerifyPeer()).isFalse();
+        assertThat(target.isStartTls()).isTrue();
+    }
+
+    @Test
+    void shouldApplyAuthentication() {
+
+        RedisURI source = new RedisURI();
+        source.setUsername("foo");
+        source.setPassword("bar");
+
+        RedisURI target = RedisURI.builder().withHost("localhost").withAuthentication(source).build();
+
+        assertThat(target.getUsername()).isEqualTo("foo");
+        assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
+    }
+
+    @Test
+    void shouldInitializeBuilder() {
+
+        RedisURI source = new RedisURI();
+        source.setHost("localhost");
+        source.setPort(1234);
+        source.setTimeout(Duration.ofSeconds(2));
+        source.setClientName("foo");
+        source.setUsername("foo");
+        source.setPassword("bar");
+        source.setDatabase(4);
+        source.setSsl(true);
+        source.setVerifyPeer(false);
+        source.setStartTls(true);
+
+        RedisURI target = RedisURI.builder(source).build();
+
+        source.setPassword("baz");
+
+        assertThat(target.getHost()).isEqualTo(source.getHost());
+        assertThat(target.getPort()).isEqualTo(source.getPort());
+        assertThat(target.getUsername()).isEqualTo(source.getUsername());
+        assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
+        assertThat(target.getTimeout()).isEqualTo(source.getTimeout());
+        assertThat(target.getClientName()).isEqualTo(source.getClientName());
+        assertThat(target.getSocket()).isEqualTo(source.getSocket());
+        assertThat(target.getDatabase()).isEqualTo(source.getDatabase());
+        assertThat(target.isStartTls()).isEqualTo(source.isStartTls());
+        assertThat(target.isSsl()).isEqualTo(source.isSsl());
+        assertThat(target.isVerifyPeer()).isEqualTo(source.isVerifyPeer());
+    }
+
+    @Test
+    void shouldInitializeBuilderUsingSocket() {
+
+        RedisURI source = new RedisURI();
+        source.setSocket("localhost");
+
+        RedisURI target = RedisURI.builder(source).build();
+
+        assertThat(target.getSocket()).isEqualTo(source.getSocket());
     }
 }

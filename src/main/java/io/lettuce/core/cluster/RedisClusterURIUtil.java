@@ -71,14 +71,9 @@ public abstract class RedisClusterURIUtil {
      */
     static void applyUriConnectionSettings(RedisURI from, RedisURI to) {
 
-        if (from.getPassword() != null && from.getPassword().length != 0) {
-            to.setPassword(new String(from.getPassword()));
-        }
-
+        to.applyAuthentication(from);
+        to.applySsl(from);
         to.setTimeout(from.getTimeout());
-        to.setSsl(from.isSsl());
-        to.setStartTls(from.isStartTls());
-        to.setVerifyPeer(from.isVerifyPeer());
     }
 
 }

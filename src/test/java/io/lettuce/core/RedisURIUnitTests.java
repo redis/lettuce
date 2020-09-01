@@ -244,4 +244,60 @@ class RedisURIUnitTests {
 
         assertThat(redisURI).hasToString("redis://host:1234");
     }
+
+    @Test
+    void shouldApplySslSettings() {
+
+        RedisURI source = new RedisURI();
+        source.setStartTls(true);
+
+        RedisURI target = new RedisURI();
+
+        target.applySsl(source);
+
+        assertThat(target.isSsl()).isFalse();
+        assertThat(target.isVerifyPeer()).isTrue();
+        assertThat(target.isStartTls()).isTrue();
+
+        source.setVerifyPeer(false);
+        source.setStartTls(true);
+
+        target.applySsl(source);
+
+        assertThat(target.isSsl()).isFalse();
+        assertThat(target.isVerifyPeer()).isFalse();
+        assertThat(target.isStartTls()).isTrue();
+
+        source.setSsl(true);
+        source.setVerifyPeer(false);
+        source.setStartTls(true);
+
+        target.applySsl(source);
+
+        assertThat(target.isSsl()).isTrue();
+        assertThat(target.isVerifyPeer()).isFalse();
+        assertThat(target.isStartTls()).isTrue();
+    }
+
+    @Test
+    void shouldApplyAuthentication() {
+
+        RedisURI source = new RedisURI();
+        source.setUsername("foo");
+        source.setPassword("bar");
+
+        RedisURI target = new RedisURI();
+
+        target.applyAuthentication(source);
+
+        assertThat(target.getUsername()).isEqualTo("foo");
+        assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
+
+        source.setUsername(null);
+
+        target.applyAuthentication(source);
+
+        assertThat(target.getUsername()).isNull();
+        assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
+    }
 }
