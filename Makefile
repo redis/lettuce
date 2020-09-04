@@ -106,7 +106,7 @@ work/redis-%.conf:
 work/redis-%.pid: work/redis-%.conf work/redis-git/src/redis-server
 	work/redis-git/src/redis-server $<
 
-redis-start: work/redis-6479.pid work/redis-6480.pid work/redis-6481.pid work/redis-6482.pid work/redis-6483.pid
+redis-start: work/redis-6479.pid work/redis-6480.pid work/redis-6481.pid work/redis-6482.pid work/redis-6483.pid work/redis-6484.pid
 
 ##########
 # Sentinel
@@ -128,11 +128,27 @@ work/sentinel-%.conf:
 	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
 	@echo unixsocketperm 777 >> $@
 
+work/sentinel-26381.conf:
+	@mkdir -p $(@D)
+
+	@echo port 26381 >> $@
+	@echo daemonize yes >> $@
+	@echo pidfile $(shell pwd)/work/redis-sentinel-26381.pid >> $@
+	@echo logfile $(shell pwd)/work/redis-sentinel-26381.log >> $@
+
+	@echo sentinel monitor mymaster 127.0.0.1 6484 1 >> $@
+	@echo sentinel down-after-milliseconds mymaster 200 >> $@
+	@echo sentinel failover-timeout mymaster 200 >> $@
+	@echo sentinel parallel-syncs mymaster 1 >> $@
+	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
+	@echo unixsocketperm 777 >> $@
+	@echo requirepass foobared >> $@
+
 work/sentinel-%.pid: work/sentinel-%.conf work/redis-git/src/redis-server
 	work/redis-git/src/redis-server $< --sentinel
 	sleep 0.5
 
-sentinel-start: work/sentinel-26379.pid work/sentinel-26380.pid
+sentinel-start: work/sentinel-26379.pid work/sentinel-26380.pid work/sentinel-26381.pid
 
 ##########
 # Cluster
