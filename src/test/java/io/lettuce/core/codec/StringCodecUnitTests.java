@@ -117,7 +117,8 @@ class StringCodecUnitTests {
     @Test
     void estimateSize() {
 
-        assertThat(new StringCodec(LettuceCharsets.UTF8).estimateSize(teststring)).isEqualTo((int) (teststring.length() * 1.1));
+        assertThat(new StringCodec(LettuceCharsets.UTF8).estimateSize(teststring))
+                .isEqualTo(ByteBufUtil.utf8MaxBytes(teststring));
         assertThat(new StringCodec(LettuceCharsets.ASCII).estimateSize(teststring)).isEqualTo(teststring.length());
         assertThat(new StringCodec(StandardCharsets.ISO_8859_1).estimateSize(teststring)).isEqualTo(teststring.length());
     }
