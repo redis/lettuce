@@ -210,4 +210,19 @@ public class SentinelConnectionIntegrationTests extends TestSupport {
         connection.close();
     }
 
+    @Test
+    void sentinelWithAuthentication() {
+
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), 26381, SentinelTestSettings.MASTER_ID, "foobared")
+                .withClientName("my-client").build();
+
+        redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+        StatefulRedisConnection<String, String> connection = redisClient.connect(redisURI);
+
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.close();
+    }
+
 }

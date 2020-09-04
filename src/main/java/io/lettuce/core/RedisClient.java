@@ -604,7 +604,11 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
 
         if (clientOptions.isPingBeforeActivateConnection()) {
-            connectionBuilder.enablePingBeforeConnect();
+            if (hasPassword(redisURI)) {
+                connectionBuilder.enableAuthPingBeforeConnect();
+            } else {
+                connectionBuilder.enablePingBeforeConnect();
+            }
         }
 
         channelType(connectionBuilder, redisURI);
