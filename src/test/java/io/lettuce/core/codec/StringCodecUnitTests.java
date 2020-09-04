@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 
 /**
@@ -124,7 +125,7 @@ class StringCodecUnitTests {
     void sizeOf() {
 
         assertThat(new StringCodec(StandardCharsets.UTF_8).sizeOf(teststring, false))
-            .isEqualTo(teststring.length() * 3);
+            .isEqualTo(ByteBufUtil.utf8MaxBytes(teststring));
         assertThat(new StringCodec(StandardCharsets.US_ASCII).sizeOf(teststring, false))
             .isEqualTo(teststring.length());
         assertThat(new StringCodec(StandardCharsets.ISO_8859_1).sizeOf(teststring, false))
