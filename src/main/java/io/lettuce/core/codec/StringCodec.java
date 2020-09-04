@@ -191,18 +191,18 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
      */
     int sizeOf(String value, boolean estimate) {
 
+        if (utf8) {
+            return ByteBufUtil.utf8MaxBytes(value);
+        }
+
+        if (ascii) {
+            return value.length();
+        }
+
         if (estimate) {
             return (int) averageBytesPerChar * value.length();
         }
 
-        if (utf8) {
-            return ByteBufUtil.utf8MaxBytes(value);
-        }
-        
-        if (ascii) {
-            return value.length();
-        }
-        
         return (int) maxBytesPerChar * value.length();
     }
 }
