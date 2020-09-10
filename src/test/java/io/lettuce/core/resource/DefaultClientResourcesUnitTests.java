@@ -49,8 +49,8 @@ class DefaultClientResourcesUnitTests {
 
         DefaultClientResources sut = DefaultClientResources.create();
 
-        assertThat(sut.commandLatencyCollector()).isNotNull();
-        assertThat(sut.commandLatencyCollector().isEnabled()).isTrue();
+        assertThat(sut.commandLatencyRecorder()).isNotNull();
+        assertThat(sut.commandLatencyRecorder().isEnabled()).isTrue();
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
         NioEventLoopGroup eventLoopGroup = sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
@@ -66,7 +66,7 @@ class DefaultClientResourcesUnitTests {
         Future<Boolean> shutdown = sut.eventLoopGroupProvider().shutdown(0, 0, TimeUnit.SECONDS);
         assertThat(shutdown.get()).isTrue();
 
-        assertThat(sut.commandLatencyCollector().isEnabled()).isFalse();
+        assertThat(sut.commandLatencyRecorder().isEnabled()).isFalse();
     }
 
     @Test
@@ -81,8 +81,8 @@ class DefaultClientResourcesUnitTests {
         assertThat(eventExecutors).hasSize(4);
         assertThat(eventLoopGroup.executorCount()).isEqualTo(4);
         assertThat(sut.ioThreadPoolSize()).isEqualTo(4);
-        assertThat(sut.commandLatencyCollector()).isNotNull();
-        assertThat(sut.commandLatencyCollector().isEnabled()).isFalse();
+        assertThat(sut.commandLatencyRecorder()).isNotNull();
+        assertThat(sut.commandLatencyRecorder().isEnabled()).isFalse();
 
         assertThat(sut.shutdown(0, 0, TimeUnit.MILLISECONDS).get()).isTrue();
     }
@@ -109,7 +109,7 @@ class DefaultClientResourcesUnitTests {
 
         DefaultClientResources sut = DefaultClientResources.builder().eventExecutorGroup(executorMock)
                 .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
-                .commandLatencyCollector(latencyCollectorMock).nettyCustomizer(nettyCustomizer).build();
+                .commandLatencyRecorder(latencyCollectorMock).nettyCustomizer(nettyCustomizer).build();
 
         assertThat(sut.eventExecutorGroup()).isSameAs(executorMock);
         assertThat(sut.eventLoopGroupProvider()).isSameAs(groupProviderMock);
@@ -138,7 +138,7 @@ class DefaultClientResourcesUnitTests {
 
         ClientResources sut = ClientResources.builder().eventExecutorGroup(executorMock)
                 .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
-                .commandLatencyCollector(latencyCollectorMock).build();
+                .commandLatencyRecorder(latencyCollectorMock).build();
 
         ClientResources copy = sut.mutate().timer(timerMock2).build();
 

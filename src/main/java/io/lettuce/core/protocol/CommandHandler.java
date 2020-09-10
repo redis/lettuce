@@ -31,6 +31,7 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.PushOutput;
 import io.lettuce.core.resource.ClientResources;
@@ -86,6 +87,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
+    private final CommandLatencyRecorder commandLatencyRecorder;
+
     private final boolean latencyMetricsEnabled;
 
     private final boolean tracingEnabled;
@@ -130,7 +133,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
         this.endpoint = endpoint;
-        this.latencyMetricsEnabled = clientResources.commandLatencyCollector().isEnabled();
+        this.commandLatencyRecorder = clientResources.commandLatencyRecorder();
+        this.latencyMetricsEnabled = commandLatencyRecorder.isEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
 
         Tracing tracing = clientResources.tracing();
@@ -859,13 +863,13 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
 
-        if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null
+        if (withLatency != null && latencyMetricsEnabled && channel != null
                 && remote() != null) {
 
             long firstResponseLatency = withLatency.getFirstResponse() - withLatency.getSent();
             long completionLatency = nanoTime() - withLatency.getSent();
 
-            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
+            commandLatencyRecorder.recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
                     completionLatency);
         }
     }

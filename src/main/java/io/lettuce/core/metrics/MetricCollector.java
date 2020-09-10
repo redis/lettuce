@@ -37,11 +37,4 @@ public interface MetricCollector<T> {
      */
     T retrieveMetrics();
 
-    /**
-     * Returns {@code true} if the metric collector is enabled.
-     *
-     * @return {@code true} if the metric collector is enabled
-     */
-    boolean isEnabled();
-
 }

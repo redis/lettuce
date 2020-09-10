@@ -101,7 +101,7 @@ class PubSubCommandHandlerUnitTests {
             return null;
         });
 
-        when(clientResources.commandLatencyCollector())
+        when(clientResources.commandLatencyRecorder())
                 .thenReturn(new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
         when(clientResources.tracing()).thenReturn(Tracing.disabled());
 

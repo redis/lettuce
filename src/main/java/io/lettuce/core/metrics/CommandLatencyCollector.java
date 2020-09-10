@@ -18,7 +18,6 @@ package io.lettuce.core.metrics;
 import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.protocol.ProtocolKeyword;
 
@@ -33,7 +32,8 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * @author Mark Paluch
  * @since 3.4
  */
-public interface CommandLatencyCollector extends MetricCollector<Map<CommandLatencyId, CommandMetrics>> {
+public interface CommandLatencyCollector
+        extends MetricCollector<Map<CommandLatencyId, CommandMetrics>>, CommandLatencyRecorder {
 
     /**
      * Creates a new {@link CommandLatencyCollector} using {@link CommandLatencyCollectorOptions}.
@@ -48,9 +48,11 @@ public interface CommandLatencyCollector extends MetricCollector<Map<CommandLate
     /**
      * Returns a disabled no-op {@link CommandLatencyCollector}.
      *
-     * @return
+     * @return a disabled no-op {@link CommandLatencyCollector}.
      * @since 5.1
+     * @deprecated since 6.0, use {@link CommandLatencyRecorder#disabled()} instead.
      */
+    @Deprecated
     static CommandLatencyCollector disabled() {
 
         return new CommandLatencyCollector() {
@@ -76,17 +78,4 @@ public interface CommandLatencyCollector extends MetricCollector<Map<CommandLate
 
         };
     }
-
-    /**
-     * Record the command latency per {@code connectionPoint} and {@code commandType}.
-     *
-     * @param local the local address
-     * @param remote the remote address
-     * @param commandType the command type
-     * @param firstResponseLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the first response
-     * @param completionLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the command completion
-     */
-    void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType, long firstResponseLatency,
-            long completionLatency);
-
 }

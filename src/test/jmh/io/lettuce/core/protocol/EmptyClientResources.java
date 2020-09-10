@@ -24,6 +24,7 @@ import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.CommandLatencyId;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.metrics.CommandMetrics;
 import io.lettuce.core.resource.*;
 import io.lettuce.core.tracing.Tracing;
@@ -93,7 +94,7 @@ public class EmptyClientResources implements ClientResources {
     }
 
     @Override
-    public CommandLatencyCollector commandLatencyCollector() {
+    public CommandLatencyRecorder commandLatencyRecorder() {
         return LATENCY_COLLECTOR;
     }
 

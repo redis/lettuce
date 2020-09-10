@@ -67,7 +67,7 @@ class ReactiveBackpressurePropagationUnitTests {
     @BeforeEach
     void before() {
 
-        when(clientResources.commandLatencyCollector()).thenReturn(latencyCollector);
+        when(clientResources.commandLatencyRecorder()).thenReturn(latencyCollector);
         when(clientResources.tracing()).thenReturn(Tracing.disabled());
         when(statefulConnection.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 

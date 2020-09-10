@@ -19,6 +19,7 @@ Use Spring Data Redis for a seamless Spring integration with Lettuce.
 * `AsyncConnectionPoolSupport.createBoundedObjectPool(…)` methods are now blocking to await pool initialization.
 * `DecodeBufferPolicy` for fine-grained memory reclaim control.
 * `RedisURI.toString()` renders masked password.
+* `ClientResources.commandLatencyCollector(…)` refactored into `ClientResources.commandLatencyRecorder(…)` returning `CommandLatencyRecorder`.
 
 [[new-features.5-3-0]]
 == What's new in Lettuce 5.3
