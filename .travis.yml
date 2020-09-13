@@ -1,7 +1,6 @@
 language: java
 
 jdk:
-  - openjdk-ea
   - openjdk15
   - openjdk11
   - openjdk8
