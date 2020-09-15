@@ -1,11 +1,11 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.api.coroutines
+package io.lettuce.core.cluster.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.cluster.api.coroutines.RedisClusterSuspendableCommands
+import io.lettuce.core.api.coroutines.*
 
 /**
  * A complete coroutine and thread-safe Redis API with 400+ Methods.
@@ -27,7 +27,7 @@ import io.lettuce.core.cluster.api.coroutines.RedisClusterSuspendableCommands
  * @since 6.0
  **/
 @ExperimentalLettuceCoroutinesApi
-interface RedisSuspendableCommands<K, V> :
+interface RedisClusterSuspendableCommands<K, V> :
         BaseRedisSuspendableCommands<K, V>,
         RedisGeoSuspendableCommands<K, V>,
         RedisHashSuspendableCommands<K, V>,
@@ -39,9 +39,7 @@ interface RedisSuspendableCommands<K, V> :
         RedisSetSuspendableCommands<K, V>,
         RedisSortedSetSuspendableCommands<K, V>,
         RedisStreamSuspendableCommands<K, V>,
-        RedisStringSuspendableCommands<K, V>,
-        RedisTransactionalSuspendableCommands<K, V>,
-        RedisClusterSuspendableCommands<K, V> {
+        RedisStringSuspendableCommands<K, V> {
 
     /**
      * Authenticate to the server.
@@ -49,7 +47,7 @@ interface RedisSuspendableCommands<K, V> :
      * @param password the password
      * @return String simple-string-reply
      */
-    override suspend fun auth(password: CharSequence): String?
+    suspend fun auth(password: CharSequence): String?
 
     /**
      * Authenticate to the server with username and password. Requires Redis 6 or newer.
@@ -59,24 +57,6 @@ interface RedisSuspendableCommands<K, V> :
      * @return String simple-string-reply
      * @since 6.0
      */
-    override suspend fun auth(username: String, password: CharSequence): String?
-
-    /**
-     * Change the selected database for the current connection.
-     *
-     * @param db the database number
-     * @return String simple-string-reply
-     */
-    suspend fun select(db: Int): String?
-
-    /**
-     * Swap two Redis databases, so that immediately all the clients connected to a given DB will see the data of the other DB,
-     * and the other way around
-     *
-     * @param db1 the first database number
-     * @param db2 the second database number
-     * @return String simple-string-reply
-     */
-    suspend fun swapdb(db1: Int, db2: Int): String?
+    suspend fun auth(username: String, password: CharSequence): String?
 
 }

@@ -7,6 +7,7 @@
 * Support for RESP3 usage with Redis 6 along with RESP2/RESP3 handshake and protocol version discovery.
 * ACL authentication using username and password or password-only authentication.
 * Cluster topology refresh is now non-blocking.
+* <<kotlin,Kotlin Coroutine Extensions>>.
 * RxJava 3 support.
 * Refined Scripting API accepting the Lua script either as `byte[]` or `String`.
 * Connection and Queue failures now no longer throw an exception but properly associate the failure with the Future handle.

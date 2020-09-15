@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.api.coroutines
+package io.lettuce.core.sentinel.api
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.TransactionResult
+import io.lettuce.core.sentinel.api.coroutines.RedisSentinelSuspendableCommands
+import io.lettuce.core.sentinel.api.coroutines.RedisSentinelSuspendableCommandsImpl
 
 /**
- * Allows to create transaction DSL block with [RedisSuspendableCommands].
+ * Extension for [StatefulRedisSentinelConnection] to create [RedisSentinelSuspendableCommands]
  *
  * @author Mikhael Sokolov
+ * @author Mark Paluch
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-suspend inline fun <K, V> RedisSuspendableCommands<K, V>.multi(action: RedisSuspendableCommands<K, V>.() -> Unit): TransactionResult? {
-    multi()
-    runCatching {
-        action.invoke(this)
-    }.onFailure {
-        discard()
-    }
-    return exec()
+fun <K, V> StatefulRedisSentinelConnection<K, V>.suspendable(): RedisSentinelSuspendableCommands<K, V> {
+    return RedisSentinelSuspendableCommandsImpl(this.reactive())
 }

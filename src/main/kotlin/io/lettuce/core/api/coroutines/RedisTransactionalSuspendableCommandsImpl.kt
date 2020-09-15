@@ -13,24 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@file:Suppress("unused")
+
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.TransactionResult
+import io.lettuce.core.api.reactive.RedisTransactionalReactiveCommands
+import kotlinx.coroutines.reactive.awaitLast
+
 
 /**
- * Allows to create transaction DSL block with [RedisSuspendableCommands].
+ * Coroutine executed commands (based on reactive commands) for Transactions.
  *
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Mikhael Sokolov
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-suspend inline fun <K, V> RedisSuspendableCommands<K, V>.multi(action: RedisSuspendableCommands<K, V>.() -> Unit): TransactionResult? {
-    multi()
-    runCatching {
-        action.invoke(this)
-    }.onFailure {
-        discard()
-    }
-    return exec()
+internal class RedisTransactionalSuspendableCommandsImpl<K, V>(private val ops: RedisTransactionalReactiveCommands<K, V>) : RedisTransactionalSuspendableCommands<K, V> {
+
+    override suspend fun discard(): String = ops.discard().awaitLast()
+
+    override suspend fun exec(): TransactionResult = ops.exec().awaitLast()
+
+    override suspend fun multi(): String = ops.multi().awaitLast()
+
+    override suspend fun watch(vararg keys: K): String = ops.watch(*keys).awaitLast()
+
+    override suspend fun unwatch(): String = ops.unwatch().awaitLast()
+
 }
+
