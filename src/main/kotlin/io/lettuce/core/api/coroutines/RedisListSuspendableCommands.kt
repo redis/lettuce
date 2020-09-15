@@ -135,7 +135,7 @@ interface RedisListSuspendableCommands<K, V> {
      * @param args command arguments to configure{@code FIRST} and {@code MAXLEN} options.
      * @return V integer-reply representing the matching element, or null if there is no match.
      * @since 5.3.2
-     **/
+     */
     suspend fun lpos(key: K, value: V, args: LPosArgs): Long?
 
     /**
@@ -202,7 +202,7 @@ interface RedisListSuspendableCommands<K, V> {
      * @param count the count type: long.
      * @param value the value.
      * @return Long integer-reply the number of removed elements.
-     **/
+     */
     suspend fun lrem(key: K, count: Long, value: V): Long?
 
     /**

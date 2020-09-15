@@ -41,7 +41,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param keys the keys.
      * @return Long integer-reply The number of keys that were removed.
      *
-     **/
+     */
     suspend fun del(vararg keys: K): Long?
 
     /**
@@ -50,7 +50,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param keys the keys.
      * @return Long integer-reply The number of keys that were removed.
      *
-     **/
+     */
     suspend fun unlink(vararg keys: K): Long?
 
     /**
@@ -59,7 +59,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param key the key.
      * @return byte[] bulk-string-reply the serialized value.
      *
-     **/
+     */
     suspend fun dump(key: K): ByteArray?
 
     /**
@@ -68,7 +68,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param keys the keys.
      * @return Long integer-reply specifically: Number of existing keys.
      *
-     **/
+     */
     suspend fun exists(vararg keys: K): Long?
 
     /**
@@ -80,7 +80,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
      *
-     **/
+     */
     suspend fun expire(key: K, seconds: Long): Boolean?
 
     /**
@@ -93,7 +93,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
      *         (see: {@code EXPIRE}).
      *
-     **/
+     */
     suspend fun expireat(key: K, timestamp: Date): Boolean?
 
     /**
@@ -106,7 +106,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
      *         (see: {@code EXPIRE}).
      *
-     **/
+     */
     suspend fun expireat(key: K, timestamp: Long): Boolean?
 
     /**
@@ -115,7 +115,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param pattern the pattern type: patternkey (pattern).
      * @return List<K> array-reply list of keys matching {@code pattern}.
      *
-     **/
+     */
     suspend fun keys(pattern: K): Flow<K>?
 
     /**
@@ -128,7 +128,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param timeout the timeout in milliseconds.
      * @return String simple-string-reply The command returns OK on success.
      *
-     **/
+     */
     suspend fun migrate(host: String, port: Int, key: K, db: Int, timeout: Long): String?
 
     /**
@@ -141,7 +141,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param migrateArgs migrate args that allow to configure further options.
      * @return String simple-string-reply The command returns OK on success.
      *
-     **/
+     */
     suspend fun migrate(host: String, port: Int, db: Int, timeout: Long, migrateArgs: MigrateArgs<K>): String?
 
     /**
@@ -151,7 +151,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param db the db type: long.
      * @return Boolean integer-reply specifically:.
      *
-     **/
+     */
     suspend fun move(key: K, db: Int): Boolean?
 
     /**
@@ -160,7 +160,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param key the key.
      * @return String.
      *
-     **/
+     */
     suspend fun objectEncoding(key: K): String?
 
     /**
@@ -170,7 +170,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param key the key.
      * @return number of seconds since the object stored at the specified key is idle.
      *
-     **/
+     */
     suspend fun objectIdletime(key: K): Long?
 
     /**
@@ -179,7 +179,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param key the key.
      * @return Long.
      *
-     **/
+     */
     suspend fun objectRefcount(key: K): Long?
 
     /**
@@ -191,7 +191,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *         {@code true} if the timeout was removed. {@code false} if {@code key} does not exist or does not have an
      *         associated timeout.
      *
-     **/
+     */
     suspend fun persist(key: K): Boolean?
 
     /**
@@ -203,7 +203,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
      *
-     **/
+     */
     suspend fun pexpire(key: K, milliseconds: Long): Boolean?
 
     /**
@@ -216,7 +216,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
      *         (see: {@code EXPIRE}).
      *
-     **/
+     */
     suspend fun pexpireat(key: K, timestamp: Date): Boolean?
 
     /**
@@ -229,7 +229,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
      *         (see: {@code EXPIRE}).
      *
-     **/
+     */
     suspend fun pexpireat(key: K, timestamp: Long): Boolean?
 
     /**
@@ -239,7 +239,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @return Long integer-reply TTL in milliseconds, or a negative value in order to signal an error (see the description
      *         above).
      *
-     **/
+     */
     suspend fun pttl(key: K): Long?
 
     /**
@@ -247,7 +247,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *
      * @return K bulk-string-reply the random key, or {@code null} when the database is empty.
      *
-     **/
+     */
     suspend fun randomkey(): K?
 
     /**
@@ -257,7 +257,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param newKey the newkey type: key.
      * @return String simple-string-reply.
      *
-     **/
+     */
     suspend fun rename(key: K, newKey: K): String?
 
     /**
@@ -269,7 +269,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *
      *         {@code true} if {@code key} was renamed to {@code newkey}. {@code false} if {@code newkey} already exists.
      *
-     **/
+     */
     suspend fun renamenx(key: K, newKey: K): Boolean?
 
     /**
@@ -280,7 +280,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param value the serialized-value type: string.
      * @return String simple-string-reply The command returns OK on success.
      *
-     **/
+     */
     suspend fun restore(key: K, ttl: Long, value: ByteArray): String?
 
     /**
@@ -292,7 +292,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @return String simple-string-reply The command returns OK on success.
      * @since 5.1
      *
-     **/
+     */
     suspend fun restore(key: K, value: ByteArray, args: RestoreArgs): String?
 
     /**
@@ -301,7 +301,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param key the key.
      * @return List<V> array-reply list of sorted elements.
      *
-     **/
+     */
     suspend fun sort(key: K): Flow<V>
 
     /**
@@ -311,7 +311,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param sortArgs sort arguments.
      * @return List<V> array-reply list of sorted elements.
      *
-     **/
+     */
     suspend fun sort(key: K, sortArgs: SortArgs): Flow<V>
 
     /**
@@ -322,7 +322,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param destination the destination key to store sort results.
      * @return Long number of values.
      *
-     **/
+     */
     suspend fun sortStore(key: K, sortArgs: SortArgs, destination: K): Long?
 
     /**
@@ -331,7 +331,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param keys the keys.
      * @return Long integer-reply the number of found keys.
      *
-     **/
+     */
     suspend fun touch(vararg keys: K): Long?
 
     /**
@@ -340,7 +340,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param key the key.
      * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error (see the description above).
      *
-     **/
+     */
     suspend fun ttl(key: K): Long?
 
     /**
@@ -349,7 +349,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param key the key.
      * @return String simple-string-reply type of {@code key}, or {@code none} when {@code key} does not exist.
      *
-     **/
+     */
     suspend fun type(key: K): String?
 
     /**
@@ -357,7 +357,7 @@ interface RedisKeySuspendableCommands<K, V> {
      *
      * @return KeyScanCursor<K> scan cursor.
      *
-     **/
+     */
     suspend fun scan(): KeyScanCursor<K>?
 
     /**
@@ -366,7 +366,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor<K> scan cursor.
      *
-     **/
+     */
     suspend fun scan(scanArgs: ScanArgs): KeyScanCursor<K>?
 
     /**
@@ -376,7 +376,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor<K> scan cursor.
      *
-     **/
+     */
     suspend fun scan(scanCursor: ScanCursor, scanArgs: ScanArgs): KeyScanCursor<K>?
 
     /**
@@ -385,7 +385,7 @@ interface RedisKeySuspendableCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return KeyScanCursor<K> scan cursor.
      *
-     **/
+     */
     suspend fun scan(scanCursor: ScanCursor): KeyScanCursor<K>?
 
 }
