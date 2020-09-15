@@ -30,7 +30,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Mikhael Sokolov
  * @author Mark Paluch
  * @since 6.0
- **/
+ */
 @ExperimentalLettuceCoroutinesApi
 open class RedisSuspendableCommandsImpl<K : Any, V : Any>(
         private val ops: RedisReactiveCommands<K, V>

@@ -25,7 +25,7 @@ import io.lettuce.core.cluster.api.coroutines.RedisClusterSuspendableCommands
  * @param <V> Value type.
  * @author Mikhael Sokolov
  * @since 6.0
- **/
+ */
 @ExperimentalLettuceCoroutinesApi
 interface RedisSuspendableCommands<K, V> :
         BaseRedisSuspendableCommands<K, V>,
