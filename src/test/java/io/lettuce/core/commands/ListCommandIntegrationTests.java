@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -125,9 +124,9 @@ public class ListCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.lpos(key, "a")).isEqualTo(0);
         assertThat(redis.lpos(key, "c")).isEqualTo(2);
-        assertThat(redis.lpos(key, "c", LPosArgs.Builder.first(1))).isEqualTo(2);
-        assertThat(redis.lpos(key, "c", LPosArgs.Builder.first(2))).isEqualTo(6);
-        assertThat(redis.lpos(key, "c", LPosArgs.Builder.first(4))).isNull();
+        assertThat(redis.lpos(key, "c", LPosArgs.Builder.rank(1))).isEqualTo(2);
+        assertThat(redis.lpos(key, "c", LPosArgs.Builder.rank(2))).isEqualTo(6);
+        assertThat(redis.lpos(key, "c", LPosArgs.Builder.rank(4))).isNull();
 
         assertThat(redis.lpos(key, "c", 0)).contains(2L, 6L, 7L);
         assertThat(redis.lpos(key, "c", 0, LPosArgs.Builder.maxlen(1))).isEmpty();

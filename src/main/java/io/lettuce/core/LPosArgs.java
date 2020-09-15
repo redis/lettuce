@@ -30,7 +30,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  */
 public class LPosArgs implements CompositeArgument {
 
-    private Long first;
+    private Long rank;
 
     private Long maxlen;
 
@@ -66,13 +66,13 @@ public class LPosArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link LPosArgs} and setting {@literal FIRST}.
+         * Creates new {@link LPosArgs} and setting {@literal RANK}.
          *
-         * @return new {@link LPosArgs} with {@literal FIRST} set.
-         * @see LPosArgs#maxlen(long)
+         * @return new {@link LPosArgs} with {@literal RANK} set.
+         * @see LPosArgs#rank(long)
          */
-        public static LPosArgs first(long rank) {
-            return new LPosArgs().first(rank);
+        public static LPosArgs rank(long rank) {
+            return new LPosArgs().rank(rank);
         }
 
     }
@@ -92,14 +92,14 @@ public class LPosArgs implements CompositeArgument {
     }
 
     /**
-     * Specify the rank of the first element to return, in case there are multiple matches
+     * Specify the rank of the first element to return, in case there are multiple matches.
      *
      * @param rank number.
      * @return {@code this}
      */
-    public LPosArgs first(long rank) {
+    public LPosArgs rank(long rank) {
 
-        this.first = rank;
+        this.rank = rank;
         return this;
     }
 
@@ -112,9 +112,9 @@ public class LPosArgs implements CompositeArgument {
             args.add(maxlen);
         }
 
-        if (first != null) {
-            args.add("FIRST");
-            args.add(first);
+        if (rank != null) {
+            args.add("RANK");
+            args.add(rank);
         }
     }
 
