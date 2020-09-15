@@ -37,7 +37,6 @@ class TransactionExtensionsIntegrationTests : TestSupport() {
     @Inject
     internal fun shouldApplyMultiClosure(connection: StatefulRedisConnection<String, String>) {
 
-
         val transactionResult = connection.sync().multi {
             set("key", "value")
             get("key")
