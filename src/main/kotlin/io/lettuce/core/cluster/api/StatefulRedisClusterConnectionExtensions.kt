@@ -27,6 +27,4 @@ import io.lettuce.core.cluster.api.coroutines.RedisClusterSuspendableCommandsImp
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-fun <K : Any, V : Any> StatefulRedisClusterConnection<K, V>.suspendable(): RedisClusterSuspendableCommands<K, V> {
-    return RedisClusterSuspendableCommandsImpl(this.reactive())
-}
+fun <K : Any, V : Any> StatefulRedisClusterConnection<K, V>.suspendable(): RedisClusterSuspendableCommands<K, V> = RedisClusterSuspendableCommandsImpl(reactive())

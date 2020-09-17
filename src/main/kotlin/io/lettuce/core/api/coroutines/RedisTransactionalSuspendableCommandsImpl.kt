@@ -33,7 +33,7 @@ import kotlinx.coroutines.reactive.awaitLast
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class RedisTransactionalSuspendableCommandsImpl<K, V>(private val ops: RedisTransactionalReactiveCommands<K, V>) : RedisTransactionalSuspendableCommands<K, V> {
+internal class RedisTransactionalSuspendableCommandsImpl<K : Any, V : Any>(private val ops: RedisTransactionalReactiveCommands<K, V>) : RedisTransactionalSuspendableCommands<K, V> {
 
     override suspend fun discard(): String = ops.discard().awaitLast()
 

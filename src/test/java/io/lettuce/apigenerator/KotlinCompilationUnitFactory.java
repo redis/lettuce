@@ -26,27 +26,33 @@ import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.javadoc.Javadoc;
 import io.lettuce.core.internal.LettuceSets;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.util.stream.Collectors.joining;
 
 /**
  * @author Mikhael Sokolov
- * @author dengliming
- * @author Mark Paluch
  */
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 class KotlinCompilationUnitFactory {
 
-    private static final Set<String> SKIP_IMPORTS = Collections.unmodifiableSet(LettuceSets.newHashSet("java.util.List", "java.util.Set", "java.util.Map"));
+    private static final Set<String> SKIP_IMPORTS = LettuceSets.unmodifiableSet("java.util.List", "java.util.Set", "java.util.Map");
+    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("keys", "geohash", "georadius", "georadiusbymember", "hmget", "hkeys", "hvals", "sort", "zpopmin", "zpopmax", "zrange", "zrangeWithScores", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "mget");
+    private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
+    private static final Set<String> NON_NULL_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec", "watch", "unwatch", "getMasterAddrByName", "master", "reset", "failover", "monitor", "RedisSentinelSuspendableCommands.set", "remove", "RedisSentinelSuspendableCommands.clientSetname", "RedisSentinelSuspendableCommands.clientKill", "RedisSentinelSuspendableCommands.clientPause", "RedisSentinelSuspendableCommands.clientList", "RedisSentinelSuspendableCommands.info", "RedisSentinelSuspendableCommands.ping");
+    private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
+
     private static final String FORMATTING_INDENT = "    ";
 
     private final File templateFile;
@@ -54,11 +60,8 @@ class KotlinCompilationUnitFactory {
     private final String targetPackage;
     private final String targetName;
 
-    private final String ops;
-    private final String coroutinesInterface;
     private final Supplier<List<String>> importSupplier;
     private final Function<String, String> commentInjector;
-    private final Function<MethodDeclaration, String> implBody;
 
     private final StringBuilder result = new StringBuilder();
 
@@ -66,19 +69,13 @@ class KotlinCompilationUnitFactory {
                                         File sources,
                                         String targetPackage,
                                         String targetName,
-                                        String opsClass,
-                                        String coroutinesInterface,
                                         Supplier<List<String>> importSupplier,
-                                        Function<String, String> commentInjector,
-                                        Function<MethodDeclaration, String> implBody) {
+                                        Function<String, String> commentInjector) {
         this.templateFile = templateFile;
         this.targetPackage = targetPackage;
         this.targetName = targetName;
-        this.ops = opsClass;
-        this.coroutinesInterface = coroutinesInterface;
         this.importSupplier = importSupplier;
         this.commentInjector = commentInjector;
-        this.implBody = implBody;
 
         this.target = new File(sources, targetPackage.replace('.', '/') + "/" + targetName + ".kt");
     }
@@ -87,7 +84,7 @@ class KotlinCompilationUnitFactory {
         CompilationUnit template = JavaParser.parse(templateFile);
 
         JavaToken license = template.getTokenRange().get().getBegin();
-        result.append(license.asString());
+        result.append(license.asString().replace("2017-2020", "2020"));
         result.append(license.getNextToken().get().asString());
         result.append("\n");
 
@@ -111,42 +108,25 @@ class KotlinCompilationUnitFactory {
                         .append("\n")
                 );
 
-        result.append("\n\n");
+        result.append("\n");
 
         ClassOrInterfaceDeclaration clazz = (ClassOrInterfaceDeclaration) template.getTypes().get(0);
 
         result.append(commentInjector.apply(extractJavadoc(clazz.getJavadoc().get())
                 .replaceAll("@author Mark Paluch", "@author \\${author}")
                 .replaceAll("@since [0-9].0", "@since \\${since}")
-                .replaceAll("\\*\\*/", "* @generated by \\${generator}\r\n */")
+                .replaceAll("\\*/", "* @generated by \\${generator}\r\n */")
         ));
 
         result.append("@ExperimentalLettuceCoroutinesApi").append("\n");
 
         NodeList<TypeParameter> typeParameters = clazz.getTypeParameters();
-        String tp = extractTypeParams(typeParameters);
 
-        if (isInterface()) {
-            result
-                    .append("interface ")
-                    .append(targetName)
-                    .append(tp)
-                    .append(" ");
-        } else {
-            result
-                    .append("internal class ")
-                    .append(targetName)
-                    .append(tp)
-                    .append("(")
-                    .append("private val ops: ")
-                    .append(ops)
-                    .append(tp)
-                    .append(")")
-                    .append(" : ")
-                    .append(coroutinesInterface)
-                    .append(tp)
-                    .append(" ");
-        }
+        result
+                .append("interface ")
+                .append(targetName)
+                .append(extractTypeParams(typeParameters, "Any"))
+                .append(" ");
 
 
         result.append("{\n\n");
@@ -160,20 +140,23 @@ class KotlinCompilationUnitFactory {
 
         @Override
         public void visit(MethodDeclaration method, Object arg) {
+            if (method.isAnnotationPresent(Deprecated.class)
+                    || contains(SKIP_METHODS, method)
+                    || method.getParameters().stream().anyMatch(p -> p.getType().asString().contains("StreamingChannel"))) {
+                return;
+            }
             result
                     .append(FORMATTING_INDENT)
                     .append(extractJavadoc(method.getJavadoc().get()).replace("\n", "\n" + FORMATTING_INDENT))
                     .append(extractAnnotations(method))
-                    .append(isInterface() ? "" : "override ")
-                    .append("suspend fun ")
-                    .append(method.getTypeParameters().isNonEmpty() ? extractTypeParams(method.getTypeParameters()).concat(" ") : "")
-                    .append(method.getName())
+                    .append(contains(NON_SUSPENDABLE_METHODS, method) || (contains(FLOW_METHODS, method) && isCollection(method.getType())) ? "" : "suspend ")
+                    .append("fun ")
+                    .append(method.getTypeParameters().isNonEmpty() ? extractTypeParams(method.getTypeParameters(), null).concat(" ") : "")
+                    .append(method.getNameAsString())
                     .append("(")
                     .append(extractParameters(method))
                     .append(")")
-                    .append(": ")
-                    .append(toKotlinType(method.getType(), true))
-                    .append(constructBody(method))
+                    .append(toKotlinType(method.getType(), contains(FLOW_METHODS, method) && isCollection(method.getType()), contains(NON_NULL_RESULT_METHODS, method)))
                     .append("\n\n");
         }
 
@@ -181,14 +164,7 @@ class KotlinCompilationUnitFactory {
             return method
                     .getAnnotations()
                     .stream()
-                    .map(a -> {
-                        String name = a.getNameAsString();
-                        if ("Deprecated".equals(name)) {
-                            return "@Deprecated(message = \"Use another API instead.\")" + "\n" + FORMATTING_INDENT;
-                        } else {
-                            return name + "\n" + FORMATTING_INDENT;
-                        }
-                    })
+                    .map(a -> a.getNameAsString() + "\n" + FORMATTING_INDENT)
                     .collect(joining());
         }
 
@@ -196,86 +172,80 @@ class KotlinCompilationUnitFactory {
             return method
                     .getParameters()
                     .stream()
-                    .map(p -> (p.isVarArgs() ? "vararg " : "") + p.getName() + ": " + toKotlinType(p.getType(), false))
+                    .map(p -> (p.isVarArgs() ? "vararg " : "") + p.getName() + toKotlinType(p.getType(), false, true))
                     .collect(joining(", "));
         }
 
-        private String toKotlinType(Type type, boolean nullable) {
-            if (type.isArrayType()) {
+        private boolean contains(Collection<String> haystack, MethodDeclaration needle) {
+            ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) needle.getParentNode().get();
+            return haystack.contains(needle.getNameAsString()) || haystack.contains(declaringClass.getNameAsString() + "." + needle.getNameAsString());
+        }
+
+        private boolean isCollection(Type type) {
+            return type.asString().startsWith("List<") || type.asString().startsWith("Set<");
+        }
+
+        private String toKotlinType(Type type, boolean isFlowable, boolean isForceNonNullable) {
+            String fixedType;
+
+            if (type.isTypeParameter() || type.asString().equals("K") || type.asString().equals("V")) {
+                fixedType = type.asString();
+            } else if (type.isArrayType()) {
                 Type componentType = type.asArrayType().getComponentType();
                 if (componentType.asString().equals("byte")) {
-                    return "ByteArray";
+                    fixedType = "ByteArray";
                 } else {
-                    return String.format("Array<%s>", componentType.asString());
+                    fixedType = String.format("Array<%s>", componentType.asString());
                 }
             } else if (type.isPrimitiveType()) {
-                return type
+                fixedType = type
                         .asPrimitiveType()
                         .toBoxedType()
                         .getName()
                         .asString()
                         .replace("Integer", "Int")
                         .replace("Object", "Any");
+            } else if (isFlowable) {
+                fixedType = type
+                        .asString()
+                        .replace("List", "Flow")
+                        .replace("Set", "Flow")
+                        .replace("Map", "Flow");
             } else {
-                return type
+                fixedType = type
                         .asString()
                         .replace("void", "Unit")
                         .replace("Object", "Any")
                         .replace("? extends", "out")
                         .replace("? super", "in")
-                        .replace(",", ", ")
-                        .concat(nullable ? "?" : "");
+                        .replace(",", ", ");
             }
-        }
 
-        private String constructBody(MethodDeclaration method) {
-            if (isInterface()) {
-                return "";
-            }
-            StringBuilder body = new StringBuilder().append(" = ");
+            boolean nullable = !isForceNonNullable && !isFlowable && !type.isPrimitiveType() && !isCollection(type);
 
-            String params = method
-                    .getParameters()
-                    .stream()
-                    .map(p -> (p.isVarArgs() ? "*" : "") + p.getNameAsString())
-                    .collect(joining(", "));
-
-            String await = implBody.apply(method);
-
-            return body
-                    .append("ops.")
-                    .append(method.getNameAsString())
-                    .append(extractTypeParams(method.getTypeParameters()))
-                    .append("(")
-                    .append(params)
-                    .append(")")
-                    .append(await)
-                    .toString();
+            return fixedType.equals("Unit") ? "" : ": " + (nullable ? fixedType + "?" : fixedType);
         }
     }
 
-    public static String extractTypeParams(NodeList<TypeParameter> typeParams) {
+    public static String extractTypeParams(NodeList<TypeParameter> typeParams, String bounds) {
         if (typeParams.isEmpty()) {
             return "";
         } else {
             return typeParams
                     .stream()
-                    .map(tp -> tp.getName().getIdentifier())
+                    .map(tp -> tp.getName().getIdentifier() + (bounds != null ? " : " + bounds : ""))
                     .collect(joining(", ", "<", ">"));
         }
     }
 
     public static String extractJavadoc(Javadoc javadoc) {
-        String plainJavadoc = javadoc
-                .toComment().toString()
+        String plainJavadoc = StringUtils.removeEnd(javadoc.toText(), "\n")
+                .replace("\n@", "\n @")
+                .replace("\n", "\n *")
                 .replace("&lt;", "<")
                 .replace("&gt;", ">");
 
-        return plainJavadoc;
-    }
-
-    private Boolean isInterface() {
-        return implBody == null;
+        return String.format("/**\n * %s\n */\n", convertToKotlinDoc(plainJavadoc));
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -284,5 +254,28 @@ class KotlinCompilationUnitFactory {
         FileOutputStream fos = new FileOutputStream(target);
         fos.write(result.toString().getBytes());
         fos.close();
+    }
+
+    public static String convertToKotlinDoc(String javaDoc) {
+        String res = javaDoc;
+        res = replaceSurrounding(res, "\\{@code ", "\\}", "`", "`");
+        res = replaceSurrounding(res, "\\{@link ", "\\}", "[", "]");
+        return res;
+    }
+
+    public static String replaceSurrounding(String original, String prefix, String suffix, String replacePrefix, String replaceSuffix) {
+        Matcher matcher = Pattern.compile(prefix + "[a-zA-Z0-9.,#\\-~()*\\s]+" + suffix).matcher(original);
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            String substr = StringUtils
+                    .substringBetween(
+                            matcher.group(),
+                            prefix.replace("\\", ""),
+                            suffix.replace("\\", "")
+                    );
+            matcher.appendReplacement(result, replacePrefix + substr + replaceSuffix);
+        }
+        matcher.appendTail(result);
+        return result.toString();
     }
 }

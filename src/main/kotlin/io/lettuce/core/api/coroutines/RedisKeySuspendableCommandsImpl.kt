@@ -50,7 +50,7 @@ internal class RedisKeySuspendableCommandsImpl<K : Any, V : Any>(private val ops
 
     override suspend fun expireat(key: K, timestamp: Long): Boolean? = ops.expireat(key, timestamp).awaitFirstOrNull()
 
-    override suspend fun keys(pattern: K): Flow<K>? = ops.keys(pattern).asFlow()
+    override fun keys(pattern: K): Flow<K> = ops.keys(pattern).asFlow()
 
     override suspend fun migrate(host: String, port: Int, key: K, db: Int, timeout: Long): String? = ops.migrate(host, port, key, db, timeout).awaitFirstOrNull()
 
@@ -84,9 +84,9 @@ internal class RedisKeySuspendableCommandsImpl<K : Any, V : Any>(private val ops
 
     override suspend fun restore(key: K, value: ByteArray, args: RestoreArgs): String? = ops.restore(key, value, args).awaitFirstOrNull()
 
-    override suspend fun sort(key: K): Flow<V> = ops.sort(key).asFlow()
+    override fun sort(key: K): Flow<V> = ops.sort(key).asFlow()
 
-    override suspend fun sort(key: K, sortArgs: SortArgs): Flow<V> = ops.sort(key, sortArgs).asFlow()
+    override fun sort(key: K, sortArgs: SortArgs): Flow<V> = ops.sort(key, sortArgs).asFlow()
 
     override suspend fun sortStore(key: K, sortArgs: SortArgs, destination: K): Long? = ops.sortStore(key, sortArgs, destination).awaitFirstOrNull()
 

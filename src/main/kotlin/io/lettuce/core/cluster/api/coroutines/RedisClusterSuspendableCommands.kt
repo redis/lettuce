@@ -27,7 +27,7 @@ import io.lettuce.core.api.coroutines.*
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-interface RedisClusterSuspendableCommands<K, V> :
+interface RedisClusterSuspendableCommands<K : Any, V : Any> :
         BaseRedisSuspendableCommands<K, V>,
         RedisGeoSuspendableCommands<K, V>,
         RedisHashSuspendableCommands<K, V>,

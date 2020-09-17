@@ -25,7 +25,7 @@ import io.lettuce.core.TransactionResult
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-suspend inline fun <K, V> RedisSuspendableCommands<K, V>.multi(action: RedisSuspendableCommands<K, V>.() -> Unit): TransactionResult? {
+suspend inline fun <K : Any, V : Any> RedisSuspendableCommands<K, V>.multi(action: RedisSuspendableCommands<K, V>.() -> Unit): TransactionResult? {
     multi()
     runCatching {
         action.invoke(this)
