@@ -21,6 +21,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 
@@ -72,27 +73,27 @@ internal class RedisSortedSetSuspendableCommandsImpl<K : Any, V : Any>(private v
 
     override suspend fun zpopmin(key: K): ScoredValue<V>? = ops.zpopmin(key).awaitFirstOrNull()
 
-    override suspend fun zpopmin(key: K, count: Long): Flow<ScoredValue<V>> = ops.zpopmin(key, count).asFlow()
+    override fun zpopmin(key: K, count: Long): Flow<ScoredValue<V>> = ops.zpopmin(key, count).asFlow()
 
     override suspend fun zpopmax(key: K): ScoredValue<V>? = ops.zpopmax(key).awaitFirstOrNull()
 
-    override suspend fun zpopmax(key: K, count: Long): Flow<ScoredValue<V>> = ops.zpopmax(key, count).asFlow()
+    override fun zpopmax(key: K, count: Long): Flow<ScoredValue<V>> = ops.zpopmax(key, count).asFlow()
 
-    override suspend fun zrange(key: K, start: Long, stop: Long): List<V>? = ops.zrange(key, start, stop).collectList().awaitFirstOrNull()
+    override fun zrange(key: K, start: Long, stop: Long): Flow<V> = ops.zrange(key, start, stop).asFlow()
 
-    override suspend fun zrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>> = ops.zrangeWithScores(key, start, stop).asFlow()
+    override fun zrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>> = ops.zrangeWithScores(key, start, stop).asFlow()
 
-    override suspend fun zrangebylex(key: K, range: Range<out V>): List<V>? = ops.zrangebylex(key, range).collectList().awaitFirstOrNull()
+    override suspend fun zrangebylex(key: K, range: Range<out V>): List<V> = ops.zrangebylex(key, range).asFlow().toList()
 
-    override suspend fun zrangebylex(key: K, range: Range<out V>, limit: Limit): List<V>? = ops.zrangebylex(key, range, limit).collectList().awaitFirstOrNull()
+    override suspend fun zrangebylex(key: K, range: Range<out V>, limit: Limit): List<V> = ops.zrangebylex(key, range, limit).asFlow().toList()
 
-    override suspend fun zrangebyscore(key: K, range: Range<out Number>): List<V>? = ops.zrangebyscore(key, range).collectList().awaitFirstOrNull()
+    override suspend fun zrangebyscore(key: K, range: Range<out Number>): List<V> = ops.zrangebyscore(key, range).asFlow().toList()
 
-    override suspend fun zrangebyscore(key: K, range: Range<out Number>, limit: Limit): List<V>? = ops.zrangebyscore(key, range, limit).collectList().awaitFirstOrNull()
+    override suspend fun zrangebyscore(key: K, range: Range<out Number>, limit: Limit): List<V> = ops.zrangebyscore(key, range, limit).asFlow().toList()
 
-    override suspend fun zrangebyscoreWithScores(key: K, range: Range<out Number>): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range).asFlow()
+    override fun zrangebyscoreWithScores(key: K, range: Range<out Number>): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range).asFlow()
 
-    override suspend fun zrangebyscoreWithScores(key: K, range: Range<out Number>, limit: Limit): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range, limit).asFlow()
+    override fun zrangebyscoreWithScores(key: K, range: Range<out Number>, limit: Limit): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range, limit).asFlow()
 
     override suspend fun zrank(key: K, member: V): Long? = ops.zrank(key, member).awaitFirstOrNull()
 
@@ -104,21 +105,21 @@ internal class RedisSortedSetSuspendableCommandsImpl<K : Any, V : Any>(private v
 
     override suspend fun zremrangebyscore(key: K, range: Range<out Number>): Long? = ops.zremrangebyscore(key, range).awaitFirstOrNull()
 
-    override suspend fun zrevrange(key: K, start: Long, stop: Long): Flow<V> = ops.zrevrange(key, start, stop).asFlow()
+    override fun zrevrange(key: K, start: Long, stop: Long): Flow<V> = ops.zrevrange(key, start, stop).asFlow()
 
-    override suspend fun zrevrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>> = ops.zrevrangeWithScores(key, start, stop).asFlow()
+    override fun zrevrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>> = ops.zrevrangeWithScores(key, start, stop).asFlow()
 
-    override suspend fun zrevrangebylex(key: K, range: Range<out V>): Flow<V> = ops.zrevrangebylex(key, range).asFlow()
+    override fun zrevrangebylex(key: K, range: Range<out V>): Flow<V> = ops.zrevrangebylex(key, range).asFlow()
 
-    override suspend fun zrevrangebylex(key: K, range: Range<out V>, limit: Limit): Flow<V> = ops.zrevrangebylex(key, range, limit).asFlow()
+    override fun zrevrangebylex(key: K, range: Range<out V>, limit: Limit): Flow<V> = ops.zrevrangebylex(key, range, limit).asFlow()
 
-    override suspend fun zrevrangebyscore(key: K, range: Range<out Number>): Flow<V> = ops.zrevrangebyscore(key, range).asFlow()
+    override fun zrevrangebyscore(key: K, range: Range<out Number>): Flow<V> = ops.zrevrangebyscore(key, range).asFlow()
 
-    override suspend fun zrevrangebyscore(key: K, range: Range<out Number>, limit: Limit): Flow<V> = ops.zrevrangebyscore(key, range, limit).asFlow()
+    override fun zrevrangebyscore(key: K, range: Range<out Number>, limit: Limit): Flow<V> = ops.zrevrangebyscore(key, range, limit).asFlow()
 
-    override suspend fun zrevrangebyscoreWithScores(key: K, range: Range<out Number>): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range).asFlow()
+    override fun zrevrangebyscoreWithScores(key: K, range: Range<out Number>): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range).asFlow()
 
-    override suspend fun zrevrangebyscoreWithScores(key: K, range: Range<out Number>, limit: Limit): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range, limit).asFlow()
+    override fun zrevrangebyscoreWithScores(key: K, range: Range<out Number>, limit: Limit): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range, limit).asFlow()
 
     override suspend fun zrevrank(key: K, member: V): Long? = ops.zrevrank(key, member).awaitFirstOrNull()
 

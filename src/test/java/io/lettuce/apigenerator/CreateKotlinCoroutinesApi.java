@@ -22,7 +22,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -68,11 +67,8 @@ public class CreateKotlinCoroutinesApi {
                 KOTLIN_SOURCES,
                 targetPackage,
                 targetName,
-                null,
-                null,
                 importSupplier(),
-                commentInjector(),
-                null
+                commentInjector()
         );
     }
 
@@ -82,9 +78,11 @@ public class CreateKotlinCoroutinesApi {
      * @return
      */
     Supplier<List<String>> importSupplier() {
-        return () -> Collections.singletonList("io.lettuce.core.ExperimentalLettuceCoroutinesApi");
+        return () -> Arrays.asList(
+                "io.lettuce.core.ExperimentalLettuceCoroutinesApi",
+                "kotlinx.coroutines.flow.Flow"
+        );
     }
-
 
     /**
      * Mutate type comment.

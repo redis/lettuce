@@ -21,6 +21,8 @@ package io.lettuce.core.sentinel.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.KillArgs
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitLast
 import java.net.SocketAddress
@@ -34,15 +36,15 @@ import java.net.SocketAddress
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class RedisSentinelSuspendableCommandsImpl<K, V>(private val ops: RedisSentinelReactiveCommands<K, V>) : RedisSentinelSuspendableCommands<K, V> {
+internal class RedisSentinelSuspendableCommandsImpl<K : Any, V : Any>(private val ops: RedisSentinelReactiveCommands<K, V>) : RedisSentinelSuspendableCommands<K, V> {
 
     override suspend fun getMasterAddrByName(key: K): SocketAddress = ops.getMasterAddrByName(key).awaitLast()
 
-    override suspend fun masters(): List<Map<K, V>> = ops.masters().collectList().awaitLast()
+    override suspend fun masters(): List<Map<K, V>> = ops.masters().asFlow().toList()
 
     override suspend fun master(key: K): Map<K, V> = ops.master(key).awaitLast()
 
-    override suspend fun slaves(key: K): List<Map<K, V>> = ops.slaves(key).collectList().awaitLast()
+    override suspend fun slaves(key: K): List<Map<K, V>> = ops.slaves(key).asFlow().toList()
 
     override suspend fun reset(key: K): Long = ops.reset(key).awaitLast()
 
@@ -72,7 +74,7 @@ internal class RedisSentinelSuspendableCommandsImpl<K, V>(private val ops: Redis
 
     override suspend fun ping(): String = ops.ping().awaitLast()
 
-    override fun isOpen(): Boolean = ops.isOpen()
+    override fun isOpen(): Boolean = ops.isOpen
 
 }
 

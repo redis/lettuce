@@ -30,9 +30,7 @@ import org.junit.runners.Suite;
         CreateReactiveApi.class,
         CreateAsyncNodeSelectionClusterApi.class,
         CreateSyncNodeSelectionClusterApi.class,
-        CreateKotlinCoroutinesApi.class,
-        CreateKotlinCoroutinesAsyncImplementation.class,
-        CreateKotlinCoroutinesReactiveImplementation.class,
+        CreateKotlinCoroutinesApi.class
 })
 public class GenerateCommandInterfaces {
 

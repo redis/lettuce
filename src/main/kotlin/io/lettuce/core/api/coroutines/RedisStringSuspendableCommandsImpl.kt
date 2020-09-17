@@ -21,6 +21,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 
@@ -34,7 +35,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class RedisStringSuspendableCommandsImpl<K, V>(private val ops: RedisStringReactiveCommands<K, V>) : RedisStringSuspendableCommands<K, V> {
+internal class RedisStringSuspendableCommandsImpl<K : Any, V : Any>(private val ops: RedisStringReactiveCommands<K, V>) : RedisStringSuspendableCommands<K, V> {
 
     override suspend fun append(key: K, value: V): Long? = ops.append(key, value).awaitFirstOrNull()
 
@@ -42,7 +43,7 @@ internal class RedisStringSuspendableCommandsImpl<K, V>(private val ops: RedisSt
 
     override suspend fun bitcount(key: K, start: Long, end: Long): Long? = ops.bitcount(key, start, end).awaitFirstOrNull()
 
-    override suspend fun bitfield(key: K, bitFieldArgs: BitFieldArgs): List<Long>? = ops.bitfield(key, bitFieldArgs).map { it.value }.collectList().awaitFirstOrNull()
+    override suspend fun bitfield(key: K, bitFieldArgs: BitFieldArgs): List<Long> = ops.bitfield(key, bitFieldArgs).map { it.value }.asFlow().toList()
 
     override suspend fun bitpos(key: K, state: Boolean): Long? = ops.bitpos(key, state).awaitFirstOrNull()
 
@@ -76,7 +77,7 @@ internal class RedisStringSuspendableCommandsImpl<K, V>(private val ops: RedisSt
 
     override suspend fun incrbyfloat(key: K, amount: Double): Double? = ops.incrbyfloat(key, amount).awaitFirstOrNull()
 
-    override suspend fun mget(vararg keys: K): Flow<KeyValue<K, V>>? = ops.mget(*keys).asFlow()
+    override fun mget(vararg keys: K): Flow<KeyValue<K, V>> = ops.mget(*keys).asFlow()
 
     override suspend fun mset(map: Map<K, V>): String? = ops.mset(map).awaitFirstOrNull()
 

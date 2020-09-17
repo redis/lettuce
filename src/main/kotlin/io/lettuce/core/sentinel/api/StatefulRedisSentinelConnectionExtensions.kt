@@ -27,6 +27,4 @@ import io.lettuce.core.sentinel.api.coroutines.RedisSentinelSuspendableCommandsI
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-fun <K, V> StatefulRedisSentinelConnection<K, V>.suspendable(): RedisSentinelSuspendableCommands<K, V> {
-    return RedisSentinelSuspendableCommandsImpl(this.reactive())
-}
+fun <K : Any, V : Any> StatefulRedisSentinelConnection<K, V>.suspendable(): RedisSentinelSuspendableCommands<K, V> = RedisSentinelSuspendableCommandsImpl(reactive())

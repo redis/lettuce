@@ -21,6 +21,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisGeoReactiveCommands
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 
@@ -32,27 +33,27 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class RedisGeoSuspendableCommandsImpl<K, V : Any>(private val ops: RedisGeoReactiveCommands<K, V>) : RedisGeoSuspendableCommands<K, V> {
+internal class RedisGeoSuspendableCommandsImpl<K : Any, V : Any>(private val ops: RedisGeoReactiveCommands<K, V>) : RedisGeoSuspendableCommands<K, V> {
 
     override suspend fun geoadd(key: K, longitude: Double, latitude: Double, member: V): Long? = ops.geoadd(key, longitude, latitude, member).awaitFirstOrNull()
 
     override suspend fun geoadd(key: K, vararg lngLatMember: Any): Long? = ops.geoadd(key, *lngLatMember).awaitFirstOrNull()
 
-    override suspend fun geohash(key: K, vararg members: V): Flow<Value<String>> = ops.geohash(key, *members).asFlow()
+    override fun geohash(key: K, vararg members: V): Flow<Value<String>> = ops.geohash(key, *members).asFlow()
 
-    override suspend fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit): Flow<V> = ops.georadius(key, longitude, latitude, distance, unit).asFlow()
+    override fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit): Flow<V> = ops.georadius(key, longitude, latitude, distance, unit).asFlow()
 
-    override suspend fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit, geoArgs: GeoArgs): Flow<GeoWithin<V>> = ops.georadius(key, longitude, latitude, distance, unit, geoArgs).asFlow()
+    override fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit, geoArgs: GeoArgs): Flow<GeoWithin<V>> = ops.georadius(key, longitude, latitude, distance, unit, geoArgs).asFlow()
 
     override suspend fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long? = ops.georadius(key, longitude, latitude, distance, unit, geoRadiusStoreArgs).awaitFirstOrNull()
 
-    override suspend fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit): Flow<V> = ops.georadiusbymember(key, member, distance, unit).asFlow()
+    override fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit): Flow<V> = ops.georadiusbymember(key, member, distance, unit).asFlow()
 
-    override suspend fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoArgs: GeoArgs): Flow<GeoWithin<V>> = ops.georadiusbymember(key, member, distance, unit, geoArgs).asFlow()
+    override fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoArgs: GeoArgs): Flow<GeoWithin<V>> = ops.georadiusbymember(key, member, distance, unit, geoArgs).asFlow()
 
     override suspend fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long? = ops.georadiusbymember(key, member, distance, unit, geoRadiusStoreArgs).awaitFirstOrNull()
 
-    override suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates>? = ops.geopos(key, *members).map { it.value }.collectList().awaitFirstOrNull()
+    override suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates> = ops.geopos(key, *members).map { it.value }.asFlow().toList()
 
     override suspend fun geodist(key: K, from: V, to: V, unit: GeoArgs.Unit): Double? = ops.geodist(key, from, to, unit).awaitFirstOrNull()
 

@@ -34,7 +34,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class RedisHashSuspendableCommandsImpl<K, V : Any>(private val ops: RedisHashReactiveCommands<K, V>) : RedisHashSuspendableCommands<K, V> {
+internal class RedisHashSuspendableCommandsImpl<K : Any, V : Any>(private val ops: RedisHashReactiveCommands<K, V>) : RedisHashSuspendableCommands<K, V> {
 
     override suspend fun hdel(key: K, vararg fields: K): Long? = ops.hdel(key, *fields).awaitFirstOrNull()
 
@@ -48,11 +48,11 @@ internal class RedisHashSuspendableCommandsImpl<K, V : Any>(private val ops: Red
 
     override suspend fun hgetall(key: K): Map<K, V>? = ops.hgetall(key).awaitFirstOrNull()
 
-    override suspend fun hkeys(key: K): List<K>? = ops.hkeys(key).collectList().awaitFirstOrNull()
+    override fun hkeys(key: K): Flow<K> = ops.hkeys(key).asFlow()
 
     override suspend fun hlen(key: K): Long? = ops.hlen(key).awaitFirstOrNull()
 
-    override suspend fun hmget(key: K, vararg fields: K): Flow<KeyValue<K, V>>? = ops.hmget(key, *fields).asFlow()
+    override fun hmget(key: K, vararg fields: K): Flow<KeyValue<K, V>> = ops.hmget(key, *fields).asFlow()
 
     override suspend fun hmset(key: K, map: Map<K, V>): String? = ops.hmset(key, map).awaitFirstOrNull()
 
@@ -72,7 +72,7 @@ internal class RedisHashSuspendableCommandsImpl<K, V : Any>(private val ops: Red
 
     override suspend fun hstrlen(key: K, field: K): Long? = ops.hstrlen(key, field).awaitFirstOrNull()
 
-    override suspend fun hvals(key: K): Flow<V> = ops.hvals(key).asFlow()
+    override fun hvals(key: K): Flow<V> = ops.hvals(key).asFlow()
 
 }
 

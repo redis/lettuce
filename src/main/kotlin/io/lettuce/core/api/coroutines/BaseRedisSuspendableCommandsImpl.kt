@@ -23,6 +23,8 @@ import io.lettuce.core.api.reactive.BaseRedisReactiveCommands
 import io.lettuce.core.output.CommandOutput
 import io.lettuce.core.protocol.CommandArgs
 import io.lettuce.core.protocol.ProtocolKeyword
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 
 
@@ -35,13 +37,13 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class BaseRedisSuspendableCommandsImpl<K, V>(private val ops: BaseRedisReactiveCommands<K, V>) : BaseRedisSuspendableCommands<K, V> {
+internal class BaseRedisSuspendableCommandsImpl<K : Any, V : Any>(private val ops: BaseRedisReactiveCommands<K, V>) : BaseRedisSuspendableCommands<K, V> {
 
     override suspend fun publish(channel: K, message: V): Long? = ops.publish(channel, message).awaitFirstOrNull()
 
-    override suspend fun pubsubChannels(): List<K>? = ops.pubsubChannels().collectList().awaitFirstOrNull()
+    override suspend fun pubsubChannels(): List<K> = ops.pubsubChannels().asFlow().toList()
 
-    override suspend fun pubsubChannels(channel: K): List<K>? = ops.pubsubChannels(channel).collectList().awaitFirstOrNull()
+    override suspend fun pubsubChannels(channel: K): List<K> = ops.pubsubChannels(channel).asFlow().toList()
 
     override suspend fun pubsubNumsub(vararg channels: K): Map<K, Long>? = ops.pubsubNumsub(*channels).awaitFirstOrNull()
 
@@ -49,7 +51,7 @@ internal class BaseRedisSuspendableCommandsImpl<K, V>(private val ops: BaseRedis
 
     override suspend fun echo(msg: V): V? = ops.echo(msg).awaitFirstOrNull()
 
-    override suspend fun role(): List<Any>? = ops.role().collectList().awaitFirstOrNull()
+    override suspend fun role(): List<Any> = ops.role().asFlow().toList()
 
     override suspend fun ping(): String? = ops.ping().awaitFirstOrNull()
 
@@ -65,11 +67,11 @@ internal class BaseRedisSuspendableCommandsImpl<K, V>(private val ops: BaseRedis
 
     override suspend fun <T> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): T? = ops.dispatch<T>(type, output, args).awaitFirstOrNull()
 
-    override fun isOpen(): Boolean = ops.isOpen()
+    override fun isOpen(): Boolean = ops.isOpen
 
-    override fun setAutoFlushCommands(autoFlush: Boolean): Unit = ops.setAutoFlushCommands(autoFlush)
+    override fun setAutoFlushCommands(autoFlush: Boolean) = ops.setAutoFlushCommands(autoFlush)
 
-    override fun flushCommands(): Unit = ops.flushCommands()
+    override fun flushCommands() = ops.flushCommands()
 
 }
 
