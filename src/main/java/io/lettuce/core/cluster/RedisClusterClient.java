@@ -531,6 +531,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
+        if (CommandListenerWriter.isSupported(getResources())) {
+            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+        }
 
         StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(writer, endpoint, codec,
                 getDefaultTimeout());
@@ -573,6 +576,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
+        if (CommandListenerWriter.isSupported(getResources())) {
+            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+        }
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 getDefaultTimeout());
@@ -611,6 +617,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+        }
+        if (CommandListenerWriter.isSupported(getResources())) {
+            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
         }
 
         ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(getClusterClientOptions(), writer,
@@ -694,6 +703,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+        }
+        if (CommandListenerWriter.isSupported(getResources())) {
+            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
         }
 
         ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(getClusterClientOptions(), writer,

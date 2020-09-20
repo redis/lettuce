@@ -273,6 +273,9 @@ public class RedisClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getOptions())) {
             writer = new CommandExpiryWriter(writer, getOptions(), getResources());
         }
+        if (CommandListenerWriter.isSupported(getResources())) {
+            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+        }
 
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout);
         ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
@@ -400,6 +403,9 @@ public class RedisClient extends AbstractRedisClient {
 
         if (CommandExpiryWriter.isSupported(getOptions())) {
             writer = new CommandExpiryWriter(writer, getOptions(), getResources());
+        }
+        if (CommandListenerWriter.isSupported(getResources())) {
+            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
         }
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout);
@@ -563,6 +569,9 @@ public class RedisClient extends AbstractRedisClient {
 
         if (CommandExpiryWriter.isSupported(getOptions())) {
             writer = new CommandExpiryWriter(writer, getOptions(), getResources());
+        }
+        if (CommandListenerWriter.isSupported(getResources())) {
+            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
         }
 
         StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(writer, codec, timeout);

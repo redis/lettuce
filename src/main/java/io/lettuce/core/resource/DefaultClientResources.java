@@ -15,10 +15,13 @@
  */
 package io.lettuce.core.resource;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import reactor.core.scheduler.Schedulers;
+import io.lettuce.core.CommandListener;
 import io.lettuce.core.event.DefaultEventBus;
 import io.lettuce.core.event.DefaultEventPublisherOptions;
 import io.lettuce.core.event.EventBus;
@@ -136,6 +139,8 @@ public class DefaultClientResources implements ClientResources {
 
     private final Tracing tracing;
 
+    private final List<CommandListener> commandListeners;
+
     private volatile boolean shutdownCalled = false;
 
     protected DefaultClientResources(Builder builder) {
@@ -232,6 +237,7 @@ public class DefaultClientResources implements ClientResources {
         reconnectDelay = builder.reconnectDelay;
         nettyCustomizer = builder.nettyCustomizer;
         tracing = builder.tracing;
+        commandListeners = builder.commandListeners;
 
         if (!sharedTimer && timer instanceof HashedWheelTimer) {
             ((HashedWheelTimer) timer).start();
@@ -296,6 +302,8 @@ public class DefaultClientResources implements ClientResources {
         private Timer timer;
 
         private Tracing tracing = Tracing.disabled();
+
+        private List<CommandListener> commandListeners = Collections.emptyList();
 
         private Builder() {
         }
@@ -559,7 +567,22 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
+         * Sets the {@link CommandListener} instances to listen redis command execution.
          *
+         * @param listeners - redis command listeners, must not be {@code null}.
+         * @return this
+         * @since 6.1
+         */
+        @Override
+        public ClientResources.Builder commandListeners(List<CommandListener> listeners) {
+            LettuceAssert.notNull(listeners, "Redis command listeners must not be null");
+
+            this.commandListeners = Collections.unmodifiableList(listeners);
+
+            return this;
+        }
+
+        /**
          * @return a new instance of {@link DefaultClientResources}.
          */
         @Override
@@ -593,7 +616,8 @@ public class DefaultClientResources implements ClientResources {
                 .commandLatencyPublisherOptions(commandLatencyPublisherOptions()).dnsResolver(dnsResolver())
                 .eventBus(eventBus()).eventExecutorGroup(eventExecutorGroup()).reconnectDelay(reconnectDelay)
                 .socketAddressResolver(socketAddressResolver()).nettyCustomizer(nettyCustomizer()).timer(timer())
-                .tracing(tracing());
+                .tracing(tracing())
+                .commandListeners(commandListeners());
 
         builder.sharedCommandLatencyCollector = sharedEventLoopGroupProvider;
         builder.sharedEventExecutor = sharedEventExecutor;
@@ -732,4 +756,8 @@ public class DefaultClientResources implements ClientResources {
         return tracing;
     }
 
+    @Override
+    public List<CommandListener> commandListeners() {
+        return commandListeners;
+    }
 }
