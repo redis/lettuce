@@ -17,7 +17,9 @@ package io.lettuce.core.resource;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.List;
 
+import io.lettuce.core.CommandListener;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.metrics.CommandLatencyCollector;
@@ -241,6 +243,15 @@ public interface ClientResources {
         Builder tracing(Tracing tracing);
 
         /**
+         * Sets the {@link CommandListener} instances to listen redis command execution.
+         *
+         * @param listeners - redis command listeners, must not be {@code null}.
+         * @return this
+         * @since 6.1
+         */
+        Builder commandListeners(List<CommandListener> listeners);
+
+        /**
          * @return a new instance of {@link DefaultClientResources}.
          */
         ClientResources build();
@@ -384,4 +395,11 @@ public interface ClientResources {
      */
     Tracing tracing();
 
+    /**
+     * Return the {@link CommandListener} instances to listen redis command execution.
+     *
+     * @return list of redis command listeners.
+     * @since 6.1
+     */
+    List<CommandListener> commandListeners();
 }
