@@ -121,8 +121,8 @@ class BraveTracingUnitTests extends TestSupport {
         BraveTracing.BraveSpan span = (BraveTracing.BraveSpan) tracing.getTracerProvider().getTracer().nextSpan();
         span.start(new AsyncCommand<>(new Command<>(CommandType.AUTH, null)));
 
-        MutableSpan braveSpan = (MutableSpan) ReflectionTestUtils.getField(span.getSpan(), "state");
-        List<String> tags = (List) ReflectionTestUtils.getField(braveSpan, "tags");
+        MutableSpan braveSpan = ReflectionTestUtils.getField(span.getSpan(), "state");
+        Object[] tags = ReflectionTestUtils.getField(braveSpan, "tags");
 
         assertThat(tags).contains("cmd", "AUTH");
     }
