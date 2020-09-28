@@ -88,6 +88,7 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
         }
 
         exception = throwable;
+        this.status = ST_COMPLETED;
         return true;
     }
 

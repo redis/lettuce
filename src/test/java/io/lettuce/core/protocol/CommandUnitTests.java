@@ -28,6 +28,8 @@ import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.StatusOutput;
 
 /**
+ * Unit test for {@link Command}.
+ *
  * @author Will Glozer
  * @author Mark Paluch
  */
@@ -61,6 +63,15 @@ public class CommandUnitTests {
         assertThat(sut.isDone()).isFalse();
 
         sut.complete();
+
+        assertThat(sut.isCancelled()).isFalse();
+        assertThat(sut.isDone()).isTrue();
+    }
+
+    @Test
+    void isDoneExceptionally() {
+
+        sut.completeExceptionally(new IllegalStateException());
 
         assertThat(sut.isCancelled()).isFalse();
         assertThat(sut.isDone()).isTrue();
