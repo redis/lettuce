@@ -140,6 +140,19 @@ connection.getStatefulConnection().addListener(new RedisPubSubListener<String, S
 connection.subscribe("channel")
 ```
 
+Cloud Provider Compatibility
+----------------------------
+
+While we're not actively testing Lettuce against various cloud offerings, we've verified initial compatibility with the following services (or have seen folks using Lettuce there):
+
+* AWS Elasticache (Operated in replica- and Redis Cluster mode)
+* Azure Redis
+* IBM Cloud Databases for Redis
+* Google Cloud Memorystore for Redis
+* RedisLabs Enterprise Redis Cluster
+
+Note: Some providers operate Redis in non-standard modes that aren't fully supported by Lettuce. 
+
 Building
 -----------
 
