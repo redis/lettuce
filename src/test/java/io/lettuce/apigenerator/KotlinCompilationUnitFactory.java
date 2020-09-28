@@ -40,6 +40,8 @@ import static java.util.stream.Collectors.joining;
 
 /**
  * @author Mikhael Sokolov
+ * @author dengliming
+ * @author Mark Paluch
  */
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 class KotlinCompilationUnitFactory {
@@ -170,7 +172,7 @@ class KotlinCompilationUnitFactory {
                     .append(extractParameters(method))
                     .append(")")
                     .append(": ")
-                    .append(fixType(method.getType()))
+                    .append(toKotlinType(method.getType(), true))
                     .append(constructBody(method))
                     .append("\n\n");
         }
@@ -194,17 +196,17 @@ class KotlinCompilationUnitFactory {
             return method
                     .getParameters()
                     .stream()
-                    .map(p -> (p.isVarArgs() ? "vararg " : "") + p.getName() + ": " + fixType(p.getType()))
+                    .map(p -> (p.isVarArgs() ? "vararg " : "") + p.getName() + ": " + toKotlinType(p.getType(), false))
                     .collect(joining(", "));
         }
 
-        private String fixType(Type type) {
+        private String toKotlinType(Type type, boolean nullable) {
             if (type.isArrayType()) {
                 Type componentType = type.asArrayType().getComponentType();
                 if (componentType.asString().equals("byte")) {
-                    return "ByteArray?";
+                    return "ByteArray";
                 } else {
-                    return String.format("Array<%s?>?", componentType.asString());
+                    return String.format("Array<%s>", componentType.asString());
                 }
             } else if (type.isPrimitiveType()) {
                 return type
@@ -213,7 +215,7 @@ class KotlinCompilationUnitFactory {
                         .getName()
                         .asString()
                         .replace("Integer", "Int")
-                        .replace("Object", "Any?");
+                        .replace("Object", "Any");
             } else {
                 return type
                         .asString()
@@ -222,7 +224,7 @@ class KotlinCompilationUnitFactory {
                         .replace("? extends", "out")
                         .replace("? super", "in")
                         .replace(",", ", ")
-                        .concat("?");
+                        .concat(nullable ? "?" : "");
             }
         }
 
@@ -263,22 +265,13 @@ class KotlinCompilationUnitFactory {
         }
     }
 
-    @SuppressWarnings({"StringBufferReplaceableByString"})
     public static String extractJavadoc(Javadoc javadoc) {
         String plainJavadoc = javadoc
-                .toText()
-                .replace("\n", "\n" + " * ")
+                .toComment().toString()
                 .replace("&lt;", "<")
                 .replace("&gt;", ">");
 
-        return new StringBuilder()
-                .append("/**\n")
-                .append(" * ")
-                .append(plainJavadoc)
-                .append("\n")
-                .append(" */")
-                .append("\n")
-                .toString();
+        return plainJavadoc;
     }
 
     private Boolean isInterface() {
