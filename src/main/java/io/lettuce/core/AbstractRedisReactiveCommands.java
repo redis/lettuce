@@ -22,18 +22,17 @@ import java.util.Date;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import io.lettuce.core.codec.Base16;
-import io.lettuce.core.internal.LettuceStrings;
-import io.lettuce.core.models.stream.PendingMessage;
-import io.lettuce.core.models.stream.PendingMessages;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
+import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.stream.PendingMessage;
+import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
@@ -59,8 +58,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>,
         RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
 
-    private final Object mutex = new Object();
-
     private final StatefulConnection<K, V> connection;
 
     private final RedisCommandBuilder<K, V> commandBuilder;
@@ -69,7 +66,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     private final boolean tracingEnabled;
 
-    private EventExecutorGroup scheduler;
+    private volatile EventExecutorGroup scheduler;
 
     /**
      * Initialize a new instance.
@@ -86,20 +83,18 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
 
     private EventExecutorGroup getScheduler() {
 
-        if (this.scheduler != null) {
-            return this.scheduler;
+        EventExecutorGroup scheduler = this.scheduler;
+        if (scheduler != null) {
+            return scheduler;
         }
 
-        synchronized (mutex) {
+        EventExecutorGroup schedulerToUse = ImmediateEventExecutor.INSTANCE;
 
-            EventExecutorGroup scheduler = ImmediateEventExecutor.INSTANCE;
-
-            if (connection.getOptions().isPublishOnScheduler()) {
-                scheduler = connection.getResources().eventExecutorGroup();
-            }
-
-            return this.scheduler = scheduler;
+        if (connection.getOptions().isPublishOnScheduler()) {
+            schedulerToUse = connection.getResources().eventExecutorGroup();
         }
+
+        return this.scheduler = schedulerToUse;
     }
 
     @Override

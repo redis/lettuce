@@ -24,10 +24,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import io.lettuce.core.internal.*;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.Transports.NativeTransports;
+import io.lettuce.core.internal.*;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;
@@ -63,6 +64,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public abstract class AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractRedisClient.class);
+
+    private static final int EVENTLOOP_ACQ_INACTIVE = 0;
+
+    private static final int EVENTLOOP_ACQ_ACTIVE = 1;
+
+    private final AtomicInteger eventLoopGroupCas = new AtomicInteger();
 
     protected final ConnectionEvents connectionEvents = new ConnectionEvents();
 
@@ -246,7 +253,22 @@ public abstract class AbstractRedisClient {
         }
     }
 
-    private synchronized EventLoopGroup getEventLoopGroup(ConnectionPoint connectionPoint) {
+    private EventLoopGroup getEventLoopGroup(ConnectionPoint connectionPoint) {
+
+        for (;;) {
+            if (!eventLoopGroupCas.compareAndSet(EVENTLOOP_ACQ_INACTIVE, EVENTLOOP_ACQ_ACTIVE)) {
+                continue;
+            }
+
+            try {
+                return doGetEventExecutor(connectionPoint);
+            } finally {
+                eventLoopGroupCas.set(EVENTLOOP_ACQ_INACTIVE);
+            }
+        }
+    }
+
+    private EventLoopGroup doGetEventExecutor(ConnectionPoint connectionPoint) {
 
         if (connectionPoint.getSocket() == null && !eventLoopGroups.containsKey(Transports.eventLoopGroupClass())) {
             eventLoopGroups.put(Transports.eventLoopGroupClass(),

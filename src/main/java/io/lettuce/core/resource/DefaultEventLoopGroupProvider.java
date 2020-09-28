@@ -23,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.EventLoopGroup;
@@ -40,6 +42,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEventLoopGroupProvider.class);
+
+    private final Lock lock = new ReentrantLock();
 
     private final Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
 
@@ -79,15 +83,19 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     @Override
     public <T extends EventLoopGroup> T allocate(Class<T> type) {
 
-        synchronized (this) {
+        lock.lock();
+        try {
             logger.debug("Allocating executor {}", type.getName());
             return addReference(getOrCreate(type));
+        } finally {
+            lock.unlock();
         }
     }
 
     private <T extends ExecutorService> T addReference(T reference) {
 
-        synchronized (refCounter) {
+        lock.lock();
+        try {
             long counter = 0;
             if (refCounter.containsKey(reference)) {
                 counter = refCounter.get(reference);
@@ -96,6 +104,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             logger.debug("Adding reference to {}, existing ref count {}", reference, counter);
             counter++;
             refCounter.put(reference, counter);
+        } finally {
+            lock.unlock();
         }
 
         return reference;
@@ -103,7 +113,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     private <T extends ExecutorService> T release(T reference) {
 
-        synchronized (refCounter) {
+        lock.lock();
+        try {
             long counter = 0;
             if (refCounter.containsKey(reference)) {
                 counter = refCounter.get(reference);
@@ -119,6 +130,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             } else {
                 refCounter.put(reference, counter);
             }
+        } finally {
+            lock.unlock();
         }
 
         return reference;
@@ -140,7 +153,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     /**
      * Customization hook for {@link EventLoopGroup} creation.
-     * 
+     *
      * @param <T>
      * @param type requested event loop group type.
      * @param numberOfThreads number of threads to create.
@@ -288,14 +301,14 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     /**
      * Interface to provide a custom {@link java.util.concurrent.ThreadFactory}. Implementations are asked through
      * {@link #getThreadFactory(String)} to provide a thread factory for a given pool name.
-     * 
+     *
      * @since 6.0
      */
     public interface ThreadFactoryProvider {
 
         /**
          * Return a {@link ThreadFactory} for the given {@code poolName}.
-         * 
+         *
          * @param poolName a descriptive pool name. Typically used as prefix for thread names.
          * @return the {@link ThreadFactory}.
          */

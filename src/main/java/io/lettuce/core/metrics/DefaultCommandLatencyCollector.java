@@ -27,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
@@ -363,7 +365,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
         private final AtomicLong counter = new AtomicLong();
 
-        private final Object mutex = new Object();
+        private final Lock lock = new ReentrantLock();
 
         private volatile PauseDetector pauseDetector;
 
@@ -387,7 +389,8 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             if (counter.incrementAndGet() == 1) {
 
                 // Avoid concurrent calls to retain/release
-                synchronized (mutex) {
+                lock.lock();
+                try {
 
                     if (instanceCounter.getAndIncrement() > 0) {
                         InternalLogger instance = InternalLoggerFactory.getInstance(getClass());
@@ -408,6 +411,8 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
                     this.pauseDetector = pauseDetector;
                     Runtime.getRuntime().addShutdownHook(shutdownHook);
+                } finally {
+                    lock.unlock();
                 }
             }
         }
@@ -420,7 +425,8 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             if (counter.decrementAndGet() == 0) {
 
                 // Avoid concurrent calls to retain/release
-                synchronized (mutex) {
+                lock.lock();
+                try {
 
                     instanceCounter.decrementAndGet();
 
@@ -435,6 +441,8 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                     }
 
                     shutdownHook = null;
+                } finally {
+                    lock.unlock();
                 }
             }
         }

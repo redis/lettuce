@@ -20,6 +20,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -50,6 +52,7 @@ import io.lettuce.core.protocol.CommandType;
 class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, StatefulRedisConnection<String, String>>, Connections>
         implements AsyncCloseable {
 
+    private final Lock lock = new ReentrantLock();
     private final Map<RedisURI, StatefulRedisConnection<String, String>> connections = new TreeMap<>(
             ReplicaUtils.RedisURIComparator.INSTANCE);
 
@@ -72,8 +75,11 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
             return;
         }
 
-        synchronized (this.connections) {
+        try {
+            lock.lock();
             this.connections.put(value.getT1(), value.getT2());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -111,8 +117,12 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
      * @return {@code true} if no connections present.
      */
     public boolean isEmpty() {
-        synchronized (this.connections) {
+        try {
+            lock.lock();
             return this.connections.isEmpty();
+        }
+        finally {
+            lock.unlock();
         }
     }
 

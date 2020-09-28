@@ -16,14 +16,18 @@
 package io.lettuce.core.cluster.topology;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -41,6 +45,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class Connections {
 
     private final static InternalLogger LOG = InternalLoggerFactory.getInstance(Connections.class);
+
+    private final Lock lock = new ReentrantLock();
 
     private final ClientResources clientResources;
 
@@ -66,14 +72,16 @@ class Connections {
             return;
         }
 
-        synchronized (this.connections) {
-
+        try {
+            lock.lock();
             if (this.closed) {
                 connection.closeAsync();
                 return;
             }
 
             this.connections.put(redisURI, connection);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -81,8 +89,11 @@ class Connections {
      * @return {@code true} if no connections present.
      */
     public boolean isEmpty() {
-        synchronized (this.connections) {
+        try {
+            lock.lock();
             return this.connections.isEmpty();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -125,7 +136,8 @@ class Connections {
         Requests requests = new Requests();
         Duration timeoutDuration = Duration.ofNanos(timeUnit.toNanos(timeout));
 
-        synchronized (this.connections) {
+        try {
+            lock.lock();
             for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
                 TimedAsyncCommand<String, String, String> timedCommand = commandFactory.get();
@@ -137,6 +149,9 @@ class Connections {
                 entry.getValue().dispatch(timedCommand);
                 requests.addRequest(entry.getKey(), timedCommand);
             }
+        }
+        finally {
+            lock.unlock();
         }
 
         return requests;
