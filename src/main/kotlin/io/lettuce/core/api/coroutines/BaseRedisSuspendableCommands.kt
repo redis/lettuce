@@ -65,14 +65,14 @@ interface BaseRedisSuspendableCommands<K : Any, V : Any> {
      * @param channels channel keys.
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
-    suspend fun pubsubNumsub(vararg channels: K): Map<K, Long>?
+    suspend fun pubsubNumsub(vararg channels: K): Map<K, Long>
 
     /**
      * Returns the number of subscriptions to patterns.
      *
      * @return Long integer-reply the number of patterns all the clients are subscribed to.
      */
-    suspend fun pubsubNumpat(): Long?
+    suspend fun pubsubNumpat(): Long
 
     /**
      * Echo the given string.
@@ -80,7 +80,7 @@ interface BaseRedisSuspendableCommands<K : Any, V : Any> {
      * @param msg the message type: value.
      * @return V bulk-string-reply.
      */
-    suspend fun echo(msg: V): V?
+    suspend fun echo(msg: V): V
 
     /**
      * Return the role of the instance in the context of replication.
@@ -95,21 +95,21 @@ interface BaseRedisSuspendableCommands<K : Any, V : Any> {
      *
      * @return String simple-string-reply.
      */
-    suspend fun ping(): String?
+    suspend fun ping(): String
 
     /**
      * Switch connection to Read-Only mode when connecting to a cluster.
      *
      * @return String simple-string-reply.
      */
-    suspend fun readOnly(): String?
+    suspend fun readOnly(): String
 
     /**
      * Switch connection to Read-Write mode (default) when connecting to a cluster.
      *
      * @return String simple-string-reply.
      */
-    suspend fun readWrite(): String?
+    suspend fun readWrite(): String
 
     /**
      * Instructs Redis to disconnect the connection. Note that if auto-reconnect is enabled then Lettuce will auto-reconnect if

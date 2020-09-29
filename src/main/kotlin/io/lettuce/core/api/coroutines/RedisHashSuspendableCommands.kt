@@ -91,9 +91,8 @@ interface RedisHashSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @return Map<K,V> array-reply list of fields and their values stored in the hash, or an empty list when `key`
      *        does not exist.
-     * TODO: Change to Flow
      */
-    suspend fun hgetall(key: K): Map<K, V>?
+    fun hgetall(key: K): Flow<KeyValue<K, V>>
 
     /**
      * Get all the fields in a hash.

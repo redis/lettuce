@@ -22,6 +22,7 @@ import io.lettuce.core.*
 import io.lettuce.core.XReadArgs.StreamOffset
 import io.lettuce.core.models.stream.PendingMessage
 import io.lettuce.core.models.stream.PendingMessages
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Coroutine executed commands for Streams.
@@ -92,7 +93,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param messageIds message Id's to claim.
      * @return simple-reply the [StreamMessage].
      */
-    suspend fun xclaim(key: K, consumer: Consumer<K>, minIdleTime: Long, vararg messageIds: String): List<StreamMessage<K, V>>
+    fun xclaim(key: K, consumer: Consumer<K>, minIdleTime: Long, vararg messageIds: String): Flow<StreamMessage<K, V>>
 
     /**
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
@@ -106,7 +107,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param messageIds message Id's to claim.
      * @return simple-reply the [StreamMessage].
      */
-    suspend fun xclaim(key: K, consumer: Consumer<K>, args: XClaimArgs, vararg messageIds: String): List<StreamMessage<K, V>>
+    fun xclaim(key: K, consumer: Consumer<K>, args: XClaimArgs, vararg messageIds: String): Flow<StreamMessage<K, V>>
 
     /**
      * Removes the specified entries from the stream. Returns the number of items deleted, that may be different from the number
@@ -219,7 +220,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param limit must not be `null`.
      * @return List<Object> array-reply list with members of the resulting stream.
      */
-    suspend fun xpending(key: K, group: K, range: Range<String>, limit: Limit): List<PendingMessage>
+    fun xpending(key: K, group: K, range: Range<String>, limit: Limit): Flow<PendingMessage>
 
     /**
      * Read pending messages from a stream within a specific [Range].
@@ -230,7 +231,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param limit must not be `null`.
      * @return List<Object> array-reply list with members of the resulting stream.
      */
-    suspend fun xpending(key: K, consumer: Consumer<K>, range: Range<String>, limit: Limit): List<PendingMessage>
+    fun xpending(key: K, consumer: Consumer<K>, range: Range<String>, limit: Limit): Flow<PendingMessage>
 
     /**
      * Read messages from a stream within a specific [Range].
@@ -239,7 +240,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param range must not be `null`.
      * @return List<StreamMessage> array-reply list with members of the resulting stream.
      */
-    suspend fun xrange(key: K, range: Range<String>): List<StreamMessage<K, V>>
+    fun xrange(key: K, range: Range<String>): Flow<StreamMessage<K, V>>
 
     /**
      * Read messages from a stream within a specific [Range] applying a [Limit].
@@ -249,7 +250,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param limit must not be `null`.
      * @return List<StreamMessage> array-reply list with members of the resulting stream.
      */
-    suspend fun xrange(key: K, range: Range<String>, limit: Limit): List<StreamMessage<K, V>>
+    fun xrange(key: K, range: Range<String>, limit: Limit): Flow<StreamMessage<K, V>>
 
     /**
      * Read messages from one or more [StreamOffset]s.
@@ -257,7 +258,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param streams the streams to read from.
      * @return List<StreamMessage> array-reply list with members of the resulting stream.
      */
-    suspend fun xread(vararg streams: StreamOffset<K>): List<StreamMessage<K, V>>
+    fun xread(vararg streams: StreamOffset<K>): Flow<StreamMessage<K, V>>
 
     /**
      * Read messages from one or more [StreamOffset]s.
@@ -266,7 +267,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param streams the streams to read from.
      * @return List<StreamMessage> array-reply list with members of the resulting stream.
      */
-    suspend fun xread(args: XReadArgs, vararg streams: StreamOffset<K>): List<StreamMessage<K, V>>
+    fun xread(args: XReadArgs, vararg streams: StreamOffset<K>): Flow<StreamMessage<K, V>>
 
     /**
      * Read messages from one or more [StreamOffset]s using a consumer group.
@@ -275,7 +276,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param streams the streams to read from.
      * @return List<StreamMessage> array-reply list with members of the resulting stream.
      */
-    suspend fun xreadgroup(consumer: Consumer<K>, vararg streams: StreamOffset<K>): List<StreamMessage<K, V>>
+    fun xreadgroup(consumer: Consumer<K>, vararg streams: StreamOffset<K>): Flow<StreamMessage<K, V>>
 
     /**
      * Read messages from one or more [StreamOffset]s using a consumer group.
@@ -285,7 +286,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param streams the streams to read from.
      * @return List<StreamMessage> array-reply list with members of the resulting stream.
      */
-    suspend fun xreadgroup(consumer: Consumer<K>, args: XReadArgs, vararg streams: StreamOffset<K>): List<StreamMessage<K, V>>
+    fun xreadgroup(consumer: Consumer<K>, args: XReadArgs, vararg streams: StreamOffset<K>): Flow<StreamMessage<K, V>>
 
     /**
      * Read messages from a stream within a specific [Range] in reverse order.
@@ -294,7 +295,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param range must not be `null`.
      * @return List<StreamMessage> array-reply list with members of the resulting stream.
      */
-    suspend fun xrevrange(key: K, range: Range<String>): List<StreamMessage<K, V>>
+    fun xrevrange(key: K, range: Range<String>): Flow<StreamMessage<K, V>>
 
     /**
      * Read messages from a stream within a specific [Range] applying a [Limit] in reverse order.
@@ -304,7 +305,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param limit must not be `null`.
      * @return List<StreamMessage> array-reply list with members of the resulting stream.
      */
-    suspend fun xrevrange(key: K, range: Range<String>, limit: Limit): List<StreamMessage<K, V>>
+    fun xrevrange(key: K, range: Range<String>, limit: Limit): Flow<StreamMessage<K, V>>
 
     /**
      * Trims the stream to `count` elements.

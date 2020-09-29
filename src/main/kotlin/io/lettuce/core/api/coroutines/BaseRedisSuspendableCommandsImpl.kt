@@ -26,6 +26,7 @@ import io.lettuce.core.protocol.ProtocolKeyword
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitSingle
 
 
 /**
@@ -45,19 +46,19 @@ internal class BaseRedisSuspendableCommandsImpl<K : Any, V : Any>(private val op
 
     override suspend fun pubsubChannels(channel: K): List<K> = ops.pubsubChannels(channel).asFlow().toList()
 
-    override suspend fun pubsubNumsub(vararg channels: K): Map<K, Long>? = ops.pubsubNumsub(*channels).awaitFirstOrNull()
+    override suspend fun pubsubNumsub(vararg channels: K): Map<K, Long> = ops.pubsubNumsub(*channels).awaitSingle()
 
-    override suspend fun pubsubNumpat(): Long? = ops.pubsubNumpat().awaitFirstOrNull()
+    override suspend fun pubsubNumpat(): Long = ops.pubsubNumpat().awaitSingle()
 
-    override suspend fun echo(msg: V): V? = ops.echo(msg).awaitFirstOrNull()
+    override suspend fun echo(msg: V): V = ops.echo(msg).awaitSingle()
 
     override suspend fun role(): List<Any> = ops.role().asFlow().toList()
 
-    override suspend fun ping(): String? = ops.ping().awaitFirstOrNull()
+    override suspend fun ping(): String = ops.ping().awaitSingle()
 
-    override suspend fun readOnly(): String? = ops.readOnly().awaitFirstOrNull()
+    override suspend fun readOnly(): String = ops.readOnly().awaitSingle()
 
-    override suspend fun readWrite(): String? = ops.readWrite().awaitFirstOrNull()
+    override suspend fun readWrite(): String = ops.readWrite().awaitSingle()
 
     override suspend fun quit(): String? = ops.quit().awaitFirstOrNull()
 

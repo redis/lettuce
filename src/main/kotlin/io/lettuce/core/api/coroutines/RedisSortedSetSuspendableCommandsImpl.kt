@@ -83,13 +83,13 @@ internal class RedisSortedSetSuspendableCommandsImpl<K : Any, V : Any>(private v
 
     override fun zrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>> = ops.zrangeWithScores(key, start, stop).asFlow()
 
-    override suspend fun zrangebylex(key: K, range: Range<out V>): List<V> = ops.zrangebylex(key, range).asFlow().toList()
+    override fun zrangebylex(key: K, range: Range<out V>): Flow<V> = ops.zrangebylex(key, range).asFlow()
 
-    override suspend fun zrangebylex(key: K, range: Range<out V>, limit: Limit): List<V> = ops.zrangebylex(key, range, limit).asFlow().toList()
+    override fun zrangebylex(key: K, range: Range<out V>, limit: Limit): Flow<V> = ops.zrangebylex(key, range, limit).asFlow()
 
-    override suspend fun zrangebyscore(key: K, range: Range<out Number>): List<V> = ops.zrangebyscore(key, range).asFlow().toList()
+    override fun zrangebyscore(key: K, range: Range<out Number>): Flow<V> = ops.zrangebyscore(key, range).asFlow()
 
-    override suspend fun zrangebyscore(key: K, range: Range<out Number>, limit: Limit): List<V> = ops.zrangebyscore(key, range, limit).asFlow().toList()
+    override fun zrangebyscore(key: K, range: Range<out Number>, limit: Limit): Flow<V> = ops.zrangebyscore(key, range, limit).asFlow()
 
     override fun zrangebyscoreWithScores(key: K, range: Range<out Number>): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range).asFlow()
 

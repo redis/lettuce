@@ -23,6 +23,7 @@ import io.lettuce.core.XReadArgs.StreamOffset
 import io.lettuce.core.api.reactive.RedisStreamReactiveCommands
 import io.lettuce.core.models.stream.PendingMessage
 import io.lettuce.core.models.stream.PendingMessages
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -48,9 +49,9 @@ internal class RedisStreamSuspendableCommandsImpl<K : Any, V : Any>(private val 
 
     override suspend fun xadd(key: K, args: XAddArgs, vararg keysAndValues: Any): String? = ops.xadd(key, args, *keysAndValues).awaitFirstOrNull()
 
-    override suspend fun xclaim(key: K, consumer: Consumer<K>, minIdleTime: Long, vararg messageIds: String): List<StreamMessage<K, V>> = ops.xclaim(key, consumer, minIdleTime, *messageIds).asFlow().toList()
+    override fun xclaim(key: K, consumer: Consumer<K>, minIdleTime: Long, vararg messageIds: String): Flow<StreamMessage<K, V>> = ops.xclaim(key, consumer, minIdleTime, *messageIds).asFlow()
 
-    override suspend fun xclaim(key: K, consumer: Consumer<K>, args: XClaimArgs, vararg messageIds: String): List<StreamMessage<K, V>> = ops.xclaim(key, consumer, args, *messageIds).asFlow().toList()
+    override fun xclaim(key: K, consumer: Consumer<K>, args: XClaimArgs, vararg messageIds: String): Flow<StreamMessage<K, V>> = ops.xclaim(key, consumer, args, *messageIds).asFlow()
 
     override suspend fun xdel(key: K, vararg messageIds: String): Long? = ops.xdel(key, *messageIds).awaitFirstOrNull()
 
@@ -74,25 +75,25 @@ internal class RedisStreamSuspendableCommandsImpl<K : Any, V : Any>(private val 
 
     override suspend fun xpending(key: K, group: K): PendingMessages? = ops.xpending(key, group).awaitFirstOrNull()
 
-    override suspend fun xpending(key: K, group: K, range: Range<String>, limit: Limit): List<PendingMessage> = ops.xpending(key, group, range, limit).asFlow().toList()
+    override fun xpending(key: K, group: K, range: Range<String>, limit: Limit): Flow<PendingMessage> = ops.xpending(key, group, range, limit).asFlow()
 
-    override suspend fun xpending(key: K, consumer: Consumer<K>, range: Range<String>, limit: Limit): List<PendingMessage> = ops.xpending(key, consumer, range, limit).asFlow().toList()
+    override fun xpending(key: K, consumer: Consumer<K>, range: Range<String>, limit: Limit): Flow<PendingMessage> = ops.xpending(key, consumer, range, limit).asFlow()
 
-    override suspend fun xrange(key: K, range: Range<String>): List<StreamMessage<K, V>> = ops.xrange(key, range).asFlow().toList()
+    override fun xrange(key: K, range: Range<String>): Flow<StreamMessage<K, V>> = ops.xrange(key, range).asFlow()
 
-    override suspend fun xrange(key: K, range: Range<String>, limit: Limit): List<StreamMessage<K, V>> = ops.xrange(key, range, limit).asFlow().toList()
+    override fun xrange(key: K, range: Range<String>, limit: Limit): Flow<StreamMessage<K, V>> = ops.xrange(key, range, limit).asFlow()
 
-    override suspend fun xread(vararg streams: StreamOffset<K>): List<StreamMessage<K, V>> = ops.xread(*streams).asFlow().toList()
+    override fun xread(vararg streams: StreamOffset<K>): Flow<StreamMessage<K, V>> = ops.xread(*streams).asFlow()
 
-    override suspend fun xread(args: XReadArgs, vararg streams: StreamOffset<K>): List<StreamMessage<K, V>> = ops.xread(args, *streams).asFlow().toList()
+    override fun xread(args: XReadArgs, vararg streams: StreamOffset<K>): Flow<StreamMessage<K, V>> = ops.xread(args, *streams).asFlow()
 
-    override suspend fun xreadgroup(consumer: Consumer<K>, vararg streams: StreamOffset<K>): List<StreamMessage<K, V>> = ops.xreadgroup(consumer, *streams).asFlow().toList()
+    override fun xreadgroup(consumer: Consumer<K>, vararg streams: StreamOffset<K>): Flow<StreamMessage<K, V>> = ops.xreadgroup(consumer, *streams).asFlow()
 
-    override suspend fun xreadgroup(consumer: Consumer<K>, args: XReadArgs, vararg streams: StreamOffset<K>): List<StreamMessage<K, V>> = ops.xreadgroup(consumer, args, *streams).asFlow().toList()
+    override fun xreadgroup(consumer: Consumer<K>, args: XReadArgs, vararg streams: StreamOffset<K>): Flow<StreamMessage<K, V>> = ops.xreadgroup(consumer, args, *streams).asFlow()
 
-    override suspend fun xrevrange(key: K, range: Range<String>): List<StreamMessage<K, V>> = ops.xrevrange(key, range).asFlow().toList()
+    override fun xrevrange(key: K, range: Range<String>): Flow<StreamMessage<K, V>> = ops.xrevrange(key, range).asFlow()
 
-    override suspend fun xrevrange(key: K, range: Range<String>, limit: Limit): List<StreamMessage<K, V>> = ops.xrevrange(key, range, limit).asFlow().toList()
+    override fun xrevrange(key: K, range: Range<String>, limit: Limit): Flow<StreamMessage<K, V>> = ops.xrevrange(key, range, limit).asFlow()
 
     override suspend fun xtrim(key: K, count: Long): Long? = ops.xtrim(key, count).awaitFirstOrNull()
 

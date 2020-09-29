@@ -15,18 +15,7 @@
  */
 package io.lettuce.apigenerator;
 
-import com.github.javaparser.JavaParser;
-import com.github.javaparser.JavaToken;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.type.Type;
-import com.github.javaparser.ast.type.TypeParameter;
-import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import com.github.javaparser.javadoc.Javadoc;
-import io.lettuce.core.internal.LettuceSets;
-import org.apache.commons.lang3.StringUtils;
+import static java.util.stream.Collectors.joining;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,18 +28,35 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.util.stream.Collectors.joining;
+import org.apache.commons.lang3.StringUtils;
+
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.JavaToken;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.ast.type.TypeParameter;
+import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.javadoc.Javadoc;
+
+import io.lettuce.core.internal.LettuceSets;
 
 /**
+ * Create Kotlin Coroutine API based on the templates.
+ *
  * @author Mikhael Sokolov
+ * @author dengliming
+ * @author Mark Paluch
  */
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 class KotlinCompilationUnitFactory {
 
     private static final Set<String> SKIP_IMPORTS = LettuceSets.unmodifiableSet("java.util.List", "java.util.Set", "java.util.Map");
-    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("keys", "geohash", "georadius", "georadiusbymember", "hmget", "hkeys", "hvals", "sort", "zpopmin", "zpopmax", "zrange", "zrangeWithScores", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "mget");
+    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("keys", "geohash", "georadius", "georadiusbymember", "hgetall", "hmget", "hkeys", "hvals", "sort", "zpopmin", "zpopmax", "zrange", "zrangebylex", "zrangebyscore", "zrangeWithScores", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "mget", "sdiff", "sinter", "smembers", "srandmember", "sunion", "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange");
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
-    private static final Set<String> NON_NULL_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec", "watch", "unwatch", "getMasterAddrByName", "master", "reset", "failover", "monitor", "RedisSentinelSuspendableCommands.set", "remove", "RedisSentinelSuspendableCommands.clientSetname", "RedisSentinelSuspendableCommands.clientKill", "RedisSentinelSuspendableCommands.clientPause", "RedisSentinelSuspendableCommands.clientList", "RedisSentinelSuspendableCommands.info", "RedisSentinelSuspendableCommands.ping");
+    private static final Set<String> NON_NULL_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec", "watch", "unwatch", "getMasterAddrByName", "master", "reset", "failover", "monitor", "RedisSentinelSuspendableCommands.set", "remove", "RedisSentinelSuspendableCommands.clientSetname", "RedisSentinelSuspendableCommands.clientKill", "RedisSentinelSuspendableCommands.clientPause", "RedisSentinelSuspendableCommands.clientList", "RedisSentinelSuspendableCommands.info", "RedisSentinelSuspendableCommands.ping", "pubsubNumsub", "pubsubNumpat", "echo", "ping", "readOnly", "readWrite");
     private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
 
     private static final String FORMATTING_INDENT = "    ";
@@ -140,6 +146,8 @@ class KotlinCompilationUnitFactory {
 
         @Override
         public void visit(MethodDeclaration method, Object arg) {
+
+            // Skip deprecated and StreamingChannel methods
             if (method.isAnnotationPresent(Deprecated.class)
                     || contains(SKIP_METHODS, method)
                     || method.getParameters().stream().anyMatch(p -> p.getType().asString().contains("StreamingChannel"))) {

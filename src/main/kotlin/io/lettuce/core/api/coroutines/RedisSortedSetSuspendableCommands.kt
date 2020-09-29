@@ -281,7 +281,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @return List<V> array-reply list of elements in the specified range.
      * @since 4.3
      */
-    suspend fun zrangebylex(key: K, range: Range<out V>): List<V>
+    fun zrangebylex(key: K, range: Range<out V>): Flow<V>
 
     /**
      * Return a range of members in a sorted set, by lexicographical range.
@@ -292,7 +292,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @return List<V> array-reply list of elements in the specified range.
      * @since 4.3
      */
-    suspend fun zrangebylex(key: K, range: Range<out V>, limit: Limit): List<V>
+    fun zrangebylex(key: K, range: Range<out V>, limit: Limit): Flow<V>
 
     /**
      * Return a range of members in a sorted set, by score.
@@ -302,7 +302,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @return List<V> array-reply list of elements in the specified score range.
      * @since 4.3
      */
-    suspend fun zrangebyscore(key: K, range: Range<out Number>): List<V>
+    fun zrangebyscore(key: K, range: Range<out Number>): Flow<V>
 
     /**
      * Return a range of members in a sorted set, by score.
@@ -313,7 +313,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @return List<V> array-reply list of elements in the specified score range.
      * @since 4.3
      */
-    suspend fun zrangebyscore(key: K, range: Range<out Number>, limit: Limit): List<V>
+    fun zrangebyscore(key: K, range: Range<out Number>, limit: Limit): Flow<V>
 
     /**
      * Return a range of members with score in a sorted set, by score.

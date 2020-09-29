@@ -23,6 +23,7 @@ import io.lettuce.core.ScanArgs
 import io.lettuce.core.ScanCursor
 import io.lettuce.core.ValueScanCursor
 import io.lettuce.core.api.reactive.RedisSetReactiveCommands
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.toSet
 import kotlinx.coroutines.reactive.asFlow
@@ -46,11 +47,11 @@ internal class RedisSetSuspendableCommandsImpl<K : Any, V : Any>(private val ops
 
     override suspend fun scard(key: K): Long? = ops.scard(key).awaitFirstOrNull()
 
-    override suspend fun sdiff(vararg keys: K): Set<V> = ops.sdiff(*keys).asFlow().toSet()
+    override fun sdiff(vararg keys: K): Flow<V> = ops.sdiff(*keys).asFlow()
 
     override suspend fun sdiffstore(destination: K, vararg keys: K): Long? = ops.sdiffstore(destination, *keys).awaitFirstOrNull()
 
-    override suspend fun sinter(vararg keys: K): Set<V> = ops.sinter(*keys).asFlow().toSet()
+    override fun sinter(vararg keys: K): Flow<V> = ops.sinter(*keys).asFlow()
 
     override suspend fun sinterstore(destination: K, vararg keys: K): Long? = ops.sinterstore(destination, *keys).awaitFirstOrNull()
 
@@ -58,7 +59,7 @@ internal class RedisSetSuspendableCommandsImpl<K : Any, V : Any>(private val ops
 
     override suspend fun smove(source: K, destination: K, member: V): Boolean? = ops.smove(source, destination, member).awaitFirstOrNull()
 
-    override suspend fun smembers(key: K): Set<V> = ops.smembers(key).asFlow().toSet()
+    override fun smembers(key: K): Flow<V> = ops.smembers(key).asFlow()
 
     override suspend fun spop(key: K): V? = ops.spop(key).awaitFirstOrNull()
 
@@ -66,11 +67,11 @@ internal class RedisSetSuspendableCommandsImpl<K : Any, V : Any>(private val ops
 
     override suspend fun srandmember(key: K): V? = ops.srandmember(key).awaitFirstOrNull()
 
-    override suspend fun srandmember(key: K, count: Long): List<V> = ops.srandmember(key, count).asFlow().toList()
+    override  fun srandmember(key: K, count: Long): Flow<V> = ops.srandmember(key, count).asFlow()
 
     override suspend fun srem(key: K, vararg members: V): Long? = ops.srem(key, *members).awaitFirstOrNull()
 
-    override suspend fun sunion(vararg keys: K): Set<V> = ops.sunion(*keys).asFlow().toSet()
+    override  fun sunion(vararg keys: K): Flow<V> = ops.sunion(*keys).asFlow()
 
     override suspend fun sunionstore(destination: K, vararg keys: K): Long? = ops.sunionstore(destination, *keys).awaitFirstOrNull()
 

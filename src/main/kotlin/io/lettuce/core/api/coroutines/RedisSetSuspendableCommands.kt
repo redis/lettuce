@@ -22,6 +22,7 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.ScanArgs
 import io.lettuce.core.ScanCursor
 import io.lettuce.core.ValueScanCursor
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Coroutine executed commands for Sets.
@@ -60,7 +61,7 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      * @param keys the key.
      * @return Set<V> array-reply list with members of the resulting set.
      */
-    suspend fun sdiff(vararg keys: K): Set<V>
+    fun sdiff(vararg keys: K): Flow<V>
 
     /**
      * Subtract multiple sets and store the resulting set in a key.
@@ -77,7 +78,7 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      * @param keys the key.
      * @return Set<V> array-reply list with members of the resulting set.
      */
-    suspend fun sinter(vararg keys: K): Set<V>
+    fun sinter(vararg keys: K): Flow<V>
 
     /**
      * Intersect multiple sets and store the resulting set in a key.
@@ -119,7 +120,7 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @return Set<V> array-reply all elements of the set.
      */
-    suspend fun smembers(key: K): Set<V>
+    fun smembers(key: K): Flow<V>
 
     /**
      * Remove and return a random member from a set.
@@ -155,7 +156,7 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      * @return Set<V> bulk-string-reply without the additional `count` argument the command returns a Bulk Reply
      *        with the randomly selected element, or `null` when `key` does not exist.
      */
-    suspend fun srandmember(key: K, count: Long): List<V>
+    fun srandmember(key: K, count: Long): Flow<V>
 
     /**
      * Remove one or more members from a set.
@@ -172,7 +173,7 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      * @param keys the key.
      * @return Set<V> array-reply list with members of the resulting set.
      */
-    suspend fun sunion(vararg keys: K): Set<V>
+    fun sunion(vararg keys: K): Flow<V>
 
     /**
      * Add multiple sets and store the resulting set in a key.

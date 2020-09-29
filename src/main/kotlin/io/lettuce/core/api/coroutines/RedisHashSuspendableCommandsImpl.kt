@@ -46,7 +46,7 @@ internal class RedisHashSuspendableCommandsImpl<K : Any, V : Any>(private val op
 
     override suspend fun hincrbyfloat(key: K, field: K, amount: Double): Double? = ops.hincrbyfloat(key, field, amount).awaitFirstOrNull()
 
-    override suspend fun hgetall(key: K): Map<K, V>? = ops.hgetall(key).awaitFirstOrNull()
+    override fun hgetall(key: K): Flow<KeyValue<K, V>> = ops.hgetall(key).asFlow()
 
     override fun hkeys(key: K): Flow<K> = ops.hkeys(key).asFlow()
 
