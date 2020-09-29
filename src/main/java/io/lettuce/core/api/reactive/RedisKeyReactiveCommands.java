@@ -115,7 +115,10 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel the channel.
      * @param pattern the pattern.
      * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #keys}.
      */
+    @Deprecated
     Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
     /**
@@ -293,7 +296,10 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every value.
      * @param key the key.
      * @return Long number of values.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sort}.
      */
+    @Deprecated
     Mono<Long> sort(ValueStreamingChannel<V> channel, K key);
 
     /**
@@ -312,7 +318,10 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param key the key.
      * @param sortArgs sort arguments.
      * @return Long number of values.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sort}.
      */
+    @Deprecated
     Mono<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
 
     /**
@@ -386,7 +395,10 @@ public interface RedisKeyReactiveCommands<K, V> {
      *
      * @param channel streaming channel that receives a call for every key.
      * @return StreamScanCursor scan cursor.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
@@ -395,7 +407,10 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
@@ -405,7 +420,10 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
@@ -414,6 +432,9 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 }

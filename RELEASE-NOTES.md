@@ -206,6 +206,7 @@ With this release, we took the opportunity to introduce a series of changes that
 * Internal: Removal of the internal `LettuceCharsets` utility class.
 * Internal: Reduced visibility of several `protected` fields in `AbstractRedisClient` (`eventLoopGroups`, `genericWorkerPool`, `timer`, `clientResources`, `clientOptions`, `defaultTimeout`).
 * Internal: Consolidation of Future synchronization utilities (`LettuceFutures`, `RefreshFutures`, `Futures`).
+* Deprecate reactive StreamChannel methods #1434
 
 
 Commands

@@ -19,10 +19,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -44,33 +41,56 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
  */
 class CompilationUnitFactory {
 
-    private File templateFile;
-    private File sources;
-    private File target;
-    private String targetPackage;
-    private String targetName;
+    private final File templateFile;
 
-    private Function<String, String> typeDocFunction;
-    private Map<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>> methodReturnTypeMutation;
-    private Predicate<MethodDeclaration> methodFilter;
-    private Supplier<List<String>> importSupplier;
-    private Consumer<ClassOrInterfaceDeclaration> typeMutator;
-    private Function<Comment, Comment> methodCommentMutator;
+    private final File sources;
+
+    private final File target;
+
+    private final String targetPackage;
+
+    private final String targetName;
+
+    private final Function<String, String> typeDocFunction;
+
+    private final Map<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>> methodReturnTypeMutation;
+
+    private final Predicate<MethodDeclaration> methodFilter;
+
+    private final Supplier<List<String>> importSupplier;
+
+    private final Consumer<ClassOrInterfaceDeclaration> typeMutator;
+
+    private final Consumer<MethodDeclaration> onMethod;
+
+    private final BiFunction<MethodDeclaration, Comment, Comment> methodCommentMutator;
 
     private CompilationUnit template;
-    private CompilationUnit result = new CompilationUnit();
+
+    private final CompilationUnit result = new CompilationUnit();
     private ClassOrInterfaceDeclaration resultType;
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
             Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
             Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
             Consumer<ClassOrInterfaceDeclaration> typeMutator, Function<Comment, Comment> methodCommentMutator) {
+        this(templateFile, sources, targetPackage, targetName, typeDocFunction, methodReturnTypeFunction, methodDeclaration -> {
+        }, methodFilter, importSupplier, typeMutator, (m, c) -> methodCommentMutator.apply(c));
+
+    }
+
+    public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
+            Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
+            Consumer<MethodDeclaration> onMethod, Predicate<MethodDeclaration> methodFilter,
+            Supplier<List<String>> importSupplier, Consumer<ClassOrInterfaceDeclaration> typeMutator,
+            BiFunction<MethodDeclaration, Comment, Comment> methodCommentMutator) {
 
         this.templateFile = templateFile;
         this.sources = sources;
         this.targetPackage = targetPackage;
         this.targetName = targetName;
         this.typeDocFunction = typeDocFunction;
+        this.onMethod = onMethod;
         this.methodFilter = methodFilter;
         this.importSupplier = importSupplier;
         this.typeMutator = typeMutator;
@@ -177,9 +197,6 @@ class CompilationUnitFactory {
                 return;
             }
 
-            if (parsedDeclaration.getNameAsString().equals("close")) {
-                System.out.println();
-            }
             Type returnType = getMethodReturnType(parsedDeclaration);
 
             MethodDeclaration method = new MethodDeclaration(parsedDeclaration.getModifiers(),
@@ -188,10 +205,12 @@ class CompilationUnitFactory {
                     null);
 
             if (methodCommentMutator != null) {
-                method.setComment(methodCommentMutator.apply(parsedDeclaration.getComment().orElse(null)));
+                method.setComment(methodCommentMutator.apply(method, parsedDeclaration.getComment().orElse(null)));
             } else {
                 method.setComment(parsedDeclaration.getComment().orElse(null));
             }
+
+            onMethod.accept(method);
 
             resultType.addMember(method);
         }
