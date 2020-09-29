@@ -939,6 +939,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HGETALL, new MapOutput<>(codec), key);
     }
 
+    Command<K, V, List<KeyValue<K, V>>> hgetallKeyValue(K key) {
+        notNullKey(key);
+
+        return createCommand(HGETALL, new KeyValueListOutput<>(codec), key);
+    }
+
     Command<K, V, Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key) {
         notNullKey(key);
         notNull(channel);

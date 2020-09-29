@@ -785,8 +785,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<Map<K, V>> hgetall(K key) {
-        return createMono(() -> commandBuilder.hgetall(key));
+    public Flux<KeyValue<K, V>> hgetall(K key) {
+        return createDissolvingFlux(() -> commandBuilder.hgetallKeyValue(key));
     }
 
     @Override

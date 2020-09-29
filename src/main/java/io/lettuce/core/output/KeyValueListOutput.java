@@ -25,7 +25,8 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * {@link List} of values output.
+ * {@link List} of {@link KeyValue} output. Can be either used to decode key-value tuples (e.g. {@code HGETALL}) of for a pure
+ * value response where keys are supplied as input (for e.g. {@code HMGET}).
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -39,9 +40,17 @@ public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<
 
     private Subscriber<KeyValue<K, V>> subscriber;
 
-    private Iterable<K> keys;
+    private final Iterable<K> keys;
 
     private Iterator<K> keyIterator;
+
+    private K key;
+
+    public KeyValueListOutput(RedisCodec<K, V> codec) {
+        super(codec, Collections.emptyList());
+        setSubscriber(ListSubscriber.instance());
+        this.keys = null;
+    }
 
     public KeyValueListOutput(RedisCodec<K, V> codec, Iterable<K> keys) {
         super(codec, Collections.emptyList());
@@ -52,18 +61,31 @@ public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<
     @Override
     public void set(ByteBuffer bytes) {
 
-        if (keyIterator == null) {
-            keyIterator = keys.iterator();
-        }
+        if (keys == null) {
+            if (key == null) {
+                key = codec.decodeKey(bytes);
+                return;
+            }
 
-        subscriber.onNext(output, KeyValue.fromNullable(keyIterator.next(), bytes == null ? null : codec.decodeValue(bytes)));
+            K key = this.key;
+            this.key = null;
+            subscriber.onNext(output, KeyValue.fromNullable(key, bytes == null ? null : codec.decodeValue(bytes)));
+
+        } else {
+            if (keyIterator == null) {
+                keyIterator = keys.iterator();
+            }
+
+            subscriber.onNext(output,
+                    KeyValue.fromNullable(keyIterator.next(), bytes == null ? null : codec.decodeValue(bytes)));
+        }
     }
 
     @Override
     public void multi(int count) {
 
         if (!initialized) {
-            output = OutputFactory.newList(count);
+            output = OutputFactory.newList(keys == null ? count / 2 : count);
             initialized = true;
         }
     }

@@ -88,7 +88,7 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void hgetall() {
+    public void hgetall() {
         assertThat(redis.hgetall(key).isEmpty()).isTrue();
 
         redis.hset(key, "zero", "0");
@@ -102,7 +102,7 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void hgetallStreaming() {
+    public void hgetallStreaming() {
 
         KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
 

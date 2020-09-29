@@ -197,6 +197,7 @@ With this release, we took the opportunity to introduce a series of changes that
 * Remove Spring support classes #1358
 * Replace io.lettuce.core.resource.Futures utility with Netty's PromiseCombiner #1283
 * XGROUP DELCONSUMER should return pending message count #1377 (xgroupDelconsumer(…) now returns `Long`)
+* Change hgetall return type from Mono<Map> to Flux<KeyValue> #1434
 * Script Commands: `eval`, `digest`, `scriptLoad` methods now only accept `String` and `byte[]` argument types. Previously `digest` and `scriptLoad` accepted the script contents as Codec value type which caused issues especially when marshalling values using JSON or Java Serialization. The script charset can be configured via `ClientOptions` (`ClientOptions.builder().scriptCharset(StandardCharsets.US_ASCII).build();`), defaulting to UTF-8.
 * Connection: Removal of deprecated timeout methods accepting `TimeUnit`. Use methods accepting `Duration` instead.
 * Async Commands: `RedisAsyncCommands.select(…)` and `.auth(…)` methods return now futures instead if being blocking methods.

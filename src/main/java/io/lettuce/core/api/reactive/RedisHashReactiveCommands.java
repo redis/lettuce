@@ -94,7 +94,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return Map&lt;K,V&gt; array-reply list of fields and their values stored in the hash, or an empty list when {@code key}
      *         does not exist.
      */
-    Mono<Map<K, V>> hgetall(K key);
+    Flux<KeyValue<K, V>> hgetall(K key);
 
     /**
      * Stream over all the fields and values in a hash.
