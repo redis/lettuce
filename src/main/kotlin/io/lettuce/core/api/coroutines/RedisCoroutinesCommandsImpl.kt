@@ -33,7 +33,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  */
 @ExperimentalLettuceCoroutinesApi
 open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
-        private val ops: RedisReactiveCommands<K, V>
+        internal val ops: RedisReactiveCommands<K, V>
 ) : RedisCoroutinesCommands<K, V>, RedisClusterCoroutinesCommands<K, V>,
         BaseRedisCoroutinesCommands<K, V> by BaseRedisCoroutinesCommandsImpl(ops),
         RedisGeoCoroutinesCommands<K, V> by RedisGeoCoroutinesCommandsImpl(ops),

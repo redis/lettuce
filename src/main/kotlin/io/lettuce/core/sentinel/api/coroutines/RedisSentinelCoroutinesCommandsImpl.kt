@@ -34,7 +34,7 @@ import java.net.SocketAddress
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class RedisSentinelCoroutinesCommandsImpl<K : Any, V : Any>(private val ops: RedisSentinelReactiveCommands<K, V>) : RedisSentinelCoroutinesCommands<K, V> {
+internal class RedisSentinelCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisSentinelReactiveCommands<K, V>) : RedisSentinelCoroutinesCommands<K, V> {
 
     override suspend fun getMasterAddrByName(key: K): SocketAddress = ops.getMasterAddrByName(key).awaitLast()
 

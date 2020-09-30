@@ -36,7 +36,7 @@ import kotlinx.coroutines.reactive.awaitSingle
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(private val ops: BaseRedisReactiveCommands<K, V>) : BaseRedisCoroutinesCommands<K, V> {
+internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: BaseRedisReactiveCommands<K, V>) : BaseRedisCoroutinesCommands<K, V> {
 
     override suspend fun publish(channel: K, message: V): Long? = ops.publish(channel, message).awaitFirstOrNull()
 
