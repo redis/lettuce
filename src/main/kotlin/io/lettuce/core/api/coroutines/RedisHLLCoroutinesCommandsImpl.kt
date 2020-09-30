@@ -30,7 +30,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class RedisHLLCoroutinesCommandsImpl<K : Any, V : Any>(private val ops: RedisHLLReactiveCommands<K, V>) : RedisHLLCoroutinesCommands<K, V> {
+internal class RedisHLLCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisHLLReactiveCommands<K, V>) : RedisHLLCoroutinesCommands<K, V> {
 
     override suspend fun pfadd(key: K, vararg values: V): Long? = ops.pfadd(key, *values).awaitFirstOrNull()
 

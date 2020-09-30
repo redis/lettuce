@@ -32,7 +32,7 @@ import java.util.*
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(private val ops: RedisKeyReactiveCommands<K, V>) : RedisKeyCoroutinesCommands<K, V> {
+internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisKeyReactiveCommands<K, V>) : RedisKeyCoroutinesCommands<K, V> {
 
     override suspend fun del(vararg keys: K): Long? = ops.del(*keys).awaitFirstOrNull()
 
