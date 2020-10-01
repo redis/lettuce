@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -23,7 +21,7 @@ import io.lettuce.core.ScriptOutputType
 
 /**
  * Coroutine executed commands for Scripting. [java.lang.String Lua scripts] are encoded by using the configured
- *[io.lettuce.core.ClientOptions#getScriptCharset() charset].
+ * [io.lettuce.core.ClientOptions#getScriptCharset charset].
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -110,8 +108,8 @@ interface RedisScriptingSuspendableCommands<K : Any, V : Any> {
      *
      * @param digests script digests.
      * @return List<Boolean> array-reply The command returns an array of integers that correspond to the specified SHA1
-     *        digest arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1
-     *        is returned, otherwise 0 is returned.
+     *         digest arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1
+     *         is returned, otherwise 0 is returned.
      */
     suspend fun scriptExists(vararg digests: String): List<Boolean>
 

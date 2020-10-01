@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
@@ -39,7 +37,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param timeout the timeout in seconds.
      * @param keys the keys.
      * @return KeyValue<K, ScoredValue<V>> multi-bulk containing the name of the key, the score and the popped
-     *        member.
+     *         member.
      * @since 5.1
      */
     suspend fun bzpopmin(timeout: Long, vararg keys: K): KeyValue<K, ScoredValue<V>>?
@@ -50,7 +48,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param timeout the timeout in seconds.
      * @param keys the keys.
      * @return KeyValue<K, ScoredValue<V>> multi-bulk containing the name of the key, the score and the popped
-     *        member.
+     *         member.
      * @since 5.1
      */
     suspend fun bzpopmax(timeout: Long, vararg keys: K): KeyValue<K, ScoredValue<V>>?
@@ -63,8 +61,8 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param member the member.
      * @return Long integer-reply specifically:
      *
-     *        The number of elements added to the sorted sets, not including elements already existing for which the score was
-     *        updated.
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
      */
     suspend fun zadd(key: K, score: Double, member: V): Long?
 
@@ -75,8 +73,8 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param scoresAndValues the scoresAndValue tuples (score,value,score,value,...).
      * @return Long integer-reply specifically:
      *
-     *        The number of elements added to the sorted sets, not including elements already existing for which the score was
-     *        updated.
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
      */
     suspend fun zadd(key: K, vararg scoresAndValues: Any): Long?
 
@@ -87,8 +85,8 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param scoredValues the scored values.
      * @return Long integer-reply specifically:
      *
-     *        The number of elements added to the sorted sets, not including elements already existing for which the score was
-     *        updated.
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
      */
     suspend fun zadd(key: K, vararg scoredValues: ScoredValue<V>): Long?
 
@@ -101,8 +99,8 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param member the member.
      * @return Long integer-reply specifically:
      *
-     *        The number of elements added to the sorted sets, not including elements already existing for which the score was
-     *        updated.
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
      */
     suspend fun zadd(key: K, zAddArgs: ZAddArgs, score: Double, member: V): Long?
 
@@ -114,8 +112,8 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param scoresAndValues the scoresAndValue tuples (score,value,score,value,...).
      * @return Long integer-reply specifically:
      *
-     *        The number of elements added to the sorted sets, not including elements already existing for which the score was
-     *        updated.
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
      */
     suspend fun zadd(key: K, zAddArgs: ZAddArgs, vararg scoresAndValues: Any): Long?
 
@@ -127,14 +125,14 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param scoredValues the scored values.
      * @return Long integer-reply specifically:
      *
-     *        The number of elements added to the sorted sets, not including elements already existing for which the score was
-     *        updated.
+     *         The number of elements added to the sorted sets, not including elements already existing for which the score was
+     *         updated.
      */
     suspend fun zadd(key: K, zAddArgs: ZAddArgs, vararg scoredValues: ScoredValue<V>): Long?
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists applying the `INCR` option. ZADD
-     *acts like ZINCRBY.
+     * acts like ZINCRBY.
      *
      * @param key the key.
      * @param score the score.
@@ -145,7 +143,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists applying the `INCR` option. ZADD
-     *acts like ZINCRBY.
+     * acts like ZINCRBY.
      *
      * @param key the key.
      * @param zAddArgs arguments for zadd.
@@ -161,7 +159,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @return Long integer-reply the cardinality (number of elements) of the sorted set, or `false` if `key` does
-     *        not exist.
+     *         not exist.
      */
     suspend fun zcard(key: K): Long?
 
@@ -181,8 +179,8 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @param amount the increment type: long.
      * @param member the member type: value.
-     * @return Double bulk-string-reply the new score of `member` (a double precision floating point number), represented
-     *        as string.
+     * @return Double bulk-string-reply the new score of `member` (a Double precision floating point number), represented
+     *         as string.
      */
     suspend fun zincrby(key: K, amount: Double, member: V): Double?
 
@@ -342,7 +340,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @param member the member type: value.
      * @return Long integer-reply the rank of `member`. If `member` does not exist in the sorted set or `key`
-     *        does not exist,.
+     *         does not exist,.
      */
     suspend fun zrank(key: K, member: V): Long?
 
@@ -353,7 +351,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param members the member type: value.
      * @return Long integer-reply specifically:
      *
-     *        The number of members removed from the sorted set, not including non existing members.
+     *         The number of members removed from the sorted set, not including non existing members.
      */
     suspend fun zrem(key: K, vararg members: V): Long?
 
@@ -476,7 +474,7 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @param member the member type: value.
      * @return Long integer-reply the rank of `member`. If `member` does not exist in the sorted set or `key`
-     *        does not exist,.
+     *         does not exist,.
      */
     suspend fun zrevrank(key: K, member: V): Long?
 
@@ -521,8 +519,8 @@ interface RedisSortedSetSuspendableCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param member the member type: value.
-     * @return Double bulk-string-reply the score of `member` (a double precision floating point number), represented as
-     *        string.
+     * @return Double bulk-string-reply the score of `member` (a Double precision floating point number), represented as
+     *         string.
      */
     suspend fun zscore(key: K, member: V): Double?
 

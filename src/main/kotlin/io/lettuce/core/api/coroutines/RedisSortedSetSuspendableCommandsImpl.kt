@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -39,7 +37,7 @@ interface RedisHLLSuspendableCommands<K : Any, V : Any> {
      * @param values the values.
      * @return Long integer-reply specifically:
      *
-     *        1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.
+     *         1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.
      */
     suspend fun pfadd(key: K, vararg values: V): Long?
 
@@ -58,7 +56,7 @@ interface RedisHLLSuspendableCommands<K : Any, V : Any> {
      * @param keys the keys.
      * @return Long integer-reply specifically:
      *
-     *        The approximated number of unique elements observed via `PFADD`.
+     *         The approximated number of unique elements observed via `PFADD`.
      */
     suspend fun pfcount(vararg keys: K): Long?
 

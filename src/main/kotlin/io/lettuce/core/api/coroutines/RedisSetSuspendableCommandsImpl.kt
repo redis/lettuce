@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -24,7 +22,6 @@ import io.lettuce.core.ScanCursor
 import io.lettuce.core.ValueScanCursor
 import io.lettuce.core.api.reactive.RedisSetReactiveCommands
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.toSet
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -67,11 +64,11 @@ internal class RedisSetSuspendableCommandsImpl<K : Any, V : Any>(private val ops
 
     override suspend fun srandmember(key: K): V? = ops.srandmember(key).awaitFirstOrNull()
 
-    override  fun srandmember(key: K, count: Long): Flow<V> = ops.srandmember(key, count).asFlow()
+    override fun srandmember(key: K, count: Long): Flow<V> = ops.srandmember(key, count).asFlow()
 
     override suspend fun srem(key: K, vararg members: V): Long? = ops.srem(key, *members).awaitFirstOrNull()
 
-    override  fun sunion(vararg keys: K): Flow<V> = ops.sunion(*keys).asFlow()
+    override fun sunion(vararg keys: K): Flow<V> = ops.sunion(*keys).asFlow()
 
     override suspend fun sunionstore(destination: K, vararg keys: K): Long? = ops.sunionstore(destination, *keys).awaitFirstOrNull()
 

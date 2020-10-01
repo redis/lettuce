@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.sentinel.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi

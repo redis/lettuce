@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -42,7 +40,7 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @param members the member type: value.
      * @return Long integer-reply the number of elements that were added to the set, not including all the elements already
-     *        present into the set.
+     *         present into the set.
      */
     suspend fun sadd(key: K, vararg members: V): Long?
 
@@ -51,7 +49,7 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @return Long integer-reply the cardinality (number of elements) of the set, or `false` if `key` does not
-     *        exist.
+     *         exist.
      */
     suspend fun scard(key: K): Long?
 
@@ -96,8 +94,8 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      * @param member the member type: value.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if the element is a member of the set. `false` if the element is not a member of the set, or
-     *        if `key` does not exist.
+     *         `true` if the element is a member of the set. `false` if the element is not a member of the set, or
+     *         if `key` does not exist.
      */
     suspend fun sismember(key: K, member: V): Boolean?
 
@@ -109,8 +107,8 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      * @param member the member type: value.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if the element is moved. `false` if the element is not a member of `source` and no
-     *        operation was performed.
+     *         `true` if the element is moved. `false` if the element is not a member of `source` and no
+     *         operation was performed.
      */
     suspend fun smove(source: K, destination: K, member: V): Boolean?
 
@@ -144,7 +142,7 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @return V bulk-string-reply without the additional `count` argument the command returns a Bulk Reply with the
-     *        randomly selected element, or `null` when `key` does not exist.
+     *         randomly selected element, or `null` when `key` does not exist.
      */
     suspend fun srandmember(key: K): V?
 
@@ -154,7 +152,7 @@ interface RedisSetSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @param count the count type: long.
      * @return Set<V> bulk-string-reply without the additional `count` argument the command returns a Bulk Reply
-     *        with the randomly selected element, or `null` when `key` does not exist.
+     *         with the randomly selected element, or `null` when `key` does not exist.
      */
     fun srandmember(key: K, count: Long): Flow<V>
 

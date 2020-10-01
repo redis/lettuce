@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -85,8 +83,8 @@ interface BaseRedisSuspendableCommands<K : Any, V : Any> {
     /**
      * Return the role of the instance in the context of replication.
      *
-     * @return List<Object> array-reply where the first element is one of master, slave, sentinel and the additional
-     *        elements are role-specific.
+     * @return List<Any> array-reply where the first element is one of master, slave, sentinel and the additional
+     *         elements are role-specific.
      */
     suspend fun role(): List<Any>
 
@@ -113,8 +111,8 @@ interface BaseRedisSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Instructs Redis to disconnect the connection. Note that if auto-reconnect is enabled then Lettuce will auto-reconnect if
-     *the connection was disconnected. Use [io.lettuce.core.api.StatefulConnection#close] to close connections and
-     *release resources.
+     * the connection was disconnected. Use [io.lettuce.core.api.StatefulConnection#close] to close connections and
+     * release resources.
      *
      * @return String simple-string-reply always OK.
      */
@@ -158,8 +156,8 @@ interface BaseRedisSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Disable or enable auto-flush behavior. Default is `true`. If autoFlushCommands is disabled, multiple commands can
-     *be issued without writing them actually to the transport. Commands are buffered until a [#flushCommands()] is
-     *issued. After calling [#flushCommands()] commands are sent to the transport and executed by Redis.
+     * be issued without writing them actually to the transport. Commands are buffered until a [flushCommands] is
+     * issued. After calling [flushCommands] commands are sent to the transport and executed by Redis.
      *
      * @param autoFlush state of autoFlush.
      */
@@ -167,7 +165,7 @@ interface BaseRedisSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Flush pending commands. This commands forces a flush on the channel and can be used to buffer ("pipeline") commands to
-     *achieve batching. No-op if channel is not connected.
+     * achieve batching. No-op if channel is not connected.
      */
     fun flushCommands()
 

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -41,9 +39,9 @@ interface RedisListSuspendableCommands<K : Any, V : Any> {
      * @param keys the keys.
      * @return KeyValue<K,V> array-reply specifically:
      *
-     *        A `null` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with
-     *        the first element being the name of the key where an element was popped and the second element being the value of
-     *        the popped element.
+     *         A `null` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with
+     *         the first element being the name of the key where an element was popped and the second element being the value of
+     *         the popped element.
      */
     suspend fun blpop(timeout: Long, vararg keys: K): KeyValue<K, V>?
 
@@ -54,9 +52,9 @@ interface RedisListSuspendableCommands<K : Any, V : Any> {
      * @param keys the keys.
      * @return KeyValue<K,V> array-reply specifically:
      *
-     *        A `null` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with
-     *        the first element being the name of the key where an element was popped and the second element being the value of
-     *        the popped element.
+     *         A `null` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with
+     *         the first element being the name of the key where an element was popped and the second element being the value of
+     *         the popped element.
      */
     suspend fun brpop(timeout: Long, vararg keys: K): KeyValue<K, V>?
 
@@ -67,7 +65,7 @@ interface RedisListSuspendableCommands<K : Any, V : Any> {
      * @param source the source key.
      * @param destination the destination type: key.
      * @return V bulk-string-reply the element being popped from `source` and pushed to `destination`. If
-     *        `timeout` is reached, a.
+     *         `timeout` is reached, a.
      */
     suspend fun brpoplpush(timeout: Long, source: K, destination: K): V?
 
@@ -88,7 +86,7 @@ interface RedisListSuspendableCommands<K : Any, V : Any> {
      * @param pivot the pivot.
      * @param value the value.
      * @return Long integer-reply the length of the list after the insert operation, or `-1` when the value `pivot`
-     *        was not found.
+     *         was not found.
      */
     suspend fun linsert(key: K, before: Boolean, pivot: V, value: V): Long?
 
@@ -110,10 +108,10 @@ interface RedisListSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Return the index of matching elements inside a Redis list. By default, when no options are given, it will scan the list
-     *from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
-     *in the list) is returned. Otherwise, if no match is found, `null` is returned. The returned elements indexes are
-     *always referring to what [#lindex(java.lang.Object, long)] would return. So first element from head is `0`,
-     *and so forth.
+     * from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
+     * in the list) is returned. Otherwise, if no match is found, `null` is returned. The returned elements indexes are
+     * always referring to what [lindex(Any, long)] would return. So first element from head is `0`,
+     * and so forth.
      *
      * @param key the key.
      * @param value the element to search for.
@@ -124,10 +122,10 @@ interface RedisListSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Return the index of matching elements inside a Redis list. By default, when no options are given, it will scan the list
-     *from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
-     *in the list) is returned. Otherwise, if no match is found, `null` is returned. The returned elements indexes are
-     *always referring to what [#lindex(java.lang.Object, long)] would return. So first element from head is `0`,
-     *and so forth.
+     * from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
+     * in the list) is returned. Otherwise, if no match is found, `null` is returned. The returned elements indexes are
+     * always referring to what [lindex(Any, long)] would return. So first element from head is `0`,
+     * and so forth.
      *
      * @param key the key.
      * @param value the element to search for.
@@ -139,9 +137,9 @@ interface RedisListSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Return the index of matching elements inside a Redis list using the `COUNT` option. By default, when no options are
-     *given, it will scan the list from head to tail, looking for the first match of "element". The returned elements indexes
-     *are always referring to what [#lindex(java.lang.Object, long)] would return. So first element from head is
-     *`0`, and so forth.
+     * given, it will scan the list from head to tail, looking for the first match of "element". The returned elements indexes
+     * are always referring to what [lindex(Any, long)] would return. So first element from head is
+     * `0`, and so forth.
      *
      * @param key the key.
      * @param value the element to search for.
@@ -153,9 +151,9 @@ interface RedisListSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Return the index of matching elements inside a Redis list using the `COUNT` option. By default, when no options are
-     *given, it will scan the list from head to tail, looking for the first match of "element". The returned elements indexes
-     *are always referring to what [#lindex(java.lang.Object, long)] would return. So first element from head is
-     *`0`, and so forth.
+     * given, it will scan the list from head to tail, looking for the first match of "element". The returned elements indexes
+     * are always referring to what [lindex(Any, long)] would return. So first element from head is
+     * `0`, and so forth.
      *
      * @param key the key.
      * @param value the element to search for.
