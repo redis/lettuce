@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
@@ -39,7 +37,7 @@ interface RedisHashSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @param fields the field type: key.
      * @return Long integer-reply the number of fields that were removed from the hash, not including specified but non existing
-     *        fields.
+     *         fields.
      */
     suspend fun hdel(key: K, vararg fields: K): Long?
 
@@ -50,8 +48,8 @@ interface RedisHashSuspendableCommands<K : Any, V : Any> {
      * @param field the field type: key.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if the hash contains `field`. `false` if the hash does not contain `field`, or
-     *        `key` does not exist.
+     *         `true` if the hash contains `field`. `false` if the hash does not contain `field`, or
+     *         `key` does not exist.
      */
     suspend fun hexists(key: K, field: K): Boolean?
 
@@ -61,7 +59,7 @@ interface RedisHashSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @param field the field type: key.
      * @return V bulk-string-reply the value associated with `field`, or `null` when `field` is not present in
-     *        the hash or `key` does not exist.
+     *         the hash or `key` does not exist.
      */
     suspend fun hget(key: K, field: K): V?
 
@@ -80,7 +78,7 @@ interface RedisHashSuspendableCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param field the field type: key.
-     * @param amount the increment type: double.
+     * @param amount the increment type: Double.
      * @return Double bulk-string-reply the value of `field` after the increment.
      */
     suspend fun hincrbyfloat(key: K, field: K, amount: Double): Double?
@@ -90,7 +88,7 @@ interface RedisHashSuspendableCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @return Map<K,V> array-reply list of fields and their values stored in the hash, or an empty list when `key`
-     *        does not exist.
+     *         does not exist.
      */
     fun hgetall(key: K): Flow<KeyValue<K, V>>
 
@@ -172,8 +170,8 @@ interface RedisHashSuspendableCommands<K : Any, V : Any> {
      * @param value the value.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if `field` is a new field in the hash and `value` was set. `false` if
-     *        `field` already exists in the hash and the value was updated.
+     *         `true` if `field` is a new field in the hash and `value` was set. `false` if
+     *         `field` already exists in the hash and the value was updated.
      */
     suspend fun hset(key: K, field: K, value: V): Boolean?
 
@@ -195,8 +193,8 @@ interface RedisHashSuspendableCommands<K : Any, V : Any> {
      * @param value the value.
      * @return Boolean integer-reply specifically:
      *
-     *        `1` if `field` is a new field in the hash and `value` was set. `0` if `field`
-     *        already exists in the hash and no operation was performed.
+     *         `1` if `field` is a new field in the hash and `value` was set. `0` if `field`
+     *         already exists in the hash and no operation was performed.
      */
     suspend fun hsetnx(key: K, field: K, value: V): Boolean?
 
@@ -206,7 +204,7 @@ interface RedisHashSuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @param field the field type: key.
      * @return Long integer-reply the string length of the `field` value, or `0` when `field` is not present
-     *        in the hash or `key` does not exist at all.
+     *         in the hash or `key` does not exist at all.
      */
     suspend fun hstrlen(key: K, field: K): Long?
 

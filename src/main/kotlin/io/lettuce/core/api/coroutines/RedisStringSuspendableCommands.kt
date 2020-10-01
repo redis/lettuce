@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
@@ -76,15 +74,15 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * @param state the state.
      * @return Long integer-reply The command returns the position of the first bit set to 1 or 0 according to the request.
      *
-     *        If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
-     *        returned.
+     *         If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
+     *         returned.
      *
-     *        If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
-     *        the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
-     *        command `BITPOS key 0` will return 24, since up to bit 23 all the bits are 1.
+     *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
+     *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
+     *         command `BITPOS key 0` will return 24, since up to bit 23 all the bits are 1.
      *
-     *        Basically the function consider the right of the string as padded with zeros if you look for clear bits and
-     *        specify no range or the <em>start</em> argument <strong>only</strong>.
+     *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
+     *         specify no range or the <em>start</em> argument <strong>only</strong>.
      */
     suspend fun bitpos(key: K, state: Boolean): Long?
 
@@ -96,15 +94,15 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * @param start the start type: long.
      * @return Long integer-reply The command returns the position of the first bit set to 1 or 0 according to the request.
      *
-     *        If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
-     *        returned.
+     *         If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
+     *         returned.
      *
-     *        If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
-     *        the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
-     *        command `BITPOS key 0` will return 24, since up to bit 23 all the bits are 1.
+     *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
+     *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
+     *         command `BITPOS key 0` will return 24, since up to bit 23 all the bits are 1.
      *
-     *        Basically the function consider the right of the string as padded with zeros if you look for clear bits and
-     *        specify no range or the <em>start</em> argument <strong>only</strong>.
+     *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
+     *         specify no range or the <em>start</em> argument <strong>only</strong>.
      * @since 5.0.1
      */
     suspend fun bitpos(key: K, state: Boolean, start: Long): Long?
@@ -118,19 +116,19 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * @param end the end type: long.
      * @return Long integer-reply The command returns the position of the first bit set to 1 or 0 according to the request.
      *
-     *        If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
-     *        returned.
+     *         If we look for set bits (the bit argument is 1) and the string is empty or composed of just zero bytes, -1 is
+     *         returned.
      *
-     *        If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
-     *        the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
-     *        command `BITPOS key 0` will return 24, since up to bit 23 all the bits are 1.
+     *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
+     *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
+     *         command `BITPOS key 0` will return 24, since up to bit 23 all the bits are 1.
      *
-     *        Basically the function consider the right of the string as padded with zeros if you look for clear bits and
-     *        specify no range or the <em>start</em> argument <strong>only</strong>.
+     *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
+     *         specify no range or the <em>start</em> argument <strong>only</strong>.
      *
-     *        However this behavior changes if you are looking for clear bits and specify a range with both
-     *        <strong>start</strong> and <strong>end</strong>. If no clear bit is found in the specified range, the function
-     *        returns -1 as the user specified a clear range and there are no 0 bits in that range.
+     *         However this behavior changes if you are looking for clear bits and specify a range with both
+     *         <strong>start</strong> and <strong>end</strong>. If no clear bit is found in the specified range, the function
+     *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
      */
     suspend fun bitpos(key: K, state: Boolean, start: Long, end: Long): Long?
 
@@ -140,7 +138,7 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * @param destination result key of the operation.
      * @param keys operation input key names.
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
-     *        input string.
+     *         input string.
      */
     suspend fun bitopAnd(destination: K, vararg keys: K): Long?
 
@@ -150,7 +148,7 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * @param destination result key of the operation.
      * @param source operation input key names.
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
-     *        input string.
+     *         input string.
      */
     suspend fun bitopNot(destination: K, source: K): Long?
 
@@ -160,7 +158,7 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * @param destination result key of the operation.
      * @param keys operation input key names.
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
-     *        input string.
+     *         input string.
      */
     suspend fun bitopOr(destination: K, vararg keys: K): Long?
 
@@ -170,7 +168,7 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * @param destination result key of the operation.
      * @param keys operation input key names.
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
-     *        input string.
+     *         input string.
      */
     suspend fun bitopXor(destination: K, vararg keys: K): Long?
 
@@ -248,7 +246,7 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * Increment the float value of a key by the given amount.
      *
      * @param key the key.
-     * @param amount the increment type: double.
+     * @param amount the increment type: Double.
      * @return Double bulk-string-reply the value of `key` after the increment.
      */
     suspend fun incrbyfloat(key: K, amount: Double): Double?
@@ -275,7 +273,7 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * @param map the null.
      * @return Boolean integer-reply specifically:
      *
-     *        `1` if the all the keys were set. `0` if no key was set (at least one key already existed).
+     *         `1` if the all the keys were set. `0` if no key was set (at least one key already existed).
      */
     suspend fun msetnx(map: Map<K, V>): Boolean?
 
@@ -335,7 +333,7 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
      * @param value the value.
      * @return Boolean integer-reply specifically:
      *
-     *        `1` if the key was set `0` if the key was not set.
+     *         `1` if the key was set `0` if the key was not set.
      */
     suspend fun setnx(key: K, value: V): Boolean?
 
@@ -351,16 +349,16 @@ interface RedisStringSuspendableCommands<K : Any, V : Any> {
 
     /**
      * The STRALGO command implements complex algorithms that operate on strings. This method uses the LCS algorithm (longest
-     *common substring).
+     * common substring).
      *
-     *<ul>
-     *<li>Without modifiers the string representing the longest common substring is returned.</li>
-     *<li>When [StrAlgoArgs#justLen() LEN] is given the command returns the length of the longest common substring.</li>
-     *<li>When [StrAlgoArgs#withIdx() IDX] is given the command returns an array with the LCS length and all the ranges
-     *in both the strings, start and end offset for each string, where there are matches. When
-     *[StrAlgoArgs#withMatchLen() WITHMATCHLEN] is given each array representing a match will also have the length of the
-     *match.</li>
-     *</ul>
+     * <ul>
+     * <li>Without modifiers the string representing the longest common substring is returned.</li>
+     * <li>When [StrAlgoArgs#justLen LEN] is given the command returns the length of the longest common substring.</li>
+     * <li>When [StrAlgoArgs#withIdx IDX] is given the command returns an array with the LCS length and all the ranges
+     * in both the strings, start and end offset for each string, where there are matches. When
+     * [StrAlgoArgs#withMatchLen WITHMATCHLEN] is given each array representing a match will also have the length of the
+     * match.</li>
+     * </ul>
      *
      * @param strAlgoArgs command arguments.
      * @return StringMatchResult.

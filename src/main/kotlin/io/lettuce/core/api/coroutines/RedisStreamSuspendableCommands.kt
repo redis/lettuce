@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-@file:Suppress("unused")
 
 package io.lettuce.core.api.coroutines
 
@@ -97,9 +95,9 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
-     *<p>
-     *Note that setting the `JUSTID` flag (calling this method with [XClaimArgs#justid()]) suppresses the message
-     *bode and [StreamMessage#getBody()] is `null`.
+     * <p>
+     * Note that setting the `JUSTID` flag (calling this method with [XClaimArgs#justid]) suppresses the message
+     * bode and [StreamMessage#getBody] is `null`.
      *
      * @param key the stream key.
      * @param consumer consumer identified by group name and consumer key.
@@ -111,7 +109,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Removes the specified entries from the stream. Returns the number of items deleted, that may be different from the number
-     *of IDs passed in case certain IDs do not exist.
+     * of IDs passed in case certain IDs do not exist.
      *
      * @param key the stream key.
      * @param messageIds stream message Id's.
@@ -170,7 +168,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * Retrieve information about the stream at `key`.
      *
      * @param key the stream key.
-     * @return List<Object> array-reply.
+     * @return List<Any> array-reply.
      * @since 5.2
      */
     suspend fun xinfoStream(key: K): List<Any>
@@ -179,7 +177,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * Retrieve information about the stream consumer groups at `key`.
      *
      * @param key the stream key.
-     * @return List<Object> array-reply.
+     * @return List<Any> array-reply.
      * @since 5.2
      */
     suspend fun xinfoGroups(key: K): List<Any>
@@ -189,7 +187,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      *
      * @param key the stream key.
      * @param group name of the consumer group.
-     * @return List<Object> array-reply.
+     * @return List<Any> array-reply.
      * @since 5.2
      */
     suspend fun xinfoConsumers(key: K, group: K): List<Any>
@@ -207,7 +205,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      *
      * @param key the stream key.
      * @param group name of the consumer group.
-     * @return List<Object> array-reply list pending entries.
+     * @return List<Any> array-reply list pending entries.
      */
     suspend fun xpending(key: K, group: K): PendingMessages?
 
@@ -218,7 +216,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param group name of the consumer group.
      * @param range must not be `null`.
      * @param limit must not be `null`.
-     * @return List<Object> array-reply list with members of the resulting stream.
+     * @return List<Any> array-reply list with members of the resulting stream.
      */
     fun xpending(key: K, group: K, range: Range<String>, limit: Limit): Flow<PendingMessage>
 
@@ -229,7 +227,7 @@ interface RedisStreamSuspendableCommands<K : Any, V : Any> {
      * @param consumer consumer identified by group name and consumer key.
      * @param range must not be `null`.
      * @param limit must not be `null`.
-     * @return List<Object> array-reply list with members of the resulting stream.
+     * @return List<Any> array-reply list with members of the resulting stream.
      */
     fun xpending(key: K, consumer: Consumer<K>, range: Range<String>, limit: Limit): Flow<PendingMessage>
 

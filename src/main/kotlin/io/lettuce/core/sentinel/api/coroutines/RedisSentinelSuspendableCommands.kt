@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.sentinel.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.KillArgs
+import kotlinx.coroutines.flow.Flow
 import java.net.SocketAddress
+import io.lettuce.core.KillArgs
+import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection
 
 /**
  * Coroutine executed commands for Redis Sentinel.
@@ -153,7 +153,7 @@ interface RedisSentinelSuspendableCommands<K : Any, V : Any> {
      * Get the list of client connections.
      *
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
-     *        each line is composed of a succession of property=value fields separated by a space character.
+     *         each line is composed of a succession of property=value fields separated by a space character.
      */
     suspend fun clientList(): String?
 
@@ -177,7 +177,7 @@ interface RedisSentinelSuspendableCommands<K : Any, V : Any> {
      *
      * @return String simple-string-reply.
      */
-    suspend fun ping(): String?
+    suspend fun ping(): String
 
     /**
      *

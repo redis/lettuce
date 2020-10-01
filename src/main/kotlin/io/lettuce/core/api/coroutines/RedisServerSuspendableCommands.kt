@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -71,7 +69,7 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
      * Returns the client ID we are redirecting our tracking notifications to.
      *
      * @return the ID of the client we are redirecting the notifications to. The command returns -1 if client tracking is not
-     *        enabled, or 0 if client tracking is enabled but we are not redirecting the notifications to any client.
+     *         enabled, or 0 if client tracking is enabled but we are not redirecting the notifications to any client.
      * @since 6.0
      */
     suspend fun clientGetredir(): Long?
@@ -104,7 +102,7 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
      * Get the list of client connections.
      *
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
-     *        each line is composed of a succession of property=value fields separated by a space character.
+     *         each line is composed of a succession of property=value fields separated by a space character.
      */
     suspend fun clientList(): String?
 
@@ -126,7 +124,7 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
-     *are either available when using the RESP3 protocol or through Pub/Sub notification when using RESP2.
+     * are either available when using the RESP3 protocol or through Pub/Sub notification when using RESP2.
      *
      * @param args for the CLIENT TRACKING operation.
      * @return String simple-string-reply `OK`.
@@ -147,7 +145,7 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
     /**
      * Returns an array reply of details about all Redis commands.
      *
-     * @return List<Object> array-reply.
+     * @return List<Any> array-reply.
      */
     suspend fun command(): List<Any>
 
@@ -162,7 +160,7 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
      * Returns an array reply of details about the requested commands.
      *
      * @param commands the commands to query for.
-     * @return List<Object> array-reply.
+     * @return List<Any> array-reply.
      */
     suspend fun commandInfo(vararg commands: String): List<Any>
 
@@ -170,7 +168,7 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
      * Returns an array reply of details about the requested commands.
      *
      * @param commands the commands to query for.
-     * @return List<Object> array-reply.
+     * @return List<Any> array-reply.
      */
     suspend fun commandInfo(vararg commands: CommandType): List<Any>
 
@@ -193,7 +191,7 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
      * Rewrite the configuration file with the in memory configuration.
      *
      * @return String simple-string-reply `OK` when the configuration was rewritten properly. Otherwise an error is
-     *        returned.
+     *         returned.
      */
     suspend fun configRewrite(): String?
 
@@ -365,7 +363,7 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
     /**
      * Read the slow log.
      *
-     * @return List<Object> deeply nested multi bulk replies.
+     * @return List<Any> deeply nested multi bulk replies.
      */
     suspend fun slowlogGet(): List<Any>
 
@@ -373,7 +371,7 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
      * Read the slow log.
      *
      * @param count the count.
-     * @return List<Object> deeply nested multi bulk replies.
+     * @return List<Any> deeply nested multi bulk replies.
      */
     suspend fun slowlogGet(count: Int): List<Any>
 
@@ -396,9 +394,9 @@ interface RedisServerSuspendableCommands<K : Any, V : Any> {
      *
      * @return List<V> array-reply specifically:
      *
-     *        A multi bulk reply containing two elements:
+     *         A multi bulk reply containing two elements:
      *
-     *        unix time in seconds. microseconds.
+     *         unix time in seconds. microseconds.
      */
     suspend fun time(): List<V>
 

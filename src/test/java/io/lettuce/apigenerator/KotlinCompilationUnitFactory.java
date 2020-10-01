@@ -20,9 +20,7 @@ import static java.util.stream.Collectors.joining;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -56,8 +54,15 @@ class KotlinCompilationUnitFactory {
     private static final Set<String> SKIP_IMPORTS = LettuceSets.unmodifiableSet("java.util.List", "java.util.Set", "java.util.Map");
     private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("keys", "geohash", "georadius", "georadiusbymember", "hgetall", "hmget", "hkeys", "hvals", "sort", "zpopmin", "zpopmax", "zrange", "zrangebylex", "zrangebyscore", "zrangeWithScores", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "mget", "sdiff", "sinter", "smembers", "srandmember", "sunion", "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange");
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
-    private static final Set<String> NON_NULL_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec", "watch", "unwatch", "getMasterAddrByName", "master", "reset", "failover", "monitor", "RedisSentinelSuspendableCommands.set", "remove", "RedisSentinelSuspendableCommands.clientSetname", "RedisSentinelSuspendableCommands.clientKill", "RedisSentinelSuspendableCommands.clientPause", "RedisSentinelSuspendableCommands.clientList", "RedisSentinelSuspendableCommands.info", "RedisSentinelSuspendableCommands.ping", "pubsubNumsub", "pubsubNumpat", "echo", "ping", "readOnly", "readWrite");
+    private static final Set<String> NON_NULLABLE_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec", "watch", "unwatch", "getMasterAddrByName", "master", "reset", "failover", "monitor", "RedisSentinelSuspendableCommands.set", "remove", "RedisSentinelSuspendableCommands.clientSetname", "RedisSentinelSuspendableCommands.clientKill", "RedisSentinelSuspendableCommands.clientPause", "RedisSentinelSuspendableCommands.clientList", "RedisSentinelSuspendableCommands.info", "RedisSentinelSuspendableCommands.ping", "pubsubNumsub", "pubsubNumpat", "echo", "ping", "readOnly", "readWrite");
     private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
+    private static final Map<String, String> RESULT_SPEC;
+
+    static {
+        Map<String, String> resultSpec = new HashMap<>();
+        resultSpec.put("hgetall", "Flow<KeyValue<K,V>>");
+        RESULT_SPEC = resultSpec;
+    }
 
     private static final String FORMATTING_INDENT = "    ";
 
@@ -90,11 +95,9 @@ class KotlinCompilationUnitFactory {
         CompilationUnit template = JavaParser.parse(templateFile);
 
         JavaToken license = template.getTokenRange().get().getBegin();
-        result.append(license.asString().replace("2017-2020", "2020"));
+        result.append(license.asString().replaceAll("Copyright [\\d]{4}-[\\d]{4}", "Copyright 2020"));
         result.append(license.getNextToken().get().asString());
         result.append("\n");
-
-        result.append("@file:Suppress(\"unused\")").append("\n\n");
 
         result.append("package ").append(targetPackage).append("\n\n");
 
@@ -157,14 +160,14 @@ class KotlinCompilationUnitFactory {
                     .append(FORMATTING_INDENT)
                     .append(extractJavadoc(method.getJavadoc().get()).replace("\n", "\n" + FORMATTING_INDENT))
                     .append(extractAnnotations(method))
-                    .append(contains(NON_SUSPENDABLE_METHODS, method) || (contains(FLOW_METHODS, method) && isCollection(method.getType())) ? "" : "suspend ")
+                    .append(contains(NON_SUSPENDABLE_METHODS, method) || isFlowable(method) ? "" : "suspend ")
                     .append("fun ")
                     .append(method.getTypeParameters().isNonEmpty() ? extractTypeParams(method.getTypeParameters(), null).concat(" ") : "")
                     .append(method.getNameAsString())
                     .append("(")
                     .append(extractParameters(method))
                     .append(")")
-                    .append(toKotlinType(method.getType(), contains(FLOW_METHODS, method) && isCollection(method.getType()), contains(NON_NULL_RESULT_METHODS, method)))
+                    .append(customResultType(method).orElse(toKotlinType(method.getType(), isFlowable(method), contains(NON_NULLABLE_RESULT_METHODS, method))))
                     .append("\n\n");
         }
 
@@ -184,13 +187,27 @@ class KotlinCompilationUnitFactory {
                     .collect(joining(", "));
         }
 
-        private boolean contains(Collection<String> haystack, MethodDeclaration needle) {
-            ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) needle.getParentNode().get();
-            return haystack.contains(needle.getNameAsString()) || haystack.contains(declaringClass.getNameAsString() + "." + needle.getNameAsString());
+        private Optional<String> customResultType(MethodDeclaration method) {
+            ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) method.getParentNode().get();
+            return RESULT_SPEC
+                    .entrySet()
+                    .stream()
+                    .filter(e -> e.getKey().equals(method.getNameAsString()) || e.getKey().contains(declaringClass.getNameAsString() + "." + method.getNameAsString()))
+                    .findFirst()
+                    .map(e -> ": " + e.getValue());
+        }
+
+        private boolean contains(Collection<String> haystack, MethodDeclaration method) {
+            ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) method.getParentNode().get();
+            return haystack.contains(method.getNameAsString()) || haystack.contains(declaringClass.getNameAsString() + "." + method.getNameAsString());
         }
 
         private boolean isCollection(Type type) {
             return type.asString().startsWith("List<") || type.asString().startsWith("Set<");
+        }
+
+        private boolean isFlowable(MethodDeclaration method) {
+            return contains(FLOW_METHODS, method) && (isCollection(method.getType()) || method.getType().asString().startsWith("Map<"));
         }
 
         private String toKotlinType(Type type, boolean isFlowable, boolean isForceNonNullable) {
@@ -247,13 +264,14 @@ class KotlinCompilationUnitFactory {
     }
 
     public static String extractJavadoc(Javadoc javadoc) {
-        String plainJavadoc = StringUtils.removeEnd(javadoc.toText(), "\n")
-                .replace("\n@", "\n @")
-                .replace("\n", "\n *")
+        String plainJavadoc = javadoc
+                .toComment()
+                .getContent()
                 .replace("&lt;", "<")
-                .replace("&gt;", ">");
+                .replace("&gt;", ">")
+                .replace("* \n", "*\n");
 
-        return String.format("/**\n * %s\n */\n", convertToKotlinDoc(plainJavadoc));
+        return String.format("/**%s*/\n", convertToKotlinDoc(plainJavadoc));
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -266,22 +284,28 @@ class KotlinCompilationUnitFactory {
 
     public static String convertToKotlinDoc(String javaDoc) {
         String res = javaDoc;
-        res = replaceSurrounding(res, "\\{@code ", "\\}", "`", "`");
-        res = replaceSurrounding(res, "\\{@link ", "\\}", "[", "]");
-        return res;
+
+        res = replaceSurrounding(res, "{@code ", "}", "`", "`");
+        res = replaceSurrounding(res, "{@link ", "}", "[", "]");
+
+        return res
+                .replace("java.lang.Object", "Any")
+                .replace("Object", "Any")
+                .replaceAll("\\bdouble\\b", "Double")
+                .replaceAll("\\bint\\b", "Integer");
     }
 
     public static String replaceSurrounding(String original, String prefix, String suffix, String replacePrefix, String replaceSuffix) {
-        Matcher matcher = Pattern.compile(prefix + "[a-zA-Z0-9.,#\\-~()*\\s]+" + suffix).matcher(original);
+        Matcher matcher = Pattern.compile(Pattern.quote(prefix) + "[a-zA-Z0-9.,#\\-~()*\\s]+" + Pattern.quote(suffix)).matcher(original);
         StringBuffer result = new StringBuffer();
         while (matcher.find()) {
-            String substr = StringUtils
-                    .substringBetween(
-                            matcher.group(),
-                            prefix.replace("\\", ""),
-                            suffix.replace("\\", "")
-                    );
-            matcher.appendReplacement(result, replacePrefix + substr + replaceSuffix);
+            String substr = StringUtils.substringBetween(matcher.group(), prefix, suffix);
+
+            String replacement = (replacePrefix + substr + replaceSuffix)
+                    .replace("()", "")
+                    .replace(replacePrefix + "#", replacePrefix);
+
+            matcher.appendReplacement(result, replacement);
         }
         matcher.appendTail(result);
         return result.toString();

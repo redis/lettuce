@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
@@ -73,7 +71,7 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
      * @param seconds the seconds type: long.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set.
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set.
      */
     suspend fun expire(key: K, seconds: Long): Boolean?
 
@@ -84,8 +82,8 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
      * @param timestamp the timestamp type: posix time.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
-     *        (see: `EXPIRE`).
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
+     *         (see: `EXPIRE`).
      */
     suspend fun expireat(key: K, timestamp: Date): Boolean?
 
@@ -96,8 +94,8 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
      * @param timestamp the timestamp type: posix time.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
-     *        (see: `EXPIRE`).
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
+     *         (see: `EXPIRE`).
      */
     suspend fun expireat(key: K, timestamp: Long): Boolean?
 
@@ -152,7 +150,7 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
 
     /**
      * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
-     *operations).
+     * operations).
      *
      * @param key the key.
      * @return number of seconds since the object stored at the specified key is idle.
@@ -173,8 +171,8 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
      * @param key the key.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if the timeout was removed. `false` if `key` does not exist or does not have an
-     *        associated timeout.
+     *         `true` if the timeout was removed. `false` if `key` does not exist or does not have an
+     *         associated timeout.
      */
     suspend fun persist(key: K): Boolean?
 
@@ -185,7 +183,7 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
      * @param milliseconds the milliseconds type: long.
      * @return integer-reply, specifically:
      *
-     *        `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set.
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set.
      */
     suspend fun pexpire(key: K, milliseconds: Long): Boolean?
 
@@ -196,8 +194,8 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
-     *        (see: `EXPIRE`).
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
+     *         (see: `EXPIRE`).
      */
     suspend fun pexpireat(key: K, timestamp: Date): Boolean?
 
@@ -208,8 +206,8 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
-     *        (see: `EXPIRE`).
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
+     *         (see: `EXPIRE`).
      */
     suspend fun pexpireat(key: K, timestamp: Long): Boolean?
 
@@ -218,7 +216,7 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @return Long integer-reply TTL in milliseconds, or a negative value in order to signal an error (see the description
-     *        above).
+     *         above).
      */
     suspend fun pttl(key: K): Long?
 
@@ -245,7 +243,7 @@ interface RedisKeySuspendableCommands<K : Any, V : Any> {
      * @param newKey the newkey type: key.
      * @return Boolean integer-reply specifically:
      *
-     *        `true` if `key` was renamed to `newkey`. `false` if `newkey` already exists.
+     *         `true` if `key` was renamed to `newkey`. `false` if `newkey` already exists.
      */
     suspend fun renamenx(key: K, newKey: K): Boolean?
 

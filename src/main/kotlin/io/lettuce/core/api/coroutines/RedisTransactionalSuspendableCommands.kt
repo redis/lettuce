@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -43,10 +41,10 @@ interface RedisTransactionalSuspendableCommands<K : Any, V : Any> {
     /**
      * Execute all commands issued after MULTI.
      *
-     * @return List<Object> array-reply each element being the reply to each of the commands in the atomic transaction.
+     * @return List<Any> array-reply each element being the reply to each of the commands in the atomic transaction.
      *
-     *        When using `WATCH`, `EXEC` can return a [TransactionResult#wasDiscarded discarded
-     *        TransactionResult].
+     *         When using `WATCH`, `EXEC` can return a [TransactionResult#wasDiscarded discarded
+     *         TransactionResult].
      * @see TransactionResult#wasDiscarded
      */
     suspend fun exec(): TransactionResult

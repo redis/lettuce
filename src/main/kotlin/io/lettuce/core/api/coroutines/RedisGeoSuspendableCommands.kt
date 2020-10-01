@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("unused")
-
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
@@ -46,14 +44,14 @@ interface RedisGeoSuspendableCommands<K : Any, V : Any> {
      * Multi geo add.
      *
      * @param key the key of the geo set.
-     * @param lngLatMember triplets of double longitude, double latitude and V member.
+     * @param lngLatMember triplets of Double longitude, Double latitude and V member.
      * @return Long integer-reply the number of elements that were added to the set.
      */
     suspend fun geoadd(key: K, vararg lngLatMember: Any): Long?
 
     /**
      * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a
-     *geospatial index.
+     * geospatial index.
      *
      * @param key the key of the geo set.
      * @param members the members.
@@ -87,8 +85,8 @@ interface RedisGeoSuspendableCommands<K : Any, V : Any> {
     fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit, geoArgs: GeoArgs): Flow<GeoWithin<V>>
 
     /**
-     * Perform a [#georadius(Object, double, double, double, GeoArgs.Unit, GeoArgs)] query and store the results in a
-     *sorted set.
+     * Perform a [georadius(Any, Double, Double, Double, GeoArgs.Unit, GeoArgs)] query and store the results in a
+     * sorted set.
      *
      * @param key the key of the geo set.
      * @param longitude the longitude coordinate according to WGS84.
@@ -96,14 +94,14 @@ interface RedisGeoSuspendableCommands<K : Any, V : Any> {
      * @param distance radius distance.
      * @param unit distance unit.
      * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
-     *       their locations a sorted set.
+     *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result.
      */
     suspend fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long?
 
     /**
      * Retrieve members selected by distance with the center of `member`. The member itself is always contained in the
-     *results.
+     * results.
      *
      * @param key the key of the geo set.
      * @param member reference member.
@@ -115,7 +113,7 @@ interface RedisGeoSuspendableCommands<K : Any, V : Any> {
 
     /**
      * Retrieve members selected by distance with the center of `member`. The member itself is always contained in the
-     *results.
+     * results.
      *
      * @param key the key of the geo set.
      * @param member reference member.
@@ -127,15 +125,15 @@ interface RedisGeoSuspendableCommands<K : Any, V : Any> {
     fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoArgs: GeoArgs): Flow<GeoWithin<V>>
 
     /**
-     * Perform a [#georadiusbymember(Object, Object, double, GeoArgs.Unit, GeoArgs)] query and store the results in a
-     *sorted set.
+     * Perform a [georadiusbymember(Any, Any, Double, GeoArgs.Unit, GeoArgs)] query and store the results in a
+     * sorted set.
      *
      * @param key the key of the geo set.
      * @param member reference member.
      * @param distance radius distance.
      * @param unit distance unit.
      * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
-     *       their locations a sorted set.
+     *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result.
      */
     suspend fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long?
@@ -146,20 +144,20 @@ interface RedisGeoSuspendableCommands<K : Any, V : Any> {
      * @param key the key of the geo set.
      * @param members the members.
      * @return a list of [GeoCoordinates]s representing the x,y position of each element specified in the arguments. For
-     *        missing elements `null` is returned.
+     *         missing elements `null` is returned.
      */
     suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates>
 
     /**
      * Retrieve distance between points `from` and `to`. If one or more elements are missing `null` is
-     *returned. Default in meters by, otherwise according to `unit`
+     * returned. Default in meters by, otherwise according to `unit`
      *
      * @param key the key of the geo set.
      * @param from from member.
      * @param to to member.
      * @param unit distance unit.
      * @return distance between points `from` and `to`. If one or more elements are missing `null` is
-     *        returned.
+     *         returned.
      */
     suspend fun geodist(key: K, from: V, to: V, unit: GeoArgs.Unit): Double?
 
