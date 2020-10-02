@@ -55,7 +55,6 @@ class SuspendableIntegrationTests : TestSupport() {
     @Inject
     internal fun shouldInvokeCoroutineCorrectlyForCluster(client: RedisClusterClient) {
 
-
         val connection = client.connect();
         runBlocking {
 
