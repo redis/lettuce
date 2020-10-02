@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.sentinel.api
+package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.sentinel.api.coroutines.RedisSentinelCoroutinesCommands
-import io.lettuce.core.sentinel.api.coroutines.RedisSentinelCoroutinesCommandsImpl
+import io.lettuce.core.TransactionResult
 
 /**
- * Extension for [StatefulRedisSentinelConnection] to create [RedisSentinelCoroutinesCommands]
+ * Allows to create transaction DSL block with [RedisCoroutinesCommands].
  *
  * @author Mikhael Sokolov
- * @author Mark Paluch
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-fun <K : Any, V : Any> StatefulRedisSentinelConnection<K, V>.coroutines(): RedisSentinelCoroutinesCommands<K, V> = RedisSentinelCoroutinesCommandsImpl(reactive())
+suspend inline fun <K : Any, V : Any> RedisCoroutinesCommands<K, V>.multi(action: RedisCoroutinesCommands<K, V>.() -> Unit): TransactionResult? {
+    multi()
+    runCatching {
+        action.invoke(this)
+    }.onFailure {
+        discard()
+    }
+    return exec()
+}

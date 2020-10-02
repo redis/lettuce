@@ -17,7 +17,10 @@ Most notable changes that ship with this release are:
 * Redesign command latency metrics publishing
 * API cleanups/Breaking Changes
 
-Lettuce 6 supports Redis 2.6+ up to Redis 6.x. In terms of Java runtime, Lettuce requires at least Java 8 and works with Java 15. 
+Lettuce 6 supports Redis 2.6+ up to Redis 6.x. In terms of Java runtime, Lettuce requires at least Java 8 and works with Java 15.
+
+Thanks to all contributors who made Lettuce 6.0.0.RELEASE possible.
+Lettuce requires a minimum of Java 8 to build and run and is compatible with Java 15. It is tested continuously against the latest Redis source-build.
 
 If you need any support, meet Lettuce at
 
@@ -158,10 +161,10 @@ Kotlin users can now use a Coroutine API that exposes suspended methods and uses
 The API can be obtained through an extension function for Standalone, Cluster, and Sentinel connections exposing the appropriate API.  
 
 ```kotlin
-val suspendableCommands: RedisSuspendableCommands<String, String> = connection.suspendable()
+val api: RedisCoroutinesCommands<String, String> = connection.coroutines()
 
-val foo1 = suspendableCommands.set("foo", "bar")
-val foo2 = suspendableCommands.keys("fo*")
+val foo1 = api.set("foo", "bar")
+val foo2 = api.keys("fo*")
 ```
 
 Additionally, we ship two extensions that simplify transactional usage by providing a `multi` closure:
@@ -184,8 +187,6 @@ Unless you're implementing or configuring `CommandLatencyCollector` yourself, yo
 
 This change is motivated by support for libraries that provide latency observability without publishing metrics to the `EventBus`.
 
-Thanks to all contributors who made Lettuce 6.0.0.RC2 possible.
-Lettuce requires a minimum of Java 8 to build and run and is compatible with Java 15. It is tested continuously against the latest Redis source-build.
 
 API cleanups/Breaking Changes
 -----------------------------
@@ -207,6 +208,7 @@ With this release, we took the opportunity to introduce a series of changes that
 * Internal: Reduced visibility of several `protected` fields in `AbstractRedisClient` (`eventLoopGroups`, `genericWorkerPool`, `timer`, `clientResources`, `clientOptions`, `defaultTimeout`).
 * Internal: Consolidation of Future synchronization utilities (`LettuceFutures`, `RefreshFutures`, `Futures`).
 * Deprecate reactive StreamChannel methods #1434
+* Rename StatefulRedisConnection.suspendable() to .coroutines() and command interfaces accordingly #1436
 
 
 Commands

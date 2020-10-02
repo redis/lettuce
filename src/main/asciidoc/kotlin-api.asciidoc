@@ -36,16 +36,16 @@ Coroutines support is available when `kotlinx-coroutines-core` and `kotlinx-coro
 * Collect operations are suspending functions
 * `map` operator supports asynchronous operations (no need for `flatMap`) since it takes a suspending function parameter
 
-== Suspendable API based on reactive operations
+== Coroutines API based on reactive operations
 
 Example for retrieving commands and using it:
 
 [source,kotlin]
 ----
-val suspendableCommands: RedisSuspendableCommands<String, String> = connection.suspendable()
+val api: RedisCoroutinesCommands<String, String> = connection.coroutines()
 
-val foo1 = suspendableCommands.set("foo", "bar")
-val foo2 = suspendableCommands.keys("fo*")
+val foo1 = api.set("foo", "bar")
+val foo2 = api.keys("fo*")
 ----
 
 NOTE: Coroutine Extensions are experimental and require opt-in using `@ExperimentalLettuceCoroutinesApi`.

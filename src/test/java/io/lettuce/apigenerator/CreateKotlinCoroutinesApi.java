@@ -15,10 +15,10 @@
  */
 package io.lettuce.apigenerator;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import static io.lettuce.apigenerator.Constants.KOTLIN_SOURCES;
+import static io.lettuce.apigenerator.Constants.TEMPLATES;
+import static io.lettuce.apigenerator.Constants.TEMPLATE_NAMES;
+import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.util.Arrays;
@@ -26,8 +26,10 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static io.lettuce.apigenerator.Constants.*;
-import static java.util.stream.Collectors.toList;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * Create coroutine-reactive API based on the templates.
@@ -52,7 +54,7 @@ public class CreateKotlinCoroutinesApi {
      */
     public CreateKotlinCoroutinesApi(String templateName) {
 
-        String targetName = templateName.replace("Commands", "SuspendableCommands");
+        String targetName = templateName.replace("Commands", "CoroutinesCommands");
         File templateFile = new File(TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
         String targetPackage;
 

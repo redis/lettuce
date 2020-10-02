@@ -54,7 +54,13 @@ class KotlinCompilationUnitFactory {
     private static final Set<String> SKIP_IMPORTS = LettuceSets.unmodifiableSet("java.util.List", "java.util.Set", "java.util.Map");
     private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("keys", "geohash", "georadius", "georadiusbymember", "hgetall", "hmget", "hkeys", "hvals", "sort", "zpopmin", "zpopmax", "zrange", "zrangebylex", "zrangebyscore", "zrangeWithScores", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "mget", "sdiff", "sinter", "smembers", "srandmember", "sunion", "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange");
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
-    private static final Set<String> NON_NULLABLE_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec", "watch", "unwatch", "getMasterAddrByName", "master", "reset", "failover", "monitor", "RedisSentinelSuspendableCommands.set", "remove", "RedisSentinelSuspendableCommands.clientSetname", "RedisSentinelSuspendableCommands.clientKill", "RedisSentinelSuspendableCommands.clientPause", "RedisSentinelSuspendableCommands.clientList", "RedisSentinelSuspendableCommands.info", "RedisSentinelSuspendableCommands.ping", "pubsubNumsub", "pubsubNumpat", "echo", "ping", "readOnly", "readWrite");
+
+    private static final Set<String> NON_NULLABLE_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec",
+            "watch", "unwatch", "getMasterAddrByName", "master", "reset", "failover", "monitor",
+            "RedisSentinelCoroutinesCommands.set", "remove", "RedisSentinelCoroutinesCommands.clientSetname",
+            "RedisSentinelCoroutinesCommands.clientKill", "RedisSentinelCoroutinesCommands.clientPause",
+            "RedisSentinelCoroutinesCommands.clientList", "RedisSentinelCoroutinesCommands.info",
+            "RedisSentinelCoroutinesCommands.ping", "pubsubNumsub", "pubsubNumpat", "echo", "ping", "readOnly", "readWrite");
     private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
     private static final Map<String, String> RESULT_SPEC;
 
