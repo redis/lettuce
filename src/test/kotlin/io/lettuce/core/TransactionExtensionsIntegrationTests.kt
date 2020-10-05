@@ -19,6 +19,7 @@ import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.async.multi
 import io.lettuce.core.api.sync.multi
 import io.lettuce.test.LettuceExtension
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -59,6 +60,24 @@ class TransactionExtensionsIntegrationTests : TestSupport() {
 
             assertThat(transactionResult.get(0) as String).isEqualTo("OK")
             assertThat(transactionResult.get(1) as String).isEqualTo("value")
+        }
+    }
+
+    @Test
+    @Inject
+    internal fun shouldDiscardMultiClosureOverAsync(connection: StatefulRedisConnection<String, String>) {
+
+        runBlocking {
+            val transactionResult = runCatching {
+                connection.async().multi {
+                    set("key", "value")
+                    throw RedisCommandExecutionException("oops")
+                }
+            }
+
+            assertThat(transactionResult.isFailure).isTrue()
+            assertThat(transactionResult.exceptionOrNull()).isInstanceOf(RedisCommandExecutionException::class.java)
+            assertThat(connection.async().get("key").await()).isNull()
         }
     }
 

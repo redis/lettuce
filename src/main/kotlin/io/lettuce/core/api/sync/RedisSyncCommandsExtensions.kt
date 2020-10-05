@@ -25,12 +25,11 @@ import io.lettuce.core.TransactionResult
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-inline fun <K, V> RedisCommands<K, V>.multi(action: RedisCommands<K, V>.() -> Unit): TransactionResult {
+inline fun <K, V> RedisCommands<K, V>.multi(action: RedisCommands<K, V>.() -> Unit): TransactionResult = try {
     multi()
-    runCatching {
-        action.invoke(this)
-    }.onFailure {
-        discard()
-    }
-    return exec()
+    action.invoke(this)
+    exec()
+} catch (thr: Throwable) {
+    discard()
+    throw thr
 }

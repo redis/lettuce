@@ -26,12 +26,11 @@ import kotlinx.coroutines.future.await
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-suspend inline fun <K, V> RedisAsyncCommands<K, V>.multi(action: RedisAsyncCommands<K, V>.() -> Unit): TransactionResult {
+suspend inline fun <K, V> RedisAsyncCommands<K, V>.multi(action: RedisAsyncCommands<K, V>.() -> Unit): TransactionResult = try {
     multi().await()
-    runCatching {
-        action.invoke(this)
-    }.onFailure {
-        discard()
-    }
-    return exec().await()
+    action.invoke(this)
+    exec().await()
+} catch (thr: Throwable) {
+    discard().await()
+    throw thr
 }
