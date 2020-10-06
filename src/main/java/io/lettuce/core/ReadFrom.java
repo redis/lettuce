@@ -103,6 +103,13 @@ public abstract class ReadFrom {
     public static final ReadFrom ANY = new ReadFromImpl.ReadFromAnyNode();
 
     /**
+     * Setting to read from any replica node.
+     *
+     * @since 6.0
+     */
+    public static final ReadFrom ANY_REPLICA = new ReadFromImpl.ReadFromAnyReplica();
+
+    /**
      * Chooses the nodes from the matching Redis nodes that match this read selector.
      *
      * @param nodes set of nodes that are suitable for reading
@@ -164,6 +171,10 @@ public abstract class ReadFrom {
 
         if (name.equalsIgnoreCase("any")) {
             return ANY;
+        }
+
+        if (name.equalsIgnoreCase("anyReplica")) {
+            return ANY_REPLICA;
         }
 
         throw new IllegalArgumentException("ReadFrom " + name + " not supported");
