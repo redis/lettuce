@@ -116,6 +116,17 @@ class ReadFromImpl {
     }
 
     /**
+     * Read from any replica node.
+     */
+    static final class ReadFromAnyReplica extends UnorderedPredicateReadFromAdapter {
+
+        public ReadFromAnyReplica() {
+            super(IS_REPLICA);
+        }
+
+    }
+
+    /**
      * {@link Predicate}-based {@link ReadFrom} implementation.
      *
      * @since 5.2
