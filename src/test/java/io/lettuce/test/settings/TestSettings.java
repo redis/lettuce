@@ -90,7 +90,7 @@ public class TestSettings {
      *         {@code -Dpassword=YourPassword}
      */
     public static String password() {
-        return System.getProperty("password", "passwd");
+        return System.getProperty("password", "foobared");
     }
 
     /**
