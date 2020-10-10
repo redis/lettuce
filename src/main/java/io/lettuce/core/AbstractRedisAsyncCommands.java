@@ -2255,6 +2255,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
         return dispatch(commandBuilder.zunionstore(destination, storeArgs, keys));
     }
 
+    @Override
+    public RedisFuture<List<Double>> zmscore(K key, V... members) {
+        return dispatch(commandBuilder.zmscore(key, members));
+    }
+
     private byte[] encodeScript(String script) {
         LettuceAssert.notNull(script, "Lua script must not be null");
         LettuceAssert.notEmpty(script, "Lua script must not be empty");

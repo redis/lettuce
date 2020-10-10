@@ -1334,4 +1334,13 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
     Mono<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
+
+    /**
+     * Returns the scores associated with the specified members in the sorted set stored at key.
+     *
+     * @param key the key.
+     * @param members the member type: value.
+     * @return List&lt;Double&gt; array-reply list of scores or nil associated with the specified member values.
+     */
+    Flux<Double> zmscore(K key, V... members);
 }

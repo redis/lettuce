@@ -788,6 +788,12 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
 
     }
 
+    @Test
+    void zmscore() {
+        redis.zadd("zset1", 1.0, "a", 2.0, "b");
+        assertThat(redis.zmscore("zset1", "a", "c", "b")).isEqualTo(list(1.0, null, 2.0));
+    }
+
     void setup100KeyValues(Set<String> expect) {
         for (int i = 0; i < 100; i++) {
             redis.zadd(key + 1, i, value + i);
