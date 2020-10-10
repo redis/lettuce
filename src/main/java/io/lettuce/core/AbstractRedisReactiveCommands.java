@@ -2318,6 +2318,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createMono(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
     }
 
+    @Override
+    public Flux<Double> zmscore(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.zmscore(key, members));
+    }
+
     private byte[] encodeScript(String script) {
         LettuceAssert.notNull(script, "Lua script must not be null");
         LettuceAssert.notEmpty(script, "Lua script must not be empty");

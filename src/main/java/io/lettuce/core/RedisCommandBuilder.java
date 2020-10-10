@@ -3230,6 +3230,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZUNIONSTORE, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, List<Double>> zmscore(K key, V... members) {
+        notNullKey(key);
+        notEmpty(members);
+
+        return createCommand(ZMSCORE, new DoubleListOutput<>(codec), key, members);
+    }
+
     private boolean allElementsInstanceOf(Object[] objects, Class<?> expectedAssignableType) {
 
         for (Object object : objects) {
