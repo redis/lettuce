@@ -33,6 +33,10 @@ public class ZAddArgs implements CompositeArgument {
 
     private boolean ch = false;
 
+    private boolean lt = false;
+
+    private boolean gt = false;
+
     /**
      * Builder entry points for {@link ScanArgs}.
      */
@@ -74,6 +78,25 @@ public class ZAddArgs implements CompositeArgument {
             return new ZAddArgs().ch();
         }
 
+        /**
+         * Creates new {@link ZAddArgs} and enabling {@literal GT}.
+         *
+         * @return new {@link ZAddArgs} with {@literal GT} enabled.
+         * @see ZAddArgs#gt()
+         */
+        public static ZAddArgs gt() {
+            return new ZAddArgs().gt();
+        }
+
+        /**
+         * Creates new {@link ZAddArgs} and enabling {@literal LT}.
+         *
+         * @return new {@link ZAddArgs} with {@literal LT} enabled.
+         * @see ZAddArgs#lt()
+         */
+        public static ZAddArgs lt() {
+            return new ZAddArgs().lt();
+        }
     }
 
     /**
@@ -109,6 +132,28 @@ public class ZAddArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Only update existing elements if the new score is greater than the current score. This flag doesn't prevent adding new elements.
+     *
+     * @return {@code this} {@link ZAddArgs}.
+     */
+    public ZAddArgs gt() {
+
+        this.gt = true;
+        return this;
+    }
+
+    /**
+     * Only update existing elements if the new score is less than the current score. This flag doesn't prevent adding new elements.
+     *
+     * @return {@code this} {@link ZAddArgs}.
+     */
+    public ZAddArgs lt() {
+
+        this.lt = true;
+        return this;
+    }
+
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (nx) {
@@ -117,6 +162,12 @@ public class ZAddArgs implements CompositeArgument {
 
         if (xx) {
             args.add("XX");
+        }
+
+        if (gt) {
+            args.add("GT");
+        } else if (lt) {
+            args.add("LT");
         }
 
         if (ch) {

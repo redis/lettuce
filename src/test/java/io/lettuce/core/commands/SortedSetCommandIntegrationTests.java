@@ -795,4 +795,36 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
             expect.add(value + i);
         }
     }
+
+    @Test
+    void zaddgt() {
+        assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
+        // new score less than the current score
+        assertThat(redis.zadd(key, ZAddArgs.Builder.gt(), 0.0, "a")).isEqualTo(0);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(1.0, "a")));
+
+        // new score greater than the current score
+        assertThat(redis.zadd(key, ZAddArgs.Builder.gt(), 2.0, "a")).isEqualTo(0);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(2.0, "a")));
+
+        // add new element
+        assertThat(redis.zadd(key, ZAddArgs.Builder.gt(), 0.0, "b")).isEqualTo(1);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(0.0, "b"), sv(2.0, "a")));
+    }
+
+    @Test
+    void zaddlt() {
+        assertThat(redis.zadd(key, 2.0, "a")).isEqualTo(1);
+        // new score greater than the current score
+        assertThat(redis.zadd(key, ZAddArgs.Builder.lt(), 3.0, "a")).isEqualTo(0);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(2.0, "a")));
+
+        // new score less than the current score
+        assertThat(redis.zadd(key, ZAddArgs.Builder.lt(), 1.0, "a")).isEqualTo(0);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(1.0, "a")));
+
+        // add new element
+        assertThat(redis.zadd(key, ZAddArgs.Builder.lt(), 0.0, "b")).isEqualTo(1);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(0.0, "b"), sv(1.0, "a")));
+    }
 }
