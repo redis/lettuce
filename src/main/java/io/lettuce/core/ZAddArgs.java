@@ -24,6 +24,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * {@link ZAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @author dengliming
  */
 public class ZAddArgs implements CompositeArgument {
 
@@ -32,6 +33,10 @@ public class ZAddArgs implements CompositeArgument {
     private boolean xx = false;
 
     private boolean ch = false;
+
+    private boolean lt = false;
+
+    private boolean gt = false;
 
     /**
      * Builder entry points for {@link ScanArgs}.
@@ -74,6 +79,27 @@ public class ZAddArgs implements CompositeArgument {
             return new ZAddArgs().ch();
         }
 
+        /**
+         * Creates new {@link ZAddArgs} and enabling {@literal GT}.
+         *
+         * @return new {@link ZAddArgs} with {@literal GT} enabled.
+         * @see ZAddArgs#gt()
+         * @since 6.1
+         */
+        public static ZAddArgs gt() {
+            return new ZAddArgs().gt();
+        }
+
+        /**
+         * Creates new {@link ZAddArgs} and enabling {@literal LT}.
+         *
+         * @return new {@link ZAddArgs} with {@literal LT} enabled.
+         * @see ZAddArgs#lt()
+         * @since 6.1
+         */
+        public static ZAddArgs lt() {
+            return new ZAddArgs().lt();
+        }
     }
 
     /**
@@ -109,6 +135,32 @@ public class ZAddArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Only update existing elements if the new score is greater than the current score. This flag doesn't prevent adding new elements.
+     *
+     * @return {@code this} {@link ZAddArgs}.
+     * @since 6.1
+     */
+    public ZAddArgs gt() {
+
+        this.gt = true;
+        this.lt = false;
+        return this;
+    }
+
+    /**
+     * Only update existing elements if the new score is less than the current score. This flag doesn't prevent adding new elements.
+     *
+     * @return {@code this} {@link ZAddArgs}.
+     * @since 6.1
+     */
+    public ZAddArgs lt() {
+
+        this.lt = true;
+        this.gt = false;
+        return this;
+    }
+
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (nx) {
@@ -117,6 +169,13 @@ public class ZAddArgs implements CompositeArgument {
 
         if (xx) {
             args.add("XX");
+        }
+
+        if (gt) {
+            args.add("GT");
+        }
+        if (lt) {
+            args.add("LT");
         }
 
         if (ch) {
