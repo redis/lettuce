@@ -306,4 +306,13 @@ public interface NodeSelectionSetCommands<K, V> {
      */
     Executions<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 
+    /**
+     * Returns whether each member is a member of the set stored at key.
+     *
+     * @param key the key.
+     * @param members the member type: value.
+     * @return List&lt;Boolean&gt; array-reply list representing the membership of the given elements, in the same order as they are requested.
+     */
+    Executions<List<Boolean>> smismember(K key, V... members);
+
 }

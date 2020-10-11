@@ -218,5 +218,14 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      */
     suspend fun sscan(key: K, scanCursor: ScanCursor): ValueScanCursor<V>?
 
+    /**
+     * Returns whether each member is a member of the set stored at key.
+     *
+     * @param key the key.
+     * @param members the member type: value.
+     * @return List<Boolean> array-reply list representing the membership of the given elements, in the same order as they are requested.
+     */
+    fun smismember(key: K, vararg members: V): Flow<Boolean>
+
 }
 

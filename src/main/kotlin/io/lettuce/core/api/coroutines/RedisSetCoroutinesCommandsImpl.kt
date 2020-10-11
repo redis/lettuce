@@ -80,5 +80,7 @@ internal class RedisSetCoroutinesCommandsImpl<K : Any, V : Any>(private val ops:
 
     override suspend fun sscan(key: K, scanCursor: ScanCursor): ValueScanCursor<V>? = ops.sscan(key, scanCursor).awaitFirstOrNull()
 
+    override fun smismember(key: K, vararg members: V): Flow<Boolean> = ops.smismember(key, *members).asFlow()
+
 }
 

@@ -40,6 +40,7 @@ import io.lettuce.test.condition.RedisConditions;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author dengliming
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -368,6 +369,14 @@ public class SetCommandIntegrationTests extends TestSupport {
         assertThat(cursor.isFinished()).isTrue();
 
         assertThat(cursor.getValues()).hasSize(11);
+    }
+
+    @Test
+    void smismember() {
+        assertThat(redis.smismember(key, "a")).isEqualTo(list(false));
+        redis.sadd(key, "a");
+        assertThat(redis.smismember(key, "a")).isEqualTo(list(true));
+        assertThat(redis.smismember(key, "b", "a")).isEqualTo(list(false, true));
     }
 
     void setup100KeyValues(Set<String> expect) {

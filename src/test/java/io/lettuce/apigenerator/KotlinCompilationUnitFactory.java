@@ -52,7 +52,7 @@ import io.lettuce.core.internal.LettuceSets;
 class KotlinCompilationUnitFactory {
 
     private static final Set<String> SKIP_IMPORTS = LettuceSets.unmodifiableSet("java.util.List", "java.util.Set", "java.util.Map");
-    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("keys", "geohash", "georadius", "georadiusbymember", "hgetall", "hmget", "hkeys", "hvals", "sort", "zpopmin", "zpopmax", "zrange", "zrangebylex", "zrangebyscore", "zrangeWithScores", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "mget", "sdiff", "sinter", "smembers", "srandmember", "sunion", "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange");
+    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("keys", "geohash", "georadius", "georadiusbymember", "hgetall", "hmget", "hkeys", "hvals", "sort", "zpopmin", "zpopmax", "zrange", "zrangebylex", "zrangebyscore", "zrangeWithScores", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "mget", "sdiff", "sinter", "smembers", "srandmember", "sunion", "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange", "smismember");
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
 
     private static final Set<String> NON_NULLABLE_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec",

@@ -2060,6 +2060,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SSCAN, output, args);
     }
 
+    Command<K, V, List<Boolean>> smismember(K key, V... members) {
+        notNullKey(key);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
+
+        return createCommand(SMISMEMBER, new BooleanListOutput<>(codec), key, members);
+    }
+
     Command<K, V, Long> strlen(K key) {
         notNullKey(key);
 
