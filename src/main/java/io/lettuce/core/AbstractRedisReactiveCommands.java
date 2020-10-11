@@ -50,6 +50,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
  * @author Mark Paluch
  * @author Nikolai Perevozchikov
  * @author Tugdual Grall
+ * @author dengliming
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashReactiveCommands<K, V>,
@@ -1555,6 +1556,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
         return createMono(() -> commandBuilder.sscanStreaming(channel, key, scanCursor));
+    }
+
+    @Override
+    public Flux<Boolean> smismember(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.smismember(key, members));
     }
 
     @Override

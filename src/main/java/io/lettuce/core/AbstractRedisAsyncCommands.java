@@ -44,6 +44,7 @@ import io.lettuce.core.protocol.*;
  * @author Will Glozer
  * @author Mark Paluch
  * @author Tugdual Grall
+ * @author dengliming
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
@@ -1483,6 +1484,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
         return dispatch(commandBuilder.sscanStreaming(channel, key, scanCursor));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> smismember(K key, V... members) {
+        return dispatch(commandBuilder.smismember(key, members));
     }
 
     @Override
