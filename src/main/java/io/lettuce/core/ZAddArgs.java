@@ -24,6 +24,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * {@link ZAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @author dengliming
  */
 public class ZAddArgs implements CompositeArgument {
 
@@ -83,6 +84,7 @@ public class ZAddArgs implements CompositeArgument {
          *
          * @return new {@link ZAddArgs} with {@literal GT} enabled.
          * @see ZAddArgs#gt()
+         * @since 6.1
          */
         public static ZAddArgs gt() {
             return new ZAddArgs().gt();
@@ -93,6 +95,7 @@ public class ZAddArgs implements CompositeArgument {
          *
          * @return new {@link ZAddArgs} with {@literal LT} enabled.
          * @see ZAddArgs#lt()
+         * @since 6.1
          */
         public static ZAddArgs lt() {
             return new ZAddArgs().lt();
@@ -136,10 +139,12 @@ public class ZAddArgs implements CompositeArgument {
      * Only update existing elements if the new score is greater than the current score. This flag doesn't prevent adding new elements.
      *
      * @return {@code this} {@link ZAddArgs}.
+     * @since 6.1
      */
     public ZAddArgs gt() {
 
         this.gt = true;
+        this.lt = false;
         return this;
     }
 
@@ -147,10 +152,12 @@ public class ZAddArgs implements CompositeArgument {
      * Only update existing elements if the new score is less than the current score. This flag doesn't prevent adding new elements.
      *
      * @return {@code this} {@link ZAddArgs}.
+     * @since 6.1
      */
     public ZAddArgs lt() {
 
         this.lt = true;
+        this.gt = false;
         return this;
     }
 
@@ -166,7 +173,8 @@ public class ZAddArgs implements CompositeArgument {
 
         if (gt) {
             args.add("GT");
-        } else if (lt) {
+        }
+        if (lt) {
             args.add("LT");
         }
 
