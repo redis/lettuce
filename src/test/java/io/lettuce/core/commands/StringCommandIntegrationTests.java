@@ -43,6 +43,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
  * @author Will Glozer
  * @author Mark Paluch
  * @author dengliming
+ * @author Andrey Shlykov
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -189,6 +190,13 @@ public class StringCommandIntegrationTests extends TestSupport {
     @Test
     void setNegativePX() {
         assertThatThrownBy(() -> redis.set(key, value, px(-1000))).isInstanceOf(RedisException. class);
+    }
+
+    @Test
+    void setGet() {
+        assertThat(redis.set(key, value, SetArgs.Builder.get())).isNull();
+        assertThat(redis.set(key, "value2", SetArgs.Builder.get())).isEqualTo(value);
+        assertThat(redis.get(key)).isEqualTo("value2");
     }
 
     @Test

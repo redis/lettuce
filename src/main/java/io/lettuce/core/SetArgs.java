@@ -26,6 +26,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * @author Will Glozer
  * @author Vincent Rischmann
  * @author Mark Paluch
+ * @author Andrey Shlykov
  */
 public class SetArgs implements CompositeArgument {
 
@@ -38,6 +39,8 @@ public class SetArgs implements CompositeArgument {
     private boolean xx = false;
 
     private boolean keepttl = false;
+
+    private boolean get = false;
 
     /**
      * Builder entry points for {@link SetArgs}.
@@ -103,6 +106,17 @@ public class SetArgs implements CompositeArgument {
             return new SetArgs().keepttl();
         }
 
+        /**
+         * Creates new {@link SetArgs} and enabling {@literal GET}.
+         *
+         * @return new {@link SetArgs} with {@literal GET} enabled.
+         * @see SetArgs#get()
+         * @since 6.1
+         */
+        public static SetArgs get() {
+            return new SetArgs().get();
+        }
+
     }
 
     /**
@@ -163,6 +177,17 @@ public class SetArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Return the old value stored at key, or nil when key did not exist.
+     *
+     * @return {@code this} {@link SetArgs}.
+     */
+    public SetArgs get() {
+
+        this.get = true;
+        return this;
+    }
+
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (ex != null) {
@@ -183,6 +208,10 @@ public class SetArgs implements CompositeArgument {
 
         if (keepttl) {
             args.add("KEEPTTL");
+        }
+
+        if (get) {
+            args.add("GET");
         }
     }
 
