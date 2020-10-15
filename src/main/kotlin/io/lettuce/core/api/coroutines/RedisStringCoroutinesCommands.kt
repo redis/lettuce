@@ -297,6 +297,27 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
     suspend fun set(key: K, value: V, setArgs: SetArgs): String?
 
     /**
+     * Set the string value of a key and return its old value.
+     *
+     * @param key the key
+     * @param value the value
+     * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
+     * @since 6.2
+     */
+    suspend fun setGet(key: K, value: V): V?
+
+    /**
+     * Set the string value of a key and return its old value.
+     *
+     * @param key the key
+     * @param value the value
+     * @param setArgs the command arguments
+     * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
+     * @since 6.2
+     */
+    suspend fun setGet(key: K, value: V, setArgs: SetArgs): V?
+
+    /**
      * Sets or clears the bit at offset in the string value stored at key.
      *
      * @param key the key.

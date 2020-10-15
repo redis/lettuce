@@ -43,6 +43,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
  * @author Will Glozer
  * @author Mark Paluch
  * @author dengliming
+ * @author Andrey Shlykov
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -189,6 +190,14 @@ public class StringCommandIntegrationTests extends TestSupport {
     @Test
     void setNegativePX() {
         assertThatThrownBy(() -> redis.set(key, value, px(-1000))).isInstanceOf(RedisException. class);
+    }
+
+    @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void setGet() {
+        assertThat(redis.setGet(key, value)).isNull();
+        assertThat(redis.setGet(key, "value2")).isEqualTo(value);
+        assertThat(redis.get(key)).isEqualTo("value2");
     }
 
     @Test
