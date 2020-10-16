@@ -36,7 +36,7 @@ public class SocketOptions {
 
     public static final boolean DEFAULT_SO_KEEPALIVE = false;
 
-    public static final boolean DEFAULT_SO_NO_DELAY = false;
+    public static final boolean DEFAULT_SO_NO_DELAY = true;
 
     private final Duration connectTimeout;
 
@@ -148,10 +148,13 @@ public class SocketOptions {
         }
 
         /**
-         * Sets whether to disable Nagle's algorithm. Defaults to {@code false} (Nagle enabled). See
+         * Sets whether to disable/enable Nagle's algorithm. Defaults to {@code true} (Nagle disabled). See
          * {@link #DEFAULT_SO_NO_DELAY}.
+         * <p>
+         * Disabling TCP NoDelay delays TCP {@code ACK} packets to await more data input before confirming the packet.
          *
-         * @param tcpNoDelay {@code true} to disable Nagle's algorithm, {@code false} to enable Nagle's algorithm.
+         * @param tcpNoDelay {@code false} to disable TCP NoDelay (enable Nagle's algorithm), {@code true} to enable TCP NoDelay
+         *        (disable Nagle's algorithm).
          * @return {@code this}
          * @see java.net.SocketOptions#TCP_NODELAY
          */

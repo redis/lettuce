@@ -37,11 +37,11 @@ class SocketOptionsUnitTests {
     @Test
     void testBuilder() {
 
-        SocketOptions sut = SocketOptions.builder().connectTimeout(1, TimeUnit.MINUTES).keepAlive(true).tcpNoDelay(true)
+        SocketOptions sut = SocketOptions.builder().connectTimeout(1, TimeUnit.MINUTES).keepAlive(true).tcpNoDelay(false)
                 .build();
 
         assertThat(sut.isKeepAlive()).isTrue();
-        assertThat(sut.isTcpNoDelay()).isTrue();
+        assertThat(sut.isTcpNoDelay()).isFalse();
         assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofMinutes(1));
     }
 
@@ -67,7 +67,7 @@ class SocketOptionsUnitTests {
 
     void checkAssertions(SocketOptions sut) {
         assertThat(sut.isKeepAlive()).isFalse();
-        assertThat(sut.isTcpNoDelay()).isFalse();
+        assertThat(sut.isTcpNoDelay()).isTrue();
         assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofSeconds(10));
     }
 }
