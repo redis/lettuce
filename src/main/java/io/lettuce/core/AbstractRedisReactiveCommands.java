@@ -1867,13 +1867,33 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<V> zinter(long numkey, K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zinter(numkey, keys));
+    }
+
+    @Override
+    public Flux<V> zinter(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zinter(numkey, aggregateArgs, keys));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zinterWithScores(long numkey, K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zinterWithScores(numkey, keys));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zinterWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zinterWithScores(numkey, aggregateArgs, keys));
+    }
+
+    @Override
     public Mono<Long> zinterstore(K destination, K... keys) {
         return createMono(() -> commandBuilder.zinterstore(destination, keys));
     }
 
     @Override
-    public Mono<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
-        return createMono(() -> commandBuilder.zinterstore(destination, storeArgs, keys));
+    public Mono<Long> zinterstore(K destination, ZAggregateArgs aggregateArgs, K... keys) {
+        return createMono(() -> commandBuilder.zinterstore(destination, aggregateArgs, keys));
     }
 
     @Override
@@ -2321,13 +2341,33 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<V> zunion(long numkey, K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zunion(numkey, keys));
+    }
+
+    @Override
+    public Flux<V> zunion(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zunion(numkey, aggregateArgs, keys));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zunionWithScores(long numkey, K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zunionWithScores(numkey, keys));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zunionWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zunionWithScores(numkey, aggregateArgs, keys));
+    }
+
+    @Override
     public Mono<Long> zunionstore(K destination, K... keys) {
         return createMono(() -> commandBuilder.zunionstore(destination, keys));
     }
 
     @Override
-    public Mono<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
-        return createMono(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
+    public Mono<Long> zunionstore(K destination, ZAggregateArgs aggregateArgs, K... keys) {
+        return createMono(() -> commandBuilder.zunionstore(destination, aggregateArgs, keys));
     }
 
     private byte[] encodeScript(String script) {

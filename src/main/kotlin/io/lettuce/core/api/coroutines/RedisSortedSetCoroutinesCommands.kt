@@ -185,6 +185,48 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun zincrby(key: K, amount: Double, member: V): Double?
 
     /**
+     * Intersect multiple sorted sets and returns the resulting sorted.
+     *
+     * @param numkey the numeric key.
+     * @param keys the keys.
+     * @return List<V> array-reply list of elements.
+     * @since 6.1
+     */
+    fun zinter(numkey: Long, vararg keys: K): Flow<V>
+
+    /**
+     * Intersect multiple sorted sets and returns the resulting sorted.
+     *
+     * @param numkey the numeric key.
+     * @param aggregateArgs the aggregateArgs.
+     * @param keys the keys.
+     * @return List<V> array-reply list of elements.
+     * @since 6.1
+     */
+    fun zinter(numkey: Long, aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V>
+
+    /**
+     * Intersect multiple sorted sets and returns the resulting sorted.
+     *
+     * @param numkey the numeric key.
+     * @param aggregateArgs the aggregateArgs.
+     * @param keys the keys.
+     * @return List<V> array-reply list of scored values.
+     * @since 6.1
+     */
+    fun zinterWithScores(numkey: Long, aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<ScoredValue<V>>
+
+    /**
+     * Intersect multiple sorted sets and returns the resulting sorted.
+     *
+     * @param numkey the numeric key.
+     * @param keys the keys.
+     * @return List<V> array-reply list of scored values.
+     * @since 6.1
+     */
+    fun zinterWithScores(numkey: Long, vararg keys: K): Flow<ScoredValue<V>>
+
+    /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination the destination.
@@ -197,11 +239,11 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination the destination.
-     * @param storeArgs the storeArgs.
+     * @param aggregateArgs the aggregateArgs.
      * @param keys the keys.
      * @return Long integer-reply the number of elements in the resulting sorted set at `destination`.
      */
-    suspend fun zinterstore(destination: K, storeArgs: ZStoreArgs, vararg keys: K): Long?
+    suspend fun zinterstore(destination: K, aggregateArgs: ZAggregateArgs, vararg keys: K): Long?
 
     /**
      * Count the number of members in a sorted set between a given lexicographical range.
@@ -218,10 +260,10 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param members the member type: value.
-     * @return List&lt;Double&gt; array-reply list of scores or nil associated with the specified member values.
+     * @return List<Double> array-reply list of scores or nil associated with the specified member values.
      * @since 6.1
      */
-    suspend fun zmscore(key: K, vararg members: V): List<Double?>
+    suspend fun zmscore(key: K, vararg members: V): List<Double>
 
     /**
      * Removes and returns up to count members with the lowest scores in the sorted set stored at key.
@@ -535,6 +577,48 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun zscore(key: K, member: V): Double?
 
     /**
+     * Add multiple sorted sets and returns the resulting sorted set.
+     *
+     * @param numkey the numeric key.
+     * @param keys the keys.
+     * @return List<V> array-reply list of elements.
+     * @since 6.1
+     */
+    fun zunion(numkey: Long, vararg keys: K): Flow<V>
+
+    /**
+     * Add multiple sorted sets and returns the resulting sorted set.
+     *
+     * @param numkey the numeric key.
+     * @param aggregateArgs the aggregateArgs.
+     * @param keys the keys.
+     * @return List<V> array-reply list of elements.
+     * @since 6.1
+     */
+    fun zunion(numkey: Long, aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V>
+
+    /**
+     * Add multiple sorted sets and returns the resulting sorted set.
+     *
+     * @param numkey the numeric key.
+     * @param aggregateArgs the aggregateArgs.
+     * @param keys the keys.
+     * @return List<V> array-reply list of scored values.
+     * @since 6.1
+     */
+    fun zunionWithScores(numkey: Long, aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<ScoredValue<V>>
+
+    /**
+     * Add multiple sorted sets and returns the resulting sorted set.
+     *
+     * @param numkey the numeric key.
+     * @param keys the keys.
+     * @return List<V> array-reply list of scored values.
+     * @since 6.1
+     */
+    fun zunionWithScores(numkey: Long, vararg keys: K): Flow<ScoredValue<V>>
+
+    /**
      * Add multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination destination key.
@@ -547,11 +631,11 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * Add multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination the destination.
-     * @param storeArgs the storeArgs.
+     * @param aggregateArgs the aggregateArgs.
      * @param keys the keys.
      * @return Long integer-reply the number of elements in the resulting sorted set at `destination`.
      */
-    suspend fun zunionstore(destination: K, storeArgs: ZStoreArgs, vararg keys: K): Long?
+    suspend fun zunionstore(destination: K, aggregateArgs: ZAggregateArgs, vararg keys: K): Long?
 
 }
 

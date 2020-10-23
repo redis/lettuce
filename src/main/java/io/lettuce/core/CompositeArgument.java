@@ -29,7 +29,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * @since 5.0
  * @see CommandArgs
  * @see SetArgs
- * @see ZStoreArgs
+ * @see ZAggregateArgs
  * @see GeoArgs
  */
 public interface CompositeArgument {

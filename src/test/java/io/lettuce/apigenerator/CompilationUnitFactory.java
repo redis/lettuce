@@ -75,7 +75,7 @@ class CompilationUnitFactory {
             Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
             Consumer<ClassOrInterfaceDeclaration> typeMutator, Function<Comment, Comment> methodCommentMutator) {
         this(templateFile, sources, targetPackage, targetName, typeDocFunction, methodReturnTypeFunction, methodDeclaration -> {
-        }, methodFilter, importSupplier, typeMutator, (m, c) -> methodCommentMutator.apply(c));
+        }, methodFilter, importSupplier, typeMutator, (m, c) -> methodCommentMutator != null ? methodCommentMutator.apply(c) : c);
 
     }
 
