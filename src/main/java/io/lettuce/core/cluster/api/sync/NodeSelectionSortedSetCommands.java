@@ -210,6 +210,48 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Double> zincrby(K key, double amount, V member);
 
     /**
+     * Intersect multiple sorted sets and returns the resulting sorted.
+     *
+     * @param numkey the numeric key.
+     * @param keys the keys.
+     * @return List&lt;V&gt; array-reply list of elements.
+     * @since 6.1
+     */
+    Executions<List<V>> zinter(long numkey, K... keys);
+
+    /**
+     * Intersect multiple sorted sets and returns the resulting sorted.
+     *
+     * @param numkey the numeric key.
+     * @param aggregateArgs the aggregateArgs.
+     * @param keys the keys.
+     * @return List&lt;V&gt; array-reply list of elements.
+     * @since 6.1
+     */
+    Executions<List<V>> zinter(long numkey, ZAggregateArgs aggregateArgs, K... keys);
+
+    /**
+     * Intersect multiple sorted sets and returns the resulting sorted.
+     *
+     * @param numkey the numeric key.
+     * @param aggregateArgs the aggregateArgs.
+     * @param keys the keys.
+     * @return List&lt;V&gt; array-reply list of scored values.
+     * @since 6.1
+     */
+    Executions<List<ScoredValue<V>>> zinterWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys);
+
+    /**
+     * Intersect multiple sorted sets and returns the resulting sorted.
+     *
+     * @param numkey the numeric key.
+     * @param keys the keys.
+     * @return List&lt;V&gt; array-reply list of scored values.
+     * @since 6.1
+     */
+    Executions<List<ScoredValue<V>>> zinterWithScores(long numkey, K... keys);
+
+    /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination the destination.
@@ -222,11 +264,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination the destination.
-     * @param storeArgs the storeArgs.
+     * @param aggregateArgs the aggregateArgs.
      * @param keys the keys.
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
-    Executions<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys);
+    Executions<Long> zinterstore(K destination, ZAggregateArgs aggregateArgs, K... keys);
 
     /**
      * Count the number of members in a sorted set between a given lexicographical range.
@@ -1241,6 +1283,48 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Double> zscore(K key, V member);
 
     /**
+     * Add multiple sorted sets and returns the resulting sorted set.
+     *
+     * @param numkey the numeric key.
+     * @param keys the keys.
+     * @return List&lt;V&gt; array-reply list of elements.
+     * @since 6.1
+     */
+    Executions<List<V>> zunion(long numkey, K... keys);
+
+    /**
+     * Add multiple sorted sets and returns the resulting sorted set.
+     *
+     * @param numkey the numeric key.
+     * @param aggregateArgs the aggregateArgs.
+     * @param keys the keys.
+     * @return List&lt;V&gt; array-reply list of elements.
+     * @since 6.1
+     */
+    Executions<List<V>> zunion(long numkey, ZAggregateArgs aggregateArgs, K... keys);
+
+    /**
+     * Add multiple sorted sets and returns the resulting sorted set.
+     *
+     * @param numkey the numeric key.
+     * @param aggregateArgs the aggregateArgs.
+     * @param keys the keys.
+     * @return List&lt;V&gt; array-reply list of scored values.
+     * @since 6.1
+     */
+    Executions<List<ScoredValue<V>>> zunionWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys);
+
+    /**
+     * Add multiple sorted sets and returns the resulting sorted set.
+     *
+     * @param numkey the numeric key.
+     * @param keys the keys.
+     * @return List&lt;V&gt; array-reply list of scored values.
+     * @since 6.1
+     */
+    Executions<List<ScoredValue<V>>> zunionWithScores(long numkey, K... keys);
+
+    /**
      * Add multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination destination key.
@@ -1253,9 +1337,9 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * Add multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination the destination.
-     * @param storeArgs the storeArgs.
+     * @param aggregateArgs the aggregateArgs.
      * @param keys the keys.
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
-    Executions<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
+    Executions<Long> zunionstore(K destination, ZAggregateArgs aggregateArgs, K... keys);
 }

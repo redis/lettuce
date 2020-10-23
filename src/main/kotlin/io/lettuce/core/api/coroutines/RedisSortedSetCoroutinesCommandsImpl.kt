@@ -62,13 +62,21 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun zincrby(key: K, amount: Double, member: V): Double? = ops.zincrby(key, amount, member).awaitFirstOrNull()
 
+    override fun zinter(numkey: Long, vararg keys: K): Flow<V> = ops.zinter(numkey, *keys).asFlow()
+
+    override fun zinter(numkey: Long, aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V> = ops.zinter(numkey, aggregateArgs, *keys).asFlow()
+
+    override fun zinterWithScores(numkey: Long, vararg keys: K): Flow<ScoredValue<V>> = ops.zinterWithScores(numkey, *keys).asFlow()
+
+    override fun zinterWithScores(numkey: Long, aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<ScoredValue<V>> = ops.zinterWithScores(numkey, aggregateArgs, *keys).asFlow()
+
     override suspend fun zinterstore(destination: K, vararg keys: K): Long? = ops.zinterstore(destination, *keys).awaitFirstOrNull()
 
-    override suspend fun zinterstore(destination: K, storeArgs: ZStoreArgs, vararg keys: K): Long? = ops.zinterstore(destination, storeArgs, *keys).awaitFirstOrNull()
+    override suspend fun zinterstore(destination: K, aggregateArgs: ZAggregateArgs, vararg keys: K): Long? = ops.zinterstore(destination, aggregateArgs, *keys).awaitFirstOrNull()
 
     override suspend fun zlexcount(key: K, range: Range<out V>): Long? = ops.zlexcount(key, range).awaitFirstOrNull()
 
-    override suspend fun zmscore(key: K, vararg members: V): List<Double?> = ops.zmscore(key, *members).awaitFirstOrNull().orEmpty()
+    override suspend fun zmscore(key: K, vararg members: V): List<Double> = ops.zmscore(key, *members).awaitFirstOrNull().orEmpty()
 
     override suspend fun zpopmin(key: K): ScoredValue<V>? = ops.zpopmin(key).awaitFirstOrNull()
 
@@ -132,9 +140,16 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun zscore(key: K, member: V): Double? = ops.zscore(key, member).awaitFirstOrNull()
 
+    override fun zunion(numkey: Long, vararg keys: K): Flow<V> = ops.zunion(numkey, *keys).asFlow()
+
+    override fun zunion(numkey: Long, aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V> = ops.zunion(numkey, aggregateArgs, *keys).asFlow()
+
+    override fun zunionWithScores(numkey: Long, vararg keys: K): Flow<ScoredValue<V>> = ops.zunionWithScores(numkey, *keys).asFlow()
+
+    override fun zunionWithScores(numkey: Long, aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<ScoredValue<V>> = ops.zunionWithScores(numkey, aggregateArgs, *keys).asFlow()
+
     override suspend fun zunionstore(destination: K, vararg keys: K): Long? = ops.zunionstore(destination, *keys).awaitFirstOrNull()
 
-    override suspend fun zunionstore(destination: K, storeArgs: ZStoreArgs, vararg keys: K): Long? = ops.zunionstore(destination, storeArgs, *keys).awaitFirstOrNull()
-
+    override suspend fun zunionstore(destination: K, aggregateArgs: ZAggregateArgs, vararg keys: K): Long? = ops.zunionstore(destination, aggregateArgs, *keys).awaitFirstOrNull()
 }
 

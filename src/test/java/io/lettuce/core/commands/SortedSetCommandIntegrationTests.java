@@ -16,10 +16,10 @@
 package io.lettuce.core.commands;
 
 import static io.lettuce.core.Range.Boundary.including;
-import static io.lettuce.core.ZStoreArgs.Builder.max;
-import static io.lettuce.core.ZStoreArgs.Builder.min;
-import static io.lettuce.core.ZStoreArgs.Builder.sum;
-import static io.lettuce.core.ZStoreArgs.Builder.weights;
+import static io.lettuce.core.ZAggregateArgs.Builder.max;
+import static io.lettuce.core.ZAggregateArgs.Builder.min;
+import static io.lettuce.core.ZAggregateArgs.Builder.sum;
+import static io.lettuce.core.ZAggregateArgs.Builder.weights;
 import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Double.POSITIVE_INFINITY;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -830,6 +830,38 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         setup100KeyValues(new HashSet<>());
         assertThat(redis.zremrangebylex(key, Range.create("value", "zzz"))).isEqualTo(100);
 
+    }
+
+    @Test
+    @EnabledOnCommand("ZUNION") // Redis 6.2
+    void zunion() {
+        String zset1 = "zset1";
+        String zset2 = "zset2";
+
+        assertThat(redis.zadd(zset1, 1.0, "a")).isEqualTo(1);
+        assertThat(redis.zadd(zset1, 2.0, "b")).isEqualTo(1);
+        assertThat(redis.zadd(zset2, 1.0, "a")).isEqualTo(1);
+        assertThat(redis.zadd(zset2, 2.0, "b")).isEqualTo(1);
+        assertThat(redis.zadd(zset2, 3.0, "c")).isEqualTo(1);
+
+        assertThat(redis.zunion(2, zset1, zset2)).isEqualTo(list("a", "c", "b"));
+        assertThat(redis.zunionWithScores(2, zset1, zset2)).isEqualTo(svlist(sv(2.0, "a"), sv(3.0, "c"), sv(4.0, "b")));
+    }
+
+    @Test
+    @EnabledOnCommand("ZINTER") // Redis 6.2
+    void zinter() {
+        String zset1 = "zset1";
+        String zset2 = "zset2";
+
+        assertThat(redis.zadd(zset1, 1.0, "a")).isEqualTo(1);
+        assertThat(redis.zadd(zset1, 2.0, "b")).isEqualTo(1);
+        assertThat(redis.zadd(zset2, 1.0, "a")).isEqualTo(1);
+        assertThat(redis.zadd(zset2, 2.0, "b")).isEqualTo(1);
+        assertThat(redis.zadd(zset2, 3.0, "c")).isEqualTo(1);
+
+        assertThat(redis.zinter(2, zset1, zset2)).isEqualTo(list("a", "b"));
+        assertThat(redis.zinterWithScores(2, zset1, zset2)).isEqualTo(svlist(sv(2.0, "a"), sv(4.0, "b")));
     }
 
     void setup100KeyValues(Set<String> expect) {

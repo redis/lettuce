@@ -25,13 +25,13 @@ import io.lettuce.core.protocol.CommandArgs;
 /**
  * @author Mark Paluch
  */
-class ZStoreArgsUnitTests {
+class ZAggregateArgsUnitTests {
 
     @Test
     void shouldRenderWeights() {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-        ZStoreArgs.Builder.weights(1, 2, 3).build(args);
+        ZAggregateArgs.Builder.weights(1, 2, 3).build(args);
 
         assertThat(args.toString()).contains("WEIGHTS");
     }
@@ -40,7 +40,7 @@ class ZStoreArgsUnitTests {
     void shouldOmitWeights() {
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-        ZStoreArgs.Builder.weights().build(args);
+        ZAggregateArgs.Builder.weights().build(args);
 
         assertThat(args.toString()).doesNotContain("WEIGHTS");
     }

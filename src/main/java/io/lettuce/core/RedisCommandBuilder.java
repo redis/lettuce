@@ -2609,19 +2609,49 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZINCRBY, new DoubleOutput<>(codec), args);
     }
 
+    Command<K, V, List<V>> zinter(long numkey, K... keys) {
+        notEmpty(keys);
+
+        return zinter(numkey, new ZAggregateArgs(), keys);
+    }
+
+    Command<K, V, List<V>> zinter(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(numkey).addKeys(keys);
+        aggregateArgs.build(args);
+        return createCommand(ZINTER, new ValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zinterWithScores(long numkey, K... keys) {
+        notEmpty(keys);
+
+        return zinterWithScores(numkey, new ZAggregateArgs(), keys);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zinterWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(numkey).addKeys(keys).add(WITHSCORES);
+        aggregateArgs.build(args);
+        return createCommand(ZINTER, new ScoredValueListOutput<>(codec), args);
+    }
+
     Command<K, V, Long> zinterstore(K destination, K... keys) {
         notEmpty(keys);
 
-        return zinterstore(destination, new ZStoreArgs(), keys);
+        return zinterstore(destination, new ZAggregateArgs(), keys);
     }
 
-    Command<K, V, Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys) {
+    Command<K, V, Long> zinterstore(K destination, ZAggregateArgs aggregateArgs, K... keys) {
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(storeArgs, "ZStoreArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(aggregateArgs, "ZStoreArgs " + MUST_NOT_BE_NULL);
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(keys.length).addKeys(keys);
-        storeArgs.build(args);
+        aggregateArgs.build(args);
         return createCommand(ZINTERSTORE, new IntegerOutput<>(codec), args);
     }
 
@@ -3230,19 +3260,49 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZSCORE, new DoubleOutput<>(codec), key, member);
     }
 
+    Command<K, V, List<V>> zunion(long numkey, K... keys) {
+        notEmpty(keys);
+
+        return zunion(numkey, new ZAggregateArgs(), keys);
+    }
+
+    Command<K, V, List<V>> zunion(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(numkey).addKeys(keys);
+        aggregateArgs.build(args);
+        return createCommand(ZUNION, new ValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zunionWithScores(long numkey, K... keys) {
+        notEmpty(keys);
+
+        return zunionWithScores(numkey, new ZAggregateArgs(), keys);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zunionWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(numkey).addKeys(keys).add(WITHSCORES);
+        aggregateArgs.build(args);
+        return createCommand(ZUNION, new ScoredValueListOutput<>(codec), args);
+    }
+
     Command<K, V, Long> zunionstore(K destination, K... keys) {
         notEmpty(keys);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
 
-        return zunionstore(destination, new ZStoreArgs(), keys);
+        return zunionstore(destination, new ZAggregateArgs(), keys);
     }
 
-    Command<K, V, Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
+    Command<K, V, Long> zunionstore(K destination, ZAggregateArgs aggregateArgs, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.addKey(destination).add(keys.length).addKeys(keys);
-        storeArgs.build(args);
+        aggregateArgs.build(args);
         return createCommand(ZUNIONSTORE, new IntegerOutput<>(codec), args);
     }
 
