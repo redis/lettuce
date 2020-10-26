@@ -158,7 +158,13 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     }
 
     public <T> AsyncCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
-        return (AsyncCommand<K, V, T>) connection.dispatch(new AsyncCommand<>(cmd));
+
+        AsyncCommand<K, V, T> asyncCommand = new AsyncCommand<>(cmd);
+        RedisCommand<K, V, T> dispatched = connection.dispatch(asyncCommand);
+        if (dispatched instanceof AsyncCommand) {
+            return (AsyncCommand<K, V, T>) dispatched;
+        }
+        return asyncCommand;
     }
 
     public void close() {
