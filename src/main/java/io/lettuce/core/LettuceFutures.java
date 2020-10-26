@@ -27,9 +27,7 @@ import io.lettuce.core.internal.Futures;
  *
  * @author Mark Paluch
  * @since 3.0
- * @deprecated since 6.0, use {@link Futures} instead.
  */
-@Deprecated
 public class LettuceFutures {
 
     private LettuceFutures() {
