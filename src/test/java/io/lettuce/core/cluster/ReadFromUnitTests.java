@@ -33,6 +33,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 /**
  * @author Mark Paluch
  * @author Ryosuke Hasebe
+ * @author Omer Cilingir
  */
 class ReadFromUnitTests {
 

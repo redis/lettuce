@@ -25,6 +25,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  *
  * @author Mark Paluch
  * @author Ryosuke Hasebe
+ * @author Omer Cilingir
  * @since 4.0
  */
 public abstract class ReadFrom {
@@ -105,7 +106,7 @@ public abstract class ReadFrom {
     /**
      * Setting to read from any replica node.
      *
-     * @since 6.0
+     * @since 6.0.1
      */
     public static final ReadFrom ANY_REPLICA = new ReadFromImpl.ReadFromAnyReplica();
 
