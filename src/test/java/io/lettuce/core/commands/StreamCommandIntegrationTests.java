@@ -321,6 +321,22 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void xgroupreadDeletedMessage() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "del-group", XGroupCreateArgs.Builder.mkstream());
+        redis.xadd(key, Collections.singletonMap("key", "value1"));
+        redis.xreadgroup(Consumer.from("del-group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        redis.xadd(key, XAddArgs.Builder.maxlen(1), Collections.singletonMap("key", "value2"));
+
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("del-group", "consumer1"),
+                StreamOffset.from(key, "0-0"));
+
+        assertThat(messages).hasSize(1);
+        assertThat(messages.get(0).getBody()).isEmpty();
+    }
+
+    @Test
     void xpendingWithoutRead() {
 
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
