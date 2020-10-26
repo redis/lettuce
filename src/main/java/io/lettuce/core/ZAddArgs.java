@@ -100,6 +100,7 @@ public class ZAddArgs implements CompositeArgument {
         public static ZAddArgs lt() {
             return new ZAddArgs().lt();
         }
+
     }
 
     /**
@@ -136,7 +137,8 @@ public class ZAddArgs implements CompositeArgument {
     }
 
     /**
-     * Only update existing elements if the new score is greater than the current score. This flag doesn't prevent adding new elements.
+     * Only update existing elements if the new score is greater than the current score. This flag doesn't prevent adding new
+     * elements.
      *
      * @return {@code this} {@link ZAddArgs}.
      * @since 6.1
@@ -149,7 +151,8 @@ public class ZAddArgs implements CompositeArgument {
     }
 
     /**
-     * Only update existing elements if the new score is less than the current score. This flag doesn't prevent adding new elements.
+     * Only update existing elements if the new score is less than the current score. This flag doesn't prevent adding new
+     * elements.
      *
      * @return {@code this} {@link ZAddArgs}.
      * @since 6.1
@@ -174,6 +177,7 @@ public class ZAddArgs implements CompositeArgument {
         if (gt) {
             args.add("GT");
         }
+
         if (lt) {
             args.add("LT");
         }

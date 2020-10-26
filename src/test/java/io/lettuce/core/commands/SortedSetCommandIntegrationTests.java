@@ -44,8 +44,11 @@ import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for Sorted Sets via {@link io.lettuce.core.api.sync.RedisSortedSetCommands}.
+ *
  * @author Will Glozer
  * @author Mark Paluch
+ * @author dengliming
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -797,6 +800,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
     void zaddgt() {
         assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
         // new score less than the current score
@@ -813,6 +817,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
     void zaddlt() {
         assertThat(redis.zadd(key, 2.0, "a")).isEqualTo(1);
         // new score greater than the current score
