@@ -63,6 +63,10 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
         }
 
         if (key == null) {
+            if (bytes == null) {
+                return;
+            }
+
             key = codec.decodeKey(bytes);
             return;
         }
@@ -92,7 +96,7 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
         }
 
         if (depth == 3) {
-            subscriber.onNext(output, new StreamMessage<>(stream, id, body));
+            subscriber.onNext(output, new StreamMessage<>(stream, id, body == null ? Collections.emptyMap() : body));
             key = null;
             id = null;
             body = null;
