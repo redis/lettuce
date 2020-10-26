@@ -75,7 +75,7 @@ endef
 #######
 .PRECIOUS: work/redis-%.conf
 
-# Sentinel monitored slave
+# Sentinel monitored replica
 work/redis-6483.conf:
 	@mkdir -p $(@D)
 
@@ -89,6 +89,37 @@ work/redis-6483.conf:
 	@echo unixsocket $(ROOT_DIR)/work/socket-6483 >> $@
 	@echo unixsocketperm 777 >> $@
 	@echo slaveof 127.0.0.1 6482 >> $@
+
+# Secured-Sentinel monitored master
+work/redis-6485.conf:
+	@mkdir -p $(@D)
+
+	@echo port 6485 >> $@
+	@echo daemonize yes >> $@
+	@echo pidfile $(shell pwd)/work/redis-6485.pid >> $@
+	@echo logfile $(shell pwd)/work/redis-6485.log >> $@
+	@echo save \"\" >> $@
+	@echo appendonly no >> $@
+	@echo unixsocket $(ROOT_DIR)/work/socket-6485 >> $@
+	@echo unixsocketperm 777 >> $@
+	@echo requirepass data-password >> $@
+	@echo masterauth data-password >> $@
+
+# Secured-Sentinel monitored replica
+work/redis-6486.conf:
+	@mkdir -p $(@D)
+
+	@echo port 6486 >> $@
+	@echo daemonize yes >> $@
+	@echo pidfile $(shell pwd)/work/redis-6486.pid >> $@
+	@echo logfile $(shell pwd)/work/redis-6486.log >> $@
+	@echo save \"\" >> $@
+	@echo appendonly no >> $@
+	@echo unixsocket $(ROOT_DIR)/work/socket-6486 >> $@
+	@echo unixsocketperm 777 >> $@
+	@echo slaveof 127.0.0.1 6485 >> $@
+	@echo requirepass data-password >> $@
+	@echo masterauth data-password >> $@
 
 work/redis-%.conf:
 	@mkdir -p $(@D)
@@ -106,7 +137,7 @@ work/redis-%.conf:
 work/redis-%.pid: work/redis-%.conf work/redis-git/src/redis-server
 	work/redis-git/src/redis-server $<
 
-redis-start: work/redis-6479.pid work/redis-6480.pid work/redis-6481.pid work/redis-6482.pid work/redis-6483.pid work/redis-6484.pid
+redis-start: work/redis-6479.pid work/redis-6480.pid work/redis-6481.pid work/redis-6482.pid work/redis-6483.pid work/redis-6484.pid work/redis-6485.pid work/redis-6486.pid
 
 ##########
 # Sentinel
@@ -122,6 +153,7 @@ work/sentinel-%.conf:
 	@echo logfile $(shell pwd)/work/redis-sentinel-$*.log >> $@
 
 	@echo sentinel monitor mymaster 127.0.0.1 6482 1 >> $@
+	@echo sentinel auth-pass mymaster testsentinel >> $@
 	@echo sentinel down-after-milliseconds mymaster 200 >> $@
 	@echo sentinel failover-timeout mymaster 200 >> $@
 	@echo sentinel parallel-syncs mymaster 1 >> $@
@@ -137,6 +169,8 @@ work/sentinel-26381.conf:
 	@echo logfile $(shell pwd)/work/redis-sentinel-26381.log >> $@
 
 	@echo sentinel monitor mymaster 127.0.0.1 6484 1 >> $@
+	@echo sentinel monitor secured-master 127.0.0.1 6485 1 >> $@
+	@echo sentinel auth-pass secured-master data-password >> $@
 	@echo sentinel down-after-milliseconds mymaster 200 >> $@
 	@echo sentinel failover-timeout mymaster 200 >> $@
 	@echo sentinel parallel-syncs mymaster 1 >> $@

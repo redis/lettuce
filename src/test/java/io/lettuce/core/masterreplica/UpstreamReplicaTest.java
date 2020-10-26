@@ -108,6 +108,7 @@ class UpstreamReplicaTest extends AbstractRedisClientTest {
             connection2.getStatefulConnection().close();
         }
 
+
         if (connection != null) {
             connection.close();
         }
@@ -197,6 +198,26 @@ class UpstreamReplicaTest extends AbstractRedisClientTest {
         RedisCommands<String, String> sync = connection.sync();
 
         assertThat(sync.ping()).isEqualTo("PONG");
+    }
+
+    @Test
+    void testMasterReplicaSentinelWithAuthentication() {
+
+        RedisURI redisURI = RedisURI
+                .create("redis-sentinel://" + TestSettings.host() + ":26381?sentinelMasterId=secured-master");
+        redisURI.setPassword("data-password");
+        redisURI.getSentinels().get(0).setPassword(TestSettings.password());
+
+        StatefulRedisMasterReplicaConnection<String, String> connection = MasterReplica.connect(client, StringCodec.UTF8,
+                redisURI);
+
+        connection.setReadFrom(ReadFrom.REPLICA);
+
+        connection.sync().set(key, value);
+        connection.sync().set(key, value);
+        connection.sync().get(key);
+
+        connection.close();
     }
 
     static String replicaCall(StatefulRedisMasterReplicaConnection<String, String> connection) {
