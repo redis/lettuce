@@ -17,8 +17,6 @@ package io.lettuce.core.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.junit.Assert.assertThat;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -257,7 +255,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
     void pubsubChannelsWithArg() {
         Futures.await(pubsub.subscribe(channel));
         List<String> result = redis.pubsubChannels(pattern);
-        assertThat(result, hasItem(channel));
+        assertThat(result).contains(channel);
     }
 
     @Test
@@ -266,7 +264,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
         Futures.await(pubsub.subscribe(channel));
 
         Map<String, Long> result = redis.pubsubNumsub(channel);
-        assertThat(result.size()).isGreaterThan(0);
+        assertThat(result).isNotEmpty();
         assertThat(result).containsKeys(channel);
     }
 
