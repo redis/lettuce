@@ -255,12 +255,12 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             assertThat(connection.auth(username, passwd)).isEqualTo("OK");
 
             assertThatThrownBy(() -> connection.auth(username, "invalid"))
-                    .hasMessage("WRONGPASS invalid username-password pair");
+                    .hasMessageContaining("WRONGPASS invalid username-password pair");
 
             assertThat(connection.auth(aclUsername, aclPasswd)).isEqualTo("OK");
 
             assertThatThrownBy(() -> connection.auth(aclUsername, "invalid"))
-                    .hasMessage("WRONGPASS invalid username-password pair");
+                    .hasMessageContaining("WRONGPASS invalid username-password pair");
 
             connection.getStatefulConnection().close();
         });
