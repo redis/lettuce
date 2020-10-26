@@ -15,15 +15,18 @@
  */
 package io.lettuce.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.api.reactive.RedisHashReactiveCommands;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisSetReactiveCommands;
 import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands;
 import io.lettuce.core.internal.LettuceAssert;
-import reactor.core.publisher.Mono;
 
 /**
  * Scan command support exposed through {@link Flux}.
@@ -38,6 +41,7 @@ import reactor.core.publisher.Mono;
  * signals demand.
  *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  * @since 5.1
  */
 public abstract class ScanStream {
@@ -78,7 +82,8 @@ public abstract class ScanStream {
         LettuceAssert.notNull(commands, "RedisKeyCommands must not be null");
 
         return scanArgs.map(commands::scan).orElseGet(commands::scan)
-                .expand(c -> !c.isFinished() ? scanArgs.map(it -> commands.scan(c, it)).orElseGet(() -> commands.scan(c)) : Mono.empty())
+                .expand(c -> !c.isFinished() ? scanArgs.map(it -> commands.scan(c, it)).orElseGet(() -> commands.scan(c))
+                        : Mono.empty())
                 .flatMapIterable(KeyScanCursor::getKeys);
     }
 
@@ -121,7 +126,9 @@ public abstract class ScanStream {
         LettuceAssert.notNull(key, "Key must not be null");
 
         return scanArgs.map(it -> commands.hscan(key, it)).orElseGet(() -> commands.hscan(key))
-                .expand(c -> !c.isFinished() ? scanArgs.map(it -> commands.hscan(key, c, it)).orElseGet(() -> commands.hscan(key, c)) : Mono.empty())
+                .expand(c -> !c.isFinished()
+                        ? scanArgs.map(it -> commands.hscan(key, c, it)).orElseGet(() -> commands.hscan(key, c))
+                        : Mono.empty())
                 .flatMapIterable(c -> {
                     List<KeyValue<K, V>> list = new ArrayList<>(c.getMap().size());
 
@@ -170,7 +177,9 @@ public abstract class ScanStream {
         LettuceAssert.notNull(key, "Key must not be null");
 
         return scanArgs.map(it -> commands.sscan(key, it)).orElseGet(() -> commands.sscan(key))
-                .expand(c -> !c.isFinished() ? scanArgs.map(it -> commands.sscan(key, c, it)).orElseGet(() -> commands.sscan(key, c)) : Mono.empty())
+                .expand(c -> !c.isFinished()
+                        ? scanArgs.map(it -> commands.sscan(key, c, it)).orElseGet(() -> commands.sscan(key, c))
+                        : Mono.empty())
                 .flatMapIterable(ValueScanCursor::getValues);
     }
 
@@ -213,7 +222,10 @@ public abstract class ScanStream {
         LettuceAssert.notNull(key, "Key must not be null");
 
         return scanArgs.map(it -> commands.zscan(key, it)).orElseGet(() -> commands.zscan(key))
-                .expand(c -> !c.isFinished() ? scanArgs.map(it -> commands.zscan(key, c, it)).orElseGet(() -> commands.zscan(key, c)) : Mono.empty())
+                .expand(c -> !c.isFinished()
+                        ? scanArgs.map(it -> commands.zscan(key, c, it)).orElseGet(() -> commands.zscan(key, c))
+                        : Mono.empty())
                 .flatMapIterable(ScoredValueScanCursor::getValues);
     }
+
 }
