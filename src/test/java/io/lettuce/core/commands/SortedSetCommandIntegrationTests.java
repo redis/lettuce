@@ -152,6 +152,40 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void zaddgt() {
+        assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
+        // new score less than the current score
+        assertThat(redis.zadd(key, ZAddArgs.Builder.gt(), 0.0, "a")).isEqualTo(0);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(1.0, "a")));
+
+        // new score greater than the current score
+        assertThat(redis.zadd(key, ZAddArgs.Builder.gt(), 2.0, "a")).isEqualTo(0);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(2.0, "a")));
+
+        // add new element
+        assertThat(redis.zadd(key, ZAddArgs.Builder.gt(), 0.0, "b")).isEqualTo(1);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(0.0, "b"), sv(2.0, "a")));
+    }
+
+    @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void zaddlt() {
+        assertThat(redis.zadd(key, 2.0, "a")).isEqualTo(1);
+        // new score greater than the current score
+        assertThat(redis.zadd(key, ZAddArgs.Builder.lt(), 3.0, "a")).isEqualTo(0);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(2.0, "a")));
+
+        // new score less than the current score
+        assertThat(redis.zadd(key, ZAddArgs.Builder.lt(), 1.0, "a")).isEqualTo(0);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(1.0, "a")));
+
+        // add new element
+        assertThat(redis.zadd(key, ZAddArgs.Builder.lt(), 0.0, "b")).isEqualTo(1);
+        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(0.0, "b"), sv(1.0, "a")));
+    }
+
+    @Test
     void zcard() {
         assertThat(redis.zcard(key)).isEqualTo(0);
         redis.zadd(key, 1.0, "a");
@@ -766,6 +800,13 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ZMSCORE")
+    public void zmscore() {
+        redis.zadd("zset1", 1.0, "a", 2.0, "b");
+        assertThat(redis.zmscore("zset1", "a", "c", "b")).isEqualTo(list(1.0, null, 2.0));
+    }
+
+    @Test
     void zrangebylex() {
         setup100KeyValues(new HashSet<>());
 
@@ -791,12 +832,6 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
 
     }
 
-    @Test
-    void zmscore() {
-        redis.zadd("zset1", 1.0, "a", 2.0, "b");
-        assertThat(redis.zmscore("zset1", "a", "c", "b")).isEqualTo(list(1.0, null, 2.0));
-    }
-
     void setup100KeyValues(Set<String> expect) {
         for (int i = 0; i < 100; i++) {
             redis.zadd(key + 1, i, value + i);
@@ -805,37 +840,5 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         }
     }
 
-    @Test
-    @EnabledOnCommand("ZMSCORE") // Redis 6.2
-    void zaddgt() {
-        assertThat(redis.zadd(key, 1.0, "a")).isEqualTo(1);
-        // new score less than the current score
-        assertThat(redis.zadd(key, ZAddArgs.Builder.gt(), 0.0, "a")).isEqualTo(0);
-        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(1.0, "a")));
 
-        // new score greater than the current score
-        assertThat(redis.zadd(key, ZAddArgs.Builder.gt(), 2.0, "a")).isEqualTo(0);
-        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(2.0, "a")));
-
-        // add new element
-        assertThat(redis.zadd(key, ZAddArgs.Builder.gt(), 0.0, "b")).isEqualTo(1);
-        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(0.0, "b"), sv(2.0, "a")));
-    }
-
-    @Test
-    @EnabledOnCommand("ZMSCORE") // Redis 6.2
-    void zaddlt() {
-        assertThat(redis.zadd(key, 2.0, "a")).isEqualTo(1);
-        // new score greater than the current score
-        assertThat(redis.zadd(key, ZAddArgs.Builder.lt(), 3.0, "a")).isEqualTo(0);
-        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(2.0, "a")));
-
-        // new score less than the current score
-        assertThat(redis.zadd(key, ZAddArgs.Builder.lt(), 1.0, "a")).isEqualTo(0);
-        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(1.0, "a")));
-
-        // add new element
-        assertThat(redis.zadd(key, ZAddArgs.Builder.lt(), 0.0, "b")).isEqualTo(1);
-        assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(0.0, "b"), sv(1.0, "a")));
-    }
 }

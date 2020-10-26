@@ -214,6 +214,16 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun zlexcount(key: K, range: Range<out V>): Long?
 
     /**
+     * Returns the scores associated with the specified members in the sorted set stored at key.
+     *
+     * @param key the key.
+     * @param members the member type: value.
+     * @return List&lt;Double&gt; array-reply list of scores or nil associated with the specified member values.
+     * @since 6.1
+     */
+    suspend fun zmscore(key: K, vararg members: V): List<Double?>
+
+    /**
      * Removes and returns up to count members with the lowest scores in the sorted set stored at key.
      *
      * @param key the key.

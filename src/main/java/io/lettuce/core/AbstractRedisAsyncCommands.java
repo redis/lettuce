@@ -30,7 +30,6 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
@@ -1386,6 +1385,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<List<Boolean>> smismember(K key, V... members) {
+        return dispatch(commandBuilder.smismember(key, members));
+    }
+
+    @Override
     public RedisFuture<Boolean> smove(K source, K destination, V member) {
         return dispatch(commandBuilder.smove(source, destination, member));
     }
@@ -1484,11 +1488,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
         return dispatch(commandBuilder.sscanStreaming(channel, key, scanCursor));
-    }
-
-    @Override
-    public RedisFuture<List<Boolean>> smismember(K key, V... members) {
-        return dispatch(commandBuilder.smismember(key, members));
     }
 
     @Override
@@ -1812,6 +1811,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<Long> zlexcount(K key, Range<? extends V> range) {
         return dispatch(commandBuilder.zlexcount(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<Double>> zmscore(K key, V... members) {
+        return dispatch(commandBuilder.zmscore(key, members));
     }
 
     @Override
@@ -2259,11 +2263,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return dispatch(commandBuilder.zunionstore(destination, storeArgs, keys));
-    }
-
-    @Override
-    public RedisFuture<List<Double>> zmscore(K key, V... members) {
-        return dispatch(commandBuilder.zmscore(key, members));
     }
 
     private byte[] encodeScript(String script) {

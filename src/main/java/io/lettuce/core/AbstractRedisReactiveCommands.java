@@ -19,6 +19,7 @@ import static io.lettuce.core.protocol.CommandType.*;
 
 import java.time.Duration;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -1459,6 +1460,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<Boolean> smismember(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.smismember(key, members));
+    }
+
+    @Override
     public Mono<Boolean> smove(K source, K destination, V member) {
         return createMono(() -> commandBuilder.smove(source, destination, member));
     }
@@ -1556,11 +1562,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor) {
         return createMono(() -> commandBuilder.sscanStreaming(channel, key, scanCursor));
-    }
-
-    @Override
-    public Flux<Boolean> smismember(K key, V... members) {
-        return createDissolvingFlux(() -> commandBuilder.smismember(key, members));
     }
 
     @Override
@@ -1883,6 +1884,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<Long> zlexcount(K key, Range<? extends V> range) {
         return createMono(() -> commandBuilder.zlexcount(key, range));
+    }
+
+    @Override
+    public Mono<List<Double>> zmscore(K key, V... members) {
+        return createMono(() -> commandBuilder.zmscore(key, members));
     }
 
     @Override
@@ -2322,11 +2328,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys) {
         return createMono(() -> commandBuilder.zunionstore(destination, storeArgs, keys));
-    }
-
-    @Override
-    public Flux<Double> zmscore(K key, V... members) {
-        return createDissolvingFlux(() -> commandBuilder.zmscore(key, members));
     }
 
     private byte[] encodeScript(String script) {

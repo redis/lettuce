@@ -253,6 +253,16 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Long> zlexcount(K key, Range<? extends V> range);
 
     /**
+     * Returns the scores associated with the specified members in the sorted set stored at key.
+     *
+     * @param key the key.
+     * @param members the member type: value.
+     * @return List&lt;Double&gt; array-reply list of scores or nil associated with the specified member values.
+     * @since 6.1
+     */
+    Executions<List<Double>> zmscore(K key, V... members);
+
+    /**
      * Removes and returns up to count members with the lowest scores in the sorted set stored at key.
      *
      * @param key the key
@@ -1257,12 +1267,4 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      */
     Executions<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
 
-    /**
-     * Returns the scores associated with the specified members in the sorted set stored at key.
-     *
-     * @param key the key.
-     * @param members the member type: value.
-     * @return List&lt;Double&gt; array-reply list of scores or nil associated with the specified member values.
-     */
-    Executions<List<Double>> zmscore(K key, V... members);
 }

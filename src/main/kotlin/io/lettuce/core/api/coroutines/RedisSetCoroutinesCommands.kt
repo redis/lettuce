@@ -100,6 +100,24 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun sismember(key: K, member: V): Boolean?
 
     /**
+     * Get all the members in a set.
+     *
+     * @param key the key.
+     * @return Set<V> array-reply all elements of the set.
+     */
+    fun smembers(key: K): Flow<V>
+
+    /**
+     * Returns whether each member is a member of the set stored at key.
+     *
+     * @param key the key.
+     * @param members the member type: value.
+     * @return List<Boolean> array-reply list representing the membership of the given elements, in the same order as they are requested.
+     * @since 6.1
+     */
+    fun smismember(key: K, vararg members: V): Flow<Boolean>
+
+    /**
      * Move a member from one set to another.
      *
      * @param source the source key.
@@ -111,14 +129,6 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      *         operation was performed.
      */
     suspend fun smove(source: K, destination: K, member: V): Boolean?
-
-    /**
-     * Get all the members in a set.
-     *
-     * @param key the key.
-     * @return Set<V> array-reply all elements of the set.
-     */
-    fun smembers(key: K): Flow<V>
 
     /**
      * Remove and return a random member from a set.
@@ -217,15 +227,6 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @return ValueScanCursor<V> scan cursor.
      */
     suspend fun sscan(key: K, scanCursor: ScanCursor): ValueScanCursor<V>?
-
-    /**
-     * Returns whether each member is a member of the set stored at key.
-     *
-     * @param key the key.
-     * @param members the member type: value.
-     * @return List<Boolean> array-reply list representing the membership of the given elements, in the same order as they are requested.
-     */
-    fun smismember(key: K, vararg members: V): Flow<Boolean>
 
 }
 

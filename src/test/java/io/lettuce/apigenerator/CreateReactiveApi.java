@@ -58,6 +58,7 @@ public class CreateReactiveApi {
         resultSpec.put("geopos", "Flux<Value<GeoCoordinates>>");
         resultSpec.put("bitfield", "Flux<Value<Long>>");
         resultSpec.put("hgetall", "Flux<KeyValue<K, V>>");
+        resultSpec.put("zmscore", "Mono<List<Double>>"); // Redis returns null if element was not found
         resultSpec.put("hgetall(KeyValueStreamingChannel<K, V> channel, K key)", "Mono<Long>");
 
         RESULT_SPEC = resultSpec;

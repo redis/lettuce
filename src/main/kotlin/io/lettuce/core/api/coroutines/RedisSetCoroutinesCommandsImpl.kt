@@ -54,9 +54,11 @@ internal class RedisSetCoroutinesCommandsImpl<K : Any, V : Any>(private val ops:
 
     override suspend fun sismember(key: K, member: V): Boolean? = ops.sismember(key, member).awaitFirstOrNull()
 
-    override suspend fun smove(source: K, destination: K, member: V): Boolean? = ops.smove(source, destination, member).awaitFirstOrNull()
-
     override fun smembers(key: K): Flow<V> = ops.smembers(key).asFlow()
+
+    override fun smismember(key: K, vararg members: V): Flow<Boolean> = ops.smismember(key, *members).asFlow()
+
+    override suspend fun smove(source: K, destination: K, member: V): Boolean? = ops.smove(source, destination, member).awaitFirstOrNull()
 
     override suspend fun spop(key: K): V? = ops.spop(key).awaitFirstOrNull()
 
@@ -79,8 +81,6 @@ internal class RedisSetCoroutinesCommandsImpl<K : Any, V : Any>(private val ops:
     override suspend fun sscan(key: K, scanCursor: ScanCursor, scanArgs: ScanArgs): ValueScanCursor<V>? = ops.sscan(key, scanCursor, scanArgs).awaitFirstOrNull()
 
     override suspend fun sscan(key: K, scanCursor: ScanCursor): ValueScanCursor<V>? = ops.sscan(key, scanCursor).awaitFirstOrNull()
-
-    override fun smismember(key: K, vararg members: V): Flow<Boolean> = ops.smismember(key, *members).asFlow()
 
 }
 

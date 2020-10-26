@@ -119,19 +119,6 @@ public interface NodeSelectionSetAsyncCommands<K, V> {
     AsyncExecutions<Boolean> sismember(K key, V member);
 
     /**
-     * Move a member from one set to another.
-     *
-     * @param source the source key
-     * @param destination the destination type: key
-     * @param member the member type: value
-     * @return Boolean integer-reply specifically:
-     *
-     *         {@code true} if the element is moved. {@code false} if the element is not a member of {@code source} and no
-     *         operation was performed.
-     */
-    AsyncExecutions<Boolean> smove(K source, K destination, V member);
-
-    /**
      * Get all the members in a set.
      *
      * @param key the key
@@ -147,6 +134,30 @@ public interface NodeSelectionSetAsyncCommands<K, V> {
      * @return Long count of members of the resulting set.
      */
     AsyncExecutions<Long> smembers(ValueStreamingChannel<V> channel, K key);
+
+    /**
+     * Returns whether each member is a member of the set stored at key.
+     *
+     * @param key the key.
+     * @param members the member type: value.
+     * @return List&lt;Boolean&gt; array-reply list representing the membership of the given elements, in the same order as they
+     *         are requested.
+     * @since 6.1
+     */
+    AsyncExecutions<List<Boolean>> smismember(K key, V... members);
+
+    /**
+     * Move a member from one set to another.
+     *
+     * @param source the source key
+     * @param destination the destination type: key
+     * @param member the member type: value
+     * @return Boolean integer-reply specifically:
+     *
+     *         {@code true} if the element is moved. {@code false} if the element is not a member of {@code source} and no
+     *         operation was performed.
+     */
+    AsyncExecutions<Boolean> smove(K source, K destination, V member);
 
     /**
      * Remove and return a random member from a set.
@@ -306,12 +317,4 @@ public interface NodeSelectionSetAsyncCommands<K, V> {
      */
     AsyncExecutions<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
 
-    /**
-     * Returns whether each member is a member of the set stored at key.
-     *
-     * @param key the key.
-     * @param members the member type: value.
-     * @return List&lt;Boolean&gt; array-reply list representing the membership of the given elements, in the same order as they are requested.
-     */
-    AsyncExecutions<List<Boolean>> smismember(K key, V... members);
 }

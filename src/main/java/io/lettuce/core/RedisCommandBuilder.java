@@ -38,6 +38,7 @@ import io.lettuce.core.protocol.*;
  * @author Mark Paluch
  * @author Zhang Jessey
  * @author Tugdual Grall
+ * @author dengliming
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -1904,6 +1905,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SMEMBERS, new ValueStreamingOutput<>(codec, channel), key);
     }
 
+    Command<K, V, List<Boolean>> smismember(K key, V... members) {
+        notNullKey(key);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
+
+        return createCommand(SMISMEMBER, new BooleanListOutput<>(codec), key, members);
+    }
+
     Command<K, V, Boolean> smove(K source, K destination, V member) {
         LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
@@ -2058,14 +2067,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         ValueScanStreamingOutput<K, V> output = new ValueScanStreamingOutput<>(codec, channel);
         return createCommand(SSCAN, output, args);
-    }
-
-    Command<K, V, List<Boolean>> smismember(K key, V... members) {
-        notNullKey(key);
-        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
-
-        return createCommand(SMISMEMBER, new BooleanListOutput<>(codec), key, members);
     }
 
     Command<K, V, Long> strlen(K key) {
@@ -2640,6 +2641,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.addKey(key).add(minValue(range)).add(maxValue(range));
         return createCommand(ZLEXCOUNT, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Double>> zmscore(K key, V... members) {
+        notNullKey(key);
+        notEmpty(members);
+
+        return createCommand(ZMSCORE, new DoubleListOutput<>(codec), key, members);
     }
 
     Command<K, V, ScoredValue<V>> zpopmin(K key) {
@@ -3236,13 +3244,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(destination).add(keys.length).addKeys(keys);
         storeArgs.build(args);
         return createCommand(ZUNIONSTORE, new IntegerOutput<>(codec), args);
-    }
-
-    Command<K, V, List<Double>> zmscore(K key, V... members) {
-        notNullKey(key);
-        notEmpty(members);
-
-        return createCommand(ZMSCORE, new DoubleListOutput<>(codec), key, members);
     }
 
     private boolean allElementsInstanceOf(Object[] objects, Class<?> expectedAssignableType) {

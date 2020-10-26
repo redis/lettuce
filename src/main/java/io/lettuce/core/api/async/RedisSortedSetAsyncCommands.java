@@ -253,6 +253,16 @@ public interface RedisSortedSetAsyncCommands<K, V> {
     RedisFuture<Long> zlexcount(K key, Range<? extends V> range);
 
     /**
+     * Returns the scores associated with the specified members in the sorted set stored at key.
+     *
+     * @param key the key.
+     * @param members the member type: value.
+     * @return List&lt;Double&gt; array-reply list of scores or nil associated with the specified member values.
+     * @since 6.1
+     */
+    RedisFuture<List<Double>> zmscore(K key, V... members);
+
+    /**
      * Removes and returns up to count members with the lowest scores in the sorted set stored at key.
      *
      * @param key the key
@@ -1260,12 +1270,4 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      */
     RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
 
-    /**
-     * Returns the scores associated with the specified members in the sorted set stored at key.
-     *
-     * @param key the key.
-     * @param members the member type: value.
-     * @return List&lt;Double&gt; array-reply list of scores or nil associated with the specified member values.
-     */
-    RedisFuture<List<Double>> zmscore(K key, V... members);
 }
