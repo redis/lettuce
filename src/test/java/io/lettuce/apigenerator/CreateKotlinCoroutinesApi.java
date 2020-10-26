@@ -17,8 +17,6 @@ package io.lettuce.apigenerator;
 
 import static io.lettuce.apigenerator.Constants.KOTLIN_SOURCES;
 import static io.lettuce.apigenerator.Constants.TEMPLATES;
-import static io.lettuce.apigenerator.Constants.TEMPLATE_NAMES;
-import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.util.Arrays;
@@ -26,53 +24,15 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Create coroutine-reactive API based on the templates.
  *
  * @author Mikhael Sokolov
  */
-@RunWith(Parameterized.class)
 public class CreateKotlinCoroutinesApi {
-
-    private final KotlinCompilationUnitFactory factory;
-
-    @Parameters(name = "Create {0}")
-    public static List<Object[]> arguments() {
-        return Arrays
-                .stream(TEMPLATE_NAMES)
-                .map(t -> new Object[]{t})
-                .collect(toList());
-    }
-
-    /**
-     * @param templateName
-     */
-    public CreateKotlinCoroutinesApi(String templateName) {
-
-        String targetName = templateName.replace("Commands", "CoroutinesCommands");
-        File templateFile = new File(TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
-        String targetPackage;
-
-        if (templateName.contains("RedisSentinel")) {
-            targetPackage = "io.lettuce.core.sentinel.api.coroutines";
-        } else {
-            targetPackage = "io.lettuce.core.api.coroutines";
-        }
-
-        factory = new KotlinCompilationUnitFactory(
-                templateFile,
-                KOTLIN_SOURCES,
-                targetPackage,
-                targetName,
-                importSupplier(),
-                commentInjector()
-        );
-    }
 
     /**
      * Supply additional imports.
@@ -99,8 +59,28 @@ public class CreateKotlinCoroutinesApi {
                 .replaceAll("\\$\\{generator}", getClass().getName());
     }
 
-    @Test
-    public void createInterface() throws Exception {
-        factory.create();
+    @ParameterizedTest
+    @MethodSource("arguments")
+    void createInterface(String argument) throws Exception {
+        createFactory(argument).create();
+    }
+
+    static List<String> arguments() {
+        return Arrays.asList(Constants.TEMPLATE_NAMES);
+    }
+
+    private KotlinCompilationUnitFactory createFactory(String templateName) {
+        String targetName = templateName.replace("Commands", "CoroutinesCommands");
+        File templateFile = new File(TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
+        String targetPackage;
+
+        if (templateName.contains("RedisSentinel")) {
+            targetPackage = "io.lettuce.core.sentinel.api.coroutines";
+        } else {
+            targetPackage = "io.lettuce.core.api.coroutines";
+        }
+
+        return new KotlinCompilationUnitFactory(templateFile, KOTLIN_SOURCES, targetPackage,
+                targetName, importSupplier(), commentInjector());
     }
 }

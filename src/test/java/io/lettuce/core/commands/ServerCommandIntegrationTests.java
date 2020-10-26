@@ -17,8 +17,6 @@ package io.lettuce.core.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -81,7 +79,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     @Test
     void bgrewriteaof() {
         String msg = "Background append only file rewriting";
-        assertThat(redis.bgrewriteaof(), containsString(msg));
+        assertThat(redis.bgrewriteaof()).contains(msg);
     }
 
     @Test

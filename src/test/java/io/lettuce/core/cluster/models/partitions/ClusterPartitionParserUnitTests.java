@@ -16,8 +16,6 @@
 package io.lettuce.core.cluster.models.partitions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.junit.Assert.assertThat;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -64,11 +62,7 @@ class ClusterPartitionParserUnitTests {
         assertThat(p1.getConfigEpoch()).isEqualTo(222);
         assertThat(p1.isConnected()).isTrue();
 
-        assertThat(p1.getSlots(), hasItem(7000));
-        assertThat(p1.getSlots(), hasItem(12000));
-        assertThat(p1.getSlots(), hasItem(12002));
-        assertThat(p1.getSlots(), hasItem(12003));
-        assertThat(p1.getSlots(), hasItem(16383));
+        assertThat(p1.getSlots()).contains(7000, 12000, 12002, 12003, 16383);
 
         RedisClusterNode p3 = result.getPartitions().get(2);
 
