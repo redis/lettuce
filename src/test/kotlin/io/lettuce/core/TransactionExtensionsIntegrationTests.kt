@@ -22,6 +22,7 @@ import io.lettuce.test.LettuceExtension
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import javax.inject.Inject
@@ -30,9 +31,16 @@ import javax.inject.Inject
  * Integration tests for Kotlin Transaction closure extensions.
  *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
 @ExtendWith(LettuceExtension::class)
 class TransactionExtensionsIntegrationTests : TestSupport() {
+
+    @BeforeEach
+    @Inject
+    internal fun setUp(connection: StatefulRedisConnection<String, String>) {
+        connection.sync().flushall()
+    }
 
     @Test
     @Inject
