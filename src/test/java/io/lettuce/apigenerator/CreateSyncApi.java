@@ -16,7 +16,7 @@
 package io.lettuce.apigenerator;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -24,9 +24,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.Type;
@@ -38,43 +37,9 @@ import io.lettuce.core.internal.LettuceSets;
  *
  * @author Mark Paluch
  */
-@RunWith(Parameterized.class)
-public class CreateSyncApi {
+class CreateSyncApi {
 
     private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("setAutoFlushCommands", "flushCommands");
-
-    private CompilationUnitFactory factory;
-
-    @Parameterized.Parameters(name = "Create {0}")
-    public static List<Object[]> arguments() {
-        List<Object[]> result = new ArrayList<>();
-
-        for (String templateName : Constants.TEMPLATE_NAMES) {
-            result.add(new Object[] { templateName });
-        }
-
-        return result;
-    }
-
-    /**
-     *
-     * @param templateName
-     */
-    public CreateSyncApi(String templateName) {
-
-        String targetName = templateName;
-        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
-        String targetPackage;
-
-        if (templateName.contains("RedisSentinel")) {
-            targetPackage = "io.lettuce.core.sentinel.api.sync";
-        } else {
-            targetPackage = "io.lettuce.core.api.sync";
-        }
-
-        factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodFilter(), importSupplier(), null, null);
-    }
 
     /**
      * Mutate type comment.
@@ -113,8 +78,28 @@ public class CreateSyncApi {
         return Collections::emptyList;
     }
 
-    @Test
-    public void createInterface() throws Exception {
-        factory.createInterface();
+    @ParameterizedTest
+    @MethodSource("arguments")
+    void createInterface(String argument) throws Exception {
+        createFactory(argument).createInterface();
+    }
+
+    static List<String> arguments() {
+        return Arrays.asList(Constants.TEMPLATE_NAMES);
+    }
+
+    private CompilationUnitFactory createFactory(String templateName) {
+        String targetName = templateName;
+        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
+        String targetPackage;
+
+        if (templateName.contains("RedisSentinel")) {
+            targetPackage = "io.lettuce.core.sentinel.api.sync";
+        } else {
+            targetPackage = "io.lettuce.core.api.sync";
+        }
+
+        return new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
+                methodTypeMutator(), methodFilter(), importSupplier(), null, Function.identity());
     }
 }

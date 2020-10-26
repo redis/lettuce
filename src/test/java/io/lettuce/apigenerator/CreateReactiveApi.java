@@ -23,9 +23,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
@@ -43,7 +42,6 @@ import io.lettuce.core.internal.LettuceSets;
  *
  * @author Mark Paluch
  */
-@RunWith(Parameterized.class)
 public class CreateReactiveApi {
 
     public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
@@ -64,41 +62,6 @@ public class CreateReactiveApi {
         RESULT_SPEC = resultSpec;
     }
 
-    private final CompilationUnitFactory factory;
-
-    @Parameterized.Parameters(name = "Create {0}")
-    public static List<Object[]> arguments() {
-        List<Object[]> result = new ArrayList<>();
-
-        for (String templateName : Constants.TEMPLATE_NAMES) {
-            result.add(new Object[]{templateName});
-        }
-
-        return result;
-    }
-
-    /**
-     * @param templateName
-     */
-    public CreateReactiveApi(String templateName) {
-
-        String targetName = templateName.replace("Commands", "ReactiveCommands");
-        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
-        String targetPackage;
-
-        if (templateName.contains("RedisSentinel")) {
-            targetPackage = "io.lettuce.core.sentinel.api.reactive";
-        } else {
-            targetPackage = "io.lettuce.core.api.reactive";
-        }
-
-        factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodMutator(), methodDeclaration -> true, importSupplier(), null,
-                methodCommentMutator());
-        factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
-    }
-
-    @NotNull
     protected Consumer<MethodDeclaration> methodMutator() {
         return method -> {
 
@@ -215,9 +178,32 @@ public class CreateReactiveApi {
         return () -> Arrays.asList("reactor.core.publisher.Flux", "reactor.core.publisher.Mono");
     }
 
-    @Test
-    public void createInterface() throws Exception {
-        factory.createInterface();
+    @ParameterizedTest
+    @MethodSource("arguments")
+    void createInterface(String argument) throws Exception {
+        createFactory(argument).createInterface();
+    }
+
+    static List<String> arguments() {
+        return Arrays.asList(Constants.TEMPLATE_NAMES);
+    }
+
+    private CompilationUnitFactory createFactory(String templateName) {
+        String targetName = templateName.replace("Commands", "ReactiveCommands");
+        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
+        String targetPackage;
+
+        if (templateName.contains("RedisSentinel")) {
+            targetPackage = "io.lettuce.core.sentinel.api.reactive";
+        } else {
+            targetPackage = "io.lettuce.core.api.reactive";
+        }
+
+        CompilationUnitFactory factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
+                methodTypeMutator(), methodMutator(), methodDeclaration -> true, importSupplier(), null,
+                methodCommentMutator());
+        factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
+        return factory;
     }
 
     static String nameAndParameters(MethodDeclaration method) {

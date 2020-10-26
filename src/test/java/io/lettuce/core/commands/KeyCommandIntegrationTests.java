@@ -17,7 +17,6 @@ package io.lettuce.core.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertNotEquals;
 
 import java.time.Duration;
 import java.util.*;
@@ -421,7 +420,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(12));
 
         assertThat(cursor.getCursor()).isNotNull();
-        assertNotEquals("0", cursor.getCursor());
+        assertThat(cursor.getCursor()).isNotEqualTo("0");
         assertThat(cursor.isFinished()).isFalse();
 
         check.addAll(cursor.getKeys());
