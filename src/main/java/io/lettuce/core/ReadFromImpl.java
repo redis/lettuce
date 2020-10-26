@@ -27,6 +27,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * Collection of common read setting implementations.
  *
  * @author Mark Paluch
+ * @author Omer Cilingir
  * @since 4.0
  */
 class ReadFromImpl {
@@ -117,6 +118,8 @@ class ReadFromImpl {
 
     /**
      * Read from any replica node.
+     *
+     * @since 6.0.1
      */
     static final class ReadFromAnyReplica extends UnorderedPredicateReadFromAdapter {
 
