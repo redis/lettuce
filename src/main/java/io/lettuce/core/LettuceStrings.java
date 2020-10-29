@@ -1,11 +1,11 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -76,7 +76,7 @@ public class LettuceStrings {
 
     /**
      * Convert {@link String} to {@code double}. If {@code s} is {@literal +inf}/{@literal -inf}, returns positive/negative
-     * infinity.
+     * infinity. If {@code s} is {@literal +nan}/{@literal -nan}, returns NaN.
      *
      * @param s string representation of the number.
      * @return the {@code double} value.
@@ -90,6 +90,10 @@ public class LettuceStrings {
 
         if ("-inf".equals(s)) {
             return Double.NEGATIVE_INFINITY;
+        }
+
+        if ("-nan".equals(s) || "nan".equals(s) || "+nan".equals(s)) {
+            return Double.NaN;
         }
 
         return Double.parseDouble(s);
