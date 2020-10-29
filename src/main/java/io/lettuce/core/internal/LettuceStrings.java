@@ -15,16 +15,8 @@
  */
 package io.lettuce.core.internal;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Iterator;
-
-import io.lettuce.core.RedisException;
-import io.lettuce.core.codec.Base16;
 
 /**
  * Helper for {@link String} checks. This class is part of the internal API and may change without further notice.
@@ -78,7 +70,7 @@ public class LettuceStrings {
 
     /**
      * Convert {@link String} to {@code double}. If {@code s} is {@literal +inf}/{@literal -inf}, returns positive/negative
-     * infinity.
+     * infinity. If {@code s} is {@literal +nan}/{@literal -nan}, returns NaN.
      *
      * @param s string representation of the number
      * @return the {@code double} value.
@@ -92,6 +84,10 @@ public class LettuceStrings {
 
         if ("-inf".equals(s)) {
             return Double.NEGATIVE_INFINITY;
+        }
+
+        if ("-nan".equals(s) || "nan".equals(s) || "+nan".equals(s)) {
+            return Double.NaN;
         }
 
         return Double.parseDouble(s);
