@@ -57,6 +57,16 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         output.add(integer);
     }
 
+	@Override
+	public void set(double number) {
+
+        if (!initialized) {
+			output = new ArrayList<>();
+		}
+
+		output.add(number);
+	}
+    
     @Override
     public void set(ByteBuffer bytes) {
 
