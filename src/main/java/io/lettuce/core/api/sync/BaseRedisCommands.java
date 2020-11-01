@@ -36,8 +36,8 @@ public interface BaseRedisCommands<K, V> {
     /**
      * Post a message to a channel.
      *
-     * @param channel the channel type: key
-     * @param message the message type: value
+     * @param channel the channel type: key.
+     * @param message the message type: value.
      * @return Long integer-reply the number of clients that received the message.
      */
     Long publish(K channel, V message);
@@ -52,7 +52,7 @@ public interface BaseRedisCommands<K, V> {
     /**
      * Lists the currently *active channels*.
      *
-     * @param channel the key
+     * @param channel the key.
      * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
      */
     List<K> pubsubChannels(K channel);
@@ -60,7 +60,7 @@ public interface BaseRedisCommands<K, V> {
     /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified channels.
      *
-     * @param channels channel keys
+     * @param channels channel keys.
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
     Map<K, Long> pubsubNumsub(K... channels);
@@ -75,8 +75,8 @@ public interface BaseRedisCommands<K, V> {
     /**
      * Echo the given string.
      *
-     * @param msg the message type: value
-     * @return V bulk-string-reply
+     * @param msg the message type: value.
+     * @return V bulk-string-reply.
      */
     V echo(V msg);
 
@@ -91,7 +91,7 @@ public interface BaseRedisCommands<K, V> {
     /**
      * Ping the server.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String ping();
 
@@ -121,9 +121,9 @@ public interface BaseRedisCommands<K, V> {
     /**
      * Wait for replication.
      *
-     * @param replicas minimum number of replicas
-     * @param timeout timeout in milliseconds
-     * @return number of replicas
+     * @param replicas minimum number of replicas.
+     * @param timeout timeout in milliseconds.
+     * @return number of replicas.
      */
     Long waitForReplication(int replicas, long timeout);
 
@@ -132,8 +132,8 @@ public interface BaseRedisCommands<K, V> {
      *
      * @param type the command, must not be {@code null}.
      * @param output the command output, must not be {@code null}.
-     * @param <T> response type
-     * @return the command response
+     * @param <T> response type.
+     * @return the command response.
      */
     <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
 
@@ -143,13 +143,13 @@ public interface BaseRedisCommands<K, V> {
      * @param type the command, must not be {@code null}.
      * @param output the command output, must not be {@code null}.
      * @param args the command arguments, must not be {@code null}.
-     * @param <T> response type
-     * @return the command response
+     * @param <T> response type.
+     * @return the command response.
      */
     <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
     /**
-     * @return true if the connection is open (connected and not closed).
+     * @return {@code true} if the connection is open (connected and not closed).
      */
     boolean isOpen();
 
@@ -158,5 +158,4 @@ public interface BaseRedisCommands<K, V> {
      * internal state machine gets out of sync with the connection.
      */
     void reset();
-
 }

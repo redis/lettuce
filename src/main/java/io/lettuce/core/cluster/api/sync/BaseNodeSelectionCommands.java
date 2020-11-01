@@ -32,8 +32,8 @@ public interface BaseNodeSelectionCommands<K, V> {
     /**
      * Post a message to a channel.
      *
-     * @param channel the channel type: key
-     * @param message the message type: value
+     * @param channel the channel type: key.
+     * @param message the message type: value.
      * @return Long integer-reply the number of clients that received the message.
      */
     Executions<Long> publish(K channel, V message);
@@ -48,7 +48,7 @@ public interface BaseNodeSelectionCommands<K, V> {
     /**
      * Lists the currently *active channels*.
      *
-     * @param channel the key
+     * @param channel the key.
      * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
      */
     Executions<List<K>> pubsubChannels(K channel);
@@ -56,7 +56,7 @@ public interface BaseNodeSelectionCommands<K, V> {
     /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified channels.
      *
-     * @param channels channel keys
+     * @param channels channel keys.
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
     Executions<Map<K, Long>> pubsubNumsub(K... channels);
@@ -71,8 +71,8 @@ public interface BaseNodeSelectionCommands<K, V> {
     /**
      * Echo the given string.
      *
-     * @param msg the message type: value
-     * @return V bulk-string-reply
+     * @param msg the message type: value.
+     * @return V bulk-string-reply.
      */
     Executions<V> echo(V msg);
 
@@ -87,14 +87,14 @@ public interface BaseNodeSelectionCommands<K, V> {
     /**
      * Ping the server.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     Executions<String> ping();
 
     /**
      * Instructs Redis to disconnect the connection. Note that if auto-reconnect is enabled then Lettuce will auto-reconnect if
-     * the connection was disconnected. Use {@link io.lettuce.core.api.StatefulConnection#close} to close connection and release
-     * resources.
+     * the connection was disconnected. Use {@link io.lettuce.core.api.StatefulConnection#close} to close connections and
+     * release resources.
      *
      * @return String simple-string-reply always OK.
      */
@@ -103,10 +103,9 @@ public interface BaseNodeSelectionCommands<K, V> {
     /**
      * Wait for replication.
      *
-     * @param replicas minimum number of replicas
-     * @param timeout timeout in milliseconds
-     * @return number of replicas
+     * @param replicas minimum number of replicas.
+     * @param timeout timeout in milliseconds.
+     * @return number of replicas.
      */
     Executions<Long> waitForReplication(int replicas, long timeout);
-
 }

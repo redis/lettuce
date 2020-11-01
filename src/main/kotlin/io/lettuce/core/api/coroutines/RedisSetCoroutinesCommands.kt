@@ -112,7 +112,8 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param members the member type: value.
-     * @return List<Boolean> array-reply list representing the membership of the given elements, in the same order as they are requested.
+     * @return List<Boolean> array-reply list representing the membership of the given elements, in the same order as they
+     *         are requested.
      * @since 6.1
      */
     fun smismember(key: K, vararg members: V): Flow<Boolean>

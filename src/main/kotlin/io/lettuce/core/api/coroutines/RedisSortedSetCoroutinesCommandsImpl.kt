@@ -68,7 +68,7 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(private va
 
     override suspend fun zlexcount(key: K, range: Range<out V>): Long? = ops.zlexcount(key, range).awaitFirstOrNull()
 
-    override suspend fun zmscore(key: K, vararg members: V): List<Double?> = ops.zmscore(key, *members).awaitFirstOrNull() as List<Double?>
+    override suspend fun zmscore(key: K, vararg members: V): List<Double?> = ops.zmscore(key, *members).awaitFirstOrNull().orEmpty()
 
     override suspend fun zpopmin(key: K): ScoredValue<V>? = ops.zpopmin(key).awaitFirstOrNull()
 

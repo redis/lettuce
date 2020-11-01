@@ -44,7 +44,7 @@ public interface RedisServerCommands<K, V> {
     /**
      * Asynchronously save the dataset to disk.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String bgsave();
 
@@ -52,7 +52,7 @@ public interface RedisServerCommands<K, V> {
      * Control tracking of keys in the context of server-assisted client cache invalidation.
      *
      * @param enabled {@code true} to enable key tracking.
-     * @return String simple-string-reply {@code OK}
+     * @return String simple-string-reply {@code OK}.
      * @since 6.0
      */
     String clientCaching(boolean enabled);
@@ -65,7 +65,7 @@ public interface RedisServerCommands<K, V> {
     K clientGetname();
 
     /**
-     * Returns the client ID we are redirecting our tracking notifications to
+     * Returns the client ID we are redirecting our tracking notifications to.
      *
      * @return the ID of the client we are redirecting the notifications to. The command returns -1 if client tracking is not
      *         enabled, or 0 if client tracking is enabled but we are not redirecting the notifications to any client.
@@ -84,16 +84,16 @@ public interface RedisServerCommands<K, V> {
     /**
      * Kill the connection of a client identified by ip:port.
      *
-     * @param addr ip:port
-     * @return String simple-string-reply {@code OK} if the connection exists and has been closed
+     * @param addr ip:port.
+     * @return String simple-string-reply {@code OK} if the connection exists and has been closed.
      */
     String clientKill(String addr);
 
     /**
-     * Kill connections of clients which are filtered by {@code killArgs}
+     * Kill connections of clients which are filtered by {@code killArgs}.
      *
-     * @param killArgs args for the kill operation
-     * @return Long integer-reply number of killed connections
+     * @param killArgs args for the kill operation.
+     * @return Long integer-reply number of killed connections.
      */
     Long clientKill(KillArgs killArgs);
 
@@ -108,7 +108,7 @@ public interface RedisServerCommands<K, V> {
     /**
      * Stop processing commands from clients for some time.
      *
-     * @param timeout the timeout value in milliseconds
+     * @param timeout the timeout value in milliseconds.
      * @return String simple-string-reply The command returns OK or an error if the timeout is invalid.
      */
     String clientPause(long timeout);
@@ -116,7 +116,7 @@ public interface RedisServerCommands<K, V> {
     /**
      * Set the current connection name.
      *
-     * @param name the client name
+     * @param name the client name.
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      */
     String clientSetname(K name);
@@ -125,8 +125,8 @@ public interface RedisServerCommands<K, V> {
      * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
      * are either available when using the RESP3 protocol or through Pub/Sub notification when using RESP2.
      *
-     * @param args for the CLIENT TRACKING operation
-     * @return String simple-string-reply {@code OK}
+     * @param args for the CLIENT TRACKING operation.
+     * @return String simple-string-reply {@code OK}.
      * @since 6.0
      */
     String clientTracking(TrackingArgs args);
@@ -144,7 +144,7 @@ public interface RedisServerCommands<K, V> {
     /**
      * Returns an array reply of details about all Redis commands.
      *
-     * @return List&lt;Object&gt; array-reply
+     * @return List&lt;Object&gt; array-reply.
      */
     List<Object> command();
 
@@ -158,24 +158,24 @@ public interface RedisServerCommands<K, V> {
     /**
      * Returns an array reply of details about the requested commands.
      *
-     * @param commands the commands to query for
-     * @return List&lt;Object&gt; array-reply
+     * @param commands the commands to query for.
+     * @return List&lt;Object&gt; array-reply.
      */
     List<Object> commandInfo(String... commands);
 
     /**
      * Returns an array reply of details about the requested commands.
      *
-     * @param commands the commands to query for
-     * @return List&lt;Object&gt; array-reply
+     * @param commands the commands to query for.
+     * @return List&lt;Object&gt; array-reply.
      */
     List<Object> commandInfo(CommandType... commands);
 
     /**
      * Get the value of a configuration parameter.
      *
-     * @param parameter name of the parameter
-     * @return Map&lt;String, String&gt; bulk-string-reply
+     * @param parameter name of the parameter.
+     * @return Map&lt;String, String&gt; bulk-string-reply.
      */
     Map<String, String> configGet(String parameter);
 
@@ -197,8 +197,8 @@ public interface RedisServerCommands<K, V> {
     /**
      * Set a configuration parameter to the given value.
      *
-     * @param parameter the parameter name
-     * @param value the parameter value
+     * @param parameter the parameter name.
+     * @param value the parameter value.
      * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
      */
     String configSet(String parameter, String value);
@@ -206,31 +206,31 @@ public interface RedisServerCommands<K, V> {
     /**
      * Return the number of keys in the selected database.
      *
-     * @return Long integer-reply
+     * @return Long integer-reply.
      */
     Long dbsize();
 
     /**
-     * Crash and recover
+     * Crash and recover.
      *
-     * @param delay optional delay in milliseconds
-     * @return String simple-string-reply
+     * @param delay optional delay in milliseconds.
+     * @return String simple-string-reply.
      */
     String debugCrashAndRecover(Long delay);
 
     /**
      * Get debugging information about the internal hash-table state.
      *
-     * @param db the database number
-     * @return String simple-string-reply
+     * @param db the database number.
+     * @return String simple-string-reply.
      */
     String debugHtstats(int db);
 
     /**
      * Get debugging information about a key.
      *
-     * @param key the key
-     * @return String simple-string-reply
+     * @param key the key.
+     * @return String simple-string-reply.
      */
     String debugObject(K key);
 
@@ -251,16 +251,16 @@ public interface RedisServerCommands<K, V> {
     /**
      * Restart the server gracefully.
      *
-     * @param delay optional delay in milliseconds
-     * @return String simple-string-reply
+     * @param delay optional delay in milliseconds.
+     * @return String simple-string-reply.
      */
     String debugRestart(Long delay);
 
     /**
      * Get debugging information about the internal SDS length.
      *
-     * @param key the key
-     * @return String simple-string-reply
+     * @param key the key.
+     * @return String simple-string-reply.
      */
     String debugSdslen(K key);
 
@@ -274,28 +274,28 @@ public interface RedisServerCommands<K, V> {
     /**
      * Remove all keys from all databases.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String flushall();
 
     /**
      * Remove all keys asynchronously from all databases.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String flushallAsync();
 
     /**
      * Remove all keys from the current database.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String flushdb();
 
     /**
      * Remove all keys asynchronously from the current database.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String flushdbAsync();
 
@@ -309,7 +309,7 @@ public interface RedisServerCommands<K, V> {
     /**
      * Get information and statistics about the server.
      *
-     * @param section the section type: string
+     * @param section the section type: string.
      * @return String bulk-string-reply as a collection of text lines.
      */
     String info(String section);
@@ -339,38 +339,38 @@ public interface RedisServerCommands<K, V> {
     /**
      * Synchronously save the dataset to disk and then shut down the server.
      *
-     * @param save {@code true} force save operation
+     * @param save {@code true} force save operation.
      */
     void shutdown(boolean save);
 
     /**
      * Make the server a replica of another instance, or promote it as master.
      *
-     * @param host the host type: string
-     * @param port the port type: string
-     * @return String simple-string-reply
+     * @param host the host type: string.
+     * @param port the port type: string.
+     * @return String simple-string-reply.
      */
     String slaveof(String host, int port);
 
     /**
      * Promote server as master.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     String slaveofNoOne();
 
     /**
      * Read the slow log.
      *
-     * @return List&lt;Object&gt; deeply nested multi bulk replies
+     * @return List&lt;Object&gt; deeply nested multi bulk replies.
      */
     List<Object> slowlogGet();
 
     /**
      * Read the slow log.
      *
-     * @param count the count
-     * @return List&lt;Object&gt; deeply nested multi bulk replies
+     * @param count the count.
+     * @return List&lt;Object&gt; deeply nested multi bulk replies.
      */
     List<Object> slowlogGet(int count);
 
@@ -398,5 +398,4 @@ public interface RedisServerCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     List<V> time();
-
 }

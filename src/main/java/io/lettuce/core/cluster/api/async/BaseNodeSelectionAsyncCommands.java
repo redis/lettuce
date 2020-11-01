@@ -36,8 +36,8 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
     /**
      * Post a message to a channel.
      *
-     * @param channel the channel type: key
-     * @param message the message type: value
+     * @param channel the channel type: key.
+     * @param message the message type: value.
      * @return Long integer-reply the number of clients that received the message.
      */
     AsyncExecutions<Long> publish(K channel, V message);
@@ -52,7 +52,7 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
     /**
      * Lists the currently *active channels*.
      *
-     * @param channel the key
+     * @param channel the key.
      * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
      */
     AsyncExecutions<List<K>> pubsubChannels(K channel);
@@ -60,7 +60,7 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
     /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified channels.
      *
-     * @param channels channel keys
+     * @param channels channel keys.
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
     AsyncExecutions<Map<K, Long>> pubsubNumsub(K... channels);
@@ -75,8 +75,8 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
     /**
      * Echo the given string.
      *
-     * @param msg the message type: value
-     * @return V bulk-string-reply
+     * @param msg the message type: value.
+     * @return V bulk-string-reply.
      */
     AsyncExecutions<V> echo(V msg);
 
@@ -91,7 +91,7 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
     /**
      * Ping the server.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     AsyncExecutions<String> ping();
 
@@ -107,9 +107,9 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
     /**
      * Wait for replication.
      *
-     * @param replicas minimum number of replicas
-     * @param timeout timeout in milliseconds
-     * @return number of replicas
+     * @param replicas minimum number of replicas.
+     * @param timeout timeout in milliseconds.
+     * @return number of replicas.
      */
     AsyncExecutions<Long> waitForReplication(int replicas, long timeout);
 
@@ -118,8 +118,8 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
      *
      * @param type the command, must not be {@code null}.
      * @param output the command output, must not be {@code null}.
-     * @param <T> response type
-     * @return the command response
+     * @param <T> response type.
+     * @return the command response.
      */
     <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
 
@@ -129,9 +129,8 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
      * @param type the command, must not be {@code null}.
      * @param output the command output, must not be {@code null}.
      * @param args the command arguments, must not be {@code null}.
-     * @param <T> response type
-     * @return the command response
+     * @param <T> response type.
+     * @return the command response.
      */
     <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
-
 }

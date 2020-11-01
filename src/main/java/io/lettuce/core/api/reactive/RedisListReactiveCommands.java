@@ -200,8 +200,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param start the start type: long.
      * @param stop the stop type: long.
      * @return Long count of elements in the specified range.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #lrange}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #lrange}.
      */
     @Deprecated
     Mono<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop);

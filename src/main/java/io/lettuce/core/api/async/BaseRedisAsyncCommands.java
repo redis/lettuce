@@ -37,8 +37,8 @@ public interface BaseRedisAsyncCommands<K, V> {
     /**
      * Post a message to a channel.
      *
-     * @param channel the channel type: key
-     * @param message the message type: value
+     * @param channel the channel type: key.
+     * @param message the message type: value.
      * @return Long integer-reply the number of clients that received the message.
      */
     RedisFuture<Long> publish(K channel, V message);
@@ -53,7 +53,7 @@ public interface BaseRedisAsyncCommands<K, V> {
     /**
      * Lists the currently *active channels*.
      *
-     * @param channel the key
+     * @param channel the key.
      * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
      */
     RedisFuture<List<K>> pubsubChannels(K channel);
@@ -61,7 +61,7 @@ public interface BaseRedisAsyncCommands<K, V> {
     /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified channels.
      *
-     * @param channels channel keys
+     * @param channels channel keys.
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
     RedisFuture<Map<K, Long>> pubsubNumsub(K... channels);
@@ -76,8 +76,8 @@ public interface BaseRedisAsyncCommands<K, V> {
     /**
      * Echo the given string.
      *
-     * @param msg the message type: value
-     * @return V bulk-string-reply
+     * @param msg the message type: value.
+     * @return V bulk-string-reply.
      */
     RedisFuture<V> echo(V msg);
 
@@ -92,7 +92,7 @@ public interface BaseRedisAsyncCommands<K, V> {
     /**
      * Ping the server.
      *
-     * @return String simple-string-reply
+     * @return String simple-string-reply.
      */
     RedisFuture<String> ping();
 
@@ -122,9 +122,9 @@ public interface BaseRedisAsyncCommands<K, V> {
     /**
      * Wait for replication.
      *
-     * @param replicas minimum number of replicas
-     * @param timeout timeout in milliseconds
-     * @return number of replicas
+     * @param replicas minimum number of replicas.
+     * @param timeout timeout in milliseconds.
+     * @return number of replicas.
      */
     RedisFuture<Long> waitForReplication(int replicas, long timeout);
 
@@ -133,8 +133,8 @@ public interface BaseRedisAsyncCommands<K, V> {
      *
      * @param type the command, must not be {@code null}.
      * @param output the command output, must not be {@code null}.
-     * @param <T> response type
-     * @return the command response
+     * @param <T> response type.
+     * @return the command response.
      */
     <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
 
@@ -144,13 +144,13 @@ public interface BaseRedisAsyncCommands<K, V> {
      * @param type the command, must not be {@code null}.
      * @param output the command output, must not be {@code null}.
      * @param args the command arguments, must not be {@code null}.
-     * @param <T> response type
-     * @return the command response
+     * @param <T> response type.
+     * @return the command response.
      */
     <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
     /**
-     * @return true if the connection is open (connected and not closed).
+     * @return {@code true} if the connection is open (connected and not closed).
      */
     boolean isOpen();
 
@@ -161,8 +161,8 @@ public interface BaseRedisAsyncCommands<K, V> {
     void reset();
 
     /**
-     * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands
-     * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
+     * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands can
+     * be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
      *
      * @param autoFlush state of autoFlush.
@@ -174,5 +174,4 @@ public interface BaseRedisAsyncCommands<K, V> {
      * achieve batching. No-op if channel is not connected.
      */
     void flushCommands();
-
 }

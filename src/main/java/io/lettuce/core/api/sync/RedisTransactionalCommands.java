@@ -56,7 +56,7 @@ public interface RedisTransactionalCommands<K, V> {
     /**
      * Watch the given keys to determine execution of the MULTI/EXEC block.
      *
-     * @param keys the key
+     * @param keys the key.
      * @return String simple-string-reply always {@code OK}.
      */
     String watch(K... keys);
@@ -67,5 +67,4 @@ public interface RedisTransactionalCommands<K, V> {
      * @return String simple-string-reply always {@code OK}.
      */
     String unwatch();
-
 }
