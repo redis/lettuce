@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.LMoveArgs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -266,5 +267,33 @@ public class ListCommandIntegrationTests extends TestSupport {
         redis.rpush(key, "one");
         assertThat((long) redis.rpushx(key, "two", "three")).isEqualTo(3);
         assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("one", "two", "three"));
+    }
+
+    @Test
+    @EnabledOnCommand("LMOVE") // Redis 6.2
+    void lmove() {
+        String list1 = "list1";
+        String list2 = "list2";
+
+        redis.rpush(list1, "one", "two", "three");
+        redis.lmove(list1, list2, LMoveArgs.Builder.rightLeft());
+
+        assertThat(redis.lrange(list1, 0, -1)).isEqualTo(list("one", "two"));
+        assertThat(redis.lrange(list2, 0, -1)).isEqualTo(list("three"));
+    }
+
+    @Test
+    @EnabledOnCommand("BLMOVE") // Redis 6.2
+    void blmove() {
+        String list1 = "list1";
+        String list2 = "list2";
+
+        assertThat(redis.blmove(list1, list2, LMoveArgs.Builder.rightLeft(), 1)).isEqualTo(null);
+
+        redis.rpush(list1, "one", "two", "three");
+        redis.blmove(list1, list2, LMoveArgs.Builder.rightLeft(), 1000);
+
+        assertThat(redis.lrange(list1, 0, -1)).isEqualTo(list("two", "three"));
+        assertThat(redis.lrange(list2, 0, -1)).isEqualTo(list("one"));
     }
 }

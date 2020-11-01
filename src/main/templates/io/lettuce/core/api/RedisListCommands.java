@@ -19,6 +19,7 @@ import java.util.List;
 
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.LPosArgs;
+import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.output.ValueStreamingChannel;
 
 /**
@@ -30,6 +31,22 @@ import io.lettuce.core.output.ValueStreamingChannel;
  * @since 4.0
  */
 public interface RedisListCommands<K, V> {
+
+    /**
+     * Atomically returns and removes the first/last element (head/tail depending on the
+     * wherefrom argument) of the list stored at source, and pushes the element at the
+     * first/last element (head/tail depending on the whereto argument) of the list stored at destination.
+     * When source is empty, Redis will block the connection until another client pushes to it
+     * or until timeout is reached.
+     *
+     * @param source the source key.
+     * @param destination the destination type: key.
+     * @param args command arguments to configure source and destination directions.
+     * @param timeout the timeout in seconds.
+     * @return V bulk-string-reply the element being popped and pushed.
+     * @since 6.1
+     */
+    V blmove(K source, K destination, LMoveArgs args, long timeout);
 
     /**
      * Remove and get the first element in a list, or block until one is available.
@@ -96,6 +113,19 @@ public interface RedisListCommands<K, V> {
      * @return Long integer-reply the length of the list at {@code key}.
      */
     Long llen(K key);
+
+    /**
+     * Atomically returns and removes the first/last element (head/tail depending on the
+     * wherefrom argument) of the list stored at source, and pushes the element at the
+     * first/last element (head/tail depending on the whereto argument) of the list stored at destination.
+     *
+     * @param source the source key.
+     * @param destination the destination type: key.
+     * @param args command arguments to configure source and destination directions.
+     * @return V bulk-string-reply the element being popped and pushed.
+     * @since 6.1
+     */
+    V lmove(K source, K destination, LMoveArgs args);
 
     /**
      * Remove and get the first element in a list.
@@ -266,5 +296,4 @@ public interface RedisListCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      */
     Long rpushx(K key, V... values);
-
 }

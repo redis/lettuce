@@ -19,6 +19,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.KeyValue
 import io.lettuce.core.LPosArgs
+import io.lettuce.core.LMoveArgs
 
 /**
  * Coroutine executed commands for Lists.
@@ -31,6 +32,22 @@ import io.lettuce.core.LPosArgs
  */
 @ExperimentalLettuceCoroutinesApi
 interface RedisListCoroutinesCommands<K : Any, V : Any> {
+
+    /**
+     * Atomically returns and removes the first/last element (head/tail depending on the
+     * wherefrom argument) of the list stored at source, and pushes the element at the
+     * first/last element (head/tail depending on the whereto argument) of the list stored at destination.
+     * When source is empty, Redis will block the connection until another client pushes to it
+     * or until timeout is reached.
+     *
+     * @param source the source key.
+     * @param destination the destination type: key.
+     * @param args command arguments to configure source and destination directions.
+     * @param timeout the timeout in seconds.
+     * @return V bulk-string-reply the element being popped and pushed.
+     * @since 6.1
+     */
+    suspend fun blmove(source: K, destination: K, args: LMoveArgs, timeout: Long): V?
 
     /**
      * Remove and get the first element in a list, or block until one is available.
@@ -97,6 +114,19 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @return Long integer-reply the length of the list at `key`.
      */
     suspend fun llen(key: K): Long?
+
+    /**
+     * Atomically returns and removes the first/last element (head/tail depending on the
+     * wherefrom argument) of the list stored at source, and pushes the element at the
+     * first/last element (head/tail depending on the whereto argument) of the list stored at destination.
+     *
+     * @param source the source key.
+     * @param destination the destination type: key.
+     * @param args command arguments to configure source and destination directions.
+     * @return V bulk-string-reply the element being popped and pushed.
+     * @since 6.1
+     */
+    suspend fun lmove(source: K, destination: K, args: LMoveArgs): V?
 
     /**
      * Remove and get the first element in a list.
