@@ -26,10 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
-
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.async.RedisServerAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -41,42 +37,18 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 /**
  * @author Mark Paluch
  */
-public class ClusterRule implements TestRule {
+public class ClusterTestHelper {
 
-    private RedisClusterClient clusterClient;
-    private int[] ports;
-    private Map<Integer, RedisAsyncCommands<String, String>> connectionCache = new HashMap<>();
+    private final RedisClusterClient clusterClient;
+    private final Map<Integer, RedisAsyncCommands<String, String>> connectionCache = new HashMap<>();
 
-    public ClusterRule(RedisClusterClient clusterClient, int... ports) {
+    public ClusterTestHelper(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
-        this.ports = ports;
 
         for (int port : ports) {
-            RedisAsyncCommands<String, String> connection = clusterClient.connectToNode(
-                    new InetSocketAddress("localhost", port)).async();
+            RedisAsyncCommands<String, String> connection = clusterClient.connectToNode(new InetSocketAddress("localhost", port)).async();
             connectionCache.put(port, connection);
         }
-    }
-
-    @Override
-    public Statement apply(final Statement base, Description description) {
-
-        final Statement beforeCluster = new Statement() {
-            @Override
-            public void evaluate() {
-                flushdb();
-            }
-        };
-
-        return new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                beforeCluster.evaluate();
-
-                base.evaluate();
-
-            }
-        };
     }
 
     /**
@@ -117,8 +89,8 @@ public class ClusterRule implements TestRule {
     /**
      * Flush data on all nodes, ignore failures.
      */
-    private void flushdb() {
-        onAllConnections(c -> c.flushdb(), true);
+    public void flushdb() {
+        onAllConnections(RedisServerAsyncCommands::flushdb, true);
     }
 
     /**
@@ -144,12 +116,10 @@ public class ClusterRule implements TestRule {
         return clusterClient;
     }
 
-    @SuppressWarnings("rawtypes")
     private <T> void onAllConnections(Function<RedisClusterAsyncCommands<?, ?>, Future<T>> function) {
         onAllConnections(function, false);
     }
 
-    @SuppressWarnings("rawtypes")
     private <T> void onAllConnections(Function<RedisClusterAsyncCommands<?, ?>, Future<T>> function,
             boolean ignoreExecutionException) {
 
@@ -159,7 +129,7 @@ public class ClusterRule implements TestRule {
         }
 
         try {
-            await((List) futures, ignoreExecutionException);
+            await(futures, ignoreExecutionException);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new IllegalStateException(e);
         }
