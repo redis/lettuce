@@ -36,23 +36,23 @@ class ClusterSetup {
      * Setup a cluster consisting of two members (see {@link ClusterTestSettings#port5} to {@link ClusterTestSettings#port6}).
      * Two masters (0-11999 and 12000-16383)
      *
-     * @param clusterRule
+     * @param clusterHelper helper
      */
-    public static void setup2Masters(ClusterRule clusterRule) {
+    public static void setup2Masters(ClusterTestHelper clusterHelper) {
 
-        clusterRule.clusterReset();
-        clusterRule.meet(ClusterTestSettings.host, ClusterTestSettings.port5);
-        clusterRule.meet(ClusterTestSettings.host, ClusterTestSettings.port6);
+        clusterHelper.clusterReset();
+        clusterHelper.meet(ClusterTestSettings.host, ClusterTestSettings.port5);
+        clusterHelper.meet(ClusterTestSettings.host, ClusterTestSettings.port6);
 
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connect().async();
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterHelper.getClusterClient().connect().async();
         Wait.untilTrue(() -> {
 
-            clusterRule.getClusterClient().reloadPartitions();
-            return clusterRule.getClusterClient().getPartitions().size() == 2;
+            clusterHelper.getClusterClient().reloadPartitions();
+            return clusterHelper.getClusterClient().getPartitions().size() == 2;
 
         }).waitOrTimeout();
 
-        Partitions partitions = clusterRule.getClusterClient().getPartitions();
+        Partitions partitions = clusterHelper.getClusterClient().getPartitions();
         for (RedisClusterNode partition : partitions) {
 
             if (!partition.getSlots().isEmpty()) {
@@ -72,12 +72,12 @@ class ClusterSetup {
                 ClusterTestSettings.port6);
         node2.clusterAddSlots(ClusterTestSettings.createSlots(12000, 16384));
 
-        Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
+        Wait.untilTrue(clusterHelper::isStable).waitOrTimeout();
 
         Wait.untilEquals(2L, () -> {
-            clusterRule.getClusterClient().reloadPartitions();
+            clusterHelper.getClusterClient().reloadPartitions();
 
-            return partitionStream(clusterRule)
+            return partitionStream(clusterHelper)
                     .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM)).count();
         }).waitOrTimeout();
 
@@ -88,43 +88,42 @@ class ClusterSetup {
      * Setup a cluster consisting of two members (see {@link ClusterTestSettings#port5} to {@link ClusterTestSettings#port6}).
      * One master (0-16383) and one replica.
      *
-     * @param clusterRule
+     * @param clusterHelper
      */
-    public static void setupMasterWithReplica(ClusterRule clusterRule) {
+    public static void setupMasterWithReplica(ClusterTestHelper clusterHelper) {
+        clusterHelper.clusterReset();
+        clusterHelper.meet(ClusterTestSettings.host, ClusterTestSettings.port5);
+        clusterHelper.meet(ClusterTestSettings.host, ClusterTestSettings.port6);
 
-        clusterRule.clusterReset();
-        clusterRule.meet(ClusterTestSettings.host, ClusterTestSettings.port5);
-        clusterRule.meet(ClusterTestSettings.host, ClusterTestSettings.port6);
-
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterRule.getClusterClient().connect().async();
+        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterHelper.getClusterClient().connect().async();
         StatefulRedisClusterConnection<String, String> statefulConnection = connection.getStatefulConnection();
 
         Wait.untilEquals(2, () -> {
-            clusterRule.getClusterClient().reloadPartitions();
-            return clusterRule.getClusterClient().getPartitions().size();
+            clusterHelper.getClusterClient().reloadPartitions();
+            return clusterHelper.getClusterClient().getPartitions().size();
         }).waitOrTimeout();
 
         RedisClusterCommands<String, String> node1 = statefulConnection
                 .getConnection(TestSettings.hostAddr(), ClusterTestSettings.port5).sync();
         node1.clusterAddSlots(ClusterTestSettings.createSlots(0, 16384));
 
-        Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
+        Wait.untilTrue(clusterHelper::isStable).waitOrTimeout();
 
         TestFutures.awaitOrTimeout(connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port6)
                 .clusterReplicate(
                 node1.clusterMyId()));
 
-        clusterRule.getClusterClient().reloadPartitions();
+        clusterHelper.getClusterClient().reloadPartitions();
 
         Wait.untilEquals(1L, () -> {
-            clusterRule.getClusterClient().reloadPartitions();
-            return partitionStream(clusterRule)
+            clusterHelper.getClusterClient().reloadPartitions();
+            return partitionStream(clusterHelper)
                     .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM)).count();
         }).waitOrTimeout();
 
         Wait.untilEquals(1L, () -> {
-            clusterRule.getClusterClient().reloadPartitions();
-            return partitionStream(clusterRule)
+            clusterHelper.getClusterClient().reloadPartitions();
+            return partitionStream(clusterHelper)
                     .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA))
                     .count();
         }).waitOrTimeout();
@@ -132,8 +131,8 @@ class ClusterSetup {
         connection.getStatefulConnection().close();
     }
 
-    private static Stream<RedisClusterNode> partitionStream(ClusterRule clusterRule) {
-        return clusterRule.getClusterClient().getPartitions().getPartitions().stream();
+    private static Stream<RedisClusterNode> partitionStream(ClusterTestHelper clusterHelper) {
+        return clusterHelper.getClusterClient().getPartitions().getPartitions().stream();
     }
 
 }
