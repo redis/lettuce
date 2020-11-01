@@ -173,6 +173,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<V> blmove(K source, K destination, LMoveArgs args, long timeout) {
+        return dispatch(commandBuilder.blmove(source, destination, args, timeout));
+    }
+
+    @Override
     public RedisFuture<KeyValue<K, V>> blpop(long timeout, K... keys) {
         return dispatch(commandBuilder.blpop(timeout, keys));
     }
@@ -915,6 +920,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<Long> llen(K key) {
         return dispatch(commandBuilder.llen(key));
+    }
+
+    @Override
+    public RedisFuture<V> lmove(K source, K destination, LMoveArgs args) {
+        return dispatch(commandBuilder.lmove(source, destination, args));
     }
 
     @Override

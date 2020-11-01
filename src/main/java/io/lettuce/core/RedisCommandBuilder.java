@@ -227,6 +227,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BITPOS, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, V> blmove(K source, K destination, LMoveArgs lMoveArgs, long timeout) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lMoveArgs, "LMoveArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(source).addKey(destination);
+        lMoveArgs.build(args);
+        args.add(timeout);
+        return createCommand(BLMOVE, new ValueOutput<>(codec), args);
+    }
+
     Command<K, V, KeyValue<K, V>> blpop(long timeout, K... keys) {
         notEmpty(keys);
 
@@ -1222,6 +1234,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         return createCommand(LLEN, new IntegerOutput<>(codec), key);
+    }
+
+    Command<K, V, V> lmove(K source, K destination, LMoveArgs lMoveArgs) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lMoveArgs, "LMoveArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(source).addKey(destination);
+        lMoveArgs.build(args);
+        return createCommand(LMOVE, new ValueOutput<>(codec), args);
     }
 
     Command<K, V, V> lpop(K key) {

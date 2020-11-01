@@ -189,6 +189,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<V> blmove(K source, K destination, LMoveArgs args, long timeout) {
+        return createMono(() -> commandBuilder.blmove(source, destination, args, timeout));
+    }
+
+    @Override
     public Mono<KeyValue<K, V>> blpop(long timeout, K... keys) {
         return createMono(() -> commandBuilder.blpop(timeout, keys));
     }
@@ -974,6 +979,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<Long> llen(K key) {
         return createMono(() -> commandBuilder.llen(key));
+    }
+
+    @Override
+    public Mono<V> lmove(K source, K destination, LMoveArgs args) {
+        return createMono(() -> commandBuilder.lmove(source, destination, args));
     }
 
     @Override

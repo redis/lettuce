@@ -18,6 +18,7 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.KeyValue
+import io.lettuce.core.LMoveArgs
 import io.lettuce.core.LPosArgs
 import io.lettuce.core.api.reactive.RedisListReactiveCommands
 import kotlinx.coroutines.flow.toList
@@ -38,6 +39,8 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 @ExperimentalLettuceCoroutinesApi
 internal class RedisListCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisListReactiveCommands<K, V>) : RedisListCoroutinesCommands<K, V> {
 
+    override suspend fun blmove(source: K, destination: K, args: LMoveArgs, timeout: Long): V? = ops.blmove(source, destination, args, timeout).awaitFirstOrNull()
+
     override suspend fun blpop(timeout: Long, vararg keys: K): KeyValue<K, V>? = ops.blpop(timeout, *keys).awaitFirstOrNull()
 
     override suspend fun brpop(timeout: Long, vararg keys: K): KeyValue<K, V>? = ops.brpop(timeout, *keys).awaitFirstOrNull()
@@ -49,6 +52,8 @@ internal class RedisListCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun linsert(key: K, before: Boolean, pivot: V, value: V): Long? = ops.linsert(key, before, pivot, value).awaitFirstOrNull()
 
     override suspend fun llen(key: K): Long? = ops.llen(key).awaitFirstOrNull()
+
+    override suspend fun lmove(source: K, destination: K, args: LMoveArgs): V? = ops.lmove(source, destination, args).awaitFirstOrNull()
 
     override suspend fun lpop(key: K): V? = ops.lpop(key).awaitFirstOrNull()
 
@@ -79,6 +84,5 @@ internal class RedisListCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun rpush(key: K, vararg values: V): Long? = ops.rpush(key, *values).awaitFirstOrNull()
 
     override suspend fun rpushx(key: K, vararg values: V): Long? = ops.rpushx(key, *values).awaitFirstOrNull()
-
 }
 
