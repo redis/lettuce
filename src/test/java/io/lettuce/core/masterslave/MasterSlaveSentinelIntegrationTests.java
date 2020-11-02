@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,12 +27,12 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.*;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.sentinel.SentinelTestSettings;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.settings.TestSettings;
 import io.netty.channel.group.ChannelGroup;
 
