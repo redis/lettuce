@@ -28,7 +28,10 @@ import io.lettuce.test.Wait;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Utility to setup various Redis Cluster configurations.
+ *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
 class ClusterSetup {
 
