@@ -259,7 +259,7 @@ public class RedisClient extends AbstractRedisClient {
         return transformAsyncConnectionException(connectStandaloneAsync(codec, redisURI, redisURI.getTimeout()));
     }
 
-    private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
+    protected <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
             RedisURI redisURI, Duration timeout) {
 
         assertNotNull(codec);
@@ -759,7 +759,7 @@ public class RedisClient extends AbstractRedisClient {
         });
     }
 
-    private static <T> ConnectionFuture<T> transformAsyncConnectionException(ConnectionFuture<T> future) {
+    protected static <T> ConnectionFuture<T> transformAsyncConnectionException(ConnectionFuture<T> future) {
 
         return future.thenCompose((v, e) -> {
 
@@ -771,7 +771,7 @@ public class RedisClient extends AbstractRedisClient {
         });
     }
 
-    private static <T> CompletableFuture<T> transformAsyncConnectionException(CompletionStage<T> future, RedisURI target) {
+    protected static <T> CompletableFuture<T> transformAsyncConnectionException(CompletionStage<T> future, RedisURI target) {
 
         return ConnectionFuture.from(null, future.toCompletableFuture()).thenCompose((v, e) -> {
 
@@ -805,15 +805,15 @@ public class RedisClient extends AbstractRedisClient {
         }
     }
 
-    private static <K, V> void assertNotNull(RedisCodec<K, V> codec) {
+    protected static <K, V> void assertNotNull(RedisCodec<K, V> codec) {
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
     }
 
-    private static void assertNotNull(RedisURI redisURI) {
+    protected static void assertNotNull(RedisURI redisURI) {
         LettuceAssert.notNull(redisURI, "RedisURI must not be null");
     }
 
-    private static void assertNotNull(ClientResources clientResources) {
+    protected static void assertNotNull(ClientResources clientResources) {
         LettuceAssert.notNull(clientResources, "ClientResources must not be null");
     }
 
