@@ -16,7 +16,6 @@
 package io.lettuce.core.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -24,6 +23,7 @@ import java.nio.channels.ClosedChannelException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Queue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
@@ -41,10 +41,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import io.lettuce.test.ReflectionTestUtils;
 
-import edu.umd.cs.mtc.MultithreadedTestCase;
-import edu.umd.cs.mtc.TestFramework;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.StringCodec;
@@ -52,6 +49,7 @@ import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.ConnectionTestUtil;
+import io.lettuce.test.ReflectionTestUtils;
 import io.netty.channel.*;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.ImmediateEventExecutor;
@@ -420,16 +418,36 @@ class DefaultEndpointUnitTests {
 
     @Test
     void testMTCConcurrentConcurrentWrite() throws Throwable {
-        TestFramework.runOnce(new MTCConcurrentConcurrentWrite(command, clientResources));
+
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<>(4));
+
+        try {
+            MTCConcurrentConcurrentWrite instance = new MTCConcurrentConcurrentWrite(command, clientResources);
+
+            CompletableFuture<Void> part1 = CompletableFuture.runAsync(instance::thread1, executor);
+            CompletableFuture<Void> part2 = CompletableFuture.runAsync(instance::thread2, executor);
+
+            CompletableFuture<Void> sync = CompletableFuture.allOf(part1, part2);
+            sync.get(10, TimeUnit.SECONDS);
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     /**
      * Test of concurrent access to locks. Two concurrent writes.
      */
-    static class MTCConcurrentConcurrentWrite extends MultithreadedTestCase {
+    static class MTCConcurrentConcurrentWrite {
 
         private final Command<String, String, String> command;
-        private TestableEndpoint handler;
+
+        private final TestableEndpoint handler;
+
+        private final CountDownLatch phase1 = new CountDownLatch(2);
+
+        private final CountDownLatch phase2 = new CountDownLatch(2);
+
+        private final CountDownLatch phase3 = new CountDownLatch(2);
 
         MTCConcurrentConcurrentWrite(Command<String, String, String> command, ClientResources clientResources) {
 
@@ -440,28 +458,39 @@ class DefaultEndpointUnitTests {
                 @Override
                 protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
 
-                    waitForTick(2);
+                    waitAndProgress(phase2);
 
                     Object sharedLock = ReflectionTestUtils.getField(this, "sharedLock");
-                    AtomicLong writers = (AtomicLong) ReflectionTestUtils.getField(sharedLock, "writers");
+                    AtomicLong writers = ReflectionTestUtils.getField(sharedLock, "writers");
                     assertThat(writers.get()).isEqualTo(2);
-                    waitForTick(3);
+                    waitAndProgress(phase3);
                     super.writeToBuffer(command);
                 }
+
             };
         }
 
         public void thread1() {
 
-            waitForTick(1);
+            waitAndProgress(phase1);
             handler.write(command);
         }
 
         public void thread2() {
 
-            waitForTick(1);
+            waitAndProgress(phase1);
             handler.write(command);
         }
+
+        private void waitAndProgress(CountDownLatch latch) {
+            latch.countDown();
+            try {
+                latch.await(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
     }
 
     static class TestableEndpoint extends DefaultEndpoint {
@@ -475,5 +504,7 @@ class DefaultEndpointUnitTests {
         TestableEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
             super(clientOptions, clientResources);
         }
+
     }
+
 }

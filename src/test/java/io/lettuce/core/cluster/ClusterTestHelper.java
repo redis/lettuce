@@ -36,8 +36,9 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 
 /**
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
-public class ClusterTestHelper {
+class ClusterTestHelper {
 
     private final RedisClusterClient clusterClient;
     private final Map<Integer, RedisAsyncCommands<String, String>> connectionCache = new HashMap<>();
