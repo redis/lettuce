@@ -40,6 +40,8 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
 /**
+ * Unit tests for {@link DefaultClientResources}.
+ *
  * @author Mark Paluch
  */
 class DefaultClientResourcesUnitTests {
@@ -51,6 +53,10 @@ class DefaultClientResourcesUnitTests {
 
         assertThat(sut.commandLatencyRecorder()).isNotNull();
         assertThat(sut.commandLatencyRecorder().isEnabled()).isTrue();
+
+        HashedWheelTimer timer = (HashedWheelTimer) sut.timer();
+
+        assertThat(timer).hasFieldOrPropertyWithValue("workerState", 1);
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
         NioEventLoopGroup eventLoopGroup = sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
@@ -222,7 +228,7 @@ class DefaultClientResourcesUnitTests {
         ClientResources clientResources = ClientResources.create();
         HashedWheelTimer timer = (HashedWheelTimer) clientResources.timer();
 
-        assertThat(timer).hasFieldOrPropertyWithValue("workerState", 0);
+        assertThat(timer).hasFieldOrPropertyWithValue("workerState", 1);
 
         ClientResources copy = clientResources.mutate().build();
         assertThat(copy.timer()).isSameAs(timer);
@@ -238,7 +244,7 @@ class DefaultClientResourcesUnitTests {
         ClientResources clientResources = ClientResources.create();
         HashedWheelTimer timer = (HashedWheelTimer) clientResources.timer();
 
-        assertThat(timer).hasFieldOrPropertyWithValue("workerState", 0);
+        assertThat(timer).hasFieldOrPropertyWithValue("workerState", 1);
 
         ClientResources copy = clientResources.mutate().timer(new HashedWheelTimer()).build();
         HashedWheelTimer copyTimer = (HashedWheelTimer) copy.timer();
@@ -246,7 +252,7 @@ class DefaultClientResourcesUnitTests {
 
         copy.shutdown().awaitUninterruptibly();
 
-        assertThat(timer).hasFieldOrPropertyWithValue("workerState", 0);
+        assertThat(timer).hasFieldOrPropertyWithValue("workerState", 1);
         assertThat(copyTimer).hasFieldOrPropertyWithValue("workerState", 0);
 
         copyTimer.stop();
