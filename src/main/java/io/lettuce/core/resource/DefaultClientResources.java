@@ -232,6 +232,10 @@ public class DefaultClientResources implements ClientResources {
         reconnectDelay = builder.reconnectDelay;
         nettyCustomizer = builder.nettyCustomizer;
         tracing = builder.tracing;
+
+        if (!sharedTimer && timer instanceof HashedWheelTimer) {
+            ((HashedWheelTimer) timer).start();
+        }
     }
 
     /**
