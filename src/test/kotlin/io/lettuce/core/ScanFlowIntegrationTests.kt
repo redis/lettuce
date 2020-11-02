@@ -29,13 +29,17 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import javax.inject.Inject
 
-
 /**
+ * Integration tests for [ScanFlow].
+ *
  * @author Mikhael Sokolov
+ * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class ScanFlowIntegrationTests @Inject constructor(private val connection: StatefulRedisConnection<String, String>) : TestSupport() {
+
+    val iterations = 300
 
     @BeforeEach
     fun setUp() {
@@ -45,35 +49,47 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
     @Test
     fun `should scan iteratively`() = runBlocking<Unit> {
         with(connection.coroutines()) {
-            repeat(1000) {
+            repeat(iterations) {
                 set("key - $it", value)
             }
             assertThat(ScanFlow.scan(this, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
-            assertThat(ScanFlow.scan(this).count()).isEqualTo(1000)
+            assertThat(ScanFlow.scan(this).count()).isEqualTo(iterations)
         }
     }
 
     @Test
     fun `should hscan iteratively`() = runBlocking<Unit> {
         with(connection.coroutines()) {
-            repeat(1000) {
+            repeat(iterations) {
                 hset(key, "field-$it", "value-$it")
             }
 
             assertThat(ScanFlow.hscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
-            assertThat(ScanFlow.hscan(this, key).count()).isEqualTo(1000)
+            assertThat(ScanFlow.hscan(this, key).count()).isEqualTo(iterations)
         }
     }
 
     @Test
     fun shouldSscanIteratively() = runBlocking<Unit> {
         with(connection.coroutines()) {
-            repeat(1000) {
+            repeat(iterations) {
                 sadd(key, "value-$it")
             }
 
             assertThat(ScanFlow.sscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
-            assertThat(ScanFlow.sscan(this, key).count()).isEqualTo(1000)
+            assertThat(ScanFlow.sscan(this, key).count()).isEqualTo(iterations)
+        }
+    }
+
+    @Test
+    fun shouldZscanIteratively() = runBlocking<Unit> {
+        with(connection.coroutines()) {
+            repeat(iterations) {
+                zadd(key, 1001.0, "value-$it")
+            }
+
+            assertThat(ScanFlow.zscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
+            assertThat(ScanFlow.zscan(this, key).count()).isEqualTo(iterations)
         }
     }
 }
