@@ -32,6 +32,7 @@ import io.lettuce.core.internal.LettuceFactories;
  * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Julien Ruaux
  */
 public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
@@ -55,6 +56,16 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         }
 
         output.add(integer);
+    }
+
+    @Override
+    public void set(double number) {
+
+        if (!initialized) {
+            output = new ArrayList<>();
+        }
+
+        output.add(number);
     }
 
     @Override
