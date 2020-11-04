@@ -35,4 +35,15 @@ class NestedMultiOutputUnitTests {
         output.setError(StandardCharsets.US_ASCII.encode("Oops!"));
         assertThat(output.getError()).isNotNull();
     }
+
+    @Test
+    void nestedMultiDouble() {
+        NestedMultiOutput<String, String> output = new NestedMultiOutput<>(StringCodec.UTF8);
+        double value = 123.456;
+        output.set(value);
+        assertThat(output.get()).isNotNull();
+        assertThat(output.get()).size().isEqualTo(1);
+        assertThat(output.get().get(0)).isEqualTo(value);
+    }
+
 }
