@@ -16,13 +16,14 @@
 package io.lettuce.apigenerator;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -38,9 +39,11 @@ import io.lettuce.core.internal.LettuceSets;
  *
  * @author Mark Paluch
  */
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class CreateSyncNodeSelectionClusterApi {
 
-    private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
+    private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands", "RedisTransactionalCommands");
+    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
             "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch", "setAutoFlushCommands", "flushCommands");
 
     /**
@@ -59,16 +62,10 @@ public class CreateSyncNodeSelectionClusterApi {
      * @return
      */
     Predicate<MethodDeclaration> methodFilter() {
-
         return method -> {
-
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode().orElse(null);
-            if (FILTER_METHODS.contains(method.getName().getIdentifier())
-                    || FILTER_METHODS.contains(classOfMethod.getName().getIdentifier() + "." + method.getName())) {
-                return false;
-            }
-
-            return true;
+            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode().get();
+            return !FILTER_METHODS.contains(method.getName().getIdentifier())
+                    && !FILTER_METHODS.contains(classOfMethod.getName().getIdentifier() + "." + method.getName());
         };
     }
 
@@ -78,10 +75,7 @@ public class CreateSyncNodeSelectionClusterApi {
      * @return
      */
     Function<MethodDeclaration, Type> methodTypeMutator() {
-
-        return method -> {
-            return CompilationUnitFactory.createParametrizedType("Executions", method.getType().toString());
-        };
+        return method -> CompilationUnitFactory.createParametrizedType("Executions", method.getType().toString());
     }
 
     /**
@@ -100,7 +94,10 @@ public class CreateSyncNodeSelectionClusterApi {
     }
 
     static List<String> arguments() {
-        return Arrays.asList(Constants.TEMPLATE_NAMES);
+        return Stream
+                .of(Constants.TEMPLATE_NAMES)
+                .filter(t -> !FILTER_TEMPLATES.contains(t))
+                .collect(Collectors.toList());
     }
 
     private CompilationUnitFactory createFactory(String templateName) {

@@ -16,13 +16,14 @@
 package io.lettuce.apigenerator;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -39,7 +40,8 @@ import io.lettuce.core.internal.LettuceSets;
  */
 class CreateAsyncNodeSelectionClusterApi {
 
-    private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest", "close",
+    private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands", "RedisTransactionalCommands");
+    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest", "close",
             "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "setAutoFlushCommands", "flushCommands");
 
     /**
@@ -67,9 +69,7 @@ class CreateAsyncNodeSelectionClusterApi {
      * @return
      */
     Function<MethodDeclaration, Type> methodTypeMutator() {
-        return method -> {
-            return CompilationUnitFactory.createParametrizedType("AsyncExecutions", method.getType().toString());
-        };
+        return method -> CompilationUnitFactory.createParametrizedType("AsyncExecutions", method.getType().toString());
     }
 
     /**
@@ -88,7 +88,10 @@ class CreateAsyncNodeSelectionClusterApi {
     }
 
     static List<String> arguments() {
-        return Arrays.asList(Constants.TEMPLATE_NAMES);
+        return Stream
+                .of(Constants.TEMPLATE_NAMES)
+                .filter(t -> !FILTER_TEMPLATES.contains(t))
+                .collect(Collectors.toList());
     }
 
     private CompilationUnitFactory createFactory(String templateName) {

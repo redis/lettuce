@@ -40,7 +40,7 @@ public interface RedisSentinelCommands<K, V> {
      * Return the ip and port number of the master with that name.
      *
      * @param key the key.
-     * @return SocketAddress;.
+     * @return SocketAddress.
      */
     SocketAddress getMasterAddrByName(K key);
 
@@ -205,7 +205,7 @@ public interface RedisSentinelCommands<K, V> {
     <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
     /**
-     * @return true if the connection is open (connected and not closed).
+     * @return {@code true} if the connection is open (connected and not closed).
      */
     boolean isOpen();
 
@@ -213,5 +213,4 @@ public interface RedisSentinelCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
-
 }

@@ -18,11 +18,7 @@ package io.lettuce.core.api;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.BitFieldArgs;
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.SetArgs;
-import io.lettuce.core.StrAlgoArgs;
-import io.lettuce.core.StringMatchResult;
+import io.lettuce.core.*;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 
 /**

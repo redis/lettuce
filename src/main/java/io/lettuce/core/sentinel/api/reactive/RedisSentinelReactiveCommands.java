@@ -21,6 +21,9 @@ import java.util.Map;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KillArgs;
+import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
@@ -38,7 +41,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * Return the ip and port number of the master with that name.
      *
      * @param key the key.
-     * @return SocketAddress;.
+     * @return SocketAddress.
      */
     Mono<SocketAddress> getMasterAddrByName(K key);
 
@@ -178,6 +181,29 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @return String simple-string-reply.
      */
     Mono<String> ping();
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@code null}.
+     * @param output the command output, must not be {@code null}.
+     * @param <T> response type.
+     * @return the command response.
+     * @since 5.2
+     */
+    <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@code null}.
+     * @param output the command output, must not be {@code null}.
+     * @param args the command arguments, must not be {@code null}.
+     * @param <T> response type.
+     * @return the command response.
+     * @since 5.2
+     */
+    <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args);
 
     /**
      * @return {@code true} if the connection is open (connected and not closed).

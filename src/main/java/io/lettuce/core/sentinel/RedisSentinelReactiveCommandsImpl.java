@@ -140,7 +140,8 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
         return createMono(() -> commandBuilder.info(section));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
@@ -149,7 +150,8 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
         return (Flux) createFlux(() -> new Command<>(type, output));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args) {
 
         LettuceAssert.notNull(type, "Command type must not be null");

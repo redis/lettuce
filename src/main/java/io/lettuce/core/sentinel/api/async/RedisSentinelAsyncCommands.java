@@ -206,7 +206,7 @@ public interface RedisSentinelAsyncCommands<K, V> {
     <T> RedisFuture<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
     /**
-     * @return true if the connection is open (connected and not closed).
+     * @return {@code true} if the connection is open (connected and not closed).
      */
     boolean isOpen();
 
@@ -214,5 +214,4 @@ public interface RedisSentinelAsyncCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
-
 }
