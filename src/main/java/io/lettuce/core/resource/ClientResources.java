@@ -24,6 +24,7 @@ import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.tracing.Tracing;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -45,10 +46,12 @@ import io.netty.util.concurrent.Future;
  * <li>{@link DnsResolver} to collect latency details. Requires the {@literal LatencyUtils} library.</li>
  * <li>{@link Timer} for scheduling</li>
  * <li>{@link Tracing} to trace Redis commands.</li>
+ * <li>{@link AddressResolverGroup} for dns resolution.</li>
  * </ul>
  *
  * @author Mark Paluch
  * @author Mikhael Sokolov
+ * @author Yohei Ueki
  * @since 3.4
  * @see DefaultClientResources
  */
@@ -242,6 +245,18 @@ public interface ClientResources {
         Builder tracing(Tracing tracing);
 
         /**
+         * Sets the {@link AddressResolverGroup} for dns resolution. This option is only effective if
+         * {@link DnsResolvers#UNRESOLVED} is used as {@link DnsResolver}. Defaults to
+         * {@link io.netty.resolver.DefaultAddressResolverGroup#INSTANCE} if {@literal netty-dns-resolver} is not available,
+         * otherwise defaults to {@link io.netty.resolver.dns.DnsAddressResolverGroup}.
+         *
+         * @param addressResolverGroup the {@link AddressResolverGroup} instance, must not be {@code null}.
+         * @return {@code this} {@link Builder}
+         * @since xxx
+         */
+        Builder addressResolverGroup(AddressResolverGroup<?> addressResolverGroup);
+
+        /**
          * @return a new instance of {@link DefaultClientResources}.
          */
         ClientResources build();
@@ -384,5 +399,13 @@ public interface ClientResources {
      * @since 5.1
      */
     Tracing tracing();
+
+    /**
+     * Return the {@link AddressResolverGroup} instance for dns resolution.
+     *
+     * @return the address resolver group.
+     * @since xxx
+     */
+    AddressResolverGroup<?> addressResolverGroup();
 
 }

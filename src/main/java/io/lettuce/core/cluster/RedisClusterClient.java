@@ -135,6 +135,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * possible.
  *
  * @author Mark Paluch
+ * @author Yohei Ueki
  * @since 3.0
  * @see RedisURI
  * @see StatefulRedisClusterConnection

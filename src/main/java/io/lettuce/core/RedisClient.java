@@ -75,6 +75,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Yohei Ueki
  * @see RedisURI
  * @see StatefulRedisConnection
  * @see RedisFuture

@@ -73,6 +73,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @author Jongyeol Choi
  * @author Poorva Gokhale
+ * @author Yohei Ueki
  * @since 3.0
  * @see ClientResources
  */
@@ -291,6 +292,15 @@ public abstract class AbstractRedisClient {
             connectionBuilder.bootstrap().channel(NativeTransports.domainSocketChannelClass());
         } else {
             connectionBuilder.bootstrap().channel(Transports.socketChannelClass());
+        }
+    }
+
+    protected void resolver(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
+
+        LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
+
+        if (connectionPoint.getSocket() == null) {
+            connectionBuilder.bootstrap().resolver(clientResources.addressResolverGroup());
         }
     }
 

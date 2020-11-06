@@ -206,6 +206,12 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- OS-native transports -->
 
         <dependency>

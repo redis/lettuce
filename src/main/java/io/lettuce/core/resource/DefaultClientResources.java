@@ -35,6 +35,7 @@ import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.metrics.MetricCollector;
 import io.lettuce.core.resource.Delay.StatefulDelay;
 import io.lettuce.core.tracing.Tracing;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
@@ -70,9 +71,11 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>a {@code socketAddressResolver} which is a provided instance of {@link SocketAddressResolver}.</li>
  * <li>a {@code timer} that is a provided instance of {@link io.netty.util.HashedWheelTimer}.</li>
  * <li>a {@code tracing} that is a provided instance of {@link Tracing}.</li>
+ * <li>a {@code addressResolverGroup} that is a provided instance of {@link AddressResolverGroup}.</li>
  * </ul>
  *
  * @author Mark Paluch
+ * @author Yohei Ueki
  * @since 3.4
  */
 public class DefaultClientResources implements ClientResources {
@@ -102,6 +105,12 @@ public class DefaultClientResources implements ClientResources {
      * Default (no-op) {@link NettyCustomizer}.
      */
     public static final NettyCustomizer DEFAULT_NETTY_CUSTOMIZER = DefaultNettyCustomizer.INSTANCE;
+
+    /**
+     * Default {@link AddressResolverGroup}.
+     */
+    public static final AddressResolverGroup<?> DEFAULT_ADDRESS_RESOLVER_GROUP = AddressResolverGroupProvider
+            .addressResolverGroup();
 
     static {
 
@@ -146,6 +155,8 @@ public class DefaultClientResources implements ClientResources {
     private final boolean sharedTimer;
 
     private final Tracing tracing;
+
+    private final AddressResolverGroup<?> addressResolverGroup;
 
     private volatile boolean shutdownCalled = false;
 
@@ -243,6 +254,7 @@ public class DefaultClientResources implements ClientResources {
         reconnectDelay = builder.reconnectDelay;
         nettyCustomizer = builder.nettyCustomizer;
         tracing = builder.tracing;
+        addressResolverGroup = builder.addressResolverGroup;
 
         if (!sharedTimer && timer instanceof HashedWheelTimer) {
             ((HashedWheelTimer) timer).start();
@@ -307,6 +319,8 @@ public class DefaultClientResources implements ClientResources {
         private Timer timer;
 
         private Tracing tracing = Tracing.disabled();
+
+        private AddressResolverGroup<?> addressResolverGroup = DEFAULT_ADDRESS_RESOLVER_GROUP;
 
         private Builder() {
         }
@@ -570,6 +584,25 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
+         * Sets the {@link AddressResolverGroup} for dns resolution. This option is only effective if
+         * {@link DnsResolvers#UNRESOLVED} is used as {@link DnsResolver}. Defaults to
+         * {@link io.netty.resolver.DefaultAddressResolverGroup#INSTANCE} if {@literal netty-dns-resolver} is not available,
+         * otherwise defaults to {@link io.netty.resolver.dns.DnsAddressResolverGroup}.
+         *
+         * @param addressResolverGroup the {@link AddressResolverGroup} instance, must not be {@code null}.
+         * @return {@code this} {@link ClientResources.Builder}
+         * @since xxx
+         */
+        @Override
+        public Builder addressResolverGroup(AddressResolverGroup<?> addressResolverGroup) {
+
+            LettuceAssert.notNull(addressResolverGroup, "AddressResolverGroup must not be null");
+
+            this.addressResolverGroup = addressResolverGroup;
+            return this;
+        }
+
+        /**
          * @return a new instance of {@link DefaultClientResources}.
          */
         @Override
@@ -603,7 +636,7 @@ public class DefaultClientResources implements ClientResources {
                 .commandLatencyPublisherOptions(commandLatencyPublisherOptions()).dnsResolver(dnsResolver())
                 .eventBus(eventBus()).eventExecutorGroup(eventExecutorGroup()).reconnectDelay(reconnectDelay)
                 .socketAddressResolver(socketAddressResolver()).nettyCustomizer(nettyCustomizer()).timer(timer())
-                .tracing(tracing());
+                .tracing(tracing()).addressResolverGroup(addressResolverGroup());
 
         builder.sharedCommandLatencyCollector = sharedEventLoopGroupProvider;
         builder.sharedEventExecutor = sharedEventExecutor;
@@ -740,6 +773,11 @@ public class DefaultClientResources implements ClientResources {
     @Override
     public Tracing tracing() {
         return tracing;
+    }
+
+    @Override
+    public AddressResolverGroup<?> addressResolverGroup() {
+        return addressResolverGroup;
     }
 
 }

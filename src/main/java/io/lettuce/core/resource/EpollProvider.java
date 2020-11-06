@@ -25,9 +25,11 @@ import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollChannelOption;
+import io.netty.channel.epoll.EpollDatagramChannel;
 import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.SystemPropertyUtil;
@@ -39,6 +41,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * the {@literal netty-transport-native-epoll} library during runtime. Internal API.
  *
  * @author Mark Paluch
+ * @author Yohei Ueki
  * @since 4.4
  */
 public class EpollProvider {
@@ -168,6 +171,13 @@ public class EpollProvider {
             return null;
         }
 
+        @Override
+        public Class<? extends DatagramChannel> datagramChannelClass() {
+
+            checkForEpollLibrary();
+            return null;
+        }
+
     }
 
     /**
@@ -207,6 +217,14 @@ public class EpollProvider {
             checkForEpollLibrary();
 
             return EpollSocketChannel.class;
+        }
+
+        @Override
+        public Class<? extends DatagramChannel> datagramChannelClass() {
+
+            checkForEpollLibrary();
+
+            return EpollDatagramChannel.class;
         }
 
         @Override
