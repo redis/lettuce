@@ -357,13 +357,13 @@ public class DefaultClientResources implements ClientResources {
          * Sets the thread pool size (number of threads to use) for computation operations (default value is the number of
          * CPUs). The thread pool size is only effective if no {@code eventExecutorGroup} is provided.
          *
-         * @param computationThreadPoolSize the thread pool size, must be greater {@code 0}.
+         * @param computationThreadPoolSize the thread pool size, must be greater than {@code 0}.
          * @return {@code this} {@link Builder}.
          */
         @Override
         public Builder computationThreadPoolSize(int computationThreadPoolSize) {
 
-            LettuceAssert.isTrue(computationThreadPoolSize > 0, "Computation thread pool size must be greater zero");
+            LettuceAssert.isTrue(computationThreadPoolSize > 0, "Computation thread pool size must be greater than zero");
 
             this.computationThreadPoolSize = computationThreadPoolSize;
             return this;
