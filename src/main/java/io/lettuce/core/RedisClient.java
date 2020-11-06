@@ -75,6 +75,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Yohei Ueki
  * @see RedisURI
  * @see StatefulRedisConnection
  * @see RedisFuture
@@ -322,6 +323,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
         connectionBuilder.connectionInitializer(createHandshake(state));
         channelType(connectionBuilder, redisURI);
+        resolver(connectionBuilder, redisURI);
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
@@ -599,6 +601,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, redisURI);
 
         channelType(connectionBuilder, redisURI);
+        resolver(connectionBuilder, redisURI);
         ConnectionFuture<?> sync = initializeChannelAsync(connectionBuilder);
 
         return sync.thenApply(ignore -> (StatefulRedisSentinelConnection<K, V>) connection).whenComplete((ignore, e) -> {

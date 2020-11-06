@@ -22,6 +22,8 @@ import io.lettuce.core.resource.KqueueProvider;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.DatagramChannel;
+import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
@@ -29,6 +31,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  * native socket transports.
  *
  * @author Mark Paluch
+ * @author Yohei Ueki
  * @since 4.4
  */
 class Transports {
@@ -58,6 +61,18 @@ class Transports {
     }
 
     /**
+     * @return the default {@link DatagramChannel} for socket (network/UDP) transport.
+     */
+    static Class<? extends DatagramChannel> datagramChannelClass() {
+
+        if (NativeTransports.isSocketSupported()) {
+            return NativeTransports.datagramChannelClass();
+        }
+
+        return NioDatagramChannel.class;
+    }
+
+    /**
      * Native transport support.
      */
     static class NativeTransports {
@@ -77,6 +92,13 @@ class Transports {
          */
         static Class<? extends Channel> socketChannelClass() {
             return RESOURCES.socketChannelClass();
+        }
+
+        /**
+         * @return the native transport socket {@link DatagramChannel} class.
+         */
+        static Class<? extends DatagramChannel> datagramChannelClass() {
+            return RESOURCES.datagramChannelClass();
         }
 
         /**
