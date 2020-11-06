@@ -39,7 +39,7 @@ import io.lettuce.core.internal.LettuceSets;
  */
 class CreateSyncApi {
 
-    private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("setAutoFlushCommands", "flushCommands");
+    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("setAutoFlushCommands", "flushCommands");
 
     /**
      * Mutate type comment.

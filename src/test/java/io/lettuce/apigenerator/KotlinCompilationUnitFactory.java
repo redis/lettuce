@@ -52,8 +52,13 @@ import io.lettuce.core.internal.LettuceSets;
 class KotlinCompilationUnitFactory {
 
     private static final Set<String> SKIP_IMPORTS = LettuceSets.unmodifiableSet("java.util.List", "java.util.Set", "java.util.Map");
-    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("keys", "geohash", "georadius", "georadiusbymember", "hgetall", "hmget", "hkeys", "hvals", "sort", "zpopmin", "zpopmax", "zrange", "zrangebylex", "zrangebyscore", "zrangeWithScores", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "mget", "sdiff", "sinter", "smembers", "srandmember", "sunion", "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange");
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
+    private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
+    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("geohash", "georadius", "georadiusbymember",
+            "hgetall", "hkeys", "hmget", "hvals", "keys", "mget", "sdiff", "sinter", "smembers", "smismember", "sort", "srandmember", "sunion",
+            "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange", "zinter", "zinterWithScores", "zpopmax", "zpopmin", "zrange",
+            "zrangeWithScores", "zrangebylex", "zrangebyscore", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex",
+            "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "zunion", "zunionWithScores");
 
     private static final Set<String> NON_NULLABLE_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec",
             "watch", "unwatch", "getMasterAddrByName", "master", "reset", "failover", "monitor",
@@ -61,12 +66,12 @@ class KotlinCompilationUnitFactory {
             "RedisSentinelCoroutinesCommands.clientKill", "RedisSentinelCoroutinesCommands.clientPause",
             "RedisSentinelCoroutinesCommands.clientList", "RedisSentinelCoroutinesCommands.info",
             "RedisSentinelCoroutinesCommands.ping", "pubsubNumsub", "pubsubNumpat", "echo", "ping", "readOnly", "readWrite");
-    private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
     private static final Map<String, String> RESULT_SPEC;
 
     static {
         Map<String, String> resultSpec = new HashMap<>();
         resultSpec.put("hgetall", "Flow<KeyValue<K,V>>");
+        resultSpec.put("zmscore", "List<Double?>");
         RESULT_SPEC = resultSpec;
     }
 

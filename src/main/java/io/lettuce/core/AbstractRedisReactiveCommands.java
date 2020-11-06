@@ -542,7 +542,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return createMono(commandBuilder::discard);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
@@ -551,7 +552,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         return (Flux) createFlux(() -> new Command<>(type, output));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
