@@ -18,6 +18,9 @@ package io.lettuce.core.sentinel.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.KillArgs
+import io.lettuce.core.output.CommandOutput
+import io.lettuce.core.protocol.CommandArgs
+import io.lettuce.core.protocol.ProtocolKeyword
 import java.net.SocketAddress
 
 /**
@@ -36,7 +39,7 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * Return the ip and port number of the master with that name.
      *
      * @param key the key.
-     * @return SocketAddress;.
+     * @return SocketAddress.
      */
     suspend fun getMasterAddrByName(key: K): SocketAddress
 
@@ -176,6 +179,29 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      */
     suspend fun ping(): String
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be `null`.
+     * @param output the command output, must not be `null`.
+     * @param <T> response type.
+     * @return the command response.
+     * @since 5.2
+     */
+    suspend fun <T> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>): T?
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be `null`.
+     * @param output the command output, must not be `null`.
+     * @param args the command arguments, must not be `null`.
+     * @param <T> response type.
+     * @return the command response.
+     * @since 5.2
+     */
+    suspend fun <T> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): T?
 
     /**
      *
