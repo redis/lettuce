@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * @author Xy Ma
  * @author Mark Paluch
  * @author Mikhael Sokolov
+ * @since 6.1
  */
 public class ZAggregateArgs implements CompositeArgument {
 
@@ -53,18 +54,6 @@ public class ZAggregateArgs implements CompositeArgument {
          * Utility constructor.
          */
         Builder() {
-        }
-
-        /**
-         * Creates new {@link ZAggregateArgs} setting {@literal WEIGHTS} using long.
-         *
-         * @return new {@link ZAddArgs} with {@literal WEIGHTS} set.
-         * @see ZAggregateArgs#weights(long[])
-         * @deprecated use {@link #weights(double...)}.
-         */
-        @Deprecated
-        public static ZAggregateArgs weights(long[] weights) {
-            return new ZAggregateArgs().weights(toDoubleArray(weights));
         }
 
         /**
@@ -107,21 +96,6 @@ public class ZAggregateArgs implements CompositeArgument {
             return new ZAggregateArgs().max();
         }
 
-    }
-
-    /**
-     * Specify a multiplication factor for each input sorted set.
-     *
-     * @param weights must not be {@code null}.
-     * @return {@code this} {@link ZAggregateArgs}.
-     * @deprecated use {@link #weights(double...)}
-     */
-    @Deprecated
-    public static ZAggregateArgs weights(long[] weights) {
-
-        LettuceAssert.notNull(weights, "Weights must not be null");
-
-        return new ZAggregateArgs().weights(toDoubleArray(weights));
     }
 
     /**
@@ -175,15 +149,7 @@ public class ZAggregateArgs implements CompositeArgument {
         return this;
     }
 
-    private static double[] toDoubleArray(long[] weights) {
-
-        double result[] = new double[weights.length];
-        for (int i = 0; i < weights.length; i++) {
-            result[i] = weights[i];
-        }
-        return result;
-    }
-
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (weights != null && !weights.isEmpty()) {

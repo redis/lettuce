@@ -15,12 +15,16 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.internal.LettuceStrings.string;
+import static io.lettuce.core.internal.LettuceStrings.*;
 import static io.lettuce.core.protocol.CommandKeyword.*;
 import static io.lettuce.core.protocol.CommandType.*;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.XReadArgs.StreamOffset;
@@ -30,7 +34,11 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.BaseRedisCommandBuilder;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * @param <K>
@@ -39,6 +47,7 @@ import io.lettuce.core.protocol.*;
  * @author Zhang Jessey
  * @author Tugdual Grall
  * @author dengliming
+ * @author Mikhael Sokolov
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -2609,32 +2618,32 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZINCRBY, new DoubleOutput<>(codec), args);
     }
 
-    Command<K, V, List<V>> zinter(long numkey, K... keys) {
+    Command<K, V, List<V>> zinter(K... keys) {
         notEmpty(keys);
 
-        return zinter(numkey, new ZAggregateArgs(), keys);
+        return zinter(new ZAggregateArgs(), keys);
     }
 
-    Command<K, V, List<V>> zinter(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+    Command<K, V, List<V>> zinter(ZAggregateArgs aggregateArgs, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(numkey).addKeys(keys);
+        args.add(keys.length).addKeys(keys);
         aggregateArgs.build(args);
         return createCommand(ZINTER, new ValueListOutput<>(codec), args);
     }
 
-    Command<K, V, List<ScoredValue<V>>> zinterWithScores(long numkey, K... keys) {
+    Command<K, V, List<ScoredValue<V>>> zinterWithScores(K... keys) {
         notEmpty(keys);
 
-        return zinterWithScores(numkey, new ZAggregateArgs(), keys);
+        return zinterWithScores(new ZAggregateArgs(), keys);
     }
 
-    Command<K, V, List<ScoredValue<V>>> zinterWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+    Command<K, V, List<ScoredValue<V>>> zinterWithScores(ZAggregateArgs aggregateArgs, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(numkey).addKeys(keys).add(WITHSCORES);
+        args.add(keys.length).addKeys(keys).add(WITHSCORES);
         aggregateArgs.build(args);
         return createCommand(ZINTER, new ScoredValueListOutput<>(codec), args);
     }
@@ -3260,32 +3269,32 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZSCORE, new DoubleOutput<>(codec), key, member);
     }
 
-    Command<K, V, List<V>> zunion(long numkey, K... keys) {
+    Command<K, V, List<V>> zunion(K... keys) {
         notEmpty(keys);
 
-        return zunion(numkey, new ZAggregateArgs(), keys);
+        return zunion(new ZAggregateArgs(), keys);
     }
 
-    Command<K, V, List<V>> zunion(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+    Command<K, V, List<V>> zunion(ZAggregateArgs aggregateArgs, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(numkey).addKeys(keys);
+        args.add(keys.length).addKeys(keys);
         aggregateArgs.build(args);
         return createCommand(ZUNION, new ValueListOutput<>(codec), args);
     }
 
-    Command<K, V, List<ScoredValue<V>>> zunionWithScores(long numkey, K... keys) {
+    Command<K, V, List<ScoredValue<V>>> zunionWithScores(K... keys) {
         notEmpty(keys);
 
-        return zunionWithScores(numkey, new ZAggregateArgs(), keys);
+        return zunionWithScores(new ZAggregateArgs(), keys);
     }
 
-    Command<K, V, List<ScoredValue<V>>> zunionWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys) {
+    Command<K, V, List<ScoredValue<V>>> zunionWithScores(ZAggregateArgs aggregateArgs, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(numkey).addKeys(keys).add(WITHSCORES);
+        args.add(keys.length).addKeys(keys).add(WITHSCORES);
         aggregateArgs.build(args);
         return createCommand(ZUNION, new ScoredValueListOutput<>(codec), args);
     }

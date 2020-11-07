@@ -212,44 +212,40 @@ public interface RedisSortedSetAsyncCommands<K, V> {
     /**
      * Intersect multiple sorted sets and returns the resulting sorted.
      *
-     * @param numkey the numeric key.
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of elements.
      * @since 6.1
      */
-    RedisFuture<List<V>> zinter(long numkey, K... keys);
+    RedisFuture<List<V>> zinter(K... keys);
 
     /**
      * Intersect multiple sorted sets and returns the resulting sorted.
      *
-     * @param numkey the numeric key.
-     * @param aggregateArgs the aggregateArgs.
+     * @param aggregateArgs arguments to define aggregation and weights.
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of elements.
      * @since 6.1
      */
-    RedisFuture<List<V>> zinter(long numkey, ZAggregateArgs aggregateArgs, K... keys);
+    RedisFuture<List<V>> zinter(ZAggregateArgs aggregateArgs, K... keys);
 
     /**
      * Intersect multiple sorted sets and returns the resulting sorted.
      *
-     * @param numkey the numeric key.
-     * @param aggregateArgs the aggregateArgs.
+     * @param aggregateArgs arguments to define aggregation and weights.
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of scored values.
      * @since 6.1
      */
-    RedisFuture<List<ScoredValue<V>>> zinterWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys);
+    RedisFuture<List<ScoredValue<V>>> zinterWithScores(ZAggregateArgs aggregateArgs, K... keys);
 
     /**
      * Intersect multiple sorted sets and returns the resulting sorted.
      *
-     * @param numkey the numeric key.
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of scored values.
      * @since 6.1
      */
-    RedisFuture<List<ScoredValue<V>>> zinterWithScores(long numkey, K... keys);
+    RedisFuture<List<ScoredValue<V>>> zinterWithScores(K... keys);
 
     /**
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
@@ -264,11 +260,11 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * Intersect multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination the destination.
-     * @param aggregateArgs the aggregateArgs.
+     * @param storeArgs arguments to define aggregation and weights.
      * @param keys the keys.
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
-    RedisFuture<Long> zinterstore(K destination, ZAggregateArgs aggregateArgs, K... keys);
+    RedisFuture<Long> zinterstore(K destination, ZStoreArgs storeArgs, K... keys);
 
     /**
      * Count the number of members in a sorted set between a given lexicographical range.
@@ -1285,44 +1281,40 @@ public interface RedisSortedSetAsyncCommands<K, V> {
     /**
      * Add multiple sorted sets and returns the resulting sorted set.
      *
-     * @param numkey the numeric key.
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of elements.
      * @since 6.1
      */
-    RedisFuture<List<V>> zunion(long numkey, K... keys);
+    RedisFuture<List<V>> zunion(K... keys);
 
     /**
      * Add multiple sorted sets and returns the resulting sorted set.
      *
-     * @param numkey the numeric key.
-     * @param aggregateArgs the aggregateArgs.
+     * @param aggregateArgs arguments to define aggregation and weights.
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of elements.
      * @since 6.1
      */
-    RedisFuture<List<V>> zunion(long numkey, ZAggregateArgs aggregateArgs, K... keys);
+    RedisFuture<List<V>> zunion(ZAggregateArgs aggregateArgs, K... keys);
 
     /**
      * Add multiple sorted sets and returns the resulting sorted set.
      *
-     * @param numkey the numeric key.
-     * @param aggregateArgs the aggregateArgs.
+     * @param aggregateArgs arguments to define aggregation and weights.
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of scored values.
      * @since 6.1
      */
-    RedisFuture<List<ScoredValue<V>>> zunionWithScores(long numkey, ZAggregateArgs aggregateArgs, K... keys);
+    RedisFuture<List<ScoredValue<V>>> zunionWithScores(ZAggregateArgs aggregateArgs, K... keys);
 
     /**
      * Add multiple sorted sets and returns the resulting sorted set.
      *
-     * @param numkey the numeric key.
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of scored values.
      * @since 6.1
      */
-    RedisFuture<List<ScoredValue<V>>> zunionWithScores(long numkey, K... keys);
+    RedisFuture<List<ScoredValue<V>>> zunionWithScores(K... keys);
 
     /**
      * Add multiple sorted sets and store the resulting sorted set in a new key.
@@ -1337,9 +1329,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * Add multiple sorted sets and store the resulting sorted set in a new key.
      *
      * @param destination the destination.
-     * @param aggregateArgs the aggregateArgs.
+     * @param storeArgs arguments to define aggregation and weights.
      * @param keys the keys.
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
-    RedisFuture<Long> zunionstore(K destination, ZAggregateArgs aggregateArgs, K... keys);
+    RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
 }
