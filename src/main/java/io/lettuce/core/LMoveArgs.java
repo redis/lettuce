@@ -16,29 +16,25 @@
 package io.lettuce.core;
 
 import io.lettuce.core.protocol.CommandArgs;
-
-import static io.lettuce.core.protocol.CommandKeyword.LEFT;
-import static io.lettuce.core.protocol.CommandKeyword.RIGHT;
+import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/blmove">BLMOVE</a> and
- * <a href="http://redis.io/commands/lmove">LMOVE</a> commands. Static import the methods from {@link Builder} and
- * chain the method calls: {@code leftRight()}.
+ * <a href="http://redis.io/commands/lmove">LMOVE</a> commands. Static import the methods from {@link Builder} and chain the
+ * method calls: {@code leftRight()}.
  *
  * @author Mikhael Sokolov
+ * @author Mark Paluch
  * @since 6.1
  */
 public class LMoveArgs implements CompositeArgument {
 
-    private enum Direction {
-        LEFT, RIGHT
-    }
+    private final ProtocolKeyword source;
 
-    private final Direction source;
+    private final ProtocolKeyword destination;
 
-    private final Direction destination;
-
-    private LMoveArgs(Direction source, Direction destination) {
+    private LMoveArgs(ProtocolKeyword source, ProtocolKeyword destination) {
         this.source = source;
         this.destination = destination;
     }
@@ -55,57 +51,44 @@ public class LMoveArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link LMoveArgs} setting with LEFT LEFT directions.
+         * Creates new {@link LMoveArgs} setting with {@code LEFT} {@code LEFT} directions.
          *
          * @return new {@link LMoveArgs} with args set.
          */
         public static LMoveArgs leftLeft() {
-            return new LMoveArgs(Direction.LEFT, Direction.LEFT);
+            return new LMoveArgs(CommandKeyword.LEFT, CommandKeyword.LEFT);
         }
 
         /**
-         * Creates new {@link LMoveArgs} setting with LEFT RIGHT directions.
+         * Creates new {@link LMoveArgs} setting with {@code LEFT} {@code RIGHT} directions.
          *
          * @return new {@link LMoveArgs} with args set.
          */
         public static LMoveArgs leftRight() {
-            return new LMoveArgs(Direction.LEFT, Direction.RIGHT);
+            return new LMoveArgs(CommandKeyword.LEFT, CommandKeyword.RIGHT);
         }
 
         /**
-         * Creates new {@link LMoveArgs} setting with RIGHT LEFT directions.
+         * Creates new {@link LMoveArgs} setting with {@code RIGHT} {@code LEFT} directions.
          *
          * @return new {@link LMoveArgs} with args set.
          */
         public static LMoveArgs rightLeft() {
-            return new LMoveArgs(Direction.RIGHT, Direction.LEFT);
+            return new LMoveArgs(CommandKeyword.RIGHT, CommandKeyword.LEFT);
         }
 
         /**
-         * Creates new {@link LMoveArgs} setting with RIGHT RIGHT directions.
+         * Creates new {@link LMoveArgs} setting with {@code RIGHT} {@code RIGHT} directions.
          *
          * @return new {@link LMoveArgs} with args set.
          */
         public static LMoveArgs rightRight() {
-            return new LMoveArgs(Direction.RIGHT, Direction.RIGHT);
+            return new LMoveArgs(CommandKeyword.RIGHT, CommandKeyword.RIGHT);
         }
     }
 
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
-        passDirection(source, args);
-        passDirection(destination, args);
-    }
-
-    private static <K, V> void passDirection(Direction direction, CommandArgs<K, V> args) {
-        switch (direction) {
-            case LEFT:
-                args.add(LEFT);
-                break;
-            case RIGHT:
-                args.add(RIGHT);
-                break;
-            default:
-                throw new IllegalArgumentException(String.format("Direction %s not supported", direction));
-        }
+        args.add(source).add(destination);
     }
 }
