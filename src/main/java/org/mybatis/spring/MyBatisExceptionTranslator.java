@@ -23,6 +23,7 @@ import javax.sql.DataSource;
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.transaction.TransactionException;
@@ -85,7 +86,10 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
       }
       if (e.getCause() instanceof SQLException) {
         this.initExceptionTranslator();
-        return this.exceptionTranslator.translate(e.getMessage() + "\n", null, (SQLException) e.getCause());
+        String task = e.getMessage() + "\n";
+        SQLException se = (SQLException) e.getCause();
+        DataAccessException dae = this.exceptionTranslator.translate(task, null, se);
+        return dae != null ? dae : new UncategorizedSQLException(task, null, se);
       } else if (e.getCause() instanceof TransactionException) {
         throw (TransactionException) e.getCause();
       }
