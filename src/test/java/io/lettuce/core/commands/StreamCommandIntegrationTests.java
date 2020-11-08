@@ -15,11 +15,16 @@
  */
 package io.lettuce.core.commands;
 
-import static io.lettuce.core.protocol.CommandType.XINFO;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.lettuce.core.protocol.CommandType.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -28,7 +33,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.Consumer;
+import io.lettuce.core.Limit;
+import io.lettuce.core.Range;
+import io.lettuce.core.StreamMessage;
+import io.lettuce.core.TestSupport;
+import io.lettuce.core.TransactionResult;
+import io.lettuce.core.XAddArgs;
+import io.lettuce.core.XClaimArgs;
+import io.lettuce.core.XGroupCreateArgs;
+import io.lettuce.core.XReadArgs;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
@@ -93,20 +107,12 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void xaddMaxLenEfficientTrimmingNoMkStream() {
+    @EnabledOnCommand("LMOVE") // Redis 6.2
+    void xaddWithNomkstream() {
 
-        Map<String, String> body = Collections.singletonMap("foo", "bar");
-        String id = redis.xadd(key, XAddArgs.Builder.maxlen(5).approximateTrimming().noMkStream(), body);
+        String id = redis.xadd(key, XAddArgs.Builder.nomkstream(), Collections.singletonMap("foo", "bar"));
         assertThat(id).isNull();
         assertThat(redis.exists(key)).isEqualTo(0L);
-
-        id = redis.xadd(key, XAddArgs.Builder.maxlen(5).approximateTrimming(), body);
-        assertThat(id).isNotNull();
-        assertThat(redis.exists(key)).isEqualTo(1L);
-
-        List<StreamMessage<String, String>> messages = redis.xrange(key, Range.unbounded());
-        assertThat(messages.size()).isEqualTo(1);
-        assertThat(messages.get(0).getBody()).isEqualTo(body);
     }
 
     @Test

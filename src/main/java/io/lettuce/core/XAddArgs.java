@@ -37,7 +37,7 @@ public class XAddArgs {
 
     private boolean approximateTrimming;
 
-    private boolean noMkStream;
+    private boolean nomkstream;
 
     /**
      * Builder entry points for {@link XAddArgs}.
@@ -58,6 +58,17 @@ public class XAddArgs {
          */
         public static XAddArgs maxlen(long count) {
             return new XAddArgs().maxlen(count);
+        }
+
+        /**
+         * Creates new {@link XAddArgs} and setting {@literal NOMKSTREAM}.
+         *
+         * @return new {@link XAddArgs} with {@literal NOMKSTREAM} set.
+         * @see XAddArgs#nomkstream()
+         * @since 6.1
+         */
+        public static XAddArgs nomkstream() {
+            return new XAddArgs().nomkstream();
         }
 
     }
@@ -112,25 +123,25 @@ public class XAddArgs {
     }
 
     /**
-     * Not to create new stream by default.
+     * Do add the message if the stream does not already exist.
      *
      * @return {@code this}
      * @since 6.1
      */
-    public XAddArgs noMkStream() {
-        return noMkStream(true);
+    public XAddArgs nomkstream() {
+        return nomkstream(true);
     }
 
     /**
-     * Not to create new stream by default.
+     * Do add the message if the stream does not already exist.
      *
-     * @param noMkStream {@code true} to apply not to create new stream by default.
+     * @param nomkstream {@code true} to not create a stream if it does not already exist.
      * @return {@code this}
      * @since 6.1
      */
-    public XAddArgs noMkStream(boolean noMkStream) {
+    public XAddArgs nomkstream(boolean nomkstream) {
 
-        this.noMkStream = noMkStream;
+        this.nomkstream = nomkstream;
         return this;
     }
 
@@ -147,7 +158,7 @@ public class XAddArgs {
             args.add(maxlen);
         }
 
-        if (noMkStream) {
+        if (nomkstream) {
             args.add(CommandKeyword.NOMKSTREAM);
         }
 
