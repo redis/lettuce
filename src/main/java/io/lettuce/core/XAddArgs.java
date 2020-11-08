@@ -26,6 +26,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {@link XAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @author dengliming
  * @since 5.1
  */
 public class XAddArgs {
@@ -35,6 +36,8 @@ public class XAddArgs {
     private Long maxlen;
 
     private boolean approximateTrimming;
+
+    private boolean noMkStream;
 
     /**
      * Builder entry points for {@link XAddArgs}.
@@ -108,6 +111,29 @@ public class XAddArgs {
         return this;
     }
 
+    /**
+     * Not to create new stream by default.
+     *
+     * @return {@code this}
+     * @since 6.1
+     */
+    public XAddArgs noMkStream() {
+        return noMkStream(true);
+    }
+
+    /**
+     * Not to create new stream by default.
+     *
+     * @param noMkStream {@code true} to apply not to create new stream by default.
+     * @return {@code this}
+     * @since 6.1
+     */
+    public XAddArgs noMkStream(boolean noMkStream) {
+
+        this.noMkStream = noMkStream;
+        return this;
+    }
+
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (maxlen != null) {
@@ -119,6 +145,10 @@ public class XAddArgs {
             }
 
             args.add(maxlen);
+        }
+
+        if (noMkStream) {
+            args.add(CommandKeyword.NOMKSTREAM);
         }
 
         if (id != null) {
