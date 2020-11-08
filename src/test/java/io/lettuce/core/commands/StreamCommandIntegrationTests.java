@@ -43,6 +43,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
  * Integration tests for {@link io.lettuce.core.api.sync.RedisStreamCommands}.
  *
  * @author Mark Paluch
+ * @author dengliming
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -89,6 +90,23 @@ public class StreamCommandIntegrationTests extends TestSupport {
         String id = redis.xadd(key, XAddArgs.Builder.maxlen(5).approximateTrimming(), "foo", "bar");
 
         assertThat(id).isNotNull();
+    }
+
+    @Test
+    void xaddMaxLenEfficientTrimmingNoMkStream() {
+
+        Map<String, String> body = Collections.singletonMap("foo", "bar");
+        String id = redis.xadd(key, XAddArgs.Builder.maxlen(5).approximateTrimming().noMkStream(), body);
+        assertThat(id).isNull();
+        assertThat(redis.exists(key)).isEqualTo(0L);
+
+        id = redis.xadd(key, XAddArgs.Builder.maxlen(5).approximateTrimming(), body);
+        assertThat(id).isNotNull();
+        assertThat(redis.exists(key)).isEqualTo(1L);
+
+        List<StreamMessage<String, String>> messages = redis.xrange(key, Range.unbounded());
+        assertThat(messages.size()).isEqualTo(1);
+        assertThat(messages.get(0).getBody()).isEqualTo(body);
     }
 
     @Test
@@ -523,4 +541,5 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.xgroupSetid(StreamOffset.latest(key), "group")).isEqualTo("OK");
     }
+
 }
