@@ -138,6 +138,16 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
     suspend fun xgroupCreate(streamOffset: StreamOffset<K>, group: K, args: XGroupCreateArgs): String?
 
     /**
+     * Create a consumer from a consumer group.
+     *
+     * @param key the stream key.
+     * @param consumer consumer identified by group name and consumer key.
+     * @return simple-reply `true` if successful.
+     * @since 6.1
+     */
+    suspend fun xgroupCreateconsumer(key: K, consumer: Consumer<K>): Boolean?
+
+    /**
      * Delete a consumer from a consumer group.
      *
      * @param key the stream key.
