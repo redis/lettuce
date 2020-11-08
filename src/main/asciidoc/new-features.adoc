@@ -5,9 +5,9 @@
 == What's new in Lettuce 6.1
 
 * Kotlin Coroutines support for `SCAN`/`HSCAN`/`SSCAN`/`ZSCAN` through `ScanFlow`.
+* Command Listener API through `RedisClient.addListener(CommandListener)`.
 
 [[new-features.6-0-0]]
-
 == What's new in Lettuce 6.0
 
 * Support for RESP3 usage with Redis 6 along with RESP2/RESP3 handshake and protocol version discovery.

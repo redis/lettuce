@@ -13,39 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.lettuce.core.models.events;
-
-import io.lettuce.core.protocol.RedisCommand;
-
-import java.util.Map;
+package io.lettuce.core.event.command;
 
 /**
- * Base class for redis commands events.
+ * A listener for Redis command events.
  *
  * @author Mikhael Sokolov
+ * @since 6.1
  */
-public abstract class CommandBaseEvent<K, V, T> {
+public interface CommandListener {
 
-    private final RedisCommand<K, V, T> command;
-    private final Map<String, ?> context;
-
-    protected CommandBaseEvent(RedisCommand<K, V, T> command, Map<String, ?> context) {
-        this.command = command;
-        this.context = context;
+    /**
+     * Listener for command started events.
+     *
+     * @param event the event.
+     */
+    default void commandStarted(CommandStartedEvent event) {
     }
 
     /**
-     * @return command
+     * Listener for command completed events.
+     *
+     * @param event the event.
      */
-    public RedisCommand<K, V, T> getCommand() {
-        return command;
+    default void commandSucceeded(CommandSucceededEvent event) {
     }
 
     /**
-     * @return shared context
+     * Listener for command failure events.
+     *
+     * @param event the event.
      */
-    public Map<String, ?> getContext() {
-        return context;
+    default void commandFailed(CommandFailedEvent event) {
     }
+
 }

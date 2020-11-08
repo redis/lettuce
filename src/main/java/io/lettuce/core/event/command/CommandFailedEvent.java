@@ -13,31 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.lettuce.core.models.events;
-
-import io.lettuce.core.protocol.RedisCommand;
+package io.lettuce.core.event.command;
 
 import java.util.Map;
 
+import io.lettuce.core.protocol.RedisCommand;
+
 /**
- * Event for failed command.
+ * Event for a failed command.
  *
  * @author Mikhael Sokolov
+ * @since 6.1
  */
-public class CommandFailedEvent<K, V, T> extends CommandBaseEvent<K, V, T> {
+public class CommandFailedEvent extends CommandBaseEvent {
 
     private final Throwable cause;
 
-    public CommandFailedEvent(RedisCommand<K, V, T> command, Map<String, ?> context, Throwable cause) {
+    public CommandFailedEvent(RedisCommand<Object, Object, Object> command, Map<String, Object> context, Throwable cause) {
         super(command, context);
         this.cause = cause;
     }
 
     /**
-     * @return cause of failure
+     * @return the exception.
      */
     public Throwable getCause() {
         return cause;
     }
+
 }

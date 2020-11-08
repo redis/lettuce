@@ -15,16 +15,24 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.lang.reflect.Field;
 import java.net.SocketAddress;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.event.command.CommandFailedEvent;
+import io.lettuce.core.event.command.CommandListener;
+import io.lettuce.core.event.command.CommandStartedEvent;
+import io.lettuce.core.event.command.CommandSucceededEvent;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
@@ -36,6 +44,8 @@ import io.lettuce.test.settings.TestSettings;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
+ * Integration tests for {@link RedisClient}.
+ *
  * @author Mark Paluch
  */
 class RedisClientIntegrationTests extends TestSupport {
@@ -43,9 +53,9 @@ class RedisClientIntegrationTests extends TestSupport {
     private final ClientResources clientResources = TestClientResources.get();
 
     @Test
-    void shouldNotifyListener() {
+    void shouldNotifyConnectionListener() {
 
-        final TestConnectionListener listener = new TestConnectionListener();
+        TestConnectionListener listener = new TestConnectionListener();
 
         RedisClient client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
 
@@ -124,6 +134,28 @@ class RedisClientIntegrationTests extends TestSupport {
         assertThat(eventLoopGroups).isEmpty();
         assertThat(executor.isShuttingDown()).isTrue();
         assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isTrue();
+    }
+
+    @Test
+    void shouldPropagateCommandTimeoutToCommandListener() throws InterruptedException {
+
+        TestCommandListener commandListener = new TestCommandListener();
+
+        RedisClient client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
+        client.addListener(commandListener);
+        ClientOptions options = ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build();
+        client.setOptions(options);
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+        connection.setTimeout(Duration.ofMillis(1));
+
+        assertThat(connection.async().blpop(100, key).await(100, TimeUnit.SECONDS)).isTrue();
+
+        assertThat(commandListener.started).hasSize(1);
+        assertThat(commandListener.succeeded).isEmpty();
+        assertThat(commandListener.failed).hasSize(1).extracting(it -> it.getCommand().getType()).contains(CommandType.BLPOP);
+
+        FastShutdown.shutdown(client);
     }
 
     @Test
@@ -213,5 +245,36 @@ class RedisClientIntegrationTests extends TestSupport {
         public void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
             onException = connection;
         }
+    }
+
+    static class TestCommandListener implements CommandListener {
+
+        final List<CommandStartedEvent> started = new ArrayList<>();
+
+        final List<CommandSucceededEvent> succeeded = new ArrayList<>();
+
+        final List<CommandFailedEvent> failed = new ArrayList<>();
+
+        @Override
+        public void commandStarted(CommandStartedEvent event) {
+            synchronized (started) {
+                started.add(event);
+            }
+        }
+
+        @Override
+        public void commandSucceeded(CommandSucceededEvent event) {
+            synchronized (succeeded) {
+                succeeded.add(event);
+            }
+        }
+
+        @Override
+        public void commandFailed(CommandFailedEvent event) {
+            synchronized (failed) {
+                failed.add(event);
+            }
+        }
+
     }
 }

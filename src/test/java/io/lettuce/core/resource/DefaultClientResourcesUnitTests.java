@@ -15,12 +15,8 @@
  */
 package io.lettuce.core.resource;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -142,6 +138,7 @@ class DefaultClientResourcesUnitTests {
         EventBus eventBusMock = mock(EventBus.class);
         CommandLatencyCollector latencyCollectorMock = mock(CommandLatencyCollector.class);
 
+
         ClientResources sut = ClientResources.builder().eventExecutorGroup(executorMock)
                 .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
                 .commandLatencyRecorder(latencyCollectorMock).build();
@@ -150,6 +147,7 @@ class DefaultClientResourcesUnitTests {
 
         assertThat(sut.eventExecutorGroup()).isSameAs(executorMock);
         assertThat(sut.eventLoopGroupProvider()).isSameAs(groupProviderMock);
+
         assertThat(sut.timer()).isSameAs(timerMock);
         assertThat(copy.timer()).isSameAs(timerMock2).isNotSameAs(timerMock);
         assertThat(sut.eventBus()).isSameAs(eventBusMock);

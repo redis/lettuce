@@ -15,8 +15,7 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.internal.LettuceStrings.isEmpty;
-import static io.lettuce.core.internal.LettuceStrings.isNotEmpty;
+import static io.lettuce.core.internal.LettuceStrings.*;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -29,14 +28,20 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
-import io.lettuce.core.internal.*;
-import io.lettuce.core.masterreplica.MasterReplica;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.ExceptionFactory;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceStrings;
+import io.lettuce.core.masterreplica.MasterReplica;
+import io.lettuce.core.protocol.CommandExpiryWriter;
+import io.lettuce.core.protocol.CommandHandler;
+import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.Endpoint;
+import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -273,8 +278,9 @@ public class RedisClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getOptions())) {
             writer = new CommandExpiryWriter(writer, getOptions(), getResources());
         }
-        if (CommandListenerWriter.isSupported(getResources())) {
-            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+
+        if (CommandListenerWriter.isSupported(getCommandListeners())) {
+            writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout);
@@ -404,8 +410,9 @@ public class RedisClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getOptions())) {
             writer = new CommandExpiryWriter(writer, getOptions(), getResources());
         }
-        if (CommandListenerWriter.isSupported(getResources())) {
-            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+
+        if (CommandListenerWriter.isSupported(getCommandListeners())) {
+            writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout);
@@ -570,8 +577,9 @@ public class RedisClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getOptions())) {
             writer = new CommandExpiryWriter(writer, getOptions(), getResources());
         }
-        if (CommandListenerWriter.isSupported(getResources())) {
-            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+
+        if (CommandListenerWriter.isSupported(getCommandListeners())) {
+            writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
         StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(writer, codec, timeout);

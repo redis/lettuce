@@ -13,48 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.lettuce.core;
 
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.models.events.CommandFailedEvent;
-import io.lettuce.core.models.events.CommandStartedEvent;
-import io.lettuce.core.models.events.CommandSucceededEvent;
-import io.lettuce.core.resource.ClientResources;
-import io.lettuce.test.LettuceExtension;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static io.lettuce.core.ScriptOutputType.BOOLEAN;
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.event.command.CommandFailedEvent;
+import io.lettuce.core.event.command.CommandListener;
+import io.lettuce.core.event.command.CommandStartedEvent;
+import io.lettuce.core.event.command.CommandSucceededEvent;
+import io.lettuce.test.LettuceExtension;
 
 /**
+ * Integration tests for {@link CommandListener}.
+ *
  * @author Mikhael Sokolov
+ * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-@SuppressWarnings({"rawtypes", "unchecked"})
-public class CommandListenerTest extends TestSupport {
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public class CommandListenerIntegrationTests extends TestSupport {
 
-    private RedisURI uri;
+    private final RedisClient client;
 
-    @BeforeEach
-    void setUp() {
-        this.uri = RedisURI.create(host, port);
+    @Inject
+    public CommandListenerIntegrationTests(RedisClient client) {
+        this.client = client;
     }
 
     @Test
     void shouldWorkRedisCommandListener() {
+
         List<CommandStartedEvent> startedEvents = Collections.synchronizedList(new ArrayList<>());
         List<CommandSucceededEvent> succeededEvents = Collections.synchronizedList(new ArrayList<>());
         List<CommandFailedEvent> failedEvents = Collections.synchronizedList(new ArrayList<>());
 
         CommandListener listener = new CommandListener() {
+
             @Override
             public void commandStarted(CommandStartedEvent event) {
                 event.getContext().put(key, value);
@@ -67,33 +71,36 @@ public class CommandListenerTest extends TestSupport {
             public void commandSucceeded(CommandSucceededEvent event) {
                 succeededEvents.add(event);
 
-                assertThat(event.getContext().get(key)).isEqualTo(value);
-                assertThat(event.getExecuteDuration()).isPositive();
+                assertThat(event.getContext()).containsEntry(key, value);
+                assertThat(event.getDuration()).isPositive();
             }
 
             @Override
             public void commandFailed(CommandFailedEvent event) {
                 failedEvents.add(event);
 
-                assertThat(event.getContext().get(key)).isEqualTo(value);
+                assertThat(event.getContext()).containsEntry(key, value);
                 assertThat(event.getCause()).isInstanceOf(RedisCommandExecutionException.class);
             }
+
         };
 
-        ClientResources resources = ClientResources.builder().commandListeners(singletonList(listener)).build();
-        RedisClient client = RedisClient.create(resources, uri);
+        client.addListener(listener);
 
         RedisCommands<String, String> sync = client.connect().sync();
 
         sync.set(key, value);
         sync.get(key);
         try {
-            sync.eval("bad script", BOOLEAN);
+            sync.llen(key);
         } catch (RedisCommandExecutionException ignored) {
         }
 
         assertThat(startedEvents).hasSize(3);
         assertThat(succeededEvents).hasSize(2);
         assertThat(failedEvents).hasSize(1);
+
+        client.removeListener(listener);
     }
+
 }

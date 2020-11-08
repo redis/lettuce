@@ -18,7 +18,12 @@ package io.lettuce.core.cluster;
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -531,8 +536,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
-        if (CommandListenerWriter.isSupported(getResources())) {
-            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+
+        if (CommandListenerWriter.isSupported(getCommandListeners())) {
+            writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
         StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(writer, endpoint, codec,
@@ -576,8 +582,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
-        if (CommandListenerWriter.isSupported(getResources())) {
-            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+
+        if (CommandListenerWriter.isSupported(getCommandListeners())) {
+            writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
@@ -618,8 +625,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
-        if (CommandListenerWriter.isSupported(getResources())) {
-            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+
+        if (CommandListenerWriter.isSupported(getCommandListeners())) {
+            writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
         ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(getClusterClientOptions(), writer,
@@ -704,8 +712,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
-        if (CommandListenerWriter.isSupported(getResources())) {
-            writer = new CommandListenerWriter(writer, new CommandListenerMulticaster(getResources().commandListeners()));
+
+        if (CommandListenerWriter.isSupported(getCommandListeners())) {
+            writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
         ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(getClusterClientOptions(), writer,

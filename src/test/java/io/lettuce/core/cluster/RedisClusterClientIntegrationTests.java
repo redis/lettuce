@@ -15,15 +15,14 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterTestUtil.getOwnPartition;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
+import static io.lettuce.core.cluster.ClusterTestUtil.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -36,7 +35,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -47,6 +52,11 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.event.command.CommandBaseEvent;
+import io.lettuce.core.event.command.CommandFailedEvent;
+import io.lettuce.core.event.command.CommandListener;
+import io.lettuce.core.event.command.CommandStartedEvent;
+import io.lettuce.core.event.command.CommandSucceededEvent;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.test.Delay;
@@ -58,6 +68,8 @@ import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Integration tests for {@link RedisClusterClient}.
+ *
  * @author Mark Paluch
  */
 @SuppressWarnings("unchecked")
@@ -65,19 +77,27 @@ import io.lettuce.test.settings.TestSettings;
 class RedisClusterClientIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisClusterClient clusterClient;
 
     private StatefulRedisConnection<String, String> redis1;
+
     private StatefulRedisConnection<String, String> redis2;
+
     private StatefulRedisConnection<String, String> redis3;
+
     private StatefulRedisConnection<String, String> redis4;
 
     private RedisCommands<String, String> redissync1;
+
     private RedisCommands<String, String> redissync2;
+
     private RedisCommands<String, String> redissync3;
+
     private RedisCommands<String, String> redissync4;
 
     private RedisAdvancedClusterCommands<String, String> sync;
+
     private StatefulRedisClusterConnection<String, String> connection;
 
     @Inject
@@ -277,50 +297,82 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     @SuppressWarnings({ "rawtypes" })
     void testClusterCommandRedirection() {
 
-        RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
+        TestCommandListener listener = new TestCommandListener();
+        clusterClient.getPartitions();
 
-        // Command on node within the default connection
-        assertThat(connection.set(ClusterTestSettings.KEY_B, value)).isEqualTo("OK");
+        try {
 
-        // gets redirection to node 3
-        assertThat(connection.set(ClusterTestSettings.KEY_A, value)).isEqualTo("OK");
-        connection.getStatefulConnection().close();
+            clusterClient.addListener(listener);
+            RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
+
+            listener.clear();
+
+            // Command on node within the default connection
+            assertThat(connection.set(ClusterTestSettings.KEY_B, value)).isEqualTo("OK");
+
+            // gets routing to node 3
+            assertThat(connection.set(ClusterTestSettings.KEY_A, value)).isEqualTo("OK");
+            connection.getStatefulConnection().close();
+        } finally {
+            client.removeListener(listener);
+        }
+
+        assertThat(listener.started).hasSize(2);
+        assertThat(listener.succeeded).hasSize(2);
     }
 
     @Test
     @SuppressWarnings({ "rawtypes" })
     void testClusterRedirection() {
 
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
-        Partitions partitions = clusterClient.getPartitions();
+        TestCommandListener listener = new TestCommandListener();
+        clusterClient.getPartitions();
+        try {
 
-        for (RedisClusterNode partition : partitions) {
-            partition.setSlots(Collections.emptyList());
-            if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
-                partition.setSlots(IntStream.range(0, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList()));
+            clusterClient.addListener(listener);
+            RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
+            Partitions partitions = clusterClient.getPartitions();
+
+            for (RedisClusterNode partition : partitions) {
+                partition.setSlots(Collections.emptyList());
+                if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+                    partition.setSlots(IntStream.range(0, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList()));
+                }
             }
+            partitions.updateCache();
+
+            // appropriate cluster node
+            RedisFuture<String> setB = connection.set(ClusterTestSettings.KEY_B, value);
+
+            assertThat(setB.toCompletableFuture()).isInstanceOf(AsyncCommand.class);
+
+            TestFutures.awaitOrTimeout(setB);
+            assertThat(setB.getError()).isNull();
+            assertThat(TestFutures.getOrTimeout(setB)).isEqualTo("OK");
+
+            listener.clear();
+
+            // gets redirection to node 3
+            RedisFuture<String> setA = connection.set(ClusterTestSettings.KEY_A, value);
+
+            assertThat((CompletionStage) setA).isInstanceOf(AsyncCommand.class);
+
+            TestFutures.awaitOrTimeout(setA);
+            assertThat(setA.getError()).isNull();
+            assertThat(TestFutures.getOrTimeout(setA)).isEqualTo("OK");
+
+            connection.getStatefulConnection().close();
+        } finally {
+            clusterClient.removeListener(listener);
         }
-        partitions.updateCache();
 
-        // appropriate cluster node
-        RedisFuture<String> setB = connection.set(ClusterTestSettings.KEY_B, value);
+        assertThat(listener.started).hasSize(2);
+        assertThat(listener.succeeded).hasSize(2);
 
-        assertThat(setB.toCompletableFuture()).isInstanceOf(AsyncCommand.class);
-
-        TestFutures.awaitOrTimeout(setB);
-        assertThat(setB.getError()).isNull();
-        assertThat(TestFutures.getOrTimeout(setB)).isEqualTo("OK");
-
-        // gets redirection to node 3
-        RedisFuture<String> setA = connection.set(ClusterTestSettings.KEY_A, value);
-
-        assertThat((CompletionStage) setA).isInstanceOf(AsyncCommand.class);
-
-        TestFutures.awaitOrTimeout(setA);
-        assertThat(setA.getError()).isNull();
-        assertThat(TestFutures.getOrTimeout(setA)).isEqualTo("OK");
-
-        connection.getStatefulConnection().close();
+        // Redirected Cluster commands report events twice because the facade and the node connection reports the command.
+        CommandStartedEvent commandStartedEvent = listener.started.get(0);
+        assertThat(listener.started).extracting(CommandBaseEvent::getCommand).containsSequence(commandStartedEvent.getCommand(),
+                commandStartedEvent.getCommand());
     }
 
     @Test
@@ -622,4 +674,36 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         connection.getStatefulConnection().close();
     }
+
+    static class TestCommandListener implements CommandListener {
+
+        final List<CommandStartedEvent> started = new Vector<>();
+
+        final List<CommandSucceededEvent> succeeded = new Vector<>();
+
+        final List<CommandFailedEvent> failed = new Vector<>();
+
+        @Override
+        public void commandStarted(CommandStartedEvent event) {
+            started.add(event);
+        }
+
+        @Override
+        public void commandSucceeded(CommandSucceededEvent event) {
+            succeeded.add(event);
+        }
+
+        @Override
+        public void commandFailed(CommandFailedEvent event) {
+            failed.add(event);
+        }
+
+        public void clear() {
+            started.clear();
+            succeeded.clear();
+            failed.clear();
+        }
+
+    }
+
 }

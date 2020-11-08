@@ -23,13 +23,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.CommandExpiryWriter;
+import io.lettuce.core.protocol.CommandWrapper;
+import io.lettuce.core.protocol.ConnectionFacade;
+import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.netty.util.internal.logging.InternalLogger;
@@ -104,8 +107,13 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
         this.timeout = timeout;
 
-        if (channelWriter instanceof CommandExpiryWriter) {
-            ((CommandExpiryWriter) channelWriter).setTimeout(timeout);
+        RedisChannelWriter writer = channelWriter;
+        if (writer instanceof CommandListenerWriter) {
+            writer = ((CommandListenerWriter) channelWriter).getDelegate();
+        }
+
+        if (writer instanceof CommandExpiryWriter) {
+            ((CommandExpiryWriter) writer).setTimeout(timeout);
         }
     }
 
