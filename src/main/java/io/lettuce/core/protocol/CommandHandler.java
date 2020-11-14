@@ -15,13 +15,19 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.ConnectionEvents.Reset;
+import static io.lettuce.core.ConnectionEvents.*;
 
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.lettuce.core.ClientOptions;
@@ -40,7 +46,11 @@ import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracer;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.local.LocalAddress;
 import io.netty.util.Recycler;
 import io.netty.util.concurrent.Future;
@@ -104,6 +114,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private Channel channel;
 
     private ByteBuf buffer;
+
+    private boolean hasDecodeProgress;
 
     private PushOutput<ByteBuffer, ByteBuffer> pushOutput;
 
@@ -591,6 +603,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
                 try {
                     if (!decode(ctx, buffer, pushOutput)) {
+                        hasDecodeProgress = true;
                         decodeBufferPolicy.afterPartialDecode(buffer);
                         return;
                     }
@@ -601,10 +614,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                     throw e;
                 }
 
+                hasDecodeProgress = false;
                 PushOutput<ByteBuffer, ByteBuffer> output = pushOutput;
                 pushOutput = null;
                 notifyPushListeners(output);
-
             } else {
 
                 RedisCommand<?, ?, ?> command = stack.peek();
@@ -615,7 +628,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 pristine = false;
 
                 try {
+
                     if (!decode(ctx, buffer, command)) {
+                        hasDecodeProgress = true;
                         decodeBufferPolicy.afterPartialDecode(buffer);
                         return;
                     }
@@ -625,6 +640,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                     throw e;
                 }
 
+                hasDecodeProgress = false;
                 if (isProtectedMode(command)) {
                     onProtectedMode(command.getOutput().getError());
                 } else {
@@ -677,7 +693,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     protected boolean isPushDecode(ByteBuf buffer) {
-        return isPushMessage(buffer) || pushOutput != null;
+        return (!hasDecodeProgress && isPushMessage(buffer)) || pushOutput != null;
     }
 
     private boolean isMessageDecode() {
