@@ -30,8 +30,6 @@ jobs:
       env:
         - JDK='OpenJDK 8'
         - REDIS=3.2
-    - env: JDK='OpenJDK 11'
-      before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -f 11
     - env: JDK='OpenJDK 15'
       before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -f 15
     - env: JDK='OpenJDK EA'
