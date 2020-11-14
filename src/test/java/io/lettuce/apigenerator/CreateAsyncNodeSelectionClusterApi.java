@@ -37,6 +37,7 @@ import io.lettuce.core.internal.LettuceSets;
  * Create async API based on the templates.
  *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
 class CreateAsyncNodeSelectionClusterApi {
 

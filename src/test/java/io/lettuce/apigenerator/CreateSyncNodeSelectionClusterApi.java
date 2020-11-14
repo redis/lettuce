@@ -38,6 +38,7 @@ import io.lettuce.core.internal.LettuceSets;
  * Create sync API based on the templates.
  *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 public class CreateSyncNodeSelectionClusterApi {
