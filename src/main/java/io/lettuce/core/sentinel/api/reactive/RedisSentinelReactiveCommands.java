@@ -189,7 +189,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @param output the command output, must not be {@code null}.
      * @param <T> response type.
      * @return the command response.
-     * @since 5.2
+     * @since 6.0.2
      */
     <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output);
 
@@ -201,7 +201,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @param args the command arguments, must not be {@code null}.
      * @param <T> response type.
      * @return the command response.
-     * @since 5.2
+     * @since 6.0.2
      */
     <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args);
 
@@ -214,4 +214,5 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
 }

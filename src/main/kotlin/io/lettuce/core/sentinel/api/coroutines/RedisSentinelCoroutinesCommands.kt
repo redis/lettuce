@@ -187,7 +187,7 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * @param output the command output, must not be `null`.
      * @param <T> response type.
      * @return the command response.
-     * @since 5.2
+     * @since 6.0.2
      */
     suspend fun <T> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>): T?
 
@@ -199,7 +199,7 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * @param args the command arguments, must not be `null`.
      * @param <T> response type.
      * @return the command response.
-     * @since 5.2
+     * @since 6.0.2
      */
     suspend fun <T> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): T?
 

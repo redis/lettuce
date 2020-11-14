@@ -189,7 +189,7 @@ public interface RedisSentinelCommands<K, V> {
      * @param output the command output, must not be {@code null}.
      * @param <T> response type
      * @return the command response
-     * @since 5.2
+     * @since 6.0.2
      */
     <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
 
@@ -201,7 +201,7 @@ public interface RedisSentinelCommands<K, V> {
      * @param args the command arguments, must not be {@code null}.
      * @param <T> response type
      * @return the command response
-     * @since 5.2
+     * @since 6.0.2
      */
     <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
