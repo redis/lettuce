@@ -193,9 +193,10 @@ public class StringCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void setGet() {
-        assertThat(redis.set(key, value, SetArgs.Builder.get())).isNull();
-        assertThat(redis.set(key, "value2", SetArgs.Builder.get())).isEqualTo(value);
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void setget() {
+        assertThat(redis.setget(key, value)).isNull();
+        assertThat(redis.setget(key, "value2")).isEqualTo(value);
         assertThat(redis.get(key)).isEqualTo("value2");
     }
 

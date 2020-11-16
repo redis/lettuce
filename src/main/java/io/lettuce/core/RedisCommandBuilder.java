@@ -1832,6 +1832,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SET, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, V> setget(K key, V value) {
+        return setget(key, value, new SetArgs());
+    }
+
+    Command<K, V, V> setget(K key, V value, SetArgs setArgs) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+        setArgs.get().build(args);
+        return createCommand(SET, new ValueOutput<>(codec), args);
+    }
+
     Command<K, V, Long> setbit(K key, long offset, int value) {
         notNullKey(key);
 

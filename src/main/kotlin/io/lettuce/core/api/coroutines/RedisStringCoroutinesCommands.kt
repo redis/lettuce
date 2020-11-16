@@ -257,7 +257,7 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @param keys the key.
      * @return List<V> array-reply list of values at the specified keys.
      */
-    fun mget(vararg keys: K): Flow<KeyValue<K, V>>
+    fun mget(vararg keys: K): Flow<KeyValue<K,V>>
 
     /**
      * Set multiple keys to multiple values.
@@ -295,6 +295,27 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply `OK` if `SET` was executed correctly.
      */
     suspend fun set(key: K, value: V, setArgs: SetArgs): String?
+
+    /**
+     * Set the string value of a key and return its old value.
+     *
+     * @param key the key
+     * @param value the value
+     * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
+     * @since 6.2
+     */
+    suspend fun setget(key: K, value: V): V?
+
+    /**
+     * Set the string value of a key and return its old value.
+     *
+     * @param key the key
+     * @param value the value
+     * @param setArgs the command arguments
+     * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
+     * @since 6.2
+     */
+    suspend fun setget(key: K, value: V, setArgs: SetArgs): V?
 
     /**
      * Sets or clears the bit at offset in the string value stored at key.

@@ -727,6 +727,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<V> setget(K key, V value) {
+        return dispatch(commandBuilder.setget(key, value));
+    }
+
+    @Override
+    public RedisFuture<V> setget(K key, V value, SetArgs setArgs) {
+        return dispatch(commandBuilder.setget(key, value, setArgs));
+    }
+
+    @Override
     public RedisFuture<Long> hdel(K key, K... fields) {
         return dispatch(commandBuilder.hdel(key, fields));
     }
