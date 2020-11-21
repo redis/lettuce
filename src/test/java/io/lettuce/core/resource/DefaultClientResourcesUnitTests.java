@@ -30,6 +30,7 @@ import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.resource.FastShutdown;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -39,6 +40,7 @@ import io.netty.util.concurrent.Future;
  * Unit tests for {@link DefaultClientResources}.
  *
  * @author Mark Paluch
+ * @author Yohei Ueki
  */
 class DefaultClientResourcesUnitTests {
 
@@ -108,16 +110,19 @@ class DefaultClientResourcesUnitTests {
         EventBus eventBusMock = mock(EventBus.class);
         CommandLatencyCollector latencyCollectorMock = mock(CommandLatencyCollector.class);
         NettyCustomizer nettyCustomizer = mock(NettyCustomizer.class);
+        AddressResolverGroup<?> addressResolverGroup = mock(AddressResolverGroup.class);
 
         DefaultClientResources sut = DefaultClientResources.builder().eventExecutorGroup(executorMock)
                 .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
-                .commandLatencyRecorder(latencyCollectorMock).nettyCustomizer(nettyCustomizer).build();
+                .commandLatencyRecorder(latencyCollectorMock).nettyCustomizer(nettyCustomizer)
+                .addressResolverGroup(addressResolverGroup).build();
 
         assertThat(sut.eventExecutorGroup()).isSameAs(executorMock);
         assertThat(sut.eventLoopGroupProvider()).isSameAs(groupProviderMock);
         assertThat(sut.timer()).isSameAs(timerMock);
         assertThat(sut.eventBus()).isSameAs(eventBusMock);
         assertThat(sut.nettyCustomizer()).isSameAs(nettyCustomizer);
+        assertThat(sut.addressResolverGroup()).isSameAs(addressResolverGroup);
 
         assertThat(TestFutures.getOrTimeout(sut.shutdown())).isTrue();
 
@@ -137,11 +142,11 @@ class DefaultClientResourcesUnitTests {
         Timer timerMock2 = mock(Timer.class);
         EventBus eventBusMock = mock(EventBus.class);
         CommandLatencyCollector latencyCollectorMock = mock(CommandLatencyCollector.class);
-
+        AddressResolverGroup<?> addressResolverGroupMock = mock(AddressResolverGroup.class);
 
         ClientResources sut = ClientResources.builder().eventExecutorGroup(executorMock)
                 .eventLoopGroupProvider(groupProviderMock).timer(timerMock).eventBus(eventBusMock)
-                .commandLatencyRecorder(latencyCollectorMock).build();
+                .commandLatencyRecorder(latencyCollectorMock).addressResolverGroup(addressResolverGroupMock).build();
 
         ClientResources copy = sut.mutate().timer(timerMock2).build();
 
@@ -151,6 +156,7 @@ class DefaultClientResourcesUnitTests {
         assertThat(sut.timer()).isSameAs(timerMock);
         assertThat(copy.timer()).isSameAs(timerMock2).isNotSameAs(timerMock);
         assertThat(sut.eventBus()).isSameAs(eventBusMock);
+        assertThat(sut.addressResolverGroup()).isSameAs(addressResolverGroupMock);
 
         assertThat(TestFutures.getOrTimeout(sut.shutdown())).isTrue();
 

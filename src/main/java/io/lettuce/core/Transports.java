@@ -34,7 +34,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  * @author Yohei Ueki
  * @since 4.4
  */
-class Transports {
+public class Transports {
 
     /**
      * @return the default {@link EventLoopGroup} for socket transport that is compatible with {@link #socketChannelClass()}.
@@ -51,7 +51,7 @@ class Transports {
     /**
      * @return the default {@link Channel} for socket (network/TCP) transport.
      */
-    static Class<? extends Channel> socketChannelClass() {
+    public static Class<? extends Channel> socketChannelClass() {
 
         if (NativeTransports.isSocketSupported()) {
             return NativeTransports.socketChannelClass();
@@ -63,7 +63,7 @@ class Transports {
     /**
      * @return the default {@link DatagramChannel} for socket (network/UDP) transport.
      */
-    static Class<? extends DatagramChannel> datagramChannelClass() {
+    public static Class<? extends DatagramChannel> datagramChannelClass() {
 
         if (NativeTransports.isSocketSupported()) {
             return NativeTransports.datagramChannelClass();

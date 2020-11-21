@@ -54,9 +54,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.resolver.dns.DnsAddressResolverGroup;
-import io.netty.resolver.dns.DnsNameResolverBuilder;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.internal.logging.InternalLogger;
@@ -306,9 +303,7 @@ public abstract class AbstractRedisClient {
         LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
 
         if (connectionPoint.getSocket() == null) {
-            connectionBuilder.bootstrap().resolver(
-                    new DnsAddressResolverGroup(new DnsNameResolverBuilder().channelType(Transports.datagramChannelClass())
-                            .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))));
+            connectionBuilder.bootstrap().resolver(clientResources.addressResolverGroup());
         }
     }
 
