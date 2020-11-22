@@ -28,6 +28,7 @@ import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.metrics.CommandMetrics;
 import io.lettuce.core.resource.*;
 import io.lettuce.core.tracing.Tracing;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -36,6 +37,7 @@ import io.netty.util.concurrent.SucceededFuture;
 
 /**
  * @author Mark Paluch
+ * @author Yohei Ueki
  */
 public class EmptyClientResources implements ClientResources {
 
@@ -121,6 +123,11 @@ public class EmptyClientResources implements ClientResources {
     @Override
     public Tracing tracing() {
         return Tracing.disabled();
+    }
+
+    @Override
+    public AddressResolverGroup<?> addressResolverGroup() {
+        return null;
     }
 
     public static class EmptyCommandLatencyCollector implements CommandLatencyCollector {
