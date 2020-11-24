@@ -788,7 +788,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             if (timeout.getNano() == 0) {
                 queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout.getSeconds() + "s");
             } else {
-                queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout.toMillis() + "ns");
+                queryPairs.add(PARAMETER_NAME_TIMEOUT + "=" + timeout.toNanos() + "ns");
             }
         }
 
