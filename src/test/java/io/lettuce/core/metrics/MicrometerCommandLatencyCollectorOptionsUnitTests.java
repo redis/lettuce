@@ -50,7 +50,9 @@ class MicrometerCommandLatencyCollectorOptionsUnitTests {
 
     @Test
     void histogram() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder().histogram().build();
+        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
+                .histogram(true)
+                .build();
 
         assertThat(options.isHistogram()).isTrue();
     }

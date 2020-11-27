@@ -34,9 +34,9 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
 
     public static final boolean DEFAULT_LOCAL_DISTINCTION = false;
 
-    public static final Duration DEFAULT_MIN_LATENCY = Duration.ofMillis(1L);
-
     public static final Duration DEFAULT_MAX_LATENCY = Duration.ofMinutes(5L);
+
+    public static final Duration DEFAULT_MIN_LATENCY = Duration.ofMillis(1L);
 
     public static final double[] DEFAULT_TARGET_PERCENTILES = new double[] { 0.50, 0.90, 0.95, 0.99, 0.999 };
 
@@ -149,7 +149,6 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
          * Enable the latency collector.
          *
          * @return this {@link Builder}.
-         * @since 5.1
          */
         @Override
         public Builder enable() {
@@ -161,10 +160,11 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
          * Enable histogram buckets used to generate aggregable percentile approximations in monitoring
          * systems that have query facilities to do so.
          *
+         * @param histogram {@code true} if histogram buckets are recorded
          * @return this {@link Builder}.
          */
-        public Builder histogram() {
-            this.histogram = true;
+        public Builder histogram(boolean histogram) {
+            this.histogram = histogram;
             return this;
         }
 
@@ -174,6 +174,9 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
          * {@code false}, multiple connections to the same host/connection point will be recorded together. This allows a
          * consolidated view on one particular service. Defaults to {@code false}. See
          * {@link MicrometerCommandLatencyCollectorOptions#DEFAULT_LOCAL_DISTINCTION}.
+         *
+         * Warning: Enabling this could potentially cause a label cardinality explosion in the remote metric system and
+         * should be used with caution.
          *
          * @param localDistinction {@code true} if latencies are recorded distinct on local level (per connection)
          * @return this {@link Builder}.

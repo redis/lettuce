@@ -30,15 +30,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder {
 
-    static final String COMPLETION_METRIC = "lettuce.command.completion";
-
-    static final String FIRST_RESPONSE_METRIC = "lettuce.command.firstresponse";
-
     static final String LABEL_COMMAND = "command";
 
     static final String LABEL_LOCAL = "local";
 
     static final String LABEL_REMOTE = "remote";
+
+    static final String METRIC_COMPLETION = "lettuce.command.completion";
+
+    static final String METRIC_FIRST_RESPONSE = "lettuce.command.firstresponse";
 
     private final MeterRegistry meterRegistry;
 
@@ -79,7 +79,7 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     }
 
     protected Timer completionTimer(CommandLatencyId commandLatencyId) {
-        Timer.Builder timer = Timer.builder(COMPLETION_METRIC)
+        Timer.Builder timer = Timer.builder(METRIC_COMPLETION)
                 .description("Latency between command send and command completion (complete response received")
                 .tag(LABEL_COMMAND, commandLatencyId.commandType().name())
                 .tag(LABEL_LOCAL, commandLatencyId.localAddress().toString())
@@ -97,7 +97,7 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     }
 
     protected Timer firstResponseTimer(CommandLatencyId commandLatencyId) {
-        Timer.Builder timer = Timer.builder(FIRST_RESPONSE_METRIC)
+        Timer.Builder timer = Timer.builder(METRIC_FIRST_RESPONSE)
                 .description("Latency between command send and first response (first response received)")
                 .tag(LABEL_COMMAND, commandLatencyId.commandType().name())
                 .tag(LABEL_LOCAL, commandLatencyId.localAddress().toString())
