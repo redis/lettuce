@@ -15,8 +15,7 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -202,8 +201,10 @@ class RedisURIUnitTests {
         RedisURI defaultUri = new RedisURI();
         checkUriTimeout("redis://auth@localhost:1234/5?timeout=junk", defaultUri.getTimeout().getSeconds(), TimeUnit.SECONDS);
 
-        RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/5?timeout=5000ms");
-        assertThat(redisURI).hasToString("redis://****@localhost:1234/5?timeout=5s");
+        assertThat(RedisURI.create("redis://auth@localhost:1234/5?timeout=5000ms"))
+                .hasToString("redis://****@localhost:1234/5?timeout=5s");
+        assertThat(RedisURI.create("redis://auth@localhost:1234/5?timeout=123ms"))
+                .hasToString("redis://****@localhost:1234/5?timeout=123000000ns");
     }
 
     @Test
