@@ -15,12 +15,9 @@
  */
 package io.lettuce.core.pubsub;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Queue;
 
@@ -48,7 +45,11 @@ import io.lettuce.test.ReflectionTestUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelConfig;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoop;
 
 /**
  * @author Mark Paluch
@@ -118,7 +119,8 @@ class PubSubCommandHandlerUnitTests {
 
         sut.channelRead(context, responseBytes(":1000\r\n"));
 
-        assertThat((Object) ReflectionTestUtils.getField(command, "exception")).isInstanceOf(IllegalStateException.class);
+        assertThat((Object) ReflectionTestUtils.getField(command, "exception"))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

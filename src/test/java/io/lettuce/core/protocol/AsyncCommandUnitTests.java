@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CancellationException;
@@ -198,7 +197,7 @@ public class AsyncCommandUnitTests {
                 return null;
             }
         };
-        assertThatThrownBy(() -> output.set(null)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> output.set(null)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -209,7 +208,7 @@ public class AsyncCommandUnitTests {
                 return null;
             }
         };
-        assertThatThrownBy(() -> output.set(0)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> output.set(0)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

@@ -15,10 +15,9 @@
  */
 package io.lettuce.core.reliability;
 
-import static io.lettuce.test.ConnectionTestUtil.getCommandBuffer;
-import static io.lettuce.test.ConnectionTestUtil.getStack;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static io.lettuce.test.ConnectionTestUtil.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -28,7 +27,11 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -242,7 +245,7 @@ class AtMostOnceTest extends AbstractRedisClientTest {
 
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isFalse();
-        assertThat(getException(command)).isInstanceOf(IllegalStateException.class);
+        assertThat(getException(command)).isInstanceOf(UnsupportedOperationException.class);
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
         assertThat(sync.get(key)).isEqualTo("2");

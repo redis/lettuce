@@ -15,8 +15,8 @@
  */
 package io.lettuce.core.reliability;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -26,13 +26,22 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisCommandTimeoutException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.test.ConnectionTestUtil;
 import io.lettuce.test.Delay;
 import io.lettuce.test.Wait;
@@ -284,7 +293,7 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
         assertThat(command.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(command.isCancelled()).isFalse();
         assertThat(command.isDone()).isTrue();
-        assertThat(getException(command)).isInstanceOf(IllegalStateException.class);
+        assertThat(getException(command)).isInstanceOf(UnsupportedOperationException.class);
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
         assertThat(connection.get(key)).isEqualTo("2");

@@ -25,7 +25,7 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * <p>
  * Provides common decode methods and parsing functionality for output handling. Template methods that accept response values
- * throw {@link IllegalStateException} unless overridden by the concrete implementation.
+ * throw {@link UnsupportedOperationException} unless overridden by the concrete implementation.
  * <p>
  * Command outputs may accumulate their state until a command is finished or emit partial results during the decode process.
  * Output implementations that wish to emit partial results can implement {@link StreamingOutput} push individual output
@@ -73,7 +73,7 @@ public abstract class CommandOutput<K, V, T> {
      * @param bytes The command output, or null.
      */
     public void set(ByteBuffer bytes) {
-        throw new IllegalStateException(getClass().getName() + " does not support set(ByteBuffer)");
+        throw new UnsupportedOperationException(getClass().getName() + " does not support set(ByteBuffer)");
     }
 
     /**
@@ -104,7 +104,7 @@ public abstract class CommandOutput<K, V, T> {
      * @param integer The command output.
      */
     public void set(long integer) {
-        throw new IllegalStateException(getClass().getName() + " does not support set(long)");
+        throw new UnsupportedOperationException(getClass().getName() + " does not support set(long)");
     }
 
     /**
@@ -115,7 +115,7 @@ public abstract class CommandOutput<K, V, T> {
      * @since 6.0/RESP 3
      */
     public void set(double number) {
-        throw new IllegalStateException(getClass().getName() + " does not support set(double)");
+        throw new UnsupportedOperationException(getClass().getName() + " does not support set(double)");
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class CommandOutput<K, V, T> {
      * @since 6.0/RESP 3
      */
     public void set(boolean value) {
-        throw new IllegalStateException(getClass().getName() + " does not support set(boolean)");
+        throw new UnsupportedOperationException(getClass().getName() + " does not support set(boolean)");
     }
 
     /**

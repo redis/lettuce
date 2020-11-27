@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.output;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 
@@ -49,6 +48,7 @@ class BooleanListOutputUnitTests {
 
     @Test
     void setByteNotImplemented() {
-        assertThatThrownBy(() -> sut.set(ByteBuffer.wrap("4.567".getBytes()))).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> sut.set(ByteBuffer.wrap("4.567".getBytes())))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 }

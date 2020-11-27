@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.output;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -63,7 +62,7 @@ class ListOutputUnitTests {
     @ParameterizedTest
     @MethodSource("parameters")
     void setIntegerShouldFail(Fixture fixture) {
-        assertThatThrownBy(() -> fixture.commandOutput.set(123L)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> fixture.commandOutput.set(123L)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @ParameterizedTest

@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.output;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 
@@ -34,7 +33,7 @@ class GeoCoordinatesListOutputUnitTests {
 
     @Test
     void setIntegerShouldFail() {
-        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
