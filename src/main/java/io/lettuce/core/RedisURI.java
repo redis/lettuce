@@ -15,8 +15,7 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.internal.LettuceStrings.isEmpty;
-import static io.lettuce.core.internal.LettuceStrings.isNotEmpty;
+import static io.lettuce.core.internal.LettuceStrings.*;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -24,7 +23,14 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -128,6 +134,7 @@ import io.lettuce.core.internal.LettuceStrings;
  *
  * @author Mark Paluch
  * @author Guy Korland
+ * @author Johnny Lim
  * @since 3.0
  */
 @SuppressWarnings("serial")
