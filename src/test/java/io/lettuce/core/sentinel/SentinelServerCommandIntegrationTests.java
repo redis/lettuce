@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.sentinel;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +37,8 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Integration tests for {@link StatefulRedisSentinelConnection}.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
@@ -86,7 +88,7 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
 
     @Test
     public void clientKill() {
-        Pattern p = Pattern.compile(".*addr=([^ ]+).*");
+        Pattern p = Pattern.compile(".*[^l]addr=([^ ]+).*");
         String clients = sentinel.clientList();
         Matcher m = p.matcher(clients);
 
@@ -101,7 +103,7 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
         RedisSentinelCommands<String, String> connection2 = redisClient.connectSentinel(redisURI).sync();
         connection2.clientSetname("killme");
 
-        Pattern p = Pattern.compile("^.*addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);
+        Pattern p = Pattern.compile("^.*[^l]addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);
         String clients = sentinel.clientList();
         Matcher m = p.matcher(clients);
 
