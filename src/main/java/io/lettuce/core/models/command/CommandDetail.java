@@ -37,6 +37,8 @@ public class CommandDetail implements Serializable {
 
     private int keyStepCount;
 
+    private Set<AclCategory> aclCategories;
+
     public CommandDetail() {
     }
 
@@ -50,13 +52,30 @@ public class CommandDetail implements Serializable {
      * @param lastKeyPosition position of last key in argument list
      * @param keyStepCount step count for locating repeating keys
      */
+    @Deprecated
     public CommandDetail(String name, int arity, Set<Flag> flags, int firstKeyPosition, int lastKeyPosition, int keyStepCount) {
+        this(name, arity, flags, firstKeyPosition, lastKeyPosition, keyStepCount, null);
+    }
+
+    /**
+     * Constructs a {@link CommandDetail}
+     *
+     * @param name name of the command, must not be {@code null}
+     * @param arity command arity specification
+     * @param flags set of flags, must not be {@code null} but may be empty
+     * @param firstKeyPosition position of first key in argument list
+     * @param lastKeyPosition position of last key in argument list
+     * @param keyStepCount step count for locating repeating keys
+     * @param aclCategories command ACL details
+     */
+    public CommandDetail(String name, int arity, Set<Flag> flags, int firstKeyPosition, int lastKeyPosition, int keyStepCount, Set<AclCategory> aclCategories) {
         this.name = name;
         this.arity = arity;
         this.flags = flags;
         this.firstKeyPosition = firstKeyPosition;
         this.lastKeyPosition = lastKeyPosition;
         this.keyStepCount = keyStepCount;
+        this.aclCategories = aclCategories;
     }
 
     public String getName() {
@@ -107,6 +126,14 @@ public class CommandDetail implements Serializable {
         this.keyStepCount = keyStepCount;
     }
 
+    public Set<AclCategory> getAclCategories() {
+        return aclCategories;
+    }
+
+    public void setAclCategories(Set<AclCategory> aclCategories) {
+        this.aclCategories = aclCategories;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -117,6 +144,7 @@ public class CommandDetail implements Serializable {
         sb.append(", firstKeyPosition=").append(firstKeyPosition);
         sb.append(", lastKeyPosition=").append(lastKeyPosition);
         sb.append(", keyStepCount=").append(keyStepCount);
+        sb.append(", aclCategories=").append(aclCategories);
         sb.append(']');
         return sb.toString();
     }
@@ -193,4 +221,110 @@ public class CommandDetail implements Serializable {
         MOVABLEKEYS;
     }
 
+    public enum AclCategory {
+        /**
+         * command affects keyspace
+         */
+        KEYSPACE,
+
+        /**
+         * read command
+         */
+        READ,
+
+        /**
+         * write command
+         */
+        WRITE,
+
+        /**
+         * command for sets
+         */
+        SET,
+
+        /**
+         * command for sorted sets
+         */
+        SORTEDSET,
+
+        /**
+         * command for lists
+         */
+        LIST,
+
+        /**
+         * command for hash ops
+         */
+        HASH,
+
+        /**
+         * command for strings
+         */
+        STRING,
+
+        /**
+         * command for bitmaps
+         */
+        BITMAP,
+
+        /**
+         * command for hyperloglog
+         */
+        HYPERLOGLOG,
+
+        /**
+         * geo command
+         */
+        GEO,
+
+        /**
+         * streaming command
+         */
+        STREAM,
+
+        /**
+         * pubsub command
+         */
+        PUBSUB,
+
+        /**
+         * admin command
+         */
+        ADMIN,
+
+        /**
+         * fast command
+         */
+        FAST,
+
+        /**
+         * slow command
+         */
+        SLOW,
+
+        /**
+         * blocking command
+         */
+        BLOCKING,
+
+        /**
+         * dangerous command
+         */
+        DANGEROUS,
+
+        /**
+         * connection-establishing command
+         */
+        CONNECTION,
+
+        /**
+         * transactional command
+         */
+        TRANSACTION,
+
+        /**
+         * scripting command
+         */
+        SCRIPTING
+    }
 }
