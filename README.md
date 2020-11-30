@@ -20,7 +20,8 @@ This version of Lettuce has been tested against the latest Redis source-build.
 * [CDI](https://github.com/lettuce-io/lettuce-core/wiki/CDI-Support) and [Spring](https://github.com/lettuce-io/lettuce-core/wiki/Spring-Support) integration
 * [Codecs](https://github.com/lettuce-io/lettuce-core/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
 * multiple [Command Interfaces](https://github.com/lettuce-io/lettuce-core/wiki/Command-Interfaces-%284.0%29)
-* Compatible with Java 8 and 9 (implicit automatic module w/o descriptors)
+* Support for [Native Transports](https://github.com/lettuce-io/lettuce-core/wiki/Native-Transports)
+* Compatible with Java 8++ (implicit automatic module w/o descriptors)
 
 See the [reference documentation](https://lettuce.io/docs/) and [Wiki](https://github.com/lettuce-io/lettuce-core/wiki) for more details.
 

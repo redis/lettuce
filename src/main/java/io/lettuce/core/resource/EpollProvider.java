@@ -112,10 +112,10 @@ public class EpollProvider {
         INSTANCE;
 
         @Override
-        public Class<? extends Channel> domainSocketChannelClass() {
+        public boolean matches(Class<? extends EventExecutorGroup> type) {
 
             checkForEpollLibrary();
-            return null;
+            return false;
         }
 
         @Override
@@ -126,13 +126,6 @@ public class EpollProvider {
         }
 
         @Override
-        public boolean matches(Class<? extends EventExecutorGroup> type) {
-
-            checkForEpollLibrary();
-            return false;
-        }
-
-        @Override
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
 
             checkForEpollLibrary();
@@ -140,14 +133,21 @@ public class EpollProvider {
         }
 
         @Override
-        public SocketAddress newSocketAddress(String socketPath) {
+        public Class<? extends Channel> socketChannelClass() {
 
             checkForEpollLibrary();
             return null;
         }
 
         @Override
-        public Class<? extends Channel> socketChannelClass() {
+        public Class<? extends Channel> domainSocketChannelClass() {
+
+            checkForEpollLibrary();
+            return null;
+        }
+
+        @Override
+        public SocketAddress newSocketAddress(String socketPath) {
 
             checkForEpollLibrary();
             return null;
@@ -171,19 +171,19 @@ public class EpollProvider {
         }
 
         @Override
+        public Class<? extends EventLoopGroup> eventLoopGroupClass() {
+
+            checkForEpollLibrary();
+
+            return EpollEventLoopGroup.class;
+        }
+
+        @Override
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
 
             checkForEpollLibrary();
 
             return new EpollEventLoopGroup(nThreads, threadFactory);
-        }
-
-        @Override
-        public Class<? extends Channel> domainSocketChannelClass() {
-
-            checkForEpollLibrary();
-
-            return EpollDomainSocketChannel.class;
         }
 
         @Override
@@ -195,11 +195,11 @@ public class EpollProvider {
         }
 
         @Override
-        public Class<? extends EventLoopGroup> eventLoopGroupClass() {
+        public Class<? extends Channel> domainSocketChannelClass() {
 
             checkForEpollLibrary();
 
-            return EpollEventLoopGroup.class;
+            return EpollDomainSocketChannel.class;
         }
 
         @Override

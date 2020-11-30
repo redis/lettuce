@@ -105,17 +105,17 @@ public class KqueueProvider {
     }
 
     /**
-     * {@link EventLoopResources} for unavailable EPoll.
+     * {@link EventLoopResources} for unavailable Kqueue.
      */
     enum UnavailableKqueueResources implements EventLoopResources {
 
         INSTANCE;
 
         @Override
-        public Class<? extends Channel> domainSocketChannelClass() {
+        public boolean matches(Class<? extends EventExecutorGroup> type) {
 
             checkForKqueueLibrary();
-            return null;
+            return false;
         }
 
         @Override
@@ -126,13 +126,6 @@ public class KqueueProvider {
         }
 
         @Override
-        public boolean matches(Class<? extends EventExecutorGroup> type) {
-
-            checkForKqueueLibrary();
-            return false;
-        }
-
-        @Override
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
 
             checkForKqueueLibrary();
@@ -140,14 +133,21 @@ public class KqueueProvider {
         }
 
         @Override
-        public SocketAddress newSocketAddress(String socketPath) {
+        public Class<? extends Channel> socketChannelClass() {
 
             checkForKqueueLibrary();
             return null;
         }
 
         @Override
-        public Class<? extends Channel> socketChannelClass() {
+        public Class<? extends Channel> domainSocketChannelClass() {
+
+            checkForKqueueLibrary();
+            return null;
+        }
+
+        @Override
+        public SocketAddress newSocketAddress(String socketPath) {
 
             checkForKqueueLibrary();
             return null;
@@ -171,19 +171,19 @@ public class KqueueProvider {
         }
 
         @Override
+        public Class<? extends EventLoopGroup> eventLoopGroupClass() {
+
+            checkForKqueueLibrary();
+
+            return KQueueEventLoopGroup.class;
+        }
+
+        @Override
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
 
             checkForKqueueLibrary();
 
             return new KQueueEventLoopGroup(nThreads, threadFactory);
-        }
-
-        @Override
-        public Class<? extends Channel> domainSocketChannelClass() {
-
-            checkForKqueueLibrary();
-
-            return KQueueDomainSocketChannel.class;
         }
 
         @Override
@@ -195,12 +195,13 @@ public class KqueueProvider {
         }
 
         @Override
-        public Class<? extends EventLoopGroup> eventLoopGroupClass() {
+        public Class<? extends Channel> domainSocketChannelClass() {
 
             checkForKqueueLibrary();
 
-            return KQueueEventLoopGroup.class;
+            return KQueueDomainSocketChannel.class;
         }
+
 
         @Override
         public SocketAddress newSocketAddress(String socketPath) {
