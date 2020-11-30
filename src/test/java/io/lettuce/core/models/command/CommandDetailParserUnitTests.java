@@ -51,7 +51,7 @@ class CommandDetailParserUnitTests {
 
     @Test
     void testParse() {
-        Object o = LettuceLists.newList("get", "1", LettuceLists.newList("fast", "loading"), 1L, 2L, 3L);
+        Object o = LettuceLists.newList("get", "1", LettuceLists.newList("fast", "loading"), 1L, 2L, 3L, LettuceLists.newList("@read", "@string", "@fast"));
         List<CommandDetail> result = CommandDetailParser.parse(LettuceLists.newList(o));
         assertThat(result).hasSize(1);
 
@@ -62,6 +62,7 @@ class CommandDetailParserUnitTests {
         assertThat(commandDetail.getFirstKeyPosition()).isEqualTo(1);
         assertThat(commandDetail.getLastKeyPosition()).isEqualTo(2);
         assertThat(commandDetail.getKeyStepCount()).isEqualTo(3);
+        assertThat(commandDetail.getAclCategories()).hasSize(3);
     }
 
     @Test
@@ -73,6 +74,7 @@ class CommandDetailParserUnitTests {
         commandDetail.setKeyStepCount(4);
         commandDetail.setName("theName");
         commandDetail.setFlags(new HashSet<>());
+        commandDetail.setAclCategories(new HashSet<>());
 
         assertThat(commandDetail.toString()).contains(CommandDetail.class.getSimpleName());
     }

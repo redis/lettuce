@@ -38,6 +38,9 @@ public class CommandDetailParser {
     @SuppressWarnings("serial")
     protected static final Map<String, CommandDetail.Flag> FLAG_MAPPING;
 
+    @SuppressWarnings("serial")
+    protected static final Map<String, CommandDetail.AclCategory> ACL_CATEGORY_MAPPING;
+
     static {
         Map<String, CommandDetail.Flag> flagMap = new HashMap<>();
         flagMap.put("admin", CommandDetail.Flag.ADMIN);
@@ -55,6 +58,30 @@ public class CommandDetailParser {
         flagMap.put("stale", CommandDetail.Flag.STALE);
         flagMap.put("write", CommandDetail.Flag.WRITE);
         FLAG_MAPPING = Collections.unmodifiableMap(flagMap);
+
+        Map<String, CommandDetail.AclCategory> aclCategoriesMap = new HashMap<>();
+        aclCategoriesMap.put("@keyspace", CommandDetail.AclCategory.KEYSPACE);
+        aclCategoriesMap.put("@read", CommandDetail.AclCategory.READ);
+        aclCategoriesMap.put("@write", CommandDetail.AclCategory.WRITE);
+        aclCategoriesMap.put("@set", CommandDetail.AclCategory.SET);
+        aclCategoriesMap.put("@sortedset", CommandDetail.AclCategory.SORTEDSET);
+        aclCategoriesMap.put("@list", CommandDetail.AclCategory.LIST);
+        aclCategoriesMap.put("@hash", CommandDetail.AclCategory.HASH);
+        aclCategoriesMap.put("@string", CommandDetail.AclCategory.STRING);
+        aclCategoriesMap.put("@bitmap", CommandDetail.AclCategory.BITMAP);
+        aclCategoriesMap.put("@hyperloglog", CommandDetail.AclCategory.HYPERLOGLOG);
+        aclCategoriesMap.put("@geo", CommandDetail.AclCategory.GEO);
+        aclCategoriesMap.put("@stream", CommandDetail.AclCategory.STREAM);
+        aclCategoriesMap.put("@pubsub", CommandDetail.AclCategory.PUBSUB);
+        aclCategoriesMap.put("@admin", CommandDetail.AclCategory.ADMIN);
+        aclCategoriesMap.put("@fast", CommandDetail.AclCategory.FAST);
+        aclCategoriesMap.put("@slow", CommandDetail.AclCategory.SLOW);
+        aclCategoriesMap.put("@blocking", CommandDetail.AclCategory.BLOCKING);
+        aclCategoriesMap.put("@dangerous", CommandDetail.AclCategory.DANGEROUS);
+        aclCategoriesMap.put("@connection", CommandDetail.AclCategory.CONNECTION);
+        aclCategoriesMap.put("@transaction", CommandDetail.AclCategory.TRANSACTION);
+        aclCategoriesMap.put("@scripting", CommandDetail.AclCategory.SCRIPTING);
+        ACL_CATEGORY_MAPPING = Collections.unmodifiableMap(aclCategoriesMap);
     }
 
     private CommandDetailParser() {
@@ -96,11 +123,12 @@ public class CommandDetailParser {
         int firstKey = Math.toIntExact(getLongFromIterator(iterator, 0));
         int lastKey = Math.toIntExact(getLongFromIterator(iterator, 0));
         int keyStepCount = Math.toIntExact(getLongFromIterator(iterator, 0));
+        Object categories = iterator.hasNext() ? iterator.next() : null;
 
         Set<CommandDetail.Flag> parsedFlags = parseFlags(flags);
+        Set<CommandDetail.AclCategory> parsedAclCategories = parseAclCategories(categories);
 
-        // TODO: Extract command grouping (ACL)
-        return new CommandDetail(name, arity, parsedFlags, firstKey, lastKey, keyStepCount);
+        return new CommandDetail(name, arity, parsedFlags, firstKey, lastKey, keyStepCount, parsedAclCategories);
     }
 
     private static Set<CommandDetail.Flag> parseFlags(Object flags) {
@@ -112,6 +140,22 @@ public class CommandDetailParser {
                 CommandDetail.Flag flag = FLAG_MAPPING.get(o);
                 if (flag != null) {
                     result.add(flag);
+                }
+            }
+        }
+
+        return Collections.unmodifiableSet(result);
+    }
+
+    private static Set<CommandDetail.AclCategory> parseAclCategories(Object aclCategories) {
+        Set<CommandDetail.AclCategory> result = new HashSet<>();
+
+        if (aclCategories instanceof Collection<?>) {
+            Collection<?> collection = (Collection<?>) aclCategories;
+            for (Object o : collection) {
+                CommandDetail.AclCategory aclCategory = ACL_CATEGORY_MAPPING.get(o);
+                if (aclCategory != null) {
+                    result.add(aclCategory);
                 }
             }
         }
