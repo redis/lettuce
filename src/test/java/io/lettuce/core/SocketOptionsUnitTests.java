@@ -15,7 +15,7 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +58,24 @@ class SocketOptionsUnitTests {
         assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofSeconds(1));
 
         assertThat(reconfigured.isTcpNoDelay()).isFalse();
+    }
+
+    @Test
+    void shouldConfigureSimpleKeepAlive() {
+
+        SocketOptions sut = SocketOptions.builder().keepAlive(true).build();
+
+        assertThat(sut.isKeepAlive()).isTrue();
+        assertThat(sut.isExtendedKeepAlive()).isFalse();
+    }
+
+    @Test
+    void shouldConfigureSimpleExtendedAlive() {
+
+        SocketOptions sut = SocketOptions.builder().keepAlive(SocketOptions.KeepAliveOptions.builder().build()).build();
+
+        assertThat(sut.isKeepAlive()).isFalse();
+        assertThat(sut.isExtendedKeepAlive()).isTrue();
     }
 
     @Test

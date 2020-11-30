@@ -16,13 +16,16 @@
 package io.lettuce.core.resource;
 
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.incubator.channel.uring.IOUring;
+import io.netty.incubator.channel.uring.IOUringChannelOption;
 import io.netty.incubator.channel.uring.IOUringEventLoopGroup;
 import io.netty.incubator.channel.uring.IOUringSocketChannel;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -101,6 +104,18 @@ public class IOUringProvider {
      */
     public static EventLoopResources getResources() {
         return IOURING_RESOURCES;
+    }
+
+    /**
+     * Apply Keep-Alive options.
+     *
+     * @since 6.1
+     */
+    public static void applyKeepAlive(Bootstrap bootstrap, int count, Duration idle, Duration interval) {
+
+        bootstrap.option(IOUringChannelOption.TCP_KEEPCNT, count);
+        bootstrap.option(IOUringChannelOption.TCP_KEEPIDLE, Math.toIntExact(idle.getSeconds()));
+        bootstrap.option(IOUringChannelOption.TCP_KEEPINTVL, Math.toIntExact(interval.getSeconds()));
     }
 
     /**

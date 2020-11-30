@@ -268,13 +268,8 @@ public abstract class AbstractRedisClient {
         ClientOptions clientOptions = getOptions();
         SocketOptions socketOptions = clientOptions.getSocketOptions();
 
-        redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
-                Math.toIntExact(socketOptions.getConnectTimeout().toMillis()));
-
-        if (LettuceStrings.isEmpty(redisURI.getSocket())) {
-            redisBootstrap.option(ChannelOption.SO_KEEPALIVE, socketOptions.isKeepAlive());
-            redisBootstrap.option(ChannelOption.TCP_NODELAY, socketOptions.isTcpNoDelay());
-        }
+        Transports.configureBootstrap(redisBootstrap, socketOptions, !LettuceStrings.isEmpty(redisURI.getSocket()),
+                this::getEventLoopGroup);
 
         connectionBuilder.apply(redisURI);
 
@@ -287,7 +282,9 @@ public abstract class AbstractRedisClient {
 
         LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
 
-        connectionBuilder.bootstrap().group(getEventLoopGroup(connectionPoint));
+        boolean domainSocket = LettuceStrings.isNotEmpty(connectionPoint.getSocket());
+        connectionBuilder.bootstrap().group(
+                getEventLoopGroup(domainSocket ? NativeTransports.eventLoopGroupClass() : Transports.eventLoopGroupClass()));
 
         if (connectionPoint.getSocket() != null) {
             NativeTransports.assertDomainSocketAvailable();
@@ -297,7 +294,7 @@ public abstract class AbstractRedisClient {
         }
     }
 
-    private EventLoopGroup getEventLoopGroup(ConnectionPoint connectionPoint) {
+    private EventLoopGroup getEventLoopGroup(Class<? extends EventLoopGroup> eventLoopGroupClass) {
 
         for (;;) {
             if (!eventLoopGroupCas.compareAndSet(EVENTLOOP_ACQ_INACTIVE, EVENTLOOP_ACQ_ACTIVE)) {
@@ -305,42 +302,13 @@ public abstract class AbstractRedisClient {
             }
 
             try {
-                return doGetEventExecutor(connectionPoint);
+
+                return eventLoopGroups.computeIfAbsent(eventLoopGroupClass,
+                        it -> clientResources.eventLoopGroupProvider().allocate(it));
             } finally {
                 eventLoopGroupCas.set(EVENTLOOP_ACQ_INACTIVE);
             }
         }
-    }
-
-    private EventLoopGroup doGetEventExecutor(ConnectionPoint connectionPoint) {
-
-        if (connectionPoint.getSocket() == null && !eventLoopGroups.containsKey(Transports.eventLoopGroupClass())) {
-            eventLoopGroups.put(Transports.eventLoopGroupClass(),
-                    clientResources.eventLoopGroupProvider().allocate(Transports.eventLoopGroupClass()));
-        }
-
-        if (connectionPoint.getSocket() != null) {
-
-            NativeTransports.assertDomainSocketAvailable();
-
-            Class<? extends EventLoopGroup> eventLoopGroupClass = NativeTransports.eventLoopGroupClass();
-
-            if (!eventLoopGroups.containsKey(NativeTransports.eventLoopGroupClass())) {
-                eventLoopGroups.put(eventLoopGroupClass,
-                        clientResources.eventLoopGroupProvider().allocate(eventLoopGroupClass));
-            }
-        }
-
-        if (connectionPoint.getSocket() == null) {
-            return eventLoopGroups.get(Transports.eventLoopGroupClass());
-        }
-
-        if (connectionPoint.getSocket() != null) {
-            NativeTransports.assertDomainSocketAvailable();
-            return eventLoopGroups.get(NativeTransports.eventLoopGroupClass());
-        }
-
-        throw new IllegalStateException("This should not have happened in a binary decision. Please file a bug.");
     }
 
     /**

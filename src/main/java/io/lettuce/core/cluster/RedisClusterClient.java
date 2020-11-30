@@ -814,7 +814,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.endpoint(endpoint);
         connectionBuilder.commandHandler(commandHandlerSupplier);
         connectionBuilder(socketAddressSupplier, connectionBuilder, connectionSettings);
-        channelType(connectionBuilder, connectionSettings);
 
         return connectionBuilder;
     }

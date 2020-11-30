@@ -15,15 +15,25 @@
  */
 package io.lettuce.core;
 
+import java.net.SocketOption;
+import java.time.Duration;
+import java.util.function.Function;
+
+import jdk.net.ExtendedSocketOptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.EpollProvider;
 import io.lettuce.core.resource.EventLoopResources;
 import io.lettuce.core.resource.IOUringProvider;
 import io.lettuce.core.resource.KqueueProvider;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Transport infrastructure utility class. This class provides {@link EventLoopGroup} and {@link Channel} classes for TCP socket
@@ -33,6 +43,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  * @since 4.4
  */
 class Transports {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(Transports.class);
 
     /**
      * @return the default {@link EventLoopGroup} for socket transport that is compatible with {@link #socketChannelClass()}.
@@ -56,6 +68,53 @@ class Transports {
         }
 
         return NioSocketChannel.class;
+    }
+
+    /**
+     * Initialize the {@link Bootstrap} and apply {@link SocketOptions}.
+     *
+     * @since 6.1
+     */
+    static void configureBootstrap(Bootstrap bootstrap, SocketOptions options, boolean domainSocket,
+            Function<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroupProvider) {
+
+        Class<? extends EventLoopGroup> eventLoopGroupClass = Transports.eventLoopGroupClass();
+
+        Class<? extends Channel> channelClass = Transports.socketChannelClass();
+
+        if (domainSocket) {
+
+            NativeTransports.assertDomainSocketAvailable();
+            eventLoopGroupClass = NativeTransports.eventLoopGroupClass();
+            channelClass = NativeTransports.domainSocketChannelClass();
+        }
+
+        EventLoopGroup eventLoopGroup = eventLoopGroupProvider.apply(eventLoopGroupClass);
+
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(options.getConnectTimeout().toMillis()));
+
+        if (!domainSocket) {
+            bootstrap.option(ChannelOption.SO_KEEPALIVE, options.isKeepAlive());
+            bootstrap.option(ChannelOption.TCP_NODELAY, options.isTcpNoDelay());
+        }
+
+        bootstrap.channel(channelClass).group(eventLoopGroup);
+
+        if (options.isKeepAlive() && options.isExtendedKeepAlive()) {
+
+            SocketOptions.KeepAliveOptions keepAlive = options.getKeepAlive();
+
+            if (IOUringProvider.isAvailable()) {
+                IOUringProvider.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(), keepAlive.getInterval());
+            } else if (EpollProvider.isAvailable()) {
+                EpollProvider.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(), keepAlive.getInterval());
+            } else if (ExtendedNioSocketOptions.isAvailable() && !KqueueProvider.isAvailable()) {
+                ExtendedNioSocketOptions.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(),
+                        keepAlive.getInterval());
+            } else {
+                logger.warn("Cannot apply extended TCP keepalive options to channel type " + channelClass.getName());
+            }
+        }
     }
 
     /**
@@ -106,6 +165,55 @@ class Transports {
 
             LettuceAssert.assertState(NativeTransports.isDomainSocketSupported(),
                     "A unix domain socket connection requires epoll or kqueue and neither is available");
+        }
+
+    }
+
+    /**
+     * Utility to support Java 11 {@link ExtendedSocketOptions extended keepalive options}.
+     */
+    @SuppressWarnings("unchecked")
+    static class ExtendedNioSocketOptions {
+
+        private static final SocketOption<Integer> TCP_KEEPCOUNT;
+
+        private static final SocketOption<Integer> TCP_KEEPIDLE;
+
+        private static final SocketOption<Integer> TCP_KEEPINTERVAL;
+
+        static {
+
+            SocketOption<Integer> keepCount = null;
+            SocketOption<Integer> keepIdle = null;
+            SocketOption<Integer> keepInterval = null;
+            try {
+
+                keepCount = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPCOUNT").get(null);
+                keepIdle = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPIDLE").get(null);
+                keepInterval = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPINTERVAL")
+                        .get(null);
+            } catch (ReflectiveOperationException e) {
+                logger.trace("Cannot extract ExtendedSocketOptions for KeepAlive", e);
+            }
+
+            TCP_KEEPCOUNT = keepCount;
+            TCP_KEEPIDLE = keepIdle;
+            TCP_KEEPINTERVAL = keepInterval;
+        }
+
+        public static boolean isAvailable() {
+            return TCP_KEEPCOUNT != null && TCP_KEEPIDLE != null && TCP_KEEPINTERVAL != null;
+        }
+
+        /**
+         * Apply Keep-Alive options.
+         *
+         */
+        public static void applyKeepAlive(Bootstrap bootstrap, int count, Duration idle, Duration interval) {
+
+            bootstrap.option(NioChannelOption.of(TCP_KEEPCOUNT), count);
+            bootstrap.option(NioChannelOption.of(TCP_KEEPIDLE), Math.toIntExact(idle.getSeconds()));
+            bootstrap.option(NioChannelOption.of(TCP_KEEPINTERVAL), Math.toIntExact(interval.getSeconds()));
         }
 
     }

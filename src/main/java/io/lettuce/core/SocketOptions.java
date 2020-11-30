@@ -40,7 +40,9 @@ public class SocketOptions {
 
     private final Duration connectTimeout;
 
-    private final boolean keepAlive;
+    private final KeepAliveOptions keepAlive;
+
+    private final boolean extendedKeepAlive;
 
     private final boolean tcpNoDelay;
 
@@ -48,12 +50,14 @@ public class SocketOptions {
 
         this.connectTimeout = builder.connectTimeout;
         this.keepAlive = builder.keepAlive;
+        this.extendedKeepAlive = builder.extendedKeepAlive;
         this.tcpNoDelay = builder.tcpNoDelay;
     }
 
     protected SocketOptions(SocketOptions original) {
         this.connectTimeout = original.getConnectTimeout();
-        this.keepAlive = original.isKeepAlive();
+        this.keepAlive = original.getKeepAlive();
+        this.extendedKeepAlive = original.isExtendedKeepAlive();
         this.tcpNoDelay = original.isTcpNoDelay();
     }
 
@@ -92,9 +96,11 @@ public class SocketOptions {
 
         private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT_DURATION;
 
-        private boolean keepAlive = DEFAULT_SO_KEEPALIVE;
+        private KeepAliveOptions keepAlive = KeepAliveOptions.builder().enable(DEFAULT_SO_KEEPALIVE).build();
 
         private boolean tcpNoDelay = DEFAULT_SO_NO_DELAY;
+
+        private boolean extendedKeepAlive = false;
 
         private Builder() {
         }
@@ -135,7 +141,7 @@ public class SocketOptions {
         }
 
         /**
-         * Sets whether to enable TCP keepalive. Defaults to {@code false}. See {@link #DEFAULT_SO_KEEPALIVE}.
+         * Set whether to enable TCP keepalive. Defaults to {@code false}. See {@link #DEFAULT_SO_KEEPALIVE}.
          *
          * @param keepAlive whether to enable or disable the TCP keepalive.
          * @return {@code this}
@@ -143,12 +149,33 @@ public class SocketOptions {
          */
         public Builder keepAlive(boolean keepAlive) {
 
-            this.keepAlive = keepAlive;
+            this.keepAlive = KeepAliveOptions.builder().enable(keepAlive).build();
+            this.extendedKeepAlive = false;
+
             return this;
         }
 
         /**
-         * Sets whether to disable/enable Nagle's algorithm. Defaults to {@code true} (Nagle disabled). See
+         * Configure TCP keepalive. Defaults to disabled. See {@link #DEFAULT_SO_KEEPALIVE}.
+         *
+         * @param keepAlive whether to enable or disable the TCP keepalive.
+         * @return {@code this}
+         * @since 6.1
+         * @see KeepAliveOptions
+         * @see java.net.SocketOptions#SO_KEEPALIVE
+         */
+        public Builder keepAlive(KeepAliveOptions keepAlive) {
+
+            LettuceAssert.notNull(keepAlive, "KeepAlive options must not be null");
+
+            this.keepAlive = keepAlive;
+            this.extendedKeepAlive = true;
+
+            return this;
+        }
+
+        /**
+         * Set whether to disable/enable Nagle's algorithm. Defaults to {@code true} (Nagle disabled). See
          * {@link #DEFAULT_SO_NO_DELAY}.
          * <p>
          * Disabling TCP NoDelay delays TCP {@code ACK} packets to await more data input before confirming the packet.
@@ -189,7 +216,7 @@ public class SocketOptions {
         SocketOptions.Builder builder = builder();
 
         builder.connectTimeout = this.getConnectTimeout();
-        builder.keepAlive = this.isKeepAlive();
+        builder.keepAlive = this.getKeepAlive();
         builder.tcpNoDelay = this.isTcpNoDelay();
 
         return builder;
@@ -211,7 +238,21 @@ public class SocketOptions {
      * @see java.net.SocketOptions#SO_KEEPALIVE
      */
     public boolean isKeepAlive() {
+        return keepAlive.isEnabled();
+    }
+
+    /**
+     * Returns the TCP keepalive options.
+     *
+     * @return TCP keepalive options
+     * @see KeepAliveOptions
+     */
+    public KeepAliveOptions getKeepAlive() {
         return keepAlive;
+    }
+
+    boolean isExtendedKeepAlive() {
+        return extendedKeepAlive;
     }
 
     /**
@@ -222,6 +263,224 @@ public class SocketOptions {
      */
     public boolean isTcpNoDelay() {
         return tcpNoDelay;
+    }
+
+    /**
+     * Extended Keep-Alive options (idle, interval, count). Extended options should not be used in code intended to be portable
+     * as options are applied only when using NIO sockets with Java 11 or newer epoll sockets, or io_uring sockets. Not
+     * applicable for kqueue in general or NIO sockets using Java 10 or earlier.
+     * <p>
+     * The time granularity of {@link #getIdle()} and {@link #getInterval()} is seconds.
+     *
+     * @since 6.1
+     */
+    public static class KeepAliveOptions {
+
+        public static final int DEFAULT_COUNT = 9;
+
+        public static final Duration DEFAULT_IDLE = Duration.ofHours(2);
+
+        public static final Duration DEFAULT_INTERVAL = Duration.ofSeconds(1);
+
+        private final int count;
+
+        private final boolean enabled;
+
+        private final Duration idle;
+
+        private final Duration interval;
+
+        private KeepAliveOptions(KeepAliveOptions.Builder builder) {
+
+            this.count = builder.count;
+            this.enabled = builder.enabled;
+            this.idle = builder.idle;
+            this.interval = builder.interval;
+        }
+
+        /**
+         * Returns a new {@link KeepAliveOptions.Builder} to construct {@link KeepAliveOptions}.
+         *
+         * @return a new {@link KeepAliveOptions.Builder} to construct {@link KeepAliveOptions}.
+         */
+        public static KeepAliveOptions.Builder builder() {
+            return new KeepAliveOptions.Builder();
+        }
+
+        /**
+         * Builder for {@link KeepAliveOptions}.
+         */
+        public static class Builder {
+
+            private int count = DEFAULT_COUNT;
+
+            private boolean enabled = DEFAULT_SO_KEEPALIVE;
+
+            private Duration idle = DEFAULT_IDLE;
+
+            private Duration interval = DEFAULT_INTERVAL;
+
+            private Builder() {
+            }
+
+            /**
+             * Set the the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to
+             * {@code 9}. See also {@link #DEFAULT_COUNT} and {@code TCP_KEEPCNT}.
+             *
+             * @param count the maximum number of keepalive probes TCP
+             * @return {@code this}
+             */
+            public KeepAliveOptions.Builder count(int count) {
+
+                LettuceAssert.isTrue(count >= 0, "Count must be greater 0");
+
+                this.count = count;
+                return this;
+            }
+
+            /**
+             * Enable TCP keepalive. Defaults to disabled. See {@link #DEFAULT_SO_KEEPALIVE}.
+             *
+             * @return {@code this}
+             * @see java.net.SocketOptions#SO_KEEPALIVE
+             */
+            public KeepAliveOptions.Builder enable() {
+                return enable(true);
+            }
+
+            /**
+             * Disable TCP keepalive. Defaults to disabled. See {@link #DEFAULT_SO_KEEPALIVE}.
+             *
+             * @return {@code this}
+             * @see java.net.SocketOptions#SO_KEEPALIVE
+             */
+            public KeepAliveOptions.Builder disable() {
+                return enable(false);
+            }
+
+            /**
+             * Enable TCP keepalive. Defaults to {@code false}. See {@link #DEFAULT_SO_KEEPALIVE}.
+             *
+             * @param enabled whether to enable TCP keepalive.
+             * @return {@code this}
+             * @see java.net.SocketOptions#SO_KEEPALIVE
+             */
+            public KeepAliveOptions.Builder enable(boolean enabled) {
+
+                this.enabled = enabled;
+                return this;
+            }
+
+            /**
+             * The time the connection needs to remain idle before TCP starts sending keepalive probes if keepalive is enabled.
+             * Defaults to {@code 2 hours}. See also @link {@link #DEFAULT_IDLE} and {@code TCP_KEEPIDLE}.
+             * <p>
+             * The time granularity of is seconds.
+             *
+             * @param idle connection idle time, must be greater {@literal 0}.
+             * @return {@code this}
+             */
+            public KeepAliveOptions.Builder idle(Duration idle) {
+
+                LettuceAssert.notNull(idle, "Idle time must not be null");
+                LettuceAssert.isTrue(!idle.isNegative(), "Idle time must not be begative");
+
+                this.idle = idle;
+                return this;
+            }
+
+            /**
+             * The time between individual keepalive probes. Defaults to {@code 1 second}. See also {@link #DEFAULT_INTERVAL}
+             * and {@code TCP_KEEPINTVL}.
+             * <p>
+             * The time granularity of is seconds.
+             *
+             * @param interval connection interval time, must be greater {@literal 0}
+             * @return {@code this}
+             */
+            public KeepAliveOptions.Builder interval(Duration interval) {
+
+                LettuceAssert.notNull(interval, "Idle time must not be null");
+                LettuceAssert.isTrue(!interval.isNegative(), "Idle time must not be begative");
+
+                this.idle = interval;
+                return this;
+            }
+
+            /**
+             * Create a new instance of {@link KeepAliveOptions}
+             *
+             * @return new instance of {@link KeepAliveOptions}
+             */
+            public KeepAliveOptions build() {
+                return new KeepAliveOptions(this);
+            }
+
+        }
+
+        /**
+         * Returns a builder to create new {@link KeepAliveOptions} whose settings are replicated from the current
+         * {@link KeepAliveOptions}.
+         *
+         * @return a {@link KeepAliveOptions.Builder} to create new {@link KeepAliveOptions} whose settings are replicated from
+         *         the current {@link KeepAliveOptions}
+         */
+        public KeepAliveOptions.Builder mutate() {
+
+            KeepAliveOptions.Builder builder = builder();
+
+            builder.enabled = this.isEnabled();
+            builder.count = this.getCount();
+            builder.idle = this.getIdle();
+            builder.interval = this.getInterval();
+
+            return builder;
+        }
+
+        /**
+         * Returns the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to {@code 9}.
+         * See also {@link #DEFAULT_COUNT} and {@code TCP_KEEPCNT}.
+         *
+         * @return the maximum number of keepalive probes TCP should send before dropping the connection.
+         */
+        public int getCount() {
+            return count;
+        }
+
+        /**
+         * Returns whether to enable TCP keepalive.
+         *
+         * @return whether to enable TCP keepalive
+         * @see java.net.SocketOptions#SO_KEEPALIVE
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        /**
+         * The time the connection needs to remain idle before TCP starts sending keepalive probes if keepalive is enabled.
+         * Defaults to {@code 2 hours}. See also @link {@link #DEFAULT_IDLE} and {@code TCP_KEEPIDLE}.
+         * <p>
+         * The time granularity of is seconds.
+         *
+         * @return the time the connection needs to remain idle before TCP starts sending keepalive probes.
+         */
+        public Duration getIdle() {
+            return idle;
+        }
+
+        /**
+         * The time between individual keepalive probes. Defaults to {@code 1 second}. See also {@link #DEFAULT_INTERVAL} and
+         * {@code TCP_KEEPINTVL}.
+         * <p>
+         * The time granularity of is seconds.
+         *
+         * @return the time the connection needs to remain idle before TCP starts sending keepalive probes.
+         */
+        public Duration getInterval() {
+            return interval;
+        }
+
     }
 
 }

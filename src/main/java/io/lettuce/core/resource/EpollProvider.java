@@ -16,12 +16,15 @@
 package io.lettuce.core.resource;
 
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
@@ -102,6 +105,18 @@ public class EpollProvider {
      */
     public static EventLoopResources getResources() {
         return EPOLL_RESOURCES;
+    }
+
+    /**
+     * Apply Keep-Alive options.
+     *
+     * @since 6.1
+     */
+    public static void applyKeepAlive(Bootstrap bootstrap, int count, Duration idle, Duration interval) {
+
+        bootstrap.option(EpollChannelOption.TCP_KEEPCNT, count);
+        bootstrap.option(EpollChannelOption.TCP_KEEPIDLE, Math.toIntExact(idle.getSeconds()));
+        bootstrap.option(EpollChannelOption.TCP_KEEPINTVL, Math.toIntExact(interval.getSeconds()));
     }
 
     /**
