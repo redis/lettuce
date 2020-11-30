@@ -6,6 +6,7 @@
 
 * Kotlin Coroutines support for `SCAN`/`HSCAN`/`SSCAN`/`ZSCAN` through `ScanFlow`.
 * Command Listener API through `RedisClient.addListener(CommandListener)`.
+* <<command.latency.metrics.micrometer,Micrometer support>> through `MicrometerCommandLatencyRecorder`.
 
 [[new-features.6-0-0]]
 == What's new in Lettuce 6.0

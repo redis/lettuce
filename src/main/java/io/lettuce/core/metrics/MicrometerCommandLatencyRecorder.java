@@ -15,18 +15,22 @@
  */
 package io.lettuce.core.metrics;
 
-import io.lettuce.core.protocol.ProtocolKeyword;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import io.netty.channel.local.LocalAddress;
-
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.netty.channel.local.LocalAddress;
+
 /**
+ * Micrometer implementation of {@link CommandLatencyRecorder}
+ *
  * @author Steven Sheehy
+ * @since 6.1
  */
 public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder {
 
@@ -42,13 +46,23 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
 
     private final MeterRegistry meterRegistry;
 
-    private final MicrometerCommandLatencyCollectorOptions options;
+    private final MicrometerOptions options;
 
     private final Map<CommandLatencyId, Timer> completionTimers = new ConcurrentHashMap<>();
 
     private final Map<CommandLatencyId, Timer> firstResponseTimers = new ConcurrentHashMap<>();
 
-    public MicrometerCommandLatencyRecorder(MeterRegistry meterRegistry, MicrometerCommandLatencyCollectorOptions options) {
+    /**
+     * Create a new {@link MicrometerCommandLatencyRecorder} instance given {@link MeterRegistry} and {@link MicrometerOptions}.
+     *
+     * @param meterRegistry
+     * @param options
+     */
+    public MicrometerCommandLatencyRecorder(MeterRegistry meterRegistry, MicrometerOptions options) {
+
+        LettuceAssert.notNull(meterRegistry, "MeterRegistry must not be null");
+        LettuceAssert.notNull(options, "MicrometerOptions must not be null");
+
         this.meterRegistry = meterRegistry;
         this.options = options;
     }
@@ -62,6 +76,7 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
         }
 
         CommandLatencyId commandLatencyId = createId(local, remote, protocolKeyword);
+
         Timer firstResponseTimer = firstResponseTimers.computeIfAbsent(commandLatencyId, this::firstResponseTimer);
         firstResponseTimer.record(firstResponseLatency, TimeUnit.NANOSECONDS);
 
@@ -79,38 +94,35 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     }
 
     protected Timer completionTimer(CommandLatencyId commandLatencyId) {
+
         Timer.Builder timer = Timer.builder(METRIC_COMPLETION)
                 .description("Latency between command send and command completion (complete response received")
                 .tag(LABEL_COMMAND, commandLatencyId.commandType().name())
                 .tag(LABEL_LOCAL, commandLatencyId.localAddress().toString())
-                .tag(LABEL_REMOTE, commandLatencyId.remoteAddress().toString())
-                .tags(options.tags());
+                .tag(LABEL_REMOTE, commandLatencyId.remoteAddress().toString()).tags(options.tags());
 
         if (options.isHistogram()) {
-            timer.publishPercentileHistogram()
-                    .publishPercentiles(options.targetPercentiles())
-                    .minimumExpectedValue(options.minLatency())
-                    .maximumExpectedValue(options.maxLatency());
+            timer.publishPercentileHistogram().publishPercentiles(options.targetPercentiles())
+                    .minimumExpectedValue(options.minLatency()).maximumExpectedValue(options.maxLatency());
         }
 
         return timer.register(meterRegistry);
     }
 
     protected Timer firstResponseTimer(CommandLatencyId commandLatencyId) {
+
         Timer.Builder timer = Timer.builder(METRIC_FIRST_RESPONSE)
                 .description("Latency between command send and first response (first response received)")
                 .tag(LABEL_COMMAND, commandLatencyId.commandType().name())
                 .tag(LABEL_LOCAL, commandLatencyId.localAddress().toString())
-                .tag(LABEL_REMOTE, commandLatencyId.remoteAddress().toString())
-                .tags(options.tags());
+                .tag(LABEL_REMOTE, commandLatencyId.remoteAddress().toString()).tags(options.tags());
 
         if (options.isHistogram()) {
-            timer.publishPercentileHistogram()
-                    .publishPercentiles(options.targetPercentiles())
-                    .minimumExpectedValue(options.minLatency())
-                    .maximumExpectedValue(options.maxLatency());
+            timer.publishPercentileHistogram().publishPercentiles(options.targetPercentiles())
+                    .minimumExpectedValue(options.minLatency()).maximumExpectedValue(options.maxLatency());
         }
 
         return timer.register(meterRegistry);
     }
+
 }

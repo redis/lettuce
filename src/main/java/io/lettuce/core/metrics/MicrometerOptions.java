@@ -15,18 +15,19 @@
  */
 package io.lettuce.core.metrics;
 
+import java.time.Duration;
+
 import io.lettuce.core.internal.LettuceAssert;
 import io.micrometer.core.instrument.Tags;
 
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
-
 /**
- * The Micrometer implementation of {@link CommandLatencyCollectorOptions}.
+ * Configuration options for {@link MicrometerCommandLatencyRecorder}.
  *
  * @author Steven Sheehy
+ * @author Mark Paluch
+ * @since 6.1
  */
-public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyCollectorOptions {
+public class MicrometerOptions {
 
     public static final boolean DEFAULT_ENABLED = true;
 
@@ -40,7 +41,7 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
 
     public static final double[] DEFAULT_TARGET_PERCENTILES = new double[] { 0.50, 0.90, 0.95, 0.99, 0.999 };
 
-    private static final MicrometerCommandLatencyCollectorOptions DISABLED = builder().disable().build();
+    private static final MicrometerOptions DISABLED = builder().disable().build();
 
     private final Builder builder;
 
@@ -58,7 +59,8 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
 
     private final double[] targetPercentiles;
 
-    protected MicrometerCommandLatencyCollectorOptions(Builder builder) {
+    protected MicrometerOptions(Builder builder) {
+
         this.builder = builder;
         this.enabled = builder.enabled;
         this.histogram = builder.histogram;
@@ -70,52 +72,47 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
     }
 
     /**
-     * Create a new {@link MicrometerCommandLatencyCollectorOptions} instance using default settings.
+     * Create a new {@link MicrometerOptions} instance using default settings.
      *
-     * @return a new instance of {@link MicrometerCommandLatencyCollectorOptions} instance using default settings
+     * @return a new instance of {@link MicrometerOptions} instance using default settings
      */
-    public static MicrometerCommandLatencyCollectorOptions create() {
+    public static MicrometerOptions create() {
         return builder().build();
     }
 
     /**
-     * Create a {@link MicrometerCommandLatencyCollectorOptions} instance with disabled event emission.
+     * Create a {@link MicrometerOptions} instance with disabled event emission.
      *
-     * @return a new instance of {@link MicrometerCommandLatencyCollectorOptions} with disabled event emission
+     * @return a new instance of {@link MicrometerOptions} with disabled event emission
      */
-    public static MicrometerCommandLatencyCollectorOptions disabled() {
+    public static MicrometerOptions disabled() {
         return DISABLED;
     }
 
     /**
-     * Returns a new {@link MicrometerCommandLatencyCollectorOptions.Builder} to construct
-     * {@link MicrometerCommandLatencyCollectorOptions}.
+     * Returns a new {@link MicrometerOptions.Builder} to construct {@link MicrometerOptions}.
      *
-     * @return a new {@link MicrometerCommandLatencyCollectorOptions.Builder} to construct
-     *         {@link MicrometerCommandLatencyCollectorOptions}.
+     * @return a new {@link MicrometerOptions.Builder} to construct {@link MicrometerOptions}.
      */
-    public static MicrometerCommandLatencyCollectorOptions.Builder builder() {
-        return new MicrometerCommandLatencyCollectorOptions.Builder();
+    public static MicrometerOptions.Builder builder() {
+        return new MicrometerOptions.Builder();
     }
 
     /**
-     * Returns a builder to create new {@link MicrometerCommandLatencyCollectorOptions} whose settings are replicated from the
-     * current {@link MicrometerCommandLatencyCollectorOptions}.
+     * Returns a builder to create new {@link MicrometerOptions} whose settings are replicated from the current
+     * {@link MicrometerOptions}.
      *
-     * @return a a {@link CommandLatencyCollectorOptions.Builder} to create new {@link MicrometerCommandLatencyCollectorOptions}
-     *         whose settings are replicated from the current {@link MicrometerCommandLatencyCollectorOptions}
-     *
-     * @since 5.1
+     * @return a a {@link CommandLatencyCollectorOptions.Builder} to create new {@link MicrometerOptions} whose settings are
+     *         replicated from the current {@link MicrometerOptions}
      */
-    @Override
-    public MicrometerCommandLatencyCollectorOptions.Builder mutate() {
+    public MicrometerOptions.Builder mutate() {
         return this.builder;
     }
 
     /**
-     * Builder for {@link MicrometerCommandLatencyCollectorOptions}.
+     * Builder for {@link MicrometerOptions}.
      */
-    public static class Builder implements CommandLatencyCollectorOptions.Builder {
+    public static class Builder {
 
         private boolean enabled = DEFAULT_ENABLED;
 
@@ -139,7 +136,6 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
          *
          * @return this {@link Builder}.
          */
-        @Override
         public Builder disable() {
             this.enabled = false;
             return this;
@@ -150,15 +146,14 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
          *
          * @return this {@link Builder}.
          */
-        @Override
         public Builder enable() {
             this.enabled = true;
             return this;
         }
 
         /**
-         * Enable histogram buckets used to generate aggregable percentile approximations in monitoring
-         * systems that have query facilities to do so.
+         * Enable histogram buckets used to generate aggregable percentile approximations in monitoring systems that have query
+         * facilities to do so.
          *
          * @param histogram {@code true} if histogram buckets are recorded
          * @return this {@link Builder}.
@@ -173,79 +168,66 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
          * host/connection point will be recorded separately which allows to inspect every connection individually. If
          * {@code false}, multiple connections to the same host/connection point will be recorded together. This allows a
          * consolidated view on one particular service. Defaults to {@code false}. See
-         * {@link MicrometerCommandLatencyCollectorOptions#DEFAULT_LOCAL_DISTINCTION}.
+         * {@link MicrometerOptions#DEFAULT_LOCAL_DISTINCTION}.
          *
-         * Warning: Enabling this could potentially cause a label cardinality explosion in the remote metric system and
-         * should be used with caution.
+         * Warning: Enabling this could potentially cause a label cardinality explosion in the remote metric system and should
+         * be used with caution.
          *
          * @param localDistinction {@code true} if latencies are recorded distinct on local level (per connection)
          * @return this {@link Builder}.
          */
-        @Override
         public Builder localDistinction(boolean localDistinction) {
             this.localDistinction = localDistinction;
             return this;
         }
 
         /**
-         * Sets the maximum value that this timer is expected to observe. Sets an upper bound
-         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
-         * Only applicable when histogram is enabled. Defaults to {@code 5m}.
-         * See {@link MicrometerCommandLatencyCollectorOptions#DEFAULT_MAX_LATENCY}.
+         * Sets the maximum value that this timer is expected to observe. Sets an upper bound on histogram buckets that are
+         * shipped to monitoring systems that support aggregable percentile approximations. Only applicable when histogram is
+         * enabled. Defaults to {@code 5m}. See {@link MicrometerOptions#DEFAULT_MAX_LATENCY}.
          *
-         * @param maxLatency The maximum value that this timer is expected to observe.
+         * @param maxLatency The maximum value that this timer is expected to observe
          * @return this {@link Builder}.
          */
         public Builder maxLatency(Duration maxLatency) {
+            LettuceAssert.notNull(maxLatency, "Max Latency must not be null");
             this.maxLatency = maxLatency;
             return this;
         }
 
         /**
-         * Sets the minimum value that this timer is expected to observe. Sets a lower bound
-         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
-         * Only applicable when histogram is enabled. Defaults to {@code 1ms}.
-         * See {@link MicrometerCommandLatencyCollectorOptions#DEFAULT_MIN_LATENCY}.
+         * Sets the minimum value that this timer is expected to observe. Sets a lower bound on histogram buckets that are
+         * shipped to monitoring systems that support aggregable percentile approximations. Only applicable when histogram is
+         * enabled. Defaults to {@code 1ms}. See {@link MicrometerOptions#DEFAULT_MIN_LATENCY}.
          *
-         * @param minLatency The minimum value that this timer is expected to observe.
+         * @param minLatency The minimum value that this timer is expected to observe
          * @return this {@link Builder}.
          */
         public Builder minLatency(Duration minLatency) {
+            LettuceAssert.notNull(maxLatency, "Max Latency must not be null");
             this.minLatency = minLatency;
             return this;
         }
 
         /**
-         * Not supported since the MeterRegistry implementation defines whether metrics are cumulative or reset
-         *
-         * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
-         *        emitted
-         * @return this {@link Builder}.
-         */
-        @Override
-        public Builder resetLatenciesAfterEvent(boolean resetLatenciesAfterEvent) {
-            throw new UnsupportedOperationException("resetLatenciesAfterEvent not supported for Micrometer");
-        }
-
-        /**
          * Extra tags to add to the generated metrics. Defaults to {@code Tags.empty()}.
          *
-         * @param tags Tags to add to the metrics.
+         * @param tags Tags to add to the metrics
          * @return this {@link Builder}.
          */
         public Builder tags(Tags tags) {
+            LettuceAssert.notNull(tags, "Tags must not be null");
             this.tags = tags;
             return this;
         }
 
         /**
          * Sets the emitted percentiles. Defaults to 0.50, 0.90, 0.95, 0.99, 0.999}. Only applicable when histogram is enabled.
-         * See {@link MicrometerCommandLatencyCollectorOptions#DEFAULT_TARGET_PERCENTILES}.
+         * See {@link MicrometerOptions#DEFAULT_TARGET_PERCENTILES}.
          *
          * @param targetPercentiles the percentiles which should be emitted, must not be {@code null}
          * @return this {@link Builder}.
          */
-        @Override
         public Builder targetPercentiles(double[] targetPercentiles) {
             LettuceAssert.notNull(targetPercentiles, "TargetPercentiles must not be null");
             this.targetPercentiles = targetPercentiles;
@@ -253,26 +235,14 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
         }
 
         /**
-         * Not supported since the MeterRegistry implementation defines the base unit and cannot be changed.
-         *
-         * @param targetUnit the target unit
-         * @return this {@link Builder}.
+         * @return a new instance of {@link MicrometerOptions}.
          */
-        @Override
-        public Builder targetUnit(TimeUnit targetUnit) {
-            throw new UnsupportedOperationException("targetUnit not supported for Micrometer");
+        public MicrometerOptions build() {
+            return new MicrometerOptions(this);
         }
 
-        /**
-         * @return a new instance of {@link MicrometerCommandLatencyCollectorOptions}.
-         */
-        @Override
-        public MicrometerCommandLatencyCollectorOptions build() {
-            return new MicrometerCommandLatencyCollectorOptions(this);
-        }
     }
 
-    @Override
     public boolean isEnabled() {
         return enabled;
     }
@@ -281,7 +251,6 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
         return histogram;
     }
 
-    @Override
     public boolean localDistinction() {
         return localDistinction;
     }
@@ -294,24 +263,14 @@ public class MicrometerCommandLatencyCollectorOptions implements CommandLatencyC
         return minLatency;
     }
 
-    @Override
-    public boolean resetLatenciesAfterEvent() {
-        throw new UnsupportedOperationException("resetLatenciesAfterEvent not supported for Micrometer");
-    }
-
     public Tags tags() {
         return tags;
     }
 
-    @Override
     public double[] targetPercentiles() {
         double[] result = new double[targetPercentiles.length];
         System.arraycopy(targetPercentiles, 0, result, 0, targetPercentiles.length);
         return result;
     }
 
-    @Override
-    public TimeUnit targetUnit() {
-        throw new UnsupportedOperationException("targetUnit not supported for Micrometer");
-    }
 }

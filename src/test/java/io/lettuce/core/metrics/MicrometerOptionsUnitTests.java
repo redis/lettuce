@@ -15,22 +15,26 @@
  */
 package io.lettuce.core.metrics;
 
-import io.micrometer.core.instrument.Tags;
-import org.junit.jupiter.api.Test;
+import static io.lettuce.core.metrics.MicrometerOptions.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static io.lettuce.core.metrics.MicrometerCommandLatencyCollectorOptions.*;
+import org.junit.jupiter.api.Test;
+
+import io.micrometer.core.instrument.Tags;
 
 /**
+ * Unit tests for {@link MicrometerOptions}.
+ *
  * @author Steven Sheehy
  */
-class MicrometerCommandLatencyCollectorOptionsUnitTests {
+class MicrometerOptionsUnitTests {
 
     @Test
     void create() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.create();
+
+        MicrometerOptions options = MicrometerOptions.create();
 
         assertThat(options.isEnabled()).isEqualTo(DEFAULT_ENABLED);
         assertThat(options.isHistogram()).isEqualTo(DEFAULT_HISTOGRAM);
@@ -43,55 +47,53 @@ class MicrometerCommandLatencyCollectorOptionsUnitTests {
 
     @Test
     void disabled() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.disabled();
+
+        MicrometerOptions options = MicrometerOptions.disabled();
 
         assertThat(options.isEnabled()).isFalse();
     }
 
     @Test
     void histogram() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
-                .histogram(true)
-                .build();
+
+        MicrometerOptions options = MicrometerOptions.builder().histogram(true).build();
 
         assertThat(options.isHistogram()).isTrue();
     }
 
     @Test
     void localDistinction() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
-                .localDistinction(true)
-                .build();
+
+        MicrometerOptions options = MicrometerOptions.builder().localDistinction(true).build();
 
         assertThat(options.localDistinction()).isTrue();
     }
 
     @Test
     void maxLatency() {
+
         Duration maxLatency = Duration.ofSeconds(2L);
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
-                .maxLatency(maxLatency)
-                .build();
+        MicrometerOptions options = MicrometerOptions.builder().maxLatency(maxLatency).build();
 
         assertThat(options.maxLatency()).isEqualTo(maxLatency);
     }
 
     @Test
     void minLatency() {
+
         Duration minLatency = Duration.ofSeconds(2L);
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
-                .minLatency(minLatency)
-                .build();
+        MicrometerOptions options = MicrometerOptions.builder().minLatency(minLatency).build();
 
         assertThat(options.minLatency()).isEqualTo(minLatency);
     }
 
     @Test
     void targetPercentiles() {
+
         double[] percentiles = new double[] { 0.1, 0.2, 0.3 };
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
-                .targetPercentiles(percentiles).build();
+        MicrometerOptions options = MicrometerOptions.builder().targetPercentiles(percentiles).build();
 
         assertThat(options.targetPercentiles()).hasSize(3).isEqualTo(percentiles);
     }
+
 }

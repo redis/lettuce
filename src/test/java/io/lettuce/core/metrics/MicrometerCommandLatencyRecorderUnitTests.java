@@ -15,7 +15,18 @@
  */
 package io.lettuce.core.metrics;
 
+import static io.lettuce.core.metrics.MicrometerCommandLatencyRecorder.*;
+import static org.assertj.core.api.Assertions.*;
+
+import java.net.SocketAddress;
+
+import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.google.common.primitives.Doubles;
+
 import io.lettuce.core.protocol.CommandType;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -24,17 +35,10 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.netty.channel.local.LocalAddress;
-import org.assertj.core.api.InstanceOfAssertFactories;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.net.SocketAddress;
-
-import static io.lettuce.core.metrics.MicrometerCommandLatencyRecorder.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
+ * Unit tests for {@link MicrometerCommandLatencyRecorder}.
+ *
  * @author Steven Sheehy
  */
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +52,8 @@ class MicrometerCommandLatencyRecorderUnitTests {
 
     @Test
     void verifyMetrics() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.create();
+
+        MicrometerOptions options = MicrometerOptions.create();
         MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
 
         commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.AUTH, 1, 10);
@@ -57,29 +62,22 @@ class MicrometerCommandLatencyRecorderUnitTests {
         commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.BGSAVE, 300, 1500);
 
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(2);
-        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers())
-                .hasSize(1)
-                .element(0)
-                .extracting(Timer::takeSnapshot)
-                .hasFieldOrPropertyWithValue("count", 3L)
-                .hasFieldOrPropertyWithValue("max", 300.0)
-                .hasFieldOrPropertyWithValue("mean", 200.0)
+        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers()).hasSize(1)
+                .element(0).extracting(Timer::takeSnapshot).hasFieldOrPropertyWithValue("count", 3L)
+                .hasFieldOrPropertyWithValue("max", 300.0).hasFieldOrPropertyWithValue("mean", 200.0)
                 .hasFieldOrPropertyWithValue("total", 600.0);
 
         assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(2);
-        assertThat(meterRegistry.find(METRIC_COMPLETION).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers())
-                .hasSize(1)
-                .element(0)
-                .extracting(Timer::takeSnapshot)
-                .hasFieldOrPropertyWithValue("count", 3L)
-                .hasFieldOrPropertyWithValue("max", 1500.0)
-                .hasFieldOrPropertyWithValue("mean", 1000.0)
+        assertThat(meterRegistry.find(METRIC_COMPLETION).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers()).hasSize(1)
+                .element(0).extracting(Timer::takeSnapshot).hasFieldOrPropertyWithValue("count", 3L)
+                .hasFieldOrPropertyWithValue("max", 1500.0).hasFieldOrPropertyWithValue("mean", 1000.0)
                 .hasFieldOrPropertyWithValue("total", 3000.0);
     }
 
     @Test
     void disabled() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.disabled();
+
+        MicrometerOptions options = MicrometerOptions.disabled();
         MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
 
         commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.AUTH, 1, 10);
@@ -89,25 +87,18 @@ class MicrometerCommandLatencyRecorderUnitTests {
 
     @Test
     void histogramEnabled() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
-                .histogram(true)
-                .build();
+
+        MicrometerOptions options = MicrometerOptions.builder().histogram(true).build();
         MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
 
         commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.AUTH, 1, 10);
         commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.AUTH, 2, 5);
 
-        assertThat(meterRegistry.find(METRIC_COMPLETION).timers())
-                .hasSize(1)
-                .element(0)
-                .extracting(Timer::takeSnapshot)
+        assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(1).element(0).extracting(Timer::takeSnapshot)
                 .extracting(HistogramSnapshot::percentileValues, InstanceOfAssertFactories.array(ValueAtPercentile[].class))
                 .extracting(ValueAtPercentile::percentile)
                 .containsExactlyElementsOf(Doubles.asList(options.targetPercentiles()));
-        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers())
-                .hasSize(1)
-                .element(0)
-                .extracting(Timer::takeSnapshot)
+        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(1).element(0).extracting(Timer::takeSnapshot)
                 .extracting(HistogramSnapshot::percentileValues, InstanceOfAssertFactories.array(ValueAtPercentile[].class))
                 .extracting(ValueAtPercentile::percentile)
                 .containsExactlyElementsOf(Doubles.asList(options.targetPercentiles()));
@@ -115,9 +106,8 @@ class MicrometerCommandLatencyRecorderUnitTests {
 
     @Test
     void localDistinctionEnabled() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
-                .localDistinction(true)
-                .build();
+
+        MicrometerOptions options = MicrometerOptions.builder().localDistinction(true).build();
         MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
         LocalAddress localAddress2 = new LocalAddress("localhost:12345");
 
@@ -134,9 +124,8 @@ class MicrometerCommandLatencyRecorderUnitTests {
 
     @Test
     void localDistinctionDisabled() {
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
-                .localDistinction(false)
-                .build();
+
+        MicrometerOptions options = MicrometerOptions.builder().localDistinction(false).build();
         MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
         LocalAddress localAddress2 = new LocalAddress("localhost:12345");
 
@@ -151,10 +140,9 @@ class MicrometerCommandLatencyRecorderUnitTests {
 
     @Test
     void tags() {
+
         Tags tags = Tags.of("app", "foo");
-        MicrometerCommandLatencyCollectorOptions options = MicrometerCommandLatencyCollectorOptions.builder()
-                .tags(tags)
-                .build();
+        MicrometerOptions options = MicrometerOptions.builder().tags(tags).build();
         MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
 
         commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.AUTH, 1, 10);
@@ -166,4 +154,5 @@ class MicrometerCommandLatencyRecorderUnitTests {
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.AUTH.name()).timers()).hasSize(1);
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_REMOTE, REMOTE_ADDRESS.toString()).timers()).hasSize(1);
     }
+
 }
