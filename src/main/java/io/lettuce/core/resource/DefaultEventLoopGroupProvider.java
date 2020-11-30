@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.resource;
 
-import static io.lettuce.core.resource.PromiseAdapter.toBooleanPromise;
+import static io.lettuce.core.resource.PromiseAdapter.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +29,15 @@ import java.util.concurrent.locks.ReentrantLock;
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.*;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.ImmediateEventExecutor;
+import io.netty.util.concurrent.Promise;
+import io.netty.util.concurrent.PromiseCombiner;
+import io.netty.util.concurrent.SucceededFuture;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -231,6 +239,16 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             if (resources.matches(type)) {
                 return resources.newEventLoopGroup(numberOfThreads,
                         factoryProvider.getThreadFactory("lettuce-kqueueEventLoop"));
+            }
+        }
+
+        if (IOUringProvider.isAvailable()) {
+
+            EventLoopResources resources = IOUringProvider.getResources();
+
+            if (resources.matches(type)) {
+                return resources.newEventLoopGroup(numberOfThreads,
+                        factoryProvider.getThreadFactory("lettuce-io_uringEventLoop"));
             }
         }
 

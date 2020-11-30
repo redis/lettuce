@@ -290,7 +290,7 @@ public abstract class AbstractRedisClient {
         connectionBuilder.bootstrap().group(getEventLoopGroup(connectionPoint));
 
         if (connectionPoint.getSocket() != null) {
-            NativeTransports.assertAvailable();
+            NativeTransports.assertDomainSocketAvailable();
             connectionBuilder.bootstrap().channel(NativeTransports.domainSocketChannelClass());
         } else {
             connectionBuilder.bootstrap().channel(Transports.socketChannelClass());
@@ -321,7 +321,7 @@ public abstract class AbstractRedisClient {
 
         if (connectionPoint.getSocket() != null) {
 
-            NativeTransports.assertAvailable();
+            NativeTransports.assertDomainSocketAvailable();
 
             Class<? extends EventLoopGroup> eventLoopGroupClass = NativeTransports.eventLoopGroupClass();
 
@@ -336,7 +336,7 @@ public abstract class AbstractRedisClient {
         }
 
         if (connectionPoint.getSocket() != null) {
-            NativeTransports.assertAvailable();
+            NativeTransports.assertDomainSocketAvailable();
             return eventLoopGroups.get(NativeTransports.eventLoopGroupClass());
         }
 

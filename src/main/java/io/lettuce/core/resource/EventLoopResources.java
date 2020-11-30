@@ -40,6 +40,11 @@ public interface EventLoopResources {
     boolean matches(Class<? extends EventExecutorGroup> type);
 
     /**
+     * @return the {@link EventLoopGroup} class.
+     */
+    Class<? extends EventLoopGroup> eventLoopGroupClass();
+
+    /**
      * Create a new {@link EpollEventLoopGroup}.
      *
      * @param nThreads number of threads.
@@ -49,19 +54,14 @@ public interface EventLoopResources {
     EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory);
 
     /**
-     * @return the Domain Socket {@link Channel} class.
-     */
-    Class<? extends Channel> domainSocketChannelClass();
-
-    /**
      * @return the {@link Channel} class.
      */
     Class<? extends Channel> socketChannelClass();
 
     /**
-     * @return the {@link EventLoopGroup} class.
+     * @return the Domain Socket {@link Channel} class.
      */
-    Class<? extends EventLoopGroup> eventLoopGroupClass();
+    Class<? extends Channel> domainSocketChannelClass();
 
     /**
      * @param socketPath the socket file path.

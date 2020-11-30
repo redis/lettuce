@@ -15,9 +15,8 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +26,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -184,7 +182,8 @@ class UnixDomainSocketIntegrationTests {
 
     private void assumeTestSupported() {
         String osName = SystemPropertyUtil.get("os.name").toLowerCase(Locale.UK).trim();
-        assumeTrue(Transports.NativeTransports.isSocketSupported(), "Only supported on Linux/OSX, your os is " + osName
+        assumeTrue(Transports.NativeTransports.isDomainSocketSupported(),
+                "Only supported on Linux/OSX, your os is " + osName
                 + " with epoll/kqueue support.");
     }
 

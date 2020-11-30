@@ -18,6 +18,7 @@ package io.lettuce.core;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.EpollProvider;
 import io.lettuce.core.resource.EventLoopResources;
+import io.lettuce.core.resource.IOUringProvider;
 import io.lettuce.core.resource.KqueueProvider;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
@@ -25,8 +26,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
- * Transport infrastructure utility class. This class provides {@link EventLoopGroup} and {@link Channel} classes for socket and
- * native socket transports.
+ * Transport infrastructure utility class. This class provides {@link EventLoopGroup} and {@link Channel} classes for TCP socket
+ * and domain socket transports.
  *
  * @author Mark Paluch
  * @since 4.4
@@ -38,7 +39,7 @@ class Transports {
      */
     static Class<? extends EventLoopGroup> eventLoopGroupClass() {
 
-        if (NativeTransports.isSocketSupported()) {
+        if (NativeTransports.isAvailable()) {
             return NativeTransports.eventLoopGroupClass();
         }
 
@@ -50,7 +51,7 @@ class Transports {
      */
     static Class<? extends Channel> socketChannelClass() {
 
-        if (NativeTransports.isSocketSupported()) {
+        if (NativeTransports.isAvailable()) {
             return NativeTransports.socketChannelClass();
         }
 
@@ -63,12 +64,19 @@ class Transports {
     static class NativeTransports {
 
         static EventLoopResources RESOURCES = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
-                : EpollProvider.getResources();
+                : IOUringProvider.isAvailable() ? IOUringProvider.getResources() : EpollProvider.getResources();
 
         /**
          * @return {@code true} if a native transport is available.
          */
-        static boolean isSocketSupported() {
+        static boolean isAvailable() {
+            return EpollProvider.isAvailable() || KqueueProvider.isAvailable() || IOUringProvider.isAvailable();
+        }
+
+        /**
+         * @return {@code true} if a native transport for domain sockets is available.
+         */
+        static boolean isDomainSocketSupported() {
             return EpollProvider.isAvailable() || KqueueProvider.isAvailable();
         }
 
@@ -83,6 +91,7 @@ class Transports {
          * @return the native transport domain socket {@link Channel} class.
          */
         static Class<? extends Channel> domainSocketChannelClass() {
+            assertDomainSocketAvailable();
             return RESOURCES.domainSocketChannelClass();
         }
 
@@ -93,10 +102,10 @@ class Transports {
             return RESOURCES.eventLoopGroupClass();
         }
 
-        static void assertAvailable() {
+        static void assertDomainSocketAvailable() {
 
-            LettuceAssert.assertState(NativeTransports.isSocketSupported(),
-                    "A unix domain socket connections requires epoll or kqueue and neither is available");
+            LettuceAssert.assertState(NativeTransports.isDomainSocketSupported(),
+                    "A unix domain socket connection requires epoll or kqueue and neither is available");
         }
 
     }
