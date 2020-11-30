@@ -2314,6 +2314,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XGROUP, new StatusOutput<>(codec), args);
     }
 
+    public Command<K, V, Boolean> xgroupCreateconsumer(K key, Consumer<K> consumer) {
+        notNullKey(key);
+        LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("CREATECONSUMER").addKey(key).addKey(consumer.getGroup())
+                .addKey(consumer.getName());
+
+        return createCommand(XGROUP, new BooleanOutput<>(codec), args);
+    }
+
     public Command<K, V, Long> xgroupDelconsumer(K key, Consumer<K> consumer) {
         notNullKey(key);
         LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);

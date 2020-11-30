@@ -332,6 +332,17 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("LMOVE") // Redis 6.2
+    void xgroupCreateconsumer() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        assertThat(redis.xgroupCreateconsumer(key, Consumer.from("group", "consumer1"))).isTrue();
+        assertThat(redis.xgroupCreateconsumer(key, Consumer.from("group", "consumer1"))).isFalse();
+    }
+
+    @Test
     void xgroupread() {
 
         redis.xadd(key, Collections.singletonMap("key", "value"));

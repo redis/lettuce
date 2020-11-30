@@ -57,6 +57,8 @@ internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun xgroupCreate(streamOffset: StreamOffset<K>, group: K, args: XGroupCreateArgs): String? = ops.xgroupCreate(streamOffset, group, args).awaitFirstOrNull()
 
+    override suspend fun xgroupCreateconsumer(key: K, consumer: Consumer<K>): Boolean? = ops.xgroupCreateconsumer(key, consumer).awaitFirstOrNull()
+
     override suspend fun xgroupDelconsumer(key: K, consumer: Consumer<K>): Long? = ops.xgroupDelconsumer(key, consumer).awaitFirstOrNull()
 
     override suspend fun xgroupDestroy(key: K, group: K): Boolean? = ops.xgroupDestroy(key, group).awaitFirstOrNull()
