@@ -15,9 +15,7 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.concurrent.Future;
@@ -67,7 +65,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             RedisCommands<String, String> connection = client.connect().sync();
 
             assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class)
-                    .hasMessageContaining("NOAUTH Authentication required");
+                    .hasMessageContaining("NOAUTH");
 
             assertThat(connection.auth(passwd)).isEqualTo("OK");
             assertThat(connection.set(key, value)).isEqualTo("OK");
@@ -89,7 +87,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             RedisCommands<String, String> connection = client.connect().sync();
 
             assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class)
-                    .hasMessageContaining("NOAUTH Authentication required");
+                    .hasMessageContaining("NOAUTH");
 
             assertThat(connection.auth(passwd)).isEqualTo("OK");
             assertThat(connection.set(key, value)).isEqualTo("OK");
