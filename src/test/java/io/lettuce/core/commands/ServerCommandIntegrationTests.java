@@ -15,10 +15,8 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.Date;
 import java.util.List;
@@ -35,7 +33,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.KillArgs;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.TestSupport;
+import io.lettuce.core.TrackingArgs;
+import io.lettuce.core.UnblockType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -141,7 +145,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
     @Test
     void clientKill() {
-        Pattern p = Pattern.compile(".*addr=([^ ]+).*");
+        Pattern p = Pattern.compile(".*[^l]addr=([^ ]+).*");
         String clients = redis.clientList();
         Matcher m = p.matcher(clients);
 
@@ -155,11 +159,11 @@ public class ServerCommandIntegrationTests extends TestSupport {
         RedisCommands<String, String> connection2 = client.connect().sync();
         connection2.clientSetname("killme");
 
-        Pattern p = Pattern.compile("^.*addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);
+        Pattern p = Pattern.compile("^.*[^l]addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);
         String clients = redis.clientList();
         Matcher m = p.matcher(clients);
 
-        assertThat(m.matches()).isTrue();
+        assertThat(m.find()).isTrue();
         String addr = m.group(1);
         assertThat(redis.clientKill(KillArgs.Builder.addr(addr).skipme())).isGreaterThan(0);
 
