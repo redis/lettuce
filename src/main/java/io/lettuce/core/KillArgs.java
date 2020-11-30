@@ -15,10 +15,8 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandKeyword.ADDR;
-import static io.lettuce.core.protocol.CommandKeyword.ID;
-import static io.lettuce.core.protocol.CommandKeyword.SKIPME;
-import static io.lettuce.core.protocol.CommandType.TYPE;
+import static io.lettuce.core.protocol.CommandKeyword.*;
+import static io.lettuce.core.protocol.CommandType.*;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
@@ -42,6 +40,8 @@ public class KillArgs implements CompositeArgument {
     private Boolean skipme;
 
     private String addr;
+
+    private String laddr;
 
     private Long id;
 
@@ -69,7 +69,7 @@ public class KillArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link KillArgs} setting {@literal ADDR}.
+         * Creates new {@link KillArgs} setting {@literal ADDR} (Remote Address).
          *
          * @param addr must not be {@code null}.
          * @return new {@link KillArgs} with {@literal ADDR} set.
@@ -77,6 +77,17 @@ public class KillArgs implements CompositeArgument {
          */
         public static KillArgs addr(String addr) {
             return new KillArgs().addr(addr);
+        }
+
+        /**
+         * Creates new {@link KillArgs} setting {@literal LADDR} (Local Address).
+         *
+         * @param laddr must not be {@code null}.
+         * @return new {@link KillArgs} with {@literal LADDR} set.
+         * @see KillArgs#laddr(String)
+         */
+        public static KillArgs laddr(String laddr) {
+            return new KillArgs().laddr(laddr);
         }
 
         /**
@@ -157,7 +168,7 @@ public class KillArgs implements CompositeArgument {
     }
 
     /**
-     * Kill the client at {@code addr}.
+     * Kill the client at {@code addr} (Remote Address).
      *
      * @param addr must not be {@code null}.
      * @return {@code this} {@link KillArgs}.
@@ -167,6 +178,21 @@ public class KillArgs implements CompositeArgument {
         LettuceAssert.notNull(addr, "Client address must not be null");
 
         this.addr = addr;
+        return this;
+    }
+
+    /**
+     * Kill the client at {@code laddr} (Local Address).
+     *
+     * @param laddr must not be {@code null}.
+     * @return {@code this} {@link KillArgs}.
+     * @since 6.1
+     */
+    public KillArgs laddr(String laddr) {
+
+        LettuceAssert.notNull(laddr, "Local client address must not be null");
+
+        this.laddr = laddr;
         return this;
     }
 
@@ -197,6 +223,7 @@ public class KillArgs implements CompositeArgument {
         return this;
     }
 
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (skipme != null) {
@@ -209,6 +236,10 @@ public class KillArgs implements CompositeArgument {
 
         if (addr != null) {
             args.add(ADDR).add(addr);
+        }
+
+        if (laddr != null) {
+            args.add("LADDR").add(laddr);
         }
 
         if (type != null) {
