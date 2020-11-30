@@ -15,9 +15,7 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 
@@ -25,6 +23,7 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -61,7 +60,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
                 connection.ping();
                 fail("Server doesn't require authentication");
             } catch (RedisException e) {
-                assertThat(e.getMessage()).isEqualTo("NOAUTH Authentication required.");
+                assertThat(e.getMessage()).startsWith("NOAUTH");
                 assertThat(connection.auth(passwd)).isEqualTo("OK");
                 assertThat(connection.set(key, value)).isEqualTo("OK");
             }
@@ -143,7 +142,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             async.auth("invalid");
             fail("Authenticated with invalid password");
         } catch (RedisException e) {
-            assertThat(e.getMessage()).isEqualTo("ERR Client sent AUTH, but no password is set");
+            assertThat(e.getMessage()).startsWith("ERR").contains("AUTH");
             StatefulRedisConnection<String, String> statefulRedisCommands = async.getStatefulConnection();
             assertThat(ReflectionTestUtils.getField(statefulRedisCommands, "password")).isNull();
         } finally {
