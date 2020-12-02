@@ -37,16 +37,16 @@ import io.netty.util.concurrent.Future;
  *
  * {@link ClientResources} provides in particular:
  * <ul>
+ * <li>{@link AddressResolverGroup} for DNS resolution.</li>
  * <li>{@link CommandLatencyRecorder} to collect latency details. Enabled using
  * {@link io.lettuce.core.metrics.DefaultCommandLatencyCollector} when {@literal HdrHistogram} is on the classpath.</li>
  * <li>{@link EventBus} for client event dispatching</li>
  * <li>{@link EventLoopGroupProvider} to obtain particular {@link io.netty.channel.EventLoopGroup EventLoopGroups}</li>
  * <li>{@link EventExecutorGroup} to perform internal computation tasks</li>
  * <li>Reconnect {@link Delay}.</li>
- * <li>{@link DnsResolver} to collect latency details. Requires the {@literal LatencyUtils} library.</li>
+ * <li>{@link SocketAddressResolver} for to map/resolve DNS addresses to a {@link java.net.InetSocketAddress}.</li>
  * <li>{@link Timer} for scheduling</li>
  * <li>{@link Tracing} to trace Redis commands.</li>
- * <li>{@link AddressResolverGroup} for dns resolution.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -81,6 +81,18 @@ public interface ClientResources {
      * @since 5.1
      */
     interface Builder {
+
+        /**
+         * Sets the {@link AddressResolverGroup} for DNS resolution. This option is only effective if
+         * {@link DnsResolvers#UNRESOLVED} is used as {@link DnsResolver}. Defaults to
+         * {@link io.netty.resolver.DefaultAddressResolverGroup#INSTANCE} if {@literal netty-dns-resolver} is not available,
+         * otherwise defaults to {@link io.netty.resolver.dns.DnsAddressResolverGroup}.
+         *
+         * @param addressResolverGroup the {@link AddressResolverGroup} instance, must not be {@code null}.
+         * @return {@code this} {@link Builder}
+         * @since 6.1
+         */
+        Builder addressResolverGroup(AddressResolverGroup<?> addressResolverGroup);
 
         /**
          * Sets the {@link CommandLatencyCollector} that can that can be used across different instances of the RedisClient.
@@ -137,12 +149,14 @@ public interface ClientResources {
 
         /**
          * Sets the {@link DnsResolver} that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
-         * {@link DnsResolvers#JVM_DEFAULT}
+         * {@link DnsResolvers#UNRESOLVED} to use netty's {@link AddressResolverGroup}.
          *
          * @param dnsResolver the DNS resolver, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          * @since 4.3
+         * @deprecated since 6.1. Configure {@link AddressResolverGroup} instead.
          */
+        @Deprecated
         Builder dnsResolver(DnsResolver dnsResolver);
 
         /**
@@ -245,18 +259,6 @@ public interface ClientResources {
         Builder tracing(Tracing tracing);
 
         /**
-         * Sets the {@link AddressResolverGroup} for dns resolution. This option is only effective if
-         * {@link DnsResolvers#UNRESOLVED} is used as {@link DnsResolver}. Defaults to
-         * {@link io.netty.resolver.DefaultAddressResolverGroup#INSTANCE} if {@literal netty-dns-resolver} is not available,
-         * otherwise defaults to {@link io.netty.resolver.dns.DnsAddressResolverGroup}.
-         *
-         * @param addressResolverGroup the {@link AddressResolverGroup} instance, must not be {@code null}.
-         * @return {@code this} {@link Builder}
-         * @since xxx
-         */
-        Builder addressResolverGroup(AddressResolverGroup<?> addressResolverGroup);
-
-        /**
          * @return a new instance of {@link DefaultClientResources}.
          */
         ClientResources build();
@@ -291,6 +293,14 @@ public interface ClientResources {
      * @return eventually the success/failure of the shutdown without errors.
      */
     Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit);
+
+    /**
+     * Return the {@link AddressResolverGroup} instance for DNS resolution.
+     *
+     * @return the address resolver group.
+     * @since 6.1
+     */
+    AddressResolverGroup<?> addressResolverGroup();
 
     /**
      * Return the {@link EventPublisherOptions} for latency event publishing.
@@ -399,13 +409,4 @@ public interface ClientResources {
      * @since 5.1
      */
     Tracing tracing();
-
-    /**
-     * Return the {@link AddressResolverGroup} instance for dns resolution.
-     *
-     * @return the address resolver group.
-     * @since xxx
-     */
-    AddressResolverGroup<?> addressResolverGroup();
-
 }

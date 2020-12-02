@@ -39,6 +39,16 @@ public class MappingSocketAddressResolver extends SocketAddressResolver {
     private final DnsResolver dnsResolver;
 
     /**
+     * Create a new {@link SocketAddressResolver} given {@link Function mapping function}.
+     *
+     * @param mappingFunction must not be {@code null}.
+     * @since 6.1
+     */
+    private MappingSocketAddressResolver(Function<HostAndPort, HostAndPort> mappingFunction) {
+        this(DnsResolver.unresolved(), mappingFunction);
+    }
+
+    /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver} and {@link Function mapping function}.
      *
      * @param dnsResolver must not be {@code null}.
@@ -51,6 +61,18 @@ public class MappingSocketAddressResolver extends SocketAddressResolver {
         LettuceAssert.notNull(mappingFunction, "Mapping function must not be null!");
         this.dnsResolver = dnsResolver;
         this.mappingFunction = mappingFunction;
+    }
+
+    /**
+     * Create a new {@link SocketAddressResolver} given {@link DnsResolver} and {@link Function mapping function}.
+     *
+     * @param mappingFunction must not be {@code null}.
+     * @return the {@link MappingSocketAddressResolver}.
+     * @since 6.1
+     */
+    public static MappingSocketAddressResolver create(
+            Function<HostAndPort, HostAndPort> mappingFunction) {
+        return new MappingSocketAddressResolver(mappingFunction);
     }
 
     /**

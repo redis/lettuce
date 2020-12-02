@@ -20,6 +20,7 @@ import java.util.concurrent.ThreadFactory;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.socket.DatagramChannel;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
@@ -54,6 +55,11 @@ enum UnavailableResources implements EventLoopResources {
 
     @Override
     public Class<? extends Channel> domainSocketChannelClass() {
+        return null;
+    }
+
+    @Override
+    public Class<? extends DatagramChannel> datagramChannelClass() {
         return null;
     }
 

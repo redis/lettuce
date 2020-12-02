@@ -56,22 +56,20 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </p>
  * {@link DefaultClientResources} allow to configure:
  * <ul>
+ * <li>a {@code addressResolverGroup} that is a provided instance of {@link AddressResolverGroup}.</li>
  * <li>a {@code commandLatencyRecorder} which is a provided instance of {@link io.lettuce.core.metrics.CommandLatencyRecorder}
- * .</li>
+ * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
+ * <li>an {@code eventBus} which is a provided instance of {@link EventBus}.</li> .</li>
  * <li>the {@code ioThreadPoolSize}, alternatively</li>
  * <li>a {@code eventLoopGroupProvider} which is a provided instance of {@link EventLoopGroupProvider}. Higher precedence than
  * {@code ioThreadPoolSize}.</li>
  * <li>computationThreadPoolSize</li>
  * <li>a {@code eventExecutorGroup} which is a provided instance of {@link EventExecutorGroup}. Higher precedence than
  * {@code computationThreadPoolSize}.</li>
- *
- * <li>an {@code eventBus} which is a provided instance of {@link EventBus}.</li>
- * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
  * <li>a {@code nettyCustomizer} that is a provided instance of {@link NettyCustomizer}.</li>
  * <li>a {@code socketAddressResolver} which is a provided instance of {@link SocketAddressResolver}.</li>
  * <li>a {@code timer} that is a provided instance of {@link io.netty.util.HashedWheelTimer}.</li>
  * <li>a {@code tracing} that is a provided instance of {@link Tracing}.</li>
- * <li>a {@code addressResolverGroup} that is a provided instance of {@link AddressResolverGroup}.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -124,6 +122,8 @@ public class DefaultClientResources implements ClientResources {
         }
     }
 
+    private final AddressResolverGroup<?> addressResolverGroup;
+
     private final CommandLatencyRecorder commandLatencyRecorder;
 
     private final boolean sharedCommandLatencyRecorder;
@@ -156,11 +156,11 @@ public class DefaultClientResources implements ClientResources {
 
     private final Tracing tracing;
 
-    private final AddressResolverGroup<?> addressResolverGroup;
-
     private volatile boolean shutdownCalled = false;
 
     protected DefaultClientResources(Builder builder) {
+
+        addressResolverGroup = builder.addressResolverGroup;
 
         if (builder.eventLoopGroupProvider == null) {
             int ioThreadPoolSize = builder.ioThreadPoolSize;
@@ -254,7 +254,6 @@ public class DefaultClientResources implements ClientResources {
         reconnectDelay = builder.reconnectDelay;
         nettyCustomizer = builder.nettyCustomizer;
         tracing = builder.tracing;
-        addressResolverGroup = builder.addressResolverGroup;
 
         if (!sharedTimer && timer instanceof HashedWheelTimer) {
             ((HashedWheelTimer) timer).start();
@@ -323,6 +322,25 @@ public class DefaultClientResources implements ClientResources {
         private AddressResolverGroup<?> addressResolverGroup = DEFAULT_ADDRESS_RESOLVER_GROUP;
 
         private Builder() {
+        }
+
+        /**
+         * Sets the {@link AddressResolverGroup} for DNS resolution. This option is only effective if
+         * {@link DnsResolvers#UNRESOLVED} is used as {@link DnsResolver}. Defaults to
+         * {@link io.netty.resolver.DefaultAddressResolverGroup#INSTANCE} if {@literal netty-dns-resolver} is not available,
+         * otherwise defaults to {@link io.netty.resolver.dns.DnsAddressResolverGroup}.
+         *
+         * @param addressResolverGroup the {@link AddressResolverGroup} instance, must not be {@code null}.
+         * @return {@code this} {@link ClientResources.Builder}
+         * @since 6.1
+         */
+        @Override
+        public Builder addressResolverGroup(AddressResolverGroup<?> addressResolverGroup) {
+
+            LettuceAssert.notNull(addressResolverGroup, "AddressResolverGroup must not be null");
+
+            this.addressResolverGroup = addressResolverGroup;
+            return this;
         }
 
         /**
@@ -580,25 +598,6 @@ public class DefaultClientResources implements ClientResources {
             LettuceAssert.notNull(tracing, "Tracing must not be null");
 
             this.tracing = tracing;
-            return this;
-        }
-
-        /**
-         * Sets the {@link AddressResolverGroup} for dns resolution. This option is only effective if
-         * {@link DnsResolvers#UNRESOLVED} is used as {@link DnsResolver}. Defaults to
-         * {@link io.netty.resolver.DefaultAddressResolverGroup#INSTANCE} if {@literal netty-dns-resolver} is not available,
-         * otherwise defaults to {@link io.netty.resolver.dns.DnsAddressResolverGroup}.
-         *
-         * @param addressResolverGroup the {@link AddressResolverGroup} instance, must not be {@code null}.
-         * @return {@code this} {@link ClientResources.Builder}
-         * @since xxx
-         */
-        @Override
-        public Builder addressResolverGroup(AddressResolverGroup<?> addressResolverGroup) {
-
-            LettuceAssert.notNull(addressResolverGroup, "AddressResolverGroup must not be null");
-
-            this.addressResolverGroup = addressResolverGroup;
             return this;
         }
 

@@ -23,9 +23,11 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.incubator.channel.uring.IOUring;
 import io.netty.incubator.channel.uring.IOUringChannelOption;
+import io.netty.incubator.channel.uring.IOUringDatagramChannel;
 import io.netty.incubator.channel.uring.IOUringEventLoopGroup;
 import io.netty.incubator.channel.uring.IOUringSocketChannel;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -151,6 +153,11 @@ public class IOUringProvider {
         @Override
         public Class<? extends Channel> domainSocketChannelClass() {
             return IOUringSocketChannel.class;
+        }
+
+        @Override
+        public Class<? extends DatagramChannel> datagramChannelClass() {
+            return IOUringDatagramChannel.class;
         }
 
         @Override

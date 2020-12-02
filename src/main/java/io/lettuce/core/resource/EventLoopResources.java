@@ -61,14 +61,15 @@ public interface EventLoopResources {
     Class<? extends Channel> socketChannelClass();
 
     /**
-     * @return the {@link DatagramChannel} class.
-     */
-    Class<? extends DatagramChannel> datagramChannelClass();
-
-    /**
      * @return the Domain Socket {@link Channel} class.
      */
     Class<? extends Channel> domainSocketChannelClass();
+
+    /**
+     * @return the {@link DatagramChannel} class.
+     * @since 6.1
+     */
+    Class<? extends DatagramChannel> datagramChannelClass();
 
     /**
      * @param socketPath the socket file path.

@@ -34,6 +34,15 @@ public class SocketAddressResolver {
     private final DnsResolver dnsResolver;
 
     /**
+     * Create a new {@link SocketAddressResolver}.
+     *
+     * @since 6.1
+     */
+    protected SocketAddressResolver() {
+        this(DnsResolver.unresolved());
+    }
+
+    /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver}.
      *
      * @param dnsResolver must not be {@code null}.

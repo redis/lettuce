@@ -403,7 +403,7 @@ public class SocketOptions {
                 LettuceAssert.notNull(interval, "Idle time must not be null");
                 LettuceAssert.isTrue(!interval.isNegative(), "Idle time must not be begative");
 
-                this.idle = interval;
+                this.interval = interval;
                 return this;
             }
 

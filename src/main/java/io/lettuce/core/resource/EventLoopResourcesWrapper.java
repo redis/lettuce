@@ -20,6 +20,7 @@ import java.util.concurrent.ThreadFactory;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.socket.DatagramChannel;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
@@ -66,6 +67,12 @@ class EventLoopResourcesWrapper implements EventLoopResources {
     public Class<? extends Channel> domainSocketChannelClass() {
         verifier.run();
         return delegate.domainSocketChannelClass();
+    }
+
+    @Override
+    public Class<? extends DatagramChannel> datagramChannelClass() {
+        verifier.run();
+        return delegate.datagramChannelClass();
     }
 
     @Override

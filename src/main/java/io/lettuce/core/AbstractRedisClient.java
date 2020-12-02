@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import reactor.core.publisher.Mono;
-import io.lettuce.core.Transports.NativeTransports;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Exceptions;
@@ -43,6 +42,8 @@ import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
+import io.lettuce.core.resource.Transports;
+import io.lettuce.core.resource.Transports.NativeTransports;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -73,7 +74,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @author Jongyeol Choi
  * @author Poorva Gokhale
- * @author Yohei Ueki
  * @since 3.0
  * @see ClientResources
  */
@@ -266,15 +266,10 @@ public abstract class AbstractRedisClient {
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
 
-        ClientOptions clientOptions = getOptions();
-        SocketOptions socketOptions = clientOptions.getSocketOptions();
-
-        Transports.configureBootstrap(redisBootstrap, socketOptions, !LettuceStrings.isEmpty(redisURI.getSocket()),
-                this::getEventLoopGroup);
-
         connectionBuilder.apply(redisURI);
 
         connectionBuilder.bootstrap(redisBootstrap);
+        connectionBuilder.configureBootstrap(!LettuceStrings.isEmpty(redisURI.getSocket()), this::getEventLoopGroup);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents);
         connectionBuilder.socketAddressSupplier(socketAddressSupplier);
     }
@@ -292,15 +287,6 @@ public abstract class AbstractRedisClient {
             connectionBuilder.bootstrap().channel(NativeTransports.domainSocketChannelClass());
         } else {
             connectionBuilder.bootstrap().channel(Transports.socketChannelClass());
-        }
-    }
-
-    protected void resolver(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
-
-        LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
-
-        if (connectionPoint.getSocket() == null) {
-            connectionBuilder.bootstrap().resolver(clientResources.addressResolverGroup());
         }
     }
 

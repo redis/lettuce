@@ -67,11 +67,12 @@ public class KqueueProvider {
 
         if (KQUEUE_AVAILABLE) {
             logger.debug("Starting with kqueue library");
-            KQUEUE_RESOURCES = AvailableKqueueResources.INSTANCE;
+            KQUEUE_RESOURCES = new EventLoopResourcesWrapper(KqueueResources.INSTANCE, KqueueProvider::checkForKqueueLibrary);
 
         } else {
             logger.debug("Starting without optional kqueue library");
-            KQUEUE_RESOURCES = UnavailableKqueueResources.INSTANCE;
+            KQUEUE_RESOURCES = new EventLoopResourcesWrapper(UnavailableResources.INSTANCE,
+                    KqueueProvider::checkForKqueueLibrary);
         }
     }
 
@@ -170,7 +171,7 @@ public class KqueueProvider {
     /**
      * {@link EventLoopResources} for available kqueue.
      */
-    enum AvailableKqueueResources implements EventLoopResources {
+    enum KqueueResources implements EventLoopResources {
 
         INSTANCE;
 

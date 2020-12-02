@@ -70,11 +70,11 @@ public class EpollProvider {
 
         if (EPOLL_AVAILABLE) {
             logger.debug("Starting with epoll library");
-            EPOLL_RESOURCES = AvailableEpollResources.INSTANCE;
+            EPOLL_RESOURCES = new EventLoopResourcesWrapper(EpollResources.INSTANCE, EpollProvider::checkForEpollLibrary);
 
         } else {
             logger.debug("Starting without optional epoll library");
-            EPOLL_RESOURCES = UnavailableEpollResources.INSTANCE;
+            EPOLL_RESOURCES = new EventLoopResourcesWrapper(UnavailableResources.INSTANCE, EpollProvider::checkForEpollLibrary);
         }
     }
 
@@ -123,67 +123,9 @@ public class EpollProvider {
     }
 
     /**
-     * {@link EventLoopResources} for unavailable EPoll.
-     */
-    enum UnavailableEpollResources implements EventLoopResources {
-
-        INSTANCE;
-
-        @Override
-        public boolean matches(Class<? extends EventExecutorGroup> type) {
-
-            checkForEpollLibrary();
-            return false;
-        }
-
-        @Override
-        public Class<? extends EventLoopGroup> eventLoopGroupClass() {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-        @Override
-        public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-        @Override
-        public Class<? extends Channel> socketChannelClass() {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-        @Override
-        public Class<? extends Channel> domainSocketChannelClass() {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-        @Override
-        public SocketAddress newSocketAddress(String socketPath) {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-        @Override
-        public Class<? extends DatagramChannel> datagramChannelClass() {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-    }
-
-    /**
      * {@link EventLoopResources} for available Epoll.
      */
-    enum AvailableEpollResources implements EventLoopResources {
+    enum EpollResources implements EventLoopResources {
 
         INSTANCE;
 
@@ -197,49 +139,31 @@ public class EpollProvider {
 
         @Override
         public Class<? extends EventLoopGroup> eventLoopGroupClass() {
-
-            checkForEpollLibrary();
-
             return EpollEventLoopGroup.class;
         }
 
         @Override
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-
-            checkForEpollLibrary();
-
             return new EpollEventLoopGroup(nThreads, threadFactory);
         }
 
         @Override
         public Class<? extends Channel> socketChannelClass() {
-
-            checkForEpollLibrary();
-
             return EpollSocketChannel.class;
         }
 
         @Override
-        public Class<? extends DatagramChannel> datagramChannelClass() {
-
-            checkForEpollLibrary();
-
-            return EpollDatagramChannel.class;
-        }
-
-        @Override
         public Class<? extends Channel> domainSocketChannelClass() {
-
-            checkForEpollLibrary();
-
             return EpollDomainSocketChannel.class;
         }
 
         @Override
+        public Class<? extends DatagramChannel> datagramChannelClass() {
+            return EpollDatagramChannel.class;
+        }
+
+        @Override
         public SocketAddress newSocketAddress(String socketPath) {
-
-            checkForEpollLibrary();
-
             return new DomainSocketAddress(socketPath);
         }
 

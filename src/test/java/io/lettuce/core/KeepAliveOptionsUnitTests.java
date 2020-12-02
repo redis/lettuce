@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.SocketOptions.KeepAliveOptions;
 
 /**
- *
  * Unit tests for {@link KeepAliveOptions}.
  *
  * @author Mark Paluch
@@ -35,7 +34,7 @@ class KeepAliveOptionsUnitTests {
     void testNew() {
         KeepAliveOptions disabled = KeepAliveOptions.builder().build();
 
-        assertThat(disabled).isNull();
+        assertThat(disabled).isNotNull();
     }
 
     @Test

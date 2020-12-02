@@ -1,11 +1,11 @@
 package io.lettuce.core.resource;
 
-import java.util.function.Supplier;
-
-import io.lettuce.core.Transports;
+import io.lettuce.core.internal.LettuceClassUtils;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.resolver.DefaultAddressResolverGroup;
+import io.netty.resolver.dns.DefaultDnsCache;
+import io.netty.resolver.dns.DefaultDnsCnameCache;
 import io.netty.resolver.dns.DnsAddressResolverGroup;
 import io.netty.resolver.dns.DnsNameResolverBuilder;
 import io.netty.util.internal.logging.InternalLogger;
@@ -17,7 +17,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@literal netty-dns-resolver} becomes mandatory. Internal API.
  *
  * @author Yohei Ueki
- * @since xxx
+ * @author Mark Paluch
+ * @since 6.1
  */
 class AddressResolverGroupProvider {
 
@@ -26,40 +27,34 @@ class AddressResolverGroupProvider {
     private static final AddressResolverGroup<?> ADDRESS_RESOLVER_GROUP;
 
     static {
-        boolean dnsResolverAvailable;
-        try {
-            Class.forName("io.netty.resolver.dns.DnsAddressResolverGroup");
-            dnsResolverAvailable = true;
-        } catch (ClassNotFoundException e) {
-            dnsResolverAvailable = false;
-        }
+        boolean dnsResolverAvailable = LettuceClassUtils.isPresent("io.netty.resolver.dns.DnsAddressResolverGroup");
 
         // create addressResolverGroup instance via Supplier to avoid NoClassDefFoundError.
-        Supplier<AddressResolverGroup<?>> supplier;
+        AddressResolverGroup<?> group;
         if (dnsResolverAvailable) {
             logger.debug("Starting with netty's non-blocking DNS resolver library");
-            supplier = AddressResolverGroupProvider::defaultDnsAddressResolverGroup;
+            group = AddressResolverGroupProvider.defaultDnsAddressResolverGroup();
         } else {
             logger.debug("Starting without optional netty's non-blocking DNS resolver library");
-            supplier = () -> DefaultAddressResolverGroup.INSTANCE;
+            group = DefaultAddressResolverGroup.INSTANCE;
         }
-        ADDRESS_RESOLVER_GROUP = supplier.get();
+        ADDRESS_RESOLVER_GROUP = group;
     }
 
     /**
-     * Returns the {@link AddressResolverGroup} for dns resolution.
+     * Returns the {@link AddressResolverGroup} for DNS resolution.
      *
      * @return the {@link DnsAddressResolverGroup} if {@literal netty-dns-resolver} is available, otherwise return
      *         {@link DefaultAddressResolverGroup#INSTANCE}.
-     * @since xxx
      */
     static AddressResolverGroup<?> addressResolverGroup() {
         return ADDRESS_RESOLVER_GROUP;
     }
 
-    private static DnsAddressResolverGroup defaultDnsAddressResolverGroup() {
+    private static AddressResolverGroup<?> defaultDnsAddressResolverGroup() {
         return new DnsAddressResolverGroup(new DnsNameResolverBuilder().channelType(Transports.datagramChannelClass())
-                .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class)));
+                .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))
+                .cnameCache(new DefaultDnsCnameCache()).resolveCache(new DefaultDnsCache()));
     }
 
 }

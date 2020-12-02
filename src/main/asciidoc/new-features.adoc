@@ -9,6 +9,8 @@
 * <<command.latency.metrics.micrometer,Micrometer support>> through `MicrometerCommandLatencyRecorder`.
 * <<native.transport,Experimental support for `io_uring`>>.
 * Configuration of extended Keep-Alive options through `KeepAliveOptions` (only available for some transports/Java versions).
+* Configuration of netty's `AddressResolverGroup` through `ClientResources`.
+Uses `DnsAddressResolverGroup` when `netty-resolver-dns` is on the classpath.
 
 [[new-features.6-0-0]]
 == What's new in Lettuce 6.0
