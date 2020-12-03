@@ -29,11 +29,10 @@ class AddressResolverGroupProvider {
     static {
         boolean dnsResolverAvailable = LettuceClassUtils.isPresent("io.netty.resolver.dns.DnsAddressResolverGroup");
 
-        // create addressResolverGroup instance via Supplier to avoid NoClassDefFoundError.
         AddressResolverGroup<?> group;
         if (dnsResolverAvailable) {
             logger.debug("Starting with netty's non-blocking DNS resolver library");
-            group = AddressResolverGroupProvider.defaultDnsAddressResolverGroup();
+            group = DefaultDnsAddressResolverGroupWrapper.INSTANCE;
         } else {
             logger.debug("Starting without optional netty's non-blocking DNS resolver library");
             group = DefaultAddressResolverGroup.INSTANCE;
@@ -51,10 +50,14 @@ class AddressResolverGroupProvider {
         return ADDRESS_RESOLVER_GROUP;
     }
 
-    private static AddressResolverGroup<?> defaultDnsAddressResolverGroup() {
-        return new DnsAddressResolverGroup(new DnsNameResolverBuilder().channelType(Transports.datagramChannelClass())
-                .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))
-                .cnameCache(new DefaultDnsCnameCache()).resolveCache(new DefaultDnsCache()));
+    // Wraps DnsAddressResolverGroup to avoid NoClassDefFoundError.
+    private static class DefaultDnsAddressResolverGroupWrapper {
+
+        static AddressResolverGroup<?> INSTANCE = new DnsAddressResolverGroup(
+                new DnsNameResolverBuilder().channelType(Transports.datagramChannelClass())
+                        .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))
+                        .cnameCache(new DefaultDnsCnameCache()).resolveCache(new DefaultDnsCache()));
+
     }
 
 }
