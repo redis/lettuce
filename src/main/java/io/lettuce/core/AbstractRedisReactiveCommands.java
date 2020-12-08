@@ -788,13 +788,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<V> setget(K key, V value) {
-        return createMono(() -> commandBuilder.setget(key, value));
+    public Mono<V> setGet(K key, V value) {
+        return createMono(() -> commandBuilder.setGet(key, value));
     }
 
     @Override
-    public Mono<V> setget(K key, V value, SetArgs setArgs) {
-        return createMono(() -> commandBuilder.setget(key, value, setArgs));
+    public Mono<V> setGet(K key, V value, SetArgs setArgs) {
+        return createMono(() -> commandBuilder.setGet(key, value, setArgs));
     }
 
     @Override

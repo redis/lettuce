@@ -315,7 +315,7 @@ public interface NodeSelectionStringCommands<K, V> {
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
      * @since 6.2
      */
-    Executions<V> setget(K key, V value);
+    Executions<V> setGet(K key, V value);
 
     /**
      * Set the string value of a key and return its old value.
@@ -327,7 +327,7 @@ public interface NodeSelectionStringCommands<K, V> {
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
      * @since 6.2
      */
-    Executions<V> setget(K key, V value, SetArgs setArgs);
+    Executions<V> setGet(K key, V value, SetArgs setArgs);
 
     /**
      * Sets or clears the bit at offset in the string value stored at key.

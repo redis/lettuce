@@ -1832,15 +1832,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SET, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, V> setget(K key, V value) {
-        return setget(key, value, new SetArgs());
+    Command<K, V, V> setGet(K key, V value) {
+        return setGet(key, value, new SetArgs());
     }
 
-    Command<K, V, V> setget(K key, V value, SetArgs setArgs) {
+    Command<K, V, V> setGet(K key, V value, SetArgs setArgs) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
-        setArgs.get().build(args);
+        setArgs.build(args);
+        args.add("GET");
+
         return createCommand(SET, new ValueOutput<>(codec), args);
     }
 
