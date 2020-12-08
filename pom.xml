@@ -50,7 +50,7 @@
     </developers>
 
     <properties>
-        <assertj-core.version>3.17.2</assertj-core.version>
+        <assertj-core.version>3.18.1</assertj-core.version>
         <cdi-api.version>2.0.SP1</cdi-api.version>
         <brave.version>5.12.7</brave.version>
         <commons-lang3.version>3.11</commons-lang3.version>
