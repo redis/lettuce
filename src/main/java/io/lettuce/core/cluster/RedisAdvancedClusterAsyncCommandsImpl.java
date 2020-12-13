@@ -15,13 +15,17 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterScanSupport.asyncClusterKeyScanCursorMapper;
-import static io.lettuce.core.cluster.ClusterScanSupport.asyncClusterStreamScanCursorMapper;
-import static io.lettuce.core.cluster.NodeSelectionInvocationHandler.ExecutionModel.ASYNC;
-import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.UPSTREAM;
+import static io.lettuce.core.cluster.ClusterScanSupport.*;
+import static io.lettuce.core.cluster.NodeSelectionInvocationHandler.ExecutionModel.*;
+import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.*;
 
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadLocalRandom;
@@ -29,13 +33,22 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisAsyncCommands;
+import io.lettuce.core.GeoArgs;
+import io.lettuce.core.GeoWithin;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.async.RedisKeyAsyncCommands;
 import io.lettuce.core.api.async.RedisScriptingAsyncCommands;
 import io.lettuce.core.api.async.RedisServerAsyncCommands;
-import io.lettuce.core.cluster.ClusterScanSupport.ScanCursorMapper;
+import io.lettuce.core.cluster.ClusterScanSupport.*;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.AsyncNodeSelection;

@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.AssertionsForClassTypes.fail;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import java.util.ArrayList;
@@ -30,7 +30,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanIterator;
+import io.lettuce.core.ScoredValue;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.test.KeysAndValues;

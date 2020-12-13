@@ -15,13 +15,15 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterScanSupport.reactiveClusterKeyScanCursorMapper;
-import static io.lettuce.core.cluster.ClusterScanSupport.reactiveClusterStreamScanCursorMapper;
-import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.UPSTREAM;
-import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
-import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
+import static io.lettuce.core.cluster.ClusterScanSupport.*;
+import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.*;
+import static io.lettuce.core.protocol.CommandType.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
@@ -33,7 +35,16 @@ import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisReactiveCommands;
+import io.lettuce.core.GeoArgs;
+import io.lettuce.core.GeoWithin;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;

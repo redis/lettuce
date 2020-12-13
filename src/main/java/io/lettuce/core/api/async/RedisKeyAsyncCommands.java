@@ -18,7 +18,14 @@ package io.lettuce.core.api.async;
 import java.util.Date;
 import java.util.List;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.MigrateArgs;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RestoreArgs;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.SortArgs;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 

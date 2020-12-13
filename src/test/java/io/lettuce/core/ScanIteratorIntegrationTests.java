@@ -15,7 +15,7 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.AssertionsForClassTypes.fail;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import java.util.ArrayList;
