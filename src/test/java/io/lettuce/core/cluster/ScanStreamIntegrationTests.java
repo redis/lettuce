@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import reactor.test.StepVerifier;
-import io.lettuce.core.ScanArgs;
+import io.lettuce.core.KeyScanArgs;
 import io.lettuce.core.ScanStream;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -54,7 +54,7 @@ class ScanStreamIntegrationTests extends TestSupport {
 
         RedisAdvancedClusterReactiveCommands<String, String> reactive = connection.reactive();
 
-        StepVerifier.create(ScanStream.scan(reactive, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
+        StepVerifier.create(ScanStream.scan(reactive, KeyScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
         StepVerifier.create(ScanStream.scan(reactive)).expectNextCount(1000).verifyComplete();
     }

@@ -1293,12 +1293,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+    public Mono<KeyScanCursor<K>> scan(KeyScanArgs scanArgs) {
         return createMono(() -> commandBuilder.scan(scanArgs));
     }
 
     @Override
-    public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
+    public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, KeyScanArgs scanArgs) {
         return createMono(() -> commandBuilder.scan(scanCursor, scanArgs));
     }
 
@@ -1313,12 +1313,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, KeyScanArgs scanArgs) {
         return createMono(() -> commandBuilder.scanStreaming(channel, scanArgs));
     }
 
     @Override
-    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
+    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, KeyScanArgs scanArgs) {
         return createMono(() -> commandBuilder.scanStreaming(channel, scanCursor, scanArgs));
     }
 

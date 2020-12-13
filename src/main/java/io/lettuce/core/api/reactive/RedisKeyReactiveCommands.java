@@ -368,7 +368,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    Mono<KeyScanCursor<K>> scan(ScanArgs scanArgs);
+    Mono<KeyScanCursor<K>> scan(KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -377,7 +377,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
+    Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -406,7 +406,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #scan}.
      */
     @Deprecated
-    Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
+    Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -418,7 +418,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #scan}.
      */
     @Deprecated
-    Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
+    Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.

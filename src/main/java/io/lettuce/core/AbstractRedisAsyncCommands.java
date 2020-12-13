@@ -1216,12 +1216,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+    public RedisFuture<KeyScanCursor<K>> scan(KeyScanArgs scanArgs) {
         return dispatch(commandBuilder.scan(scanArgs));
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
+    public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, KeyScanArgs scanArgs) {
         return dispatch(commandBuilder.scan(scanCursor, scanArgs));
     }
 
@@ -1236,12 +1236,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, KeyScanArgs scanArgs) {
         return dispatch(commandBuilder.scanStreaming(channel, scanArgs));
     }
 
     @Override
-    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
+    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, KeyScanArgs scanArgs) {
         return dispatch(commandBuilder.scanStreaming(channel, scanCursor, scanArgs));
     }
 

@@ -332,7 +332,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
     void scanWithArgs() {
         redis.set(key, value);
 
-        KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(10));
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(10));
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
 
@@ -390,7 +390,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
-        StreamScanCursor cursor = redis.scan(adapter, ScanCursor.INITIAL, ScanArgs.Builder.limit(5));
+        StreamScanCursor cursor = redis.scan(adapter, ScanCursor.INITIAL, KeyScanArgs.Builder.limit(5));
 
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
@@ -402,7 +402,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
-        StreamScanCursor cursor = redis.scan(adapter, ScanArgs.Builder.limit(100).match("*"));
+        StreamScanCursor cursor = redis.scan(adapter, KeyScanArgs.Builder.limit(100).match("*"));
 
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
@@ -417,7 +417,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         Set<String> check = new HashSet<>();
         setup100KeyValues(expect);
 
-        KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(12));
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(12));
 
         assertThat(cursor.getCursor()).isNotNull();
         assertThat(cursor.getCursor()).isNotEqualTo("0");
@@ -440,7 +440,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);
 
-        KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(200).match("key1*"));
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(200).match("key1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();

@@ -71,14 +71,14 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * @param <V> Value type.
      * @return a new {@link ScanIterator}.
      */
-    public static <K, V> ScanIterator<K> scan(RedisKeyCommands<K, V> commands, ScanArgs scanArgs) {
+    public static <K, V> ScanIterator<K> scan(RedisKeyCommands<K, V> commands, KeyScanArgs scanArgs) {
 
         LettuceAssert.notNull(scanArgs, "ScanArgs must not be null");
 
         return scan(commands, Optional.of(scanArgs));
     }
 
-    private static <K, V> ScanIterator<K> scan(RedisKeyCommands<K, V> commands, Optional<ScanArgs> scanArgs) {
+    private static <K, V> ScanIterator<K> scan(RedisKeyCommands<K, V> commands, Optional<KeyScanArgs> scanArgs) {
 
         LettuceAssert.notNull(commands, "RedisKeyCommands must not be null");
 

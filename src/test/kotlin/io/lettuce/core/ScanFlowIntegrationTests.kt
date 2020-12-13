@@ -52,7 +52,7 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
             repeat(iterations) {
                 set("key - $it", value)
             }
-            assertThat(ScanFlow.scan(this, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
+            assertThat(ScanFlow.scan(this, KeyScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
             assertThat(ScanFlow.scan(this).count()).isEqualTo(iterations)
         }
     }
@@ -64,7 +64,7 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
                 hset(key, "field-$it", "value-$it")
             }
 
-            assertThat(ScanFlow.hscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
+            assertThat(ScanFlow.hscan(this, key, KeyScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
             assertThat(ScanFlow.hscan(this, key).count()).isEqualTo(iterations)
         }
     }
@@ -76,7 +76,7 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
                 sadd(key, "value-$it")
             }
 
-            assertThat(ScanFlow.sscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
+            assertThat(ScanFlow.sscan(this, key, KeyScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
             assertThat(ScanFlow.sscan(this, key).count()).isEqualTo(iterations)
         }
     }
@@ -88,7 +88,7 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
                 zadd(key, 1001.0, "value-$it")
             }
 
-            assertThat(ScanFlow.zscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
+            assertThat(ScanFlow.zscan(this, key, KeyScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
             assertThat(ScanFlow.zscan(this, key).count()).isEqualTo(iterations)
         }
     }

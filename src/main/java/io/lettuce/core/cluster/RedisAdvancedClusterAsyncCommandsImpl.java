@@ -560,13 +560,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+    public RedisFuture<KeyScanCursor<K>> scan(KeyScanArgs scanArgs) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(scanArgs),
                 asyncClusterKeyScanCursorMapper());
     }
 
     @Override
-    public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
+    public RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, KeyScanArgs scanArgs) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs),
                 asyncClusterKeyScanCursorMapper());
     }
@@ -583,13 +583,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, KeyScanArgs scanArgs) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel, scanArgs),
                 asyncClusterStreamScanCursorMapper());
     }
 
     @Override
-    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
+    public RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, KeyScanArgs scanArgs) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor, scanArgs),
                 asyncClusterStreamScanCursorMapper());
     }

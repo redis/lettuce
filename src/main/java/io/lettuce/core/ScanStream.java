@@ -70,14 +70,14 @@ public abstract class ScanStream {
      * @param <V> Value type.
      * @return a new {@link Flux}.
      */
-    public static <K, V> Flux<K> scan(RedisKeyReactiveCommands<K, V> commands, ScanArgs scanArgs) {
+    public static <K, V> Flux<K> scan(RedisKeyReactiveCommands<K, V> commands, KeyScanArgs scanArgs) {
 
         LettuceAssert.notNull(scanArgs, "ScanArgs must not be null");
 
         return scan(commands, Optional.of(scanArgs));
     }
 
-    private static <K, V> Flux<K> scan(RedisKeyReactiveCommands<K, V> commands, Optional<ScanArgs> scanArgs) {
+    private static <K, V> Flux<K> scan(RedisKeyReactiveCommands<K, V> commands, Optional<KeyScanArgs> scanArgs) {
 
         LettuceAssert.notNull(commands, "RedisKeyCommands must not be null");
 

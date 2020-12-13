@@ -361,7 +361,7 @@ public interface RedisKeyCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    KeyScanCursor<K> scan(ScanArgs scanArgs);
+    KeyScanCursor<K> scan(KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -370,7 +370,7 @@ public interface RedisKeyCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    KeyScanCursor<K> scan(ScanCursor scanCursor, ScanArgs scanArgs);
+    KeyScanCursor<K> scan(ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -395,7 +395,7 @@ public interface RedisKeyCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
+    StreamScanCursor scan(KeyStreamingChannel<K> channel, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -405,7 +405,7 @@ public interface RedisKeyCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
+    StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.

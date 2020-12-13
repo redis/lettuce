@@ -250,7 +250,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyReactiveCommands#scan(ScanArgs)
      */
-    Mono<KeyScanCursor<K>> scan(ScanArgs scanArgs);
+    Mono<KeyScanCursor<K>> scan(KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -261,7 +261,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyReactiveCommands#scan(ScanCursor, ScanArgs)
      */
-    Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
+    Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -290,7 +290,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel, ScanArgs)
      */
-    Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
+    Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -302,7 +302,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
      */
-    Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
+    Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.

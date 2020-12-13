@@ -66,7 +66,7 @@ class ScanStreamIntegrationTests extends TestSupport {
 
         RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
 
-        StepVerifier.create(ScanStream.scan(reactive, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
+        StepVerifier.create(ScanStream.scan(reactive, KeyScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
         StepVerifier.create(ScanStream.scan(reactive)).expectNextSequence(list).verifyComplete();
     }

@@ -364,9 +364,9 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
         do {
 
             if (scanCursor == null) {
-                scanCursor = commands.scan(ScanArgs.Builder.matches("a*")).block();
+                scanCursor = commands.scan(KeyScanArgs.Builder.matches("a*")).block();
             } else {
-                scanCursor = commands.scan(scanCursor, ScanArgs.Builder.matches("a*")).block();
+                scanCursor = commands.scan(scanCursor, KeyScanArgs.Builder.matches("a*")).block();
             }
             allKeys.addAll(scanCursor.getKeys());
         } while (!scanCursor.isFinished());
@@ -410,9 +410,9 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
         do {
 
             if (scanCursor == null) {
-                scanCursor = commands.scan(adapter, ScanArgs.Builder.matches("a*")).block();
+                scanCursor = commands.scan(adapter, KeyScanArgs.Builder.matches("a*")).block();
             } else {
-                scanCursor = commands.scan(adapter, scanCursor, ScanArgs.Builder.matches("a*")).block();
+                scanCursor = commands.scan(adapter, scanCursor, KeyScanArgs.Builder.matches("a*")).block();
             }
         } while (!scanCursor.isFinished());
 

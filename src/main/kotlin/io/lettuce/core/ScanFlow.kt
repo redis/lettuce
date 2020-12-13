@@ -37,7 +37,7 @@ object ScanFlow {
      * @param scanArgs scan arguments.
      * @return `Flow<K>` flow of keys.
      */
-    fun <K : Any, V : Any> scan(commands: RedisKeyCoroutinesCommands<K, V>, scanArgs: ScanArgs? = null): Flow<K> {
+    fun <K : Any, V : Any> scan(commands: RedisKeyCoroutinesCommands<K, V>, scanArgs: KeyScanArgs? = null): Flow<K> {
         val ops = when (commands) {
             is RedisCoroutinesCommandsImpl -> commands.ops
             is RedisClusterCoroutinesCommandsImpl -> commands.ops

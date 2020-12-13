@@ -361,7 +361,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs);
+    RedisFuture<KeyScanCursor<K>> scan(KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -370,7 +370,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
-    RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -395,7 +395,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
@@ -405,7 +405,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.

@@ -16,10 +16,10 @@
 package io.lettuce.core;
 
 import static io.lettuce.core.protocol.CommandKeyword.*;
-import static io.lettuce.core.protocol.CommandType.*;
-
+//
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 
 /**
  *
@@ -243,7 +243,7 @@ public class KillArgs implements CompositeArgument {
         }
 
         if (type != null) {
-            args.add(TYPE).add(type.name().toLowerCase());
+            args.add(CommandType.TYPE).add(type.name().toLowerCase());
         }
     }
 

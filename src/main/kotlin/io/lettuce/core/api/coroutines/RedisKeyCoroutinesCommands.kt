@@ -332,7 +332,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor<K> scan cursor.
      */
-    suspend fun scan(scanArgs: ScanArgs): KeyScanCursor<K>?
+    suspend fun scan(scanArgs: KeyScanArgs): KeyScanCursor<K>?
 
     /**
      * Incrementally iterate the keys space.
@@ -341,7 +341,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param scanArgs scan arguments.
      * @return KeyScanCursor<K> scan cursor.
      */
-    suspend fun scan(scanCursor: ScanCursor, scanArgs: ScanArgs): KeyScanCursor<K>?
+    suspend fun scan(scanCursor: ScanCursor, scanArgs: KeyScanArgs): KeyScanCursor<K>?
 
     /**
      * Incrementally iterate the keys space.

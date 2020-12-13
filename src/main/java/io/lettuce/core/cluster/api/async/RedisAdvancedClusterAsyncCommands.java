@@ -355,7 +355,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyAsyncCommands#scan(ScanArgs)
      */
-    RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs);
+    RedisFuture<KeyScanCursor<K>> scan(KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -366,7 +366,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyAsyncCommands#scan(ScanCursor, ScanArgs)
      */
-    RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -395,7 +395,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyAsyncCommands#scan(KeyStreamingChannel, ScanArgs)
      */
-    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
@@ -407,7 +407,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyAsyncCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
      */
-    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, KeyScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.

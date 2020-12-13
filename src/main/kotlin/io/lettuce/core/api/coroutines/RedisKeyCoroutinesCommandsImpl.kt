@@ -96,9 +96,9 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun scan(): KeyScanCursor<K>? = ops.scan().awaitFirstOrNull()
 
-    override suspend fun scan(scanArgs: ScanArgs): KeyScanCursor<K>? = ops.scan(scanArgs).awaitFirstOrNull()
+    override suspend fun scan(scanArgs: KeyScanArgs): KeyScanCursor<K>? = ops.scan(scanArgs).awaitFirstOrNull()
 
-    override suspend fun scan(scanCursor: ScanCursor, scanArgs: ScanArgs): KeyScanCursor<K>? = ops.scan(scanCursor, scanArgs).awaitFirstOrNull()
+    override suspend fun scan(scanCursor: ScanCursor, scanArgs: KeyScanArgs): KeyScanCursor<K>? = ops.scan(scanCursor, scanArgs).awaitFirstOrNull()
 
     override suspend fun scan(scanCursor: ScanCursor): KeyScanCursor<K>? = ops.scan(scanCursor).awaitFirstOrNull()
 

@@ -64,7 +64,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         redis.mset(KeysAndValues.MAP);
 
-        ScanIterator<String> scan = ScanIterator.scan(redis, ScanArgs.Builder.limit(50).match("key-foo"));
+        ScanIterator<String> scan = ScanIterator.scan(redis, KeyScanArgs.Builder.limit(50).match("key-foo"));
 
         assertThat(scan.hasNext()).isFalse();
         try {
@@ -80,7 +80,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         redis.mset(KeysAndValues.MAP);
 
-        ScanIterator<String> scan = ScanIterator.scan(redis, ScanArgs.Builder.limit(50).match("key-11*"));
+        ScanIterator<String> scan = ScanIterator.scan(redis, KeyScanArgs.Builder.limit(50).match("key-11*"));
 
         assertThat(scan.hasNext()).isTrue();
         assertThat(scan.hasNext()).isTrue();

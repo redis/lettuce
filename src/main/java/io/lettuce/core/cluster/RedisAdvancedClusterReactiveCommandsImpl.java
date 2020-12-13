@@ -465,13 +465,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
+    public Mono<KeyScanCursor<K>> scan(KeyScanArgs scanArgs) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(scanArgs),
                 reactiveClusterKeyScanCursorMapper());
     }
 
     @Override
-    public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
+    public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, KeyScanArgs scanArgs) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs),
                 reactiveClusterKeyScanCursorMapper());
     }
@@ -488,13 +488,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
+    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, KeyScanArgs scanArgs) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel, scanArgs),
                 reactiveClusterStreamScanCursorMapper());
     }
 
     @Override
-    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
+    public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, KeyScanArgs scanArgs) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor, scanArgs),
                 reactiveClusterStreamScanCursorMapper());
     }
