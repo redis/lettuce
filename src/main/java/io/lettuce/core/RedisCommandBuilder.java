@@ -18,6 +18,7 @@ package io.lettuce.core;
 import static io.lettuce.core.internal.LettuceStrings.*;
 import static io.lettuce.core.protocol.CommandKeyword.*;
 import static io.lettuce.core.protocol.CommandType.*;
+import static io.lettuce.core.protocol.CommandType.COPY;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -2190,6 +2191,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
         return createCommand(UNLINK, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> copy(K source, K destination) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination);
+        return createCommand(COPY, new BooleanOutput<>(codec), args);
     }
 
     Command<K, V, String> unwatch() {

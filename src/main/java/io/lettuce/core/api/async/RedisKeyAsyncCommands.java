@@ -50,6 +50,19 @@ public interface RedisKeyAsyncCommands<K, V> {
     RedisFuture<Long> unlink(K... keys);
 
     /**
+     * Copy the value stored at the source key to the destination key.
+     *
+     * @param source the source.
+     * @param destination the destination.
+     * @return Boolean integer-reply specifically:
+     *
+     *         {@code 1} if source was copied. {@code 0} if source was not copied.
+     *
+     * @since 6.2
+     */
+    RedisFuture<Boolean> copy(K source, K destination);
+
+    /**
      * Return a serialized version of the value stored at the specified key.
      *
      * @param key the key.

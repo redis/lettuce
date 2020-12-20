@@ -1572,6 +1572,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<Boolean> copy(K source, K destination) {
+        return dispatch(commandBuilder.copy(source, destination));
+    }
+
+    @Override
     public RedisFuture<String> unwatch() {
         return dispatch(commandBuilder.unwatch());
     }
