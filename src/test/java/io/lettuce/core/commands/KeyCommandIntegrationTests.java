@@ -77,12 +77,34 @@ public class KeyCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("UNLINK")
     void unlink() {
-
         redis.set(key, value);
         assertThat((long) redis.unlink(key)).isEqualTo(1);
         redis.set(key + "1", value);
         redis.set(key + "2", value);
         assertThat(redis.unlink(key + "1", key + "2")).isEqualTo(2);
+    }
+
+    @Test
+    void copy() {
+        redis.set(key, value);
+        redis.copy(key, key + "2");
+        assertThat(redis.get(key + "2")).isEqualTo(value);
+    }
+
+    @Test
+    void copyWithReplace() {
+        redis.set(key, value);
+        redis.set(key + 2, "value to be overridden");
+        redis.copy(key, key + "2", CopyArgs.Builder.replace(true));
+        assertThat(redis.get(key + "2")).isEqualTo(value);
+    }
+
+    @Test
+    void copyWithDestinationDb() {
+        redis.set(key, value);
+        redis.copy(key, key, CopyArgs.Builder.destinationDb(2));
+        redis.select(2);
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
