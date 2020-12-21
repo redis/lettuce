@@ -1653,6 +1653,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Boolean> copy(K source, K destination, int destinationDb) {
+        return createMono(() -> commandBuilder.copy(source, destination, destinationDb));
+    }
+
+    @Override
     public Mono<String> unwatch() {
         return createMono(commandBuilder::unwatch);
     }

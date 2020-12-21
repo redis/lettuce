@@ -63,6 +63,20 @@ public interface RedisKeyAsyncCommands<K, V> {
     RedisFuture<Boolean> copy(K source, K destination);
 
     /**
+     * Copy the value stored at the source key to the destination key in alternative logical database index.
+     *
+     * @param source the source.
+     * @param destination the destination.
+     * @param destinationDb the destination-db.
+     * @return Boolean integer-reply specifically:
+     *
+     *         {@code 1} if source was copied. {@code 0} if source was not copied.
+     *
+     * @since 6.2
+     */
+    RedisFuture<Boolean> copy(K source, K destination, int destinationDb);
+
+    /**
      * Return a serialized version of the value stored at the specified key.
      *
      * @param key the key.
