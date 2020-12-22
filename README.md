@@ -29,7 +29,7 @@ See the [reference documentation](https://lettuce.io/docs/) and [Wiki](https://g
 Communication
 ---------------
 
-* GitHub Discussions (Q&A, Ideas, General discussion): https://github.com/lettuce-io/lettuce-core/discussions 
+* [GitHub Discussions](https://github.com/lettuce-io/lettuce-core/discussions) (Q&A, Ideas, General discussion)
 * Stack Overflow (Questions): [https://stackoverflow.com/questions/tagged/lettuce](https://stackoverflow.com/questions/tagged/lettuce)
 * Gitter (chat): [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 * Twitter: [@LettuceDriver](https://twitter.com/LettuceDriver)
