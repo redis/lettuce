@@ -145,6 +145,11 @@
     "allDeclaredConstructors": true
   },
   {
+    "name": "io.lettuce.core.sentinel.api.sync.RedisSentinelCommands",
+    "allPublicMethods": true,
+    "allDeclaredMethods": true
+  },
+  {
     "name": "reactor.core.publisher.Mono"
   }
 ]
