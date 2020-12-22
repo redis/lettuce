@@ -356,18 +356,22 @@ public interface RedisKeyCommands<K, V> {
 
     /**
      * Incrementally iterate the keys space.
+     * Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     KeyScanCursor<K> scan(ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
+     * Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     KeyScanCursor<K> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
@@ -389,20 +393,24 @@ public interface RedisKeyCommands<K, V> {
 
     /**
      * Incrementally iterate the keys space.
+     * Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @see KeyScanArgs
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
+     * Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @see KeyScanArgs
      */
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 

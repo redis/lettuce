@@ -2175,7 +2175,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, String> type(K key) {
         notNullKey(key);
 
-        return createCommand(TYPE, new StatusOutput<>(codec), key);
+        return createCommand(CommandType.TYPE, new StatusOutput<>(codec), key);
     }
 
     Command<K, V, Long> unlink(K... keys) {

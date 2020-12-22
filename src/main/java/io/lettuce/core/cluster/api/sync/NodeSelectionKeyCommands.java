@@ -18,7 +18,14 @@ package io.lettuce.core.cluster.api.sync;
 import java.util.Date;
 import java.util.List;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyScanArgs;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.MigrateArgs;
+import io.lettuce.core.RestoreArgs;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.SortArgs;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 
@@ -356,19 +363,21 @@ public interface NodeSelectionKeyCommands<K, V> {
     Executions<KeyScanCursor<K>> scan();
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     Executions<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     Executions<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
@@ -389,21 +398,23 @@ public interface NodeSelectionKeyCommands<K, V> {
     Executions<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @see KeyScanArgs
      */
     Executions<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @see KeyScanArgs
      */
     Executions<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 

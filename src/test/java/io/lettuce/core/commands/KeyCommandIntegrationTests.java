@@ -15,11 +15,15 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -28,7 +32,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyScanArgs;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RestoreArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
@@ -335,7 +345,19 @@ public class KeyCommandIntegrationTests extends TestSupport {
         KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(10));
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
+    }
 
+    @Test
+    @EnabledOnCommand("ZMSCORE")
+    void scanWithType() {
+        redis.set("key1", value);
+        redis.lpush("key2", value);
+
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.type("string"));
+        assertThat(cursor.getKeys()).containsOnly("key1");
+
+        cursor = redis.scan(KeyScanArgs.Builder.type("list"));
+        assertThat(cursor.getKeys()).containsOnly("key2");
     }
 
     @Test

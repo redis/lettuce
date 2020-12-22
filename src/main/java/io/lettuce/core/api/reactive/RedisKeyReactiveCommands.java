@@ -369,19 +369,21 @@ public interface RedisKeyReactiveCommands<K, V> {
     Mono<KeyScanCursor<K>> scan();
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     Mono<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
@@ -404,24 +406,28 @@ public interface RedisKeyReactiveCommands<K, V> {
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #scan}.
+     * @see KeyScanArgs
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
     @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #scan}.
+     * @see KeyScanArgs
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
     @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);

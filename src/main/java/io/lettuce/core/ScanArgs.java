@@ -15,8 +15,7 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandKeyword.COUNT;
-import static io.lettuce.core.protocol.CommandKeyword.MATCH;
+import static io.lettuce.core.protocol.CommandKeyword.*;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +26,7 @@ import io.lettuce.core.protocol.CommandArgs;
 /**
  * Argument list builder for the Redis scan commands ({@literal SCAN, HSCAN, SSCAN, ZSCAN}). Static import the methods from
  *
- * {@link Builder} and chain the method calls: {@code matches("weight_*").limit(0, 2)}.
+ * {@link Builder} and chain the method calls: {@code matches("weight_*").limit(2)}.
  * <p>
  * {@link ScanArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
@@ -118,6 +117,7 @@ public class ScanArgs implements CompositeArgument {
         return this;
     }
 
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (match != null) {

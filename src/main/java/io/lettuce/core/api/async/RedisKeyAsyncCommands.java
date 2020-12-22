@@ -18,6 +18,7 @@ package io.lettuce.core.api.async;
 import java.util.Date;
 import java.util.List;
 
+import io.lettuce.core.KeyScanArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.MigrateArgs;
 import io.lettuce.core.RedisFuture;
@@ -363,19 +364,21 @@ public interface RedisKeyAsyncCommands<K, V> {
     RedisFuture<KeyScanCursor<K>> scan();
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
@@ -396,21 +399,23 @@ public interface RedisKeyAsyncCommands<K, V> {
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @see KeyScanArgs
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @see KeyScanArgs
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 

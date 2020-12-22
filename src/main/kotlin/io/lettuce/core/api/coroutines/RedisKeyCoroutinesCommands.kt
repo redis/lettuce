@@ -328,18 +328,22 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Incrementally iterate the keys space.
+     * Use [KeyScanArgs] to specify `SCAN`-specific arguments.
      *
      * @param scanArgs scan arguments.
      * @return KeyScanCursor<K> scan cursor.
+     * @see KeyScanArgs
      */
     suspend fun scan(scanArgs: ScanArgs): KeyScanCursor<K>?
 
     /**
      * Incrementally iterate the keys space.
+     * Use [KeyScanArgs] to specify `SCAN`-specific arguments.
      *
      * @param scanCursor cursor to resume from a previous scan, must not be `null`.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor<K> scan cursor.
+     * @see KeyScanArgs
      */
     suspend fun scan(scanCursor: ScanCursor, scanArgs: ScanArgs): KeyScanCursor<K>?
 
