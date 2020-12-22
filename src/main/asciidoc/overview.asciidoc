@@ -9,19 +9,22 @@ This section provides some basic introduction to Redis.The rest of the document 
 
 [[overview.redis]]
 === Knowing Redis
-NoSQL stores have taken the storage world by storm. It is a vast domain with a plethora of solutions, terms and patterns (to make things worse even the term itself has multiple http://www.google.com/search?q=nosql+acronym[meanings]). While some of the principles are common, it is crucial that the user is familiar to some degree with Redis. The best way to get acquainted to this solutions is to read their documentation and follow their documentation - it usually doesn't take more then 5-10 minutes to go through them and if you are coming from an RDMBS-only background many times these exercises can be an eye opener.
 
-The jumping off ground for learning about Redis is http://www.redis.io/[redis.io]. Here is a list of other useful resources:
+NoSQL stores have taken the storage world by storm.
+It is a vast domain with a plethora of solutions, terms and patterns (to make things worse even the term itself has multiple http://www.google.com/search?q=nosql+acronym[meanings]).
+While some of the principles are common, it is crucial that the user is familiar to some degree with Redis.
+The best way to get acquainted to this solutions is to read their documentation and follow their documentation - it usually doesn't take more then 5-10 minutes to go through them and if you are coming from an RDMBS-only background many times these exercises can be an eye opener.
+
+The jumping off ground for learning about Redis is http://www.redis.io/[redis.io].
+Here is a list of other useful resources:
 
 * The http://try.redis.io/[interactive tutorial] introduces Redis.
 * The http://redis.io/commands[command references] explains Redis commands and contains links to getting started guides, reference documentation and tutorials.
 
 === Project Reactor
 
-https://projectreactor.io[Reactor] is a highly optimized reactive library for building efficient, non-blocking
-applications on the JVM based on the https://github.com/reactive-streams/reactive-streams-jvm[Reactive Streams Specification].
-Reactor based applications can sustain very high throughput message rates and operate with a very low memory footprint,
-making it suitable for building efficient event-driven applications using the microservices architecture.
+https://projectreactor.io[Reactor] is a highly optimized reactive library for building efficient, non-blocking applications on the JVM based on the https://github.com/reactive-streams/reactive-streams-jvm[Reactive Streams Specification].
+Reactor based applications can sustain very high throughput message rates and operate with a very low memory footprint, making it suitable for building efficient event-driven applications using the microservices architecture.
 
 Reactor implements two publishers https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html[Flux<T>] and
 https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html[Mono<T>], both of which support non-blocking back-pressure.
@@ -29,7 +32,8 @@ This enables exchange of data between threads with well-defined memory usage, av
 
 === Non-blocking API for Redis
 
-Lettuce is a scalable thread-safe Redis client based on http://netty.io[netty] and Reactor. Lettuce provides <<basic-usage,synchronous>>, <<asynchronous-api,asynchronous>> and <<reactive-api,reactive>> APIs to interact with Redis.
+Lettuce is a scalable thread-safe Redis client based on http://netty.io[netty] and Reactor.
+Lettuce provides <<basic-usage,synchronous>>, <<asynchronous-api,asynchronous>> and <<reactive-api,reactive>> APIs to interact with Redis.
 
 [[overview.requirements]]
 === Requirements
@@ -49,13 +53,15 @@ There are a few support options available:
 
 * Lettuce on Stackoverflow http://stackoverflow.com/questions/tagged/lettuce[Stackoverflow] is a tag for all Lettuce users to share information and help each other.Note that registration is needed *only* for posting.
 * Get in touch with the community on https://gitter.im/lettuce-io/Lobby[Gitter].
-* Google Group: https://groups.google.com/g/lettuce-redis-client-users[lettuce-redis-client-users] or mailto:lettuce-redis-client-users@googlegroups.com[lettuce-redis-client-users@googlegroups.com].
+* GitHub Discussions: https://github.com/lettuce-io/lettuce-core/discussions
 * Report bugs (or ask questions) in Github issues https://github.com/lettuce-io/lettuce-core/issues.
 
 [[overview.development]]
 ==== Following Development
 
-For information on the Lettuce source code repository, nightly builds and snapshot artifacts please see the https://lettuce.io[Lettuce homepage].You can help make lettuce best serve the needs of the lettuce community by interacting with developers through the Community on http://stackoverflow.com/questions/tagged/lettuce[Stackoverflow].To follow developer activity look for the mailing list information on the https://lettuce.io[lettuce homepage].If you encounter a bug or want to suggest an improvement, please create a ticket on the lettuce issue https://github.com/lettuce-io/lettuce-core/issues[tracker].
+For information on the Lettuce source code repository, nightly builds and snapshot artifacts please see the https://lettuce.io[Lettuce homepage].
+You can help make lettuce best serve the needs of the lettuce community by interacting with developers through the Community on http://stackoverflow.com/questions/tagged/lettuce[Stackoverflow].
+If you encounter a bug or want to suggest an improvement, please create a ticket on the lettuce issue https://github.com/lettuce-io/lettuce-core/issues[tracker].
 
 ==== Project Metadata
 

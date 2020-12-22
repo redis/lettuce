@@ -51,7 +51,7 @@ If you want to request a feature, please ensure to specify the following:
 
 ## Questions
 
-If you have a question, then check one of the following places first as GitHub issues are for bugs and feature requests. Typically, forums, chats, and mailing lists are the best place to ask your question as you can expect to get an answer faster there:
+If you have a question, then check one of the following places first as GitHub issues are for bugs and feature requests. Typically, forums, chats, and GitHub discissions are the best place to ask your question as you can expect to get an answer faster there:
 
 **Checkout the docs**
 
@@ -61,9 +61,12 @@ If you have a question, then check one of the following places first as GitHub i
 
 **Communication**
 
-* Google Group/Mailing List (General discussion, announcements and releases): [lettuce-redis-client-users](https://groups.google.com/g/lettuce-redis-client-users) or [lettuce-redis-client-users@googlegroups.com](mailto:lettuce-redis-client-users@googlegroups.com)
-* Stack Overflow (Questions): [Questions about Lettuce](https://stackoverflow.com/questions/tagged/lettuce)
-* Gitter (General discussion): [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+* GitHub Discussions (Q&A, Ideas, General discussion): https://github.com/lettuce-io/lettuce-core/discussions 
+* Stack Overflow (Questions): [https://stackoverflow.com/questions/tagged/lettuce](https://stackoverflow.com/questions/tagged/lettuce)
+* Gitter (chat): [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+* Twitter: [@LettuceDriver](https://twitter.com/LettuceDriver)
+* [GitHub Issues](https://github.com/lettuce-io/lettuce-core/issues) (Bug reports, feature requests)
+
 
 ### Building from Source
 
