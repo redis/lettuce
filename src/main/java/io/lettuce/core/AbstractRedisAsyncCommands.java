@@ -1577,8 +1577,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<Boolean> copy(K source, K destination, int destinationDd) {
-        return dispatch(commandBuilder.copy(source, destination, destinationDd));
+    public RedisFuture<Boolean> copy(K source, K destination, CopyArgs copyArgs) {
+        return dispatch(commandBuilder.copy(source, destination, copyArgs));
     }
 
     @Override

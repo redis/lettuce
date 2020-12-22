@@ -2201,11 +2201,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(COPY, new BooleanOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> copy(K source, K destination, int destinationDb) {
+    Command<K, V, Boolean> copy(K source, K destination, CopyArgs copyArgs) {
         LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination).add("DB").add(destinationDb);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination);
+        copyArgs.build(args);
         return createCommand(COPY, new BooleanOutput<>(codec), args);
     }
 

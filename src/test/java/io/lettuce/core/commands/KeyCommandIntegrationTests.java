@@ -82,6 +82,22 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void copyWithReplace() {
+        redis.set(key, value);
+        redis.set(key + 2, "value to be overridden");
+        redis.copy(key, key + "2", CopyArgs.Builder.replace(true));
+        assertThat(redis.get(key + "2")).isEqualTo(value);
+    }
+
+    @Test
+    void copyWithDestinationDb() {
+        redis.set(key, value);
+        redis.copy(key, key, CopyArgs.Builder.destinationDb(2));
+        redis.select(2);
+        assertThat(redis.get(key)).isEqualTo(value);
+    }
+
+    @Test
     void dump() {
         assertThat(redis.dump("invalid")).isNull();
         redis.set(key, value);
