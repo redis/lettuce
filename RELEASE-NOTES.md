@@ -24,8 +24,7 @@ Lettuce requires a minimum of Java 8 to build and run and is compatible with Jav
 
 If you need any support, meet Lettuce at
 
-* Google Group (General discussion, announcements, and releases): https://groups.google.com/g/lettuce-redis-client-users
-or lettuce-redis-client-users@googlegroups.com
+* GitHub Discussions: https://github.com/lettuce-io/lettuce-core/discussions
 * Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
 * Join the chat at https://gitter.im/lettuce-io/Lobby for general discussion
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
