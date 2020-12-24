@@ -22,6 +22,7 @@ import io.lettuce.core.output.CommandOutput
 import io.lettuce.core.protocol.CommandArgs
 import io.lettuce.core.protocol.ProtocolKeyword
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -75,9 +76,9 @@ internal class RedisSentinelCoroutinesCommandsImpl<K : Any, V : Any>(private val
 
     override suspend fun ping(): String = ops.ping().awaitLast()
 
-    override suspend fun <T> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>): T? = ops.dispatch<T>(type, output).awaitFirstOrNull()
+    override fun <T : Any> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>): Flow<T> = ops.dispatch<T>(type, output).asFlow()
 
-    override suspend fun <T> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): T? = ops.dispatch<T>(type, output, args).awaitFirstOrNull()
+    override fun <T : Any> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): Flow<T> = ops.dispatch<T>(type, output, args).asFlow()
 
     override fun isOpen(): Boolean = ops.isOpen
 
