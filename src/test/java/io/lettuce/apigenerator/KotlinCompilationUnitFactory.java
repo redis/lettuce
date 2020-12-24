@@ -54,7 +54,7 @@ class KotlinCompilationUnitFactory {
     private static final Set<String> SKIP_IMPORTS = LettuceSets.unmodifiableSet("java.util.List", "java.util.Set", "java.util.Map");
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
     private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
-    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("geohash", "georadius", "georadiusbymember",
+    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("dispatch", "geohash", "georadius", "georadiusbymember",
             "hgetall", "hkeys", "hmget", "hvals", "keys", "mget", "sdiff", "sinter", "smembers", "smismember", "sort", "srandmember", "sunion",
             "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange", "zinter", "zinterWithScores", "zpopmax", "zpopmin", "zrange",
             "zrangeWithScores", "zrangebylex", "zrangebyscore", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex",
@@ -173,7 +173,7 @@ class KotlinCompilationUnitFactory {
                     .append(extractAnnotations(method))
                     .append(contains(NON_SUSPENDABLE_METHODS, method) || isFlowable(method) ? "" : "suspend ")
                     .append("fun ")
-                    .append(method.getTypeParameters().isNonEmpty() ? extractTypeParams(method.getTypeParameters(), null).concat(" ") : "")
+                    .append(method.getTypeParameters().isNonEmpty() ? extractTypeParams(method.getTypeParameters(), "Any").concat(" ") : "")
                     .append(method.getNameAsString())
                     .append("(")
                     .append(extractParameters(method))
@@ -218,7 +218,7 @@ class KotlinCompilationUnitFactory {
         }
 
         private boolean isFlowable(MethodDeclaration method) {
-            return contains(FLOW_METHODS, method) && (isCollection(method.getType()) || method.getType().asString().startsWith("Map<"));
+            return contains(FLOW_METHODS, method);
         }
 
         private String toKotlinType(Type type, boolean isFlowable, boolean isForceNonNullable) {
@@ -246,7 +246,8 @@ class KotlinCompilationUnitFactory {
                         .asString()
                         .replace("List", "Flow")
                         .replace("Set", "Flow")
-                        .replace("Map", "Flow");
+                        .replace("Map", "Flow")
+                        .replace("T", "Flow<T>");
             } else {
                 fixedType = type
                         .asString()
