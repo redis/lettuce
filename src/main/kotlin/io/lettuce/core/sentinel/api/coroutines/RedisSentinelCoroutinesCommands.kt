@@ -22,6 +22,7 @@ import io.lettuce.core.output.CommandOutput
 import io.lettuce.core.protocol.CommandArgs
 import io.lettuce.core.protocol.ProtocolKeyword
 import java.net.SocketAddress
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Coroutine executed commands for Redis Sentinel.
@@ -189,7 +190,7 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * @return the command response.
      * @since 6.0.2
      */
-    suspend fun <T> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>): T?
+    fun <T : Any> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>): Flow<T>
 
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
@@ -201,7 +202,7 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * @return the command response.
      * @since 6.0.2
      */
-    suspend fun <T> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): T?
+    fun <T : Any> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): Flow<T>
 
     /**
      *
