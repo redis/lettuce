@@ -26,6 +26,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * @author Mark Paluch
  * @author Ryosuke Hasebe
  * @author Omer Cilingir
+ * @author Yohei Ueki
  * @since 4.0
  */
 public abstract class ReadFrom {
@@ -111,6 +112,17 @@ public abstract class ReadFrom {
     public static final ReadFrom ANY_REPLICA = new ReadFromImpl.ReadFromAnyReplica();
 
     /**
+     * Setting to read from any node in the subnets.
+     *
+     * @param cidrNotations CIDR-block notation strings, e.g., "192.168.0.0/16".
+     * @return an instance of {@link ReadFromImpl.ReadFromSubnet}.
+     * @since x.x.x
+     */
+    public static ReadFrom subnet(String... cidrNotations) {
+        return new ReadFromImpl.ReadFromSubnet(cidrNotations);
+    }
+
+    /**
      * Chooses the nodes from the matching Redis nodes that match this read selector.
      *
      * @param nodes set of nodes that are suitable for reading
@@ -176,6 +188,10 @@ public abstract class ReadFrom {
 
         if (name.equalsIgnoreCase("anyReplica")) {
             return ANY_REPLICA;
+        }
+
+        if (name.equalsIgnoreCase("subnet")) {
+            throw new IllegalArgumentException("subnet must be created via ReadFrom#subnet");
         }
 
         throw new IllegalArgumentException("ReadFrom " + name + " not supported");

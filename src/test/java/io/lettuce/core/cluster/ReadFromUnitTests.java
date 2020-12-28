@@ -18,6 +18,7 @@ package io.lettuce.core.cluster;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -34,6 +36,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * @author Mark Paluch
  * @author Ryosuke Hasebe
  * @author Omer Cilingir
+ * @author Yohei Ueki
  */
 class ReadFromUnitTests {
 
@@ -91,6 +94,50 @@ class ReadFromUnitTests {
     }
 
     @Test
+    void subnet() {
+        ReadFrom sut = ReadFrom.subnet("192.0.2.0/24", "2001:db8:abcd:0000::/52");
+
+        RedisClusterNode nodeInSubnetIpv4 = createNodeWithHost("192.0.2.1");
+        RedisClusterNode nodeNotInSubnetIpv4 = createNodeWithHost("198.51.100.1");
+        RedisClusterNode nodeInSubnetIpv6 = createNodeWithHost("2001:db8:abcd:0000::1");
+        RedisClusterNode nodeNotInSubnetIpv6 = createNodeWithHost("2001:db8:abcd:1000::");
+        RedisClusterNode nodeHostname = createNodeWithHost("example.com");
+
+        List<RedisNodeDescription> result = sut
+                .select(getNodes(nodeInSubnetIpv4, nodeNotInSubnetIpv4, nodeInSubnetIpv6, nodeNotInSubnetIpv6, nodeHostname));
+
+        assertThat(result).hasSize(2).containsExactly(nodeInSubnetIpv4, nodeInSubnetIpv6);
+    }
+
+    @Test
+    void subnetLocalhost() {
+        ReadFrom sut = ReadFrom.subnet("127.0.0.0/8", "::1/128");
+
+        RedisClusterNode localhost = createNodeWithHost("localhost");
+
+        List<RedisNodeDescription> result = sut.select(getNodes(localhost));
+
+        assertThat(result).hasSize(1).containsExactly(localhost);
+    }
+
+    private RedisClusterNode createNodeWithHost(String host) {
+        RedisClusterNode node = new RedisClusterNode();
+        node.setUri(RedisURI.Builder.redis(host).build());
+        return node;
+    }
+
+    @Test
+    void subnetInvalidCidr() {
+        // malformed CIDR notation
+        assertThatThrownBy(() -> ReadFrom.subnet("192.0.2.1//1")).isInstanceOf(IllegalArgumentException.class);
+        // malformed ipAddress
+        assertThatThrownBy(() -> ReadFrom.subnet("foo.bar/12")).isInstanceOf(IllegalArgumentException.class);
+        // malformed cidrPrefix
+        assertThatThrownBy(() -> ReadFrom.subnet("192.0.2.1/40")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ReadFrom.subnet("192.0.2.1/foo")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void valueOfNull() {
         assertThatThrownBy(() -> ReadFrom.valueOf(null)).isInstanceOf(IllegalArgumentException.class);
     }
@@ -130,6 +177,11 @@ class ReadFromUnitTests {
         assertThat(ReadFrom.valueOf("anyReplica")).isEqualTo(ReadFrom.ANY_REPLICA);
     }
 
+    @Test
+    void valueOfSubnet() {
+        assertThatThrownBy(() -> ReadFrom.valueOf("subnet")).isInstanceOf(IllegalArgumentException.class);
+    }
+
     private ReadFrom.Nodes getNodes() {
         return new ReadFrom.Nodes() {
             @Override
@@ -144,4 +196,22 @@ class ReadFromUnitTests {
         };
 
     }
+
+    private ReadFrom.Nodes getNodes(RedisNodeDescription... nodes) {
+        return new ReadFrom.Nodes() {
+
+            @Override
+            public List<RedisNodeDescription> getNodes() {
+                return Arrays.asList(nodes);
+            }
+
+            @Override
+            public Iterator<RedisNodeDescription> iterator() {
+                return getNodes().iterator();
+            }
+
+        };
+
+    }
+
 }

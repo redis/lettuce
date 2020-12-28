@@ -32,6 +32,7 @@ import io.lettuce.test.LettuceExtension;
 
 /**
  * @author Mark Paluch
+ * @author Yohei Ueki
  */
 @SuppressWarnings("unchecked")
 @ExtendWith(LettuceExtension.class)
@@ -112,4 +113,16 @@ class RedisClusterReadFromIntegrationTests extends TestSupport {
         connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port2).sync().waitForReplication(1, 1000);
         assertThat(sync.get(key)).isEqualTo("value1");
     }
+
+    @Test
+    void readWriteSubnet() {
+
+        connection.setReadFrom(ReadFrom.subnet("0.0.0.0/0", "::/0"));
+
+        sync.set(key, "value1");
+
+        connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port2).sync().waitForReplication(1, 1000);
+        assertThat(sync.get(key)).isEqualTo("value1");
+    }
+
 }

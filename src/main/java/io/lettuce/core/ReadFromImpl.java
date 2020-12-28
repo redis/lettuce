@@ -15,19 +15,26 @@
  */
 package io.lettuce.core;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.role.RedisNodeDescription;
+import io.netty.handler.ipfilter.IpFilterRuleType;
+import io.netty.handler.ipfilter.IpSubnetFilterRule;
+import io.netty.util.internal.SocketUtils;
 
 /**
  * Collection of common read setting implementations.
  *
  * @author Mark Paluch
  * @author Omer Cilingir
+ * @author Yohei Ueki
  * @since 4.0
  */
 class ReadFromImpl {
@@ -125,6 +132,60 @@ class ReadFromImpl {
 
         public ReadFromAnyReplica() {
             super(IS_REPLICA);
+        }
+
+    }
+
+    /**
+     * Read from any node in the subnets.
+     *
+     * @since x.x.x
+     */
+    static final class ReadFromSubnet extends ReadFrom {
+
+        private final List<IpSubnetFilterRule> rules = new ArrayList<>();
+
+        /**
+         * @param cidrNotations CIDR-block notation strings, e.g., "192.168.0.0/16".
+         */
+        ReadFromSubnet(String... cidrNotations) {
+            LettuceAssert.notEmpty(cidrNotations, "cidrNotations must not be empty");
+
+            for (String cidrNotation : cidrNotations) {
+                // parts[0]: ipAddress (e.g., "192.168.0.0")
+                // parts[1]: cidrPrefix (e.g., "16")
+                String[] parts = cidrNotation.split("/");
+                LettuceAssert.isTrue(parts.length == 2, "cidrNotation must have exact one '/'");
+
+                rules.add(new IpSubnetFilterRule(parts[0], Integer.parseInt(parts[1]), IpFilterRuleType.ACCEPT));
+            }
+        }
+
+        @Override
+        public List<RedisNodeDescription> select(Nodes nodes) {
+            List<RedisNodeDescription> result = new ArrayList<>(nodes.getNodes().size());
+            for (RedisNodeDescription node : nodes) {
+                if (isInSubnet(node.getUri())) {
+                    result.add(node);
+                }
+            }
+
+            return result;
+        }
+
+        private boolean isInSubnet(RedisURI redisURI) {
+            if (LettuceStrings.isEmpty(redisURI.getHost())) {
+                return false;
+            }
+
+            InetSocketAddress address = SocketUtils.socketAddress(redisURI.getHost(), redisURI.getPort());
+
+            for (IpSubnetFilterRule rule : rules) {
+                if (rule.matches(address)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
     }
