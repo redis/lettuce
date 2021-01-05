@@ -15,7 +15,9 @@
  */
 package io.lettuce.core;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +29,7 @@ import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.netty.handler.ipfilter.IpFilterRuleType;
 import io.netty.handler.ipfilter.IpSubnetFilterRule;
-import io.netty.util.internal.SocketUtils;
+import io.netty.util.NetUtil;
 
 /**
  * Collection of common read setting implementations.
@@ -137,7 +139,9 @@ class ReadFromImpl {
     }
 
     /**
-     * Read from any node in the subnets.
+     * Read from any node in the subnets. This class does not provide DNS resolution and supports only IP address style
+     * {@link RedisURI} i.e. unavailable when using {@link io.lettuce.core.masterreplica.MasterReplica} with
+     * static setup (provided hosts) and Redis Sentinel with {@literal announce-hostname yes}.
      *
      * @since x.x.x
      */
@@ -174,11 +178,21 @@ class ReadFromImpl {
         }
 
         private boolean isInSubnet(RedisURI redisURI) {
-            if (LettuceStrings.isEmpty(redisURI.getHost())) {
+            String host = redisURI.getHost();
+            if (LettuceStrings.isEmpty(host)) {
                 return false;
             }
 
-            InetSocketAddress address = SocketUtils.socketAddress(redisURI.getHost(), redisURI.getPort());
+            LettuceAssert.isTrue(NetUtil.isValidIpV4Address(host) || NetUtil.isValidIpV6Address(host),
+                    "ReadFromSubnet supports only IP address-style redisURI. host=" + host);
+
+            InetSocketAddress address;
+            try {
+                // This won't make DNS lookup because host is already validated as an IP address.
+                address = new InetSocketAddress(InetAddress.getByName(host), redisURI.getPort());
+            } catch (UnknownHostException e) {
+                throw new IllegalStateException("Should not reach here. host=" + host, e);
+            }
 
             for (IpSubnetFilterRule rule : rules) {
                 if (rule.matches(address)) {

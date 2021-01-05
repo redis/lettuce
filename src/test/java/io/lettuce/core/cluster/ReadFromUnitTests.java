@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ReadFrom;
+import io.lettuce.core.ReadFrom.Nodes;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -101,23 +102,22 @@ class ReadFromUnitTests {
         RedisClusterNode nodeNotInSubnetIpv4 = createNodeWithHost("198.51.100.1");
         RedisClusterNode nodeInSubnetIpv6 = createNodeWithHost("2001:db8:abcd:0000::1");
         RedisClusterNode nodeNotInSubnetIpv6 = createNodeWithHost("2001:db8:abcd:1000::");
-        RedisClusterNode nodeHostname = createNodeWithHost("example.com");
 
         List<RedisNodeDescription> result = sut
-                .select(getNodes(nodeInSubnetIpv4, nodeNotInSubnetIpv4, nodeInSubnetIpv6, nodeNotInSubnetIpv6, nodeHostname));
+                .select(getNodes(nodeInSubnetIpv4, nodeNotInSubnetIpv4, nodeInSubnetIpv6, nodeNotInSubnetIpv6));
 
         assertThat(result).hasSize(2).containsExactly(nodeInSubnetIpv4, nodeInSubnetIpv6);
     }
 
     @Test
-    void subnetLocalhost() {
-        ReadFrom sut = ReadFrom.subnet("127.0.0.0/8", "::1/128");
+    void subnetNodeWithHostname() {
+        ReadFrom sut = ReadFrom.subnet("0.0.0.0/24");
 
-        RedisClusterNode localhost = createNodeWithHost("localhost");
+        Nodes hostNode = getNodes(createNodeWithHost("example.com"));
+        assertThatThrownBy(() -> sut.select(hostNode)).isInstanceOf(IllegalArgumentException.class);
 
-        List<RedisNodeDescription> result = sut.select(getNodes(localhost));
-
-        assertThat(result).hasSize(1).containsExactly(localhost);
+        Nodes localhostNode = getNodes(createNodeWithHost("localhost"));
+        assertThatThrownBy(() -> sut.select(localhostNode)).isInstanceOf(IllegalArgumentException.class);
     }
 
     private RedisClusterNode createNodeWithHost(String host) {
