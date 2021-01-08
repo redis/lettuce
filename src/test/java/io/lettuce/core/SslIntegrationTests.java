@@ -15,10 +15,9 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.test.settings.TestSettings.sslPort;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static io.lettuce.test.settings.TestSettings.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -119,6 +118,18 @@ class SslIntegrationTests extends TestSupport {
         setOptions(sslOptions);
 
         verifyConnection(URI_VERIFY);
+    }
+
+    @Test
+    void standaloneWithVerifyCaOnly() {
+
+        SslOptions sslOptions = SslOptions.builder() //
+                .jdkSslProvider() //
+                .truststore(TRUSTSTORE_FILE) //
+                .build();
+        setOptions(sslOptions);
+
+        verifyConnection(sslURIBuilder(1).withVerifyPeer(SslVerifyMode.CA).build());
     }
 
     @Test

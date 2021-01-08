@@ -68,7 +68,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
     @Override
     public ChannelInitializer<Channel> build(SocketAddress socketAddress) {
-        return new SslChannelInitializer(this::buildHandlers, toHostAndPort(socketAddress), redisURI.isVerifyPeer(),
+        return new SslChannelInitializer(this::buildHandlers, toHostAndPort(socketAddress), redisURI.getVerifyMode(),
                 redisURI.isStartTls(), clientResources(), clientOptions().getSslOptions());
     }
 
@@ -90,7 +90,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         private final HostAndPort hostAndPort;
 
-        private final boolean verifyPeer;
+        private final SslVerifyMode verifyPeer;
 
         private final boolean startTls;
 
@@ -98,7 +98,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
         private final SslOptions sslOptions;
 
-        public SslChannelInitializer(Supplier<List<ChannelHandler>> handlers, HostAndPort hostAndPort, boolean verifyPeer,
+        public SslChannelInitializer(Supplier<List<ChannelHandler>> handlers, HostAndPort hostAndPort, SslVerifyMode verifyPeer,
                 boolean startTls, ClientResources clientResources, SslOptions sslOptions) {
 
             this.handlers = handlers;
@@ -131,9 +131,11 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             SSLParameters sslParams = sslOptions.createSSLParameters();
             SslContextBuilder sslContextBuilder = sslOptions.createSslContextBuilder();
 
-            if (verifyPeer) {
+            if (verifyPeer == SslVerifyMode.FULL) {
                 sslParams.setEndpointIdentificationAlgorithm("HTTPS");
-            } else {
+            } else if (verifyPeer == SslVerifyMode.CA) {
+                sslParams.setEndpointIdentificationAlgorithm("");
+            } else if (verifyPeer == SslVerifyMode.NONE) {
                 sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
             }
 

@@ -74,25 +74,25 @@ import io.lettuce.core.internal.LettuceStrings;
  *
  * <b>Redis Standalone</b> <blockquote> <i>redis</i><b>{@code ://}</b>[[<i>username</i>{@code :}]<i>password@</i>]<i>host</i>
  * [<b>{@code :} </b> <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b>
- * [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [ <i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]]
- * </blockquote>
+ * [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [ <i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]
+ * [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
  *
  * <b>Redis Standalone (SSL)</b> <blockquote>
  * <i>rediss</i><b>{@code ://}</b>[[<i>username</i>{@code :}]<i>password@</i>]<i>host</i> [<b>{@code :} </b>
  * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]] </blockquote>
+ * <i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>] [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
  *
  * Redis Standalone (Unix Domain Sockets)</b> <blockquote> <i>redis-socket</i><b>{@code ://}
  * </b>[[<i>username</i>{@code :}]<i>password@</i>]<i>path</i>[
  * <b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&amp;database=database</i>]
- * [<i>&amp;clientName=clientName</i>]] </blockquote>
+ * [<i>&amp;clientName=clientName</i>] [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
  *
  * <b>Redis Sentinel</b> <blockquote>
  * <i>redis-sentinel</i><b>{@code ://}</b>[[<i>username</i>{@code :}]<i>password@</i>]<i>host1</i> [<b>{@code :} </b>
  * <i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /} </b>
  * <i>database</i>][<b>{@code ?} </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&amp;sentinelMasterId=sentinelMasterId</i>] [<i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]]
- * </blockquote>
+ * <i>&amp;sentinelMasterId=sentinelMasterId</i>] [<i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]
+ * [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
  *
  * <p>
  * Note: When using Redis Sentinel, the password from the URI applies to the data nodes only. Sentinel authentication must be
@@ -166,6 +166,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     public static final String PARAMETER_NAME_CLIENT_NAME = "clientName";
 
+    public static final String PARAMETER_NAME_VERIFY_PEER = "verifyPeer";
+
     public static final Map<String, LongFunction<Duration>> CONVERTER_MAP;
 
     static {
@@ -215,7 +217,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     private boolean ssl = false;
 
-    private boolean verifyPeer = true;
+    private SslVerifyMode verifyMode = SslVerifyMode.FULL;
 
     private boolean startTls = false;
 
@@ -577,12 +579,22 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Sets whether to verify peers when using {@link #isSsl() SSL}.
+     * Returns whether to verify peers when using {@link #isSsl() SSL}.
      *
      * @return {@code true} to verify peers when using {@link #isSsl() SSL}.
      */
     public boolean isVerifyPeer() {
-        return verifyPeer;
+        return verifyMode != SslVerifyMode.NONE;
+    }
+
+    /**
+     * Returns the mode to verify peers when using {@link #isSsl() SSL}.
+     *
+     * @return the verification mode
+     * @since 6.1
+     */
+    public SslVerifyMode getVerifyMode() {
+        return verifyMode;
     }
 
     /**
@@ -592,8 +604,20 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @param verifyPeer {@code true} to verify peers when using {@link #isSsl() SSL}.
      */
     public void setVerifyPeer(boolean verifyPeer) {
-        this.verifyPeer = verifyPeer;
-        this.sentinels.forEach(it -> it.setVerifyPeer(verifyPeer));
+        setVerifyPeer(verifyPeer ? SslVerifyMode.FULL : SslVerifyMode.NONE);
+    }
+
+    /**
+     * Sets how to verify peers when using {@link #isSsl() SSL}. Sets peer verification also for already configured Redis
+     * Sentinel nodes.
+     *
+     * @param verifyMode verification mode to use when using {@link #isSsl() SSL}.
+     * @since 6.1
+     */
+    public void setVerifyPeer(SslVerifyMode verifyMode) {
+        LettuceAssert.notNull(verifyMode, "VerifyMode must not be null");
+        this.verifyMode = verifyMode;
+        this.sentinels.forEach(it -> it.setVerifyPeer(this.verifyMode));
     }
 
     /**
@@ -718,6 +742,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
                     parseClientName(builder, queryParam);
                 }
 
+                if (forStartWith.startsWith(PARAMETER_NAME_VERIFY_PEER.toLowerCase() + "=")) {
+                    parseVerifyPeer(builder, queryParam);
+                }
+
                 if (forStartWith.startsWith(PARAMETER_NAME_SENTINEL_MASTER_ID.toLowerCase() + "=")) {
                     parseSentinelMasterId(builder, queryParam);
                 }
@@ -784,6 +812,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         if (clientName != null) {
             queryPairs.add(PARAMETER_NAME_CLIENT_NAME + "=" + urlEncode(clientName));
+        }
+
+        if (isSsl() && getVerifyMode() != SslVerifyMode.FULL) {
+            queryPairs.add(PARAMETER_NAME_VERIFY_PEER + "=" + verifyMode.name());
         }
 
         if (sentinelMasterId != null) {
@@ -958,6 +990,14 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
     }
 
+    private static void parseVerifyPeer(Builder builder, String queryParam) {
+
+        String verifyPeer = getValuePart(queryParam);
+        if (isNotEmpty(verifyPeer)) {
+            builder.withVerifyPeer(SslVerifyMode.valueOf(verifyPeer.toUpperCase()));
+        }
+    }
+
     private static void parseSentinelMasterId(Builder builder, String queryParam) {
 
         String masterIdString = getValuePart(queryParam);
@@ -1077,7 +1117,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
         return URI_SCHEME_REDIS_SENTINEL.equals(scheme) || URI_SCHEME_REDIS_SENTINEL_SECURE.equals(scheme);
     }
 
-
     /**
      * Builder for Redis URI.
      */
@@ -1103,7 +1142,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         private boolean ssl = false;
 
-        private boolean verifyPeer = true;
+        private SslVerifyMode verifyMode = SslVerifyMode.FULL;
 
         private boolean startTls = false;
 
@@ -1379,9 +1418,22 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @return the builder
          */
         public Builder withVerifyPeer(boolean verifyPeer) {
+            return withVerifyPeer(verifyPeer ? SslVerifyMode.FULL : SslVerifyMode.NONE);
+        }
 
-            this.verifyPeer = verifyPeer;
-            this.sentinels.forEach(it -> it.setVerifyPeer(verifyPeer));
+        /**
+         * Configures peer verification mode. Sets peer verification also for already configured Redis Sentinel nodes.
+         *
+         * @param verifyMode the mode to verify hosts when using SSL
+         * @return the builder
+         * @since 6.1
+         */
+        public Builder withVerifyPeer(SslVerifyMode verifyMode) {
+
+            LettuceAssert.notNull(verifyMode, "VerifyMode must not be null");
+
+            this.verifyMode = verifyMode;
+            this.sentinels.forEach(it -> it.setVerifyPeer(verifyMode));
             return this;
         }
 
@@ -1576,7 +1628,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             redisURI.setSocket(socket);
             redisURI.setSsl(ssl);
             redisURI.setStartTls(startTls);
-            redisURI.setVerifyPeer(verifyPeer);
+            redisURI.setVerifyPeer(verifyMode);
             redisURI.setTimeout(timeout);
 
             return redisURI;

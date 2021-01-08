@@ -97,6 +97,10 @@ class RedisURIUnitTests {
     void sslUriTest() {
         RedisURI redisURI = RedisURI.create("redis+ssl://localhost:6379");
         assertThat(redisURI).hasToString("rediss://localhost:6379");
+
+        redisURI = RedisURI.create("redis+ssl://localhost:6379?verifyPeer=ca");
+        assertThat(redisURI.getVerifyMode()).isEqualTo(SslVerifyMode.CA);
+        assertThat(redisURI).hasToString("rediss://localhost:6379?verifyPeer=CA");
     }
 
     @Test
