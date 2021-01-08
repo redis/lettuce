@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.CopyArgs;
 import io.lettuce.core.KeyScanArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.RedisException;
@@ -85,13 +86,16 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("COPY")
     void copy() {
         redis.set(key, value);
-        redis.copy(key, key + "2");
+        assertThat(redis.copy(key, key + "2")).isTrue();
+        assertThat(redis.copy("unknown", key + "2")).isFalse();
         assertThat(redis.get(key + "2")).isEqualTo(value);
     }
 
     @Test
+    @EnabledOnCommand("COPY")
     void copyWithReplace() {
         redis.set(key, value);
         redis.set(key + 2, "value to be overridden");
@@ -100,6 +104,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("COPY")
     void copyWithDestinationDb() {
         redis.set(key, value);
         redis.copy(key, key, CopyArgs.Builder.destinationDb(2));

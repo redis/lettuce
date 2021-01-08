@@ -34,25 +34,48 @@ import java.util.*
 @ExperimentalLettuceCoroutinesApi
 internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisKeyReactiveCommands<K, V>) : RedisKeyCoroutinesCommands<K, V> {
 
+    override suspend fun copy(source: K, destination: K): Boolean? =
+        ops.copy(source, destination).awaitFirstOrNull()
+
+    override suspend fun copy(source: K, destination: K, copyArgs: CopyArgs): Boolean? =
+        ops.copy(source, destination, copyArgs).awaitFirstOrNull()
+
     override suspend fun del(vararg keys: K): Long? = ops.del(*keys).awaitFirstOrNull()
 
-    override suspend fun unlink(vararg keys: K): Long? = ops.unlink(*keys).awaitFirstOrNull()
+    override suspend fun unlink(vararg keys: K): Long? =
+        ops.unlink(*keys).awaitFirstOrNull()
 
     override suspend fun dump(key: K): ByteArray? = ops.dump(key).awaitFirstOrNull()
 
-    override suspend fun exists(vararg keys: K): Long? = ops.exists(*keys).awaitFirstOrNull()
+    override suspend fun exists(vararg keys: K): Long? =
+        ops.exists(*keys).awaitFirstOrNull()
 
-    override suspend fun expire(key: K, seconds: Long): Boolean? = ops.expire(key, seconds).awaitFirstOrNull()
+    override suspend fun expire(key: K, seconds: Long): Boolean? =
+        ops.expire(key, seconds).awaitFirstOrNull()
 
-    override suspend fun expireat(key: K, timestamp: Date): Boolean? = ops.expireat(key, timestamp).awaitFirstOrNull()
+    override suspend fun expireat(key: K, timestamp: Date): Boolean? =
+        ops.expireat(key, timestamp).awaitFirstOrNull()
 
-    override suspend fun expireat(key: K, timestamp: Long): Boolean? = ops.expireat(key, timestamp).awaitFirstOrNull()
+    override suspend fun expireat(key: K, timestamp: Long): Boolean? =
+        ops.expireat(key, timestamp).awaitFirstOrNull()
 
     override fun keys(pattern: K): Flow<K> = ops.keys(pattern).asFlow()
 
-    override suspend fun migrate(host: String, port: Int, key: K, db: Int, timeout: Long): String? = ops.migrate(host, port, key, db, timeout).awaitFirstOrNull()
+    override suspend fun migrate(
+        host: String,
+        port: Int,
+        key: K,
+        db: Int,
+        timeout: Long
+    ): String? = ops.migrate(host, port, key, db, timeout).awaitFirstOrNull()
 
-    override suspend fun migrate(host: String, port: Int, db: Int, timeout: Long, migrateArgs: MigrateArgs<K>): String? = ops.migrate(host, port, db, timeout, migrateArgs).awaitFirstOrNull()
+    override suspend fun migrate(
+        host: String,
+        port: Int,
+        db: Int,
+        timeout: Long,
+        migrateArgs: MigrateArgs<K>
+    ): String? = ops.migrate(host, port, db, timeout, migrateArgs).awaitFirstOrNull()
 
     override suspend fun move(key: K, db: Int): Boolean? = ops.move(key, db).awaitFirstOrNull()
 

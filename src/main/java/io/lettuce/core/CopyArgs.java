@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import io.lettuce.core.protocol.CommandKeyword;
  *
  * {@link CopyArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
+ * @author Bartek Kowalczyk
  * @since 6.2
  */
-public class CopyArgs {
+public class CopyArgs implements CompositeArgument {
 
 	private Long destinationDb;
 
@@ -87,6 +88,7 @@ public class CopyArgs {
 		return this;
 	}
 
+    @Override
 	public <K, V> void build(CommandArgs<K, V> args) {
 
 		if (destinationDb != null) {

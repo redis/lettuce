@@ -19,6 +19,8 @@ import java.util.Date;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.CopyArgs;
+import io.lettuce.core.KeyScanArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.MigrateArgs;
 import io.lettuce.core.RestoreArgs;
@@ -41,6 +43,27 @@ import io.lettuce.core.output.ValueStreamingChannel;
 public interface RedisKeyReactiveCommands<K, V> {
 
     /**
+     * Copy the value stored at the source key to the destination key.
+     *
+     * @param source the source.
+     * @param destination the destination.
+     * @return Boolean integer-reply specifically: {@code true} if source was copied. {@code false} if source was not copied.
+     * @since 6.2
+     */
+    Mono<Boolean> copy(K source, K destination);
+
+    /**
+     * Copy the value stored at the source key to the destination key.
+     *
+     * @param source the source.
+     * @param destination the destination.
+     * @param copyArgs the copyArgs.
+     * @return Boolean integer-reply specifically: {@code true} if source was copied. {@code false} if source was not copied.
+     * @since 6.2
+     */
+    Mono<Boolean> copy(K source, K destination, CopyArgs copyArgs);
+
+    /**
      * Delete one or more keys.
      *
      * @param keys the keys.
@@ -55,33 +78,6 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @return Long integer-reply The number of keys that were removed.
      */
     Mono<Long> unlink(K... keys);
-
-    /**
-     * Copy the value stored at the source key to the destination key.
-     *
-     * @param source the source.
-     * @param destination the destination.
-     * @return Boolean integer-reply specifically:
-     *
-     *         {@code 1} if source was copied. {@code 0} if source was not copied.
-     *
-     * @since 6.2
-     */
-    Mono<Boolean> copy(K source, K destination);
-
-    /**
-     * Copy the value stored at the source key to the destination key.
-     *
-     * @param source the source.
-     * @param destination the destination.
-     * @param copyArgs the copyArgs.
-     * @return Boolean integer-reply specifically:
-     *
-     *         {@code 1} if source was copied. {@code 0} if source was not copied.
-     *
-     * @since 6.2
-     */
-    Mono<Boolean> copy(K source, K destination, CopyArgs copyArgs);
 
     /**
      * Return a serialized version of the value stored at the specified key.

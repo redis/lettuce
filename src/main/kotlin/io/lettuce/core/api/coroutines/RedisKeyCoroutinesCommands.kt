@@ -33,6 +33,27 @@ import java.util.*
 interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
 
     /**
+     * Copy the value stored at the source key to the destination key.
+     *
+     * @param source the source.
+     * @param destination the destination.
+     * @return Boolean integer-reply specifically: `true` if source was copied. `false` if source was not copied.
+     * @since 6.2
+     */
+    suspend fun copy(source: K, destination: K): Boolean?
+
+    /**
+     * Copy the value stored at the source key to the destination key.
+     *
+     * @param source the source.
+     * @param destination the destination.
+     * @param copyArgs the copyArgs.
+     * @return Boolean integer-reply specifically: `true` if source was copied. `false` if source was not copied.
+     * @since 6.2
+     */
+    suspend fun copy(source: K, destination: K, copyArgs: CopyArgs): Boolean?
+
+    /**
      * Delete one or more keys.
      *
      * @param keys the keys.
