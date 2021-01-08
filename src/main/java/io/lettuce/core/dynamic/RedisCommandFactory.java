@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <h3>Example</h3>
  *
  * <pre class="code">
- * 
+ *
  * public interface MyRedisCommands extends Commands {
  *
  *     String get(String key); // Synchronous Execution of GET
@@ -76,7 +76,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *     &#064;CommandNaming(split = DOT)
  *     // support for Redis Module command notation -&gt; NR.RUN
  *     double nrRun(String key, int... indexes);
- * 
+ *
  * }
  *
  * RedisCommandFactory factory = new RedisCommandFactory(connection);
