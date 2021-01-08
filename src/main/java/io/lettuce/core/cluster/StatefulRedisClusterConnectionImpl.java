@@ -15,9 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.protocol.CommandType.AUTH;
-import static io.lettuce.core.protocol.CommandType.READONLY;
-import static io.lettuce.core.protocol.CommandType.READWRITE;
+import static io.lettuce.core.protocol.CommandType.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -29,7 +27,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClient;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionState;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
@@ -73,8 +78,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     private final ClusterConnectionState connectionState = new ClusterConnectionState();
 
     private volatile Partitions partitions;
-
-    private volatile CommandSet commandSet;
 
     /**
      * Initialize a new connection.
@@ -125,14 +128,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Override
     public void removeListener(RedisClusterPushListener listener) {
         pushHandler.removeListener(listener);
-    }
-
-    CommandSet getCommandSet() {
-        return commandSet;
-    }
-
-    void setCommandSet(CommandSet commandSet) {
-        this.commandSet = commandSet;
     }
 
     private RedisURI lookup(String nodeId) {

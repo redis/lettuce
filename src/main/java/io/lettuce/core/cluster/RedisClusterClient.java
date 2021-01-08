@@ -53,7 +53,6 @@ import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
-import io.lettuce.core.models.command.CommandDetailParser;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
@@ -655,15 +654,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                     .onErrorResume(t -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
         }
 
-        return connectionMono.flatMap(c -> c.reactive().command().collectList()
-                //
-                .map(CommandDetailParser::parse)
-                //
-                .doOnNext(detail -> c.setCommandSet(new CommandSet(detail)))
-                //
-                .doOnError(e -> c.setCommandSet(new CommandSet(Collections.emptyList()))).then(Mono.just(c))
-                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
-                .doOnNext(
+        return connectionMono.doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterConnection<K, V>) it).toFuture();
     }
@@ -741,13 +732,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                     .onErrorResume(t -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
         }
 
-        return connectionMono.flatMap(c -> c.reactive().command().collectList()
-                //
-                .map(CommandDetailParser::parse)
-                //
-                .doOnNext(detail -> c.setCommandSet(new CommandSet(detail)))
-                .doOnError(e -> c.setCommandSet(new CommandSet(Collections.emptyList()))).then(Mono.just(c))
-                .onErrorResume(RedisCommandExecutionException.class, e -> Mono.just(c)))
+        return connectionMono
                 .doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterPubSubConnection<K, V>) it).toFuture();

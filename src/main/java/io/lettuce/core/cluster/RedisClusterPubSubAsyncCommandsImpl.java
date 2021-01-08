@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.NodeSelectionInvocationHandler.ExecutionModel.ASYNC;
+import static io.lettuce.core.cluster.NodeSelectionInvocationHandler.ExecutionModel.*;
 
 import java.lang.reflect.Proxy;
 import java.util.List;
@@ -35,7 +35,6 @@ import io.lettuce.core.cluster.pubsub.api.async.NodeSelectionPubSubAsyncCommands
 import io.lettuce.core.cluster.pubsub.api.async.PubSubAsyncNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
@@ -63,44 +62,24 @@ public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncC
 
     @Override
     public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-
-        if (getStatefulConnection().getCommandSet().hasCommand(CommandType.GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit);
+        return super.georadius_ro(key, longitude, latitude, distance, unit);
     }
 
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
             GeoArgs.Unit unit, GeoArgs geoArgs) {
-
-        if (getStatefulConnection().getCommandSet().hasCommand(CommandType.GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
+        return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
     }
 
     @Override
     public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-
-        if (getStatefulConnection().getCommandSet().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit);
+        return super.georadiusbymember_ro(key, member, distance, unit);
     }
 
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
-
-        if (getStatefulConnection().getCommandSet().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit, geoArgs);
+        return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
     }
 
     @Override

@@ -21,7 +21,12 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClient;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -52,8 +57,6 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     private final ClusterPushHandler clusterPushHandler;
 
     private volatile Partitions partitions;
-
-    private volatile CommandSet commandSet;
 
     private volatile String nodeId;
 
@@ -110,14 +113,6 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisClusterPubSubReactiveCommandsImpl<K, V>(this, codec);
-    }
-
-    CommandSet getCommandSet() {
-        return commandSet;
-    }
-
-    void setCommandSet(CommandSet commandSet) {
-        this.commandSet = commandSet;
     }
 
     @Override
