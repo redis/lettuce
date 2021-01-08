@@ -19,7 +19,10 @@ import java.io.Serializable;
 import java.util.Set;
 
 /**
+ * Domain object describing Redis Command details.
+ *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  * @since 3.0
  */
 @SuppressWarnings("serial")
@@ -51,6 +54,7 @@ public class CommandDetail implements Serializable {
      * @param firstKeyPosition position of first key in argument list
      * @param lastKeyPosition position of last key in argument list
      * @param keyStepCount step count for locating repeating keys
+     * @deprecated since 6.1
      */
     @Deprecated
     public CommandDetail(String name, int arity, Set<Flag> flags, int firstKeyPosition, int lastKeyPosition, int keyStepCount) {
@@ -67,6 +71,7 @@ public class CommandDetail implements Serializable {
      * @param lastKeyPosition position of last key in argument list
      * @param keyStepCount step count for locating repeating keys
      * @param aclCategories command ACL details
+     * @since 6.1
      */
     public CommandDetail(String name, int arity, Set<Flag> flags, int firstKeyPosition, int lastKeyPosition, int keyStepCount, Set<AclCategory> aclCategories) {
         this.name = name;
@@ -150,6 +155,7 @@ public class CommandDetail implements Serializable {
     }
 
     public enum Flag {
+
         /**
          * command may result in modifications.
          */
@@ -221,7 +227,11 @@ public class CommandDetail implements Serializable {
         MOVABLEKEYS;
     }
 
+    /**
+     * @since 6.1
+     */
     public enum AclCategory {
+
         /**
          * command affects keyspace
          */

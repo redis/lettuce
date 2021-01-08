@@ -25,6 +25,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * output.
  *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  * @since 3.0
  */
 @SuppressWarnings("serial")

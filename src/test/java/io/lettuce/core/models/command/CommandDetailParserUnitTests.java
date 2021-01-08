@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.models.command;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,7 +26,10 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.internal.LettuceLists;
 
 /**
+ * Unit tests for {@link CommandDetailParser}.
+ *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
 class CommandDetailParserUnitTests {
 
@@ -51,7 +54,8 @@ class CommandDetailParserUnitTests {
 
     @Test
     void testParse() {
-        Object o = LettuceLists.newList("get", "1", LettuceLists.newList("fast", "loading"), 1L, 2L, 3L, LettuceLists.newList("@read", "@string", "@fast"));
+        Object o = LettuceLists.newList("get", "1", LettuceLists.newList("fast", "loading"), 1L, 2L, 3L,
+                LettuceLists.newList("@read", "@string", "@fast"));
         List<CommandDetail> result = CommandDetailParser.parse(LettuceLists.newList(o));
         assertThat(result).hasSize(1);
 
@@ -78,4 +82,5 @@ class CommandDetailParserUnitTests {
 
         assertThat(commandDetail.toString()).contains(CommandDetail.class.getSimpleName());
     }
+
 }
