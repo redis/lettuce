@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,21 +24,21 @@ interface WithLatency {
 
     /**
      * Sets the time of sending the item.
-     * 
+     *
      * @param time the time of when the item was sent.
      */
     void sent(long time);
 
     /**
      * Sets the time of the first response.
-     * 
+     *
      * @param time the time of the first response.
      */
     void firstResponse(long time);
 
     /**
      * Set the time of completion.
-     * 
+     *
      * @param time the time of completion.
      */
     void completed(long time);
