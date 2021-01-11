@@ -135,6 +135,8 @@ public interface NodeSelectionListCommands<K, V> {
      */
     Executions<V> lpop(K key);
 
+    Executions<List<V>> lpop(K key, long count);
+
     /**
      * Return the index of matching elements inside a Redis list. By default, when no options are given, it will scan the list
      * from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
@@ -269,6 +271,8 @@ public interface NodeSelectionListCommands<K, V> {
      * @return V bulk-string-reply the value of the last element, or {@code null} when {@code key} does not exist.
      */
     Executions<V> rpop(K key);
+
+    Executions<List<V>> rpop(K key, long count);
 
     /**
      * Remove the last element in a list, append it to another list and return it.

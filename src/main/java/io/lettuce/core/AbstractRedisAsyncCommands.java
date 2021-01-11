@@ -933,6 +933,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<List<V>> lpop(K key, long count) {
+        return dispatch(commandBuilder.lpop(key, count));
+    }
+
+    @Override
     public RedisFuture<Long> lpos(K key, V value) {
         return lpos(key, value, null);
     }
@@ -1183,6 +1188,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<V> rpop(K key) {
         return dispatch(commandBuilder.rpop(key));
+    }
+
+    @Override
+    public RedisFuture<List<V>> rpop(K key, long count) {
+        return dispatch(commandBuilder.rpop(key, count));
     }
 
     @Override
