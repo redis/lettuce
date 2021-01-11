@@ -119,6 +119,13 @@ public class ListCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void lpopCount() {
+        assertThat(redis.lpop(key, 1)).isEqualTo(list());
+        redis.rpush(key, "one", "two");
+        assertThat(redis.lpop(key, 3)).isEqualTo(list("one", "two"));
+    }
+
+    @Test
     @EnabledOnCommand("LPOS")
     void lpos() {
 
@@ -230,6 +237,13 @@ public class ListCommandIntegrationTests extends TestSupport {
         redis.rpush(key, "one", "two");
         assertThat(redis.rpop(key)).isEqualTo("two");
         assertThat(redis.lrange(key, 0, -1)).isEqualTo(list("one"));
+    }
+
+    @Test
+    void rpopCount() {
+        assertThat(redis.rpop(key, 1)).isEqualTo(list());
+        redis.rpush(key, "one", "two");
+        assertThat(redis.rpop(key, 3)).isEqualTo(list("two", "one"));
     }
 
     @Test

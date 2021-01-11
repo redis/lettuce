@@ -1253,6 +1253,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(LPOP, new ValueOutput<>(codec), key);
     }
 
+    Command<K, V, List<V>> lpop(K key, long count) {
+        notNullKey(key);
+
+        return createCommand(LPOP, new ValueListOutput<>(codec), new CommandArgs<>(codec).addKey(key).add(count));
+    }
+
     Command<K, V, Long> lpos(K key, V value, LPosArgs lposArgs) {
         notNullKey(key);
 
@@ -1654,6 +1660,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         return createCommand(RPOP, new ValueOutput<>(codec), key);
+    }
+
+    Command<K, V, List<V>> rpop(K key, long count) {
+        notNullKey(key);
+
+        return createCommand(RPOP, new ValueListOutput<>(codec), new CommandArgs<>(codec).addKey(key).add(count));
     }
 
     Command<K, V, V> rpoplpush(K source, K destination) {
