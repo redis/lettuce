@@ -1,12 +1,12 @@
-Lettuce 6.0.1 RELEASE NOTES
+Lettuce 6.0.2 RELEASE NOTES
 ==============================
 
-The Lettuce team is pleased to announce the Lettuce 6.0.1 service release! 
+The Lettuce team is pleased to announce the Lettuce 6.0.2 service release! 
 This release ships with bugfixes and selected enhancements along with dependency upgrades. 
  
 Find the full changelog at the end of this document.
 
-Thanks to all contributors who made Lettuce 6.0.1.RELEASE possible.
+Thanks to all contributors who made Lettuce 6.0.2.RELEASE possible.
 Lettuce 6 supports Redis 2.6+ up to Redis 6.x. In terms of Java runtime, Lettuce requires at least Java 8 and works with Java 15. It is tested continuously against the latest Redis source-build.
 
 If you need any support, meet Lettuce at
@@ -15,25 +15,33 @@ If you need any support, meet Lettuce at
 * Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
 * Join the chat at https://gitter.im/lettuce-io/Lobby for general discussion
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/6.0.1.RELEASE/reference/
-* Javadoc: https://lettuce.io/core/6.0.1.RELEASE/api/
+* Documentation: https://lettuce.io/core/6.0.2.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/6.0.2.RELEASE/api/
 
 Enhancements
 ------------
-* Add anyReplica setting for ReadFrom #1444 (Thanks to @omer-cilingir)
+* API generator problems #1499 (Thanks to @sokomishalov)
+* Provide VoidOutput for Fire&Forget command usage #1529 (Thanks to @jaredpetersen)
+* Improve unsupported error logging for CommandOutput #1532
+* Add support for local addr in CLIENT KILL #1536
 
 Fixes
 -----
-* Fix EXEC without MULTI when using coroutines over async #1441 (Thanks to @sokomishalov)
-* Lettuce with Tracing enabled fails to connect to a Redis Sentinel #1470 (Thanks to @jsonwan)
-* Lettuce doesn't handle deleted stream items (NullPointerException) #1474 (Thanks to @chemist777)
+* LettuceStrings does not handle -nan which is returned by FT.INFO in redisearch #1482 (Thanks to @krm1312)
+* Improperly decoding command responses #1512 (Thanks to @johnny-costanzo)
+* Fix timeout parameter for nanoseconds in RedisURI #1528 (Thanks to @izeye)
+* Lettuce 6.0.2 fails with GraalVM 20.3 #1562 (Thanks to @atrianac)
+* Reactive stream spec violation when using command timeout #1576 (Thanks to @martin-tarjanyi)
 
 Other
 -----
-* Fix integration test password #1445
-* Un-Deprecate io.lettuce.core.LettuceFutures #1453 (Thanks to @andrewsensus)
-* Switch to Flux/Mono.expand(…) for ScanStream #1458
-* Enable TCP NoDelay by default #1462
-* Adapt tests to changed Redis response #1473
-* Upgrade dependencies #1476
-* Remove JUnit 4 dependency management #1477
+* Remove or replace ClusterRule #1478
+* Implement set(double) in NestedMultiOutput #1486 (Thanks to @jruaux)
+* Start HashWheelTimer in ClientResources to avoid blocking calls in EventLoop #1489
+* Reduce build matrix to Java 8, 11, 15, and EA #1519
+* Upgrade to Netty 4.1.54.Final #1541
+* netty 4.1.56 #1556 (Thanks to @sullis)
+* Move Mailing list forum to GitHub discussions #1557
+* Let coroutines `dispatch`-method be flowable #1567 (Thanks to @sokomishalov)
+* Update copyright years to 2021 #1573
+* Upgrade dependencies #1578
