@@ -2070,6 +2070,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit) {
+        return dispatch(commandBuilder.zrangestorebylex(dstKey, srcKey, range, limit, false));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit) {
+        return dispatch(commandBuilder.zrangestorebyscore(dstKey, srcKey, range, limit, false));
+    }
+
+    @Override
     public RedisFuture<Long> zrank(K key, V member) {
         return dispatch(commandBuilder.zrank(key, member));
     }
@@ -2127,6 +2137,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
         return dispatch(commandBuilder.zrevrangeWithScores(channel, key, start, stop));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit) {
+        return dispatch(commandBuilder.zrangestorebylex(dstKey, srcKey, range, limit, true));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit) {
+        return dispatch(commandBuilder.zrangestorebyscore(dstKey, srcKey, range, limit, true));
     }
 
     @Override
