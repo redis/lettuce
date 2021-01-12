@@ -28,12 +28,12 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import io.lettuce.core.internal.ExceptionFactory;
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
 import reactor.util.context.Context;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.StreamingOutput;
 import io.lettuce.core.protocol.CommandWrapper;
@@ -494,7 +494,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      *
      * Refer to the individual states for more information.
      */
-    private enum State {
+    enum State {
 
         /**
          * The initial unsubscribed state. Will respond to {@link #subscribe(RedisSubscription, Subscriber)} by changing state
@@ -724,13 +724,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
      * @param <V> value type
      * @param <T> response type
      */
-    private static class SubscriptionCommand<K, V, T> extends CommandWrapper<K, V, T> implements DemandAware.Sink {
+    static class SubscriptionCommand<K, V, T> extends CommandWrapper<K, V, T> implements DemandAware.Sink {
 
         private final boolean dissolve;
 
         private final RedisSubscription<T> subscription;
-
-        private volatile boolean completed = false;
 
         private volatile DemandAware.Source source;
 
@@ -744,50 +742,40 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         @Override
         public boolean hasDemand() {
-            return completed || subscription.state() == State.COMPLETED || subscription.data.isEmpty();
+            return isDone() || subscription.state() == State.COMPLETED || subscription.data.isEmpty();
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        public void complete() {
+        @SuppressWarnings({ "unchecked", "CastCanBeRemovedNarrowingVariableType" })
+        protected void doOnComplete() {
 
-            if (completed) {
-                return;
-            }
+            if (getOutput() != null) {
 
-            try {
-                super.complete();
+                Object result = getOutput().get();
 
-                if (getOutput() != null) {
-                    Object result = getOutput().get();
-
-                    if (getOutput().hasError()) {
-                        onError(ExceptionFactory.createExecutionException(getOutput().getError()));
-                        completed = true;
-                        return;
-                    }
-
-                    if (!(getOutput() instanceof StreamingOutput<?>) && result != null) {
-
-                        if (dissolve && result instanceof Collection) {
-
-                            Collection<T> collection = (Collection<T>) result;
-
-                            for (T t : collection) {
-                                if (t != null) {
-                                    subscription.onNext(t);
-                                }
-                            }
-                        } else {
-                            subscription.onNext((T) result);
-                        }
-                    }
+                if (getOutput().hasError()) {
+                    onError(ExceptionFactory.createExecutionException(getOutput().getError()));
+                    return;
                 }
 
-                subscription.onAllDataRead();
-            } finally {
-                completed = true;
+                if (!(getOutput() instanceof StreamingOutput<?>) && result != null) {
+
+                    if (dissolve && result instanceof Collection) {
+
+                        Collection<T> collection = (Collection<T>) result;
+
+                        for (T t : collection) {
+                            if (t != null) {
+                                subscription.onNext(t);
+                            }
+                        }
+                    } else {
+                        subscription.onNext((T) result);
+                    }
+                }
             }
+
+            subscription.onAllDataRead();
         }
 
         @Override
@@ -801,28 +789,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         @Override
-        public void cancel() {
-
-            if (completed) {
-                return;
-            }
-
-            super.cancel();
-
-            completed = true;
-        }
-
-        @Override
-        public boolean completeExceptionally(Throwable throwable) {
-
-            if (completed) {
-                return false;
-            }
-
-            boolean b = super.completeExceptionally(throwable);
+        protected void doOnError(Throwable throwable) {
             onError(throwable);
-            completed = true;
-            return b;
         }
 
         private void onError(Throwable throwable) {
