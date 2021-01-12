@@ -136,6 +136,16 @@ public interface RedisListCommands<K, V> {
     V lpop(K key);
 
     /**
+     * Remove and get the first {@code count} elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return @return List&lt;V&gt; array-reply list of the first {@code count} elements, or {@code null} when {@code key} does not exist.
+     * @since 6.1
+     */
+    List<V> lpop(K key, long count);
+
+    /**
      * Return the index of matching elements inside a Redis list. By default, when no options are given, it will scan the list
      * from head to tail, looking for the first match of "element". If the element is found, its index (the zero-based position
      * in the list) is returned. Otherwise, if no match is found, {@code null} is returned. The returned elements indexes are
@@ -269,6 +279,16 @@ public interface RedisListCommands<K, V> {
      * @return V bulk-string-reply the value of the last element, or {@code null} when {@code key} does not exist.
      */
     V rpop(K key);
+
+    /**
+     * Remove and get the last {@code count} elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return List&lt;V&gt; array-reply list of the last {@code count} elements, or {@code null} when {@code key} does not exist.
+     * @since 6.1
+     */
+    List<V> rpop(K key, long count);
 
     /**
      * Remove the last element in a list, append it to another list and return it.

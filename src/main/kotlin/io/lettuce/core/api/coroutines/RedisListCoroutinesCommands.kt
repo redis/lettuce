@@ -18,8 +18,8 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.KeyValue
-import io.lettuce.core.LPosArgs
 import io.lettuce.core.LMoveArgs
+import io.lettuce.core.LPosArgs
 
 /**
  * Coroutine executed commands for Lists.
@@ -135,6 +135,16 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @return V bulk-string-reply the value of the first element, or `null` when `key` does not exist.
      */
     suspend fun lpop(key: K): V?
+
+    /**
+     * Remove and get the first `count` elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return @return List<V> array-reply list of the first `count` elements, or `null` when `key` does not exist.
+     * @since 6.1
+     */
+    suspend fun lpop(key: K, count: Long): List<V>
 
     /**
      * Return the index of matching elements inside a Redis list. By default, when no options are given, it will scan the list
@@ -259,6 +269,16 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @return V bulk-string-reply the value of the last element, or `null` when `key` does not exist.
      */
     suspend fun rpop(key: K): V?
+
+    /**
+     * Remove and get the last `count` elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return List<V> array-reply list of the last `count` elements, or `null` when `key` does not exist.
+     * @since 6.1
+     */
+    suspend fun rpop(key: K, count: Long): List<V>
 
     /**
      * Remove the last element in a list, append it to another list and return it.

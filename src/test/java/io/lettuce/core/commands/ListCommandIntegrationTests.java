@@ -43,6 +43,7 @@ import io.lettuce.test.condition.RedisConditions;
  * @author Will Glozer
  * @author Mark Paluch
  * @author Mikhael Sokolov
+ * @author M Sazzadul Hoque
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -119,6 +120,7 @@ public class ListCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("BLMOVE") // Redis 6.2
     void lpopCount() {
         assertThat(redis.lpop(key, 1)).isEqualTo(list());
         redis.rpush(key, "one", "two");
@@ -240,6 +242,7 @@ public class ListCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("BLMOVE") // Redis 6.2
     void rpopCount() {
         assertThat(redis.rpop(key, 1)).isEqualTo(list());
         redis.rpush(key, "one", "two");

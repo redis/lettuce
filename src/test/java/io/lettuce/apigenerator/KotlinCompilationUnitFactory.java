@@ -15,12 +15,17 @@
  */
 package io.lettuce.apigenerator;
 
-import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -106,7 +111,7 @@ class KotlinCompilationUnitFactory {
         CompilationUnit template = JavaParser.parse(templateFile);
 
         JavaToken license = template.getTokenRange().get().getBegin();
-        result.append(license.asString().replaceAll("Copyright [\\d]{4}-[\\d]{4}", "Copyright 2020"));
+        result.append(license.asString().replaceAll("Copyright [\\d]{4}-[\\d]{4}", "Copyright 2020-$2"));
         result.append(license.getNextToken().get().asString());
         result.append("\n");
 

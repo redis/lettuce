@@ -18,8 +18,8 @@ package io.lettuce.core.api.reactive;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KeyValue;
-import io.lettuce.core.LPosArgs;
 import io.lettuce.core.LMoveArgs;
+import io.lettuce.core.LPosArgs;
 import io.lettuce.core.output.ValueStreamingChannel;
 
 /**
@@ -136,6 +136,14 @@ public interface RedisListReactiveCommands<K, V> {
      */
     Mono<V> lpop(K key);
 
+    /**
+     * Remove and get the first {@code count} elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return @return V array-reply list of the first {@code count} elements, or {@code null} when {@code key} does not exist.
+     * @since 6.1
+     */
     Flux<V> lpop(K key, long count);
 
     /**
@@ -275,6 +283,14 @@ public interface RedisListReactiveCommands<K, V> {
      */
     Mono<V> rpop(K key);
 
+    /**
+     * Remove and get the last {@code count} elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return V array-reply list of the last {@code count} elements, or {@code null} when {@code key} does not exist.
+     * @since 6.1
+     */
     Flux<V> rpop(K key, long count);
 
     /**

@@ -47,42 +47,63 @@ internal class RedisListCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun brpoplpush(timeout: Long, source: K, destination: K): V? = ops.brpoplpush(timeout, source, destination).awaitFirstOrNull()
 
-    override suspend fun lindex(key: K, index: Long): V? = ops.lindex(key, index).awaitFirstOrNull()
+    override suspend fun lindex(key: K, index: Long): V? =
+        ops.lindex(key, index).awaitFirstOrNull()
 
-    override suspend fun linsert(key: K, before: Boolean, pivot: V, value: V): Long? = ops.linsert(key, before, pivot, value).awaitFirstOrNull()
+    override suspend fun linsert(key: K, before: Boolean, pivot: V, value: V): Long? =
+        ops.linsert(key, before, pivot, value).awaitFirstOrNull()
 
     override suspend fun llen(key: K): Long? = ops.llen(key).awaitFirstOrNull()
 
-    override suspend fun lmove(source: K, destination: K, args: LMoveArgs): V? = ops.lmove(source, destination, args).awaitFirstOrNull()
+    override suspend fun lmove(source: K, destination: K, args: LMoveArgs): V? =
+        ops.lmove(source, destination, args).awaitFirstOrNull()
 
     override suspend fun lpop(key: K): V? = ops.lpop(key).awaitFirstOrNull()
 
-    override suspend fun lpos(key: K, value: V): Long? = ops.lpos(key, value).awaitFirstOrNull()
+    override suspend fun lpop(key: K, count: Long): List<V> =
+        ops.lpop(key, count).asFlow().toList()
 
-    override suspend fun lpos(key: K, value: V, args: LPosArgs): Long? = ops.lpos(key, value, args).awaitFirstOrNull()
+    override suspend fun lpos(key: K, value: V): Long? =
+        ops.lpos(key, value).awaitFirstOrNull()
 
-    override suspend fun lpos(key: K, value: V, count: Int): List<Long> = ops.lpos(key, value, count).asFlow().toList()
+    override suspend fun lpos(key: K, value: V, args: LPosArgs): Long? =
+        ops.lpos(key, value, args).awaitFirstOrNull()
 
-    override suspend fun lpos(key: K, value: V, count: Int, args: LPosArgs): List<Long> = ops.lpos(key, value, count, args).asFlow().toList()
+    override suspend fun lpos(key: K, value: V, count: Int): List<Long> =
+        ops.lpos(key, value, count).asFlow().toList()
 
-    override suspend fun lpush(key: K, vararg values: V): Long? = ops.lpush(key, *values).awaitFirstOrNull()
+    override suspend fun lpos(key: K, value: V, count: Int, args: LPosArgs): List<Long> =
+        ops.lpos(key, value, count, args).asFlow().toList()
+
+    override suspend fun lpush(key: K, vararg values: V): Long? =
+        ops.lpush(key, *values).awaitFirstOrNull()
 
     override suspend fun lpushx(key: K, vararg values: V): Long? = ops.lpushx(key, *values).awaitFirstOrNull()
 
-    override suspend fun lrange(key: K, start: Long, stop: Long): List<V> = ops.lrange(key, start, stop).asFlow().toList()
+    override suspend fun lrange(key: K, start: Long, stop: Long): List<V> =
+        ops.lrange(key, start, stop).asFlow().toList()
 
-    override suspend fun lrem(key: K, count: Long, value: V): Long? = ops.lrem(key, count, value).awaitFirstOrNull()
+    override suspend fun lrem(key: K, count: Long, value: V): Long? =
+        ops.lrem(key, count, value).awaitFirstOrNull()
 
-    override suspend fun lset(key: K, index: Long, value: V): String? = ops.lset(key, index, value).awaitFirstOrNull()
+    override suspend fun lset(key: K, index: Long, value: V): String? =
+        ops.lset(key, index, value).awaitFirstOrNull()
 
-    override suspend fun ltrim(key: K, start: Long, stop: Long): String? = ops.ltrim(key, start, stop).awaitFirstOrNull()
+    override suspend fun ltrim(key: K, start: Long, stop: Long): String? =
+        ops.ltrim(key, start, stop).awaitFirstOrNull()
 
     override suspend fun rpop(key: K): V? = ops.rpop(key).awaitFirstOrNull()
 
-    override suspend fun rpoplpush(source: K, destination: K): V? = ops.rpoplpush(source, destination).awaitFirstOrNull()
+    override suspend fun rpop(key: K, count: Long): List<V> =
+        ops.rpop(key, count).asFlow().toList()
 
-    override suspend fun rpush(key: K, vararg values: V): Long? = ops.rpush(key, *values).awaitFirstOrNull()
+    override suspend fun rpoplpush(source: K, destination: K): V? =
+        ops.rpoplpush(source, destination).awaitFirstOrNull()
 
-    override suspend fun rpushx(key: K, vararg values: V): Long? = ops.rpushx(key, *values).awaitFirstOrNull()
+    override suspend fun rpush(key: K, vararg values: V): Long? =
+        ops.rpush(key, *values).awaitFirstOrNull()
+
+    override suspend fun rpushx(key: K, vararg values: V): Long? =
+        ops.rpushx(key, *values).awaitFirstOrNull()
 }
 

@@ -16,9 +16,10 @@
 package io.lettuce.core.cluster.api.sync;
 
 import java.util.List;
+
 import io.lettuce.core.KeyValue;
-import io.lettuce.core.LPosArgs;
 import io.lettuce.core.LMoveArgs;
+import io.lettuce.core.LPosArgs;
 import io.lettuce.core.output.ValueStreamingChannel;
 
 /**
@@ -135,6 +136,15 @@ public interface NodeSelectionListCommands<K, V> {
      */
     Executions<V> lpop(K key);
 
+    /**
+     * Remove and get the first {@code count} elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return @return List&lt;V&gt; array-reply list of the first {@code count} elements, or {@code null} when {@code key} does
+     *         not exist.
+     * @since 6.1
+     */
     Executions<List<V>> lpop(K key, long count);
 
     /**
@@ -272,6 +282,15 @@ public interface NodeSelectionListCommands<K, V> {
      */
     Executions<V> rpop(K key);
 
+    /**
+     * Remove and get the last {@code count} elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return List&lt;V&gt; array-reply list of the last {@code count} elements, or {@code null} when {@code key} does not
+     *         exist.
+     * @since 6.1
+     */
     Executions<List<V>> rpop(K key, long count);
 
     /**

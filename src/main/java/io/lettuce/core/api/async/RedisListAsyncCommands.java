@@ -16,11 +16,12 @@
 package io.lettuce.core.api.async;
 
 import java.util.List;
+
 import io.lettuce.core.KeyValue;
-import io.lettuce.core.LPosArgs;
 import io.lettuce.core.LMoveArgs;
-import io.lettuce.core.output.ValueStreamingChannel;
+import io.lettuce.core.LPosArgs;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.output.ValueStreamingChannel;
 
 /**
  * Asynchronous executed commands for Lists.
@@ -136,6 +137,15 @@ public interface RedisListAsyncCommands<K, V> {
      */
     RedisFuture<V> lpop(K key);
 
+    /**
+     * Remove and get the first {@code count} elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return @return List&lt;V&gt; array-reply list of the first {@code count} elements, or {@code null} when {@code key} does
+     *         not exist.
+     * @since 6.1
+     */
     RedisFuture<List<V>> lpop(K key, long count);
 
     /**
@@ -273,6 +283,15 @@ public interface RedisListAsyncCommands<K, V> {
      */
     RedisFuture<V> rpop(K key);
 
+    /**
+     * Remove and get the last {@code count} elements in a list.
+     *
+     * @param key the key.
+     * @param count the number of elements to return.
+     * @return List&lt;V&gt; array-reply list of the last {@code count} elements, or {@code null} when {@code key} does not
+     *         exist.
+     * @since 6.1
+     */
     RedisFuture<List<V>> rpop(K key, long count);
 
     /**
