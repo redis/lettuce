@@ -15,8 +15,9 @@
  */
 package io.lettuce.core.protocol;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,8 @@ import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.StatusOutput;
 
 /**
+ * Unit tests for {@link CommandWrapper}.
+ *
  * @author Mark Paluch
  */
 class CommandWrapperUnitTests {
@@ -56,8 +59,59 @@ class CommandWrapperUnitTests {
 
         commandWrapper.complete();
 
-        assertThat(v1.get()).isEqualTo(true);
-        assertThat(v2.get()).isEqualTo(true);
+        assertThat(v1.get()).isTrue();
+        assertThat(v2.get()).isTrue();
+    }
+
+    @Test
+    void shouldGuardAgainstMultipleCompleteCalls() {
+
+        CommandWrapper<String, String, String> commandWrapper = new CommandWrapper<>(sut);
+
+        AtomicInteger counter = new AtomicInteger();
+
+        commandWrapper.onComplete((s, throwable) -> commandWrapper.completeExceptionally(new IllegalStateException()));
+        commandWrapper.onComplete((s, throwable) -> {
+            counter.incrementAndGet();
+        });
+
+        commandWrapper.complete();
+
+        assertThat(counter).hasValue(1);
+    }
+
+    @Test
+    void shouldGuardAgainstMultipleCancelCalls() {
+
+        CommandWrapper<String, String, String> commandWrapper = new CommandWrapper<>(sut);
+
+        AtomicInteger counter = new AtomicInteger();
+
+        commandWrapper.onComplete(s -> commandWrapper.cancel());
+        commandWrapper.onComplete((s, throwable) -> {
+            counter.incrementAndGet();
+        });
+
+        commandWrapper.cancel();
+
+        assertThat(counter).hasValue(1);
+    }
+
+    @Test
+    void shouldGuardAgainstMultipleCompleteExceptionallyCalls() {
+
+        CommandWrapper<String, String, String> commandWrapper = new CommandWrapper<>(sut);
+
+        AtomicInteger counter = new AtomicInteger();
+
+        commandWrapper.onComplete(s -> commandWrapper.complete());
+        commandWrapper.onComplete((s, throwable) -> {
+            counter.incrementAndGet();
+        });
+
+        commandWrapper.completeExceptionally(new IllegalStateException());
+
+        assertThat(counter).hasValue(1);
     }
 
 }

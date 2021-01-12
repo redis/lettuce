@@ -30,12 +30,13 @@ import io.netty.buffer.ByteBuf;
  */
 public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "rawtypes" })
     private static final AtomicReferenceFieldUpdater<CommandWrapper, Object[]> ONCOMPLETE = AtomicReferenceFieldUpdater
             .newUpdater(CommandWrapper.class, Object[].class, "onComplete");
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static final Object[] EMPTY = new Object[0];
+
+    private static final Object[] COMPLETE = new Object[0];
 
     protected final RedisCommand<K, V, T> command;
 
@@ -53,15 +54,30 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void complete() {
 
-        command.complete();
-
         Object[] consumers = ONCOMPLETE.get(this);
-        if (!expireCallbacks(consumers)) {
-            return;
+
+        if (consumers != COMPLETE && ONCOMPLETE.compareAndSet(this, consumers, COMPLETE)) {
+
+            command.complete();
+
+            doOnComplete();
+            notifyConsumers(consumers);
         }
+    }
+
+    /**
+     * Callback method called after successful completion and before notifying downstream consumers.
+     *
+     * @since 5.3.6
+     */
+    protected void doOnComplete() {
+
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void notifyConsumers(Object[] consumers) {
 
         for (Object callback : consumers) {
 
@@ -88,27 +104,46 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     @Override
     public void cancel() {
 
-        command.cancel();
-        notifyBiConsumer(new CancellationException());
+        Object[] consumers = ONCOMPLETE.get(this);
+
+        if (consumers != COMPLETE && ONCOMPLETE.compareAndSet(this, consumers, COMPLETE)) {
+
+            command.cancel();
+            CancellationException exception = new CancellationException();
+            doOnError(exception);
+            notifyBiConsumer(consumers, exception);
+        }
+
     }
 
     @Override
     public boolean completeExceptionally(Throwable throwable) {
 
-        boolean result = command.completeExceptionally(throwable);
-        notifyBiConsumer(throwable);
+        Object[] consumers = ONCOMPLETE.get(this);
+
+        boolean result = false;
+        if (consumers != COMPLETE && ONCOMPLETE.compareAndSet(this, consumers, COMPLETE)) {
+
+            result = command.completeExceptionally(throwable);
+            doOnError(throwable);
+            notifyBiConsumer(consumers, throwable);
+        }
 
         return result;
     }
 
+    /**
+     * Callback method called after error completion and before notifying downstream consumers.
+     *
+     * @param throwable
+     * @since 5.3.6
+     */
+    protected void doOnError(Throwable throwable) {
+
+    }
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private void notifyBiConsumer(Throwable exception) {
-
-        Object[] consumers = ONCOMPLETE.get(this);
-
-        if (!expireCallbacks(consumers)) {
-            return;
-        }
+    private void notifyBiConsumer(Object[] consumers, Throwable exception) {
 
         for (Object callback : consumers) {
 
@@ -123,10 +158,6 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
                 consumer.accept(null, exception);
             }
         }
-    }
-
-    private boolean expireCallbacks(Object[] consumers) {
-        return consumers != EMPTY && ONCOMPLETE.compareAndSet(this, consumers, EMPTY);
     }
 
     @Override
