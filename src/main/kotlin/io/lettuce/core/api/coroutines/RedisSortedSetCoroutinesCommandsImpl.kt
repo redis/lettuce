@@ -112,6 +112,10 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override fun zrangebyscoreWithScores(key: K, range: Range<out Number>, limit: Limit): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range, limit).asFlow()
 
+    override suspend fun zrangestorebylex(dstKey: K, srcKey: K, range: Range<out V>, limit: Limit): Long? = ops.zrangestorebylex(dstKey, srcKey, range, limit).awaitFirstOrNull()
+
+    override suspend fun zrangestorebyscore(dstKey: K, srcKey: K, range: Range<out Number>, limit: Limit): Long? = ops.zrangestorebyscore(dstKey, srcKey, range, limit).awaitFirstOrNull()
+
     override suspend fun zrank(key: K, member: V): Long? = ops.zrank(key, member).awaitFirstOrNull()
 
     override suspend fun zrem(key: K, vararg members: V): Long? = ops.zrem(key, *members).awaitFirstOrNull()
@@ -137,6 +141,10 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override fun zrevrangebyscoreWithScores(key: K, range: Range<out Number>): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range).asFlow()
 
     override fun zrevrangebyscoreWithScores(key: K, range: Range<out Number>, limit: Limit): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range, limit).asFlow()
+
+    override suspend fun zrevrangestorebylex(dstKey: K, srcKey: K, range: Range<out V>, limit: Limit): Long? = ops.zrevrangestorebylex(dstKey, srcKey, range, limit).awaitFirstOrNull()
+
+    override suspend fun zrevrangestorebyscore(dstKey: K, srcKey: K, range: Range<out Number>, limit: Limit): Long? = ops.zrevrangestorebyscore(dstKey, srcKey, range, limit).awaitFirstOrNull()
 
     override suspend fun zrevrank(key: K, member: V): Long? = ops.zrevrank(key, member).awaitFirstOrNull()
 

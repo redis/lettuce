@@ -2131,6 +2131,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit) {
+        return createMono(() -> commandBuilder.zrangestorebylex(dstKey, srcKey, range, limit, false));
+    }
+
+    @Override
+    public Mono<Long> zrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit) {
+        return createMono(() -> commandBuilder.zrangestorebyscore(dstKey, srcKey, range, limit, false));
+    }
+
+    @Override
     public Mono<Long> zrank(K key, V member) {
         return createMono(() -> commandBuilder.zrank(key, member));
     }
@@ -2323,6 +2333,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
             Limit limit) {
         return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, range, limit));
+    }
+
+    @Override
+    public Mono<Long> zrevrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit) {
+        return createMono(() -> commandBuilder.zrangestorebylex(dstKey, srcKey, range, limit, true));
+    }
+
+    @Override
+    public Mono<Long> zrevrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit) {
+        return createMono(() -> commandBuilder.zrangestorebyscore(dstKey, srcKey, range, limit, true));
     }
 
     @Override

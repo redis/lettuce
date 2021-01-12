@@ -730,6 +730,28 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
     AsyncExecutions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
+     * Get the specified range of elements in the sorted set stored at <srcKey> and stores the result in the <dstKey> destination key.
+     *
+     * @param dstKey the dst key.
+     * @param srcKey the src key.
+     * @param range the lexicographical range.
+     * @return The number of elements in the resulting sorted set.
+     * @since 6.2
+     */
+    AsyncExecutions<Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
+
+    /**
+     * Get the specified range of elements in the sorted set stored at <srcKey> and stores the result in the <dstKey> destination key.
+     *
+     * @param dstKey the dst key.
+     * @param srcKey the src key.
+     * @param range the score range.
+     * @return The number of elements in the resulting sorted set.
+     * @since 6.2
+     */
+    AsyncExecutions<Long> zrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit);
+
+    /**
      * Determine the index of a member in a sorted set.
      *
      * @param key the key.
@@ -1181,6 +1203,28 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @since 4.3
      */
     AsyncExecutions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
+
+    /**
+     * Get the lexicographical range ordered from high to low of elements in the sorted set stored at <srcKey> and stores the result in the <dstKey> destination key.
+     *
+     * @param dstKey the dst key.
+     * @param srcKey the src key.
+     * @param range the lexicographical range.
+     * @return The number of elements in the resulting sorted set.
+     * @since 6.2
+     */
+    AsyncExecutions<Long> zrevrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
+
+    /**
+     * Get the specified range of elements in the sorted set stored at <srcKey> with scores ordered from high to low and stores the result in the <dstKey> destination key.
+     *
+     * @param dstKey the dst key.
+     * @param srcKey the src key.
+     * @param range the score range.
+     * @return The number of elements in the resulting sorted set.
+     * @since 6.2
+     */
+    AsyncExecutions<Long> zrevrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit);
 
     /**
      * Determine the index of a member in a sorted set, with scores ordered from high to low.

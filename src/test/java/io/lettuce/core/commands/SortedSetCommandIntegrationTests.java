@@ -419,6 +419,22 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
+    void zrangestorebylex() {
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        assertThat(redis.zrangestorebylex("key1", key, Range.create("a", "b"), Limit.create(0, 4))).isEqualTo(2);
+        assertThat(redis.zrange("key1", 0, 2)). isEqualTo(list("a", "b"));
+    }
+
+    @Test
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
+    void zrangestorebyscore() {
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        assertThat(redis.zrangestorebyscore("key1", key, Range.create(0, 2), Limit.create(0, 2))).isEqualTo(2);
+        assertThat(redis.zrange("key1", 0, 2)).isEqualTo(list("a", "b"));
+    }
+
+    @Test
     void zrank() {
         assertThat(redis.zrank(key, "a")).isNull();
         setup();
@@ -613,6 +629,22 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         setup();
         assertThat(redis.zrevrank(key, "c")).isEqualTo(0);
         assertThat(redis.zrevrank(key, "a")).isEqualTo(2);
+    }
+
+    @Test
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
+    void zrevrangestorebylex() {
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        assertThat(redis.zrevrangestorebylex("key1", key, Range.create("c", "-"), Limit.create(0, 4))).isEqualTo(3);
+        assertThat(redis.zrange("key1", 0, 2)). isEqualTo(list("a", "b", "c"));
+    }
+
+    @Test
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
+    void zrevrangestorebyscore() {
+        redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
+        assertThat(redis.zrevrangestorebyscore("key1", key, Range.from(Boundary.including(2), Boundary.excluding(1)), Limit.create(0, 2))).isEqualTo(1);
+        assertThat(redis.zrange("key1", 0, 2)).isEqualTo(list("b"));
     }
 
     @Test

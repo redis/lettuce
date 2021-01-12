@@ -2985,6 +2985,36 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGEBYSCORE, new ScoredValueStreamingOutput<>(codec, channel), args);
     }
 
+    Command<K, V, Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit, boolean rev) {
+        notNullKey(srcKey);
+        notNullKey(dstKey);
+        notNullRange(range);
+        notNullLimit(limit);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKeys(dstKey, srcKey).add(minValue(range)).add(maxValue(range)).add(BYLEX);
+        if (rev) {
+            args.add(REV);
+        }
+        addLimit(args, limit);
+        return createCommand(ZRANGESTORE, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> zrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit, boolean rev) {
+        notNullKey(srcKey);
+        notNullKey(dstKey);
+        notNullRange(range);
+        notNullLimit(limit);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKeys(dstKey, srcKey).add(min(range)).add(max(range)).add(BYSCORE);
+        if (rev) {
+            args.add(REV);
+        }
+        addLimit(args, limit);
+        return createCommand(ZRANGESTORE, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Long> zrank(K key, V member) {
         notNullKey(key);
 
