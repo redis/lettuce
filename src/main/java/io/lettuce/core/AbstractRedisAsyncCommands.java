@@ -1833,6 +1833,21 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<List<V>> zdiff(K... keys) {
+        return dispatch(commandBuilder.zdiff(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> zdiffstore(K destKey, K... srcKeys) {
+        return dispatch(commandBuilder.zdiffstore(destKey, srcKeys));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zdiffWithScores(K... keys) {
+        return dispatch(commandBuilder.zdiffWithScores(keys));
+    }
+
+    @Override
     public RedisFuture<Double> zincrby(K key, double amount, V member) {
         return dispatch(commandBuilder.zincrby(key, amount, member));
     }

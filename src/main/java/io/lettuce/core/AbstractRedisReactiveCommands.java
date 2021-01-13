@@ -1908,6 +1908,21 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<V> zdiff(K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zdiff(keys));
+    }
+
+    @Override
+    public Mono<Long> zdiffstore(K destKey, K... srcKeys) {
+        return createMono(() -> commandBuilder.zdiffstore(destKey, srcKeys));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zdiffWithScores(K... keys) {
+        return createDissolvingFlux(() -> commandBuilder.zdiffWithScores(keys));
+    }
+
+    @Override
     public Mono<Double> zincrby(K key, double amount, V member) {
         return createMono(() -> commandBuilder.zincrby(key, amount, member));
     }

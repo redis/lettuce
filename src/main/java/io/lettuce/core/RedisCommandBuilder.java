@@ -2674,6 +2674,32 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZCOUNT, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, List<V> > zdiff(K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(keys.length).addKeys(keys);
+        System.out.println(args);
+        return createCommand(ZDIFF, new ValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> zdiffstore(K destKey, K... srcKeys) {
+        notNullKey(destKey);
+        notEmpty(srcKeys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(destKey).add(srcKeys.length).addKeys(srcKeys);
+        return createCommand(ZDIFFSTORE, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zdiffWithScores(K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(keys.length).addKeys(keys).add(WITHSCORES);
+        return createCommand(ZDIFF, new ScoredValueListOutput<>(codec), args);
+    }
+
     Command<K, V, Double> zincrby(K key, double amount, V member) {
         notNullKey(key);
 
