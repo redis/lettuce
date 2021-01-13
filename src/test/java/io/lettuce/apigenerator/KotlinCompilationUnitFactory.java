@@ -61,7 +61,7 @@ class KotlinCompilationUnitFactory {
     private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
     private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("dispatch", "geohash", "georadius", "georadiusbymember",
             "hgetall", "hkeys", "hmget", "hvals", "keys", "mget", "sdiff", "sinter", "smembers", "smismember", "sort", "srandmember", "sunion",
-            "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange", "zinter", "zinterWithScores", "zpopmax", "zpopmin", "zrange",
+            "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange", "zdiff", "zdiffWithScores", "zinter", "zinterWithScores", "zpopmax", "zpopmin", "zrange",
             "zrangeWithScores", "zrangebylex", "zrangebyscore", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex",
             "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores", "zunion", "zunionWithScores");
 

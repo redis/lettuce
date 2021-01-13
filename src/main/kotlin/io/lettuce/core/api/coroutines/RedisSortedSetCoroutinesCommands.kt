@@ -174,6 +174,34 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun zcount(key: K, range: Range<out Number>): Long?
 
     /**
+     * Computes the difference between the first and all successive input sorted sets.
+     *
+     * @param keys the keys.
+     * @return List<V> array-reply list of elements.
+     * @since 6.2
+     */
+    fun zdiff(vararg keys: K): Flow<V>
+
+    /**
+     * Computes the difference between the first and all successive input sorted sets and stores the result in destination.
+     *
+     * @param destKey the dest key.
+     * @param srcKeys the src keys.
+     * @return Long the number of elements in the resulting sorted set at destination.
+     * @since 6.2
+     */
+    suspend fun zdiffstore(destKey: K, vararg srcKeys: K): Long?
+
+    /**
+     * Computes the difference between the first and all successive input sorted sets.
+     *
+     * @param keys the keys.
+     * @return List<V> array-reply list of scored values.
+     * @since 6.2
+     */
+    fun zdiffWithScores(vararg keys: K): Flow<ScoredValue<V>>
+
+    /**
      * Increment the score of a member in a sorted set.
      *
      * @param key the key.

@@ -60,6 +60,12 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun zcount(key: K, range: Range<out Number>): Long? = ops.zcount(key, range).awaitFirstOrNull()
 
+    override fun zdiff(vararg keys: K): Flow<V> = ops.zdiff(*keys).asFlow()
+
+    override suspend fun zdiffstore(destKey: K, vararg srcKeys: K): Long? = ops.zdiffstore(destKey, *srcKeys).awaitFirstOrNull()
+
+    override fun zdiffWithScores(vararg keys: K): Flow<ScoredValue<V>> = ops.zdiffWithScores(*keys).asFlow()
+
     override suspend fun zincrby(key: K, amount: Double, member: V): Double? = ops.zincrby(key, amount, member).awaitFirstOrNull()
 
     override fun zinter(vararg keys: K): Flow<V> = ops.zinter(*keys).asFlow()

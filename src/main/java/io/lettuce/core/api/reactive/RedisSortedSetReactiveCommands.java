@@ -201,6 +201,34 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<Long> zcount(K key, Range<? extends Number> range);
 
     /**
+     * Computes the difference between the first and all successive input sorted sets.
+     *
+     * @param keys the keys.
+     * @return V array-reply list of elements.
+     * @since 6.2
+     */
+    Flux<V> zdiff(K... keys);
+
+    /**
+     * Computes the difference between the first and all successive input sorted sets and stores the result in destination.
+     *
+     * @param destKey the dest key.
+     * @param srcKeys the src keys.
+     * @return Long the number of elements in the resulting sorted set at destination.
+     * @since 6.2
+     */
+    Mono<Long> zdiffstore(K destKey, K... srcKeys);
+
+    /**
+     * Computes the difference between the first and all successive input sorted sets.
+     *
+     * @param keys the keys.
+     * @return V array-reply list of scored values.
+     * @since 6.2
+     */
+    Flux<ScoredValue<V>> zdiffWithScores(K... keys);
+
+    /**
      * Increment the score of a member in a sorted set.
      *
      * @param key the key.
