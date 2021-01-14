@@ -38,7 +38,6 @@ import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 
@@ -2695,7 +2694,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.add(keys.length).addKeys(keys);
-        System.out.println(args);
         return createCommand(ZDIFF, new ValueListOutput<>(codec), args);
     }
 
