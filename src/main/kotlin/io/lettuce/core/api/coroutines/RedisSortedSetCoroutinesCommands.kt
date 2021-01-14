@@ -180,7 +180,7 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @return List<V> array-reply list of elements.
      * @since 6.2
      */
-    suspend fun zdiff(vararg keys: K): Flow<V>
+    fun zdiff(vararg keys: K): Flow<V>
 
     /**
      * Computes the difference between the first and all successive input sorted sets and stores the result in destination.
@@ -199,7 +199,7 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @return List<V> array-reply list of scored values.
      * @since 6.2
      */
-    suspend fun zdiffWithScores(vararg keys: K): Flow<ScoredValue<V>>
+    fun zdiffWithScores(vararg keys: K): Flow<ScoredValue<V>>
 
     /**
      * Increment the score of a member in a sorted set.
