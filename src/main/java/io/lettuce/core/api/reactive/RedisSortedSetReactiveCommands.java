@@ -752,7 +752,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
-     * Get the specified range of elements in the sorted set stored at <srcKey> and stores the result in the <dstKey> destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
+     * {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -763,7 +764,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
     /**
-     * Get the specified range of elements in the sorted set stored at <srcKey> and stores the result in the <dstKey> destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
+     * {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -1247,7 +1249,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
-     * Get the lexicographical range ordered from high to low of elements in the sorted set stored at <srcKey> and stores the result in the <dstKey> destination key.
+     * Get the lexicographical range ordered from high to low of elements in the sorted set stored at {@code srcKey} and stores
+     * the result in the {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -1258,7 +1261,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<Long> zrevrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
     /**
-     * Get the specified range of elements in the sorted set stored at <srcKey> with scores ordered from high to low and stores the result in the <dstKey> destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} with scores ordered from high to low and
+     * stores the result in the {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
