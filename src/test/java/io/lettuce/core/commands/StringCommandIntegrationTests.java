@@ -16,9 +16,8 @@
 package io.lettuce.core.commands;
 
 import static io.lettuce.core.SetArgs.Builder.*;
-import static io.lettuce.core.StringMatchResult.Position;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static io.lettuce.core.StringMatchResult.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,7 +30,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.SetArgs;
+import io.lettuce.core.StrAlgoArgs;
+import io.lettuce.core.StringMatchResult;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
@@ -198,6 +202,15 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.setGet(key, value)).isNull();
         assertThat(redis.setGet(key, "value2")).isEqualTo(value);
         assertThat(redis.get(key)).isEqualTo("value2");
+    }
+
+    @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void setGetWithArgs() {
+        assertThat(redis.setGet(key, value)).isNull();
+        assertThat(redis.setGet(key, "value2", SetArgs.Builder.ex(100))).isEqualTo(value);
+        assertThat(redis.get(key)).isEqualTo("value2");
+        assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(10);
     }
 
     @Test

@@ -61,6 +61,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
  * @author Nikolai Perevozchikov
  * @author Tugdual Grall
  * @author dengliming
+ * @author Andrey Shlykov
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashReactiveCommands<K, V>,
@@ -788,16 +789,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<V> setGet(K key, V value) {
-        return createMono(() -> commandBuilder.setGet(key, value));
-    }
-
-    @Override
-    public Mono<V> setGet(K key, V value, SetArgs setArgs) {
-        return createMono(() -> commandBuilder.setGet(key, value, setArgs));
-    }
-
-    @Override
     public Mono<Long> hdel(K key, K... fields) {
         return createMono(() -> commandBuilder.hdel(key, fields));
     }
@@ -1404,6 +1395,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     @Override
     public Mono<String> set(K key, V value, SetArgs setArgs) {
         return createMono(() -> commandBuilder.set(key, value, setArgs));
+    }
+
+    @Override
+    public Mono<V> setGet(K key, V value) {
+        return createMono(() -> commandBuilder.setGet(key, value));
+    }
+
+    @Override
+    public Mono<V> setGet(K key, V value, SetArgs setArgs) {
+        return createMono(() -> commandBuilder.setGet(key, value, setArgs));
     }
 
     @Override

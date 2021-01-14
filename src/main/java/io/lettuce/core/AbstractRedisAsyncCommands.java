@@ -53,6 +53,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Mark Paluch
  * @author Tugdual Grall
  * @author dengliming
+ * @author Andrey Shlykov
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
@@ -727,16 +728,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<V> setGet(K key, V value) {
-        return dispatch(commandBuilder.setGet(key, value));
-    }
-
-    @Override
-    public RedisFuture<V> setGet(K key, V value, SetArgs setArgs) {
-        return dispatch(commandBuilder.setGet(key, value, setArgs));
-    }
-
-    @Override
     public RedisFuture<Long> hdel(K key, K... fields) {
         return dispatch(commandBuilder.hdel(key, fields));
     }
@@ -1327,6 +1318,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     @Override
     public RedisFuture<String> set(K key, V value, SetArgs setArgs) {
         return dispatch(commandBuilder.set(key, value, setArgs));
+    }
+
+    @Override
+    public RedisFuture<V> setGet(K key, V value) {
+        return dispatch(commandBuilder.setGet(key, value));
+    }
+
+    @Override
+    public RedisFuture<V> setGet(K key, V value, SetArgs setArgs) {
+        return dispatch(commandBuilder.setGet(key, value, setArgs));
     }
 
     @Override

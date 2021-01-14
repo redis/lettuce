@@ -38,6 +38,7 @@ import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 
@@ -1851,10 +1852,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, V> setGet(K key, V value, SetArgs setArgs) {
         notNullKey(key);
+        LettuceAssert.notNull(setArgs, "SetArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
         setArgs.build(args);
-        args.add("GET");
+        args.add(GET);
 
         return createCommand(SET, new ValueOutput<>(codec), args);
     }

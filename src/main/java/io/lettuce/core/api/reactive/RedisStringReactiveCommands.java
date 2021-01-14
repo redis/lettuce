@@ -312,9 +312,8 @@ public interface RedisStringReactiveCommands<K, V> {
     /**
      * Set the string value of a key and return its old value.
      *
-     * @param key the key
-     * @param value the value
-     *
+     * @param key the key.
+     * @param value the value.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
      * @since 6.2
      */
@@ -323,10 +322,9 @@ public interface RedisStringReactiveCommands<K, V> {
     /**
      * Set the string value of a key and return its old value.
      *
-     * @param key the key
-     * @param value the value
-     * @param setArgs the command arguments
-     *
+     * @param key the key.
+     * @param value the value.
+     * @param setArgs the command arguments.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
      * @since 6.2
      */
