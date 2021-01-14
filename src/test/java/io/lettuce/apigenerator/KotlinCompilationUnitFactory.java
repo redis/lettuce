@@ -111,7 +111,7 @@ class KotlinCompilationUnitFactory {
         CompilationUnit template = JavaParser.parse(templateFile);
 
         JavaToken license = template.getTokenRange().get().getBegin();
-        result.append(license.asString().replaceAll("Copyright [\\d]{4}-[\\d]{4}", "Copyright 2020-$2"));
+        result.append(license.asString().replaceAll("Copyright ([\\d]{4})-([\\d]{4})", "Copyright 2020-$2"));
         result.append(license.getNextToken().get().asString());
         result.append("\n");
 
