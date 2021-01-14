@@ -777,10 +777,8 @@ public class RedisClient extends AbstractRedisClient {
 
     private Mono<SocketAddress> lookupRedis(RedisURI sentinelUri) {
 
-        Mono<StatefulRedisSentinelConnection<String, String>> connection = Mono
-                .fromCompletionStage(() -> connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout));
-
-        return connection.flatMap(c -> {
+        return Mono.usingWhen(
+                Mono.fromCompletionStage(() -> connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout)), c -> {
 
             String sentinelMasterId = sentinelUri.getSentinelMasterId();
             return c.reactive().getMasterAddrByName(sentinelMasterId).map(it -> {
@@ -799,16 +797,17 @@ public class RedisClient extends AbstractRedisClient {
 
                 return it;
             }).timeout(this.timeout) //
-                    .onErrorResume(e -> {
+                            .onErrorMap(e -> {
 
                         RedisCommandTimeoutException ex = ExceptionFactory
                                 .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
                         ex.addSuppressed(e);
 
-                        return Mono.fromCompletionStage(c::closeAsync).then(Mono.error(ex));
-                    }).flatMap(it -> Mono.fromCompletionStage(c::closeAsync) //
-                            .thenReturn(it));
-        });
+                                return ex;
+                            });
+                }, c -> Mono.fromCompletionStage(c::closeAsync), //
+                (c, ex) -> Mono.fromCompletionStage(c::closeAsync), //
+                c -> Mono.fromCompletionStage(c::closeAsync));
     }
 
     private static <T> ConnectionFuture<T> transformAsyncConnectionException(ConnectionFuture<T> future) {
