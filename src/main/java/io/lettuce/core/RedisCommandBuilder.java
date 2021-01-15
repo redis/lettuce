@@ -19,6 +19,7 @@ import static io.lettuce.core.internal.LettuceStrings.*;
 import static io.lettuce.core.protocol.CommandKeyword.*;
 import static io.lettuce.core.protocol.CommandType.*;
 import static io.lettuce.core.protocol.CommandType.COPY;
+import static io.lettuce.core.protocol.CommandType.SAVE;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -35,11 +36,7 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
-import io.lettuce.core.protocol.BaseRedisCommandBuilder;
-import io.lettuce.core.protocol.Command;
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.protocol.*;
 
 /**
  * @param <K>
@@ -65,6 +62,104 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
+    }
+
+    Command<K, V, List<AclCategory>> aclCat() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(CAT);
+        return createCommand(ACL, new EnumListOutput<>(codec, AclCategory.class), args);
+    }
+
+    Command<K, V, List<CommandType>> aclCat(AclCategory category) {
+        LettuceAssert.notNull(category, "Category " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(CAT).add(category.name().toLowerCase());
+        return createCommand(ACL, new EnumListOutput<>(codec, CommandType.class), args);
+    }
+
+    Command<K, V, Long> aclDeluser(String... usernames) {
+        notEmpty(usernames);
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(DELUSER);
+        for (String username : usernames) {
+            args.add(username);
+        }
+        return createCommand(ACL, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclGenpass() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(GENPASS);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclGenpass(int bits) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(GENPASS).add(bits);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, Map<String, Object>> aclGetuser(String username) {
+        LettuceAssert.notNull(username, "Username " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(GETUSER).add(username);
+        return createCommand(ACL, new UserRulesOutput<>(codec), args);
+    }
+
+    Command<K, V, List<String>> aclList() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LIST);
+        return createCommand(ACL, new StringListOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclLoad() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LOAD);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Map<String, Object>>> aclLog() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LOG);
+        return new Command(ACL, new ListOfGenericMapsOutput<>(StringCodec.ASCII), args);
+    }
+
+    Command<K, V, List<Map<String, Object>>> aclLog(int count) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LOG).add(count);
+        return new Command(ACL, new ListOfGenericMapsOutput<>(StringCodec.ASCII), args);
+    }
+
+    Command<K, V, String> aclLogReset() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LOG).add(RESET);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclSave() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(CommandKeyword.SAVE);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclSetuser(String username, AclSetuserArgs setuserArgs) {
+        notNullKey(username);
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(SETUSER).add(username);
+        setuserArgs.build(args);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, List<String>> aclUsers() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(USERS);
+        return createCommand(ACL, new StringListOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclWhoami() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(WHOAMI);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, Long> append(K key, V value) {

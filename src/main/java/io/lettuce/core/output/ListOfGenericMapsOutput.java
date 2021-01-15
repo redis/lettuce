@@ -15,33 +15,33 @@
  */
 package io.lettuce.core.output;
 
+import io.lettuce.core.codec.RedisCodec;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.codec.RedisCodec;
-
 /**
- * {@link java.util.List} of maps output.
+ * {@link List} of maps output.
  *
  * @param <K> Key type.
  * @param <V> Value type.
  *
  * @author Will Glozer
  */
-public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>> {
+public class ListOfGenericMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, Object>>> {
 
-    private MapOutput<K, V> nested;
+    private GenericMapOutput<K, V> nested;
 
     private int mapCount = -1;
 
     private final List<Integer> counts = new ArrayList<>();
 
-    public ListOfMapsOutput(RedisCodec<K, V> codec) {
+    public ListOfGenericMapsOutput(RedisCodec<K, V> codec) {
         super(codec, new ArrayList<>());
-        nested = new MapOutput<>(codec);
+        nested = new GenericMapOutput<>(codec);
     }
 
     @Override
@@ -51,8 +51,7 @@ public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>>
 
     @Override
     public void complete(int depth) {
-
-        if (!counts.isEmpty()) {
+        if (counts.size() > 0) {
             int expectedSize = counts.get(0);
 
             if (nested.get().size() == expectedSize) {
@@ -79,5 +78,10 @@ public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>>
     @Override
     public void set(long integer) {
         nested.set(integer);
+    }
+
+    @Override
+    public void set(double number) {
+        nested.set(number);
     }
 }

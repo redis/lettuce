@@ -57,11 +57,12 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Andrey Shlykov
  */
 @SuppressWarnings("unchecked")
-public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
-        RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
-        RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
-        RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
-        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
+public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K,V>,
+        RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
+        RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>,
+        RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>,
+        BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>,
+        RedisClusterAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -76,6 +77,81 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
+    }
+
+    @Override
+    public RedisFuture<List<AclCategory>> aclCat() {
+        return dispatch(commandBuilder.aclCat());
+    }
+
+    @Override
+    public RedisFuture<List<CommandType>> aclCat(AclCategory category) {
+        return dispatch(commandBuilder.aclCat(category));
+    }
+
+    @Override
+    public RedisFuture<Long> aclDeluser(String... usernames) {
+        return dispatch(commandBuilder.aclDeluser(usernames));
+    }
+
+    @Override
+    public RedisFuture<String> aclGenpass() {
+        return dispatch(commandBuilder.aclGenpass());
+    }
+
+    @Override
+    public RedisFuture<String> aclGenpass(int bits) {
+        return dispatch(commandBuilder.aclGenpass(bits));
+    }
+
+    @Override
+    public RedisFuture<Map<String, Object>> aclGetuser(String username) {
+        return dispatch(commandBuilder.aclGetuser(username));
+    }
+
+    @Override
+    public RedisFuture<List<String>> aclList() {
+        return dispatch(commandBuilder.aclList());
+    }
+
+    @Override
+    public RedisFuture<String> aclLoad() {
+        return dispatch(commandBuilder.aclLoad());
+    }
+
+    @Override
+    public RedisFuture<List<Map<String, Object>>> aclLog() {
+        return dispatch(commandBuilder.aclLog());
+    }
+
+    @Override
+    public RedisFuture<List<Map<String, Object>>> aclLog(int count) {
+        return dispatch(commandBuilder.aclLog(count));
+    }
+
+    @Override
+    public RedisFuture<String> aclLogReset() {
+        return dispatch(commandBuilder.aclLogReset());
+    }
+
+    @Override
+    public RedisFuture<String> aclSave() {
+        return dispatch(commandBuilder.aclSave());
+    }
+
+    @Override
+    public RedisFuture<String> aclSetuser(String username, AclSetuserArgs args) {
+        return dispatch(commandBuilder.aclSetuser(username, args));
+    }
+
+    @Override
+    public RedisFuture<List<String>> aclUsers() {
+        return dispatch(commandBuilder.aclUsers());
+    }
+
+    @Override
+    public RedisFuture<String> aclWhoami() {
+        return dispatch(commandBuilder.aclWhoami());
     }
 
     @Override

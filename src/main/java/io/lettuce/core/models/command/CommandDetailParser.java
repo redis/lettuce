@@ -17,6 +17,7 @@ package io.lettuce.core.models.command;
 
 import java.util.*;
 
+import io.lettuce.core.AclCategory;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -40,7 +41,7 @@ public class CommandDetailParser {
     protected static final Map<String, CommandDetail.Flag> FLAG_MAPPING;
 
     @SuppressWarnings("serial")
-    protected static final Map<String, CommandDetail.AclCategory> ACL_CATEGORY_MAPPING;
+    protected static final Map<String, AclCategory> ACL_CATEGORY_MAPPING;
 
     static {
         Map<String, CommandDetail.Flag> flagMap = new HashMap<>();
@@ -60,28 +61,28 @@ public class CommandDetailParser {
         flagMap.put("write", CommandDetail.Flag.WRITE);
         FLAG_MAPPING = Collections.unmodifiableMap(flagMap);
 
-        Map<String, CommandDetail.AclCategory> aclCategoriesMap = new HashMap<>();
-        aclCategoriesMap.put("@keyspace", CommandDetail.AclCategory.KEYSPACE);
-        aclCategoriesMap.put("@read", CommandDetail.AclCategory.READ);
-        aclCategoriesMap.put("@write", CommandDetail.AclCategory.WRITE);
-        aclCategoriesMap.put("@set", CommandDetail.AclCategory.SET);
-        aclCategoriesMap.put("@sortedset", CommandDetail.AclCategory.SORTEDSET);
-        aclCategoriesMap.put("@list", CommandDetail.AclCategory.LIST);
-        aclCategoriesMap.put("@hash", CommandDetail.AclCategory.HASH);
-        aclCategoriesMap.put("@string", CommandDetail.AclCategory.STRING);
-        aclCategoriesMap.put("@bitmap", CommandDetail.AclCategory.BITMAP);
-        aclCategoriesMap.put("@hyperloglog", CommandDetail.AclCategory.HYPERLOGLOG);
-        aclCategoriesMap.put("@geo", CommandDetail.AclCategory.GEO);
-        aclCategoriesMap.put("@stream", CommandDetail.AclCategory.STREAM);
-        aclCategoriesMap.put("@pubsub", CommandDetail.AclCategory.PUBSUB);
-        aclCategoriesMap.put("@admin", CommandDetail.AclCategory.ADMIN);
-        aclCategoriesMap.put("@fast", CommandDetail.AclCategory.FAST);
-        aclCategoriesMap.put("@slow", CommandDetail.AclCategory.SLOW);
-        aclCategoriesMap.put("@blocking", CommandDetail.AclCategory.BLOCKING);
-        aclCategoriesMap.put("@dangerous", CommandDetail.AclCategory.DANGEROUS);
-        aclCategoriesMap.put("@connection", CommandDetail.AclCategory.CONNECTION);
-        aclCategoriesMap.put("@transaction", CommandDetail.AclCategory.TRANSACTION);
-        aclCategoriesMap.put("@scripting", CommandDetail.AclCategory.SCRIPTING);
+        Map<String, AclCategory> aclCategoriesMap = new HashMap<>();
+        aclCategoriesMap.put("@keyspace", AclCategory.KEYSPACE);
+        aclCategoriesMap.put("@read", AclCategory.READ);
+        aclCategoriesMap.put("@write", AclCategory.WRITE);
+        aclCategoriesMap.put("@set", AclCategory.SET);
+        aclCategoriesMap.put("@sortedset", AclCategory.SORTEDSET);
+        aclCategoriesMap.put("@list", AclCategory.LIST);
+        aclCategoriesMap.put("@hash", AclCategory.HASH);
+        aclCategoriesMap.put("@string", AclCategory.STRING);
+        aclCategoriesMap.put("@bitmap", AclCategory.BITMAP);
+        aclCategoriesMap.put("@hyperloglog", AclCategory.HYPERLOGLOG);
+        aclCategoriesMap.put("@geo", AclCategory.GEO);
+        aclCategoriesMap.put("@stream", AclCategory.STREAM);
+        aclCategoriesMap.put("@pubsub", AclCategory.PUBSUB);
+        aclCategoriesMap.put("@admin", AclCategory.ADMIN);
+        aclCategoriesMap.put("@fast", AclCategory.FAST);
+        aclCategoriesMap.put("@slow", AclCategory.SLOW);
+        aclCategoriesMap.put("@blocking", AclCategory.BLOCKING);
+        aclCategoriesMap.put("@dangerous", AclCategory.DANGEROUS);
+        aclCategoriesMap.put("@connection", AclCategory.CONNECTION);
+        aclCategoriesMap.put("@transaction", AclCategory.TRANSACTION);
+        aclCategoriesMap.put("@scripting", AclCategory.SCRIPTING);
         ACL_CATEGORY_MAPPING = Collections.unmodifiableMap(aclCategoriesMap);
     }
 
@@ -127,7 +128,7 @@ public class CommandDetailParser {
         Object categories = iterator.hasNext() ? iterator.next() : null;
 
         Set<CommandDetail.Flag> parsedFlags = parseFlags(flags);
-        Set<CommandDetail.AclCategory> parsedAclCategories = parseAclCategories(categories);
+        Set<AclCategory> parsedAclCategories = parseAclCategories(categories);
 
         return new CommandDetail(name, arity, parsedFlags, firstKey, lastKey, keyStepCount, parsedAclCategories);
     }
@@ -148,13 +149,13 @@ public class CommandDetailParser {
         return Collections.unmodifiableSet(result);
     }
 
-    private static Set<CommandDetail.AclCategory> parseAclCategories(Object aclCategories) {
-        Set<CommandDetail.AclCategory> result = new HashSet<>();
+    private static Set<AclCategory> parseAclCategories(Object aclCategories) {
+        Set<AclCategory> result = new HashSet<>();
 
         if (aclCategories instanceof Collection<?>) {
             Collection<?> collection = (Collection<?>) aclCategories;
             for (Object o : collection) {
-                CommandDetail.AclCategory aclCategory = ACL_CATEGORY_MAPPING.get(o);
+                AclCategory aclCategory = ACL_CATEGORY_MAPPING.get(o);
                 if (aclCategory != null) {
                     result.add(aclCategory);
                 }

@@ -27,7 +27,7 @@ import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
  * @author Mark Paluch
  * @since 5.0
  */
-public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>,
+public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>,
         RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
         RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>,
         RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
