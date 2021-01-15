@@ -52,7 +52,6 @@ import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
-
 /**
  * A reactive and thread-safe API for a Redis connection.
  *
@@ -65,11 +64,12 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
  * @author Andrey Shlykov
  * @since 4.0
  */
-public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashReactiveCommands<K, V>,
-        RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>,
-        RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>,
-        RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>,
-        RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
+public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
+        RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
+        RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
+        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
+        BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
+        RedisClusterReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -108,6 +108,81 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         }
 
         return this.scheduler = schedulerToUse;
+    }
+
+    @Override
+    public Flux<AclCategory> aclCat() {
+        return createDissolvingFlux(commandBuilder::aclCat);
+    }
+
+    @Override
+    public Flux<CommandType> aclCat(AclCategory category) {
+        return createDissolvingFlux(() -> commandBuilder.aclCat(category));
+    }
+
+    @Override
+    public Mono<Long> aclDeluser(String... usernames) {
+        return createMono(() -> commandBuilder.aclDeluser(usernames));
+    }
+
+    @Override
+    public Mono<String> aclGenpass() {
+        return createMono(commandBuilder::aclGenpass);
+    }
+
+    @Override
+    public Mono<String> aclGenpass(int bits) {
+        return createMono(() -> commandBuilder.aclGenpass(bits));
+    }
+
+    @Override
+    public Mono<Map<String, Object>> aclGetuser(String username) {
+        return createMono(() -> commandBuilder.aclGetuser(username));
+    }
+
+    @Override
+    public Flux<String> aclList() {
+        return createDissolvingFlux(commandBuilder::aclList);
+    }
+
+    @Override
+    public Mono<String> aclLoad() {
+        return createMono(commandBuilder::aclLoad);
+    }
+
+    @Override
+    public Flux<Map<String, Object>> aclLog() {
+        return createDissolvingFlux(commandBuilder::aclLog);
+    }
+
+    @Override
+    public Flux<Map<String, Object>> aclLog(int count) {
+        return createDissolvingFlux(() -> commandBuilder.aclLog(count));
+    }
+
+    @Override
+    public Mono<String> aclLogReset() {
+        return createMono(commandBuilder::aclLogReset);
+    }
+
+    @Override
+    public Mono<String> aclSave() {
+        return createMono(commandBuilder::aclSave);
+    }
+
+    @Override
+    public Mono<String> aclSetuser(String username, AclSetuserArgs args) {
+        return createMono(() -> commandBuilder.aclSetuser(username, args));
+    }
+
+    @Override
+    public Flux<String> aclUsers() {
+        return createDissolvingFlux(commandBuilder::aclUsers);
+    }
+
+    @Override
+    public Mono<String> aclWhoami() {
+        return createMono(commandBuilder::aclWhoami);
     }
 
     @Override

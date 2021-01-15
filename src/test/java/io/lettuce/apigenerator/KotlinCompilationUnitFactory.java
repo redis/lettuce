@@ -60,7 +60,7 @@ class KotlinCompilationUnitFactory {
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
     private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
 
-    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("dispatch", "geohash", "georadius",
+    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("aclList", "aclLog", "dispatch", "geohash", "georadius",
             "georadiusbymember", "geosearch",
             "hgetall", "hkeys", "hmget", "hvals", "keys", "mget", "sdiff", "sinter", "smembers", "smismember", "sort", "srandmember", "sunion",
             "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange", "zdiff", "zdiffWithScores", "zinter", "zinterWithScores", "zpopmax", "zpopmin", "zrange",
@@ -77,7 +77,7 @@ class KotlinCompilationUnitFactory {
 
     static {
         Map<String, String> resultSpec = new HashMap<>();
-        resultSpec.put("hgetall", "Flow<KeyValue<K,V>>");
+        resultSpec.put("hgetall", "Flow<KeyValue<K, V>>");
         resultSpec.put("zmscore", "List<Double?>");
         RESULT_SPEC = resultSpec;
     }
@@ -251,10 +251,10 @@ class KotlinCompilationUnitFactory {
             } else if (isFlowable) {
                 fixedType = type
                         .asString()
-                        .replace("List", "Flow")
-                        .replace("Set", "Flow")
-                        .replace("Map", "Flow")
-                        .replace("T", "Flow<T>");
+                        .replaceFirst("List|Map|Set", "Flow")
+                        .replace("T", "Flow<T>")
+                        .replace("Object", "Any")
+                        .replace(",", ", ");
             } else {
                 fixedType = type
                         .asString()
