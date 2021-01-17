@@ -15,20 +15,17 @@
  */
 package io.lettuce.core;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.role.RedisNodeDescription;
-import io.netty.handler.ipfilter.IpFilterRuleType;
-import io.netty.handler.ipfilter.IpSubnetFilterRule;
 import io.netty.util.NetUtil;
 
 /**
@@ -140,28 +137,24 @@ class ReadFromImpl {
 
     /**
      * Read from any node in the subnets. This class does not provide DNS resolution and supports only IP address style
-     * {@link RedisURI} i.e. unavailable when using {@link io.lettuce.core.masterreplica.MasterReplica} with
-     * static setup (provided hosts) and Redis Sentinel with {@literal announce-hostname yes}.
+     * {@link RedisURI} i.e. unavailable when using {@link io.lettuce.core.masterreplica.MasterReplica} with static setup
+     * (provided hosts) and Redis Sentinel with {@literal announce-hostname yes}. Both IPv4 and IPv6 style subnets are supported
+     * but they never match with IP addresses of different version.
      *
      * @since x.x.x
      */
     static final class ReadFromSubnet extends ReadFrom {
 
-        private final List<IpSubnetFilterRule> rules = new ArrayList<>();
+        private final List<SubnetRule> rules = new ArrayList<>();
 
         /**
-         * @param cidrNotations CIDR-block notation strings, e.g., "192.168.0.0/16".
+         * @param cidrNotations CIDR-block notation strings, e.g., "192.168.0.0/16" or "2001:db8:abcd:0000::/52".
          */
         ReadFromSubnet(String... cidrNotations) {
             LettuceAssert.notEmpty(cidrNotations, "cidrNotations must not be empty");
 
             for (String cidrNotation : cidrNotations) {
-                // parts[0]: ipAddress (e.g., "192.168.0.0")
-                // parts[1]: cidrPrefix (e.g., "16")
-                String[] parts = cidrNotation.split("/");
-                LettuceAssert.isTrue(parts.length == 2, "cidrNotation must have exact one '/'");
-
-                rules.add(new IpSubnetFilterRule(parts[0], Integer.parseInt(parts[1]), IpFilterRuleType.ACCEPT));
+                rules.add(createSubnetRule(cidrNotation));
             }
         }
 
@@ -169,37 +162,169 @@ class ReadFromImpl {
         public List<RedisNodeDescription> select(Nodes nodes) {
             List<RedisNodeDescription> result = new ArrayList<>(nodes.getNodes().size());
             for (RedisNodeDescription node : nodes) {
-                if (isInSubnet(node.getUri())) {
-                    result.add(node);
+                for (SubnetRule rule : rules) {
+                    if (rule.isInSubnet(node.getUri().getHost())) {
+                        result.add(node);
+                        break;
+                    }
                 }
             }
 
             return result;
         }
 
-        private boolean isInSubnet(RedisURI redisURI) {
-            String host = redisURI.getHost();
-            if (LettuceStrings.isEmpty(host)) {
-                return false;
+        interface SubnetRule {
+
+            boolean isInSubnet(String ipAddress);
+
+        }
+
+        static SubnetRule createSubnetRule(String cidrNotation) {
+            String[] parts = cidrNotation.split("/");
+            LettuceAssert.isTrue(parts.length == 2, "cidrNotation must have exact one '/'");
+
+            String ipAddress = parts[0];
+            int cidrPrefix = Integer.parseInt(parts[1]);
+
+            if (NetUtil.isValidIpV4Address(ipAddress)) {
+                return new Ipv4SubnetRule(ipAddress, cidrPrefix);
+            } else if (NetUtil.isValidIpV6Address(ipAddress)) {
+                return new Ipv6SubnetRule(ipAddress, cidrPrefix);
+            } else {
+                throw new IllegalArgumentException("invalid cidrNotation. cidrNotation=" + cidrNotation);
+            }
+        }
+
+        static class Ipv4SubnetRule implements SubnetRule {
+
+            private static final int IPV4_BYTE_COUNT = 4;
+
+            private final int networkAddress;
+
+            private final int subnetMask;
+
+            Ipv4SubnetRule(String ipAddress, int cidrPrefix) {
+                LettuceAssert.isTrue(NetUtil.isValidIpV4Address(ipAddress),
+                        () -> "invalid ipv4 IP address. ipAddress=" + ipAddress);
+                LettuceAssert.isTrue(0 <= cidrPrefix && cidrPrefix <= 32, () -> "invalid cidrPrefix. cidrPrefix=" + cidrPrefix);
+
+                subnetMask = toSubnetMask(cidrPrefix);
+                networkAddress = toNetworkAddress(ipAddress, subnetMask);
             }
 
-            LettuceAssert.isTrue(NetUtil.isValidIpV4Address(host) || NetUtil.isValidIpV6Address(host),
-                    "ReadFromSubnet supports only IP address-style redisURI. host=" + host);
-
-            InetSocketAddress address;
-            try {
-                // This won't make DNS lookup because host is already validated as an IP address.
-                address = new InetSocketAddress(InetAddress.getByName(host), redisURI.getPort());
-            } catch (UnknownHostException e) {
-                throw new IllegalStateException("Should not reach here. host=" + host, e);
-            }
-
-            for (IpSubnetFilterRule rule : rules) {
-                if (rule.matches(address)) {
-                    return true;
+            /**
+             * return {@code true} if the {@code ipAddress} is in this subnet. If {@code ipAddress} is not valid IPv4 style
+             * (e.g., IPv6 style) {@code false} is always returned.
+             */
+            @Override
+            public boolean isInSubnet(String ipAddress) {
+                if (LettuceStrings.isEmpty(ipAddress) || !NetUtil.isValidIpV4Address(ipAddress)) {
+                    return false;
                 }
+
+                return (toInt(ipAddress) & subnetMask) == networkAddress;
             }
-            return false;
+
+            private static int toSubnetMask(int cidrPrefix) {
+                return (int) (-1L << (32 - cidrPrefix));
+            }
+
+            private static int toNetworkAddress(String ipAddress, int subnetMask) {
+                return toInt(ipAddress) & subnetMask;
+            }
+
+            private static int toInt(String ipAddress) {
+                byte[] octets = NetUtil.createByteArrayFromIpAddressString(ipAddress);
+
+                LettuceAssert.isTrue(octets != null && octets.length == IPV4_BYTE_COUNT,
+                        () -> "invalid IP address. ipAddress=" + ipAddress);
+
+                return ((octets[0] & 0xff) << 24) | ((octets[1] & 0xff) << 16) | ((octets[2] & 0xff) << 8) | (octets[3] & 0xff);
+            }
+
+        }
+
+        static class Ipv6SubnetRule implements SubnetRule {
+
+            private static final int IPV6_BYTE_COUNT = 16;
+
+            private final BigInteger networkAddress;
+
+            private final BigInteger subnetMask;
+
+            public Ipv6SubnetRule(String ipAddress, int cidrPrefix) {
+                LettuceAssert.isTrue(NetUtil.isValidIpV6Address(ipAddress),
+                        () -> "invalid ipv6 IP address. ipAddress=" + ipAddress);
+                LettuceAssert.isTrue(0 <= cidrPrefix && cidrPrefix <= 128,
+                        () -> "invalid cidrPrefix. cidrPrefix=" + cidrPrefix);
+
+                subnetMask = toSubnetMask(cidrPrefix);
+                networkAddress = toNetworkAddress(ipAddress, subnetMask);
+            }
+
+            /**
+             * return {@code true} if the {@code ipAddress} is in this subnet. If {@code ipAddress} is not valid IPv6 style
+             * (e.g., IPv4 style) {@code false} is always returned.
+             */
+            @Override
+            public boolean isInSubnet(String ipAddress) {
+                if (LettuceStrings.isEmpty(ipAddress) || !NetUtil.isValidIpV6Address(ipAddress)) {
+                    return false;
+                }
+
+                return toBigInteger(ipAddress).and(subnetMask).equals(networkAddress);
+            }
+
+            private static BigInteger toSubnetMask(int cidrPrefix) {
+                return BigInteger.valueOf(-1).shiftLeft(128 - cidrPrefix);
+            }
+
+            private static BigInteger toNetworkAddress(String ipAddress, BigInteger subnetMask) {
+                return toBigInteger(ipAddress).and(subnetMask);
+            }
+
+            private static BigInteger toBigInteger(String ipAddress) {
+                byte[] octets = NetUtil.createByteArrayFromIpAddressString(ipAddress);
+
+                LettuceAssert.isTrue(octets != null && octets.length == IPV6_BYTE_COUNT,
+                        () -> "invalid IP address. ipAddress=" + ipAddress);
+
+                return new BigInteger(octets);
+            }
+
+        }
+
+    }
+
+    /**
+     * Read from any node that has {@link RedisURI} matching with the given pattern.
+     *
+     * @since x.x.x
+     */
+    static class ReadFromRegex extends ReadFrom {
+
+        private final ReadFrom delegate;
+
+        public ReadFromRegex(Pattern pattern) {
+            LettuceAssert.notNull(pattern, "Pattern must not be null");
+
+            delegate = new UnorderedPredicateReadFromAdapter(redisNodeDescription -> {
+                String host = redisNodeDescription.getUri().getHost();
+                if (LettuceStrings.isEmpty(host)) {
+                    return false;
+                }
+                return pattern.matcher(host).matches();
+            });
+        }
+
+        @Override
+        public List<RedisNodeDescription> select(Nodes nodes) {
+            return delegate.select(nodes);
+        }
+
+        @Override
+        protected boolean isOrderSensitive() {
+            return delegate.isOrderSensitive();
         }
 
     }

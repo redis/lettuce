@@ -16,6 +16,7 @@
 package io.lettuce.core;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -114,12 +115,24 @@ public abstract class ReadFrom {
     /**
      * Setting to read from any node in the subnets.
      *
-     * @param cidrNotations CIDR-block notation strings, e.g., "192.168.0.0/16".
+     * @param cidrNotations CIDR-block notation strings, e.g., "192.168.0.0/16", "2001:db8:abcd:0000::/52". Must not be
+     *        {@code null}.
      * @return an instance of {@link ReadFromImpl.ReadFromSubnet}.
      * @since x.x.x
      */
     public static ReadFrom subnet(String... cidrNotations) {
         return new ReadFromImpl.ReadFromSubnet(cidrNotations);
+    }
+
+    /**
+     * Read from any node that has {@link RedisURI} matching with the given pattern.
+     *
+     * @param pattern regex pattern, e.g., {@code Pattern.compile(".*region-1.*")}. Must not be {@code null}.
+     * @return an instance of {@link ReadFromImpl.ReadFromRegex}.
+     * @since x.x.x
+     */
+    public static ReadFrom regex(Pattern pattern) {
+        return new ReadFromImpl.ReadFromRegex(pattern);
     }
 
     /**
@@ -192,6 +205,10 @@ public abstract class ReadFrom {
 
         if (name.equalsIgnoreCase("subnet")) {
             throw new IllegalArgumentException("subnet must be created via ReadFrom#subnet");
+        }
+
+        if (name.equalsIgnoreCase("regex")) {
+            throw new IllegalArgumentException("regex must be created via ReadFrom#regex");
         }
 
         throw new IllegalArgumentException("ReadFrom " + name + " not supported");

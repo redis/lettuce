@@ -17,6 +17,8 @@ package io.lettuce.core.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.regex.Pattern;
+
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.AfterEach;
@@ -118,6 +120,17 @@ class RedisClusterReadFromIntegrationTests extends TestSupport {
     void readWriteSubnet() {
 
         connection.setReadFrom(ReadFrom.subnet("0.0.0.0/0", "::/0"));
+
+        sync.set(key, "value1");
+
+        connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port2).sync().waitForReplication(1, 1000);
+        assertThat(sync.get(key)).isEqualTo("value1");
+    }
+
+    @Test
+    void readWriteRegex() {
+
+        connection.setReadFrom(ReadFrom.regex(Pattern.compile(".*")));
 
         sync.set(key, "value1");
 

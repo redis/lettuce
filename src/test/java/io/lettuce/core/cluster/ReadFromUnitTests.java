@@ -17,17 +17,18 @@ package io.lettuce.core.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ReadFrom;
-import io.lettuce.core.ReadFrom.Nodes;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -95,7 +96,47 @@ class ReadFromUnitTests {
     }
 
     @Test
-    void subnet() {
+    void subnetIpv4RuleIpv6NodeGiven() {
+        ReadFrom sut = ReadFrom.subnet("0.0.0.0/0");
+        RedisClusterNode ipv6node = createNodeWithHost("2001:db8:abcd:1000::");
+
+        List<RedisNodeDescription> result = sut.select(getNodes(ipv6node));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void subnetIpv4RuleAnyNode() {
+        ReadFrom sut = ReadFrom.subnet("0.0.0.0/0");
+        RedisClusterNode node = createNodeWithHost("192.0.2.1");
+
+        List<RedisNodeDescription> result = sut.select(getNodes(node));
+
+        assertThat(result).hasSize(1).containsExactly(node);
+    }
+
+    @Test
+    void subnetIpv6RuleIpv4NodeGiven() {
+        ReadFrom sut = ReadFrom.subnet("::/0");
+        RedisClusterNode node = createNodeWithHost("192.0.2.1");
+
+        List<RedisNodeDescription> result = sut.select(getNodes(node));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void subnetIpv6RuleAnyNode() {
+        ReadFrom sut = ReadFrom.subnet("::/0");
+        RedisClusterNode node = createNodeWithHost("2001:db8:abcd:1000::");
+
+        List<RedisNodeDescription> result = sut.select(getNodes(node));
+
+        assertThat(result).hasSize(1).containsExactly(node);
+    }
+
+    @Test
+    void subnetIpv4Ipv6Mixed() {
         ReadFrom sut = ReadFrom.subnet("192.0.2.0/24", "2001:db8:abcd:0000::/52");
 
         RedisClusterNode nodeInSubnetIpv4 = createNodeWithHost("192.0.2.1");
@@ -111,30 +152,55 @@ class ReadFromUnitTests {
 
     @Test
     void subnetNodeWithHostname() {
-        ReadFrom sut = ReadFrom.subnet("0.0.0.0/24");
+        ReadFrom sut = ReadFrom.subnet("0.0.0.0/0");
 
-        Nodes hostNode = getNodes(createNodeWithHost("example.com"));
-        assertThatThrownBy(() -> sut.select(hostNode)).isInstanceOf(IllegalArgumentException.class);
+        RedisClusterNode hostNode = createNodeWithHost("example.com");
+        RedisClusterNode localhostNode = createNodeWithHost("localhost");
 
-        Nodes localhostNode = getNodes(createNodeWithHost("localhost"));
-        assertThatThrownBy(() -> sut.select(localhostNode)).isInstanceOf(IllegalArgumentException.class);
+        List<RedisNodeDescription> result = sut.select(getNodes(hostNode, localhostNode));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void subnetCidrValidation() {
+        // malformed CIDR notation
+        assertThatThrownBy(() -> ReadFrom.subnet("192.0.2.1//1")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ReadFrom.subnet("2001:db8:abcd:0000:://52")).isInstanceOf(IllegalArgumentException.class);
+        // malformed ipAddress
+        assertThatThrownBy(() -> ReadFrom.subnet("foo.bar/12")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ReadFrom.subnet("zzzz:db8:abcd:0000:://52")).isInstanceOf(IllegalArgumentException.class);
+        // malformed cidrPrefix
+        assertThatThrownBy(() -> ReadFrom.subnet("192.0.2.1/40")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ReadFrom.subnet("192.0.2.1/foo")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ReadFrom.subnet("2001:db8:abcd:0000/129")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ReadFrom.subnet("2001:db8:abcd:0000/-1")).isInstanceOf(IllegalArgumentException.class);
+
+        // acceptable cidrPrefix
+        assertDoesNotThrow(() -> ReadFrom.subnet("0.0.0.0/0"));
+        assertDoesNotThrow(() -> ReadFrom.subnet("0.0.0.0/32"));
+        assertDoesNotThrow(() -> ReadFrom.subnet("::/0"));
+        assertDoesNotThrow(() -> ReadFrom.subnet("::/128"));
+    }
+
+    @Test
+    void regex() {
+        ReadFrom sut = ReadFrom.regex(Pattern.compile(".*region-1.*"));
+
+        RedisClusterNode node1 = createNodeWithHost("redis-node-1.region-1.example.com");
+        RedisClusterNode node2 = createNodeWithHost("redis-node-2.region-1.example.com");
+        RedisClusterNode node3 = createNodeWithHost("redis-node-1.region-2.example.com");
+        RedisClusterNode node4 = createNodeWithHost("redis-node-2.region-2.example.com");
+
+        List<RedisNodeDescription> result = sut.select(getNodes(node1, node2, node3, node4));
+
+        assertThat(result).hasSize(2).containsExactly(node1, node2);
     }
 
     private RedisClusterNode createNodeWithHost(String host) {
         RedisClusterNode node = new RedisClusterNode();
         node.setUri(RedisURI.Builder.redis(host).build());
         return node;
-    }
-
-    @Test
-    void subnetInvalidCidr() {
-        // malformed CIDR notation
-        assertThatThrownBy(() -> ReadFrom.subnet("192.0.2.1//1")).isInstanceOf(IllegalArgumentException.class);
-        // malformed ipAddress
-        assertThatThrownBy(() -> ReadFrom.subnet("foo.bar/12")).isInstanceOf(IllegalArgumentException.class);
-        // malformed cidrPrefix
-        assertThatThrownBy(() -> ReadFrom.subnet("192.0.2.1/40")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ReadFrom.subnet("192.0.2.1/foo")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -180,6 +246,11 @@ class ReadFromUnitTests {
     @Test
     void valueOfSubnet() {
         assertThatThrownBy(() -> ReadFrom.valueOf("subnet")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void valueOfRegex() {
+        assertThatThrownBy(() -> ReadFrom.valueOf("regex")).isInstanceOf(IllegalArgumentException.class);
     }
 
     private ReadFrom.Nodes getNodes() {
