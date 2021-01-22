@@ -11,9 +11,9 @@
 [[master-slave]]
 [[master-replica]]
 [[upstream-replica]]
-=== Upstream/Replica
+=== Master/Replica
 
-include::{ext-doc}/Upstream-Replica.asciidoc[leveloffset=+2]
+include::{ext-doc}/Master-Replica.asciidoc[leveloffset=+2]
 
 [[redis-sentinel]]
 === Redis Sentinel

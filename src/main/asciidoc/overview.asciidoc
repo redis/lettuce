@@ -74,7 +74,7 @@ If you encounter a bug or want to suggest an improvement, please create a ticket
 === Where to go from here
 
 * Head to <<getting-started>> if you feel like jumping straight into the code.
-* Go to <<ha-sharding>> for Upstream/Replica ("Master/Slave"), Redis Sentinel and Redis Cluster topics.
+* Go to <<ha-sharding>> for Master/Replica ("Master/Slave"), Redis Sentinel and Redis Cluster topics.
 * In order to dig deeper into the core features of Reactor:
 ** If you’re looking for client configuration options, performance related behavior and how to use various transports, go to <<advanced-usage>>.
 ** See <<integration-extension>> for extending Lettuce with codecs or integrate it in your CDI/Spring application.
