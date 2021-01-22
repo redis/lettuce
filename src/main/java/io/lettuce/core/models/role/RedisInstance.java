@@ -34,8 +34,12 @@ public interface RedisInstance {
      */
     enum Role {
 
-        @Deprecated
         MASTER {
+
+            @Override
+            public boolean isMaster() {
+                return true;
+            }
 
             @Override
             public boolean isUpstream() {
@@ -55,6 +59,11 @@ public interface RedisInstance {
         },
 
         UPSTREAM {
+
+            @Override
+            public boolean isMaster() {
+                return true;
+            }
 
             @Override
             public boolean isUpstream() {
@@ -78,8 +87,16 @@ public interface RedisInstance {
          * @return {@code true} if the role indicates that the role is a replication source.
          * @since 6.0
          */
-        public boolean isUpstream() {
+        public boolean isMaster() {
             return false;
+        }
+
+        /**
+         * @return {@code true} if the role indicates that the role is a replication source.
+         * @since 6.1
+         */
+        public boolean isUpstream() {
+            return isMaster();
         }
 
         /**

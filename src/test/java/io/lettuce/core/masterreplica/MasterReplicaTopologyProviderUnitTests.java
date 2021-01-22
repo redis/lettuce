@@ -15,9 +15,8 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
@@ -30,9 +29,11 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Unit tests for {@link ReplicaTopologyProvider}.
+ *
  * @author Mark Paluch
  */
-class UpstreamReplicaTopologyProviderUnitTests {
+class MasterReplicaTopologyProviderUnitTests {
 
     private StatefulRedisConnection<String, String> connectionMock = mock(StatefulRedisConnection.class);
 

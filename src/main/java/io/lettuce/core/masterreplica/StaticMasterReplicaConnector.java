@@ -30,13 +30,13 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
- * {@link UpstreamReplicaConnector} to connect to a static declared Master/Replica setup providing a fixed array of
+ * {@link MasterReplicaConnector} to connect to a static declared Master/Replica setup providing a fixed array of
  * {@link RedisURI}. This connector determines roles and remains using only the provided endpoints.
  *
  * @author Mark Paluch
  * @since 5.1
  */
-class StaticUpstreamReplicaConnector<K, V> implements UpstreamReplicaConnector<K, V> {
+class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V> {
 
     private final RedisClient redisClient;
 
@@ -44,7 +44,7 @@ class StaticUpstreamReplicaConnector<K, V> implements UpstreamReplicaConnector<K
 
     private final Iterable<RedisURI> redisURIs;
 
-    StaticUpstreamReplicaConnector(RedisClient redisClient, RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
+    StaticMasterReplicaConnector(RedisClient redisClient, RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
         this.redisClient = redisClient;
         this.codec = codec;
         this.redisURIs = redisURIs;
@@ -59,8 +59,8 @@ class StaticUpstreamReplicaConnector<K, V> implements UpstreamReplicaConnector<K
 
         RedisURI seedNode = redisURIs.iterator().next();
 
-        UpstreamReplicaTopologyRefresh refresh = new UpstreamReplicaTopologyRefresh(redisClient, topologyProvider);
-        UpstreamReplicaConnectionProvider<K, V> connectionProvider = new UpstreamReplicaConnectionProvider<>(redisClient, codec,
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
+        MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
                 seedNode, initialConnections);
 
         return refresh.getNodes(seedNode).flatMap(nodes -> {
@@ -74,14 +74,14 @@ class StaticUpstreamReplicaConnector<K, V> implements UpstreamReplicaConnector<K
     }
 
     private Mono<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec, RedisURI seedNode,
-            UpstreamReplicaConnectionProvider<K, V> connectionProvider, List<RedisNodeDescription> nodes) {
+            MasterReplicaConnectionProvider<K, V> connectionProvider, List<RedisNodeDescription> nodes) {
 
         connectionProvider.setKnownNodes(nodes);
 
-        UpstreamReplicaChannelWriter channelWriter = new UpstreamReplicaChannelWriter(connectionProvider,
+        MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
                 redisClient.getResources());
 
-        StatefulRedisUpstreamReplicaConnectionImpl<K, V> connection = new StatefulRedisUpstreamReplicaConnectionImpl<>(
+        StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
                 channelWriter, codec, seedNode.getTimeout());
         connection.setOptions(redisClient.getOptions());
 

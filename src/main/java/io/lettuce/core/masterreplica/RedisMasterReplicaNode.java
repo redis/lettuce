@@ -24,13 +24,13 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * @author Mark Paluch
  * @author Adam McElwee
  */
-class RedisUpstreamReplicaNode implements RedisNodeDescription {
+class RedisMasterReplicaNode implements RedisNodeDescription {
 
     private final RedisURI redisURI;
 
     private final Role role;
 
-    RedisUpstreamReplicaNode(String host, int port, RedisURI seed, Role role) {
+    RedisMasterReplicaNode(String host, int port, RedisURI seed, Role role) {
 
         this.redisURI = RedisURI.builder(seed).withHost(host).withPort(port).build();
         this.role = role;
@@ -50,10 +50,10 @@ class RedisUpstreamReplicaNode implements RedisNodeDescription {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof RedisUpstreamReplicaNode))
+        if (!(o instanceof RedisMasterReplicaNode))
             return false;
 
-        RedisUpstreamReplicaNode that = (RedisUpstreamReplicaNode) o;
+        RedisMasterReplicaNode that = (RedisMasterReplicaNode) o;
 
         if (!redisURI.equals(that.redisURI))
             return false;

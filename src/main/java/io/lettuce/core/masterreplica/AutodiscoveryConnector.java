@@ -34,13 +34,13 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
- * {@link UpstreamReplicaConnector} to connect unmanaged Redis Master/Replica with auto-discovering master and replica nodes
- * from a single {@link RedisURI}.
+ * {@link MasterReplicaConnector} to connect unmanaged Redis Master/Replica with auto-discovering master and replica nodes from
+ * a single {@link RedisURI}.
  *
  * @author Mark Paluch
  * @since 5.1
  */
-class AutodiscoveryConnector<K, V> implements UpstreamReplicaConnector<K, V> {
+class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
     private final RedisClient redisClient;
 
@@ -112,8 +112,8 @@ class AutodiscoveryConnector<K, V> implements UpstreamReplicaConnector<K, V> {
         ReplicaTopologyProvider topologyProvider = new ReplicaTopologyProvider(connectionAndUri.getT2(),
                 connectionAndUri.getT1());
 
-        UpstreamReplicaTopologyRefresh refresh = new UpstreamReplicaTopologyRefresh(redisClient, topologyProvider);
-        UpstreamReplicaConnectionProvider<K, V> connectionProvider = new UpstreamReplicaConnectionProvider<>(redisClient, codec,
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
+        MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
                 redisURI, (Map) initialConnections);
 
         Mono<List<RedisNodeDescription>> refreshFuture = refresh.getNodes(redisURI);
@@ -122,10 +122,10 @@ class AutodiscoveryConnector<K, V> implements UpstreamReplicaConnector<K, V> {
 
             connectionProvider.setKnownNodes(nodes);
 
-            UpstreamReplicaChannelWriter channelWriter = new UpstreamReplicaChannelWriter(connectionProvider,
+            MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
                     redisClient.getResources());
 
-            StatefulRedisUpstreamReplicaConnectionImpl<K, V> connection = new StatefulRedisUpstreamReplicaConnectionImpl<>(
+            StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
                     channelWriter, codec, redisURI.getTimeout());
 
             connection.setOptions(redisClient.getOptions());

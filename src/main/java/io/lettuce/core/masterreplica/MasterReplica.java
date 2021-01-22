@@ -57,12 +57,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <p />
  * Master-Replica topologies are either static or semi-static. Redis Standalone instances with attached replicas provide no
  * failover/HA mechanism. Redis Sentinel managed instances are controlled by Redis Sentinel and allow failover (which include
- * upstream promotion). The {@link MasterReplica} API supports both mechanisms. The topology is provided by a
+ * master promotion). The {@link MasterReplica} API supports both mechanisms. The topology is provided by a
  * {@link TopologyProvider}:
  *
  * <ul>
  * <li>{@link ReplicaTopologyProvider}: Dynamic topology lookup using the {@code INFO REPLICATION} output. Replicas are listed
- * as {@code replicaN=...} entries. The initial connection can either point to a upstream or a replica and the topology provider
+ * as {@code replicaN=...} entries. The initial connection can either point to a master or a replica and the topology provider
  * will discover nodes. The connection needs to be re-established outside of lettuce in a case of Master/Replica failover or
  * topology changes.</li>
  * <li>{@link StaticMasterReplicaTopologyProvider}: Topology is defined by the list of {@link RedisURI URIs} and the
@@ -83,7 +83,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * <ul>
  * <li>Redis Sentinel: At least one Sentinel must be reachable, the masterId must be registered and at least one host must be
- * available (upstream or replica). Allows for runtime-recovery based on Sentinel Events.</li>
+ * available (master or replica). Allows for runtime-recovery based on Sentinel Events.</li>
  * <li>Static Setup (auto-discovery): The initial endpoint must be reachable. No recovery/reconfiguration during runtime.</li>
  * <li>Static Setup (provided hosts): All endpoints must be reachable. No recovery/reconfiguration during runtime.</li>
  * </ul>
@@ -98,7 +98,7 @@ public class MasterReplica {
      * {@link RedisCodec codec} to encode/decode keys.
      * <p>
      * This {@link MasterReplica} performs auto-discovery of nodes using either Redis Sentinel or Master/Replica. A
-     * {@link RedisURI} can point to either a upstream or a replica host.
+     * {@link RedisURI} can point to either a master or a replica host.
      * </p>
      *
      * @param redisClient the Redis client.
@@ -118,7 +118,7 @@ public class MasterReplica {
      * supplied {@link RedisCodec codec} to encode/decode keys.
      * <p>
      * This {@link MasterReplica} performs auto-discovery of nodes using either Redis Sentinel or Master/Replica. A
-     * {@link RedisURI} can point to either a upstream or a replica host.
+     * {@link RedisURI} can point to either a master or a replica host.
      * </p>
      *
      * @param redisClient the Redis client.
@@ -224,7 +224,7 @@ public class MasterReplica {
             return new SentinelConnector<>(redisClient, codec, first).connectAsync();
         }
 
-        return new StaticUpstreamReplicaConnector<>(redisClient, codec, uriList).connectAsync();
+        return new StaticMasterReplicaConnector<>(redisClient, codec, uriList).connectAsync();
     }
 
     private static boolean isSentinel(RedisURI redisURI) {
