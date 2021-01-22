@@ -47,12 +47,12 @@ import io.netty.util.concurrent.DefaultThreadFactory;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class UpstreamReplicaTopologyRefreshUnitTests {
+class MasterReplicaTopologyRefreshUnitTests {
 
-    private static final RedisUpstreamReplicaNode UPSTREAM = new RedisUpstreamReplicaNode("localhost", 1, new RedisURI(),
+    private static final RedisMasterReplicaNode UPSTREAM = new RedisMasterReplicaNode("localhost", 1, new RedisURI(),
             RedisInstance.Role.UPSTREAM);
 
-    private static final RedisUpstreamReplicaNode REPLICA = new RedisUpstreamReplicaNode("localhost", 2, new RedisURI(),
+    private static final RedisMasterReplicaNode REPLICA = new RedisMasterReplicaNode("localhost", 2, new RedisURI(),
             RedisInstance.Role.REPLICA);
 
     @Mock
@@ -93,7 +93,7 @@ class UpstreamReplicaTopologyRefreshUnitTests {
     @Test
     void shouldRetrieveTopology() {
 
-        UpstreamReplicaTopologyRefresh refresh = new UpstreamReplicaTopologyRefresh(connectionFactory, executorService,
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService,
                 provider);
 
         CompletableFuture<StatefulRedisConnection<String, String>> master = CompletableFuture.completedFuture(connection);
@@ -112,7 +112,7 @@ class UpstreamReplicaTopologyRefreshUnitTests {
     @Test
     void shouldRetrieveTopologyWithFailedNode() {
 
-        UpstreamReplicaTopologyRefresh refresh = new UpstreamReplicaTopologyRefresh(connectionFactory, executorService,
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService,
                 provider);
 
         CompletableFuture<StatefulRedisConnection<String, String>> connected = CompletableFuture.completedFuture(connection);

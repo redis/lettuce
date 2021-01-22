@@ -133,7 +133,7 @@ class SentinelTopologyProvider implements TopologyProvider {
 
         String ip = map.get("ip");
         String port = map.get("port");
-        return new RedisUpstreamReplicaNode(ip, Integer.parseInt(port), sentinelUri, role);
+        return new RedisMasterReplicaNode(ip, Integer.parseInt(port), sentinelUri, role);
     }
 
 }

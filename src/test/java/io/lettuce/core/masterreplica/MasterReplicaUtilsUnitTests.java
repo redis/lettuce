@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
 
 import java.util.Arrays;
 
@@ -25,21 +25,23 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.models.role.RedisInstance;
 
 /**
+ * Unit tests for {@link RedisMasterReplicaNode}.
+ *
  * @author Mark Paluch
  */
-class UpstreamReplicaUtilsUnitTests {
+class MasterReplicaUtilsUnitTests {
 
     @Test
     void isChangedShouldReturnFalse() {
 
-        RedisUpstreamReplicaNode upstream = new RedisUpstreamReplicaNode("host", 1234, RedisURI.create("host", 111),
+        RedisMasterReplicaNode upstream = new RedisMasterReplicaNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.UPSTREAM);
-        RedisUpstreamReplicaNode replica = new RedisUpstreamReplicaNode("host", 234, RedisURI.create("host", 234),
+        RedisMasterReplicaNode replica = new RedisMasterReplicaNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.REPLICA);
 
-        RedisUpstreamReplicaNode newupstream = new RedisUpstreamReplicaNode("host", 1234, RedisURI.create("host", 555),
+        RedisMasterReplicaNode newupstream = new RedisMasterReplicaNode("host", 1234, RedisURI.create("host", 555),
                 RedisInstance.Role.UPSTREAM);
-        RedisUpstreamReplicaNode newslave = new RedisUpstreamReplicaNode("host", 234, RedisURI.create("host", 666),
+        RedisMasterReplicaNode newslave = new RedisMasterReplicaNode("host", 234, RedisURI.create("host", 666),
                 RedisInstance.Role.REPLICA);
 
         assertThat(ReplicaUtils.isChanged(Arrays.asList(upstream, replica), Arrays.asList(newupstream, newslave))).isFalse();
@@ -52,12 +54,12 @@ class UpstreamReplicaUtilsUnitTests {
     @Test
     void isChangedShouldReturnTrueBecauseSlaveIsGone() {
 
-        RedisUpstreamReplicaNode upstream = new RedisUpstreamReplicaNode("host", 1234, RedisURI.create("host", 111),
+        RedisMasterReplicaNode upstream = new RedisMasterReplicaNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.UPSTREAM);
-        RedisUpstreamReplicaNode replica = new RedisUpstreamReplicaNode("host", 234, RedisURI.create("host", 234),
+        RedisMasterReplicaNode replica = new RedisMasterReplicaNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.UPSTREAM);
 
-        RedisUpstreamReplicaNode newupstream = new RedisUpstreamReplicaNode("host", 1234, RedisURI.create("host", 111),
+        RedisMasterReplicaNode newupstream = new RedisMasterReplicaNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.UPSTREAM);
 
         assertThat(ReplicaUtils.isChanged(Arrays.asList(upstream, replica), Arrays.asList(newupstream))).isTrue();
@@ -66,14 +68,14 @@ class UpstreamReplicaUtilsUnitTests {
     @Test
     void isChangedShouldReturnTrueBecauseHostWasMigrated() {
 
-        RedisUpstreamReplicaNode upstream = new RedisUpstreamReplicaNode("host", 1234, RedisURI.create("host", 111),
+        RedisMasterReplicaNode upstream = new RedisMasterReplicaNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.UPSTREAM);
-        RedisUpstreamReplicaNode replica = new RedisUpstreamReplicaNode("host", 234, RedisURI.create("host", 234),
+        RedisMasterReplicaNode replica = new RedisMasterReplicaNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.REPLICA);
 
-        RedisUpstreamReplicaNode newupstream = new RedisUpstreamReplicaNode("host", 1234, RedisURI.create("host", 555),
+        RedisMasterReplicaNode newupstream = new RedisMasterReplicaNode("host", 1234, RedisURI.create("host", 555),
                 RedisInstance.Role.UPSTREAM);
-        RedisUpstreamReplicaNode newslave = new RedisUpstreamReplicaNode("newhost", 234, RedisURI.create("newhost", 666),
+        RedisMasterReplicaNode newslave = new RedisMasterReplicaNode("newhost", 234, RedisURI.create("newhost", 666),
                 RedisInstance.Role.REPLICA);
 
         assertThat(ReplicaUtils.isChanged(Arrays.asList(upstream, replica), Arrays.asList(newupstream, newslave))).isTrue();
@@ -85,14 +87,14 @@ class UpstreamReplicaUtilsUnitTests {
     @Test
     void isChangedShouldReturnTrueBecauseRolesSwitched() {
 
-        RedisUpstreamReplicaNode upstream = new RedisUpstreamReplicaNode("host", 1234, RedisURI.create("host", 111),
+        RedisMasterReplicaNode upstream = new RedisMasterReplicaNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.UPSTREAM);
-        RedisUpstreamReplicaNode replica = new RedisUpstreamReplicaNode("host", 234, RedisURI.create("host", 234),
+        RedisMasterReplicaNode replica = new RedisMasterReplicaNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.UPSTREAM);
 
-        RedisUpstreamReplicaNode newslave = new RedisUpstreamReplicaNode("host", 1234, RedisURI.create("host", 111),
+        RedisMasterReplicaNode newslave = new RedisMasterReplicaNode("host", 1234, RedisURI.create("host", 111),
                 RedisInstance.Role.REPLICA);
-        RedisUpstreamReplicaNode newupstream = new RedisUpstreamReplicaNode("host", 234, RedisURI.create("host", 234),
+        RedisMasterReplicaNode newupstream = new RedisMasterReplicaNode("host", 234, RedisURI.create("host", 234),
                 RedisInstance.Role.UPSTREAM);
 
         assertThat(ReplicaUtils.isChanged(Arrays.asList(upstream, replica), Arrays.asList(newupstream, newslave))).isTrue();

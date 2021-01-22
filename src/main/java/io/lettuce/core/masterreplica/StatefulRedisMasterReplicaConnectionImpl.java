@@ -24,7 +24,7 @@ import io.lettuce.core.codec.RedisCodec;
 /**
  * @author Mark Paluch
  */
-class StatefulRedisUpstreamReplicaConnectionImpl<K, V> extends StatefulRedisConnectionImpl<K, V>
+class StatefulRedisMasterReplicaConnectionImpl<K, V> extends StatefulRedisConnectionImpl<K, V>
         implements StatefulRedisMasterReplicaConnection<K, V> {
 
     /**
@@ -34,7 +34,7 @@ class StatefulRedisUpstreamReplicaConnectionImpl<K, V> extends StatefulRedisConn
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      */
-    StatefulRedisUpstreamReplicaConnectionImpl(UpstreamReplicaChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
+    StatefulRedisMasterReplicaConnectionImpl(MasterReplicaChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
         super(writer, NoOpPushHandler.INSTANCE, codec, timeout);
     }
 
@@ -49,8 +49,8 @@ class StatefulRedisUpstreamReplicaConnectionImpl<K, V> extends StatefulRedisConn
     }
 
     @Override
-    public UpstreamReplicaChannelWriter getChannelWriter() {
-        return (UpstreamReplicaChannelWriter) super.getChannelWriter();
+    public MasterReplicaChannelWriter getChannelWriter() {
+        return (MasterReplicaChannelWriter) super.getChannelWriter();
     }
 
 }

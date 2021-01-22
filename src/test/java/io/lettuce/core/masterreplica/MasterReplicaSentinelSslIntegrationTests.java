@@ -39,12 +39,12 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-class UpstreamReplicaSentinelSslIntegrationTests extends TestSupport {
+class MasterReplicaSentinelSslIntegrationTests extends TestSupport {
 
     private final ClientResources clientResources;
 
     @Inject
-    UpstreamReplicaSentinelSslIntegrationTests(ClientResources clientResources) {
+    MasterReplicaSentinelSslIntegrationTests(ClientResources clientResources) {
         this.clientResources = clientResources.mutate()
                 .socketAddressResolver(MappingSocketAddressResolver.create(DnsResolver.jvmDefault(), hostAndPort -> {
 
