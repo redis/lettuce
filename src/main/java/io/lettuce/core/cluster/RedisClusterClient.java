@@ -145,8 +145,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterClient.class);
 
-    private final ClusterTopologyRefresh refresh = ClusterTopologyRefresh.create(new NodeConnectionFactoryImpl(),
-            getResources());
+    private final ClusterTopologyRefresh refresh;
 
     private final ClusterTopologyRefreshScheduler topologyRefreshScheduler = new ClusterTopologyRefreshScheduler(
             this::getClusterClientOptions, this::getPartitions, this::refreshPartitionsAsync, getResources());
@@ -162,7 +161,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         super(null);
 
-        initialUris = Collections.emptyList();
+        this.initialUris = Collections.emptyList();
+        this.refresh = createTopologyRefresh();
     }
 
     /**
@@ -182,6 +182,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         assertSameOptions(redisURIs);
 
         this.initialUris = Collections.unmodifiableList(LettuceLists.newList(redisURIs));
+        this.refresh = createTopologyRefresh();
 
         setDefaultTimeout(getFirstUri().getTimeout());
         setOptions(ClusterClientOptions.create());
@@ -1092,6 +1093,16 @@ public class RedisClusterClient extends AbstractRedisClient {
                 function.accept((T) c);
             }
         }
+    }
+
+    /**
+     * Template method to create {@link ClusterTopologyRefresh}. Can be overriden by subclasses.
+     *
+     * @return
+     * @since 6.0.3
+     */
+    protected ClusterTopologyRefresh createTopologyRefresh() {
+        return ClusterTopologyRefresh.create(new NodeConnectionFactoryImpl(), getResources());
     }
 
     /**
