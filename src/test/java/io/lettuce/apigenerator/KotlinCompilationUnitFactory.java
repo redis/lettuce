@@ -59,7 +59,9 @@ class KotlinCompilationUnitFactory {
     private static final Set<String> SKIP_IMPORTS = LettuceSets.unmodifiableSet("java.util.List", "java.util.Set", "java.util.Map");
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
     private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
-    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("dispatch", "geohash", "georadius", "georadiusbymember",
+
+    private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("dispatch", "geohash", "georadius",
+            "georadiusbymember", "geosearch",
             "hgetall", "hkeys", "hmget", "hvals", "keys", "mget", "sdiff", "sinter", "smembers", "smismember", "sort", "srandmember", "sunion",
             "xclaim", "xpending", "xrange", "xread", "xreadgroup", "xrevrange", "zdiff", "zdiffWithScores", "zinter", "zinterWithScores", "zpopmax", "zpopmin", "zrange",
             "zrangeWithScores", "zrangebylex", "zrangebyscore", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex",

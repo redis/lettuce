@@ -765,6 +765,23 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Flux<V> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate) {
+        return createDissolvingFlux(() -> commandBuilder.geosearch(key, reference, predicate));
+    }
+
+    @Override
+    public Flux<GeoWithin<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs) {
+        return createDissolvingFlux(() -> commandBuilder.geosearch(key, reference, predicate, geoArgs));
+    }
+
+    @Override
+    public Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs, boolean storeDist) {
+        return createMono(() -> commandBuilder.geosearchstore(destination, key, reference, predicate, geoArgs, storeDist));
+    }
+
+    @Override
     public Mono<V> get(K key) {
         return createMono(() -> commandBuilder.get(key));
     }

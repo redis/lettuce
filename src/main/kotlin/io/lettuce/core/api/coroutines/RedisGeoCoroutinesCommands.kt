@@ -161,5 +161,61 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      */
     suspend fun geodist(key: K, from: V, to: V, unit: GeoArgs.Unit): Double?
 
+    /**
+     * Retrieve members selected by distance with the center of `reference` the search `predicate`.
+     * Use [GeoSearch] to create reference and predicate objects.
+     *
+     * @param key the key of the geo set.
+     * @param reference the reference member or longitude/latitude coordinates.
+     * @param predicate the bounding box or radius to search in.
+     * @return bulk reply.
+     * @since 6.1
+     */
+    fun geosearch(
+        key: K,
+        reference: GeoSearch.GeoRef<K>,
+        predicate: GeoSearch.GeoPredicate
+    ): Flow<V>
+
+    /**
+     * Retrieve members selected by distance with the center of `reference` the search `predicate`.
+     * Use [GeoSearch] to create reference and predicate objects.
+     *
+     * @param key the key of the geo set.
+     * @param reference the reference member or longitude/latitude coordinates.
+     * @param predicate the bounding box or radius to search in.
+     * @param geoArgs args to control the result.
+     * @return nested multi-bulk reply. The [GeoWithin] contains only fields which were requested by [GeoArgs].
+     * @since 6.1
+     */
+    fun geosearch(
+        key: K,
+        reference: GeoSearch.GeoRef<K>,
+        predicate: GeoSearch.GeoPredicate,
+        geoArgs: GeoArgs
+    ): Flow<GeoWithin<V>>
+
+    /**
+     * Perform a [geosearch(Any, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)] query and store the results in a
+     * sorted set.
+     *
+     * @param destination the destination where to store results.
+     * @param key the key of the geo set.
+     * @param reference the reference member or longitude/latitude coordinates.
+     * @param predicate the bounding box or radius to search in.
+     * @param geoArgs args to control the result.
+     * @param storeDist stores the items in a sorted set populated with their distance from the center of the circle or box, as a floating-point number, in the same unit specified for that shape.
+     * @return Long integer-reply the number of elements in the result.
+     * @since 6.1
+     */
+    suspend fun geosearchstore(
+        destination: K,
+        key: K,
+        reference: GeoSearch.GeoRef<K>,
+        predicate: GeoSearch.GeoPredicate,
+        geoArgs: GeoArgs,
+        storeDist: Boolean
+    ): Long?
+
 }
 

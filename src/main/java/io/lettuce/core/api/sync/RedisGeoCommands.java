@@ -18,7 +18,12 @@ package io.lettuce.core.api.sync;
 import java.util.List;
 import java.util.Set;
 
-import io.lettuce.core.*;
+import io.lettuce.core.GeoArgs;
+import io.lettuce.core.GeoCoordinates;
+import io.lettuce.core.GeoRadiusStoreArgs;
+import io.lettuce.core.GeoSearch;
+import io.lettuce.core.GeoWithin;
+import io.lettuce.core.Value;
 
 /**
  * Synchronous executed commands for the Geo-API.
@@ -160,4 +165,46 @@ public interface RedisGeoCommands<K, V> {
      *         returned.
      */
     Double geodist(K key, V from, V to, GeoArgs.Unit unit);
+
+    /**
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
+     * {@link GeoSearch} to create reference and predicate objects.
+     *
+     * @param key the key of the geo set.
+     * @param reference the reference member or longitude/latitude coordinates.
+     * @param predicate the bounding box or radius to search in.
+     * @return bulk reply.
+     * @since 6.1
+     */
+    Set<V> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate);
+
+    /**
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
+     * {@link GeoSearch} to create reference and predicate objects.
+     *
+     * @param key the key of the geo set.
+     * @param reference the reference member or longitude/latitude coordinates.
+     * @param predicate the bounding box or radius to search in.
+     * @param geoArgs args to control the result.
+     * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}.
+     * @since 6.1
+     */
+    List<GeoWithin<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate, GeoArgs geoArgs);
+
+    /**
+     * Perform a {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} query and store the results in a
+     * sorted set.
+     *
+     * @param destination the destination where to store results.
+     * @param key the key of the geo set.
+     * @param reference the reference member or longitude/latitude coordinates.
+     * @param predicate the bounding box or radius to search in.
+     * @param geoArgs args to control the result.
+     * @param storeDist stores the items in a sorted set populated with their distance from the center of the circle or box, as
+     *        a floating-point number, in the same unit specified for that shape.
+     * @return Long integer-reply the number of elements in the result.
+     * @since 6.1
+     */
+    Long geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate, GeoArgs geoArgs,
+            boolean storeDist);
 }

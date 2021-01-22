@@ -18,6 +18,7 @@ package io.lettuce.core;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
  *
@@ -37,6 +38,8 @@ public class GeoArgs implements CompositeArgument {
     private boolean withhash;
 
     private Long count;
+
+    private boolean any;
 
     private Sort sort = Sort.none;
 
@@ -145,10 +148,24 @@ public class GeoArgs implements CompositeArgument {
      * @return {@code this} {@link GeoArgs}.
      */
     public GeoArgs withCount(long count) {
+        return withCount(count, false);
+    }
+
+    /**
+     * Limit results to {@code count} entries.
+     *
+     * @param count number greater 0.
+     * @param any whether to complete the command as soon as enough matches are found, so the results may not be the ones
+     *        closest to the specified point.
+     * @return {@code this} {@link GeoArgs}.
+     * @since 6.1
+     */
+    public GeoArgs withCount(long count, boolean any) {
 
         LettuceAssert.isTrue(count > 0, "Count must be greater 0");
 
         this.count = count;
+        this.any = any;
         return this;
     }
 
@@ -232,7 +249,7 @@ public class GeoArgs implements CompositeArgument {
     /**
      * Supported geo unit.
      */
-    public enum Unit {
+    public enum Unit implements ProtocolKeyword {
 
         /**
          * meter.
@@ -253,6 +270,17 @@ public class GeoArgs implements CompositeArgument {
          * mile.
          */
         mi;
+
+        private final byte[] asBytes;
+
+        Unit() {
+            asBytes = name().getBytes();
+        }
+
+        @Override
+        public byte[] getBytes() {
+            return asBytes;
+        }
     }
 
     public <K, V> void build(CommandArgs<K, V> args) {
@@ -275,6 +303,10 @@ public class GeoArgs implements CompositeArgument {
 
         if (count != null) {
             args.add(CommandKeyword.COUNT).add(count);
+
+            if (any) {
+                args.add("ANY");
+            }
         }
     }
 

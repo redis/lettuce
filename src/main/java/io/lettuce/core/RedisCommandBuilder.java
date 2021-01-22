@@ -811,7 +811,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             String unit) {
         notNullKey(key);
         LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
         return createCommand(commandType, new ValueSetOutput<>(codec), args);
@@ -840,7 +839,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(geoRadiusStoreArgs, "GeoRadiusStoreArgs " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(geoRadiusStoreArgs.getStoreKey() != null || geoRadiusStoreArgs.getStoreDistKey() != null,
-                "At least STORE key or STORDIST key is required");
+                "At least STORE key or STOREDIST key is required");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
         geoRadiusStoreArgs.build(args);
@@ -882,12 +881,63 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
         LettuceAssert.isTrue(geoRadiusStoreArgs.getStoreKey() != null || geoRadiusStoreArgs.getStoreDistKey() != null,
-                "At least STORE key or STORDIST key is required");
+                "At least STORE key or STOREDIST key is required");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(member).add(distance).add(unit);
         geoRadiusStoreArgs.build(args);
 
         return createCommand(GEORADIUSBYMEMBER, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Set<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate) {
+        notNullKey(key);
+        LettuceAssert.notNull(reference, "GeoRef " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(predicate, "GeoPredicate " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        reference.build(args);
+        predicate.build(args);
+
+        return createCommand(GEOSEARCH, new ValueSetOutput<>(codec), args);
+    }
+
+    Command<K, V, List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(reference, "GeoRef " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(predicate, "GeoPredicate " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        reference.build(args);
+        predicate.build(args);
+        geoArgs.build(args);
+
+        return createCommand(GEOSEARCH,
+                new GeoWithinListOutput<>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(), geoArgs.isWithCoordinates()),
+                args);
+    }
+
+    Command<K, V, Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs, boolean storeDist) {
+        notNullKey(key);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key, "Key " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(reference, "GeoRef " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(predicate, "GeoPredicate " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).addKey(key);
+
+        reference.build(args);
+        predicate.build(args);
+        geoArgs.build(args);
+
+        if (storeDist) {
+            args.add("STOREDIST");
+        }
+
+        return createCommand(GEOSEARCHSTORE, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, V> get(K key) {
