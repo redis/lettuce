@@ -48,6 +48,19 @@ public interface RedisGeoCommands<K, V> {
     Long geoadd(K key, Object... lngLatMember);
 
     /**
+     * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
+     * returned. Default in meters by, otherwise according to {@code unit}
+     *
+     * @param key the key of the geo set.
+     * @param from from member.
+     * @param to to member.
+     * @param unit distance unit.
+     * @return distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
+     *         returned.
+     */
+    Double geodist(K key, V from, V to, GeoArgs.Unit unit);
+
+    /**
      * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a
      * geospatial index.
      *
@@ -56,6 +69,16 @@ public interface RedisGeoCommands<K, V> {
      * @return bulk reply Geohash strings in the order of {@code members}. Returns {@code null} if a member is not found.
      */
     List<Value<String>> geohash(K key, V... members);
+
+    /**
+     * Get geo coordinates for the {@code members}.
+     *
+     * @param key the key of the geo set.
+     * @param members the members.
+     * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
+     *         missing elements {@code null} is returned.
+     */
+    List<GeoCoordinates> geopos(K key, V... members);
 
     /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
@@ -136,29 +159,6 @@ public interface RedisGeoCommands<K, V> {
      * @return Long integer-reply the number of elements in the result.
      */
     Long georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
-
-    /**
-     * Get geo coordinates for the {@code members}.
-     *
-     * @param key the key of the geo set.
-     * @param members the members.
-     * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
-     *         missing elements {@code null} is returned.
-     */
-    List<GeoCoordinates> geopos(K key, V... members);
-
-    /**
-     * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
-     * returned. Default in meters by, otherwise according to {@code unit}
-     *
-     * @param key the key of the geo set.
-     * @param from from member.
-     * @param to to member.
-     * @param unit distance unit.
-     * @return distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
-     *         returned.
-     */
-    Double geodist(K key, V from, V to, GeoArgs.Unit unit);
 
     /**
      * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}.

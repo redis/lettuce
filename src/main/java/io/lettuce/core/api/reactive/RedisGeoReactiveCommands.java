@@ -54,6 +54,19 @@ public interface RedisGeoReactiveCommands<K, V> {
     Mono<Long> geoadd(K key, Object... lngLatMember);
 
     /**
+     * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
+     * returned. Default in meters by, otherwise according to {@code unit}
+     *
+     * @param key the key of the geo set.
+     * @param from from member.
+     * @param to to member.
+     * @param unit distance unit.
+     * @return distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
+     *         returned.
+     */
+    Mono<Double> geodist(K key, V from, V to, GeoArgs.Unit unit);
+
+    /**
      * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a
      * geospatial index.
      *
@@ -62,6 +75,16 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @return bulk reply Geohash strings in the order of {@code members}. Returns {@code null} if a member is not found.
      */
     Flux<Value<String>> geohash(K key, V... members);
+
+    /**
+     * Get geo coordinates for the {@code members}.
+     *
+     * @param key the key of the geo set.
+     * @param members the members.
+     * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
+     *         missing elements {@code null} is returned.
+     */
+    Flux<Value<GeoCoordinates>> geopos(K key, V... members);
 
     /**
      * Retrieve members selected by distance with the center of {@code longitude} and {@code latitude}.
@@ -143,31 +166,8 @@ public interface RedisGeoReactiveCommands<K, V> {
     Mono<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
-     * Get geo coordinates for the {@code members}.
-     *
-     * @param key the key of the geo set.
-     * @param members the members.
-     * @return a list of {@link GeoCoordinates}s representing the x,y position of each element specified in the arguments. For
-     *         missing elements {@code null} is returned.
-     */
-    Flux<Value<GeoCoordinates>> geopos(K key, V... members);
-
-    /**
-     * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
-     * returned. Default in meters by, otherwise according to {@code unit}
-     *
-     * @param key the key of the geo set.
-     * @param from from member.
-     * @param to to member.
-     * @param unit distance unit.
-     * @return distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is
-     *         returned.
-     */
-    Mono<Double> geodist(K key, V from, V to, GeoArgs.Unit unit);
-
-    /**
-     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
-     * {@link GeoSearch} to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}.
+     * Use {@link GeoSearch} to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -178,8 +178,8 @@ public interface RedisGeoReactiveCommands<K, V> {
     Flux<V> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate);
 
     /**
-     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
-     * {@link GeoSearch} to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}.
+     * Use {@link GeoSearch} to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -199,11 +199,9 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @param reference the reference member or longitude/latitude coordinates.
      * @param predicate the bounding box or radius to search in.
      * @param geoArgs args to control the result.
-     * @param storeDist stores the items in a sorted set populated with their distance from the center of the circle or box, as
-     *        a floating-point number, in the same unit specified for that shape.
+     * @param storeDist  stores the items in a sorted set populated with their distance from the center of the circle or box, as a floating-point number, in the same unit specified for that shape.
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */
-    Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
-            GeoArgs geoArgs, boolean storeDist);
+    Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate, GeoArgs geoArgs, boolean storeDist);
 }

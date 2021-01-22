@@ -50,6 +50,19 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
     suspend fun geoadd(key: K, vararg lngLatMember: Any): Long?
 
     /**
+     * Retrieve distance between points `from` and `to`. If one or more elements are missing `null` is
+     * returned. Default in meters by, otherwise according to `unit`
+     *
+     * @param key the key of the geo set.
+     * @param from from member.
+     * @param to to member.
+     * @param unit distance unit.
+     * @return distance between points `from` and `to`. If one or more elements are missing `null` is
+     *         returned.
+     */
+    suspend fun geodist(key: K, from: V, to: V, unit: GeoArgs.Unit): Double?
+
+    /**
      * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a
      * geospatial index.
      *
@@ -58,6 +71,16 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return bulk reply Geohash strings in the order of `members`. Returns `null` if a member is not found.
      */
     fun geohash(key: K, vararg members: V): Flow<Value<String>>
+
+    /**
+     * Get geo coordinates for the `members`.
+     *
+     * @param key the key of the geo set.
+     * @param members the members.
+     * @return a list of [GeoCoordinates]s representing the x,y position of each element specified in the arguments. For
+     *         missing elements `null` is returned.
+     */
+    suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates>
 
     /**
      * Retrieve members selected by distance with the center of `longitude` and `latitude`.
@@ -139,29 +162,6 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
     suspend fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long?
 
     /**
-     * Get geo coordinates for the `members`.
-     *
-     * @param key the key of the geo set.
-     * @param members the members.
-     * @return a list of [GeoCoordinates]s representing the x,y position of each element specified in the arguments. For
-     *         missing elements `null` is returned.
-     */
-    suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates>
-
-    /**
-     * Retrieve distance between points `from` and `to`. If one or more elements are missing `null` is
-     * returned. Default in meters by, otherwise according to `unit`
-     *
-     * @param key the key of the geo set.
-     * @param from from member.
-     * @param to to member.
-     * @param unit distance unit.
-     * @return distance between points `from` and `to`. If one or more elements are missing `null` is
-     *         returned.
-     */
-    suspend fun geodist(key: K, from: V, to: V, unit: GeoArgs.Unit): Double?
-
-    /**
      * Retrieve members selected by distance with the center of `reference` the search `predicate`.
      * Use [GeoSearch] to create reference and predicate objects.
      *
@@ -171,11 +171,7 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return bulk reply.
      * @since 6.1
      */
-    fun geosearch(
-        key: K,
-        reference: GeoSearch.GeoRef<K>,
-        predicate: GeoSearch.GeoPredicate
-    ): Flow<V>
+    fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate): Flow<V>
 
     /**
      * Retrieve members selected by distance with the center of `reference` the search `predicate`.
@@ -188,12 +184,7 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return nested multi-bulk reply. The [GeoWithin] contains only fields which were requested by [GeoArgs].
      * @since 6.1
      */
-    fun geosearch(
-        key: K,
-        reference: GeoSearch.GeoRef<K>,
-        predicate: GeoSearch.GeoPredicate,
-        geoArgs: GeoArgs
-    ): Flow<GeoWithin<V>>
+    fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs): Flow<GeoWithin<V>>
 
     /**
      * Perform a [geosearch(Any, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)] query and store the results in a
@@ -208,14 +199,7 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */
-    suspend fun geosearchstore(
-        destination: K,
-        key: K,
-        reference: GeoSearch.GeoRef<K>,
-        predicate: GeoSearch.GeoPredicate,
-        geoArgs: GeoArgs,
-        storeDist: Boolean
-    ): Long?
+    suspend fun geosearchstore(destination: K, key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs, storeDist: Boolean): Long?
 
 }
 
