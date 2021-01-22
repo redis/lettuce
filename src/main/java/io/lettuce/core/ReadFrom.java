@@ -32,18 +32,12 @@ public abstract class ReadFrom {
 
     /**
      * Setting to read from the upstream only.
-     *
-     * @deprecated since 6.0 in favor of {@link #UPSTREAM}.
      */
-    @Deprecated
     public static final ReadFrom MASTER = new ReadFromImpl.ReadFromUpstream();
 
     /**
      * Setting to read preferred from the upstream and fall back to a replica if the master is not available.
-     *
-     * @deprecated since 6.0 in favor of {@link #UPSTREAM_PREFERRED}.
      */
-    @Deprecated
     public static final ReadFrom MASTER_PREFERRED = new ReadFromImpl.ReadFromUpstreamPreferred();
 
     /**
