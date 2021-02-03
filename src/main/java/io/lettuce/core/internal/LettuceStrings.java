@@ -34,23 +34,51 @@ public class LettuceStrings {
     }
 
     /**
-     * Checks if a CharSequence is empty ("") or null.
+     * Checks if a String is empty or null.
      *
      * @param cs the char sequence
      * @return true if empty
+     * @since 6.0.3
+     * @see String#isEmpty()
      */
-    public static boolean isEmpty(final CharSequence cs) {
+    public static boolean isEmpty(String cs) {
+        return cs == null || cs.isEmpty();
+    }
+
+    /**
+     * Checks if a CharSequence has a length of 0 or null.
+     *
+     * @param cs the char sequence
+     * @return true if empty
+     * @see CharSequence#length()
+     */
+    public static boolean isEmpty(CharSequence cs) {
+        if (cs instanceof String) {
+            return isEmpty((String) cs);
+        }
         return cs == null || cs.length() == 0;
     }
 
     /**
-     * Checks if a CharSequence is not empty ("") and not null.
+     * Checks if a String is not empty and not null.
      *
      * @param cs the char sequence
      * @return true if not empty
-     *
+     * @since 6.0.3
+     * @see String#isEmpty()
      */
-    public static boolean isNotEmpty(final CharSequence cs) {
+    public static boolean isNotEmpty(String cs) {
+        return !isEmpty(cs);
+    }
+
+    /**
+     * Checks if a CharSequence has a non-zero length and is not null.
+     *
+     * @param cs the char sequence
+     * @return true if not empty
+     * @see CharSequence#length()
+     */
+    public static boolean isNotEmpty(CharSequence cs) {
         return !isEmpty(cs);
     }
 
