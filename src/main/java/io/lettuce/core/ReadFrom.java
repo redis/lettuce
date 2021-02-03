@@ -112,7 +112,7 @@ public abstract class ReadFrom {
      * @param cidrNotations CIDR-block notation strings, e.g., "192.168.0.0/16", "2001:db8:abcd:0000::/52". Must not be
      *        {@code null}.
      * @return an instance of {@link ReadFromImpl.ReadFromSubnet}.
-     * @since x.x.x
+     * @since 6.1
      */
     public static ReadFrom subnet(String... cidrNotations) {
         return new ReadFromImpl.ReadFromSubnet(cidrNotations);
@@ -123,10 +123,23 @@ public abstract class ReadFrom {
      *
      * @param pattern regex pattern, e.g., {@code Pattern.compile(".*region-1.*")}. Must not be {@code null}.
      * @return an instance of {@link ReadFromImpl.ReadFromRegex}.
-     * @since x.x.x
+     * @since 6.1
      */
     public static ReadFrom regex(Pattern pattern) {
-        return new ReadFromImpl.ReadFromRegex(pattern);
+        return regex(pattern, false);
+    }
+
+    /**
+     * Read from any node that has {@link RedisURI} matching with the given pattern.
+     *
+     * @param pattern regex pattern, e.g., {@code Pattern.compile(".*region-1.*")}. Must not be {@code null}.
+     * @param orderSensitive {@code true} to attempt reads in the order of hosts returned by {@link ReadFrom#select(Nodes)};
+     *        {@code false} to apply randomization.
+     * @return an instance of {@link ReadFromImpl.ReadFromRegex}.
+     * @since 6.1
+     */
+    public static ReadFrom regex(Pattern pattern, boolean orderSensitive) {
+        return new ReadFromImpl.ReadFromRegex(pattern, orderSensitive);
     }
 
     /**
