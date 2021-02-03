@@ -15,10 +15,13 @@
  */
 package io.lettuce.core.api;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyScanArgs;
+import io.lettuce.core.RestoreArgs;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 
@@ -91,10 +94,20 @@ public interface RedisKeyCommands<K, V> {
      * @param key the key.
      * @param seconds the seconds type: long.
      * @return Boolean integer-reply specifically:
-     *
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
      */
     Boolean expire(K key, long seconds);
+
+    /**
+     * Set a key's time to live in seconds.
+     *
+     * @param key the key.
+     * @param seconds the seconds.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 6.1
+     */
+    Boolean expire(K key, Duration seconds);
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
@@ -102,7 +115,17 @@ public interface RedisKeyCommands<K, V> {
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
      * @return Boolean integer-reply specifically:
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
+     *         (see: {@code EXPIRE}).
+     */
+    Boolean expireat(K key, long timestamp);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp.
      *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @return Boolean integer-reply specifically:
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
      *         (see: {@code EXPIRE}).
      */
@@ -113,12 +136,11 @@ public interface RedisKeyCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
-     *
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 6.1
      */
-    Boolean expireat(K key, long timestamp);
+    Boolean expireat(K key, Instant timestamp);
 
     /**
      * Find all keys matching the given pattern.
@@ -212,10 +234,20 @@ public interface RedisKeyCommands<K, V> {
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
      * @return integer-reply, specifically:
-     *
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
      */
     Boolean pexpire(K key, long milliseconds);
+
+    /**
+     * Set a key's time to live in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
+     * @since 6.1
+     */
+    Boolean pexpire(K key, Duration milliseconds);
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
@@ -223,7 +255,17 @@ public interface RedisKeyCommands<K, V> {
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @return Boolean integer-reply specifically:
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
+     *         (see: {@code EXPIRE}).
+     */
+    Boolean pexpireat(K key, long timestamp);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
      *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @return Boolean integer-reply specifically:
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
      *         (see: {@code EXPIRE}).
      */
@@ -234,12 +276,10 @@ public interface RedisKeyCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
-     *
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
-    Boolean pexpireat(K key, long timestamp);
+    Boolean pexpireat(K key, Instant timestamp);
 
     /**
      * Get the time to live for a key in milliseconds.

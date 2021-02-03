@@ -18,6 +18,7 @@ package io.lettuce.core;
 import static io.lettuce.core.protocol.CommandType.*;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -650,13 +651,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Boolean> expire(K key, Duration seconds) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return expire(key, seconds.toMillis() / 1000);
+    }
+
+    @Override
     public Mono<Boolean> expireat(K key, long timestamp) {
         return createMono(() -> commandBuilder.expireat(key, timestamp));
     }
 
     @Override
     public Mono<Boolean> expireat(K key, Date timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return expireat(key, timestamp.getTime() / 1000);
+    }
+
+    @Override
+    public Mono<Boolean> expireat(K key, Instant timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return expireat(key, timestamp.toEpochMilli() / 1000);
     }
 
     @Override
@@ -1154,13 +1168,24 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<Boolean> pexpireat(K key, Date timestamp) {
-        return pexpireat(key, timestamp.getTime());
+    public Mono<Boolean> pexpire(K key, Duration milliseconds) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return pexpire(key, milliseconds.toMillis());
     }
 
     @Override
     public Mono<Boolean> pexpireat(K key, long timestamp) {
         return createMono(() -> commandBuilder.pexpireat(key, timestamp));
+    }
+
+    @Override
+    public Mono<Boolean> pexpireat(K key, Date timestamp) {
+        return pexpireat(key, timestamp.getTime());
+    }
+
+    @Override
+    public Mono<Boolean> pexpireat(K key, Instant timestamp) {
+        return pexpireat(key, timestamp.toEpochMilli());
     }
 
     @Override

@@ -18,6 +18,7 @@ package io.lettuce.core;
 import static io.lettuce.core.protocol.CommandType.*;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -592,13 +593,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<Boolean> expireat(K key, Date timestamp) {
-        return expireat(key, timestamp.getTime() / 1000);
+    public RedisFuture<Boolean> expire(K key, Duration seconds) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return expire(key, seconds.toMillis() / 1000);
     }
 
     @Override
     public RedisFuture<Boolean> expireat(K key, long timestamp) {
         return dispatch(commandBuilder.expireat(key, timestamp));
+    }
+
+    @Override
+    public RedisFuture<Boolean> expireat(K key, Date timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return expireat(key, timestamp.getTime() / 1000);
+    }
+
+    @Override
+    public RedisFuture<Boolean> expireat(K key, Instant timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return expireat(key, timestamp.toEpochMilli() / 1000);
     }
 
     @Override
@@ -1089,8 +1103,21 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<Boolean> pexpire(K key, Duration milliseconds) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return pexpire(key, milliseconds.toMillis());
+    }
+
+    @Override
     public RedisFuture<Boolean> pexpireat(K key, Date timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return pexpireat(key, timestamp.getTime());
+    }
+
+    @Override
+    public RedisFuture<Boolean> pexpireat(K key, Instant timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return pexpireat(key, timestamp.toEpochMilli());
     }
 
     @Override

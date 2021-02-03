@@ -18,6 +18,8 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
 import kotlinx.coroutines.flow.Flow
+import java.time.Duration
+import java.time.Instant
 import java.util.*
 
 /**
@@ -91,10 +93,20 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param seconds the seconds type: long.
      * @return Boolean integer-reply specifically:
-     *
      *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set.
      */
     suspend fun expire(key: K, seconds: Long): Boolean?
+
+    /**
+     * Set a key's time to live in seconds.
+     *
+     * @param key the key.
+     * @param seconds the seconds.
+     * @return Boolean integer-reply specifically:
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set.
+     * @since 6.1
+     */
+    suspend fun expire(key: K, seconds: Duration): Boolean?
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
@@ -102,7 +114,17 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
      * @return Boolean integer-reply specifically:
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
+     *         (see: `EXPIRE`).
+     */
+    suspend fun expireat(key: K, timestamp: Long): Boolean?
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp.
      *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @return Boolean integer-reply specifically:
      *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
      *         (see: `EXPIRE`).
      */
@@ -114,11 +136,11 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
      * @return Boolean integer-reply specifically:
-     *
      *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
      *         (see: `EXPIRE`).
+     * @since 6.1
      */
-    suspend fun expireat(key: K, timestamp: Long): Boolean?
+    suspend fun expireat(key: K, timestamp: Instant): Boolean?
 
     /**
      * Find all keys matching the given pattern.
@@ -203,10 +225,20 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
      * @return integer-reply, specifically:
-     *
      *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set.
      */
     suspend fun pexpire(key: K, milliseconds: Long): Boolean?
+
+    /**
+     * Set a key's time to live in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @return integer-reply, specifically:
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set.
+     * @since 6.1
+     */
+    suspend fun pexpire(key: K, milliseconds: Duration): Boolean?
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
@@ -214,7 +246,17 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @return Boolean integer-reply specifically:
+     *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
+     *         (see: `EXPIRE`).
+     */
+    suspend fun pexpireat(key: K, timestamp: Long): Boolean?
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
      *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @return Boolean integer-reply specifically:
      *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
      *         (see: `EXPIRE`).
      */
@@ -226,11 +268,10 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @return Boolean integer-reply specifically:
-     *
      *         `true` if the timeout was set. `false` if `key` does not exist or the timeout could not be set
      *         (see: `EXPIRE`).
      */
-    suspend fun pexpireat(key: K, timestamp: Long): Boolean?
+    suspend fun pexpireat(key: K, timestamp: Instant): Boolean?
 
     /**
      * Get the time to live for a key in milliseconds.

@@ -21,6 +21,8 @@ import io.lettuce.core.api.reactive.RedisKeyReactiveCommands
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import java.time.Duration
+import java.time.Instant
 import java.util.*
 
 /**
@@ -53,7 +55,13 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun expire(key: K, seconds: Long): Boolean? =
         ops.expire(key, seconds).awaitFirstOrNull()
 
+    override suspend fun expire(key: K, seconds: Duration): Boolean? =
+        ops.expire(key, seconds).awaitFirstOrNull()
+
     override suspend fun expireat(key: K, timestamp: Date): Boolean? =
+        ops.expireat(key, timestamp).awaitFirstOrNull()
+
+    override suspend fun expireat(key: K, timestamp: Instant): Boolean? =
         ops.expireat(key, timestamp).awaitFirstOrNull()
 
     override suspend fun expireat(key: K, timestamp: Long): Boolean? =
@@ -89,9 +97,13 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun pexpire(key: K, milliseconds: Long): Boolean? = ops.pexpire(key, milliseconds).awaitFirstOrNull()
 
-    override suspend fun pexpireat(key: K, timestamp: Date): Boolean? = ops.pexpireat(key, timestamp).awaitFirstOrNull()
+    override suspend fun pexpire(key: K, milliseconds: Duration): Boolean? = ops.pexpire(key, milliseconds).awaitFirstOrNull()
 
     override suspend fun pexpireat(key: K, timestamp: Long): Boolean? = ops.pexpireat(key, timestamp).awaitFirstOrNull()
+
+    override suspend fun pexpireat(key: K, timestamp: Date): Boolean? = ops.pexpireat(key, timestamp).awaitFirstOrNull()
+
+    override suspend fun pexpireat(key: K, timestamp: Instant): Boolean? = ops.pexpireat(key, timestamp).awaitFirstOrNull()
 
     override suspend fun pttl(key: K): Long? = ops.pttl(key).awaitFirstOrNull()
 

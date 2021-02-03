@@ -15,6 +15,7 @@
  */
 package io.lettuce.core;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
@@ -70,6 +71,18 @@ public class SetArgs implements CompositeArgument {
         }
 
         /**
+         * Creates new {@link SetArgs} and enable {@literal EX}.
+         *
+         * @param timeout expire time in seconds.
+         * @return new {@link SetArgs} with {@literal EX} enabled.
+         * @see SetArgs#ex(long)
+         * @since 6.1
+         */
+        public static SetArgs ex(Duration timeout) {
+            return new SetArgs().ex(timeout);
+        }
+
+        /**
          * Creates new {@link SetArgs} and enable {@literal EXAT}.
          *
          * @param timestamp the timestamp type: posix time in seconds.
@@ -112,6 +125,18 @@ public class SetArgs implements CompositeArgument {
          * @see SetArgs#px(long)
          */
         public static SetArgs px(long timeout) {
+            return new SetArgs().px(timeout);
+        }
+
+        /**
+         * Creates new {@link SetArgs} and enable {@literal PX}.
+         *
+         * @param timeout expire time in milliseconds.
+         * @return new {@link SetArgs} with {@literal PX} enabled.
+         * @see SetArgs#px(long)
+         * @since 6.1
+         */
+        public static SetArgs px(Duration timeout) {
             return new SetArgs().px(timeout);
         }
 
@@ -196,6 +221,21 @@ public class SetArgs implements CompositeArgument {
     }
 
     /**
+     * Set the specified expire time, in seconds.
+     *
+     * @param timeout expire time in seconds.
+     * @return {@code this} {@link SetArgs}.
+     * @since 6.1
+     */
+    public SetArgs ex(Duration timeout) {
+
+        LettuceAssert.notNull(timeout, "Timeout must not be null");
+
+        this.ex = timeout.toMillis() / 1000;
+        return this;
+    }
+
+    /**
      * Set the specified expire at time using a posix {@code timestamp}.
      *
      * @param timestamp the timestamp type: posix time in seconds.
@@ -245,6 +285,20 @@ public class SetArgs implements CompositeArgument {
     public SetArgs px(long timeout) {
 
         this.px = timeout;
+        return this;
+    }
+
+    /**
+     * Set the specified expire time, in milliseconds.
+     *
+     * @param timeout expire time in milliseconds.
+     * @return {@code this} {@link SetArgs}.
+     */
+    public SetArgs px(Duration timeout) {
+
+        LettuceAssert.notNull(timeout, "Timeout must not be null");
+
+        this.px = timeout.toMillis();
         return this;
     }
 

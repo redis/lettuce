@@ -19,6 +19,7 @@ import static io.lettuce.core.SetArgs.Builder.*;
 import static io.lettuce.core.StringMatchResult.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -156,6 +157,12 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.set(key, value, ex(10))).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(9);
+
+        assertThat(redis.set(key, value, ex(Duration.ofSeconds(10)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(5L, 10L);
+
+        assertThat(redis.set(key, value, px(Duration.ofSeconds(10)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(5L, 10L);
 
         assertThat(redis.set(key, value, px(10000))).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
