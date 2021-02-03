@@ -54,6 +54,8 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
     private static final IllegalStateException NOT_PART_OF_POOL = unknownStackTrace(
             new IllegalStateException("Returned object not currently part of this pool"), BoundedAsyncPool.class, "release()");
 
+    public static final CompletableFuture<Object> COMPLETED_FUTURE = CompletableFuture.completedFuture(null);
+
     private final int maxTotal;
 
     private final int maxIdle;
@@ -153,7 +155,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
 
         int potentialIdle = getMinIdle() - getIdle();
         if (potentialIdle <= 0 || !isPoolActive()) {
-            return CompletableFuture.completedFuture(null);
+            return (CompletableFuture) COMPLETED_FUTURE;
         }
 
         int totalLimit = getAvailableCapacity();
@@ -163,7 +165,9 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
         for (int i = 0; i < toCreate; i++) {
 
             if (getAvailableCapacity() <= 0) {
-                break;
+
+                futures[i] = COMPLETED_FUTURE;
+                continue;
             }
 
             CompletableFuture<T> future = new CompletableFuture<>();
