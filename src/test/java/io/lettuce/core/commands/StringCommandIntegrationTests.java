@@ -19,6 +19,7 @@ import static io.lettuce.core.SetArgs.Builder.*;
 import static io.lettuce.core.StringMatchResult.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -173,6 +174,17 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.set(key, value, px(20000).nx())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key) >= 19).isTrue();
+    }
+
+    @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void setExAt() {
+
+        assertThat(redis.set(key, value, exAt(Instant.now().plusSeconds(60)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(50L, 61L);
+
+        assertThat(redis.set(key, value, pxAt(Instant.now().plusSeconds(60)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(50L, 61L);
     }
 
     @Test

@@ -15,6 +15,10 @@
  */
 package io.lettuce.core;
 
+import java.time.Instant;
+import java.util.Date;
+
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
@@ -31,7 +35,11 @@ public class SetArgs implements CompositeArgument {
 
     private Long ex;
 
+    private Long exAt;
+
     private Long px;
+
+    private Long pxAt;
 
     private boolean nx = false;
 
@@ -51,7 +59,7 @@ public class SetArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link SetArgs} and enabling {@literal EX}.
+         * Creates new {@link SetArgs} and enable {@literal EX}.
          *
          * @param timeout expire time in seconds.
          * @return new {@link SetArgs} with {@literal EX} enabled.
@@ -62,7 +70,42 @@ public class SetArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link SetArgs} and enabling {@literal PX}.
+         * Creates new {@link SetArgs} and enable {@literal EXAT}.
+         *
+         * @param timestamp the timestamp type: posix time in seconds.
+         * @return new {@link SetArgs} with {@literal EXAT} enabled.
+         * @see SetArgs#exAt(long)
+         */
+        public static SetArgs exAt(long timestamp) {
+            return new SetArgs().exAt(timestamp);
+        }
+
+        /**
+         * Creates new {@link SetArgs} and enable {@literal EXAT}.
+         *
+         * @param timestamp the timestamp type: posix time in seconds.
+         * @return new {@link SetArgs} with {@literal EXAT} enabled.
+         * @see SetArgs#exAt(Date)
+         * @since 6.1
+         */
+        public static SetArgs exAt(Date timestamp) {
+            return new SetArgs().exAt(timestamp);
+        }
+
+        /**
+         * Creates new {@link SetArgs} and enable {@literal EXAT}.
+         *
+         * @param timestamp the timestamp type: posix time in seconds.
+         * @return new {@link SetArgs} with {@literal EXAT} enabled.
+         * @see SetArgs#exAt(Instant)
+         * @since 6.1
+         */
+        public static SetArgs exAt(Instant timestamp) {
+            return new SetArgs().exAt(timestamp);
+        }
+
+        /**
+         * Creates new {@link SetArgs} and enable {@literal PX}.
          *
          * @param timeout expire time in milliseconds.
          * @return new {@link SetArgs} with {@literal PX} enabled.
@@ -73,7 +116,42 @@ public class SetArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link SetArgs} and enabling {@literal NX}.
+         * Creates new {@link SetArgs} and enable {@literal PXAT}.
+         *
+         * @param timestamp the timestamp type: posix time.
+         * @return new {@link SetArgs} with {@literal PXAT} enabled.
+         * @see SetArgs#pxAt(long)
+         */
+        public static SetArgs pxAt(long timestamp) {
+            return new SetArgs().pxAt(timestamp);
+        }
+
+        /**
+         * Creates new {@link SetArgs} and enable {@literal PXAT}.
+         *
+         * @param timestamp the timestamp type: posix time.
+         * @return new {@link SetArgs} with {@literal PXAT} enabled.
+         * @see SetArgs#pxAt(Date)
+         * @since 6.1
+         */
+        public static SetArgs pxAt(Date timestamp) {
+            return new SetArgs().pxAt(timestamp);
+        }
+
+        /**
+         * Creates new {@link SetArgs} and enable {@literal PXAT}.
+         *
+         * @param timestamp the timestamp type: posix time.
+         * @return new {@link SetArgs} with {@literal PXAT} enabled.
+         * @see SetArgs#pxAt(Instant)
+         * @since 6.1
+         */
+        public static SetArgs pxAt(Instant timestamp) {
+            return new SetArgs().pxAt(timestamp);
+        }
+
+        /**
+         * Creates new {@link SetArgs} and enable {@literal NX}.
          *
          * @return new {@link SetArgs} with {@literal NX} enabled.
          * @see SetArgs#nx()
@@ -83,7 +161,7 @@ public class SetArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link SetArgs} and enabling {@literal XX}.
+         * Creates new {@link SetArgs} and enable {@literal XX}.
          *
          * @return new {@link SetArgs} with {@literal XX} enabled.
          * @see SetArgs#xx()
@@ -93,7 +171,7 @@ public class SetArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link SetArgs} and enabling {@literal KEEPTTL}.
+         * Creates new {@link SetArgs} and enable {@literal KEEPTTL}.
          *
          * @return new {@link SetArgs} with {@literal KEEPTTL} enabled.
          * @see SetArgs#keepttl()
@@ -118,6 +196,47 @@ public class SetArgs implements CompositeArgument {
     }
 
     /**
+     * Set the specified expire at time using a posix {@code timestamp}.
+     *
+     * @param timestamp the timestamp type: posix time in seconds.
+     * @return {@code this} {@link SetArgs}.
+     * @since 6.1
+     */
+    public SetArgs exAt(long timestamp) {
+
+        this.exAt = timestamp;
+        return this;
+    }
+
+    /**
+     * Set the specified expire at time using a posix {@code timestamp}.
+     *
+     * @param timestamp the timestamp type: posix time in seconds.
+     * @return {@code this} {@link SetArgs}.
+     * @since 6.1
+     */
+    public SetArgs exAt(Date timestamp) {
+
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+
+        return exAt(timestamp.getTime() / 1000);
+    }
+
+    /**
+     * Set the specified expire at time using a posix {@code timestamp}.
+     *
+     * @param timestamp the timestamp type: posix time in seconds.
+     * @return {@code this} {@link SetArgs}.
+     * @since 6.1
+     */
+    public SetArgs exAt(Instant timestamp) {
+
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+
+        return exAt(timestamp.toEpochMilli() / 1000);
+    }
+
+    /**
      * Set the specified expire time, in milliseconds.
      *
      * @param timeout expire time in milliseconds.
@@ -127,6 +246,47 @@ public class SetArgs implements CompositeArgument {
 
         this.px = timeout;
         return this;
+    }
+
+    /**
+     * Set the specified expire at time using a posix {@code timestamp}.
+     *
+     * @param timestamp the timestamp type: posix time in milliseconds.
+     * @return {@code this} {@link SetArgs}.
+     * @since 6.1
+     */
+    public SetArgs pxAt(long timestamp) {
+
+        this.pxAt = timestamp;
+        return this;
+    }
+
+    /**
+     * Set the specified expire at time using a posix {@code timestamp}.
+     *
+     * @param timestamp the timestamp type: posix time in milliseconds.
+     * @return {@code this} {@link SetArgs}.
+     * @since 6.1
+     */
+    public SetArgs pxAt(Date timestamp) {
+
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+
+        return pxAt(timestamp.getTime());
+    }
+
+    /**
+     * Set the specified expire at time using a posix {@code timestamp}.
+     *
+     * @param timestamp the timestamp type: posix time in milliseconds.
+     * @return {@code this} {@link SetArgs}.
+     * @since 6.1
+     */
+    public SetArgs pxAt(Instant timestamp) {
+
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+
+        return pxAt(timestamp.toEpochMilli());
     }
 
     /**
@@ -163,14 +323,23 @@ public class SetArgs implements CompositeArgument {
         return this;
     }
 
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (ex != null) {
             args.add("EX").add(ex);
         }
 
+        if (exAt != null) {
+            args.add("EXAT").add(exAt);
+        }
+
         if (px != null) {
             args.add("PX").add(px);
+        }
+
+        if (pxAt != null) {
+            args.add("PXAT").add(pxAt);
         }
 
         if (nx) {
