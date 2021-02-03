@@ -2567,20 +2567,20 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static String getLowerValue(Range<String> range) {
 
-        if (range.getLower().equals(Boundary.unbounded())) {
-            return "-";
-        }
+        Boundary<String> boundary = range.getLower();
 
-        return range.getLower().getValue();
+        return boundary.equals(Boundary.unbounded()) ? "-" : getRange(boundary);
     }
 
     private static String getUpperValue(Range<String> range) {
 
-        if (range.getUpper().equals(Boundary.unbounded())) {
-            return "+";
-        }
+        Boundary<String> boundary = range.getUpper();
 
-        return range.getUpper().getValue();
+        return boundary.equals(Boundary.unbounded()) ? "+" : getRange(boundary);
+    }
+
+    private static String getRange(Boundary<String> boundary) {
+        return !boundary.isIncluding() ? "(" + boundary.getValue() : boundary.getValue();
     }
 
     public Command<K, V, List<StreamMessage<K, V>>> xread(XReadArgs xReadArgs, StreamOffset<K>[] streams) {

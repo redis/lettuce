@@ -181,6 +181,20 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xrangeRanges() {
+
+        String id1 = redis.xadd(key, Collections.singletonMap("key", "value"));
+        String id2 = redis.xadd(key, Collections.singletonMap("key", "value"));
+        String id3 = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        assertThat(redis.xrange(key, Range.unbounded())).hasSize(3);
+        assertThat(redis.xrange(key, Range.from(Range.Boundary.including(id1), Range.Boundary.excluding(id3)))).hasSize(2);
+        assertThat(redis.xrange(key, Range.from(Range.Boundary.excluding(id1), Range.Boundary.excluding(id3)))).hasSize(1);
+        assertThat(redis.xrange(key, Range.from(Range.Boundary.excluding(id1), Range.Boundary.including(id3)))).hasSize(2);
+    }
+
+    @Test
     void xrevrange() {
 
         for (int i = 0; i < 5; i++) {
@@ -408,6 +422,23 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(message.getId()).isEqualTo(id);
         assertThat(message.getConsumer()).isEqualTo("consumer1");
         assertThat(message.getRedeliveryCount()).isEqualTo(1);
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xpendingRanges() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id1 = redis.xadd(key, Collections.singletonMap("key", "value"));
+        String id2 = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        assertThat(redis.xpending(key, "group", Range.unbounded(), Limit.from(10))).hasSize(2);
+        assertThat(redis.xpending(key, "group", Range.from(Range.Boundary.including(id1), Range.Boundary.excluding(id2)),
+                Limit.from(10))).hasSize(1);
+        assertThat(redis.xpending(key, "group", Range.from(Range.Boundary.including(id1), Range.Boundary.including(id2)),
+                Limit.from(10))).hasSize(2);
     }
 
     @Test
