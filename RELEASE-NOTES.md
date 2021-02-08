@@ -162,6 +162,7 @@ Fixes
 * Lettuce 6.0.1 fails with GraalVM 20.3 #1562 (Thanks to @atrianac)
 * Reactive stream spec violation when using command timeout #1576 (Thanks to @martin-tarjanyi)
 * Fix copyright replace bug for Kotlin api generator #1588 (Thanks to @dengliming)
+* Fix NullPointerException in BoundedAsyncPool.createIdle() when at capacity #1611
 
 Other
 -----
