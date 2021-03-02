@@ -202,7 +202,7 @@ public interface RedisSortedSetCommands<K, V> {
      *
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of elements.
-     * @since 6.2
+     * @since 6.1
      */
     List<V> zdiff(K... keys);
 
@@ -212,7 +212,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @param destKey the dest key.
      * @param srcKeys the src keys.
      * @return Long the number of elements in the resulting sorted set at destination.
-     * @since 6.2
+     * @since 6.1
      */
     Long zdiffstore(K destKey, K... srcKeys);
 
@@ -221,7 +221,7 @@ public interface RedisSortedSetCommands<K, V> {
      *
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of scored values.
-     * @since 6.2
+     * @since 6.1
      */
     List<ScoredValue<V>> zdiffWithScores(K... keys);
 
@@ -765,7 +765,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @param srcKey the src key.
      * @param range the lexicographical range.
      * @return The number of elements in the resulting sorted set.
-     * @since 6.2
+     * @since 6.1
      */
     Long zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
@@ -776,7 +776,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @param srcKey the src key.
      * @param range the score range.
      * @return The number of elements in the resulting sorted set.
-     * @since 6.2
+     * @since 6.1
      */
     Long zrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit);
 
@@ -1242,7 +1242,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @param srcKey the dst key.
      * @param range the lexicographical range.
      * @return The number of elements in the resulting sorted set.
-     * @since 6.2
+     * @since 6.1
      */
     Long zrevrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
@@ -1253,7 +1253,7 @@ public interface RedisSortedSetCommands<K, V> {
      * @param srcKey the dst key.
      * @param range the score range.
      * @return The number of elements in the resulting sorted set.
-     * @since 6.2
+     * @since 6.1
      */
     Long zrevrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit);
 

@@ -142,7 +142,7 @@ class ReplicaTopologyProvider implements TopologyProvider {
             String ip = getNested(IP_PATTERN, group, 1);
             String port = getNested(PORT_PATTERN, group, 1);
 
-            replicas.add(new RedisUpstreamReplicaNode(ip, Integer.parseInt(port), redisURI, RedisInstance.Role.SLAVE));
+            replicas.add(new RedisMasterReplicaNode(ip, Integer.parseInt(port), redisURI, RedisInstance.Role.SLAVE));
         }
 
         return replicas;
@@ -163,7 +163,7 @@ class ReplicaTopologyProvider implements TopologyProvider {
         String host = masterHostMatcher.group(1);
         int port = Integer.parseInt(masterPortMatcher.group(1));
 
-        return new RedisUpstreamReplicaNode(host, port, redisURI, RedisInstance.Role.UPSTREAM);
+        return new RedisMasterReplicaNode(host, port, redisURI, RedisInstance.Role.UPSTREAM);
     }
 
     private String getNested(Pattern pattern, String string, int group) {
@@ -196,7 +196,7 @@ class ReplicaTopologyProvider implements TopologyProvider {
                     + RedisInstance.Role.REPLICA);
         }
 
-        return new RedisUpstreamReplicaNode(redisURI.getHost(), redisURI.getPort(), redisURI, role);
+        return new RedisMasterReplicaNode(redisURI.getHost(), redisURI.getPort(), redisURI, role);
     }
 
 }

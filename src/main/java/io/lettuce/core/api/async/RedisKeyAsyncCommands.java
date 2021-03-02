@@ -15,6 +15,8 @@
  */
 package io.lettuce.core.api.async;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -48,7 +50,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param source the source.
      * @param destination the destination.
      * @return Boolean integer-reply specifically: {@code true} if source was copied. {@code false} if source was not copied.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<Boolean> copy(K source, K destination);
 
@@ -59,7 +61,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param destination the destination.
      * @param copyArgs the copyArgs.
      * @return Boolean integer-reply specifically: {@code true} if source was copied. {@code false} if source was not copied.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<Boolean> copy(K source, K destination, CopyArgs copyArgs);
 
@@ -101,20 +103,38 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param key the key.
      * @param seconds the seconds type: long.
      * @return Boolean integer-reply specifically:
-     *
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
      */
     RedisFuture<Boolean> expire(K key, long seconds);
+
+    /**
+     * Set a key's time to live in seconds.
+     *
+     * @param key the key.
+     * @param seconds the seconds.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 6.1
+     */
+    RedisFuture<Boolean> expire(K key, Duration seconds);
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     */
+    RedisFuture<Boolean> expireat(K key, long timestamp);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp.
      *
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> expireat(K key, Date timestamp);
 
@@ -123,12 +143,11 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
-     *
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 6.1
      */
-    RedisFuture<Boolean> expireat(K key, long timestamp);
+    RedisFuture<Boolean> expireat(K key, Instant timestamp);
 
     /**
      * Find all keys matching the given pattern.
@@ -222,20 +241,38 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
      * @return integer-reply, specifically:
-     *
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
      */
     RedisFuture<Boolean> pexpire(K key, long milliseconds);
+
+    /**
+     * Set a key's time to live in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
+     * @since 6.1
+     */
+    RedisFuture<Boolean> pexpire(K key, Duration milliseconds);
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     */
+    RedisFuture<Boolean> pexpireat(K key, long timestamp);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
      *
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> pexpireat(K key, Date timestamp);
 
@@ -245,11 +282,10 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @return Boolean integer-reply specifically:
-     *
      *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
      *         (see: {@code EXPIRE}).
      */
-    RedisFuture<Boolean> pexpireat(K key, long timestamp);
+    RedisFuture<Boolean> pexpireat(K key, Instant timestamp);
 
     /**
      * Get the time to live for a key in milliseconds.

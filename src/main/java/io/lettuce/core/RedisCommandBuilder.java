@@ -19,6 +19,7 @@ import static io.lettuce.core.internal.LettuceStrings.*;
 import static io.lettuce.core.protocol.CommandKeyword.*;
 import static io.lettuce.core.protocol.CommandType.*;
 import static io.lettuce.core.protocol.CommandType.COPY;
+import static io.lettuce.core.protocol.CommandType.SAVE;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -38,6 +39,7 @@ import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 
@@ -65,6 +67,104 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
+    }
+
+    Command<K, V, Set<AclCategory>> aclCat() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(CAT);
+        return createCommand(ACL, new EnumSetOutput<>(codec, AclCategory.class, String::toUpperCase, it -> null), args);
+    }
+
+    Command<K, V, Set<CommandType>> aclCat(AclCategory category) {
+        LettuceAssert.notNull(category, "Category " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(CAT).add(category.name().toLowerCase());
+        return createCommand(ACL, new EnumSetOutput<>(codec, CommandType.class, String::toUpperCase, it -> null), args);
+    }
+
+    Command<K, V, Long> aclDeluser(String... usernames) {
+        notEmpty(usernames);
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(DELUSER);
+        for (String username : usernames) {
+            args.add(username);
+        }
+        return createCommand(ACL, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclGenpass() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(GENPASS);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclGenpass(int bits) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(GENPASS).add(bits);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Object>> aclGetuser(String username) {
+        LettuceAssert.notNull(username, "Username " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(GETUSER).add(username);
+        return createCommand(ACL, new NestedMultiOutput<>(codec), args);
+    }
+
+    Command<K, V, List<String>> aclList() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LIST);
+        return createCommand(ACL, new StringListOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclLoad() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LOAD);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Map<String, Object>>> aclLog() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LOG);
+        return new Command(ACL, new ListOfGenericMapsOutput<>(StringCodec.ASCII), args);
+    }
+
+    Command<K, V, List<Map<String, Object>>> aclLog(int count) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LOG).add(count);
+        return new Command(ACL, new ListOfGenericMapsOutput<>(StringCodec.ASCII), args);
+    }
+
+    Command<K, V, String> aclLogReset() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(LOG).add(RESET);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclSave() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(CommandKeyword.SAVE);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclSetuser(String username, AclSetuserArgs setuserArgs) {
+        notNullKey(username);
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(SETUSER).add(username);
+        setuserArgs.build(args);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, List<String>> aclUsers() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(USERS);
+        return createCommand(ACL, new StringListOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclWhoami() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(WHOAMI);
+        return createCommand(ACL, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, Long> append(K key, V value) {
@@ -811,7 +911,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             String unit) {
         notNullKey(key);
         LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
         return createCommand(commandType, new ValueSetOutput<>(codec), args);
@@ -840,7 +939,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(geoRadiusStoreArgs, "GeoRadiusStoreArgs " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(geoRadiusStoreArgs.getStoreKey() != null || geoRadiusStoreArgs.getStoreDistKey() != null,
-                "At least STORE key or STORDIST key is required");
+                "At least STORE key or STOREDIST key is required");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(longitude).add(latitude).add(distance).add(unit);
         geoRadiusStoreArgs.build(args);
@@ -882,12 +981,63 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(unit, "Unit " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(unit, "Unit " + MUST_NOT_BE_EMPTY);
         LettuceAssert.isTrue(geoRadiusStoreArgs.getStoreKey() != null || geoRadiusStoreArgs.getStoreDistKey() != null,
-                "At least STORE key or STORDIST key is required");
+                "At least STORE key or STOREDIST key is required");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(member).add(distance).add(unit);
         geoRadiusStoreArgs.build(args);
 
         return createCommand(GEORADIUSBYMEMBER, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Set<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate) {
+        notNullKey(key);
+        LettuceAssert.notNull(reference, "GeoRef " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(predicate, "GeoPredicate " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        reference.build(args);
+        predicate.build(args);
+
+        return createCommand(GEOSEARCH, new ValueSetOutput<>(codec), args);
+    }
+
+    Command<K, V, List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(reference, "GeoRef " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(predicate, "GeoPredicate " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        reference.build(args);
+        predicate.build(args);
+        geoArgs.build(args);
+
+        return createCommand(GEOSEARCH,
+                new GeoWithinListOutput<>(codec, geoArgs.isWithDistance(), geoArgs.isWithHash(), geoArgs.isWithCoordinates()),
+                args);
+    }
+
+    Command<K, V, Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs, boolean storeDist) {
+        notNullKey(key);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key, "Key " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(reference, "GeoRef " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(predicate, "GeoPredicate " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).addKey(key);
+
+        reference.build(args);
+        predicate.build(args);
+        geoArgs.build(args);
+
+        if (storeDist) {
+            args.add("STOREDIST");
+        }
+
+        return createCommand(GEOSEARCHSTORE, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, V> get(K key) {
@@ -2526,20 +2676,20 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static String getLowerValue(Range<String> range) {
 
-        if (range.getLower().equals(Boundary.unbounded())) {
-            return "-";
-        }
+        Boundary<String> boundary = range.getLower();
 
-        return range.getLower().getValue();
+        return boundary.equals(Boundary.unbounded()) ? "-" : getRange(boundary);
     }
 
     private static String getUpperValue(Range<String> range) {
 
-        if (range.getUpper().equals(Boundary.unbounded())) {
-            return "+";
-        }
+        Boundary<String> boundary = range.getUpper();
 
-        return range.getUpper().getValue();
+        return boundary.equals(Boundary.unbounded()) ? "+" : getRange(boundary);
+    }
+
+    private static String getRange(Boundary<String> boundary) {
+        return !boundary.isIncluding() ? "(" + boundary.getValue() : boundary.getValue();
     }
 
     public Command<K, V, List<StreamMessage<K, V>>> xread(XReadArgs xReadArgs, StreamOffset<K>[] streams) {

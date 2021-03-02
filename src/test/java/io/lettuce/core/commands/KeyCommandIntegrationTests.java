@@ -18,6 +18,7 @@ package io.lettuce.core.commands;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -139,7 +140,10 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.expire(key, 10)).isFalse();
         redis.set(key, value);
         assertThat(redis.expire(key, 10)).isTrue();
-        assertThat((long) redis.ttl(key)).isEqualTo(10);
+        assertThat(redis.ttl(key)).isBetween(5L, 10L);
+
+        redis.expire(key, Duration.ofSeconds(20));
+        assertThat(redis.ttl(key)).isBetween(10L, 20L);
     }
 
     @Test
@@ -150,6 +154,9 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.expireat(key, expiration)).isTrue();
 
         assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(8);
+
+        assertThat(redis.expireat(key, Instant.now().plusSeconds(15))).isTrue();
+        assertThat(redis.ttl(key)).isBetween(10L, 20L);
     }
 
     @Test
@@ -229,6 +236,9 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         assertThat(redis.pexpire(key, 5000)).isTrue();
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
+
+        redis.pexpire(key, Duration.ofSeconds(20));
+        assertThat(redis.ttl(key)).isBetween(10L, 20L);
     }
 
     @Test
@@ -238,6 +248,9 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         assertThat(redis.pexpireat(key, expiration)).isTrue();
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
+
+        assertThat(redis.pexpireat(key, Instant.now().plusSeconds(15))).isTrue();
+        assertThat(redis.ttl(key)).isBetween(10L, 20L);
     }
 
     @Test

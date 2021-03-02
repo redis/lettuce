@@ -15,12 +15,11 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,19 +34,16 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.role.RedisInstance;
-import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.test.WithPassword;
-import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Integration tests for static master/replica via {@link MasterReplica}.
+ *
  * @author Mark Paluch
  */
-class UpstreamReplicaTest extends AbstractRedisClientTest {
-
-    private RedisURI masterURI = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd)
-            .withClientName("my-client").withDatabase(5).build();
+class StaticMasterReplicaTest extends AbstractRedisClientTest {
 
     private StatefulRedisMasterReplicaConnection<String, String> connection;
 
@@ -58,10 +54,10 @@ class UpstreamReplicaTest extends AbstractRedisClientTest {
     private RedisCommands<String, String> connection2;
 
     @BeforeEach
-    void before() {
+    void before() throws Exception {
 
-        RedisURI node1 = RedisURI.Builder.redis(host, TestSettings.port(3)).withDatabase(2).build();
-        RedisURI node2 = RedisURI.Builder.redis(host, TestSettings.port(4)).withDatabase(2).build();
+        RedisURI node1 = RedisURI.Builder.redis(host, TestSettings.port(3)).withClientName("my-client").withDatabase(2).build();
+        RedisURI node2 = RedisURI.Builder.redis(host, TestSettings.port(4)).withClientName("my-client").withDatabase(2).build();
 
         connection1 = client.connect(node1).sync();
         connection2 = client.connect(node2).sync();
@@ -89,21 +85,26 @@ class UpstreamReplicaTest extends AbstractRedisClientTest {
         this.connection2.auth(passwd);
         this.connection2.configSet("masterauth", passwd);
 
-        connection = MasterReplica.connect(client, StringCodec.UTF8, masterURI);
+        node1.setPassword(passwd);
+        node2.setPassword(passwd);
+
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(upstream, replica));
         connection.setReadFrom(ReadFrom.REPLICA);
     }
 
     @AfterEach
-    void after() {
+    void after() throws Exception {
 
         if (connection1 != null) {
             WithPassword.disableAuthentication(connection1);
+            connection1.configSet("masterauth", "");
             connection1.configRewrite();
             connection1.getStatefulConnection().close();
         }
 
         if (connection2 != null) {
             WithPassword.disableAuthentication(connection2);
+            connection2.configSet("masterauth", "");
             connection2.configRewrite();
             connection2.getStatefulConnection().close();
         }
@@ -114,20 +115,7 @@ class UpstreamReplicaTest extends AbstractRedisClientTest {
     }
 
     @Test
-    void testMasterReplicaReadFromMaster() {
-
-        connection.setReadFrom(ReadFrom.UPSTREAM);
-        String server = connection.sync().info("server");
-
-        Pattern pattern = Pattern.compile("tcp_port:(\\d+)");
-        Matcher matcher = pattern.matcher(server);
-
-        assertThat(matcher.find()).isTrue();
-        assertThat(matcher.group(1)).isEqualTo("" + upstream.getPort());
-    }
-
-    @Test
-    void testMasterReplicaReadFromReplica() {
+    void testMasterReplicaStandaloneBasic() {
 
         String server = connection.sync().info("server");
 
@@ -135,7 +123,7 @@ class UpstreamReplicaTest extends AbstractRedisClientTest {
         Matcher matcher = pattern.matcher(server);
 
         assertThat(matcher.find()).isTrue();
-        assertThat(matcher.group(1)).isEqualTo("" + replica.getPort());
+        assertThat(matcher.group(1)).isEqualTo("6483");
         assertThat(connection.getReadFrom()).isEqualTo(ReadFrom.REPLICA);
     }
 
@@ -150,56 +138,89 @@ class UpstreamReplicaTest extends AbstractRedisClientTest {
     }
 
     @Test
-    void testConnectToReplica() {
+    void noReplicaForRead() {
 
         connection.close();
 
-        RedisURI replicaUri = RedisURI.Builder.redis(host, TestSettings.port(4)).withPassword(passwd).build();
-        connection = MasterReplica.connect(client, StringCodec.UTF8, replicaUri);
-
-        RedisCommands<String, String> sync = connection.sync();
-        sync.set(key, value);
-    }
-
-    @Test
-    void noReplicaForRead() {
-
-        connection.setReadFrom(new ReadFrom() {
-            @Override
-            public List<RedisNodeDescription> select(Nodes nodes) {
-                return Collections.emptyList();
-            }
-        });
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Collections.singletonList(upstream));
+        connection.setReadFrom(ReadFrom.REPLICA);
 
         assertThatThrownBy(() -> replicaCall(connection)).isInstanceOf(RedisException.class);
     }
 
     @Test
-    void masterReplicaConnectionShouldSetClientName() {
-
-        assertThat(connection.sync().clientGetname()).isEqualTo(masterURI.getClientName());
-        connection.sync().quit();
-        assertThat(connection.sync().clientGetname()).isEqualTo(masterURI.getClientName());
+    void shouldWorkWithMasterOnly() {
 
         connection.close();
+
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Collections.singletonList(upstream));
+
+        connection.sync().set(key, value);
+        assertThat(connection.sync().get(key)).isEqualTo("value");
     }
 
     @Test
-    @EnabledOnCommand("ACL")
-    void testConnectToReplicaWithAcl() {
+    void shouldWorkWithReplicaOnly() {
 
         connection.close();
 
-        RedisURI replicaUri = RedisURI.Builder.redis(host, TestSettings.port(900 + 6)).withAuthentication("default", passwd)
-                .build();
-        connection = MasterReplica.connect(client, StringCodec.UTF8, replicaUri);
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Collections.singletonList(replica));
+        connection.setReadFrom(ReadFrom.UPSTREAM_PREFERRED);
 
-        RedisCommands<String, String> sync = connection.sync();
+        assertThat(connection.sync().info()).isNotEmpty();
+    }
 
-        assertThat(sync.ping()).isEqualTo("PONG");
+    @Test
+    void noUpstreamForWrite() {
+
+        connection.close();
+
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Collections.singletonList(replica));
+
+        assertThatThrownBy(() -> connection.sync().set(key, value)).isInstanceOf(RedisException.class);
+    }
+
+    @Test
+    void masterReplicaConnectionShouldSetClientName() {
+
+        assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo("my-client");
+
+        connection.close();
     }
 
     static String replicaCall(StatefulRedisMasterReplicaConnection<String, String> connection) {
         return connection.sync().info("replication");
+    }
+
+    @Test
+    void testConnectionCount() {
+
+        MasterReplicaConnectionProvider connectionProvider = getConnectionProvider();
+
+        assertThat(connectionProvider.getConnectionCount()).isEqualTo(0);
+        replicaCall(connection);
+
+        assertThat(connectionProvider.getConnectionCount()).isEqualTo(1);
+
+        connection.sync().set(key, value);
+        assertThat(connectionProvider.getConnectionCount()).isEqualTo(2);
+    }
+
+    @Test
+    void testReconfigureTopology() {
+        MasterReplicaConnectionProvider connectionProvider = getConnectionProvider();
+
+        replicaCall(connection);
+
+        connectionProvider.setKnownNodes(Collections.emptyList());
+
+        assertThat(connectionProvider.getConnectionCount()).isEqualTo(0);
+    }
+
+    MasterReplicaConnectionProvider getConnectionProvider() {
+        MasterReplicaChannelWriter writer = ((StatefulRedisMasterReplicaConnectionImpl) connection).getChannelWriter();
+        return writer.getUpstreamReplicaConnectionProvider();
     }
 }

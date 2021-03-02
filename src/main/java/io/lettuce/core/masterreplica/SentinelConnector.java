@@ -31,12 +31,12 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * {@link UpstreamReplicaConnector} to connect a Sentinel-managed Master/Replica setup using a Sentinel {@link RedisURI}.
+ * {@link MasterReplicaConnector} to connect a Sentinel-managed Master/Replica setup using a Sentinel {@link RedisURI}.
  *
  * @author Mark Paluch
  * @since 5.1
  */
-class SentinelConnector<K, V> implements UpstreamReplicaConnector<K, V> {
+class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SentinelConnector.class);
 
@@ -59,8 +59,8 @@ class SentinelConnector<K, V> implements UpstreamReplicaConnector<K, V> {
         SentinelTopologyRefresh sentinelTopologyRefresh = new SentinelTopologyRefresh(redisClient,
                 redisURI.getSentinelMasterId(), redisURI.getSentinels());
 
-        UpstreamReplicaTopologyRefresh refresh = new UpstreamReplicaTopologyRefresh(redisClient, topologyProvider);
-        UpstreamReplicaConnectionProvider<K, V> connectionProvider = new UpstreamReplicaConnectionProvider<>(redisClient, codec,
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
+        MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
                 redisURI, Collections.emptyMap());
 
         Runnable runnable = getTopologyRefreshRunnable(refresh, connectionProvider);
@@ -76,12 +76,12 @@ class SentinelConnector<K, V> implements UpstreamReplicaConnector<K, V> {
     }
 
     private Mono<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec,
-            SentinelTopologyRefresh sentinelTopologyRefresh, UpstreamReplicaConnectionProvider<K, V> connectionProvider,
+            SentinelTopologyRefresh sentinelTopologyRefresh, MasterReplicaConnectionProvider<K, V> connectionProvider,
             Runnable runnable, List<RedisNodeDescription> nodes) {
 
         connectionProvider.setKnownNodes(nodes);
 
-        UpstreamReplicaChannelWriter channelWriter = new UpstreamReplicaChannelWriter(connectionProvider,
+        MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
                 redisClient.getResources()) {
 
             @Override
@@ -91,7 +91,7 @@ class SentinelConnector<K, V> implements UpstreamReplicaConnector<K, V> {
 
         };
 
-        StatefulRedisUpstreamReplicaConnectionImpl<K, V> connection = new StatefulRedisUpstreamReplicaConnectionImpl<>(
+        StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
                 channelWriter, codec, redisURI.getTimeout());
         connection.setOptions(redisClient.getOptions());
 
@@ -102,8 +102,8 @@ class SentinelConnector<K, V> implements UpstreamReplicaConnector<K, V> {
         }).then(Mono.just(connection));
     }
 
-    private Runnable getTopologyRefreshRunnable(UpstreamReplicaTopologyRefresh refresh,
-            UpstreamReplicaConnectionProvider<K, V> connectionProvider) {
+    private Runnable getTopologyRefreshRunnable(MasterReplicaTopologyRefresh refresh,
+            MasterReplicaConnectionProvider<K, V> connectionProvider) {
 
         return () -> {
             try {

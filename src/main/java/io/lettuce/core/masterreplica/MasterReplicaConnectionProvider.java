@@ -43,9 +43,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @since 4.1
  */
-class UpstreamReplicaConnectionProvider<K, V> {
+class MasterReplicaConnectionProvider<K, V> {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(UpstreamReplicaConnectionProvider.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterReplicaConnectionProvider.class);
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
@@ -61,7 +61,7 @@ class UpstreamReplicaConnectionProvider<K, V> {
 
     private ReadFrom readFrom;
 
-    UpstreamReplicaConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
+    MasterReplicaConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
             Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections) {
 
         this.initialRedisUri = initialRedisUri;
@@ -77,9 +77,9 @@ class UpstreamReplicaConnectionProvider<K, V> {
     }
 
     /**
-     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link UpstreamReplicaConnectionProvider.Intent#WRITE}
-     * intentions use the master connection, {@link UpstreamReplicaConnectionProvider.Intent#READ} intentions lookup one or more
-     * read candidates using the {@link ReadFrom} setting.
+     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link MasterReplicaConnectionProvider.Intent#WRITE} intentions
+     * use the master connection, {@link MasterReplicaConnectionProvider.Intent#READ} intentions lookup one or more read
+     * candidates using the {@link ReadFrom} setting.
      *
      * @param intent command intent
      * @return the connection.
@@ -98,9 +98,9 @@ class UpstreamReplicaConnectionProvider<K, V> {
     }
 
     /**
-     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link UpstreamReplicaConnectionProvider.Intent#WRITE}
-     * intentions use the master connection, {@link UpstreamReplicaConnectionProvider.Intent#READ} intentions lookup one or more
-     * read candidates using the {@link ReadFrom} setting.
+     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link MasterReplicaConnectionProvider.Intent#WRITE} intentions
+     * use the master connection, {@link MasterReplicaConnectionProvider.Intent#READ} intentions lookup one or more read
+     * candidates using the {@link ReadFrom} setting.
      *
      * @param intent command intent
      * @return the connection.

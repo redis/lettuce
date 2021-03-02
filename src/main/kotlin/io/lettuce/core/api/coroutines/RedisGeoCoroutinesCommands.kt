@@ -50,6 +50,19 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
     suspend fun geoadd(key: K, vararg lngLatMember: Any): Long?
 
     /**
+     * Retrieve distance between points `from` and `to`. If one or more elements are missing `null` is
+     * returned. Default in meters by, otherwise according to `unit`
+     *
+     * @param key the key of the geo set.
+     * @param from from member.
+     * @param to to member.
+     * @param unit distance unit.
+     * @return distance between points `from` and `to`. If one or more elements are missing `null` is
+     *         returned.
+     */
+    suspend fun geodist(key: K, from: V, to: V, unit: GeoArgs.Unit): Double?
+
+    /**
      * Retrieve Geohash strings representing the position of one or more elements in a sorted set value representing a
      * geospatial index.
      *
@@ -58,6 +71,16 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return bulk reply Geohash strings in the order of `members`. Returns `null` if a member is not found.
      */
     fun geohash(key: K, vararg members: V): Flow<Value<String>>
+
+    /**
+     * Get geo coordinates for the `members`.
+     *
+     * @param key the key of the geo set.
+     * @param members the members.
+     * @return a list of [GeoCoordinates]s representing the x,y position of each element specified in the arguments. For
+     *         missing elements `null` is returned.
+     */
+    suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates>
 
     /**
      * Retrieve members selected by distance with the center of `longitude` and `latitude`.
@@ -139,27 +162,44 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
     suspend fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long?
 
     /**
-     * Get geo coordinates for the `members`.
+     * Retrieve members selected by distance with the center of `reference` the search `predicate`.
+     * Use [GeoSearch] to create reference and predicate objects.
      *
      * @param key the key of the geo set.
-     * @param members the members.
-     * @return a list of [GeoCoordinates]s representing the x,y position of each element specified in the arguments. For
-     *         missing elements `null` is returned.
+     * @param reference the reference member or longitude/latitude coordinates.
+     * @param predicate the bounding box or radius to search in.
+     * @return bulk reply.
+     * @since 6.1
      */
-    suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates>
+    fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate): Flow<V>
 
     /**
-     * Retrieve distance between points `from` and `to`. If one or more elements are missing `null` is
-     * returned. Default in meters by, otherwise according to `unit`
+     * Retrieve members selected by distance with the center of `reference` the search `predicate`.
+     * Use [GeoSearch] to create reference and predicate objects.
      *
      * @param key the key of the geo set.
-     * @param from from member.
-     * @param to to member.
-     * @param unit distance unit.
-     * @return distance between points `from` and `to`. If one or more elements are missing `null` is
-     *         returned.
+     * @param reference the reference member or longitude/latitude coordinates.
+     * @param predicate the bounding box or radius to search in.
+     * @param geoArgs args to control the result.
+     * @return nested multi-bulk reply. The [GeoWithin] contains only fields which were requested by [GeoArgs].
+     * @since 6.1
      */
-    suspend fun geodist(key: K, from: V, to: V, unit: GeoArgs.Unit): Double?
+    fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs): Flow<GeoWithin<V>>
+
+    /**
+     * Perform a [geosearch(Any, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)] query and store the results in a
+     * sorted set.
+     *
+     * @param destination the destination where to store results.
+     * @param key the key of the geo set.
+     * @param reference the reference member or longitude/latitude coordinates.
+     * @param predicate the bounding box or radius to search in.
+     * @param geoArgs args to control the result.
+     * @param storeDist stores the items in a sorted set populated with their distance from the center of the circle or box, as a floating-point number, in the same unit specified for that shape.
+     * @return Long integer-reply the number of elements in the result.
+     * @since 6.1
+     */
+    suspend fun geosearchstore(destination: K, key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs, storeDist: Boolean): Long?
 
 }
 

@@ -17,7 +17,6 @@ package io.lettuce.core.cluster.api.reactive;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -33,10 +32,11 @@ import io.lettuce.core.api.reactive.*;
  * @since 5.0
  */
 public interface RedisClusterReactiveCommands<K, V>
-        extends BaseRedisReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>,
-        RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>,
-        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
-        RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V> {
+        extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
+        RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
+        RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
+        RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
+        RedisStringReactiveCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.

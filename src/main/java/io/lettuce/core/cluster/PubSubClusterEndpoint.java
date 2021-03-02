@@ -35,7 +35,7 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
 
     private final NotifyingMessageListener multicast = new NotifyingMessageListener();
 
-    private final UpstreamMessageListener upstream = new UpstreamMessageListener();
+    private final MasterMessageListener upstream = new MasterMessageListener();
 
     private volatile boolean nodeMessagePropagation = false;
 
@@ -108,7 +108,7 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
         }
     }
 
-    private class UpstreamMessageListener extends NotifyingMessageListener {
+    private class MasterMessageListener extends NotifyingMessageListener {
 
         @Override
         public void message(RedisClusterNode node, K channel, V message) {

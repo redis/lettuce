@@ -203,7 +203,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      *
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of elements.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<List<V>> zdiff(K... keys);
 
@@ -213,7 +213,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param destKey the dest key.
      * @param srcKeys the src keys.
      * @return Long the number of elements in the resulting sorted set at destination.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<Long> zdiffstore(K destKey, K... srcKeys);
 
@@ -222,7 +222,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      *
      * @param keys the keys.
      * @return List&lt;V&gt; array-reply list of scored values.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<List<ScoredValue<V>>> zdiffWithScores(K... keys);
 
@@ -765,7 +765,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param srcKey the src key.
      * @param range the lexicographical range.
      * @return The number of elements in the resulting sorted set.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
@@ -777,7 +777,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param srcKey the src key.
      * @param range the score range.
      * @return The number of elements in the resulting sorted set.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<Long> zrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit);
 
@@ -1242,7 +1242,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param srcKey the src key.
      * @param range the lexicographical range.
      * @return The number of elements in the resulting sorted set.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<Long> zrevrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
@@ -1254,7 +1254,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param srcKey the src key.
      * @param range the score range.
      * @return The number of elements in the resulting sorted set.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<Long> zrevrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit);
 

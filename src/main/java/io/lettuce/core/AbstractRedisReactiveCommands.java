@@ -18,9 +18,11 @@ package io.lettuce.core;
 import static io.lettuce.core.protocol.CommandType.*;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Flux;
@@ -51,7 +53,6 @@ import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
-
 /**
  * A reactive and thread-safe API for a Redis connection.
  *
@@ -64,11 +65,12 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
  * @author Andrey Shlykov
  * @since 4.0
  */
-public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashReactiveCommands<K, V>,
-        RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>,
-        RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>,
-        RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>,
-        RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
+public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
+        RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
+        RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
+        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
+        BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
+        RedisClusterReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -107,6 +109,81 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
         }
 
         return this.scheduler = schedulerToUse;
+    }
+
+    @Override
+    public Mono<Set<AclCategory>> aclCat() {
+        return createMono(commandBuilder::aclCat);
+    }
+
+    @Override
+    public Mono<Set<CommandType>> aclCat(AclCategory category) {
+        return createMono(() -> commandBuilder.aclCat(category));
+    }
+
+    @Override
+    public Mono<Long> aclDeluser(String... usernames) {
+        return createMono(() -> commandBuilder.aclDeluser(usernames));
+    }
+
+    @Override
+    public Mono<String> aclGenpass() {
+        return createMono(commandBuilder::aclGenpass);
+    }
+
+    @Override
+    public Mono<String> aclGenpass(int bits) {
+        return createMono(() -> commandBuilder.aclGenpass(bits));
+    }
+
+    @Override
+    public Mono<List<Object>> aclGetuser(String username) {
+        return createMono(() -> commandBuilder.aclGetuser(username));
+    }
+
+    @Override
+    public Flux<String> aclList() {
+        return createDissolvingFlux(commandBuilder::aclList);
+    }
+
+    @Override
+    public Mono<String> aclLoad() {
+        return createMono(commandBuilder::aclLoad);
+    }
+
+    @Override
+    public Flux<Map<String, Object>> aclLog() {
+        return createDissolvingFlux(commandBuilder::aclLog);
+    }
+
+    @Override
+    public Flux<Map<String, Object>> aclLog(int count) {
+        return createDissolvingFlux(() -> commandBuilder.aclLog(count));
+    }
+
+    @Override
+    public Mono<String> aclLogReset() {
+        return createMono(commandBuilder::aclLogReset);
+    }
+
+    @Override
+    public Mono<String> aclSave() {
+        return createMono(commandBuilder::aclSave);
+    }
+
+    @Override
+    public Mono<String> aclSetuser(String username, AclSetuserArgs args) {
+        return createMono(() -> commandBuilder.aclSetuser(username, args));
+    }
+
+    @Override
+    public Flux<String> aclUsers() {
+        return createDissolvingFlux(commandBuilder::aclUsers);
+    }
+
+    @Override
+    public Mono<String> aclWhoami() {
+        return createMono(commandBuilder::aclWhoami);
     }
 
     @Override
@@ -650,13 +727,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
+    public Mono<Boolean> expire(K key, Duration seconds) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return expire(key, seconds.toMillis() / 1000);
+    }
+
+    @Override
     public Mono<Boolean> expireat(K key, long timestamp) {
         return createMono(() -> commandBuilder.expireat(key, timestamp));
     }
 
     @Override
     public Mono<Boolean> expireat(K key, Date timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return expireat(key, timestamp.getTime() / 1000);
+    }
+
+    @Override
+    public Mono<Boolean> expireat(K key, Instant timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return expireat(key, timestamp.toEpochMilli() / 1000);
     }
 
     @Override
@@ -762,6 +852,23 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     protected Flux<GeoWithin<V>> georadiusbymember_ro(K key, V member, double distance, Unit unit, GeoArgs geoArgs) {
         return createDissolvingFlux(
                 () -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance, unit.name(), geoArgs));
+    }
+
+    @Override
+    public Flux<V> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate) {
+        return createDissolvingFlux(() -> commandBuilder.geosearch(key, reference, predicate));
+    }
+
+    @Override
+    public Flux<GeoWithin<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs) {
+        return createDissolvingFlux(() -> commandBuilder.geosearch(key, reference, predicate, geoArgs));
+    }
+
+    @Override
+    public Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs, boolean storeDist) {
+        return createMono(() -> commandBuilder.geosearchstore(destination, key, reference, predicate, geoArgs, storeDist));
     }
 
     @Override
@@ -1137,13 +1244,24 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisHashRe
     }
 
     @Override
-    public Mono<Boolean> pexpireat(K key, Date timestamp) {
-        return pexpireat(key, timestamp.getTime());
+    public Mono<Boolean> pexpire(K key, Duration milliseconds) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return pexpire(key, milliseconds.toMillis());
     }
 
     @Override
     public Mono<Boolean> pexpireat(K key, long timestamp) {
         return createMono(() -> commandBuilder.pexpireat(key, timestamp));
+    }
+
+    @Override
+    public Mono<Boolean> pexpireat(K key, Date timestamp) {
+        return pexpireat(key, timestamp.getTime());
+    }
+
+    @Override
+    public Mono<Boolean> pexpireat(K key, Instant timestamp) {
+        return pexpireat(key, timestamp.toEpochMilli());
     }
 
     @Override

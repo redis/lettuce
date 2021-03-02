@@ -15,10 +15,8 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.offset;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +28,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.GeoArgs;
+import io.lettuce.core.GeoCoordinates;
+import io.lettuce.core.GeoRadiusStoreArgs;
+import io.lettuce.core.GeoSearch;
+import io.lettuce.core.GeoWithin;
+import io.lettuce.core.ScoredValue;
+import io.lettuce.core.TestSupport;
+import io.lettuce.core.TransactionResult;
+import io.lettuce.core.Value;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -514,6 +520,58 @@ public class GeoCommandIntegrationTests extends TestSupport {
     void georadiusStorebymemberWithNullArgs() {
         assertThatThrownBy(() -> redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, (GeoRadiusStoreArgs<String>) null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @EnabledOnCommand("GEOSEARCH")
+    void geosearchWithCountAndSort() {
+
+        prepareGeo();
+
+        Set<String> empty = redis.geosearch(key, GeoSearch.fromMember("Bahn"), GeoSearch.byRadius(1, GeoArgs.Unit.km));
+        assertThat(empty).hasSize(1).contains("Bahn");
+
+        Set<String> radius = redis.geosearch(key, GeoSearch.fromMember("Bahn"), GeoSearch.byRadius(5, GeoArgs.Unit.km));
+        assertThat(radius).hasSize(2).contains("Bahn", "Weinheim");
+
+        Set<String> box = redis.geosearch(key, GeoSearch.fromMember("Bahn"), GeoSearch.byBox(6, 3, GeoArgs.Unit.km));
+        assertThat(box).hasSize(2).contains("Bahn", "Weinheim");
+    }
+
+    @Test
+    @EnabledOnCommand("GEOSEARCH")
+    void geosearchWithArgs() {
+
+        prepareGeo();
+
+        List<GeoWithin<String>> empty = redis.geosearch(key, GeoSearch.fromMember("Bahn"),
+                GeoSearch.byRadius(1, GeoArgs.Unit.km), new GeoArgs().withHash().withCoordinates().withDistance().desc());
+        assertThat(empty).isNotEmpty();
+
+        List<GeoWithin<String>> withDistanceAndCoordinates = redis.geosearch(key, GeoSearch.fromMember("Bahn"),
+                GeoSearch.byRadius(5, GeoArgs.Unit.km), new GeoArgs().withCoordinates().withDistance().desc());
+        assertThat(withDistanceAndCoordinates).hasSize(2);
+
+        GeoWithin<String> weinheim = withDistanceAndCoordinates.get(0);
+        assertThat(weinheim.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheim.getGeohash()).isNull();
+        assertThat(weinheim.getDistance()).isNotNull();
+        assertThat(weinheim.getCoordinates()).isNotNull();
+    }
+
+    @Test
+    @EnabledOnCommand("GEOSEARCHSTORE")
+    void geosearchStoreWithCountAndSort() {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.geosearchstore(resultKey, key, GeoSearch.fromMember("Bahn"), GeoSearch.byRadius(5, GeoArgs.Unit.km),
+                new GeoArgs(), true);
+        assertThat(result).isEqualTo(2);
+
+        List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(dist).hasSize(2);
     }
 
     protected void prepareGeo() {

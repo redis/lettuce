@@ -19,6 +19,8 @@ import static io.lettuce.core.SetArgs.Builder.*;
 import static io.lettuce.core.StringMatchResult.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,6 +158,12 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(9);
 
+        assertThat(redis.set(key, value, ex(Duration.ofSeconds(10)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(5L, 10L);
+
+        assertThat(redis.set(key, value, px(Duration.ofSeconds(10)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(5L, 10L);
+
         assertThat(redis.set(key, value, px(10000))).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(9);
@@ -173,6 +181,17 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.set(key, value, px(20000).nx())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key) >= 19).isTrue();
+    }
+
+    @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void setExAt() {
+
+        assertThat(redis.set(key, value, exAt(Instant.now().plusSeconds(60)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(50L, 61L);
+
+        assertThat(redis.set(key, value, pxAt(Instant.now().plusSeconds(60)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(50L, 61L);
     }
 
     @Test

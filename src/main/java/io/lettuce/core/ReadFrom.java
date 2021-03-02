@@ -16,6 +16,7 @@
 package io.lettuce.core;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -26,24 +27,19 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * @author Mark Paluch
  * @author Ryosuke Hasebe
  * @author Omer Cilingir
+ * @author Yohei Ueki
  * @since 4.0
  */
 public abstract class ReadFrom {
 
     /**
      * Setting to read from the upstream only.
-     *
-     * @deprecated since 6.0 in favor of {@link #UPSTREAM}.
      */
-    @Deprecated
     public static final ReadFrom MASTER = new ReadFromImpl.ReadFromUpstream();
 
     /**
      * Setting to read preferred from the upstream and fall back to a replica if the master is not available.
-     *
-     * @deprecated since 6.0 in favor of {@link #UPSTREAM_PREFERRED}.
      */
-    @Deprecated
     public static final ReadFrom MASTER_PREFERRED = new ReadFromImpl.ReadFromUpstreamPreferred();
 
     /**
@@ -111,6 +107,42 @@ public abstract class ReadFrom {
     public static final ReadFrom ANY_REPLICA = new ReadFromImpl.ReadFromAnyReplica();
 
     /**
+     * Setting to read from any node in the subnets.
+     *
+     * @param cidrNotations CIDR-block notation strings, e.g., "192.168.0.0/16", "2001:db8:abcd:0000::/52". Must not be
+     *        {@code null}.
+     * @return an instance of {@link ReadFromImpl.ReadFromSubnet}.
+     * @since 6.1
+     */
+    public static ReadFrom subnet(String... cidrNotations) {
+        return new ReadFromImpl.ReadFromSubnet(cidrNotations);
+    }
+
+    /**
+     * Read from any node that has {@link RedisURI} matching with the given pattern.
+     *
+     * @param pattern regex pattern, e.g., {@code Pattern.compile(".*region-1.*")}. Must not be {@code null}.
+     * @return an instance of {@link ReadFromImpl.ReadFromRegex}.
+     * @since 6.1
+     */
+    public static ReadFrom regex(Pattern pattern) {
+        return regex(pattern, false);
+    }
+
+    /**
+     * Read from any node that has {@link RedisURI} matching with the given pattern.
+     *
+     * @param pattern regex pattern, e.g., {@code Pattern.compile(".*region-1.*")}. Must not be {@code null}.
+     * @param orderSensitive {@code true} to attempt reads in the order of hosts returned by {@link ReadFrom#select(Nodes)};
+     *        {@code false} to apply randomization.
+     * @return an instance of {@link ReadFromImpl.ReadFromRegex}.
+     * @since 6.1
+     */
+    public static ReadFrom regex(Pattern pattern, boolean orderSensitive) {
+        return new ReadFromImpl.ReadFromRegex(pattern, orderSensitive);
+    }
+
+    /**
      * Chooses the nodes from the matching Redis nodes that match this read selector.
      *
      * @param nodes set of nodes that are suitable for reading
@@ -176,6 +208,14 @@ public abstract class ReadFrom {
 
         if (name.equalsIgnoreCase("anyReplica")) {
             return ANY_REPLICA;
+        }
+
+        if (name.equalsIgnoreCase("subnet")) {
+            throw new IllegalArgumentException("subnet must be created via ReadFrom#subnet");
+        }
+
+        if (name.equalsIgnoreCase("regex")) {
+            throw new IllegalArgumentException("regex must be created via ReadFrom#regex");
         }
 
         throw new IllegalArgumentException("ReadFrom " + name + " not supported");

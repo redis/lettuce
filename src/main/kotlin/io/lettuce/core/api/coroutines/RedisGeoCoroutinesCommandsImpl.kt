@@ -28,6 +28,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * Coroutine executed commands (based on reactive commands) for the Geo-API.
  *
  * @author Mikhael Sokolov
+ * @author Mark Paluch
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
@@ -36,6 +37,10 @@ internal class RedisGeoCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun geoadd(key: K, longitude: Double, latitude: Double, member: V): Long? = ops.geoadd(key, longitude, latitude, member).awaitFirstOrNull()
 
     override suspend fun geoadd(key: K, vararg lngLatMember: Any): Long? = ops.geoadd(key, *lngLatMember).awaitFirstOrNull()
+
+    override suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates> = ops.geopos(key, *members).map { it.value }.asFlow().toList()
+
+    override suspend fun geodist(key: K, from: V, to: V, unit: GeoArgs.Unit): Double? = ops.geodist(key, from, to, unit).awaitFirstOrNull()
 
     override fun geohash(key: K, vararg members: V): Flow<Value<String>> = ops.geohash(key, *members).asFlow()
 
@@ -51,9 +56,10 @@ internal class RedisGeoCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long? = ops.georadiusbymember(key, member, distance, unit, geoRadiusStoreArgs).awaitFirstOrNull()
 
-    override suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates> = ops.geopos(key, *members).map { it.value }.asFlow().toList()
+    override fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate): Flow<V> = ops.geosearch(key, reference, predicate).asFlow()
 
-    override suspend fun geodist(key: K, from: V, to: V, unit: GeoArgs.Unit): Double? = ops.geodist(key, from, to, unit).awaitFirstOrNull()
+    override fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs): Flow<GeoWithin<V>>  = ops.geosearch(key, reference, predicate, geoArgs).asFlow()
 
+    override suspend fun geosearchstore(destination: K, key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs, storeDist: Boolean): Long? = ops.geosearchstore(destination, key, reference, predicate, geoArgs, storeDist).awaitFirstOrNull()
 }
 

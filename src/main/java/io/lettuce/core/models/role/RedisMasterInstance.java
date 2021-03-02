@@ -22,10 +22,8 @@ import java.util.List;
  *
  * @author Mark Paluch
  * @since 3.0
- * @deprecated since 6.0 in favor of {@link RedisUpstreamInstance}
  */
 @SuppressWarnings("serial")
-@Deprecated
 public class RedisMasterInstance extends RedisUpstreamInstance {
 
     public RedisMasterInstance() {

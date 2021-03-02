@@ -18,6 +18,7 @@ package io.lettuce.core;
 import static io.lettuce.core.protocol.CommandType.*;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -56,11 +57,12 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Andrey Shlykov
  */
 @SuppressWarnings("unchecked")
-public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
-        RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
-        RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
-        RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
-        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
+public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K,V>,
+        RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
+        RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>,
+        RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>,
+        BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>,
+        RedisClusterAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -75,6 +77,81 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
+    }
+
+    @Override
+    public RedisFuture<Set<AclCategory>> aclCat() {
+        return dispatch(commandBuilder.aclCat());
+    }
+
+    @Override
+    public RedisFuture<Set<CommandType>> aclCat(AclCategory category) {
+        return dispatch(commandBuilder.aclCat(category));
+    }
+
+    @Override
+    public RedisFuture<Long> aclDeluser(String... usernames) {
+        return dispatch(commandBuilder.aclDeluser(usernames));
+    }
+
+    @Override
+    public RedisFuture<String> aclGenpass() {
+        return dispatch(commandBuilder.aclGenpass());
+    }
+
+    @Override
+    public RedisFuture<String> aclGenpass(int bits) {
+        return dispatch(commandBuilder.aclGenpass(bits));
+    }
+
+    @Override
+    public RedisFuture<List<Object>> aclGetuser(String username) {
+        return dispatch(commandBuilder.aclGetuser(username));
+    }
+
+    @Override
+    public RedisFuture<List<String>> aclList() {
+        return dispatch(commandBuilder.aclList());
+    }
+
+    @Override
+    public RedisFuture<String> aclLoad() {
+        return dispatch(commandBuilder.aclLoad());
+    }
+
+    @Override
+    public RedisFuture<List<Map<String, Object>>> aclLog() {
+        return dispatch(commandBuilder.aclLog());
+    }
+
+    @Override
+    public RedisFuture<List<Map<String, Object>>> aclLog(int count) {
+        return dispatch(commandBuilder.aclLog(count));
+    }
+
+    @Override
+    public RedisFuture<String> aclLogReset() {
+        return dispatch(commandBuilder.aclLogReset());
+    }
+
+    @Override
+    public RedisFuture<String> aclSave() {
+        return dispatch(commandBuilder.aclSave());
+    }
+
+    @Override
+    public RedisFuture<String> aclSetuser(String username, AclSetuserArgs args) {
+        return dispatch(commandBuilder.aclSetuser(username, args));
+    }
+
+    @Override
+    public RedisFuture<List<String>> aclUsers() {
+        return dispatch(commandBuilder.aclUsers());
+    }
+
+    @Override
+    public RedisFuture<String> aclWhoami() {
+        return dispatch(commandBuilder.aclWhoami());
     }
 
     @Override
@@ -592,13 +669,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
-    public RedisFuture<Boolean> expireat(K key, Date timestamp) {
-        return expireat(key, timestamp.getTime() / 1000);
+    public RedisFuture<Boolean> expire(K key, Duration seconds) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return expire(key, seconds.toMillis() / 1000);
     }
 
     @Override
     public RedisFuture<Boolean> expireat(K key, long timestamp) {
         return dispatch(commandBuilder.expireat(key, timestamp));
+    }
+
+    @Override
+    public RedisFuture<Boolean> expireat(K key, Date timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return expireat(key, timestamp.getTime() / 1000);
+    }
+
+    @Override
+    public RedisFuture<Boolean> expireat(K key, Instant timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return expireat(key, timestamp.toEpochMilli() / 1000);
     }
 
     @Override
@@ -701,6 +791,23 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     protected RedisFuture<List<GeoWithin<V>>> georadiusbymember_ro(K key, V member, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
         return dispatch(commandBuilder.georadiusbymember(GEORADIUSBYMEMBER_RO, key, member, distance, unit.name(), geoArgs));
+    }
+
+    @Override
+    public RedisFuture<Set<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate) {
+        return dispatch(commandBuilder.geosearch(key, reference, predicate));
+    }
+
+    @Override
+    public RedisFuture<List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs) {
+        return dispatch(commandBuilder.geosearch(key, reference, predicate, geoArgs));
+    }
+
+    @Override
+    public RedisFuture<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference,
+            GeoSearch.GeoPredicate predicate, GeoArgs geoArgs, boolean storeDist) {
+        return dispatch(commandBuilder.geosearchstore(destination, key, reference, predicate, geoArgs, storeDist));
     }
 
     @Override
@@ -1072,8 +1179,21 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<Boolean> pexpire(K key, Duration milliseconds) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return pexpire(key, milliseconds.toMillis());
+    }
+
+    @Override
     public RedisFuture<Boolean> pexpireat(K key, Date timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return pexpireat(key, timestamp.getTime());
+    }
+
+    @Override
+    public RedisFuture<Boolean> pexpireat(K key, Instant timestamp) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return pexpireat(key, timestamp.toEpochMilli());
     }
 
     @Override

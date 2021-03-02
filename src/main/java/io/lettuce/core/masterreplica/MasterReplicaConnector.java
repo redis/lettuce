@@ -20,15 +20,15 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.codec.RedisCodec;
 
 /**
- * Interface declaring an asynchronous connect method to connect a Upstream/Replica setup.
+ * Interface declaring an asynchronous connect method to connect a Master/Replica setup.
  *
  * @author Mark Paluch
  * @since 5.1
  */
-interface UpstreamReplicaConnector<K, V> {
+interface MasterReplicaConnector<K, V> {
 
     /**
-     * Asynchronously connect to a Upstream/Replica setup given {@link RedisCodec}.
+     * Asynchronously connect to a Master/Replica setup given {@link RedisCodec}.
      *
      * @return Future that is notified about the connection progress.
      */
