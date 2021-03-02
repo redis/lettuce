@@ -31,6 +31,7 @@ import io.lettuce.core.protocol.CommandType;
  * {@link MigrateArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @author dengliming
  */
 public class MigrateArgs<K> implements CompositeArgument {
 
@@ -41,6 +42,8 @@ public class MigrateArgs<K> implements CompositeArgument {
     List<K> keys = new ArrayList<>();
 
     private char[] password;
+
+    private char[] username;
 
     /**
      * Builder entry points for {@link MigrateArgs}.
@@ -117,6 +120,17 @@ public class MigrateArgs<K> implements CompositeArgument {
         public static <K> MigrateArgs<K> auth(CharSequence password) {
             // TODO : implement auth(username,password) when https://github.com/antirez/redis/pull/7035 is fixed
             return new MigrateArgs<K>().auth(password);
+        }
+
+        /**
+         * Creates new {@link MigrateArgs} with {@code AUTH2} (target authentication) enabled.
+         *
+         * @return new {@link MigrateArgs} with {@code AUTH2} (target authentication) enabled.
+         * @since 6.1
+         * @see MigrateArgs#auth2(CharSequence, CharSequence)
+         */
+        public static <K> MigrateArgs<K> auth2(CharSequence username, CharSequence password) {
+            return new MigrateArgs<K>().auth2(username, password);
         }
 
         /**
@@ -217,6 +231,29 @@ public class MigrateArgs<K> implements CompositeArgument {
     }
 
     /**
+     * Set {@literal AUTH2} {@code username} and {@code password} option.
+     *
+     * @param username must not be {@code null}.
+     * @param password must not be {@code null}.
+     * @return {@code this} {@link MigrateArgs}.
+     * @since 6.1
+     */
+    public MigrateArgs<K> auth2(CharSequence username, CharSequence password) {
+
+        LettuceAssert.notNull(username, "UserName must not be null");
+        LettuceAssert.notNull(password, "Password must not be null");
+
+        char[] chars = new char[username.length()];
+
+        for (int i = 0; i < username.length(); i++) {
+            chars[i] = username.charAt(i);
+        }
+
+        this.username = chars;
+        return auth(password);
+    }
+
+    /**
      * Set {@literal AUTH} {@code password} option.
      *
      * @param password must not be {@code null}.
@@ -243,7 +280,12 @@ public class MigrateArgs<K> implements CompositeArgument {
         }
 
         if (password != null) {
-            args.add(CommandType.AUTH).add(password);
+            if (username != null) {
+                args.add(CommandType.AUTH2).add(username);
+            } else {
+                args.add(CommandType.AUTH);
+            }
+            args.add(password);
         }
 
         if (keys.size() > 1) {

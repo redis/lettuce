@@ -30,7 +30,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // Authentication
 
-    ACL, AUTH,
+    ACL, AUTH, AUTH2,
 
     // Connection
 
