@@ -83,7 +83,7 @@ public interface RedisStringAsyncCommands<K, V> {
      *         returned.
      *
      *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
-     *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
+     *         the first bit not part of the string on the right. So if the string is three bytes set to the value 0xff the
      *         command {@code BITPOS key 0} will return 24, since up to bit 23 all the bits are 1.
      *
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
@@ -103,7 +103,7 @@ public interface RedisStringAsyncCommands<K, V> {
      *         returned.
      *
      *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
-     *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
+     *         the first bit not part of the string on the right. So if the string is three bytes set to the value 0xff the
      *         command {@code BITPOS key 0} will return 24, since up to bit 23 all the bits are 1.
      *
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
@@ -125,7 +125,7 @@ public interface RedisStringAsyncCommands<K, V> {
      *         returned.
      *
      *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1, the function returns
-     *         the first bit not part of the string on the right. So if the string is tree bytes set to the value 0xff the
+     *         the first bit not part of the string on the right. So if the string is three bytes set to the value 0xff the
      *         command {@code BITPOS key 0} will return 24, since up to bit 23 all the bits are 1.
      *
      *         Basically the function consider the right of the string as padded with zeros if you look for clear bits and
