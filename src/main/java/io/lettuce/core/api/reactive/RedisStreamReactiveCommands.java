@@ -243,6 +243,15 @@ public interface RedisStreamReactiveCommands<K, V> {
     Flux<PendingMessage> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit);
 
     /**
+     * Read pending messages from a stream within a specific {@link XPendingArgs}.
+     *
+     * @param key the stream key.
+     * @param args
+     * @return Object array-reply list with members of the resulting stream.
+     */
+    Flux<PendingMessage> xpending(K key, XPendingArgs<K> args);
+
+    /**
      * Read messages from a stream within a specific {@link Range}.
      *
      * @param key the stream key.

@@ -1723,6 +1723,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisHashAsync
     }
 
     @Override
+    public RedisFuture<List<PendingMessage>> xpending(K key, XPendingArgs<K> args) {
+        return dispatch(commandBuilder.xpending(key, args));
+    }
+
+    @Override
     public RedisFuture<List<StreamMessage<K, V>>> xrange(K key, Range<String> range) {
         return dispatch(commandBuilder.xrange(key, range, Limit.unlimited()));
     }

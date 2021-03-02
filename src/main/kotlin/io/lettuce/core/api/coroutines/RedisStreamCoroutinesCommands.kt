@@ -242,6 +242,15 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
     fun xpending(key: K, consumer: Consumer<K>, range: Range<String>, limit: Limit): Flow<PendingMessage>
 
     /**
+     * Read pending messages from a stream within a specific [XPendingArgs].
+     *
+     * @param key the stream key.
+     * @param args
+     * @return List<Any> array-reply list with members of the resulting stream.
+     */
+    fun xpending(key: K, args: XPendingArgs<K>): Flow<PendingMessage>
+
+    /**
      * Read messages from a stream within a specific [Range].
      *
      * @param key the stream key.
