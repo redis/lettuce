@@ -25,7 +25,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {@link CopyArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Bartek Kowalczyk
- * @since 6.2
+ * @since 6.1
  */
 public class CopyArgs implements CompositeArgument {
 

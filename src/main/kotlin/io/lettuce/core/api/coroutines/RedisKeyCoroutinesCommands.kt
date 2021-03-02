@@ -40,7 +40,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param source the source.
      * @param destination the destination.
      * @return Boolean integer-reply specifically: `true` if source was copied. `false` if source was not copied.
-     * @since 6.2
+     * @since 6.
      */
     suspend fun copy(source: K, destination: K): Boolean?
 
@@ -51,7 +51,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param destination the destination.
      * @param copyArgs the copyArgs.
      * @return Boolean integer-reply specifically: `true` if source was copied. `false` if source was not copied.
-     * @since 6.2
+     * @since 6.1
      */
     suspend fun copy(source: K, destination: K, copyArgs: CopyArgs): Boolean?
 

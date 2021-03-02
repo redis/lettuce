@@ -311,7 +311,7 @@ public interface RedisStringCommands<K, V> {
      * @param key the key.
      * @param value the value.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
-     * @since 6.2
+     * @since 6.1
      */
     V setGet(K key, V value);
 
@@ -322,7 +322,7 @@ public interface RedisStringCommands<K, V> {
      * @param value the value.
      * @param setArgs the command arguments.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
-     * @since 6.2
+     * @since 6.1
      */
     V setGet(K key, V value, SetArgs setArgs);
 

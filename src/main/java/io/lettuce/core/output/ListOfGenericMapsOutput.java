@@ -15,25 +15,26 @@
  */
 package io.lettuce.core.output;
 
-import io.lettuce.core.codec.RedisCodec;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.codec.RedisCodec;
+
 /**
  * {@link List} of maps output.
  *
  * @param <K> Key type.
  * @param <V> Value type.
- *
- * @author Will Glozer
+ * @author Mikhael Sokolov
+ * @since 6.1
+ * @see GenericMapOutput
  */
 public class ListOfGenericMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, Object>>> {
 
-    private GenericMapOutput<K, V> nested;
+    private final GenericMapOutput<K, V> nested;
 
     private int mapCount = -1;
 

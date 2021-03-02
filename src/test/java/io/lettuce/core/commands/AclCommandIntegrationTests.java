@@ -15,6 +15,15 @@
  */
 package io.lettuce.core.commands;
 
+import static org.assertj.core.api.Assertions.*;
+
+import javax.inject.Inject;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import io.lettuce.core.AclCategory;
 import io.lettuce.core.AclSetuserArgs;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -23,18 +32,12 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import javax.inject.Inject;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
+ * Integration tests for ACL commands.
+ *
  * @author Mikhael Sokolov
+ * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -57,7 +60,7 @@ public class AclCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void aclCat() {
+    public void aclCat() {
         assertThat(redis.aclCat()).isNotEmpty();
         assertThat(redis.aclCat(AclCategory.SLOW)).isNotEmpty();
     }
@@ -75,7 +78,7 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @Test
     void aclGetuser() {
-        assertThat(redis.aclGetuser("default")).hasFieldOrProperty("flags");
+        assertThat(redis.aclGetuser("default")).contains("flags");
     }
 
     @Test
@@ -91,7 +94,7 @@ public class AclCommandIntegrationTests extends TestSupport {
         assertThat(redis.aclLog()).hasSize(2).first().hasFieldOrProperty("reason");
         assertThat(redis.aclLog(1)).hasSize(1);
         assertThat(redis.aclLogReset()).isEqualTo("OK");
-        assertThat(redis.aclLog()).hasSize(0);
+        assertThat(redis.aclLog()).isEmpty();
     }
 
     @Test
@@ -109,7 +112,7 @@ public class AclCommandIntegrationTests extends TestSupport {
         assertThat(redis.aclDeluser("foo")).isNotNull();
         AclSetuserArgs args = AclSetuserArgs.Builder.on().addCommand(CommandType.GET).keyPattern("objects:*").addPassword("foobared");
         assertThat(redis.aclSetuser("foo", args)).isEqualTo("OK");
-        assertThat(redis.aclGetuser("foo")).containsKey("commands").containsKey("passwords").containsKey("keys");
+        assertThat(redis.aclGetuser("foo")).contains("commands").contains("passwords").contains("keys");
         assertThat(redis.aclDeluser("foo")).isNotNull();
     }
 

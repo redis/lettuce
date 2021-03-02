@@ -3,8 +3,8 @@ package io.lettuce.core;
 /**
  * Enum object describing Redis ACL categories.
  *
- * @since 6.1
  * @author Mikhael Sokolov
+ * @since 6.1
  */
 public enum AclCategory {
 

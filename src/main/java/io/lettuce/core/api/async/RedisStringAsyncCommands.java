@@ -18,7 +18,12 @@ package io.lettuce.core.api.async;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.*;
+import io.lettuce.core.BitFieldArgs;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.SetArgs;
+import io.lettuce.core.StrAlgoArgs;
+import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 
 /**
@@ -312,7 +317,7 @@ public interface RedisStringAsyncCommands<K, V> {
      * @param key the key.
      * @param value the value.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<V> setGet(K key, V value);
 
@@ -323,7 +328,7 @@ public interface RedisStringAsyncCommands<K, V> {
      * @param value the value.
      * @param setArgs the command arguments.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
-     * @since 6.2
+     * @since 6.1
      */
     RedisFuture<V> setGet(K key, V value, SetArgs setArgs);
 

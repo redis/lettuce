@@ -80,12 +80,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<AclCategory>> aclCat() {
+    public RedisFuture<Set<AclCategory>> aclCat() {
         return dispatch(commandBuilder.aclCat());
     }
 
     @Override
-    public RedisFuture<List<CommandType>> aclCat(AclCategory category) {
+    public RedisFuture<Set<CommandType>> aclCat(AclCategory category) {
         return dispatch(commandBuilder.aclCat(category));
     }
 
@@ -105,7 +105,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Map<String, Object>> aclGetuser(String username) {
+    public RedisFuture<List<Object>> aclGetuser(String username) {
         return dispatch(commandBuilder.aclGetuser(username));
     }
 

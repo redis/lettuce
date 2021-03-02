@@ -15,14 +15,14 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.protocol.ProtocolKeyword;
+import static io.lettuce.core.protocol.CommandKeyword.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.lettuce.core.protocol.CommandKeyword.*;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
  * Argument list builder for the Redis <a href="https://redis.io/commands/acl-setuser">ACL SETUSER</a> command.
@@ -30,7 +30,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * {@link AclSetuserArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mikhael Sokolov
- * @since 6.2
+ * @since 6.1
  */
 public class AclSetuserArgs implements CompositeArgument {
 

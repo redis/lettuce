@@ -298,22 +298,22 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Set the string value of a key and return its old value.
-     *
-     * @param key the key.
-     * @param value the value.
-     * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
-     * @since 6.2
+	 *
+	 * @param key the key.
+	 * @param value the value.
+	 * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
+	 * @since 6.1
      */
     suspend fun setGet(key: K, value: V): V?
 
     /**
-     * Set the string value of a key and return its old value.
-     *
-     * @param key the key.
-     * @param value the value.
-     * @param setArgs the command arguments.
-     * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
-     * @since 6.2
+	 * Set the string value of a key and return its old value.
+	 *
+	 * @param key the key.
+	 * @param value the value.
+	 * @param setArgs the command arguments.
+	 * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
+	 * @since 6.1
      */
     suspend fun setGet(key: K, value: V, setArgs: SetArgs): V?
 

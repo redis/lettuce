@@ -36,7 +36,12 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.BaseRedisCommandBuilder;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * @param <K>
@@ -64,17 +69,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         super(codec);
     }
 
-    Command<K, V, List<AclCategory>> aclCat() {
+    Command<K, V, Set<AclCategory>> aclCat() {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.add(CAT);
-        return createCommand(ACL, new EnumListOutput<>(codec, AclCategory.class), args);
+        return createCommand(ACL, new EnumSetOutput<>(codec, AclCategory.class, String::toUpperCase, it -> null), args);
     }
 
-    Command<K, V, List<CommandType>> aclCat(AclCategory category) {
+    Command<K, V, Set<CommandType>> aclCat(AclCategory category) {
         LettuceAssert.notNull(category, "Category " + MUST_NOT_BE_NULL);
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.add(CAT).add(category.name().toLowerCase());
-        return createCommand(ACL, new EnumListOutput<>(codec, CommandType.class), args);
+        return createCommand(ACL, new EnumSetOutput<>(codec, CommandType.class, String::toUpperCase, it -> null), args);
     }
 
     Command<K, V, Long> aclDeluser(String... usernames) {
@@ -99,11 +104,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ACL, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, Map<String, Object>> aclGetuser(String username) {
+    Command<K, V, List<Object>> aclGetuser(String username) {
         LettuceAssert.notNull(username, "Username " + MUST_NOT_BE_NULL);
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.add(GETUSER).add(username);
-        return createCommand(ACL, new UserRulesOutput<>(codec), args);
+        return createCommand(ACL, new NestedMultiOutput<>(codec), args);
     }
 
     Command<K, V, List<String>> aclList() {

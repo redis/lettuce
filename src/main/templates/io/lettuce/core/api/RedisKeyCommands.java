@@ -41,7 +41,7 @@ public interface RedisKeyCommands<K, V> {
      * @param source the source.
      * @param destination the destination.
      * @return Boolean integer-reply specifically: {@code true} if source was copied. {@code false} if source was not copied.
-     * @since 6.2
+     * @since 6.1
      */
     Boolean copy(K source, K destination);
 
@@ -52,7 +52,7 @@ public interface RedisKeyCommands<K, V> {
      * @param destination the destination.
      * @param copyArgs the copyArgs.
      * @return Boolean integer-reply specifically: {@code true} if source was copied. {@code false} if source was not copied.
-     * @since 6.2
+     * @since 6.1
      */
     Boolean copy(K source, K destination, CopyArgs copyArgs);
 

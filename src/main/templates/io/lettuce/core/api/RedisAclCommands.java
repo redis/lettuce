@@ -25,7 +25,6 @@ import java.util.Set;
 /**
  * ${intent} for the ACL-API.
  *
- * @author Mark Paluch
  * @author Mikhael Sokolov
  * @since 6.1
  */
@@ -36,7 +35,7 @@ public interface RedisAclCommands<K, V> {
      *
      * @return List&lt;AclCategory&gt; a list of ACL categories or
      */
-    List<AclCategory> aclCat();
+    Set<AclCategory> aclCat();
 
     /**
      * The command shows all the Redis commands in the specified category.
@@ -44,7 +43,7 @@ public interface RedisAclCommands<K, V> {
      * @param category the specified category
      * @return List&lt;CommandType&gt; a list of commands inside a given category
      */
-    List<CommandType> aclCat(AclCategory category);
+    Set<CommandType> aclCat(AclCategory category);
 
     /**
      * Delete all the specified ACL users and terminate all the connections that are authenticated with such users.
@@ -75,7 +74,7 @@ public interface RedisAclCommands<K, V> {
      * @param username the specified username
      * @return Map&lt;String, Object&gt; a map of ACL rule definitions for the user.
      */
-    Map<String, Object> aclGetuser(String username);
+    List<Object> aclGetuser(String username);
 
     /**
      * The command shows the currently active ACL rules in the Redis server.
@@ -126,7 +125,7 @@ public interface RedisAclCommands<K, V> {
      * Create an ACL user with the specified rules or modify the rules of an existing user.
      *
      * @param username the specified username
-     * @param rules rules
+     * @param setuserArgs rules
      * @return String simple-string-reply OK or error message.
      */
     String aclSetuser(String username, AclSetuserArgs setuserArgs);

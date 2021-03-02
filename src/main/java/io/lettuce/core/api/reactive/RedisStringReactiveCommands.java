@@ -19,7 +19,12 @@ import java.util.Map;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import io.lettuce.core.*;
+import io.lettuce.core.BitFieldArgs;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.SetArgs;
+import io.lettuce.core.StrAlgoArgs;
+import io.lettuce.core.StringMatchResult;
+import io.lettuce.core.Value;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 
 /**
@@ -315,7 +320,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param key the key.
      * @param value the value.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
-     * @since 6.2
+     * @since 6.1
      */
     Mono<V> setGet(K key, V value);
 
@@ -326,7 +331,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param value the value.
      * @param setArgs the command arguments.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
-     * @since 6.2
+     * @since 6.1
      */
     Mono<V> setGet(K key, V value, SetArgs setArgs);
 

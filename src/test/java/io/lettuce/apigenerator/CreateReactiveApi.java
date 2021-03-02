@@ -16,7 +16,11 @@
 package io.lettuce.apigenerator;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -53,6 +57,9 @@ public class CreateReactiveApi {
 
         Map<String, String> resultSpec = new HashMap<>();
         resultSpec.put("geopos", "Flux<Value<GeoCoordinates>>");
+        resultSpec.put("aclCat()", "Mono<Set<AclCategory>>");
+        resultSpec.put("aclCat(AclCategory category)", "Mono<Set<CommandType>>");
+        resultSpec.put("aclGetuser", "Mono<List<Object>>");
         resultSpec.put("bitfield", "Flux<Value<Long>>");
         resultSpec.put("hgetall", "Flux<KeyValue<K, V>>");
         resultSpec.put("zmscore", "Mono<List<Double>>"); // Redis returns null if element was not found

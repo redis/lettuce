@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@ import io.lettuce.core.protocol.CommandType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.awaitFirstOrElse
 import kotlinx.coroutines.reactive.awaitFirstOrNull
-
 
 /**
  * Coroutine executed commands (based on reactive commands) for basic commands.
@@ -38,9 +39,11 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 @ExperimentalLettuceCoroutinesApi
 internal class RedisAclCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisAclReactiveCommands<K, V>) : RedisAclCoroutinesCommands<K, V> {
 
-    override suspend fun aclCat(): List<AclCategory> = ops.aclCat().asFlow().toList()
+    override suspend fun aclCat(): Set<AclCategory> =
+        ops.aclCat().awaitFirstOrElse { emptySet<AclCategory>() }
 
-    override suspend fun aclCat(category: AclCategory): List<CommandType> = ops.aclCat(category).asFlow().toList()
+    override suspend fun aclCat(category: AclCategory): Set<CommandType> =
+        ops.aclCat(category).awaitFirstOrElse { emptySet<CommandType>() }
 
     override suspend fun aclDeluser(vararg usernames: String): Long? = ops.aclDeluser(*usernames).awaitFirstOrNull()
 
@@ -48,7 +51,8 @@ internal class RedisAclCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun aclGenpass(bits: Int): String? = ops.aclGenpass(bits).awaitFirstOrNull()
 
-    override suspend fun aclGetuser(username: String): Map<String, Any>? = ops.aclGetuser(username).awaitFirstOrNull()
+    override suspend fun aclGetuser(username: String): List<Any> =
+        ops.aclGetuser(username).awaitFirst()
 
     override fun aclList(): Flow<String> = ops.aclList().asFlow()
 

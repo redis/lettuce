@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Flux;
@@ -111,13 +112,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Flux<AclCategory> aclCat() {
-        return createDissolvingFlux(commandBuilder::aclCat);
+    public Mono<Set<AclCategory>> aclCat() {
+        return createMono(commandBuilder::aclCat);
     }
 
     @Override
-    public Flux<CommandType> aclCat(AclCategory category) {
-        return createDissolvingFlux(() -> commandBuilder.aclCat(category));
+    public Mono<Set<CommandType>> aclCat(AclCategory category) {
+        return createMono(() -> commandBuilder.aclCat(category));
     }
 
     @Override
@@ -136,7 +137,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<Map<String, Object>> aclGetuser(String username) {
+    public Mono<List<Object>> aclGetuser(String username) {
         return createMono(() -> commandBuilder.aclGetuser(username));
     }
 
