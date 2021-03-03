@@ -53,6 +53,7 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Will Glozer
  * @author Mark Paluch
  * @author Tugdual Grall
+ * @author dengliming
  */
 class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
@@ -492,13 +493,13 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
 
         TestFutures.awaitOrTimeout(pubsub.subscribe(channel));
 
-        assertThatThrownBy(() -> TestFutures.getOrTimeout(pubsub.ping())).isInstanceOf(RedisException.class)
+        assertThatThrownBy(() -> TestFutures.getOrTimeout(pubsub.echo("ping"))).isInstanceOf(RedisException.class)
                 .hasMessageContaining("not allowed");
         pubsub.unsubscribe(channel);
 
         Wait.untilTrue(() -> channels.size() == 2).waitOrTimeout();
 
-        assertThat(TestFutures.getOrTimeout(pubsub.ping())).isEqualTo("PONG");
+        assertThat(TestFutures.getOrTimeout(pubsub.echo("ping"))).isEqualTo("ping");
     }
 
     // RedisPubSubListener implementation
