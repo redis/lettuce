@@ -31,6 +31,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * @author Mark Paluch
+ * @author dengliming
  */
 public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
@@ -50,13 +51,14 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
     static {
 
-        ALLOWED_COMMANDS_SUBSCRIBED = new HashSet<>(5, 1);
+        ALLOWED_COMMANDS_SUBSCRIBED = new HashSet<>(6, 1);
 
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.SUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.UNSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PUNSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.QUIT.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PING.name());
 
         SUBSCRIBE_COMMANDS = new HashSet<>(2, 1);
 
