@@ -49,6 +49,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author dengliming
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -328,6 +329,12 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(Duration.ofSeconds(1)).replace())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(1000);
+
+        redis.del(key);
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(System.currentTimeMillis() + 3000).replace().absttl()))
+                .isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(3000);
     }
 
     @Test
@@ -516,4 +523,5 @@ public class KeyCommandIntegrationTests extends TestSupport {
             expect.add(key + i);
         }
     }
+
 }

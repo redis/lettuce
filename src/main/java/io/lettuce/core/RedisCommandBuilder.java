@@ -1800,6 +1800,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(REPLACE);
         }
 
+        if (restoreArgs.absttl) {
+            args.add(ABSTTL);
+        }
+
         return createCommand(RESTORE, new StatusOutput<>(codec), args);
     }
 
