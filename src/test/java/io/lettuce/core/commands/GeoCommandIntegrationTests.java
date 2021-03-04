@@ -534,7 +534,7 @@ public class GeoCommandIntegrationTests extends TestSupport {
         Set<String> radius = redis.geosearch(key, GeoSearch.fromMember("Bahn"), GeoSearch.byRadius(5, GeoArgs.Unit.km));
         assertThat(radius).hasSize(2).contains("Bahn", "Weinheim");
 
-        Set<String> box = redis.geosearch(key, GeoSearch.fromMember("Bahn"), GeoSearch.byBox(6, 3, GeoArgs.Unit.km));
+        Set<String> box = redis.geosearch(key, GeoSearch.fromMember("Bahn"), GeoSearch.byBox(6, 6, GeoArgs.Unit.km));
         assertThat(box).hasSize(2).contains("Bahn", "Weinheim");
     }
 
