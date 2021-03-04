@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2011-2021 the original author or authors.
  *
@@ -16,15 +15,15 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.offset;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 /**
+ * Unit tests for {@link ScoredValue}.
+ *
  * @author Will Glozer
  * @author Mark Paluch
  */

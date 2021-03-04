@@ -18,7 +18,8 @@ package io.lettuce.core;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * A tuple consisting of numerical geo data points to describe geo coordinates.
+ * A tuple consisting of numerical geo data points to describe geo coordinates (longitude/latitude coordinates according to
+ * WGS84).
  *
  * @author Mark Paluch
  */

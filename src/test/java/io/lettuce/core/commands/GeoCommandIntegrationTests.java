@@ -28,16 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.GeoAddArgs;
-import io.lettuce.core.GeoArgs;
-import io.lettuce.core.GeoCoordinates;
-import io.lettuce.core.GeoRadiusStoreArgs;
-import io.lettuce.core.GeoSearch;
-import io.lettuce.core.GeoWithin;
-import io.lettuce.core.ScoredValue;
-import io.lettuce.core.TestSupport;
-import io.lettuce.core.TransactionResult;
-import io.lettuce.core.Value;
+import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -71,6 +62,15 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         Long readd = redis.geoadd(key, -73.9454966, 40.747533, "lic market");
         assertThat(readd).isEqualTo(0);
+    }
+
+    @Test
+    void geoaddValue() {
+
+        redis.geoadd(key, GeoValue.just(8.6638775, 49.5282537, "Weinheim"), GeoValue.just(8.665351, 49.553302, "Bahn"));
+
+        Set<String> georadius = redis.georadius(key, 8.6582861, 49.5285695, 1, GeoArgs.Unit.km);
+        assertThat(georadius).hasSize(1).contains("Weinheim");
     }
 
     @Test
@@ -245,6 +245,11 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         assertThat(weinheim.getMember()).isEqualTo("Weinheim");
         assertThat(weinheim.getGeohash()).isEqualTo(3666615932941099L);
+
+        GeoValue<String> value = weinheim.toValue();
+        assertThat(value.getValue()).isEqualTo("Weinheim");
+        assertThat(value.getLongitude()).isEqualTo(8.663875, offset(0.5));
+        assertThat(value.getLatitude()).isEqualTo(49.52825, offset(0.5));
 
         assertThat(weinheim.getDistance()).isEqualTo(2.7882, offset(0.5));
         assertThat(weinheim.getCoordinates().getX().doubleValue()).isEqualTo(8.663875, offset(0.5));

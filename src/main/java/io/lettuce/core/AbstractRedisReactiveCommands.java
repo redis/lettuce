@@ -786,12 +786,22 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     @Override
     public Mono<Long> geoadd(K key, Object... lngLatMember) {
-        return geoadd(key, lngLatMember, null);
+        return createMono(() -> commandBuilder.geoadd(key, lngLatMember, null));
+    }
+
+    @Override
+    public Mono<Long> geoadd(K key, GeoValue<V>... values) {
+        return createMono(() -> commandBuilder.geoadd(key, values, null));
     }
 
     @Override
     public Mono<Long> geoadd(K key, GeoAddArgs args, Object... lngLatMember) {
         return createMono(() -> commandBuilder.geoadd(key, lngLatMember, args));
+    }
+
+    @Override
+    public Mono<Long> geoadd(K key, GeoAddArgs args, GeoValue<V>... values) {
+        return createMono(() -> commandBuilder.geoadd(key, values, args));
     }
 
     @Override

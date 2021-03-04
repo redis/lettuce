@@ -54,7 +54,6 @@ public class GeoWithin<V> {
     }
 
     /**
-     *
      * @return the member within the Geo set.
      */
     public V getMember() {
@@ -62,7 +61,6 @@ public class GeoWithin<V> {
     }
 
     /**
-     *
      * @return distance if requested otherwise {@code null}.
      */
     public Double getDistance() {
@@ -70,7 +68,6 @@ public class GeoWithin<V> {
     }
 
     /**
-     *
      * @return geohash if requested otherwise {@code null}.
      */
     public Long getGeohash() {
@@ -78,11 +75,18 @@ public class GeoWithin<V> {
     }
 
     /**
-     *
      * @return coordinates if requested otherwise {@code null}.
      */
     public GeoCoordinates getCoordinates() {
         return coordinates;
+    }
+
+    /**
+     * @return a {@link GeoValue} if {@code coordinates} are set.
+     * @since 6.1
+     */
+    public GeoValue<V> toValue() {
+        return GeoValue.just(coordinates, this.member);
     }
 
     @Override

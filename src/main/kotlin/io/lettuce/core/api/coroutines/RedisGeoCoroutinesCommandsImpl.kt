@@ -52,11 +52,20 @@ internal class RedisGeoCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun geoadd(key: K, vararg lngLatMember: Any): Long? =
         ops.geoadd(key, *lngLatMember).awaitFirstOrNull()
 
+    override suspend fun geoadd(key: K, vararg values: GeoValue<V>): Long? =
+        ops.geoadd(key, *values).awaitFirstOrNull()
+
     override suspend fun geoadd(
         key: K,
         args: GeoAddArgs,
         vararg lngLatMember: Any
     ): Long? = ops.geoadd(key, args, *lngLatMember).awaitFirstOrNull()
+
+    override suspend fun geoadd(
+        key: K,
+        args: GeoAddArgs,
+        vararg values: GeoValue<V>
+    ): Long? = ops.geoadd(key, args, *values).awaitFirstOrNull()
 
     override suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates> =
         ops.geopos(key, *members).map { it.value }.asFlow().toList()

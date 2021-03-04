@@ -72,12 +72,33 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * Multi geo add.
      *
      * @param key the key of the geo set.
-     * @param args additional arguments.
      * @param lngLatMember triplets of Double longitude, Double latitude and V member.
      * @return Long integer-reply the number of elements that were added to the set.
      * @since 6.1
      */
+    suspend fun geoadd(key: K, vararg values: GeoValue<V>): Long?
+
+    /**
+     * Multi geo add.
+     *
+     * @param key the key of the geo set.
+     * @param args additional arguments.
+     * @param values @link io.lettuce.core.GeoValue} values to add.
+     * @return Long integer-reply the number of elements that were added to the set.
+     * @since 6.1
+     */
     suspend fun geoadd(key: K, args: GeoAddArgs, vararg lngLatMember: Any): Long?
+
+    /**
+     * Multi geo add.
+     *
+     * @param key the key of the geo set.
+     * @param args additional arguments.
+     * @param values @link io.lettuce.core.GeoValue} values to add.
+     * @return Long integer-reply the number of elements that were added to the set.
+     * @since 6.1
+     */
+    suspend fun geoadd(key: K, args: GeoAddArgs, vararg values: GeoValue<V>): Long?
 
     /**
      * Retrieve distance between points `from` and `to`. If one or more elements are missing `null` is

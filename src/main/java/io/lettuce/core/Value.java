@@ -72,7 +72,7 @@ public class Value<V> implements Serializable {
         LettuceAssert.notNull(optional, "Optional must not be null");
 
         if (optional.isPresent()) {
-            return new Value<V>(optional.get());
+            return new Value<>(optional.get());
         }
 
         return (Value<V>) EMPTY;
@@ -92,7 +92,7 @@ public class Value<V> implements Serializable {
             return empty();
         }
 
-        return new Value<V>(value);
+        return new Value<>(value);
     }
 
     /**
@@ -117,7 +117,7 @@ public class Value<V> implements Serializable {
 
         LettuceAssert.notNull(value, "Value must not be null");
 
-        return new Value<V>(value);
+        return new Value<>(value);
     }
 
     @Override
@@ -234,7 +234,7 @@ public class Value<V> implements Serializable {
         LettuceAssert.notNull(mapper, "Mapper function must not be null");
 
         if (hasValue()) {
-            return new Value<R>(mapper.apply(getValue()));
+            return new Value<>(mapper.apply(getValue()));
         }
 
         return (Value<R>) this;

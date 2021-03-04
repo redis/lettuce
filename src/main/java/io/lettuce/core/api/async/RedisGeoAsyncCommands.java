@@ -23,6 +23,7 @@ import io.lettuce.core.GeoArgs;
 import io.lettuce.core.GeoCoordinates;
 import io.lettuce.core.GeoRadiusStoreArgs;
 import io.lettuce.core.GeoSearch;
+import io.lettuce.core.GeoValue;
 import io.lettuce.core.GeoWithin;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.Value;
@@ -73,12 +74,33 @@ public interface RedisGeoAsyncCommands<K, V> {
      * Multi geo add.
      *
      * @param key the key of the geo set.
-     * @param args additional arguments.
      * @param lngLatMember triplets of double longitude, double latitude and V member.
      * @return Long integer-reply the number of elements that were added to the set.
      * @since 6.1
      */
+    RedisFuture<Long> geoadd(K key, GeoValue<V>... values);
+
+    /**
+     * Multi geo add.
+     *
+     * @param key the key of the geo set.
+     * @param args additional arguments.
+     * @param values {@link io.lettuce.core.GeoValue} values to add.
+     * @return Long integer-reply the number of elements that were added to the set.
+     * @since 6.1
+     */
     RedisFuture<Long> geoadd(K key, GeoAddArgs args, Object... lngLatMember);
+
+    /**
+     * Multi geo add.
+     *
+     * @param key the key of the geo set.
+     * @param args additional arguments.
+     * @param values {@link io.lettuce.core.GeoValue} values to add.
+     * @return Long integer-reply the number of elements that were added to the set.
+     * @since 6.1
+     */
+    RedisFuture<Long> geoadd(K key, GeoAddArgs args, GeoValue<V>... values);
 
     /**
      * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is

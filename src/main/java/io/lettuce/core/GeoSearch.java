@@ -26,6 +26,7 @@ import io.lettuce.core.protocol.CommandArgs;
  */
 public final class GeoSearch {
 
+    // TODO: Should be V
     /**
      * Create a {@link GeoRef} from a Geo set {@code member}.
      *

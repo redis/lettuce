@@ -876,6 +876,28 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEOADD, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, Long> geoadd(K key, GeoValue<V>[] values, GeoAddArgs geoArgs) {
+
+        notNullKey(key);
+        LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(values, "Values " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (geoArgs != null) {
+            geoArgs.build(args);
+        }
+
+        for (GeoValue<V> value : values) {
+            args.add(value.getCoordinates().getX().doubleValue());
+            args.add(value.getCoordinates().getY().doubleValue());
+            args.addValue(value.getValue());
+        }
+
+        return createCommand(GEOADD, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
         notNullKey(key);
         LettuceAssert.notNull(from, "From " + MUST_NOT_BE_NULL);
