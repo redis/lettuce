@@ -26,6 +26,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * {@link RestoreArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @author dengliming
  * @since 5.1
  */
 public class RestoreArgs {
@@ -33,6 +34,8 @@ public class RestoreArgs {
     long ttl;
 
     boolean replace;
+
+    boolean absttl;
 
     /**
      * Builder entry points for {@link XAddArgs}.
@@ -116,4 +119,26 @@ public class RestoreArgs {
         return this;
     }
 
+    /**
+     * TTL will represent an absolute Unix timestamp (in milliseconds) in which the key will expire.
+     *
+     * @return {@code this}.
+     * @since 6.1
+     */
+    public RestoreArgs absttl() {
+        return absttl(true);
+    }
+
+    /**
+     * TTL will represent an absolute Unix timestamp (in milliseconds) in which the key will expire.
+     *
+     * @param absttl
+     * @return {@code this}.
+     * @since 6.1
+     */
+    public RestoreArgs absttl(boolean absttl) {
+
+        this.absttl = absttl;
+        return this;
+    }
 }
