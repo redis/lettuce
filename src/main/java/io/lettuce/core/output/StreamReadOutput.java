@@ -44,6 +44,8 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
 
     private Map<K, V> body;
 
+    private boolean bodyReceived = false;
+
     public StreamReadOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());
         setSubscriber(ListSubscriber.instance());
@@ -63,6 +65,8 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
         }
 
         if (key == null) {
+            bodyReceived = true;
+
             if (bytes == null) {
                 return;
             }
@@ -81,6 +85,10 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
 
     @Override
     public void multi(int count) {
+
+        if (id != null && key == null && count == -1) {
+            bodyReceived = true;
+        }
 
         if (!initialized) {
             output = OutputFactory.newList(count);
