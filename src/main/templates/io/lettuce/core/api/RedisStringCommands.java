@@ -207,6 +207,25 @@ public interface RedisStringCommands<K, V> {
     Long getbit(K key, long offset);
 
     /**
+     * Get the value of key and delete the key.
+     *
+     * @param key the key.
+     * @return V bulk-string-reply the value of {@code key}, or {@code null} when {@code key} does not exist.
+     * @since 6.1
+     */
+    V getdel(K key);
+
+    /**
+     * Get the value of key and optionally set its expiration.
+     *
+     * @param key the key.
+     * @param args the arguments for {@code GETEX}.
+     * @return V bulk-string-reply the value of {@code key}, or {@code null} when {@code key} does not exist.
+     * @since 6.1
+     */
+    V getex(K key, GetExArgs args);
+
+    /**
      * Get a substring of the string stored at a key.
      *
      * @param key the key.

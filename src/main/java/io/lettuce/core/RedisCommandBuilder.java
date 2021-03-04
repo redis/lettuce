@@ -1053,6 +1053,23 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GETBIT, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, V> getdel(K key) {
+        notNullKey(key);
+
+        return createCommand(GETDEL, new ValueOutput<>(codec), key);
+    }
+
+    Command<K, V, V> getex(K key, GetExArgs getExArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(getExArgs, "GetExArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        getExArgs.build(args);
+
+        return createCommand(GETEX, new ValueOutput<>(codec), args);
+    }
+
     Command<K, V, V> getrange(K key, long start, long end) {
         notNullKey(key);
 

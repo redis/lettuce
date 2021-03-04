@@ -30,6 +30,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mikhael Sokolov
+ * @author Mark Paluch
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
@@ -55,25 +56,37 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun bitopOr(destination: K, vararg keys: K): Long? = ops.bitopOr(destination, *keys).awaitFirstOrNull()
 
-    override suspend fun bitopXor(destination: K, vararg keys: K): Long? = ops.bitopXor(destination, *keys).awaitFirstOrNull()
+    override suspend fun bitopXor(destination: K, vararg keys: K): Long? =
+        ops.bitopXor(destination, *keys).awaitFirstOrNull()
 
     override suspend fun decr(key: K): Long? = ops.decr(key).awaitFirstOrNull()
 
-    override suspend fun decrby(key: K, amount: Long): Long? = ops.decrby(key, amount).awaitFirstOrNull()
+    override suspend fun decrby(key: K, amount: Long): Long? =
+        ops.decrby(key, amount).awaitFirstOrNull()
 
     override suspend fun get(key: K): V? = ops.get(key).awaitFirstOrNull()
 
-    override suspend fun getbit(key: K, offset: Long): Long? = ops.getbit(key, offset).awaitFirstOrNull()
+    override suspend fun getbit(key: K, offset: Long): Long? =
+        ops.getbit(key, offset).awaitFirstOrNull()
 
-    override suspend fun getrange(key: K, start: Long, end: Long): V? = ops.getrange(key, start, end).awaitFirstOrNull()
+    override suspend fun getdel(key: K): V? = ops.getdel(key).awaitFirstOrNull()
 
-    override suspend fun getset(key: K, value: V): V? = ops.getset(key, value).awaitFirstOrNull()
+    override suspend fun getex(key: K, args: GetExArgs): V? =
+        ops.getex(key, args).awaitFirstOrNull()
+
+    override suspend fun getrange(key: K, start: Long, end: Long): V? =
+        ops.getrange(key, start, end).awaitFirstOrNull()
+
+    override suspend fun getset(key: K, value: V): V? =
+        ops.getset(key, value).awaitFirstOrNull()
 
     override suspend fun incr(key: K): Long? = ops.incr(key).awaitFirstOrNull()
 
-    override suspend fun incrby(key: K, amount: Long): Long? = ops.incrby(key, amount).awaitFirstOrNull()
+    override suspend fun incrby(key: K, amount: Long): Long? =
+        ops.incrby(key, amount).awaitFirstOrNull()
 
-    override suspend fun incrbyfloat(key: K, amount: Double): Double? = ops.incrbyfloat(key, amount).awaitFirstOrNull()
+    override suspend fun incrbyfloat(key: K, amount: Double): Double? =
+        ops.incrbyfloat(key, amount).awaitFirstOrNull()
 
     override fun mget(vararg keys: K): Flow<KeyValue<K, V>> = ops.mget(*keys).asFlow()
 

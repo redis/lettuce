@@ -825,6 +825,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<V> getdel(K key) {
+        return dispatch(commandBuilder.getdel(key));
+    }
+
+    @Override
+    public RedisFuture<V> getex(K key, GetExArgs args) {
+        return dispatch(commandBuilder.getex(key, args));
+    }
+
+    @Override
     public RedisFuture<V> getrange(K key, long start, long end) {
         return dispatch(commandBuilder.getrange(key, start, end));
     }

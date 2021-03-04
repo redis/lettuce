@@ -207,6 +207,25 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
     suspend fun getbit(key: K, offset: Long): Long?
 
     /**
+     * Get the value of key and delete the key.
+     *
+     * @param key the key.
+     * @return V bulk-string-reply the value of `key`, or `null` when `key` does not exist.
+     * @since 6.1
+     */
+    suspend fun getdel(key: K): V?
+
+    /**
+     * Get the value of key and optionally set its expiration.
+     *
+     * @param key the key.
+     * @param args the arguments for `GETEX`.
+     * @return V bulk-string-reply the value of `key`, or `null` when `key` does not exist.
+     * @since 6.1
+     */
+    suspend fun getex(key: K, args: GetExArgs): V?
+
+    /**
      * Get a substring of the string stored at a key.
      *
      * @param key the key.
@@ -257,7 +276,7 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @param keys the key.
      * @return List<V> array-reply list of values at the specified keys.
      */
-    fun mget(vararg keys: K): Flow<KeyValue<K,V>>
+    fun mget(vararg keys: K): Flow<KeyValue<K, V>>
 
     /**
      * Set multiple keys to multiple values.
@@ -298,22 +317,22 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Set the string value of a key and return its old value.
-	 *
-	 * @param key the key.
-	 * @param value the value.
-	 * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
-	 * @since 6.1
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
+     * @since 6.1
      */
     suspend fun setGet(key: K, value: V): V?
 
     /**
-	 * Set the string value of a key and return its old value.
-	 *
-	 * @param key the key.
-	 * @param value the value.
-	 * @param setArgs the command arguments.
-	 * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
-	 * @since 6.1
+     * Set the string value of a key and return its old value.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @param setArgs the command arguments.
+     * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
+     * @since 6.1
      */
     suspend fun setGet(key: K, value: V, setArgs: SetArgs): V?
 

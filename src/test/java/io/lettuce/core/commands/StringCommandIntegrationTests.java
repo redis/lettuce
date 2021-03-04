@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.GetExArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.SetArgs;
@@ -85,6 +86,24 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.getbit(key, 0)).isEqualTo(0);
         redis.setbit(key, 0, 1);
         assertThat(redis.getbit(key, 0)).isEqualTo(1);
+    }
+
+    @Test
+    @EnabledOnCommand("GETDEL")
+    void getdel() {
+        redis.set(key, value);
+        assertThat(redis.getdel(key)).isEqualTo(value);
+        assertThat(redis.get(key)).isNull();
+    }
+
+    @Test
+    @EnabledOnCommand("GETEX")
+    void getex() {
+        redis.set(key, value);
+        assertThat(redis.getex(key, GetExArgs.Builder.ex(Duration.ofSeconds(100)))).isEqualTo(value);
+        assertThat(redis.ttl(key)).isGreaterThan(1);
+        assertThat(redis.getex(key, GetExArgs.Builder.persist())).isEqualTo(value);
+        assertThat(redis.ttl(key)).isEqualTo(-1);
     }
 
     @Test

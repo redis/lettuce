@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.BitFieldArgs;
+import io.lettuce.core.GetExArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.StrAlgoArgs;
@@ -210,6 +211,25 @@ public interface NodeSelectionStringCommands<K, V> {
      * @return Long integer-reply the bit value stored at <em>offset</em>.
      */
     Executions<Long> getbit(K key, long offset);
+
+    /**
+     * Get the value of key and delete the key.
+     *
+     * @param key the key.
+     * @return V bulk-string-reply the value of {@code key}, or {@code null} when {@code key} does not exist.
+     * @since 6.1
+     */
+    Executions<V> getdel(K key);
+
+    /**
+     * Get the value of key and optionally set its expiration.
+     *
+     * @param key the key.
+     * @param args the arguments for {@code GETEX}.
+     * @return V bulk-string-reply the value of {@code key}, or {@code null} when {@code key} does not exist.
+     * @since 6.1
+     */
+    Executions<V> getex(K key, GetExArgs args);
 
     /**
      * Get a substring of the string stored at a key.

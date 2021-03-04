@@ -886,6 +886,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<V> getdel(K key) {
+        return createMono(() -> commandBuilder.getdel(key));
+    }
+
+    @Override
+    public Mono<V> getex(K key, GetExArgs args) {
+        return createMono(() -> commandBuilder.getex(key, args));
+    }
+
+    @Override
     public Mono<V> getrange(K key, long start, long end) {
         return createMono(() -> commandBuilder.getrange(key, start, end));
     }
