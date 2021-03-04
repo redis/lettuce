@@ -34,7 +34,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.Consumer;
+import io.lettuce.core.Limit;
+import io.lettuce.core.Range;
+import io.lettuce.core.StreamMessage;
+import io.lettuce.core.TestSupport;
+import io.lettuce.core.TransactionResult;
+import io.lettuce.core.XAddArgs;
+import io.lettuce.core.XClaimArgs;
+import io.lettuce.core.XGroupCreateArgs;
+import io.lettuce.core.XReadArgs;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
@@ -375,6 +384,24 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(messages).hasSize(1);
         assertThat(messages.get(0).getBody()).isEmpty();
+    }
+
+    @Test
+    void xgroupreadTrimmedMessage() {
+
+        for (int i = 0; i < 10; i++) {
+            redis.xadd(key, Collections.singletonMap("key", "value1"));
+        }
+
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), "del-group", XGroupCreateArgs.Builder.mkstream());
+
+        redis.xreadgroup(Consumer.from("del-group", "consumer1"), XReadArgs.Builder.count(10), StreamOffset.lastConsumed(key));
+        redis.xtrim(key, 1);
+
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("del-group", "consumer1"),
+                XReadArgs.Builder.count(10), StreamOffset.from(key, "0-0"));
+
+        assertThat(messages).hasSize(10);
     }
 
     @Test
