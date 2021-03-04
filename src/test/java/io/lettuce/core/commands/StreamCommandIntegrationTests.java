@@ -18,6 +18,7 @@ package io.lettuce.core.commands;
 import static io.lettuce.core.protocol.CommandType.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,22 +29,12 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import io.lettuce.core.XPendingArgs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.Consumer;
-import io.lettuce.core.Limit;
-import io.lettuce.core.Range;
-import io.lettuce.core.StreamMessage;
-import io.lettuce.core.TestSupport;
-import io.lettuce.core.TransactionResult;
-import io.lettuce.core.XAddArgs;
-import io.lettuce.core.XClaimArgs;
-import io.lettuce.core.XGroupCreateArgs;
-import io.lettuce.core.XReadArgs;
+import io.lettuce.core.*;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
@@ -443,6 +434,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void xpendingWithArgs() {
 
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
@@ -451,12 +443,17 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
         List<PendingMessage> pendingEntries = redis.xpending(key, XPendingArgs.Builder
-                .xpending(Consumer.from("group", "consumer1"), Range.unbounded(), Limit.from(10)).idle(30L));
+                .xpending(Consumer.from("group", "consumer1"), Range.unbounded(), Limit.from(10)));
 
         PendingMessage message = pendingEntries.get(0);
         assertThat(message.getId()).isEqualTo(id);
         assertThat(message.getConsumer()).isEqualTo("consumer1");
         assertThat(message.getRedeliveryCount()).isEqualTo(1);
+
+        pendingEntries = redis.xpending(key, XPendingArgs.Builder
+                .xpending(Consumer.from("group", "consumer1"), Range.unbounded(), Limit.from(10)).idle(Duration.ofMinutes(1)));
+
+        assertThat(pendingEntries).isEmpty();
     }
 
     @Test

@@ -248,6 +248,7 @@ public interface RedisStreamReactiveCommands<K, V> {
      * @param key the stream key.
      * @param args
      * @return Object array-reply list with members of the resulting stream.
+     * @since 6.1
      */
     Flux<PendingMessage> xpending(K key, XPendingArgs<K> args);
 

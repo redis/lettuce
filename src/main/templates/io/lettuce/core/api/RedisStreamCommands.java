@@ -253,6 +253,7 @@ public interface RedisStreamCommands<K, V> {
      * @param key the stream key.
      * @param args
      * @return List&lt;Object&gt; array-reply list with members of the resulting stream.
+     * @since 6.1
      */
     List<PendingMessage> xpending(K key, XPendingArgs<K> args);
 

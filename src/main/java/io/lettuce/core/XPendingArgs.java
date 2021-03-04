@@ -15,6 +15,8 @@
  */
 package io.lettuce.core;
 
+import java.time.Duration;
+
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
@@ -56,38 +58,56 @@ public class XPendingArgs<K> {
          * @param range
          * @param limit
          */
-        public static <K> XPendingArgs xpending(Consumer<K> consumer, Range<String> range, Limit limit) {
-            return new XPendingArgs().consumer(consumer).range(range).limit(limit);
+        public static <K> XPendingArgs<K> xpending(Consumer<K> consumer, Range<String> range, Limit limit) {
+            return new XPendingArgs<K>().consumer(consumer).range(range).limit(limit);
         }
     }
 
-    public XPendingArgs range(Range<String> range) {
+    public XPendingArgs<K> range(Range<String> range) {
         LettuceAssert.notNull(range, "Range must not be null");
 
         this.range = range;
         return this;
     }
 
-    public XPendingArgs consumer(Consumer<K> consumer) {
+    public XPendingArgs<K> consumer(Consumer<K> consumer) {
         LettuceAssert.notNull(consumer, "Consumer must not be null");
 
         this.consumer = consumer;
         return this;
     }
 
-    public XPendingArgs limit(Limit limit) {
+    public XPendingArgs<K> limit(Limit limit) {
         LettuceAssert.notNull(limit, "Limit must not be null");
 
         this.limit = limit;
         return this;
     }
 
-    public XPendingArgs idle(Long idle) {
-        this.idle = idle;
+    /**
+     * Include only entries that are idle for {@link Duration}.
+     *
+     * @param timeout
+     * @return
+     */
+    public XPendingArgs<K> idle(Duration timeout) {
+        LettuceAssert.notNull(timeout, "Timeout must not be null");
+        return idle(timeout.toMillis());
+    }
+
+    /**
+     * Include only entries that are idle for {@code milliseconds}.
+     *
+     * @param milliseconds
+     * @return
+     */
+    public XPendingArgs<K> idle(long milliseconds) {
+        this.idle = milliseconds;
         return this;
     }
 
     public <V> void build(CommandArgs<K, V> args) {
+
         args.addKey(consumer.group);
 
         if (idle != null) {
