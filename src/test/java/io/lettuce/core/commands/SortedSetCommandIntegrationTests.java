@@ -305,6 +305,20 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ZRANDMEMBER")
+    void zrandmember() {
+
+        redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
+
+        assertThat(redis.zrandmember("zset")).isIn("a", "b", "c");
+        assertThat(redis.zrandmember("zset", 2)).hasSize(2).containsAnyOf("a", "b", "c");
+        assertThat(redis.zrandmemberWithscores("zset")).isIn(ScoredValue.fromNullable(2.0, "a"),
+                ScoredValue.fromNullable(3.0, "b"), ScoredValue.fromNullable(4.0, "c"));
+        assertThat(redis.zrandmemberWithscores("zset", 2)).hasSize(2).containsAnyOf(ScoredValue.fromNullable(2.0, "a"),
+                ScoredValue.fromNullable(3.0, "b"), ScoredValue.fromNullable(4.0, "c"));
+    }
+
+    @Test
     void zrange() {
         setup();
         assertThat(redis.zrange(key, 0, -1)).isEqualTo(list("a", "b", "c"));

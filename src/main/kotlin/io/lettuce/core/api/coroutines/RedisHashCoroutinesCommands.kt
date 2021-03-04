@@ -121,10 +121,48 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * Set multiple hash fields to multiple values.
      *
      * @param key the key.
-     * @param map the null.
+     * @param map the hash to apply.
      * @return String simple-string-reply.
      */
     suspend fun hmset(key: K, map: Map<K, V>): String?
+
+    /**
+     * Return a random field from the hash stored at `key`.
+     *
+     * @param key the key.
+     * @return hash field name.
+     * @since 6.1
+     */
+    suspend fun hrandfield(key: K): K?
+
+    /**
+     * Return `count` random fields from the hash stored at `key`.
+     *
+     * @param key the key.
+     * @param count the number of fields to return. If the provided count argument is positive, return an array of distinct fields.
+     * @return array-reply list of field names.
+     * @since 6.1
+     */
+    suspend fun hrandfield(key: K, count: Long): List<K>
+
+    /**
+     * Return a random field along its value from the hash stored at `key`.
+     *
+     * @param key the key.
+     * @return array-reply the key and value.
+     * @since 6.1
+     */
+    suspend fun hrandfieldWithvalues(key: K): KeyValue<K, V>?
+
+    /**
+     * Return `count` random fields along their value from the hash stored at `key`.
+     *
+     * @param key the key.
+     * @param count the number of fields to return. If the provided count argument is positive, return an array of distinct fields.
+     * @return array-reply the keys and values.
+     * @since 6.1
+     */
+    suspend fun hrandfieldWithvalues(key: K, count: Long): List<KeyValue<K, V>>
 
     /**
      * Incrementally iterate hash fields and associated values.

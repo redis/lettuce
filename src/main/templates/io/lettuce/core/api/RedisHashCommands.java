@@ -18,7 +18,6 @@ package io.lettuce.core.api;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.*;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
@@ -151,10 +150,50 @@ public interface RedisHashCommands<K, V> {
      * Set multiple hash fields to multiple values.
      *
      * @param key the key.
-     * @param map the null.
+     * @param map the hash to apply.
      * @return String simple-string-reply.
      */
     String hmset(K key, Map<K, V> map);
+
+    /**
+     * Return a random field from the hash stored at {@code key}.
+     *
+     * @param key the key.
+     * @return hash field name.
+     * @since 6.1
+     */
+    K hrandfield(K key);
+
+    /**
+     * Return {@code count} random fields from the hash stored at {@code key}.
+     *
+     * @param key the key.
+     * @param count the number of fields to return. If the provided count argument is positive, return an array of distinct
+     *        fields.
+     * @return array-reply list of field names.
+     * @since 6.1
+     */
+    List<K> hrandfield(K key, long count);
+
+    /**
+     * Return a random field along its value from the hash stored at {@code key}.
+     *
+     * @param key the key.
+     * @return array-reply the key and value.
+     * @since 6.1
+     */
+    KeyValue<K, V> hrandfieldWithvalues(K key);
+
+    /**
+     * Return {@code count} random fields along their value from the hash stored at {@code key}.
+     *
+     * @param key the key.
+     * @param count the number of fields to return. If the provided count argument is positive, return an array of distinct
+     *        fields.
+     * @return array-reply the keys and values.
+     * @since 6.1
+     */
+    List<KeyValue<K, V>> hrandfieldWithvalues(K key, long count);
 
     /**
      * Incrementally iterate hash fields and associated values.

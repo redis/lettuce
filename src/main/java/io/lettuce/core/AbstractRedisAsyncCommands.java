@@ -900,6 +900,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<K> hrandfield(K key) {
+        return dispatch(commandBuilder.hrandfield(key));
+    }
+
+    @Override
+    public RedisFuture<List<K>> hrandfield(K key, long count) {
+        return dispatch(commandBuilder.hrandfield(key, count));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, V>> hrandfieldWithvalues(K key) {
+        return dispatch(commandBuilder.hrandfieldWithvalues(key));
+    }
+
+    @Override
+    public RedisFuture<List<KeyValue<K, V>>> hrandfieldWithvalues(K key, long count) {
+        return dispatch(commandBuilder.hrandfieldWithvalues(key, count));
+    }
+
+    @Override
     public RedisFuture<MapScanCursor<K, V>> hscan(K key) {
         return dispatch(commandBuilder.hscan(key));
     }
@@ -2051,6 +2071,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<ScoredValue<V>>> zpopmax(K key, long count) {
         return dispatch(commandBuilder.zpopmax(key, count));
+    }
+
+    @Override
+    public RedisFuture<V> zrandmember(K key) {
+        return dispatch(commandBuilder.zrandmember(key));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrandmember(K key, long count) {
+        return dispatch(commandBuilder.zrandmember(key, count));
+    }
+
+    @Override
+    public RedisFuture<ScoredValue<V>> zrandmemberWithscores(K key) {
+        return dispatch(commandBuilder.zrandmemberWithscores(key));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zrandmemberWithscores(K key, long count) {
+        return dispatch(commandBuilder.zrandmemberWithscores(key, count));
     }
 
     @Override

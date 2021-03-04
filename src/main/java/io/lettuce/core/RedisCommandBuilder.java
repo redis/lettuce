@@ -1207,6 +1207,34 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HMSET, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, K> hrandfield(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(HRANDFIELD, new KeyOutput<>(codec), args);
+    }
+
+    Command<K, V, List<K>> hrandfield(K key, long count) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(count);
+        return createCommand(HRANDFIELD, new KeyListOutput<>(codec), args);
+    }
+
+    Command<K, V, KeyValue<K, V>> hrandfieldWithvalues(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(1).add(WITHVALUES);
+        return createCommand(HRANDFIELD, new KeyValueOutput<>(codec), args);
+    }
+
+    Command<K, V, List<KeyValue<K, V>>> hrandfieldWithvalues(K key, long count) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(count).add(WITHVALUES);
+        return createCommand(HRANDFIELD, new KeyValueListOutput<>(codec), args);
+    }
+
     Command<K, V, MapScanCursor<K, V>> hscan(K key) {
         notNullKey(key);
 
@@ -2985,6 +3013,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key).add(count);
 
         return createCommand(ZPOPMAX, new ScoredValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, V> zrandmember(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key);
+
+        return createCommand(ZRANDMEMBER, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, List<V>> zrandmember(K key, long count) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key).add(count);
+
+        return createCommand(ZRANDMEMBER, new ValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, ScoredValue<V>> zrandmemberWithscores(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key).add(1).add(WITHSCORES);
+
+        return createCommand(ZRANDMEMBER, new ScoredValueOutput<>(codec), args);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrandmemberWithscores(K key, long count) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key).add(count).add(WITHSCORES);
+
+        return createCommand(ZRANDMEMBER, new ScoredValueListOutput<>(codec), args);
     }
 
     Command<K, V, List<V>> zrange(K key, long start, long stop) {

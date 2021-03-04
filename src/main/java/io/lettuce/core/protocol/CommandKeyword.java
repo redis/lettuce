@@ -43,7 +43,7 @@ public enum CommandKeyword implements ProtocolKeyword {
 
     MIGRATING, IMPORTING, SAVE, SKIPME, SLAVES, STREAM, STORE, SUM, SEGFAULT, SETUSER, TRACKING, TYPE, UNBLOCK, USERS, WEIGHTS, WHOAMI,
 
-    WITHSCORES, XOR, YES, USAGE;
+    WITHSCORES, WITHVALUES, XOR, YES, USAGE;
 
     public final byte[] bytes;
 

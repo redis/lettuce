@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.offset;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -30,7 +29,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.MapScanCursor;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
@@ -218,6 +222,25 @@ public class HashCommandIntegrationTests extends TestSupport {
         hash.put("one", "");
         assertThat(redis.hmset(key, hash)).isEqualTo("OK");
         assertThat(redis.hmget(key, "one")).isEqualTo(list(kv("one", "")));
+    }
+
+    @Test
+    @EnabledOnCommand("HRANDFIELD")
+    void hrandfield() {
+
+        Map<String, String> hash = new LinkedHashMap<>();
+        hash.put("one", "1");
+        hash.put("two", "2");
+        hash.put("three", "3");
+
+        redis.hset(key, hash);
+
+        assertThat(redis.hrandfield(key)).isIn("one", "two", "three");
+        assertThat(redis.hrandfield(key, 2)).hasSize(2).containsAnyOf("one", "two", "three");
+        assertThat(redis.hrandfieldWithvalues(key)).isIn(KeyValue.fromNullable("one", "1"), KeyValue.fromNullable("two", "2"),
+                KeyValue.fromNullable("three", "3"));
+        assertThat(redis.hrandfieldWithvalues(key, 2)).hasSize(2).containsAnyOf(KeyValue.fromNullable("one", "1"),
+                KeyValue.fromNullable("two", "2"), KeyValue.fromNullable("three", "3"));
     }
 
     @Test

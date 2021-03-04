@@ -19,6 +19,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisHashReactiveCommands
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 
@@ -42,7 +43,8 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun hincrby(key: K, field: K, amount: Long): Long? = ops.hincrby(key, field, amount).awaitFirstOrNull()
 
-    override suspend fun hincrbyfloat(key: K, field: K, amount: Double): Double? = ops.hincrbyfloat(key, field, amount).awaitFirstOrNull()
+    override suspend fun hincrbyfloat(key: K, field: K, amount: Double): Double? =
+        ops.hincrbyfloat(key, field, amount).awaitFirstOrNull()
 
     override fun hgetall(key: K): Flow<KeyValue<K, V>> = ops.hgetall(key).asFlow()
 
@@ -50,17 +52,37 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun hlen(key: K): Long? = ops.hlen(key).awaitFirstOrNull()
 
-    override fun hmget(key: K, vararg fields: K): Flow<KeyValue<K, V>> = ops.hmget(key, *fields).asFlow()
+    override fun hmget(key: K, vararg fields: K): Flow<KeyValue<K, V>> =
+        ops.hmget(key, *fields).asFlow()
 
-    override suspend fun hmset(key: K, map: Map<K, V>): String? = ops.hmset(key, map).awaitFirstOrNull()
+    override suspend fun hrandfield(key: K): K? = ops.hrandfield(key).awaitFirstOrNull();
 
-    override suspend fun hscan(key: K): MapScanCursor<K, V>? = ops.hscan(key).awaitFirstOrNull()
+    override suspend fun hrandfield(key: K, count: Long): List<K> =
+        ops.hrandfield(key, count).asFlow().toList()
 
-    override suspend fun hscan(key: K, scanArgs: ScanArgs): MapScanCursor<K, V>? = ops.hscan(key, scanArgs).awaitFirstOrNull()
+    override suspend fun hrandfieldWithvalues(key: K): KeyValue<K, V>? =
+        ops.hrandfieldWithvalues(key).awaitFirstOrNull();
 
-    override suspend fun hscan(key: K, scanCursor: ScanCursor, scanArgs: ScanArgs): MapScanCursor<K, V>? = ops.hscan(key, scanCursor, scanArgs).awaitFirstOrNull()
+    override suspend fun hrandfieldWithvalues(key: K, count: Long): List<KeyValue<K, V>> =
+        ops.hrandfieldWithvalues(key, count).asFlow().toList()
 
-    override suspend fun hscan(key: K, scanCursor: ScanCursor): MapScanCursor<K, V>? = ops.hscan(key, scanCursor).awaitFirstOrNull()
+    override suspend fun hmset(key: K, map: Map<K, V>): String? =
+        ops.hmset(key, map).awaitFirstOrNull()
+
+    override suspend fun hscan(key: K): MapScanCursor<K, V>? =
+        ops.hscan(key).awaitFirstOrNull()
+
+    override suspend fun hscan(key: K, scanArgs: ScanArgs): MapScanCursor<K, V>? =
+        ops.hscan(key, scanArgs).awaitFirstOrNull()
+
+    override suspend fun hscan(
+        key: K,
+        scanCursor: ScanCursor,
+        scanArgs: ScanArgs
+    ): MapScanCursor<K, V>? = ops.hscan(key, scanCursor, scanArgs).awaitFirstOrNull()
+
+    override suspend fun hscan(key: K, scanCursor: ScanCursor): MapScanCursor<K, V>? =
+        ops.hscan(key, scanCursor).awaitFirstOrNull()
 
     override suspend fun hset(key: K, field: K, value: V): Boolean? = ops.hset(key, field, value).awaitFirstOrNull()
 

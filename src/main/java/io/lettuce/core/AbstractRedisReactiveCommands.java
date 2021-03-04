@@ -956,6 +956,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<K> hrandfield(K key) {
+        return createMono(() -> commandBuilder.hrandfield(key));
+    }
+
+    @Override
+    public Flux<K> hrandfield(K key, long count) {
+        return createDissolvingFlux(() -> commandBuilder.hrandfield(key, count));
+    }
+
+    @Override
+    public Mono<KeyValue<K, V>> hrandfieldWithvalues(K key) {
+        return createMono(() -> commandBuilder.hrandfieldWithvalues(key));
+    }
+
+    @Override
+    public Flux<KeyValue<K, V>> hrandfieldWithvalues(K key, long count) {
+        return createDissolvingFlux(() -> commandBuilder.hrandfieldWithvalues(key, count));
+    }
+
+    @Override
     public Mono<String> hmset(K key, Map<K, V> map) {
         return createMono(() -> commandBuilder.hmset(key, map));
     }
@@ -2124,6 +2144,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Flux<ScoredValue<V>> zpopmax(K key, long count) {
         return createDissolvingFlux(() -> commandBuilder.zpopmax(key, count));
+    }
+
+    @Override
+    public Mono<V> zrandmember(K key) {
+        return createMono(() -> commandBuilder.zrandmember(key));
+    }
+
+    @Override
+    public Flux<V> zrandmember(K key, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrandmember(key, count));
+    }
+
+    @Override
+    public Mono<ScoredValue<V>> zrandmemberWithscores(K key) {
+        return createMono(() -> commandBuilder.zrandmemberWithscores(key));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zrandmemberWithscores(K key, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrandmemberWithscores(key, count));
     }
 
     @Override

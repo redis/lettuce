@@ -19,6 +19,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 
@@ -94,23 +95,45 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override suspend fun zmscore(key: K, vararg members: V): List<Double?> =
         ops.zmscore(key, *members).awaitFirstOrNull().orEmpty()
 
-    override suspend fun zpopmin(key: K): ScoredValue<V>? = ops.zpopmin(key).awaitFirstOrNull()
+    override suspend fun zpopmin(key: K): ScoredValue<V>? =
+        ops.zpopmin(key).awaitFirstOrNull()
 
-    override fun zpopmin(key: K, count: Long): Flow<ScoredValue<V>> = ops.zpopmin(key, count).asFlow()
+    override fun zpopmin(key: K, count: Long): Flow<ScoredValue<V>> =
+        ops.zpopmin(key, count).asFlow()
 
-    override suspend fun zpopmax(key: K): ScoredValue<V>? = ops.zpopmax(key).awaitFirstOrNull()
+    override suspend fun zpopmax(key: K): ScoredValue<V>? =
+        ops.zpopmax(key).awaitFirstOrNull()
 
-    override fun zpopmax(key: K, count: Long): Flow<ScoredValue<V>> = ops.zpopmax(key, count).asFlow()
+    override fun zpopmax(key: K, count: Long): Flow<ScoredValue<V>> =
+        ops.zpopmax(key, count).asFlow()
 
-    override fun zrange(key: K, start: Long, stop: Long): Flow<V> = ops.zrange(key, start, stop).asFlow()
+    override suspend fun zrandmember(key: K): V? = ops.zrandmember(key).awaitFirstOrNull()
 
-    override fun zrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>> = ops.zrangeWithScores(key, start, stop).asFlow()
+    override suspend fun zrandmember(key: K, count: Long): List<V> =
+        ops.zrandmember(key, count).asFlow().toList()
 
-    override fun zrangebylex(key: K, range: Range<out V>): Flow<V> = ops.zrangebylex(key, range).asFlow()
+    override suspend fun zrandmemberWithscores(key: K): ScoredValue<V>? =
+        ops.zrandmemberWithscores(key).awaitFirstOrNull()
 
-    override fun zrangebylex(key: K, range: Range<out V>, limit: Limit): Flow<V> = ops.zrangebylex(key, range, limit).asFlow()
+    override suspend fun zrandmemberWithscores(
+        key: K,
+        count: Long
+    ): List<ScoredValue<V>> = ops.zrandmemberWithscores(key, count).asFlow().toList()
 
-    override fun zrangebyscore(key: K, range: Range<out Number>): Flow<V> = ops.zrangebyscore(key, range).asFlow()
+    override fun zrange(key: K, start: Long, stop: Long): Flow<V> =
+        ops.zrange(key, start, stop).asFlow()
+
+    override fun zrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>> =
+        ops.zrangeWithScores(key, start, stop).asFlow()
+
+    override fun zrangebylex(key: K, range: Range<out V>): Flow<V> =
+        ops.zrangebylex(key, range).asFlow()
+
+    override fun zrangebylex(key: K, range: Range<out V>, limit: Limit): Flow<V> =
+        ops.zrangebylex(key, range, limit).asFlow()
+
+    override fun zrangebyscore(key: K, range: Range<out Number>): Flow<V> =
+        ops.zrangebyscore(key, range).asFlow()
 
     override fun zrangebyscore(key: K, range: Range<out Number>, limit: Limit): Flow<V> = ops.zrangebyscore(key, range, limit).asFlow()
 
