@@ -118,7 +118,6 @@ public class MigrateArgs<K> implements CompositeArgument {
          * @see MigrateArgs#auth(CharSequence)
          */
         public static <K> MigrateArgs<K> auth(CharSequence password) {
-            // TODO : implement auth(username,password) when https://github.com/antirez/redis/pull/7035 is fixed
             return new MigrateArgs<K>().auth(password);
         }
 
@@ -240,7 +239,7 @@ public class MigrateArgs<K> implements CompositeArgument {
      */
     public MigrateArgs<K> auth2(CharSequence username, CharSequence password) {
 
-        LettuceAssert.notNull(username, "UserName must not be null");
+        LettuceAssert.notNull(username, "Username must not be null");
         LettuceAssert.notNull(password, "Password must not be null");
 
         char[] chars = new char[username.length()];
