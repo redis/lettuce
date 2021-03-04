@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +31,7 @@ class ReadOnlyCommandsUnitTests {
 
     @Test
     void testCount() {
-        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(79);
+        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(81);
     }
 
     @Test
