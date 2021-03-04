@@ -15,6 +15,8 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.core.protocol.CommandKeyword.*;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
@@ -397,11 +399,11 @@ public class SetArgs implements CompositeArgument {
         }
 
         if (nx) {
-            args.add("NX");
+            args.add(NX);
         }
 
         if (xx) {
-            args.add("XX");
+            args.add(XX);
         }
 
         if (keepttl) {

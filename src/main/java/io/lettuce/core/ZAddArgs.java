@@ -15,6 +15,8 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.core.protocol.CommandKeyword.*;
+
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
@@ -164,14 +166,15 @@ public class ZAddArgs implements CompositeArgument {
         return this;
     }
 
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (nx) {
-            args.add("NX");
+            args.add(NX);
         }
 
         if (xx) {
-            args.add("XX");
+            args.add(XX);
         }
 
         if (gt) {
@@ -183,7 +186,7 @@ public class ZAddArgs implements CompositeArgument {
         }
 
         if (ch) {
-            args.add("CH");
+            args.add(CH);
         }
     }
 
