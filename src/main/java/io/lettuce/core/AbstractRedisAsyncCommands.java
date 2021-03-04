@@ -718,12 +718,22 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Long> geoadd(K key, double longitude, double latitude, V member) {
-        return dispatch(commandBuilder.geoadd(key, longitude, latitude, member));
+        return geoadd(key, longitude, latitude, member, null);
+    }
+
+    @Override
+    public RedisFuture<Long> geoadd(K key, double longitude, double latitude, V member, GeoAddArgs args) {
+        return dispatch(commandBuilder.geoadd(key, longitude, latitude, member, args));
     }
 
     @Override
     public RedisFuture<Long> geoadd(K key, Object... lngLatMember) {
-        return dispatch(commandBuilder.geoadd(key, lngLatMember));
+        return geoadd(key, null, lngLatMember);
+    }
+
+    @Override
+    public RedisFuture<Long> geoadd(K key, GeoAddArgs args, Object... lngLatMember) {
+        return dispatch(commandBuilder.geoadd(key, lngLatMember, args));
     }
 
     @Override

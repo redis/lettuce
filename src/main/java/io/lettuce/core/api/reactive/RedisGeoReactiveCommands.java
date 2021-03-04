@@ -17,6 +17,7 @@ package io.lettuce.core.api.reactive;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.GeoAddArgs;
 import io.lettuce.core.GeoArgs;
 import io.lettuce.core.GeoCoordinates;
 import io.lettuce.core.GeoRadiusStoreArgs;
@@ -45,6 +46,19 @@ public interface RedisGeoReactiveCommands<K, V> {
     Mono<Long> geoadd(K key, double longitude, double latitude, V member);
 
     /**
+     * Single geo add.
+     *
+     * @param key the key of the geo set.
+     * @param longitude the longitude coordinate according to WGS84.
+     * @param latitude the latitude coordinate according to WGS84.
+     * @param member the member to add.
+     * @param args additional arguments.
+     * @return Long integer-reply the number of elements that were added to the set.
+     * @since 6.1
+     */
+    Mono<Long> geoadd(K key, double longitude, double latitude, V member, GeoAddArgs args);
+
+    /**
      * Multi geo add.
      *
      * @param key the key of the geo set.
@@ -52,6 +66,17 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @return Long integer-reply the number of elements that were added to the set.
      */
     Mono<Long> geoadd(K key, Object... lngLatMember);
+
+    /**
+     * Multi geo add.
+     *
+     * @param key the key of the geo set.
+     * @param args additional arguments.
+     * @param lngLatMember triplets of double longitude, double latitude and V member.
+     * @return Long integer-reply the number of elements that were added to the set.
+     * @since 6.1
+     */
+    Mono<Long> geoadd(K key, GeoAddArgs args, Object... lngLatMember);
 
     /**
      * Retrieve distance between points {@code from} and {@code to}. If one or more elements are missing {@code null} is

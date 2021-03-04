@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.GeoAddArgs;
 import io.lettuce.core.GeoArgs;
 import io.lettuce.core.GeoCoordinates;
 import io.lettuce.core.GeoRadiusStoreArgs;
@@ -70,6 +71,19 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         Long readd = redis.geoadd(key, -73.9454966, 40.747533, "lic market");
         assertThat(readd).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void geoaddXXNXCH() {
+
+        Long result = redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", GeoAddArgs.Builder.xx());
+        assertThat(result).isEqualTo(0);
+
+        redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
+        result = redis.geoadd(key, GeoAddArgs.Builder.ch(), 1.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9",
+                8.665351, 49.553302, "Bahn");
+        assertThat(result).isEqualTo(1);
     }
 
     @Test

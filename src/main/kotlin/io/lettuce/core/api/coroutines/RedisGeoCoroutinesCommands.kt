@@ -41,6 +41,25 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
     suspend fun geoadd(key: K, longitude: Double, latitude: Double, member: V): Long?
 
     /**
+     * Single geo add.
+     *
+     * @param key the key of the geo set.
+     * @param longitude the longitude coordinate according to WGS84.
+     * @param latitude the latitude coordinate according to WGS84.
+     * @param member the member to add.
+     * @param args additional arguments.
+     * @return Long integer-reply the number of elements that were added to the set.
+     * @since 6.1
+     */
+    suspend fun geoadd(
+        key: K,
+        longitude: Double,
+        latitude: Double,
+        member: V,
+        args: GeoAddArgs
+    ): Long?
+
+    /**
      * Multi geo add.
      *
      * @param key the key of the geo set.
@@ -48,6 +67,17 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return Long integer-reply the number of elements that were added to the set.
      */
     suspend fun geoadd(key: K, vararg lngLatMember: Any): Long?
+
+    /**
+     * Multi geo add.
+     *
+     * @param key the key of the geo set.
+     * @param args additional arguments.
+     * @param lngLatMember triplets of Double longitude, Double latitude and V member.
+     * @return Long integer-reply the number of elements that were added to the set.
+     * @since 6.1
+     */
+    suspend fun geoadd(key: K, args: GeoAddArgs, vararg lngLatMember: Any): Long?
 
     /**
      * Retrieve distance between points `from` and `to`. If one or more elements are missing `null` is

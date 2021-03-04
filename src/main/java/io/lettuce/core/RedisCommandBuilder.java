@@ -839,14 +839,20 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(ASYNC));
     }
 
-    Command<K, V, Long> geoadd(K key, double longitude, double latitude, V member) {
+    Command<K, V, Long> geoadd(K key, double longitude, double latitude, V member, GeoAddArgs geoArgs) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(longitude).add(latitude).addValue(member);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (geoArgs != null) {
+            geoArgs.build(args);
+        }
+
+        args.add(longitude).add(latitude).addValue(member);
         return createCommand(GEOADD, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, Long> geoadd(K key, Object[] lngLatMember) {
+    Command<K, V, Long> geoadd(K key, Object[] lngLatMember, GeoAddArgs geoArgs) {
 
         notNullKey(key);
         LettuceAssert.notNull(lngLatMember, "LngLatMember " + MUST_NOT_BE_NULL);
@@ -856,6 +862,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
                 + "sequence of longitude1, latitude1, member1, longitude2, latitude2, member2, ... longitudeN, latitudeN, memberN");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (geoArgs != null) {
+            geoArgs.build(args);
+        }
 
         for (int i = 0; i < lngLatMember.length; i += 3) {
             args.add((Double) lngLatMember[i]);
