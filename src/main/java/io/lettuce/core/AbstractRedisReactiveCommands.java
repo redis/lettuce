@@ -1918,6 +1918,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Flux<PendingMessage> xpending(K key, XPendingArgs<K> args) {
+        return createDissolvingFlux(() -> commandBuilder.xpending(key, args));
+    }
+
+    @Override
     public Flux<StreamMessage<K, V>> xrange(K key, Range<String> range) {
         return createDissolvingFlux(() -> commandBuilder.xrange(key, range, Limit.unlimited()));
     }

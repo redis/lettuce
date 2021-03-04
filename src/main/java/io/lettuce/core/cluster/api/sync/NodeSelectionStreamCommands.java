@@ -242,6 +242,15 @@ public interface NodeSelectionStreamCommands<K, V> {
     Executions<List<PendingMessage>> xpending(K key, Consumer<K> consumer, Range<String> range, Limit limit);
 
     /**
+     * Read pending messages from a stream within a specific {@link XPendingArgs}.
+     *
+     * @param key the stream key.
+     * @param args
+     * @return List&lt;Object&gt; array-reply list with members of the resulting stream.
+     */
+    Executions<List<PendingMessage>> xpending(K key, XPendingArgs<K> args);
+
+    /**
      * Read messages from a stream within a specific {@link Range}.
      *
      * @param key the stream key.

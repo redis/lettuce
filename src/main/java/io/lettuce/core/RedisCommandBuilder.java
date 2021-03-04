@@ -2619,6 +2619,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XPENDING, new PendingMessageListOutput<>(codec), args);
     }
 
+    public Command<K, V, List<PendingMessage>> xpending(K key, XPendingArgs<K> commandArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(commandArgs, "XPendingArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        commandArgs.build(args);
+        return createCommand(XPENDING, new PendingMessageListOutput<>(codec), args);
+    }
+
     public Command<K, V, List<StreamMessage<K, V>>> xrange(K key, Range<String> range, Limit limit) {
         notNullKey(key);
         LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);

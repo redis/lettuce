@@ -28,6 +28,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.XPendingArgs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -439,6 +440,23 @@ public class StreamCommandIntegrationTests extends TestSupport {
                 Limit.from(10))).hasSize(1);
         assertThat(redis.xpending(key, "group", Range.from(Range.Boundary.including(id1), Range.Boundary.including(id2)),
                 Limit.from(10))).hasSize(2);
+    }
+
+    @Test
+    void xpendingWithArgs() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        List<PendingMessage> pendingEntries = redis.xpending(key, XPendingArgs.Builder
+                .xpending(Consumer.from("group", "consumer1"), Range.unbounded(), Limit.from(10)).idle(30L));
+
+        PendingMessage message = pendingEntries.get(0);
+        assertThat(message.getId()).isEqualTo(id);
+        assertThat(message.getConsumer()).isEqualTo("consumer1");
+        assertThat(message.getRedeliveryCount()).isEqualTo(1);
     }
 
     @Test

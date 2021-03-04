@@ -79,6 +79,8 @@ internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override fun xpending(key: K, consumer: Consumer<K>, range: Range<String>, limit: Limit): Flow<PendingMessage> = ops.xpending(key, consumer, range, limit).asFlow()
 
+    override fun xpending(key: K, args: XPendingArgs<K>): Flow<PendingMessage> = ops.xpending(key, args).asFlow()
+
     override fun xrange(key: K, range: Range<String>): Flow<StreamMessage<K, V>> = ops.xrange(key, range).asFlow()
 
     override fun xrange(key: K, range: Range<String>, limit: Limit): Flow<StreamMessage<K, V>> = ops.xrange(key, range, limit).asFlow()
