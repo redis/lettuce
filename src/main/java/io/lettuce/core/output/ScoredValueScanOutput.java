@@ -17,10 +17,10 @@ package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
 
-import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.ScoredValueScanCursor;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceStrings;
 
 /**
  * {@link io.lettuce.core.ScoredValueScanCursor} for scan cursor output.
@@ -51,7 +51,9 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
 
     @Override
     public void set(double number) {
-        output.getValues().add(ScoredValue.fromNullable(number, value));
+        if (value != null) {
+            output.getValues().add(ScoredValue.just(number, value));
+        }
         value = null;
     }
 

@@ -32,7 +32,7 @@ class ScoredValueUnitTests {
     @Test
     void shouldCreateEmptyScoredValueFromOptional() {
 
-        ScoredValue<String> value = ScoredValue.from(42, Optional.<String> empty());
+        Value<String> value = ScoredValue.from(42, Optional.<String> empty());
 
         assertThat(value.hasValue()).isFalse();
     }
@@ -40,7 +40,7 @@ class ScoredValueUnitTests {
     @Test
     void shouldCreateEmptyValue() {
 
-        ScoredValue<String> value = ScoredValue.empty();
+        Value<String> value = ScoredValue.empty();
 
         assertThat(value.hasValue()).isFalse();
     }
@@ -48,7 +48,7 @@ class ScoredValueUnitTests {
     @Test
     void shouldCreateNonEmptyValueFromOptional() {
 
-        ScoredValue<String> value = ScoredValue.from(4.2, Optional.of("hello"));
+        ScoredValue<String> value = (ScoredValue) ScoredValue.from(4.2, Optional.of("hello"));
 
         assertThat(value.hasValue()).isTrue();
         assertThat(value.getValue()).isEqualTo("hello");
@@ -58,7 +58,7 @@ class ScoredValueUnitTests {
     @Test
     void shouldCreateEmptyValueFromValue() {
 
-        ScoredValue<String> value = ScoredValue.fromNullable(42, null);
+        Value<String> value = ScoredValue.fromNullable(42, null);
 
         assertThat(value.hasValue()).isFalse();
     }
@@ -66,7 +66,7 @@ class ScoredValueUnitTests {
     @Test
     void shouldCreateNonEmptyValueFromValue() {
 
-        ScoredValue<String> value = ScoredValue.fromNullable(42, "hello");
+        ScoredValue<String> value = (ScoredValue<String>) ScoredValue.fromNullable(42, "hello");
 
         assertThat(value.hasValue()).isTrue();
         assertThat(value.getValue()).isEqualTo("hello");
@@ -89,7 +89,7 @@ class ScoredValueUnitTests {
     @Test
     void shouldCreateNonEmptyValue() {
 
-        ScoredValue<String> value = ScoredValue.from(12, Optional.of("hello"));
+        ScoredValue<String> value = (ScoredValue<String>) ScoredValue.from(12, Optional.of("hello"));
 
         assertThat(value.hasValue()).isTrue();
         assertThat(value.getValue()).isEqualTo("hello");
@@ -97,7 +97,7 @@ class ScoredValueUnitTests {
 
     @Test
     void equals() {
-        ScoredValue<String> sv1 = ScoredValue.fromNullable(1.0, "a");
+        ScoredValue<String> sv1 = (ScoredValue<String>) ScoredValue.fromNullable(1.0, "a");
         assertThat(sv1.equals(ScoredValue.fromNullable(1.0, "a"))).isTrue();
         assertThat(sv1.equals(null)).isFalse();
         assertThat(sv1.equals(ScoredValue.fromNullable(1.1, "a"))).isFalse();
@@ -114,10 +114,10 @@ class ScoredValueUnitTests {
     @Test
     void toStringShouldRenderCorrectly() {
 
-        ScoredValue<String> value = ScoredValue.from(12.34, Optional.of("hello"));
-        ScoredValue<String> empty = ScoredValue.fromNullable(34, null);
+        ScoredValue<String> value = (ScoredValue<String>) ScoredValue.from(12.34, Optional.of("hello"));
+        Value<String> empty = ScoredValue.fromNullable(34, null);
 
         assertThat(value.toString()).contains("ScoredValue[12").contains("340000, hello]");
-        assertThat(empty.toString()).contains("ScoredValue[34").contains("000000].empty");
+        assertThat(empty.toString()).contains("ScoredValue[0,000000].empty");
     }
 }

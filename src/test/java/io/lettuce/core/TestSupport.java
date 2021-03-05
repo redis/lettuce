@@ -56,7 +56,7 @@ public abstract class TestSupport {
     }
 
     protected static ScoredValue<String> sv(double score, String value) {
-        return ScoredValue.fromNullable(score, value);
+        return ScoredValue.just(score, value);
     }
 
     protected static Set<String> set(String... args) {

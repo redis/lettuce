@@ -19,10 +19,10 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
-import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceStrings;
 
 /**
  * {@link List} of values and their associated scores.
@@ -60,7 +60,7 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
     @Override
     public void set(double number) {
 
-        subscriber.onNext(output, ScoredValue.fromNullable(number, value));
+        subscriber.onNext(output, ScoredValue.just(number, value));
         value = null;
     }
 

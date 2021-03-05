@@ -27,7 +27,6 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Will Glozer
  * @author Mark Paluch
  */
-@SuppressWarnings("serial")
 public class ScoredValue<V> extends Value<V> {
 
     private static final ScoredValue<Object> EMPTY = new ScoredValue<>(0, null);
@@ -48,14 +47,14 @@ public class ScoredValue<V> extends Value<V> {
     }
 
     /**
-     * Creates a {@link ScoredValue} from a {@code key} and an {@link Optional}. The resulting value contains the value from the
+     * Creates a {@link Value} from a {@code key} and an {@link Optional}. The resulting value contains the value from the
      * {@link Optional} if a value is present. Value is empty if the {@link Optional} is empty.
      *
-     * @param score the score
+     * @param score the score.
      * @param optional the optional. May be empty but never {@code null}.
-     * @return the {@link ScoredValue}
+     * @return the {@link Value}.
      */
-    public static <T extends V, V> ScoredValue<V> from(double score, Optional<T> optional) {
+    public static <T extends V, V> Value<V> from(double score, Optional<T> optional) {
 
         LettuceAssert.notNull(optional, "Optional must not be null");
 
@@ -63,21 +62,21 @@ public class ScoredValue<V> extends Value<V> {
             return new ScoredValue<>(score, optional.get());
         }
 
-        return fromNullable(score, null);
+        return empty();
     }
 
     /**
-     * Creates a {@link ScoredValue} from a {@code score} and {@code value}. The resulting value contains the value if the
+     * Creates a {@link Value} from a {@code score} and {@code value}. The resulting value contains the value if the
      * {@code value} is not null.
      *
-     * @param score the score
+     * @param score the score.
      * @param value the value. May be {@code null}.
-     * @return the {@link ScoredValue}
+     * @return the {@link Value}.
      */
-    public static <T extends V, V> ScoredValue<V> fromNullable(double score, T value) {
+    public static <T extends V, V> Value<V> fromNullable(double score, T value) {
 
         if (value == null) {
-            return new ScoredValue<>(score, null);
+            return empty();
         }
 
         return new ScoredValue<>(score, value);
@@ -95,9 +94,9 @@ public class ScoredValue<V> extends Value<V> {
     /**
      * Creates a {@link ScoredValue} from a {@code key} and {@code value}. The resulting value contains the value.
      *
-     * @param score the score
+     * @param score the score.
      * @param value the value. Must not be {@code null}.
-     * @return the {@link ScoredValue}
+     * @return the {@link ScoredValue}.
      */
     public static <T extends V, V> ScoredValue<V> just(double score, T value) {
 
@@ -143,9 +142,9 @@ public class ScoredValue<V> extends Value<V> {
      * Returns a {@link ScoredValue} consisting of the results of applying the given function to the value of this element.
      * Mapping is performed only if a {@link #hasValue() value is present}.
      *
-     * @param <R> The element type of the new stream
-     * @param mapper a stateless function to apply to each element
-     * @return the new {@link ScoredValue}
+     * @param <R> element type of the new {@link ScoredValue}.
+     * @param mapper a stateless function to apply to each element.
+     * @return the new {@link ScoredValue}.
      */
     @SuppressWarnings("unchecked")
     public <R> ScoredValue<R> map(Function<? super V, ? extends R> mapper) {
@@ -163,8 +162,8 @@ public class ScoredValue<V> extends Value<V> {
      * Returns a {@link ScoredValue} consisting of the results of applying the given function to the score of this element.
      * Mapping is performed only if a {@link #hasValue() value is present}.
      *
-     * @param mapper a stateless function to apply to each element
-     * @return the new {@link ScoredValue}
+     * @param mapper a stateless function to apply to each element.
+     * @return the new {@link ScoredValue} .
      */
     @SuppressWarnings("unchecked")
     public ScoredValue<V> mapScore(Function<? super Number, ? extends Number> mapper) {

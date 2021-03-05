@@ -314,8 +314,8 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         assertThat(redis.zrandmember("zset", 2)).hasSize(2).containsAnyOf("a", "b", "c");
         assertThat(redis.zrandmemberWithscores("zset")).isIn(ScoredValue.fromNullable(2.0, "a"),
                 ScoredValue.fromNullable(3.0, "b"), ScoredValue.fromNullable(4.0, "c"));
-        assertThat(redis.zrandmemberWithscores("zset", 2)).hasSize(2).containsAnyOf(ScoredValue.fromNullable(2.0, "a"),
-                ScoredValue.fromNullable(3.0, "b"), ScoredValue.fromNullable(4.0, "c"));
+        assertThat(redis.zrandmemberWithscores("zset", 2)).hasSize(2).containsAnyOf(ScoredValue.just(2.0, "a"),
+                ScoredValue.just(3.0, "b"), ScoredValue.just(4.0, "c"));
     }
 
     @Test

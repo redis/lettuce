@@ -47,12 +47,12 @@ public class GeoValue<V> extends Value<V> {
     }
 
     /**
-     * Creates a {@link GeoValue} from a {@code key} and an {@link Optional}. The resulting value contains the value from the
+     * Creates a {@link Value} from a {@code key} and an {@link Optional}. The resulting value contains the value from the
      * {@link Optional} if a value is present. Value is empty if the {@link Optional} is empty.
      *
-     * @param coordinates the score
+     * @param coordinates the score.
      * @param optional the optional. May be empty but never {@code null}.
-     * @return the {@link GeoValue}
+     * @return the {@link Value}.
      */
     public static <T extends V, V> Value<V> from(GeoCoordinates coordinates, Optional<T> optional) {
 
@@ -67,12 +67,12 @@ public class GeoValue<V> extends Value<V> {
     }
 
     /**
-     * Creates a {@link GeoValue} from a {@code coordinates} and {@code value}. The resulting value contains the value if the
+     * Creates a {@link Value} from a {@code coordinates} and {@code value}. The resulting value contains the value if the
      * {@code value} is not null.
      *
      * @param coordinates the coordinates.
      * @param value the value. May be {@code null}.
-     * @return the {@link GeoValue}
+     * @return the {@link Value}.
      */
     public static <T extends V, V> Value<V> fromNullable(GeoCoordinates coordinates, T value) {
 
@@ -101,7 +101,7 @@ public class GeoValue<V> extends Value<V> {
      *
      * @param coordinates the coordinates.
      * @param value the value. Must not be {@code null}.
-     * @return the {@link GeoValue}
+     * @return the {@link GeoValue}.
      */
     public static <T extends V, V> GeoValue<V> just(GeoCoordinates coordinates, T value) {
 
@@ -170,9 +170,9 @@ public class GeoValue<V> extends Value<V> {
      * Returns a {@link GeoValue} consisting of the results of applying the given function to the value of this element. Mapping
      * is performed only if a {@link #hasValue() value is present}.
      *
-     * @param <R> The element type of the new stream
-     * @param mapper a stateless function to apply to each element
-     * @return the new {@link GeoValue}
+     * @param <R> element type of the new {@link GeoValue}.
+     * @param mapper a stateless function to apply to each element.
+     * @return the new {@link GeoValue}.
      */
     @SuppressWarnings("unchecked")
     public <R> GeoValue<R> map(Function<? super V, ? extends R> mapper) {
@@ -190,8 +190,8 @@ public class GeoValue<V> extends Value<V> {
      * Returns a {@link GeoValue} consisting of the results of applying the given function to the {@link GeoCoordinates} of this
      * element. Mapping is performed only if a {@link #hasValue() value is present}.
      *
-     * @param mapper a stateless function to apply to each element
-     * @return the new {@link GeoValue}
+     * @param mapper a stateless function to apply to each element.
+     * @return the new {@link GeoValue}.
      */
     public GeoValue<V> mapCoordinates(Function<? super GeoCoordinates, ? extends GeoCoordinates> mapper) {
 
