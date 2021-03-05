@@ -53,8 +53,6 @@ public class ScoredValue<V> extends Value<V> {
      *
      * @param score the score
      * @param optional the optional. May be empty but never {@code null}.
-     * @param <T>
-     * @param <V>
      * @return the {@link ScoredValue}
      */
     public static <T extends V, V> ScoredValue<V> from(double score, Optional<T> optional) {
@@ -62,7 +60,7 @@ public class ScoredValue<V> extends Value<V> {
         LettuceAssert.notNull(optional, "Optional must not be null");
 
         if (optional.isPresent()) {
-            return new ScoredValue<V>(score, optional.get());
+            return new ScoredValue<>(score, optional.get());
         }
 
         return fromNullable(score, null);
@@ -74,23 +72,20 @@ public class ScoredValue<V> extends Value<V> {
      *
      * @param score the score
      * @param value the value. May be {@code null}.
-     * @param <T>
-     * @param <V>
      * @return the {@link ScoredValue}
      */
     public static <T extends V, V> ScoredValue<V> fromNullable(double score, T value) {
 
         if (value == null) {
-            return new ScoredValue<V>(score, null);
+            return new ScoredValue<>(score, null);
         }
 
-        return new ScoredValue<V>(score, value);
+        return new ScoredValue<>(score, value);
     }
 
     /**
      * Returns an empty {@code ScoredValue} instance. No value is present for this instance.
      *
-     * @param <V>
      * @return the {@link ScoredValue}
      */
     public static <V> ScoredValue<V> empty() {
@@ -102,15 +97,13 @@ public class ScoredValue<V> extends Value<V> {
      *
      * @param score the score
      * @param value the value. Must not be {@code null}.
-     * @param <T>
-     * @param <V>
      * @return the {@link ScoredValue}
      */
     public static <T extends V, V> ScoredValue<V> just(double score, T value) {
 
         LettuceAssert.notNull(value, "Value must not be null");
 
-        return new ScoredValue<V>(score, value);
+        return new ScoredValue<>(score, value);
     }
 
     public double getScore() {
@@ -179,7 +172,7 @@ public class ScoredValue<V> extends Value<V> {
         LettuceAssert.notNull(mapper, "Mapper function must not be null");
 
         if (hasValue()) {
-            return new ScoredValue<V>(mapper.apply(score).doubleValue(), getValue());
+            return new ScoredValue<>(mapper.apply(score).doubleValue(), getValue());
         }
 
         return this;

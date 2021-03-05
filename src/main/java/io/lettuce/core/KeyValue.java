@@ -55,9 +55,6 @@ public class KeyValue<K, V> extends Value<V> {
      *
      * @param key the key, must not be {@code null}.
      * @param optional the optional. May be empty but never {@code null}.
-     * @param <K>
-     * @param <T>
-     * @param <V>
      * @return the {@link KeyValue}
      */
     public static <K, T extends V, V> KeyValue<K, V> from(K key, Optional<T> optional) {
@@ -77,9 +74,6 @@ public class KeyValue<K, V> extends Value<V> {
      *
      * @param key the key, must not be {@code null}.
      * @param value the value. May be {@code null}.
-     * @param <K>
-     * @param <T>
-     * @param <V>
      * @return the {@link KeyValue}
      */
     public static <K, T extends V, V> KeyValue<K, V> fromNullable(K key, T value) {
@@ -95,8 +89,6 @@ public class KeyValue<K, V> extends Value<V> {
      * Returns an empty {@code KeyValue} instance with the {@code key} set. No value is present for this instance.
      *
      * @param key the key, must not be {@code null}.
-     * @param <K>
-     * @param <V>
      * @return the {@link KeyValue}
      */
     public static <K, V> KeyValue<K, V> empty(K key) {
@@ -108,9 +100,6 @@ public class KeyValue<K, V> extends Value<V> {
      *
      * @param key the key. Must not be {@code null}.
      * @param value the value. Must not be {@code null}.
-     * @param <K>
-     * @param <T>
-     * @param <V>
      * @return the {@link KeyValue}
      */
     public static <K, T extends V, V> KeyValue<K, V> just(K key, T value) {
@@ -165,6 +154,7 @@ public class KeyValue<K, V> extends Value<V> {
      * @return the new {@link KeyValue}
      */
     @SuppressWarnings("unchecked")
+    @Override
     public <R> KeyValue<K, R> map(Function<? super V, ? extends R> mapper) {
 
         LettuceAssert.notNull(mapper, "Mapper function must not be null");

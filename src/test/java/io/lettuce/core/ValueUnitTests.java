@@ -15,8 +15,7 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -25,6 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 /**
+ * Unit tests for {@link Value}.
+ *
  * @author Mark Paluch
  */
 class ValueUnitTests {
@@ -60,6 +61,7 @@ class ValueUnitTests {
         Value<String> value = Value.fromNullable(null);
 
         assertThat(value.hasValue()).isFalse();
+        assertThat(value.isEmpty()).isTrue();
     }
 
     @Test
@@ -77,6 +79,7 @@ class ValueUnitTests {
         Value<String> value = Value.just("hello");
 
         assertThat(value.hasValue()).isTrue();
+        assertThat(value.isEmpty()).isFalse();
     }
 
     @Test
@@ -177,6 +180,16 @@ class ValueUnitTests {
     }
 
     @Test
+    void ifHasValueShouldEmptyCallback() {
+
+        Value<String> value = Value.just("hello");
+        AtomicBoolean isPresent = new AtomicBoolean();
+        value.ifHasValue(s -> isPresent.set(true));
+
+        assertThat(isPresent).isTrue();
+    }
+
+    @Test
     void emptyValueShouldNotExecuteIfHasValueCallback() {
 
         Value<String> value = Value.empty();
@@ -184,6 +197,13 @@ class ValueUnitTests {
         value.ifHasValue(s -> atomicBoolean.set(true));
 
         assertThat(atomicBoolean.get()).isFalse();
+
+        AtomicBoolean isPresent = new AtomicBoolean();
+        AtomicBoolean isAbsent = new AtomicBoolean();
+        value.ifHasValueOrElse(s -> isPresent.set(true), () -> isAbsent.set(true));
+
+        assertThat(isPresent).isFalse();
+        assertThat(isAbsent).isTrue();
     }
 
     @Test

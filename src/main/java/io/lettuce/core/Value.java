@@ -36,7 +36,6 @@ import io.lettuce.core.internal.LettuceAssert;
  * @param <V> Value type.
  * @author Mark Paluch
  */
-@SuppressWarnings("serial")
 public class Value<V> implements Serializable {
 
     private static final Value<Object> EMPTY = new Value<>(null);
@@ -63,8 +62,6 @@ public class Value<V> implements Serializable {
      * value is present. Value is empty if the {@link Optional} is empty.
      *
      * @param optional the optional. May be empty but never {@code null}.
-     * @param <T>
-     * @param <V>
      * @return the {@link Value}
      */
     public static <T extends V, V> Value<V> from(Optional<T> optional) {
@@ -82,8 +79,6 @@ public class Value<V> implements Serializable {
      * Creates a {@link Value} from a {@code value}. The resulting value contains the value if the {@code value} is not null.
      *
      * @param value the value. May be {@code null}.
-     * @param <T>
-     * @param <V>
      * @return the {@link Value}
      */
     public static <T extends V, V> Value<V> fromNullable(T value) {
@@ -98,7 +93,6 @@ public class Value<V> implements Serializable {
     /**
      * Returns an empty {@code Value} instance. No value is present for this instance.
      *
-     * @param <V>
      * @return the {@link Value}
      */
     public static <V> Value<V> empty() {
@@ -109,8 +103,6 @@ public class Value<V> implements Serializable {
      * Creates a {@link Value} from a {@code value}. The resulting value contains the value.
      *
      * @param value the value. Must not be {@code null}.
-     * @param <T>
-     * @param <V>
      * @return the {@link Value}
      */
     public static <T extends V, V> Value<V> just(T value) {
@@ -130,7 +122,6 @@ public class Value<V> implements Serializable {
         Value<?> value1 = (Value<?>) o;
 
         return value != null ? value.equals(value1.value) : value1.value == null;
-
     }
 
     @Override
@@ -167,6 +158,16 @@ public class Value<V> implements Serializable {
      */
     public boolean hasValue() {
         return value != null;
+    }
+
+    /**
+     * Return {@code true} if there is no value present, otherwise {@code false}.
+     *
+     * @return {@code true} if there is no value present, otherwise {@code false}
+     * @since 6.1
+     */
+    public boolean isEmpty() {
+        return value == null;
     }
 
     /**
@@ -251,6 +252,26 @@ public class Value<V> implements Serializable {
 
         if (hasValue()) {
             consumer.accept(getValue());
+        }
+    }
+
+    /**
+     * If a value is present, invoke the specified {@link java.util.function.Consumer} with the value, otherwise call
+     * {@link Runnable emptyAction}.
+     *
+     * @param consumer block to be executed if a value is present, must not be {@code null}.
+     * @param emptyAction block to be executed if a value is absent, must not be {@code null}.
+     * @since 6.1
+     */
+    public void ifHasValueOrElse(Consumer<? super V> consumer, Runnable emptyAction) {
+
+        LettuceAssert.notNull(consumer, "Consumer must not be null");
+        LettuceAssert.notNull(emptyAction, "EmptyAction must not be null");
+
+        if (hasValue()) {
+            consumer.accept(getValue());
+        } else {
+            emptyAction.run();
         }
     }
 

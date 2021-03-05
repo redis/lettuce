@@ -17,6 +17,7 @@ package io.lettuce.core;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 import io.lettuce.core.internal.LettuceAssert;
@@ -28,10 +29,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Mark Paluch
  * @since 6.1
  */
-@SuppressWarnings("serial")
 public class GeoValue<V> extends Value<V> {
-
-    private static final GeoValue<Object> EMPTY = new GeoValue<>(new GeoCoordinates(0, 0), null);
 
     private final GeoCoordinates coordinates;
 
@@ -49,14 +47,41 @@ public class GeoValue<V> extends Value<V> {
     }
 
     /**
-     * Returns an empty {@code GeoValue} instance. No value is present for this instance.
+     * Creates a {@link GeoValue} from a {@code key} and an {@link Optional}. The resulting value contains the value from the
+     * {@link Optional} if a value is present. Value is empty if the {@link Optional} is empty.
      *
-     * @param <V>
+     * @param coordinates the score
+     * @param optional the optional. May be empty but never {@code null}.
      * @return the {@link GeoValue}
      */
-    @SuppressWarnings("unchecked")
-    public static <V> GeoValue<V> empty() {
-        return (GeoValue<V>) EMPTY;
+    public static <T extends V, V> Value<V> from(GeoCoordinates coordinates, Optional<T> optional) {
+
+        LettuceAssert.notNull(optional, "Optional must not be null");
+
+        if (optional.isPresent()) {
+            LettuceAssert.notNull(coordinates, "GeoCoordinates must not be null");
+            return new GeoValue<>(coordinates, optional.get());
+        }
+
+        return Value.empty();
+    }
+
+    /**
+     * Creates a {@link GeoValue} from a {@code coordinates} and {@code value}. The resulting value contains the value if the
+     * {@code value} is not null.
+     *
+     * @param coordinates the coordinates.
+     * @param value the value. May be {@code null}.
+     * @return the {@link GeoValue}
+     */
+    public static <T extends V, V> Value<V> fromNullable(GeoCoordinates coordinates, T value) {
+
+        if (value == null) {
+            return empty();
+        }
+
+        LettuceAssert.notNull(coordinates, "GeoCoordinates must not be null");
+        return new GeoValue<>(coordinates, value);
     }
 
     /**
@@ -65,8 +90,6 @@ public class GeoValue<V> extends Value<V> {
      * @param longitude the longitude coordinate according to WGS84.
      * @param latitude the latitude coordinate according to WGS84.
      * @param value the value. Must not be {@code null}.
-     * @param <T>
-     * @param <V>
      * @return the {@link GeoValue}
      */
     public static <T extends V, V> GeoValue<V> just(double longitude, double latitude, T value) {
@@ -78,8 +101,6 @@ public class GeoValue<V> extends Value<V> {
      *
      * @param coordinates the coordinates.
      * @param value the value. Must not be {@code null}.
-     * @param <T>
-     * @param <V>
      * @return the {@link GeoValue}
      */
     public static <T extends V, V> GeoValue<V> just(GeoCoordinates coordinates, T value) {

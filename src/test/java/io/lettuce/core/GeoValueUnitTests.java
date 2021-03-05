@@ -17,6 +17,8 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -27,9 +29,35 @@ import org.junit.jupiter.api.Test;
 class GeoValueUnitTests {
 
     @Test
+    void shouldCreateValueFromOptional() {
+
+        Value<String> value = GeoValue.from(new GeoCoordinates(1, 2), Optional.empty());
+
+        assertThat(value.hasValue()).isFalse();
+
+        value = GeoValue.from(new GeoCoordinates(1, 2), Optional.of("foo"));
+
+        assertThat(value.hasValue()).isTrue();
+        assertThat(value).isInstanceOf(GeoValue.class);
+    }
+
+    @Test
+    void shouldCreateValueFromNullable() {
+
+        Value<String> value = GeoValue.fromNullable(new GeoCoordinates(1, 2), null);
+
+        assertThat(value.hasValue()).isFalse();
+
+        value = GeoValue.fromNullable(new GeoCoordinates(1, 2), "foo");
+
+        assertThat(value.hasValue()).isTrue();
+        assertThat(value).isInstanceOf(GeoValue.class);
+    }
+
+    @Test
     void shouldCreateEmptyValue() {
 
-        GeoValue<String> value = GeoValue.empty();
+        Value<String> value = GeoValue.empty();
 
         assertThat(value.hasValue()).isFalse();
     }
@@ -67,7 +95,6 @@ class GeoValueUnitTests {
     void toStringShouldRenderCorrectly() {
 
         assertThat(GeoValue.just(12, 34, "hello")).hasToString("GeoValue[(12.0, 34.0), hello]");
-        assertThat(GeoValue.empty()).hasToString("GeoValue[(0, 0)].empty");
     }
 
 }
