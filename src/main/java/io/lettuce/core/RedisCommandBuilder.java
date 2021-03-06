@@ -20,6 +20,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
 import static io.lettuce.core.protocol.CommandType.*;
 import static io.lettuce.core.protocol.CommandType.COPY;
 import static io.lettuce.core.protocol.CommandType.SAVE;
+import static io.lettuce.core.protocol.CommandType.SYNC;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -831,12 +832,20 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(FLUSHALL, new StatusOutput<>(codec), new CommandArgs<>(codec).add(ASYNC));
     }
 
+    Command<K, V, String> flushallSync() {
+        return createCommand(FLUSHALL, new StatusOutput<>(codec), new CommandArgs<>(codec).add(CommandKeyword.SYNC));
+    }
+
     Command<K, V, String> flushdb() {
         return createCommand(FLUSHDB, new StatusOutput<>(codec));
     }
 
     Command<K, V, String> flushdbAsync() {
         return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(ASYNC));
+    }
+
+    Command<K, V, String> flushdbSync() {
+        return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(CommandKeyword.SYNC));
     }
 
     Command<K, V, Long> geoadd(K key, double longitude, double latitude, V member, GeoAddArgs geoArgs) {
@@ -2019,6 +2028,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, String> scriptFlush() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSH);
+        return createCommand(SCRIPT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> scriptFlushAsync() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSH).add(ASYNC);
+        return createCommand(SCRIPT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> scriptFlushSync() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSH).add(CommandKeyword.SYNC);
         return createCommand(SCRIPT, new StatusOutput<>(codec), args);
     }
 

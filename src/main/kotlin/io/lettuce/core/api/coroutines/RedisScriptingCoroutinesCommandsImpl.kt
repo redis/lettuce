@@ -54,6 +54,10 @@ internal class RedisScriptingCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun scriptFlush(): String? = ops.scriptFlush().awaitFirstOrNull()
 
+    override suspend fun scriptFlushAsync(): String? = ops.scriptFlushAsync().awaitFirstOrNull()
+
+    override suspend fun scriptFlushSync(): String? = ops.scriptFlushSync().awaitFirstOrNull()
+
     override suspend fun scriptKill(): String? = ops.scriptKill().awaitFirstOrNull()
 
     override suspend fun scriptLoad(script: String): String? = ops.scriptLoad(script).awaitFirstOrNull()

@@ -286,6 +286,14 @@ public interface RedisServerCommands<K, V> {
     String flushallAsync();
 
     /**
+     * Remove all keys synchronously from all databases.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    String flushallSync();
+
+    /**
      * Remove all keys from the current database.
      *
      * @return String simple-string-reply.
@@ -298,6 +306,14 @@ public interface RedisServerCommands<K, V> {
      * @return String simple-string-reply.
      */
     String flushdbAsync();
+
+    /**
+     * Remove all keys synchronously from the current database.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    String flushdbSync();
 
     /**
      * Get information and statistics about the server.

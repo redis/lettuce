@@ -119,6 +119,22 @@ public interface RedisScriptingCommands<K, V> {
     String scriptFlush();
 
     /**
+     * Remove all the scripts asynchronously from the script cache.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    String scriptFlushAsync();
+
+    /**
+     * Remove all the scripts synchronously from the script cache.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    String scriptFlushSync();
+
+    /**
      * Kill the script currently in execution.
      *
      * @return String simple-string-reply.

@@ -272,6 +272,14 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<String> flushallAsync();
 
     /**
+     * Remove all keys synchronously from all databases.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    Executions<String> flushallSync();
+
+    /**
      * Remove all keys from the current database.
      *
      * @return String simple-string-reply.
@@ -284,6 +292,14 @@ public interface NodeSelectionServerCommands<K, V> {
      * @return String simple-string-reply.
      */
     Executions<String> flushdbAsync();
+
+    /**
+     * Remove all keys synchronously from the current database.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    Executions<String> flushdbSync();
 
     /**
      * Get information and statistics about the server.

@@ -288,6 +288,14 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<String> flushallAsync();
 
     /**
+     * Remove all keys synchronously from all databases.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    Mono<String> flushallSync();
+
+    /**
      * Remove all keys from the current database.
      *
      * @return String simple-string-reply.
@@ -300,6 +308,14 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String simple-string-reply.
      */
     Mono<String> flushdbAsync();
+
+    /**
+     * Remove all keys synchronously from the current database.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    Mono<String> flushdbSync();
 
     /**
      * Get information and statistics about the server.

@@ -287,6 +287,14 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     suspend fun flushallAsync(): String?
 
     /**
+     * Remove all keys synchronously from all databases.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    suspend fun flushallSync(): String?
+
+    /**
      * Remove all keys from the current database.
      *
      * @return String simple-string-reply.
@@ -299,6 +307,14 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      */
     suspend fun flushdbAsync(): String?
+
+    /**
+     * Remove all keys synchronously from the current database.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    suspend fun flushdbSync(): String?
 
     /**
      * Get information and statistics about the server.

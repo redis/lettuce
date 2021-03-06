@@ -121,6 +121,22 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
     suspend fun scriptFlush(): String?
 
     /**
+     * Remove all the scripts asynchronously from the script cache.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    suspend fun scriptFlushAsync(): String?
+
+    /**
+     * Remove all the scripts synchronously from the script cache.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    suspend fun scriptFlushSync(): String?
+
+    /**
      * Kill the script currently in execution.
      *
      * @return String simple-string-reply.

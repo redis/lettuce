@@ -401,6 +401,15 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void flushallSync() {
+
+        redis.set(key, value);
+        assertThat(redis.flushallSync()).isEqualTo("OK");
+        assertThat(redis.get(key)).isNull();
+    }
+
+    @Test
     void flushdb() {
         redis.set(key, value);
         assertThat(redis.flushdb()).isEqualTo("OK");
@@ -419,6 +428,14 @@ public class ServerCommandIntegrationTests extends TestSupport {
         assertThat(redis.get(key)).isNull();
         redis.select(0);
         assertThat(redis.get(key)).isEqualTo(value);
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void flushdbSync() {
+        redis.set(key, value);
+        assertThat(redis.flushdbSync()).isEqualTo("OK");
+        assertThat(redis.get(key)).isNull();
     }
 
     @Test

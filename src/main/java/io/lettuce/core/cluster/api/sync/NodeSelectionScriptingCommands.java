@@ -120,6 +120,22 @@ public interface NodeSelectionScriptingCommands<K, V> {
     Executions<String> scriptFlush();
 
     /**
+     * Remove all the scripts asynchronously from the script cache.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    Executions<String> scriptFlushAsync();
+
+    /**
+     * Remove all the scripts synchronously from the script cache.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    Executions<String> scriptFlushSync();
+
+    /**
      * Kill the script currently in execution.
      *
      * @return String simple-string-reply.

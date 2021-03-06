@@ -105,9 +105,13 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun flushallAsync(): String? = ops.flushallAsync().awaitFirstOrNull()
 
+    override suspend fun flushallSync(): String? = ops.flushallSync().awaitFirstOrNull()
+
     override suspend fun flushdb(): String? = ops.flushdb().awaitFirstOrNull()
 
     override suspend fun flushdbAsync(): String? = ops.flushdbAsync().awaitFirstOrNull()
+
+    override suspend fun flushdbSync(): String? = ops.flushdbSync().awaitFirstOrNull()
 
     override suspend fun info(): String? = ops.info().awaitFirstOrNull()
 
