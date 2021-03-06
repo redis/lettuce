@@ -17,6 +17,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.FlushMode
 import io.lettuce.core.KillArgs
 import io.lettuce.core.TrackingArgs
 import io.lettuce.core.UnblockType
@@ -103,9 +104,13 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun flushall(): String? = ops.flushall().awaitFirstOrNull()
 
+    override suspend fun flushall(flushMode: FlushMode): String? = ops.flushall(flushMode).awaitFirstOrNull()
+
     override suspend fun flushallAsync(): String? = ops.flushallAsync().awaitFirstOrNull()
 
     override suspend fun flushdb(): String? = ops.flushdb().awaitFirstOrNull()
+
+    override suspend fun flushdb(flushMode: FlushMode): String? = ops.flushdb(flushMode).awaitFirstOrNull()
 
     override suspend fun flushdbAsync(): String? = ops.flushdbAsync().awaitFirstOrNull()
 

@@ -17,6 +17,7 @@ package io.lettuce.core.cluster.api.async;
 
 import java.util.List;
 
+import io.lettuce.core.FlushMode;
 import io.lettuce.core.ScriptOutputType;
 
 /**
@@ -118,6 +119,14 @@ public interface NodeSelectionScriptingAsyncCommands<K, V> {
      * @return String simple-string-reply.
      */
     AsyncExecutions<String> scriptFlush();
+
+    /**
+     * Remove all the scripts from the script cache by the specified {@code flushMode}.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    AsyncExecutions<String> scriptFlush(FlushMode flushMode);
 
     /**
      * Kill the script currently in execution.

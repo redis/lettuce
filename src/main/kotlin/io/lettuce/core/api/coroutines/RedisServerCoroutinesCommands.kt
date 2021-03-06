@@ -17,6 +17,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.FlushMode
 import io.lettuce.core.KillArgs
 import io.lettuce.core.TrackingArgs
 import io.lettuce.core.UnblockType
@@ -280,6 +281,14 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     suspend fun flushall(): String?
 
     /**
+     * Remove all keys from all databases by the specified `flushMode`.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    suspend fun flushall(flushMode: FlushMode): String?
+
+    /**
      * Remove all keys asynchronously from all databases.
      *
      * @return String simple-string-reply.
@@ -292,6 +301,14 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      */
     suspend fun flushdb(): String?
+
+    /**
+     * Remove all keys from the current database by the specified `flushMode`.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    suspend fun flushdb(flushMode: FlushMode): String?
 
     /**
      * Remove all keys asynchronously from the current database.

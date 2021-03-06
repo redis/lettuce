@@ -17,6 +17,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.FlushMode
 import io.lettuce.core.ScriptOutputType
 
 /**
@@ -119,6 +120,14 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      */
     suspend fun scriptFlush(): String?
+
+    /**
+     * Remove all the scripts from the script cache by the specified `flushMode`.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    suspend fun scriptFlush(flushMode: FlushMode): String?
 
     /**
      * Kill the script currently in execution.

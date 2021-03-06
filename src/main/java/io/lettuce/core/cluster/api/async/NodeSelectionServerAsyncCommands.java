@@ -18,6 +18,7 @@ package io.lettuce.core.cluster.api.async;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
@@ -265,6 +266,14 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
     AsyncExecutions<String> flushall();
 
     /**
+     * Remove all keys from all databases by the specified {@code flushMode}.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    AsyncExecutions<String> flushall(FlushMode flushMode);
+
+    /**
      * Remove all keys asynchronously from all databases.
      *
      * @return String simple-string-reply.
@@ -277,6 +286,14 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * @return String simple-string-reply.
      */
     AsyncExecutions<String> flushdb();
+
+    /**
+     * Remove all keys from the current database by the specified {@code flushMode}.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    AsyncExecutions<String> flushdb(FlushMode flushMode);
 
     /**
      * Remove all keys asynchronously from the current database.

@@ -17,6 +17,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.FlushMode
 import io.lettuce.core.ScriptOutputType
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands
 import kotlinx.coroutines.flow.toList
@@ -53,6 +54,8 @@ internal class RedisScriptingCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override suspend fun scriptExists(vararg digests: String): List<Boolean> = ops.scriptExists(*digests).asFlow().toList()
 
     override suspend fun scriptFlush(): String? = ops.scriptFlush().awaitFirstOrNull()
+
+    override suspend fun scriptFlush(flushMode: FlushMode): String? = ops.scriptFlush(flushMode).awaitFirstOrNull()
 
     override suspend fun scriptKill(): String? = ops.scriptKill().awaitFirstOrNull()
 

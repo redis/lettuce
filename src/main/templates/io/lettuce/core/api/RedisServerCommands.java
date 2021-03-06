@@ -279,6 +279,14 @@ public interface RedisServerCommands<K, V> {
     String flushall();
 
     /**
+     * Remove all keys from all databases by the specified {@code flushMode}.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    String flushall(FlushMode flushMode);
+
+    /**
      * Remove all keys asynchronously from all databases.
      *
      * @return String simple-string-reply.
@@ -291,6 +299,14 @@ public interface RedisServerCommands<K, V> {
      * @return String simple-string-reply.
      */
     String flushdb();
+
+    /**
+     * Remove all keys from the current database by the specified {@code flushMode}.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    String flushdb(FlushMode flushMode);
 
     /**
      * Remove all keys asynchronously from the current database.

@@ -20,6 +20,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
 import static io.lettuce.core.protocol.CommandType.*;
 import static io.lettuce.core.protocol.CommandType.COPY;
 import static io.lettuce.core.protocol.CommandType.SAVE;
+import static io.lettuce.core.protocol.CommandType.SYNC;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -827,12 +828,24 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(FLUSHALL, new StatusOutput<>(codec));
     }
 
+    Command<K, V, String> flushall(FlushMode flushMode) {
+        LettuceAssert.notNull(flushMode, "FlushMode " + MUST_NOT_BE_NULL);
+
+        return createCommand(FLUSHALL, new StatusOutput<>(codec), new CommandArgs<>(codec).add(flushMode.name()));
+    }
+
     Command<K, V, String> flushallAsync() {
         return createCommand(FLUSHALL, new StatusOutput<>(codec), new CommandArgs<>(codec).add(ASYNC));
     }
 
     Command<K, V, String> flushdb() {
         return createCommand(FLUSHDB, new StatusOutput<>(codec));
+    }
+
+    Command<K, V, String> flushdb(FlushMode flushMode) {
+        LettuceAssert.notNull(flushMode, "FlushMode " + MUST_NOT_BE_NULL);
+
+        return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(flushMode.name()));
     }
 
     Command<K, V, String> flushdbAsync() {
@@ -2019,6 +2032,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, String> scriptFlush() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSH);
+        return createCommand(SCRIPT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> scriptFlush(FlushMode flushMode) {
+        LettuceAssert.notNull(flushMode, "FlushMode " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSH).add(flushMode.name());
         return createCommand(SCRIPT, new StatusOutput<>(codec), args);
     }
 
