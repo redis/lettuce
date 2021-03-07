@@ -1949,6 +1949,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> xtrim(K key, XTrimArgs args) {
+        return dispatch(commandBuilder.xtrim(key, args));
+    }
+
+    @Override
     public RedisFuture<KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
         return dispatch(commandBuilder.bzpopmin(timeout, keys));
     }

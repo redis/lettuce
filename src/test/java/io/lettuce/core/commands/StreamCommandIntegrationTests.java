@@ -99,6 +99,25 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xaddMinidLimit() {
+        redis.xadd(key, XAddArgs.Builder.minid("2").id("3"), "foo", "bar");
+        redis.xadd(key, XAddArgs.Builder.minid("2").id("4"), "foo", "bar");
+        assertThat(redis.xlen(key)).isEqualTo(2);
+        redis.xadd(key, XAddArgs.Builder.minid("4").id("5"), "foo", "bar");
+        assertThat(redis.xlen(key)).isEqualTo(2);
+        redis.del(key);
+
+        redis.configSet("stream-node-max-entries", "1");
+        for (int i = 0; i < 5; i++) {
+            redis.xadd(key, "foo", "bar");
+        }
+        redis.xadd(key, XAddArgs.Builder.maxlen(2).approximateTrimming().limit(5l), "foo", "bar");
+        assertThat(redis.xlen(key)).isEqualTo(2);
+        redis.configSet("stream-node-max-entries", "100");
+    }
+
+    @Test
     @EnabledOnCommand("LMOVE") // Redis 6.2
     void xaddWithNomkstream() {
 
@@ -136,6 +155,22 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xtrim(key, true, 8);
 
         assertThat(redis.xlen(key)).isLessThanOrEqualTo(10);
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xtrimMinidLimit() {
+        redis.xadd(key, XAddArgs.Builder.maxlen(3).id("3"), "foo", "bar");
+        redis.xtrim(key, XTrimArgs.Builder.minid("4"));
+        assertThat(redis.xlen(key)).isZero();
+
+        List<String> ids = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            ids.add(redis.xadd(key, Collections.singletonMap("key", "value")));
+        }
+
+        redis.xtrim(key, XTrimArgs.Builder.maxlen(8));
+        assertThat(redis.xlen(key)).isEqualTo(8);
     }
 
     @Test

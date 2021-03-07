@@ -2755,6 +2755,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XTRIM, new IntegerOutput<>(codec), args);
     }
 
+    public Command<K, V, Long> xtrim(K key, XTrimArgs xTrimArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(xTrimArgs, "XTrimArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        xTrimArgs.build(args);
+        return createCommand(XTRIM, new IntegerOutput<>(codec), args);
+    }
+
     private static String getLowerValue(Range<String> range) {
 
         Boundary<String> boundary = range.getLower();

@@ -2023,6 +2023,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<Long> xtrim(K key, XTrimArgs args) {
+        return createMono(() -> commandBuilder.xtrim(key, args));
+    }
+
+    @Override
     public Mono<KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
         return createMono(() -> commandBuilder.bzpopmin(timeout, keys));
     }

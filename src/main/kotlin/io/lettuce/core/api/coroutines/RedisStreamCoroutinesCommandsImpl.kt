@@ -101,5 +101,6 @@ internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun xtrim(key: K, approximateTrimming: Boolean, count: Long): Long? = ops.xtrim(key, approximateTrimming, count).awaitFirstOrNull()
 
+    override suspend fun xtrim(key: K, args: XTrimArgs): Long? = ops.xtrim(key, args).awaitFirstOrNull()
 }
 
