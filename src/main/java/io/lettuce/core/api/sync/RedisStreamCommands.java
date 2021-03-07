@@ -343,4 +343,14 @@ public interface RedisStreamCommands<K, V> {
      * @return simple-reply number of removed entries.
      */
     Long xtrim(K key, boolean approximateTrimming, long count);
+
+    /**
+     * Trims the stream within a specific {@link XTrimArgs}.
+     *
+     * @param key the stream key.
+     * @param args
+     * @return simple-reply number of removed entries.
+     * @since 6.1
+     */
+    Long xtrim(K key, XTrimArgs args);
 }

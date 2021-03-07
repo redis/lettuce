@@ -343,5 +343,15 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
      */
     suspend fun xtrim(key: K, approximateTrimming: Boolean, count: Long): Long?
 
+    /**
+     * Trims the stream within a specific [XTrimArgs].
+     *
+     * @param key the stream key.
+     * @param args
+     * @return simple-reply number of removed entries.
+     * @since 6.1
+     */
+    suspend fun xtrim(key: K, args: XTrimArgs): Long?
+
 }
 

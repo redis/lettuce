@@ -20,31 +20,26 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * Argument list builder for the Redis <a href="http://redis.io/commands/xadd">XADD</a> command. Static import the methods from
+ * Argument list builder for the Redis <a href="http://redis.io/commands/xadd">XTRIM</a> command. Static import the methods from
  * {@link Builder} and call the methods: {@code maxlen(…)} .
  * <p>
- * {@link XAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
+ * {@link XTrimArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
- * @author Mark Paluch
  * @author dengliming
- * @since 5.1
+ * @since 6.1
  */
-public class XAddArgs {
-
-    private String id;
+public class XTrimArgs {
 
     private Long maxlen;
 
     private boolean approximateTrimming;
-
-    private boolean nomkstream;
 
     private String minid;
 
     private Long limit;
 
     /**
-     * Builder entry points for {@link XAddArgs}.
+     * Builder entry points for {@link XTrimArgs}.
      */
     public static class Builder {
 
@@ -55,50 +50,24 @@ public class XAddArgs {
         }
 
         /**
-         * Creates new {@link XAddArgs} and setting {@literal MAXLEN}.
+         * Creates new {@link XTrimArgs} and setting {@literal MAXLEN}.
          *
-         * @return new {@link XAddArgs} with {@literal MAXLEN} set.
-         * @see XAddArgs#maxlen(long)
+         * @return new {@link XTrimArgs} with {@literal MAXLEN} set.
+         * @see XTrimArgs#maxlen(long)
          */
-        public static XAddArgs maxlen(long count) {
-            return new XAddArgs().maxlen(count);
+        public static XTrimArgs maxlen(long count) {
+            return new XTrimArgs().maxlen(count);
         }
 
         /**
-         * Creates new {@link XAddArgs} and setting {@literal NOMKSTREAM}.
+         * Creates new {@link XTrimArgs} and setting {@literal MINID}.
          *
-         * @return new {@link XAddArgs} with {@literal NOMKSTREAM} set.
-         * @see XAddArgs#nomkstream()
-         * @since 6.1
+         * @return new {@link XTrimArgs} with {@literal MINID} set.
+         * @see XTrimArgs#minid(String)
          */
-        public static XAddArgs nomkstream() {
-            return new XAddArgs().nomkstream();
+        public static XTrimArgs minid(String minid) {
+            return new XTrimArgs().minid(minid);
         }
-
-        /**
-         * Creates new {@link XAddArgs} and setting {@literal MINID}.
-         *
-         * @return new {@link XAddArgs} with {@literal MINID} set.
-         * @see XAddArgs#minid(String)
-         * @since 6.1
-         */
-        public static XAddArgs minid(String minid) {
-            return new XAddArgs().minid(minid);
-        }
-    }
-
-    /**
-     * Limit results to {@code maxlen} entries.
-     *
-     * @param id must not be {@code null}.
-     * @return {@code this}
-     */
-    public XAddArgs id(String id) {
-
-        LettuceAssert.notNull(id, "Id must not be null");
-
-        this.id = id;
-        return this;
     }
 
     /**
@@ -107,7 +76,7 @@ public class XAddArgs {
      * @param maxlen number greater 0.
      * @return {@code this}
      */
-    public XAddArgs maxlen(long maxlen) {
+    public XTrimArgs maxlen(long maxlen) {
 
         LettuceAssert.isTrue(maxlen > 0, "Maxlen must be greater 0");
 
@@ -120,9 +89,8 @@ public class XAddArgs {
      *
      * @param minid
      * @return {@code this}
-     * @since 6.1
      */
-    public XAddArgs minid(String minid) {
+    public XTrimArgs minid(String minid) {
 
         LettuceAssert.notNull(minid, "Minid must not be null");
 
@@ -135,9 +103,8 @@ public class XAddArgs {
      *
      * @param limit has meaning only if `~` was provided.
      * @return {@code this}
-     * @since 6.1
      */
-    public XAddArgs limit(Long limit) {
+    public XTrimArgs limit(Long limit) {
 
         LettuceAssert.isTrue(limit > 0, "Limit must be greater 0");
 
@@ -150,7 +117,7 @@ public class XAddArgs {
      *
      * @return {@code this}
      */
-    public XAddArgs approximateTrimming() {
+    public XTrimArgs approximateTrimming() {
         return approximateTrimming(true);
     }
 
@@ -160,32 +127,9 @@ public class XAddArgs {
      * @param approximateTrimming {@code true} to apply efficient radix node trimming.
      * @return {@code this}
      */
-    public XAddArgs approximateTrimming(boolean approximateTrimming) {
+    public XTrimArgs approximateTrimming(boolean approximateTrimming) {
 
         this.approximateTrimming = approximateTrimming;
-        return this;
-    }
-
-    /**
-     * Do add the message if the stream does not already exist.
-     *
-     * @return {@code this}
-     * @since 6.1
-     */
-    public XAddArgs nomkstream() {
-        return nomkstream(true);
-    }
-
-    /**
-     * Do add the message if the stream does not already exist.
-     *
-     * @param nomkstream {@code true} to not create a stream if it does not already exist.
-     * @return {@code this}
-     * @since 6.1
-     */
-    public XAddArgs nomkstream(boolean nomkstream) {
-
-        this.nomkstream = nomkstream;
         return this;
     }
 
@@ -214,16 +158,6 @@ public class XAddArgs {
 
         if (limit != null && approximateTrimming) {
             args.add(CommandKeyword.LIMIT).add(limit);
-        }
-
-        if (nomkstream) {
-            args.add(CommandKeyword.NOMKSTREAM);
-        }
-
-        if (id != null) {
-            args.add(id);
-        } else {
-            args.add("*");
         }
     }
 
