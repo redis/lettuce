@@ -15,9 +15,8 @@
  */
 package io.lettuce.core.sentinel;
 
-import static io.lettuce.test.settings.TestSettings.hostAddr;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static io.lettuce.test.settings.TestSettings.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -31,7 +30,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.RedisBug;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
@@ -78,7 +76,7 @@ public class SentinelCommandIntegrationTests extends TestSupport {
     void getMasterAddr() {
         SocketAddress result = sentinel.getMasterAddrByName(SentinelTestSettings.MASTER_ID);
         InetSocketAddress socketAddress = (InetSocketAddress) result;
-        assertThat(socketAddress.getHostName()).contains(TestSettings.hostAddr());
+        assertThat(socketAddress.getHostName()).isIn(TestSettings.hostAddr(), TestSettings.host());
     }
 
     @Test
@@ -140,7 +138,7 @@ public class SentinelCommandIntegrationTests extends TestSupport {
     void getMaster() {
 
         Map<String, String> result = sentinel.master(SentinelTestSettings.MASTER_ID);
-        assertThat(result.get("ip")).isEqualTo(hostAddr()); // !! IPv4/IPv6
+        assertThat(result.get("ip")).isIn(hostAddr(), TestSettings.host()); // !! IPv4/IPv6
         assertThat(result).containsKey("role-reported");
     }
 
