@@ -118,6 +118,6 @@ class ScoredValueUnitTests {
         Value<String> empty = ScoredValue.fromNullable(34, null);
 
         assertThat(value.toString()).contains("ScoredValue[12").contains("340000, hello]");
-        assertThat(empty.toString()).contains("ScoredValue[0,000000].empty");
+        assertThat(empty.toString()).contains(String.format("ScoredValue[%f].empty", 0d));
     }
 }
