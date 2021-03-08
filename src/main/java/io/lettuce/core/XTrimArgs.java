@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,15 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @author dengliming
  * @since 6.1
  */
-public class XTrimArgs {
+public class XTrimArgs implements CompositeArgument {
 
     private Long maxlen;
 
     private boolean approximateTrimming;
 
-    private String minid;
+    private boolean exactTrimming;
+
+    private String minId;
 
     private Long limit;
 
@@ -62,11 +64,13 @@ public class XTrimArgs {
         /**
          * Creates new {@link XTrimArgs} and setting {@literal MINID}.
          *
+         * @param minid the oldest ID in the stream will be exactly the minimum between its original oldest ID and the specified
+         *        threshold.
          * @return new {@link XTrimArgs} with {@literal MINID} set.
-         * @see XTrimArgs#minid(String)
+         * @see XTrimArgs#minId(String)
          */
-        public static XTrimArgs minid(String minid) {
-            return new XTrimArgs().minid(minid);
+        public static XTrimArgs minId(String minid) {
+            return new XTrimArgs().minId(minid);
         }
     }
 
@@ -85,26 +89,27 @@ public class XTrimArgs {
     }
 
     /**
-     * Limit stream to {@code maxlen} entries.
+     * Limit stream entries by message Id.
      *
-     * @param minid
+     * @param minid the oldest ID in the stream will be exactly the minimum between its original oldest ID and the specified
+     *        threshold.
      * @return {@code this}
      */
-    public XTrimArgs minid(String minid) {
+    public XTrimArgs minId(String minid) {
 
-        LettuceAssert.notNull(minid, "Minid must not be null");
+        LettuceAssert.notNull(minid, "minId must not be null");
 
-        this.minid = minid;
+        this.minId = minid;
         return this;
     }
 
     /**
      * The maximum number of entries to trim.
      *
-     * @param limit has meaning only if `~` was provided.
+     * @param limit has meaning only if {@link #approximateTrimming `~`} was set.
      * @return {@code this}
      */
-    public XTrimArgs limit(Long limit) {
+    public XTrimArgs limit(long limit) {
 
         LettuceAssert.isTrue(limit > 0, "Limit must be greater 0");
 
@@ -133,6 +138,28 @@ public class XTrimArgs {
         return this;
     }
 
+    /**
+     * Apply exact trimming for capped streams using the {@code =} flag.
+     *
+     * @return {@code this}
+     */
+    public XTrimArgs exactTrimming() {
+        return exactTrimming(true);
+    }
+
+    /**
+     * Apply exact trimming for capped streams using the {@code =} flag.
+     *
+     * @param exactTrimming {@code true} to apply exact radix node trimming.
+     * @return {@code this}
+     */
+    public XTrimArgs exactTrimming(boolean exactTrimming) {
+
+        this.exactTrimming = exactTrimming;
+        return this;
+    }
+
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (maxlen != null) {
@@ -140,20 +167,22 @@ public class XTrimArgs {
 
             if (approximateTrimming) {
                 args.add("~");
+            } else if (exactTrimming) {
+                args.add("=");
             }
 
             args.add(maxlen);
-        }
-
-        if (minid != null) {
+        } else if (minId != null) {
 
             args.add(CommandKeyword.MINID);
 
             if (approximateTrimming) {
                 args.add("~");
+            } else if (exactTrimming) {
+                args.add("=");
             }
 
-            args.add(minid);
+            args.add(minId);
         }
 
         if (limit != null && approximateTrimming) {

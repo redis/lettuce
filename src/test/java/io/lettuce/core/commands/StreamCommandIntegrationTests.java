@@ -101,10 +101,10 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void xaddMinidLimit() {
-        redis.xadd(key, XAddArgs.Builder.minid("2").id("3"), "foo", "bar");
-        redis.xadd(key, XAddArgs.Builder.minid("2").id("4"), "foo", "bar");
+        redis.xadd(key, XAddArgs.Builder.minId("2").id("3"), "foo", "bar");
+        redis.xadd(key, XAddArgs.Builder.minId("2").id("4"), "foo", "bar");
         assertThat(redis.xlen(key)).isEqualTo(2);
-        redis.xadd(key, XAddArgs.Builder.minid("4").id("5"), "foo", "bar");
+        redis.xadd(key, XAddArgs.Builder.minId("4").id("5"), "foo", "bar");
         assertThat(redis.xlen(key)).isEqualTo(2);
         redis.del(key);
 
@@ -161,7 +161,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void xtrimMinidLimit() {
         redis.xadd(key, XAddArgs.Builder.maxlen(3).id("3"), "foo", "bar");
-        redis.xtrim(key, XTrimArgs.Builder.minid("4"));
+        redis.xtrim(key, XTrimArgs.Builder.minId("4"));
         assertThat(redis.xlen(key)).isZero();
 
         List<String> ids = new ArrayList<>();

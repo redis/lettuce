@@ -37,6 +37,8 @@ public class XAddArgs {
 
     private boolean approximateTrimming;
 
+    private boolean exactTrimming;
+
     private boolean nomkstream;
 
     private String minid;
@@ -78,17 +80,19 @@ public class XAddArgs {
         /**
          * Creates new {@link XAddArgs} and setting {@literal MINID}.
          *
+         * @param minid the oldest ID in the stream will be exactly the minimum between its original oldest ID and the specified
+         *        threshold.
          * @return new {@link XAddArgs} with {@literal MINID} set.
-         * @see XAddArgs#minid(String)
+         * @see XAddArgs#minId(String)
          * @since 6.1
          */
-        public static XAddArgs minid(String minid) {
-            return new XAddArgs().minid(minid);
+        public static XAddArgs minId(String minid) {
+            return new XAddArgs().minId(minid);
         }
     }
 
     /**
-     * Limit results to {@code maxlen} entries.
+     * Specify the message {@code id}.
      *
      * @param id must not be {@code null}.
      * @return {@code this}
@@ -116,15 +120,16 @@ public class XAddArgs {
     }
 
     /**
-     * Limit stream to {@code maxlen} entries.
+     * Limit stream entries by message Id.
      *
-     * @param minid
+     * @param minid the oldest ID in the stream will be exactly the minimum between its original oldest ID and the specified
+     *        threshold.
      * @return {@code this}
      * @since 6.1
      */
-    public XAddArgs minid(String minid) {
+    public XAddArgs minId(String minid) {
 
-        LettuceAssert.notNull(minid, "Minid must not be null");
+        LettuceAssert.notNull(minid, "minId must not be null");
 
         this.minid = minid;
         return this;
@@ -133,11 +138,11 @@ public class XAddArgs {
     /**
      * The maximum number of entries to trim.
      *
-     * @param limit has meaning only if `~` was provided.
+     * @param limit has meaning only if {@link #approximateTrimming `~`} was set.
      * @return {@code this}
      * @since 6.1
      */
-    public XAddArgs limit(Long limit) {
+    public XAddArgs limit(long limit) {
 
         LettuceAssert.isTrue(limit > 0, "Limit must be greater 0");
 
@@ -163,6 +168,29 @@ public class XAddArgs {
     public XAddArgs approximateTrimming(boolean approximateTrimming) {
 
         this.approximateTrimming = approximateTrimming;
+        return this;
+    }
+
+    /**
+     * Apply exact trimming for capped streams using the {@code =} flag.
+     *
+     * @return {@code this}
+     * @since 6.1
+     */
+    public XAddArgs exactTrimming() {
+        return exactTrimming(true);
+    }
+
+    /**
+     * Apply exact trimming for capped streams using the {@code =} flag.
+     *
+     * @param exactTrimming {@code true} to apply exact radix node trimming.
+     * @return {@code this}
+     * @since 6.1
+     */
+    public XAddArgs exactTrimming(boolean exactTrimming) {
+
+        this.exactTrimming = exactTrimming;
         return this;
     }
 
@@ -196,6 +224,8 @@ public class XAddArgs {
 
             if (approximateTrimming) {
                 args.add("~");
+            } else if (exactTrimming) {
+                args.add("=");
             }
 
             args.add(maxlen);
@@ -207,6 +237,8 @@ public class XAddArgs {
 
             if (approximateTrimming) {
                 args.add("~");
+            } else if (exactTrimming) {
+                args.add("=");
             }
 
             args.add(minid);
