@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.FlushMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,7 @@ import io.lettuce.test.settings.TestSettings;
  * @author Will Glozer
  * @author Mark Paluch
  * @author Zhang Jessey
+ * @author dengliming
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -405,7 +407,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     void flushallSync() {
 
         redis.set(key, value);
-        assertThat(redis.flushallSync()).isEqualTo("OK");
+        assertThat(redis.flushall(FlushMode.SYNC)).isEqualTo("OK");
         assertThat(redis.get(key)).isNull();
     }
 
@@ -434,7 +436,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void flushdbSync() {
         redis.set(key, value);
-        assertThat(redis.flushdbSync()).isEqualTo("OK");
+        assertThat(redis.flushdb(FlushMode.SYNC)).isEqualTo("OK");
         assertThat(redis.get(key)).isNull();
     }
 

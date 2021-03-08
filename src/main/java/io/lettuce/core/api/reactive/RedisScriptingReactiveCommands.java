@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.api.reactive;
 
+import io.lettuce.core.FlushMode;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.ScriptOutputType;
@@ -120,20 +121,12 @@ public interface RedisScriptingReactiveCommands<K, V> {
     Mono<String> scriptFlush();
 
     /**
-     * Remove all the scripts asynchronously from the script cache.
+     * Remove all the scripts from the script cache by the specified {@code flushMode}.
      *
      * @return String simple-string-reply.
      * @since 6.1
      */
-    Mono<String> scriptFlushAsync();
-
-    /**
-     * Remove all the scripts synchronously from the script cache.
-     *
-     * @return String simple-string-reply.
-     * @since 6.1
-     */
-    Mono<String> scriptFlushSync();
+    Mono<String> scriptFlush(FlushMode flushMode);
 
     /**
      * Kill the script currently in execution.

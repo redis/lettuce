@@ -702,13 +702,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> flushallAsync() {
-        return dispatch(commandBuilder.flushallAsync());
+    public RedisFuture<String> flushall(FlushMode flushMode) {
+        return dispatch(commandBuilder.flushall(flushMode));
     }
 
     @Override
-    public RedisFuture<String> flushallSync() {
-        return dispatch(commandBuilder.flushallSync());
+    public RedisFuture<String> flushallAsync() {
+        return dispatch(commandBuilder.flushallAsync());
     }
 
     @Override
@@ -717,13 +717,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> flushdbAsync() {
-        return dispatch(commandBuilder.flushdbAsync());
+    public RedisFuture<String> flushdb(FlushMode flushMode) {
+        return dispatch(commandBuilder.flushdb(flushMode));
     }
 
     @Override
-    public RedisFuture<String> flushdbSync() {
-        return dispatch(commandBuilder.flushdbSync());
+    public RedisFuture<String> flushdbAsync() {
+        return dispatch(commandBuilder.flushdbAsync());
     }
 
     @Override
@@ -1457,13 +1457,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> scriptFlushAsync() {
-        return dispatch(commandBuilder.scriptFlushAsync());
-    }
-
-    @Override
-    public RedisFuture<String> scriptFlushSync() {
-        return dispatch(commandBuilder.scriptFlushSync());
+    public RedisFuture<String> scriptFlush(FlushMode flushMode) {
+        return dispatch(commandBuilder.scriptFlush(flushMode));
     }
 
     @Override

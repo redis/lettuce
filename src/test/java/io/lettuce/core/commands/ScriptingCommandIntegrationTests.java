@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.FlushMode;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,7 @@ import io.lettuce.test.Wait;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author dengliming
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -189,7 +191,7 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
         assertThat(redis.scriptExists(digest1)).isEqualTo(list(false));
         assertThat(redis.scriptLoad(script1)).isEqualTo(digest1);
         assertThat(redis.scriptExists(digest1)).isEqualTo(list(true));
-        assertThat(redis.scriptFlushAsync()).isEqualTo("OK");
+        assertThat(redis.scriptFlush(FlushMode.ASYNC)).isEqualTo("OK");
         assertThat(redis.scriptExists(digest1)).isEqualTo(list(false));
     }
 
@@ -204,7 +206,7 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
         assertThat(redis.scriptExists(digest1)).isEqualTo(list(false));
         assertThat(redis.scriptLoad(script1)).isEqualTo(digest1);
         assertThat(redis.scriptExists(digest1)).isEqualTo(list(true));
-        assertThat(redis.scriptFlushSync()).isEqualTo("OK");
+        assertThat(redis.scriptFlush(FlushMode.SYNC)).isEqualTo("OK");
         assertThat(redis.scriptExists(digest1)).isEqualTo(list(false));
     }
 }

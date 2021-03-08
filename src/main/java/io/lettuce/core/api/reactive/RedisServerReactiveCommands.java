@@ -18,6 +18,7 @@ package io.lettuce.core.api.reactive;
 import java.util.Date;
 import java.util.Map;
 
+import io.lettuce.core.FlushMode;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KillArgs;
@@ -281,19 +282,19 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<String> flushall();
 
     /**
+     * Remove all keys from all databases by the specified {@code flushMode}.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    Mono<String> flushall(FlushMode flushMode);
+
+    /**
      * Remove all keys asynchronously from all databases.
      *
      * @return String simple-string-reply.
      */
     Mono<String> flushallAsync();
-
-    /**
-     * Remove all keys synchronously from all databases.
-     *
-     * @return String simple-string-reply.
-     * @since 6.1
-     */
-    Mono<String> flushallSync();
 
     /**
      * Remove all keys from the current database.
@@ -303,19 +304,19 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<String> flushdb();
 
     /**
+     * Remove all keys from the current database by the specified {@code flushMode}.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    Mono<String> flushdb(FlushMode flushMode);
+
+    /**
      * Remove all keys asynchronously from the current database.
      *
      * @return String simple-string-reply.
      */
     Mono<String> flushdbAsync();
-
-    /**
-     * Remove all keys synchronously from the current database.
-     *
-     * @return String simple-string-reply.
-     * @since 6.1
-     */
-    Mono<String> flushdbSync();
 
     /**
      * Get information and statistics about the server.

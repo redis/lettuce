@@ -18,6 +18,7 @@ package io.lettuce.core.api.sync;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
@@ -279,19 +280,19 @@ public interface RedisServerCommands<K, V> {
     String flushall();
 
     /**
+     * Remove all keys from all databases by the specified {@code flushMode}.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    String flushall(FlushMode flushMode);
+
+    /**
      * Remove all keys asynchronously from all databases.
      *
      * @return String simple-string-reply.
      */
     String flushallAsync();
-
-    /**
-     * Remove all keys synchronously from all databases.
-     *
-     * @return String simple-string-reply.
-     * @since 6.1
-     */
-    String flushallSync();
 
     /**
      * Remove all keys from the current database.
@@ -301,19 +302,19 @@ public interface RedisServerCommands<K, V> {
     String flushdb();
 
     /**
+     * Remove all keys from the current database by the specified {@code flushMode}.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1
+     */
+    String flushdb(FlushMode flushMode);
+
+    /**
      * Remove all keys asynchronously from the current database.
      *
      * @return String simple-string-reply.
      */
     String flushdbAsync();
-
-    /**
-     * Remove all keys synchronously from the current database.
-     *
-     * @return String simple-string-reply.
-     * @since 6.1
-     */
-    String flushdbSync();
 
     /**
      * Get information and statistics about the server.

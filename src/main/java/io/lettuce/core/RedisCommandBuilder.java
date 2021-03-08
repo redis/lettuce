@@ -828,24 +828,28 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(FLUSHALL, new StatusOutput<>(codec));
     }
 
-    Command<K, V, String> flushallAsync() {
-        return createCommand(FLUSHALL, new StatusOutput<>(codec), new CommandArgs<>(codec).add(ASYNC));
+    Command<K, V, String> flushall(FlushMode flushMode) {
+        LettuceAssert.notNull(flushMode, "FlushMode " + MUST_NOT_BE_NULL);
+
+        return createCommand(FLUSHALL, new StatusOutput<>(codec), new CommandArgs<>(codec).add(flushMode.name()));
     }
 
-    Command<K, V, String> flushallSync() {
-        return createCommand(FLUSHALL, new StatusOutput<>(codec), new CommandArgs<>(codec).add(CommandKeyword.SYNC));
+    Command<K, V, String> flushallAsync() {
+        return createCommand(FLUSHALL, new StatusOutput<>(codec), new CommandArgs<>(codec).add(ASYNC));
     }
 
     Command<K, V, String> flushdb() {
         return createCommand(FLUSHDB, new StatusOutput<>(codec));
     }
 
-    Command<K, V, String> flushdbAsync() {
-        return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(ASYNC));
+    Command<K, V, String> flushdb(FlushMode flushMode) {
+        LettuceAssert.notNull(flushMode, "FlushMode " + MUST_NOT_BE_NULL);
+
+        return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(flushMode.name()));
     }
 
-    Command<K, V, String> flushdbSync() {
-        return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(CommandKeyword.SYNC));
+    Command<K, V, String> flushdbAsync() {
+        return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(ASYNC));
     }
 
     Command<K, V, Long> geoadd(K key, double longitude, double latitude, V member, GeoAddArgs geoArgs) {
@@ -2031,13 +2035,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SCRIPT, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, String> scriptFlushAsync() {
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSH).add(ASYNC);
-        return createCommand(SCRIPT, new StatusOutput<>(codec), args);
-    }
+    Command<K, V, String> scriptFlush(FlushMode flushMode) {
+        LettuceAssert.notNull(flushMode, "FlushMode " + MUST_NOT_BE_NULL);
 
-    Command<K, V, String> scriptFlushSync() {
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSH).add(CommandKeyword.SYNC);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSH).add(flushMode.name());
         return createCommand(SCRIPT, new StatusOutput<>(codec), args);
     }
 

@@ -15,16 +15,15 @@
  */
 package io.lettuce.core.sentinel.api.reactive;
 
-import java.net.SocketAddress;
 import java.util.Map;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import java.net.SocketAddress;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Reactive executed commands for Redis Sentinel.
@@ -214,5 +213,4 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
-
 }

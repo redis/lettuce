@@ -760,13 +760,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> flushallAsync() {
-        return createMono(commandBuilder::flushallAsync);
+    public Mono<String> flushall(FlushMode flushMode) {
+        return createMono(() -> commandBuilder.flushall(flushMode));
     }
 
     @Override
-    public Mono<String> flushallSync() {
-        return createMono(commandBuilder::flushallSync);
+    public Mono<String> flushallAsync() {
+        return createMono(commandBuilder::flushallAsync);
     }
 
     @Override
@@ -775,13 +775,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> flushdbAsync() {
-        return createMono(commandBuilder::flushdbAsync);
+    public Mono<String> flushdb(FlushMode flushMode) {
+        return createMono(() -> commandBuilder.flushdb(flushMode));
     }
 
     @Override
-    public Mono<String> flushdbSync() {
-        return createMono(commandBuilder::flushdbSync);
+    public Mono<String> flushdbAsync() {
+        return createMono(commandBuilder::flushdbAsync);
     }
 
     @Override
@@ -1532,13 +1532,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> scriptFlushAsync() {
-        return createMono(commandBuilder::scriptFlushAsync);
-    }
-
-    @Override
-    public Mono<String> scriptFlushSync() {
-        return createMono(commandBuilder::scriptFlushSync);
+    public Mono<String> scriptFlush(FlushMode flushMode) {
+        return createMono(() -> commandBuilder.scriptFlush(flushMode));
     }
 
     @Override

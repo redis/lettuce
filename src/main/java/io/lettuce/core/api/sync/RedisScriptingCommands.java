@@ -17,6 +17,7 @@ package io.lettuce.core.api.sync;
 
 import java.util.List;
 
+import io.lettuce.core.FlushMode;
 import io.lettuce.core.ScriptOutputType;
 
 /**
@@ -120,20 +121,12 @@ public interface RedisScriptingCommands<K, V> {
     String scriptFlush();
 
     /**
-     * Remove all the scripts asynchronously from the script cache.
+     * Remove all the scripts from the script cache by the specified {@code flushMode}.
      *
      * @return String simple-string-reply.
      * @since 6.1
      */
-    String scriptFlushAsync();
-
-    /**
-     * Remove all the scripts synchronously from the script cache.
-     *
-     * @return String simple-string-reply.
-     * @since 6.1
-     */
-    String scriptFlushSync();
+    String scriptFlush(FlushMode flushMode);
 
     /**
      * Kill the script currently in execution.
