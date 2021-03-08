@@ -28,21 +28,21 @@ import io.lettuce.core.cluster.api.coroutines.RedisClusterCoroutinesCommands
  */
 @ExperimentalLettuceCoroutinesApi
 interface RedisCoroutinesCommands<K : Any, V : Any> :
-        BaseRedisCoroutinesCommands<K, V>,
-        RedisAclCoroutinesCommands<K, V>,
-        RedisGeoCoroutinesCommands<K, V>,
-        RedisHashCoroutinesCommands<K, V>,
-        RedisHLLCoroutinesCommands<K, V>,
-        RedisKeyCoroutinesCommands<K, V>,
-        RedisListCoroutinesCommands<K, V>,
-        RedisScriptingCoroutinesCommands<K, V>,
-        RedisServerCoroutinesCommands<K, V>,
-        RedisSetCoroutinesCommands<K, V>,
-        RedisSortedSetCoroutinesCommands<K, V>,
-        RedisStreamCoroutinesCommands<K, V>,
-        RedisStringCoroutinesCommands<K, V>,
-        RedisTransactionalCoroutinesCommands<K, V>,
-        RedisClusterCoroutinesCommands<K, V> {
+    BaseRedisCoroutinesCommands<K, V>,
+    RedisAclCoroutinesCommands<K, V>,
+    RedisGeoCoroutinesCommands<K, V>,
+    RedisHashCoroutinesCommands<K, V>,
+    RedisHLLCoroutinesCommands<K, V>,
+    RedisKeyCoroutinesCommands<K, V>,
+    RedisListCoroutinesCommands<K, V>,
+    RedisScriptingCoroutinesCommands<K, V>,
+    RedisServerCoroutinesCommands<K, V>,
+    RedisSetCoroutinesCommands<K, V>,
+    RedisSortedSetCoroutinesCommands<K, V>,
+    RedisStreamCoroutinesCommands<K, V>,
+    RedisStringCoroutinesCommands<K, V>,
+    RedisTransactionalCoroutinesCommands<K, V>,
+    RedisClusterCoroutinesCommands<K, V> {
 
     /**
      * Authenticate to the server.

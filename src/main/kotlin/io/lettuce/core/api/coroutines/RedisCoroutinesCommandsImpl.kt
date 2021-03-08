@@ -33,22 +33,22 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  */
 @ExperimentalLettuceCoroutinesApi
 open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
-        internal val ops: RedisReactiveCommands<K, V>
+    internal val ops: RedisReactiveCommands<K, V>
 ) : RedisCoroutinesCommands<K, V>, RedisClusterCoroutinesCommands<K, V>,
-        BaseRedisCoroutinesCommands<K, V> by BaseRedisCoroutinesCommandsImpl(ops),
-        RedisAclCoroutinesCommands<K, V> by RedisAclCoroutinesCommandsImpl(ops),
-        RedisGeoCoroutinesCommands<K, V> by RedisGeoCoroutinesCommandsImpl(ops),
-        RedisHashCoroutinesCommands<K, V> by RedisHashCoroutinesCommandsImpl(ops),
-        RedisHLLCoroutinesCommands<K, V> by RedisHLLCoroutinesCommandsImpl(ops),
-        RedisKeyCoroutinesCommands<K, V> by RedisKeyCoroutinesCommandsImpl(ops),
-        RedisListCoroutinesCommands<K, V> by RedisListCoroutinesCommandsImpl(ops),
-        RedisScriptingCoroutinesCommands<K, V> by RedisScriptingCoroutinesCommandsImpl(ops),
-        RedisServerCoroutinesCommands<K, V> by RedisServerCoroutinesCommandsImpl(ops),
-        RedisSetCoroutinesCommands<K, V> by RedisSetCoroutinesCommandsImpl(ops),
-        RedisSortedSetCoroutinesCommands<K, V> by RedisSortedSetCoroutinesCommandsImpl(ops),
-        RedisStreamCoroutinesCommands<K, V> by RedisStreamCoroutinesCommandsImpl(ops),
-        RedisStringCoroutinesCommands<K, V> by RedisStringCoroutinesCommandsImpl(ops),
-        RedisTransactionalCoroutinesCommands<K, V> by RedisTransactionalCoroutinesCommandsImpl(ops) {
+    BaseRedisCoroutinesCommands<K, V> by BaseRedisCoroutinesCommandsImpl(ops),
+    RedisAclCoroutinesCommands<K, V> by RedisAclCoroutinesCommandsImpl(ops),
+    RedisGeoCoroutinesCommands<K, V> by RedisGeoCoroutinesCommandsImpl(ops),
+    RedisHashCoroutinesCommands<K, V> by RedisHashCoroutinesCommandsImpl(ops),
+    RedisHLLCoroutinesCommands<K, V> by RedisHLLCoroutinesCommandsImpl(ops),
+    RedisKeyCoroutinesCommands<K, V> by RedisKeyCoroutinesCommandsImpl(ops),
+    RedisListCoroutinesCommands<K, V> by RedisListCoroutinesCommandsImpl(ops),
+    RedisScriptingCoroutinesCommands<K, V> by RedisScriptingCoroutinesCommandsImpl(ops),
+    RedisServerCoroutinesCommands<K, V> by RedisServerCoroutinesCommandsImpl(ops),
+    RedisSetCoroutinesCommands<K, V> by RedisSetCoroutinesCommandsImpl(ops),
+    RedisSortedSetCoroutinesCommands<K, V> by RedisSortedSetCoroutinesCommandsImpl(ops),
+    RedisStreamCoroutinesCommands<K, V> by RedisStreamCoroutinesCommandsImpl(ops),
+    RedisStringCoroutinesCommands<K, V> by RedisStringCoroutinesCommandsImpl(ops),
+    RedisTransactionalCoroutinesCommands<K, V> by RedisTransactionalCoroutinesCommandsImpl(ops) {
 
     /**
      * Authenticate to the server.

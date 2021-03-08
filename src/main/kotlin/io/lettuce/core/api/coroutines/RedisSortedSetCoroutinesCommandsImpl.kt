@@ -71,29 +71,19 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override fun zinter(vararg keys: K): Flow<V> = ops.zinter(*keys).asFlow()
 
-    override fun zinter(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V> =
-        ops.zinter(aggregateArgs, *keys).asFlow()
+    override fun zinter(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V> = ops.zinter(aggregateArgs, *keys).asFlow()
 
-    override fun zinterWithScores(vararg keys: K): Flow<ScoredValue<V>> =
-        ops.zinterWithScores(*keys).asFlow()
+    override fun zinterWithScores(vararg keys: K): Flow<ScoredValue<V>> = ops.zinterWithScores(*keys).asFlow()
 
-    override fun zinterWithScores(
-        aggregateArgs: ZAggregateArgs,
-        vararg keys: K
-    ): Flow<ScoredValue<V>> = ops.zinterWithScores(aggregateArgs, *keys).asFlow()
+    override fun zinterWithScores(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<ScoredValue<V>> = ops.zinterWithScores(aggregateArgs, *keys).asFlow()
 
     override suspend fun zinterstore(destination: K, vararg keys: K): Long? = ops.zinterstore(destination, *keys).awaitFirstOrNull()
 
-    override suspend fun zinterstore(
-        destination: K,
-        storeArgs: ZStoreArgs,
-        vararg keys: K
-    ): Long? = ops.zinterstore(destination, storeArgs, *keys).awaitFirstOrNull()
+    override suspend fun zinterstore(destination: K, storeArgs: ZStoreArgs, vararg keys: K): Long? = ops.zinterstore(destination, storeArgs, *keys).awaitFirstOrNull()
 
     override suspend fun zlexcount(key: K, range: Range<out V>): Long? = ops.zlexcount(key, range).awaitFirstOrNull()
 
-    override suspend fun zmscore(key: K, vararg members: V): List<Double?> =
-        ops.zmscore(key, *members).awaitFirstOrNull().orEmpty()
+    override suspend fun zmscore(key: K, vararg members: V): List<Double?> = ops.zmscore(key, *members).awaitFirstOrNull().orEmpty()
 
     override suspend fun zpopmin(key: K): ScoredValue<V>? =
         ops.zpopmin(key).awaitFirstOrNull()
@@ -189,23 +179,14 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override fun zunion(vararg keys: K): Flow<V> = ops.zunion(*keys).asFlow()
 
-    override fun zunion(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V> =
-        ops.zunion(aggregateArgs, *keys).asFlow()
+    override fun zunion(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V> = ops.zunion(aggregateArgs, *keys).asFlow()
 
-    override fun zunionWithScores(vararg keys: K): Flow<ScoredValue<V>> =
-        ops.zunionWithScores(*keys).asFlow()
+    override fun zunionWithScores(vararg keys: K): Flow<ScoredValue<V>> = ops.zunionWithScores(*keys).asFlow()
 
-    override fun zunionWithScores(
-        aggregateArgs: ZAggregateArgs,
-        vararg keys: K
-    ): Flow<ScoredValue<V>> = ops.zunionWithScores(aggregateArgs, *keys).asFlow()
+    override fun zunionWithScores(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<ScoredValue<V>> = ops.zunionWithScores(aggregateArgs, *keys).asFlow()
 
     override suspend fun zunionstore(destination: K, vararg keys: K): Long? = ops.zunionstore(destination, *keys).awaitFirstOrNull()
 
-    override suspend fun zunionstore(
-        destination: K,
-        storeArgs: ZStoreArgs,
-        vararg keys: K
-    ): Long? = ops.zunionstore(destination, storeArgs, *keys).awaitFirstOrNull()
+    override suspend fun zunionstore(destination: K, storeArgs: ZStoreArgs, vararg keys: K): Long? = ops.zunionstore(destination, storeArgs, *keys).awaitFirstOrNull()
 }
 
