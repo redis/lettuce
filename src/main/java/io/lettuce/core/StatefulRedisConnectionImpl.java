@@ -158,13 +158,11 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         RedisCommand<K, V, T> toSend = preProcessCommand(command);
 
-        try {
-            return super.dispatch(toSend);
-        } finally {
-            if (command.getType().name().equals(MULTI.name())) {
-                multi = (multi == null ? new MultiOutput<>(codec) : multi);
-            }
+        if (command.getType().name().equals(MULTI.name())) {
+            multi = (multi == null ? new MultiOutput<>(codec) : multi);
         }
+
+        return super.dispatch(toSend);
     }
 
     @Override
