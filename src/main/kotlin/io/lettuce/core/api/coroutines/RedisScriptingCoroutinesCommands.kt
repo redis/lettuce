@@ -122,8 +122,9 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
     suspend fun scriptFlush(): String?
 
     /**
-     * Remove all the scripts from the script cache by the specified `flushMode`.
+     * Remove all the scripts from the script cache using the specified [FlushMode].
      *
+     * @param flushMode the flush mode (sync/asnync).
      * @return String simple-string-reply.
      * @since 6.1
      */

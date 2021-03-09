@@ -60,6 +60,8 @@ class KotlinCompilationUnitFactory {
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
     private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
 
+    private static final Set<String> KEEP_DEPRECATED_METHODS = LettuceSets.unmodifiableSet("flushallAsync", "flushdbAsync");
+
     private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("aclList", "aclLog", "dispatch", "geohash", "georadius",
             "georadiusbymember", "geosearch",
             "hgetall", "hkeys", "hmget", "hvals", "keys", "mget", "sdiff", "sinter", "smembers", "smismember", "sort", "srandmember", "sunion",
@@ -169,9 +171,9 @@ class KotlinCompilationUnitFactory {
         public void visit(MethodDeclaration method, Object arg) {
 
             // Skip deprecated and StreamingChannel methods
-            if (method.isAnnotationPresent(Deprecated.class)
+            if (!contains(KEEP_DEPRECATED_METHODS, method) && (method.isAnnotationPresent(Deprecated.class)
                     || contains(SKIP_METHODS, method)
-                    || method.getParameters().stream().anyMatch(p -> p.getType().asString().contains("StreamingChannel"))) {
+                    || method.getParameters().stream().anyMatch(p -> p.getType().asString().contains("StreamingChannel")))) {
                 return;
             }
             result

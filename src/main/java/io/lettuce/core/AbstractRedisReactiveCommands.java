@@ -766,7 +766,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     @Override
     public Mono<String> flushallAsync() {
-        return createMono(commandBuilder::flushallAsync);
+        return flushall(FlushMode.ASYNC);
     }
 
     @Override
@@ -781,7 +781,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     @Override
     public Mono<String> flushdbAsync() {
-        return createMono(commandBuilder::flushdbAsync);
+        return flushdb(FlushMode.ASYNC);
     }
 
     @Override

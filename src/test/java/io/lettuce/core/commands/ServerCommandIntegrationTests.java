@@ -27,13 +27,13 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
-import io.lettuce.core.FlushMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.FlushMode;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisClient;
@@ -53,7 +53,6 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
-import io.lettuce.test.condition.RedisConditions;
 import io.lettuce.test.settings.TestSettings;
 
 /**
@@ -393,10 +392,8 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("MEMORY") // Redis 4.0
     void flushallAsync() {
-
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("3.4"));
-
         redis.set(key, value);
         assertThat(redis.flushallAsync()).isEqualTo("OK");
         assertThat(redis.get(key)).isNull();
@@ -405,7 +402,6 @@ public class ServerCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void flushallSync() {
-
         redis.set(key, value);
         assertThat(redis.flushall(FlushMode.SYNC)).isEqualTo("OK");
         assertThat(redis.get(key)).isNull();
@@ -419,10 +415,8 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("MEMORY") // Redis 4.0
     void flushdbAsync() {
-
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("3.4"));
-
         redis.set(key, value);
         redis.select(1);
         redis.set(key, value + "X");
