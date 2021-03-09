@@ -25,6 +25,10 @@ import java.net.SocketAddress;
  */
 public class DisconnectedEvent extends ConnectionEventSupport {
 
+    public DisconnectedEvent(String redisUri, String epId, String channelId, SocketAddress local, SocketAddress remote) {
+        super(redisUri, epId, channelId, local, remote);
+    }
+
     public DisconnectedEvent(SocketAddress local, SocketAddress remote) {
         super(local, remote);
     }

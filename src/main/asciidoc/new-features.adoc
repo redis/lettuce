@@ -12,6 +12,7 @@
 * Configuration of netty's `AddressResolverGroup` through `ClientResources`.
 Uses `DnsAddressResolverGroup` when `netty-resolver-dns` is on the classpath.
 * Add support for Redis ACL commands.
+* Java Flight Recorder Events
 
 [[new-features.6-0-0]]
 == What's new in Lettuce 6.0

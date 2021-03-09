@@ -16,39 +16,31 @@
 package io.lettuce.core.event.connection;
 
 import java.net.SocketAddress;
+import java.time.Duration;
 
 /**
- * Event fired on failed reconnect caused either by I/O issues or during connection initialization.
+ * Event fired on reconnect attempts.
  *
  * @author Mark Paluch
- * @since 5.2
+ * @since 6.1
  */
-public class ReconnectFailedEvent extends ConnectionEventSupport {
-
-    private final Throwable cause;
+public class ReconnectAttemptEvent extends ConnectionEventSupport {
 
     private final int attempt;
 
-    public ReconnectFailedEvent(String redisUri, String epId, SocketAddress local, SocketAddress remote, Throwable cause,
-            int attempt) {
+    private final Duration delay;
+
+    public ReconnectAttemptEvent(String redisUri, String epId, SocketAddress local, SocketAddress remote, int attempt,
+            Duration delay) {
         super(redisUri, epId, null, local, remote);
-        this.cause = cause;
         this.attempt = attempt;
+        this.delay = delay;
     }
 
-    public ReconnectFailedEvent(SocketAddress local, SocketAddress remote, Throwable cause, int attempt) {
+    public ReconnectAttemptEvent(SocketAddress local, SocketAddress remote, int attempt) {
         super(local, remote);
-        this.cause = cause;
         this.attempt = attempt;
-    }
-
-    /**
-     * Returns the {@link Throwable} that describes the reconnect cause.
-     *
-     * @return the {@link Throwable} that describes the reconnect cause.
-     */
-    public Throwable getCause() {
-        return cause;
+        this.delay = Duration.ZERO;
     }
 
     /**
@@ -59,6 +51,10 @@ public class ReconnectFailedEvent extends ConnectionEventSupport {
      */
     public int getAttempt() {
         return attempt;
+    }
+
+    public Duration getDelay() {
+        return delay;
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.event.connection;
+package io.lettuce.core.event.jfr;
 
-import java.net.SocketAddress;
+import io.lettuce.core.event.Event;
 
 /**
- * Event for a established TCP-level connection.
+ * No-op implementation.
  *
  * @author Mark Paluch
- * @since 3.4
+ * @since 6.1
  */
-public class ConnectedEvent extends ConnectionEventSupport {
+enum NoOpEventRecorder implements EventRecorder, EventRecorder.RecordableEvent {
 
-    public ConnectedEvent(String redisUri, String epId, String channelId, SocketAddress local, SocketAddress remote) {
-        super(redisUri, epId, channelId, local, remote);
+    INSTANCE;
+
+    @Override
+    public void record(Event event) {
+
     }
 
-    public ConnectedEvent(SocketAddress local, SocketAddress remote) {
-        super(local, remote);
+    @Override
+    public RecordableEvent start(Event event) {
+        return this;
+    }
+
+    @Override
+    public void record() {
+
     }
 
 }

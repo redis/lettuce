@@ -15,22 +15,35 @@
  */
 package io.lettuce.core.event.connection;
 
-import java.net.SocketAddress;
+import jdk.jfr.Category;
+import jdk.jfr.Event;
+import jdk.jfr.Label;
 
 /**
- * Event for a established TCP-level connection.
+ * Flight recorder event variant of {@link ConnectionCreatedEvent}.
  *
  * @author Mark Paluch
- * @since 3.4
+ * @since 6.1
  */
-public class ConnectedEvent extends ConnectionEventSupport {
+@Category({ "Lettuce", "Connection Events" })
+@Label("Connection Created")
+class JfrConnectionCreatedEvent extends Event {
 
-    public ConnectedEvent(String redisUri, String epId, String channelId, SocketAddress local, SocketAddress remote) {
-        super(redisUri, epId, channelId, local, remote);
+    private final String redisUri;
+
+    private final String epId;
+
+    public JfrConnectionCreatedEvent(ConnectionCreatedEvent event) {
+        this.redisUri = event.getRedisUri();
+        this.epId = event.getEpId();
     }
 
-    public ConnectedEvent(SocketAddress local, SocketAddress remote) {
-        super(local, remote);
+    public String getRedisUri() {
+        return redisUri;
+    }
+
+    public String getEpId() {
+        return epId;
     }
 
 }

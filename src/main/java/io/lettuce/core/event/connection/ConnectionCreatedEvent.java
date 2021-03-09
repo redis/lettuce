@@ -15,22 +15,31 @@
  */
 package io.lettuce.core.event.connection;
 
-import java.net.SocketAddress;
+import io.lettuce.core.event.Event;
 
 /**
- * Event for a established TCP-level connection.
+ * Event for a created connection object. Creating a connection is the first step in establishing a Redis connection.
  *
  * @author Mark Paluch
- * @since 3.4
+ * @since 6.1
  */
-public class ConnectedEvent extends ConnectionEventSupport {
+public class ConnectionCreatedEvent implements Event {
 
-    public ConnectedEvent(String redisUri, String epId, String channelId, SocketAddress local, SocketAddress remote) {
-        super(redisUri, epId, channelId, local, remote);
+    private final String redisUri;
+
+    private final String epId;
+
+    public ConnectionCreatedEvent(String redisUri, String epId) {
+        this.redisUri = redisUri;
+        this.epId = epId;
     }
 
-    public ConnectedEvent(SocketAddress local, SocketAddress remote) {
-        super(local, remote);
+    public String getRedisUri() {
+        return redisUri;
+    }
+
+    public String getEpId() {
+        return epId;
     }
 
 }

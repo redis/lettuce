@@ -67,4 +67,9 @@ public interface Endpoint extends PushHandler {
      */
     void registerConnectionWatchdog(ConnectionWatchdog connectionWatchdog);
 
+    /**
+     * @return the endpoint Id.
+     * @since 6.1
+     */
+    String getId();
 }

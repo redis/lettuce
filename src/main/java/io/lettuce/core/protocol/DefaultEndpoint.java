@@ -15,11 +15,15 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.protocol.CommandHandler.SUPPRESS_IO_EXCEPTION_MESSAGES;
+import static io.lettuce.core.protocol.CommandHandler.*;
 
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -27,7 +31,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionEvents;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
@@ -111,6 +119,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     @SuppressWarnings("unused")
     private volatile int status = ST_OPEN;
 
+    private final String cachedEndpointId;
+
     /**
      * Create a new {@link DefaultEndpoint}.
      *
@@ -129,6 +139,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
+        this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
     }
 
     @Override
@@ -789,9 +800,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return logPrefix;
         }
 
-        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "epid=0x" + Long.toHexString(endpointId)
+        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "epid=" + getId()
                 + ']';
         return logPrefix = buffer;
+    }
+
+    @Override
+    public String getId() {
+        return cachedEndpointId;
     }
 
     private static boolean isRejectCommand(ClientOptions clientOptions) {

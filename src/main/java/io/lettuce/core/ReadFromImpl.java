@@ -58,7 +58,6 @@ class ReadFromImpl {
 
             return Collections.emptyList();
         }
-
     }
 
     /**

@@ -16,6 +16,7 @@
 package io.lettuce.core.protocol;
 
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,14 +24,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.ConnectionEvents;
 import io.lettuce.core.event.EventBus;
+import io.lettuce.core.event.connection.ReconnectAttemptEvent;
 import io.lettuce.core.event.connection.ReconnectFailedEvent;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.Delay;
 import io.lettuce.core.resource.Delay.StatefulDelay;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.local.LocalAddress;
 import io.netty.util.Timeout;
@@ -68,6 +75,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private final EventBus eventBus;
 
+    private final String redisUri;
+
+    private final String epid;
+
     private Channel channel;
 
     private SocketAddress remoteAddress;
@@ -86,6 +97,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private volatile Timeout reconnectScheduleTimeout;
 
+
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
      * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
@@ -99,10 +111,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      * @param reconnectionListener the reconnection listener, must not be {@code null}
      * @param connectionFacade the connection facade, must not be {@code null}
      * @param eventBus Event bus to emit reconnect events.
+     * @param endpoint must not be {@code null}
      */
     public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
             EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
-            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus) {
+            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
+            Endpoint endpoint) {
 
         LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
@@ -113,6 +127,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         LettuceAssert.notNull(reconnectionListener, "ReconnectionListener must not be null");
         LettuceAssert.notNull(connectionFacade, "ConnectionFacade must not be null");
         LettuceAssert.notNull(eventBus, "EventBus must not be null");
+        LettuceAssert.notNull(endpoint, "Endpoint must not be null");
 
         this.reconnectDelay = reconnectDelay;
         this.bootstrap = bootstrap;
@@ -121,6 +136,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.reconnectionListener = reconnectionListener;
         this.reconnectSchedulerSync = new AtomicBoolean(false);
         this.eventBus = eventBus;
+        this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
+        this.epid = endpoint.getId();
 
         Mono<SocketAddress> wrappedSocketAddressSupplier = socketAddressSupplier.doOnNext(addr -> remoteAddress = addr)
                 .onErrorResume(t -> {
@@ -157,6 +174,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+        CommandHandler commandHandler = ctx.pipeline().get(CommandHandler.class);
 
         reconnectSchedulerSync.set(false);
         channel = ctx.channel();
@@ -220,7 +239,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
             attempts++;
             final int attempt = attempts;
-            int timeout = (int) reconnectDelay.createDelay(attempt).toMillis();
+            Duration delay = reconnectDelay.createDelay(attempt);
+            int timeout = (int) delay.toMillis();
             logger.debug("{} Reconnect attempt {}, delay {}ms", logPrefix(), attempt, timeout);
 
             this.reconnectScheduleTimeout = timer.newTimeout(it -> {
@@ -233,7 +253,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
                 }
 
                 reconnectWorkers.submit(() -> {
-                    ConnectionWatchdog.this.run(attempt);
+                    ConnectionWatchdog.this.run(attempt, delay);
                     return null;
                 });
             }, timeout, TimeUnit.MILLISECONDS);
@@ -256,6 +276,19 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      * @throws Exception when reconnection fails.
      */
     public void run(int attempt) throws Exception {
+        run(attempt, Duration.ZERO);
+    }
+
+    /**
+     * Reconnect to the remote address that the closed channel was connected to. This creates a new {@link ChannelPipeline} with
+     * the same handler instances contained in the old channel's pipeline.
+     *
+     * @param attempt attempt counter.
+     * @param delay retry delay.
+     *
+     * @throws Exception when reconnection fails.
+     */
+    private void run(int attempt, Duration delay) throws Exception {
 
         reconnectSchedulerSync.set(false);
         reconnectScheduleTimeout = null;
@@ -291,6 +324,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         try {
             reconnectionListener.onReconnectAttempt(new ConnectionEvents.Reconnect(attempt));
+            eventBus.publish(new ReconnectAttemptEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, attempt, delay));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
             Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnect();
@@ -322,7 +356,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
                     logger.log(warnLevelToUse, message, t);
                 }
 
-                eventBus.publish(new ReconnectFailedEvent(LocalAddress.ANY, remote, t, attempt));
+                eventBus.publish(new ReconnectFailedEvent(redisUri, epid, LocalAddress.ANY, remote, t, attempt));
 
                 if (!isReconnectSuspended()) {
                     scheduleReconnect();
@@ -330,7 +364,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             });
         } catch (Exception e) {
             logger.log(warnLevel, "Cannot reconnect: {}", e.toString());
-            eventBus.publish(new ReconnectFailedEvent(LocalAddress.ANY, remoteAddress, e, attempt));
+            eventBus.publish(new ReconnectFailedEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, e, attempt));
         }
     }
 

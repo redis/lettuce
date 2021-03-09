@@ -49,7 +49,7 @@ class ChannelLogDescriptor {
         return buffer.toString();
     }
 
-    private static String getId(Channel channel) {
+    static String getId(Channel channel) {
         return String.format("0x%08x", channel.hashCode());
     }
 

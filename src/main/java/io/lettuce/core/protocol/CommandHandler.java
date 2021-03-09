@@ -156,6 +156,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.decodeBufferPolicy = clientOptions.getDecodeBufferPolicy();
     }
 
+    public Endpoint getEndpoint() {
+        return endpoint;
+    }
+
     public Queue<RedisCommand<?, ?, ?>> getStack() {
         return stack;
     }
@@ -933,15 +937,27 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
+    /**
+     * @return the channel Id.
+     * @since 6.1
+     */
+    public String getChannelId() {
+        return channel == null ? "unknown" : ChannelLogDescriptor.getId(channel);
+    }
+
     private String logPrefix() {
 
         if (logPrefix != null) {
             return logPrefix;
         }
 
-        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "chid=0x"
-                + Long.toHexString(commandHandlerId) + ']';
+        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", epid=" + endpoint.getId() + ", chid=0x"
+                + getCommandHandlerId() + ']';
         return logPrefix = buffer;
+    }
+
+    private String getCommandHandlerId() {
+        return Long.toHexString(commandHandlerId);
     }
 
     private static long nanoTime() {

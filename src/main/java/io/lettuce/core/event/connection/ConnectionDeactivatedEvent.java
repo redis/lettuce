@@ -25,6 +25,11 @@ import java.net.SocketAddress;
  */
 public class ConnectionDeactivatedEvent extends ConnectionEventSupport {
 
+    public ConnectionDeactivatedEvent(String redisUri, String epId, String channelId, SocketAddress local,
+            SocketAddress remote) {
+        super(redisUri, epId, channelId, local, remote);
+    }
+
     public ConnectionDeactivatedEvent(SocketAddress local, SocketAddress remote) {
         super(local, remote);
     }

@@ -41,6 +41,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.event.ClusterTopologyChangedEvent;
+import io.lettuce.core.cluster.event.TopologyRefreshEvent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
@@ -49,6 +50,7 @@ import io.lettuce.core.cluster.topology.NodeConnectionFactory;
 import io.lettuce.core.cluster.topology.TopologyComparators;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
@@ -831,8 +833,18 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public CompletionStage<Void> refreshPartitionsAsync() {
 
+        List<RedisURI> sources = new ArrayList<>();
+
+        Iterable<RedisURI> topologyRefreshSource = getTopologyRefreshSource();
+        for (RedisURI redisURI : topologyRefreshSource) {
+            sources.add(redisURI);
+        }
+
+        EventRecorder.RecordableEvent event = EventRecorder.getInstance().start(new TopologyRefreshEvent(sources));
+
         if (partitions == null) {
-            return initializePartitions().thenAccept(Partitions::updateCache);
+            return initializePartitions().thenAccept(Partitions::updateCache)
+                    .whenComplete((unused, throwable) -> event.record());
         }
 
         return loadPartitionsAsync().thenAccept(loadedPartitions -> {
@@ -849,7 +861,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
             this.partitions.reload(loadedPartitions.getPartitions());
             updatePartitionsInConnections();
-        });
+        }).whenComplete((unused, throwable) -> event.record());
     }
 
     protected void updatePartitionsInConnections() {

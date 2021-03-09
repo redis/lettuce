@@ -15,23 +15,42 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.SlotHash.getSlot;
+import static io.lettuce.core.cluster.SlotHash.*;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
+import io.lettuce.core.cluster.event.AskRedirectionEvent;
+import io.lettuce.core.cluster.event.MovedRedirectionEvent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.event.Event;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ConnectionFacade;
+import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -89,16 +108,33 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             ClusterCommand<K, V, T> clusterCommand = (ClusterCommand<K, V, T>) command;
             if (clusterCommand.isMoved() || clusterCommand.isAsk()) {
 
+
                 HostAndPort target;
                 boolean asking;
+                ByteBuffer firstEncodedKey = clusterCommand.getArgs().getFirstEncodedKey();
+                String keyAsString = null;
+                int slot = -1;
+                if (firstEncodedKey != null) {
+                    firstEncodedKey.mark();
+                    keyAsString = StringCodec.UTF8.decodeKey(firstEncodedKey);
+                    firstEncodedKey.reset();
+                    slot = getSlot(firstEncodedKey);
+                }
+
                 if (clusterCommand.isMoved()) {
+
                     target = getMoveTarget(clusterCommand.getError());
                     clusterEventListener.onMovedRedirection();
                     asking = false;
+
+                    publish(new MovedRedirectionEvent(clusterCommand.getType().name(), keyAsString, slot,
+                            clusterCommand.getError()));
                 } else {
                     target = getAskTarget(clusterCommand.getError());
                     asking = true;
                     clusterEventListener.onAskRedirection();
+                    publish(new AskRedirectionEvent(clusterCommand.getType().name(), keyAsString, slot,
+                            clusterCommand.getError()));
                 }
 
                 command.getOutput().setError((String) null);
@@ -145,6 +181,14 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         writeCommand(commandToSend, defaultWriter);
 
         return commandToSend;
+    }
+
+    private void publish(Event event) {
+
+        ClientResources clientResources = getClientResources();
+        if (clientResources != null) {
+            clientResources.eventBus().publish(event);
+        }
     }
 
     private static boolean isSuccessfullyCompleted(CompletableFuture<?> connectFuture) {

@@ -815,6 +815,12 @@
                         </goals>
                     </execution>
                 </executions>
+
+                <configuration>
+                    <excludes>
+                        <exclude>**/Jfr*</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

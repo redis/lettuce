@@ -46,6 +46,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioChannelOption;
+import io.netty.util.AttributeKey;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -57,6 +58,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class ConnectionBuilder {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionBuilder.class);
+
+    public static final AttributeKey<String> REDIS_URI = AttributeKey.newInstance("RedisURI");
 
     private Mono<SocketAddress> socketAddressSupplier;
 
@@ -84,6 +87,8 @@ public class ConnectionBuilder {
 
     private ConnectionWatchdog connectionWatchdog;
 
+    private RedisURI redisURI;
+
     public static ConnectionBuilder connectionBuilder() {
         return new ConnectionBuilder();
     }
@@ -94,7 +99,10 @@ public class ConnectionBuilder {
      * @param redisURI
      */
     public void apply(RedisURI redisURI) {
+        this.redisURI = redisURI;
         timeout(redisURI.getTimeout());
+
+        bootstrap.attr(REDIS_URI, redisURI.toString());
     }
 
     protected List<ChannelHandler> buildHandlers() {
@@ -139,7 +147,7 @@ public class ConnectionBuilder {
 
         ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
                 clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
-                connection, clientResources.eventBus());
+                connection, clientResources.eventBus(), endpoint);
 
         endpoint.registerConnectionWatchdog(watchdog);
 
@@ -293,6 +301,10 @@ public class ConnectionBuilder {
 
     public Endpoint endpoint() {
         return endpoint;
+    }
+
+    public RedisURI getRedisURI() {
+        return redisURI;
     }
 
     static class PlainChannelInitializer extends ChannelInitializer<Channel> {

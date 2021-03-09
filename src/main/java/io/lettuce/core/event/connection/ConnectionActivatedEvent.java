@@ -28,6 +28,10 @@ import io.lettuce.core.ClientOptions;
  */
 public class ConnectionActivatedEvent extends ConnectionEventSupport {
 
+    public ConnectionActivatedEvent(String redisUri, String epId, String channelId, SocketAddress local, SocketAddress remote) {
+        super(redisUri, epId, channelId, local, remote);
+    }
+
     public ConnectionActivatedEvent(SocketAddress local, SocketAddress remote) {
         super(local, remote);
     }

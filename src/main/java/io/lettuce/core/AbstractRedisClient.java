@@ -33,6 +33,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
+import io.lettuce.core.event.connection.ConnectEvent;
+import io.lettuce.core.event.connection.ConnectionCreatedEvent;
+import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
@@ -266,9 +269,8 @@ public abstract class AbstractRedisClient {
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
 
-        connectionBuilder.apply(redisURI);
-
         connectionBuilder.bootstrap(redisBootstrap);
+        connectionBuilder.apply(redisURI);
         connectionBuilder.configureBootstrap(!LettuceStrings.isEmpty(redisURI.getSocket()), this::getEventLoopGroup);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents);
         connectionBuilder.socketAddressSupplier(socketAddressSupplier);
@@ -370,6 +372,15 @@ public abstract class AbstractRedisClient {
 
         CompletableFuture<SocketAddress> socketAddressFuture = new CompletableFuture<>();
         CompletableFuture<Channel> channelReadyFuture = new CompletableFuture<>();
+
+        EventRecorder.getInstance().record(
+                new ConnectionCreatedEvent(connectionBuilder.getRedisURI().toString(), connectionBuilder.endpoint().getId()));
+        EventRecorder.RecordableEvent event = EventRecorder.getInstance()
+                .start(new ConnectEvent(connectionBuilder.getRedisURI().toString(), connectionBuilder.endpoint().getId()));
+
+        channelReadyFuture.whenComplete((channel, throwable) -> {
+            event.record();
+        });
 
         socketAddressSupplier.doOnError(socketAddressFuture::completeExceptionally).doOnNext(socketAddressFuture::complete)
                 .subscribe(redisAddress -> {

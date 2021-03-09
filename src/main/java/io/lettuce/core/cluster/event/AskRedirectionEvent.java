@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.event.connection;
-
-import java.net.SocketAddress;
+package io.lettuce.core.cluster.event;
 
 /**
- * Event for a established TCP-level connection.
+ * Event emitted on a {@code ASK} redirection.
  *
  * @author Mark Paluch
- * @since 3.4
+ * @since 6.1
  */
-public class ConnectedEvent extends ConnectionEventSupport {
+public class AskRedirectionEvent extends RedirectionEventSupport {
 
-    public ConnectedEvent(String redisUri, String epId, String channelId, SocketAddress local, SocketAddress remote) {
-        super(redisUri, epId, channelId, local, remote);
-    }
-
-    public ConnectedEvent(SocketAddress local, SocketAddress remote) {
-        super(local, remote);
+    public AskRedirectionEvent(String command, String key, int slot, String message) {
+        super(command, key, slot, message);
     }
 
 }

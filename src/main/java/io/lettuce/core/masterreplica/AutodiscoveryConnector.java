@@ -31,6 +31,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
@@ -119,6 +120,8 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
         Mono<List<RedisNodeDescription>> refreshFuture = refresh.getNodes(redisURI);
 
         return refreshFuture.map(nodes -> {
+
+            EventRecorder.getInstance().record(new MasterReplicaTopologyChangedEvent(redisURI, nodes));
 
             connectionProvider.setKnownNodes(nodes);
 

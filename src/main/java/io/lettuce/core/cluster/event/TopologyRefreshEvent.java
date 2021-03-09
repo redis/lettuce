@@ -13,24 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.event.connection;
+package io.lettuce.core.cluster.event;
 
-import java.net.SocketAddress;
+import java.util.List;
+
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.event.Event;
 
 /**
- * Event for a established TCP-level connection.
+ * Event for initiating a topology refresh.
  *
  * @author Mark Paluch
- * @since 3.4
+ * @since 6.1
  */
-public class ConnectedEvent extends ConnectionEventSupport {
+public class TopologyRefreshEvent implements Event {
 
-    public ConnectedEvent(String redisUri, String epId, String channelId, SocketAddress local, SocketAddress remote) {
-        super(redisUri, epId, channelId, local, remote);
+    private final List<RedisURI> topologyRefreshSource;
+
+    public TopologyRefreshEvent(List<RedisURI> topologyRefreshSource) {
+        this.topologyRefreshSource = topologyRefreshSource;
     }
 
-    public ConnectedEvent(SocketAddress local, SocketAddress remote) {
-        super(local, remote);
+    public List<RedisURI> getTopologyRefreshSource() {
+        return topologyRefreshSource;
     }
 
 }

@@ -27,6 +27,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
@@ -64,6 +65,8 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
                 seedNode, initialConnections);
 
         return refresh.getNodes(seedNode).flatMap(nodes -> {
+
+            EventRecorder.getInstance().record(new MasterReplicaTopologyChangedEvent(seedNode, nodes));
 
             if (nodes.isEmpty()) {
                 return Mono.error(new RedisException(String.format("Cannot determine topology from %s", redisURIs)));

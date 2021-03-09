@@ -26,6 +26,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -88,7 +89,6 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
             public CompletableFuture<Void> closeAsync() {
                 return CompletableFuture.allOf(super.closeAsync(), sentinelTopologyRefresh.closeAsync());
             }
-
         };
 
         StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
@@ -110,6 +110,9 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
 
                 LOG.debug("Refreshing topology");
                 refresh.getNodes(redisURI).subscribe(nodes -> {
+
+                    EventRecorder.getInstance().record(new MasterReplicaTopologyChangedEvent(redisURI, nodes));
+
                     if (nodes.isEmpty()) {
                         LOG.warn("Topology refresh returned no nodes from {}", redisURI);
                     }

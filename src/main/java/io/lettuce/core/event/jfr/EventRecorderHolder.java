@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.event.connection;
+package io.lettuce.core.event.jfr;
 
-import java.net.SocketAddress;
+import io.lettuce.core.internal.LettuceClassUtils;
 
 /**
- * Event for a established TCP-level connection.
+ * Holder for {@link EventRecorder}.
  *
  * @author Mark Paluch
- * @since 3.4
+ * @since 6.1
  */
-public class ConnectedEvent extends ConnectionEventSupport {
+class EventRecorderHolder {
 
-    public ConnectedEvent(String redisUri, String epId, String channelId, SocketAddress local, SocketAddress remote) {
-        super(redisUri, epId, channelId, local, remote);
-    }
+    private static final boolean JFR_AVAILABLE = LettuceClassUtils.isPresent("jdk.jfr.Event");
 
-    public ConnectedEvent(SocketAddress local, SocketAddress remote) {
-        super(local, remote);
-    }
+    static final EventRecorder EVENT_RECORDER = JFR_AVAILABLE ? new JfrEventRecorder() : NoOpEventRecorder.INSTANCE;
 
 }
