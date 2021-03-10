@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,18 @@ public class SocketAddressResolver {
     private final DnsResolver dnsResolver;
 
     /**
+     * Create a new {@link SocketAddressResolver}.
+     *
+     * @since 6.1
+     */
+    protected SocketAddressResolver() {
+        this(DnsResolver.unresolved());
+    }
+
+    /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver}.
      *
-     * @param dnsResolver must not be {@literal null}.
+     * @param dnsResolver must not be {@code null}.
      * @since 5.1
      */
     protected SocketAddressResolver(DnsResolver dnsResolver) {
@@ -49,7 +58,7 @@ public class SocketAddressResolver {
     /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver}.
      *
-     * @param dnsResolver must not be {@literal null}.
+     * @param dnsResolver must not be {@code null}.
      * @return the {@link SocketAddressResolver}.
      * @since 5.1
      */
@@ -60,7 +69,7 @@ public class SocketAddressResolver {
     /**
      * Resolve a {@link RedisURI} to a {@link SocketAddress}.
      *
-     * @param redisURI must not be {@literal null}.
+     * @param redisURI must not be {@code null}.
      * @return the resolved {@link SocketAddress}.
      * @since 5.1
      */
@@ -74,8 +83,8 @@ public class SocketAddressResolver {
     /**
      * Resolves a {@link io.lettuce.core.RedisURI} to a {@link java.net.SocketAddress}.
      *
-     * @param redisURI must not be {@literal null}.
-     * @param dnsResolver must not be {@literal null}.
+     * @param redisURI must not be {@code null}.
+     * @param dnsResolver must not be {@code null}.
      * @return the resolved {@link SocketAddress}.
      */
     public static SocketAddress resolve(RedisURI redisURI, DnsResolver dnsResolver) {
@@ -108,4 +117,5 @@ public class SocketAddressResolver {
         throw new IllegalStateException(
                 "No native transport available. Make sure that either netty's epoll or kqueue library is on the class path and supported by your operating system.");
     }
+
 }

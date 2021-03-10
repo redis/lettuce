@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.util.function.Predicate;
 
 import io.lettuce.core.RedisException;
 import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.api.sync.NodeSelection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
@@ -164,12 +165,12 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * Enables/disables node message propagation to {@code this} {@link StatefulRedisClusterPubSubConnection connections}
      * {@link RedisPubSubListener listeners}.
      * <p>
-     * If {@code enabled} is {@literal true}, then Pub/Sub messages received on node-specific connections are propagated to this
+     * If {@code enabled} is {@code true}, then Pub/Sub messages received on node-specific connections are propagated to this
      * connection facade. Registered {@link RedisPubSubListener} will receive messages from individual node subscriptions.
      * <p>
      * Node event propagation is disabled by default.
      *
-     * @param enabled {@literal true} to enable node message propagation; {@literal false} (default) to disable message
+     * @param enabled {@code true} to enable node message propagation; {@code false} (default) to disable message
      *        propagation.
      */
     void setNodeMessagePropagation(boolean enabled);
@@ -177,14 +178,31 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
     /**
      * Add a new {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     void addListener(RedisClusterPubSubListener<K, V> listener);
 
     /**
      * Remove an existing {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     void removeListener(RedisClusterPubSubListener<K, V> listener);
+
+    /**
+     * Add a new {@link RedisClusterPushListener listener} to consume push messages.
+     *
+     * @param listener the listener, must not be {@code null}.
+     * @since 6.0
+     */
+    void addListener(RedisClusterPushListener listener);
+
+    /**
+     * Remove an existing {@link RedisClusterPushListener listener}.
+     *
+     * @param listener the listener, must not be {@code null}.
+     * @since 6.0
+     */
+    void removeListener(RedisClusterPushListener listener);
+
 }

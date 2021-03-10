@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,11 @@ public interface CommandOutputFactory {
     /**
      * Create and initialize a new {@link CommandOutput} given {@link RedisCodec}.
      *
-     * @param codec must not be {@literal null}.
+     * @param codec must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return the new {@link CommandOutput}.
      */
     <K, V> CommandOutput<K, V, ?> create(RedisCodec<K, V> codec);
+
 }

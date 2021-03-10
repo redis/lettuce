@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,9 +37,12 @@ import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.test.WithPassword;
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Integration tests for master/replica via {@link MasterReplica}.
+ *
  * @author Mark Paluch
  */
 class MasterReplicaTest extends AbstractRedisClientTest {
@@ -50,14 +52,14 @@ class MasterReplicaTest extends AbstractRedisClientTest {
 
     private StatefulRedisMasterReplicaConnection<String, String> connection;
 
-    private RedisURI master;
+    private RedisURI upstream;
     private RedisURI replica;
 
     private RedisCommands<String, String> connection1;
     private RedisCommands<String, String> connection2;
 
     @BeforeEach
-    void before() throws Exception {
+    void before() {
 
         RedisURI node1 = RedisURI.Builder.redis(host, TestSettings.port(3)).withDatabase(2).build();
         RedisURI node2 = RedisURI.Builder.redis(host, TestSettings.port(4)).withDatabase(2).build();
@@ -68,12 +70,11 @@ class MasterReplicaTest extends AbstractRedisClientTest {
         RedisInstance node1Instance = RoleParser.parse(this.connection1.role());
         RedisInstance node2Instance = RoleParser.parse(this.connection2.role());
 
-        if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
-            master = node1;
+        if (node1Instance.getRole().isUpstream() && node2Instance.getRole().isReplica()) {
+            upstream = node1;
             replica = node2;
-        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
-                && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
-            master = node2;
+        } else if (node2Instance.getRole().isUpstream() && node1Instance.getRole().isReplica()) {
+            upstream = node2;
             replica = node1;
         } else {
             assumeTrue(false,
@@ -116,14 +117,14 @@ class MasterReplicaTest extends AbstractRedisClientTest {
     @Test
     void testMasterReplicaReadFromMaster() {
 
-        connection.setReadFrom(ReadFrom.MASTER);
+        connection.setReadFrom(ReadFrom.UPSTREAM);
         String server = connection.sync().info("server");
 
         Pattern pattern = Pattern.compile("tcp_port:(\\d+)");
         Matcher matcher = pattern.matcher(server);
 
         assertThat(matcher.find()).isTrue();
-        assertThat(matcher.group(1)).isEqualTo("" + master.getPort());
+        assertThat(matcher.group(1)).isEqualTo("" + upstream.getPort());
     }
 
     @Test
@@ -182,6 +183,21 @@ class MasterReplicaTest extends AbstractRedisClientTest {
         assertThat(connection.sync().clientGetname()).isEqualTo(masterURI.getClientName());
 
         connection.close();
+    }
+
+    @Test
+    @EnabledOnCommand("ACL")
+    void testConnectToReplicaWithAcl() {
+
+        connection.close();
+
+        RedisURI replicaUri = RedisURI.Builder.redis(host, TestSettings.port(900 + 6)).withAuthentication("default", passwd)
+                .build();
+        connection = MasterReplica.connect(client, StringCodec.UTF8, replicaUri);
+
+        RedisCommands<String, String> sync = connection.sync();
+
+        assertThat(sync.ping()).isEqualTo("PONG");
     }
 
     static String replicaCall(StatefulRedisMasterReplicaConnection<String, String> connection) {

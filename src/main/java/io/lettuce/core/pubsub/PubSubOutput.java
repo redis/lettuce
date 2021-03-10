@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package io.lettuce.core.pubsub;
 
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.CommandOutput;
@@ -25,19 +27,37 @@ import io.lettuce.core.output.CommandOutput;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @param <T> Result type.
  * @author Will Glozer
+ * @author Mark Paluch
  */
-public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
+public class PubSubOutput<K, V> extends CommandOutput<K, V, V> implements PubSubMessage<K, V> {
 
     public enum Type {
-        message, pmessage, psubscribe, punsubscribe, subscribe, unsubscribe
+
+        message, pmessage, psubscribe, punsubscribe, subscribe, unsubscribe;
+
+        private final static Set<String> names = new HashSet<>();
+
+        static {
+            for (Type value : Type.values()) {
+                names.add(value.name());
+            }
+        }
+
+        public static boolean isPubSubType(String name) {
+            return names.contains(name);
+        }
+
     }
 
     private Type type;
+
     private K channel;
+
     private K pattern;
+
     private long count;
+
     private boolean completed;
 
     public PubSubOutput(RedisCodec<K, V> codec) {
@@ -89,7 +109,7 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
                     channel = codec.decodeKey(bytes);
                     break;
                 }
-                output = (T) codec.decodeValue(bytes);
+                output = codec.decodeValue(bytes);
                 completed = true;
                 break;
             case psubscribe:
@@ -115,4 +135,10 @@ public class PubSubOutput<K, V, T> extends CommandOutput<K, V, T> {
     boolean isCompleted() {
         return completed;
     }
+
+    @Override
+    public V body() {
+        return output;
+    }
+
 }

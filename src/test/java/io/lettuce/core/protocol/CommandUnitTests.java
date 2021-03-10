@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
 
@@ -29,6 +28,8 @@ import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.StatusOutput;
 
 /**
+ * Unit test for {@link Command}.
+ *
  * @author Will Glozer
  * @author Mark Paluch
  */
@@ -62,6 +63,15 @@ public class CommandUnitTests {
         assertThat(sut.isDone()).isFalse();
 
         sut.complete();
+
+        assertThat(sut.isCancelled()).isFalse();
+        assertThat(sut.isDone()).isTrue();
+    }
+
+    @Test
+    void isDoneExceptionally() {
+
+        sut.completeExceptionally(new IllegalStateException());
 
         assertThat(sut.isCancelled()).isFalse();
         assertThat(sut.isDone()).isTrue();
@@ -123,7 +133,7 @@ public class CommandUnitTests {
                 return null;
             }
         };
-        assertThatThrownBy(() -> output.set(null)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> output.set(null)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -134,7 +144,7 @@ public class CommandUnitTests {
                 return null;
             }
         };
-        assertThatThrownBy(() -> output.set(0)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> output.set(0)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,26 @@
 package io.lettuce.core.cluster.topology;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * @author Mark Paluch
@@ -38,8 +44,14 @@ import io.lettuce.core.resource.ClientResources;
  */
 class Connections {
 
+    private final static InternalLogger LOG = InternalLoggerFactory.getInstance(Connections.class);
+
+    private final Lock lock = new ReentrantLock();
+
     private final ClientResources clientResources;
+
     private final Map<RedisURI, StatefulRedisConnection<String, String>> connections;
+
     private volatile boolean closed = false;
 
     public Connections(ClientResources clientResources, Map<RedisURI, StatefulRedisConnection<String, String>> connections) {
@@ -60,29 +72,33 @@ class Connections {
             return;
         }
 
-        synchronized (this.connections) {
-
+        try {
+            lock.lock();
             if (this.closed) {
                 connection.closeAsync();
                 return;
             }
 
             this.connections.put(redisURI, connection);
+        } finally {
+            lock.unlock();
         }
     }
 
     /**
-     * @return {@literal true} if no connections present.
+     * @return {@code true} if no connections present.
      */
     public boolean isEmpty() {
-        synchronized (this.connections) {
+        try {
+            lock.lock();
             return this.connections.isEmpty();
+        } finally {
+            lock.unlock();
         }
     }
 
     /*
      * Initiate {@code CLUSTER NODES} on all connections and return the {@link Requests}.
-     *
      * @return the {@link Requests}.
      */
     public Requests requestTopology(long timeout, TimeUnit timeUnit) {
@@ -98,7 +114,6 @@ class Connections {
 
     /*
      * Initiate {@code INFO CLIENTS} on all connections and return the {@link Requests}.
-     *
      * @return the {@link Requests}.
      */
     public Requests requestClients(long timeout, TimeUnit timeUnit) {
@@ -113,7 +128,6 @@ class Connections {
 
     /*
      * Initiate {@code CLUSTER NODES} on all connections and return the {@link Requests}.
-     *
      * @return the {@link Requests}.
      */
     private Requests doRequest(Supplier<TimedAsyncCommand<String, String, String>> commandFactory, long timeout,
@@ -122,7 +136,8 @@ class Connections {
         Requests requests = new Requests();
         Duration timeoutDuration = Duration.ofNanos(timeUnit.toNanos(timeout));
 
-        synchronized (this.connections) {
+        try {
+            lock.lock();
             for (Map.Entry<RedisURI, StatefulRedisConnection<String, String>> entry : this.connections.entrySet()) {
 
                 TimedAsyncCommand<String, String, String> timedCommand = commandFactory.get();
@@ -134,6 +149,9 @@ class Connections {
                 entry.getValue().dispatch(timedCommand);
                 requests.addRequest(entry.getKey(), timedCommand);
             }
+        }
+        finally {
+            lock.unlock();
         }
 
         return requests;
@@ -151,4 +169,5 @@ class Connections {
 
         return this;
     }
+
 }

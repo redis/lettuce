@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,11 @@ import java.util.concurrent.TimeUnit;
 class ExponentialDelay extends Delay {
 
     private final Duration lower;
+
     private final Duration upper;
+
     private final int powersOf;
+
     private final TimeUnit targetTimeUnit;
 
     ExponentialDelay(Duration lower, Duration upper, int powersOf, TimeUnit targetTimeUnit) {
@@ -94,4 +97,5 @@ class ExponentialDelay extends Delay {
             return 1L << (attempt - 1);
         }
     }
+
 }

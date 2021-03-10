@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,11 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         implements StatefulRedisSentinelConnection<K, V> {
 
     protected final RedisCodec<K, V> codec;
+
     protected final RedisSentinelCommands<K, V> sync;
+
     protected final RedisSentinelAsyncCommands<K, V> async;
+
     protected final RedisSentinelReactiveCommands<K, V> reactive;
 
     private final SentinelConnectionState connectionState = new SentinelConnectionState();
@@ -98,9 +101,12 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     }
 
     static class SentinelConnectionState extends ConnectionState {
+
         @Override
         protected void setClientName(String clientName) {
             super.setClientName(clientName);
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,16 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertNotEquals;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
-import java.util.*;
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -29,7 +33,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.CopyArgs;
+import io.lettuce.core.KeyScanArgs;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RestoreArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
@@ -38,6 +49,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author dengliming
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -68,12 +80,38 @@ public class KeyCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("UNLINK")
     void unlink() {
-
         redis.set(key, value);
         assertThat((long) redis.unlink(key)).isEqualTo(1);
         redis.set(key + "1", value);
         redis.set(key + "2", value);
         assertThat(redis.unlink(key + "1", key + "2")).isEqualTo(2);
+    }
+
+    @Test
+    @EnabledOnCommand("COPY")
+    void copy() {
+        redis.set(key, value);
+        assertThat(redis.copy(key, key + "2")).isTrue();
+        assertThat(redis.copy("unknown", key + "2")).isFalse();
+        assertThat(redis.get(key + "2")).isEqualTo(value);
+    }
+
+    @Test
+    @EnabledOnCommand("COPY")
+    void copyWithReplace() {
+        redis.set(key, value);
+        redis.set(key + 2, "value to be overridden");
+        redis.copy(key, key + "2", CopyArgs.Builder.replace(true));
+        assertThat(redis.get(key + "2")).isEqualTo(value);
+    }
+
+    @Test
+    @EnabledOnCommand("COPY")
+    void copyWithDestinationDb() {
+        redis.set(key, value);
+        redis.copy(key, key, CopyArgs.Builder.destinationDb(2));
+        redis.select(2);
+        assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
@@ -103,7 +141,10 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.expire(key, 10)).isFalse();
         redis.set(key, value);
         assertThat(redis.expire(key, 10)).isTrue();
-        assertThat((long) redis.ttl(key)).isEqualTo(10);
+        assertThat(redis.ttl(key)).isBetween(5L, 10L);
+
+        redis.expire(key, Duration.ofSeconds(20));
+        assertThat(redis.ttl(key)).isBetween(10L, 20L);
     }
 
     @Test
@@ -114,6 +155,9 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.expireat(key, expiration)).isTrue();
 
         assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(8);
+
+        assertThat(redis.expireat(key, Instant.now().plusSeconds(15))).isTrue();
+        assertThat(redis.ttl(key)).isBetween(10L, 20L);
     }
 
     @Test
@@ -193,6 +237,9 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         assertThat(redis.pexpire(key, 5000)).isTrue();
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
+
+        redis.pexpire(key, Duration.ofSeconds(20));
+        assertThat(redis.ttl(key)).isBetween(10L, 20L);
     }
 
     @Test
@@ -202,6 +249,9 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         assertThat(redis.pexpireat(key, expiration)).isTrue();
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
+
+        assertThat(redis.pexpireat(key, Instant.now().plusSeconds(15))).isTrue();
+        assertThat(redis.ttl(key)).isBetween(10L, 20L);
     }
 
     @Test
@@ -279,6 +329,12 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(Duration.ofSeconds(1)).replace())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(1000);
+
+        redis.del(key);
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(System.currentTimeMillis() + 3000).replace().absttl()))
+                .isEqualTo("OK");
+        assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(3000);
     }
 
     @Test
@@ -333,10 +389,22 @@ public class KeyCommandIntegrationTests extends TestSupport {
     void scanWithArgs() {
         redis.set(key, value);
 
-        KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(10));
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(10));
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
+    }
 
+    @Test
+    @EnabledOnCommand("ZMSCORE")
+    void scanWithType() {
+        redis.set("key1", value);
+        redis.lpush("key2", value);
+
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.type("string"));
+        assertThat(cursor.getKeys()).containsOnly("key1");
+
+        cursor = redis.scan(KeyScanArgs.Builder.type("list"));
+        assertThat(cursor.getKeys()).containsOnly("key2");
     }
 
     @Test
@@ -391,7 +459,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
-        StreamScanCursor cursor = redis.scan(adapter, ScanCursor.INITIAL, ScanArgs.Builder.limit(5));
+        StreamScanCursor cursor = redis.scan(adapter, ScanCursor.INITIAL, KeyScanArgs.Builder.limit(5));
 
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
@@ -403,7 +471,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
-        StreamScanCursor cursor = redis.scan(adapter, ScanArgs.Builder.limit(100).match("*"));
+        StreamScanCursor cursor = redis.scan(adapter, KeyScanArgs.Builder.limit(100).match("*"));
 
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
@@ -418,10 +486,10 @@ public class KeyCommandIntegrationTests extends TestSupport {
         Set<String> check = new HashSet<>();
         setup100KeyValues(expect);
 
-        KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(12));
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(12));
 
         assertThat(cursor.getCursor()).isNotNull();
-        assertNotEquals("0", cursor.getCursor());
+        assertThat(cursor.getCursor()).isNotEqualTo("0");
         assertThat(cursor.isFinished()).isFalse();
 
         check.addAll(cursor.getKeys());
@@ -441,7 +509,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);
 
-        KeyScanCursor<String> cursor = redis.scan(ScanArgs.Builder.limit(200).match("key1*"));
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(200).match("key1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
@@ -455,4 +523,5 @@ public class KeyCommandIntegrationTests extends TestSupport {
             expect.add(key + i);
         }
     }
+
 }

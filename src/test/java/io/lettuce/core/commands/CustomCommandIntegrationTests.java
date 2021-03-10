@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.Arrays;
 
@@ -35,11 +34,19 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.*;
-import io.lettuce.test.TestFutures;
+import io.lettuce.core.output.VoidOutput;
+import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 
 /**
+ * Integration tests for {@link RedisCommands#dispatch}.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
@@ -76,6 +83,22 @@ public class CustomCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void dispatchFireAndForget() {
+        redis.set(key, value);
+        redis.dispatch(CommandType.LLEN, VoidOutput.create(), new CommandArgs<>(StringCodec.UTF8).addKey(key));
+    }
+
+    @Test
+    void dispatchNoOutputButError() {
+
+        redis.set(key, value);
+
+        assertThatExceptionOfType(RedisCommandExecutionException.class).isThrownBy(
+                () -> redis.dispatch(CommandType.LLEN, new VoidOutput<>(), new CommandArgs<>(StringCodec.UTF8).addKey(key)))
+                .withMessageStartingWith("WRONGTYPE");
+    }
+
+    @Test
     void dispatchShouldFailForWrongDataType() {
 
         redis.hset(key, key, value);
@@ -95,6 +118,14 @@ public class CustomCommandIntegrationTests extends TestSupport {
 
         assertThat(response).isNull();
         assertThat(exec).hasSize(1).contains("OK");
+    }
+
+    @Test
+    void dispatchMulti() {
+        String response = redis.dispatch(CommandType.MULTI, new StatusOutput<>(StringCodec.UTF8));
+        assertThat(response).isEqualTo("OK");
+        TransactionResult exec = redis.exec();
+        assertThat(exec).isEmpty();
     }
 
     @Test

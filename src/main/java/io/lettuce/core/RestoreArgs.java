@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,16 @@ import io.lettuce.core.internal.LettuceAssert;
  * {@link RestoreArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @author dengliming
  * @since 5.1
  */
 public class RestoreArgs {
 
     long ttl;
+
     boolean replace;
+
+    boolean absttl;
 
     /**
      * Builder entry points for {@link XAddArgs}.
@@ -66,6 +70,7 @@ public class RestoreArgs {
 
             return ttl(ttl.toMillis());
         }
+
     }
 
     /**
@@ -105,12 +110,35 @@ public class RestoreArgs {
     /**
      * Replaces existing keys if the target key already exists.
      *
-     * @param replace {@literal true} to enable replacing of existing keys.
+     * @param replace {@code true} to enable replacing of existing keys.
      * @return {@code this}.
      */
     public RestoreArgs replace(boolean replace) {
 
         this.replace = replace;
+        return this;
+    }
+
+    /**
+     * TTL will represent an absolute Unix timestamp (in milliseconds) in which the key will expire.
+     *
+     * @return {@code this}.
+     * @since 6.1
+     */
+    public RestoreArgs absttl() {
+        return absttl(true);
+    }
+
+    /**
+     * TTL will represent an absolute Unix timestamp (in milliseconds) in which the key will expire.
+     *
+     * @param absttl
+     * @return {@code this}.
+     * @since 6.1
+     */
+    public RestoreArgs absttl(boolean absttl) {
+
+        this.absttl = absttl;
         return this;
     }
 }

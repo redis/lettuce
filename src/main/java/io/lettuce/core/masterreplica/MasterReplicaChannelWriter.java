@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,9 +37,11 @@ import io.lettuce.core.resource.ClientResources;
 class MasterReplicaChannelWriter implements RedisChannelWriter {
 
     private MasterReplicaConnectionProvider<?, ?> masterReplicaConnectionProvider;
+
     private final ClientResources clientResources;
 
     private boolean closed = false;
+
     private boolean inTransaction;
 
     MasterReplicaChannelWriter(MasterReplicaConnectionProvider<?, ?> masterReplicaConnectionProvider,
@@ -217,7 +219,7 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         return future;
     }
 
-    MasterReplicaConnectionProvider<?, ?> getMasterReplicaConnectionProvider() {
+    MasterReplicaConnectionProvider<?, ?> getUpstreamReplicaConnectionProvider() {
         return masterReplicaConnectionProvider;
     }
 
@@ -249,14 +251,14 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
      *
-     * @param readFrom the read from setting, must not be {@literal null}
+     * @param readFrom the read from setting, must not be {@code null}
      */
     public void setReadFrom(ReadFrom readFrom) {
         masterReplicaConnectionProvider.setReadFrom(readFrom);
     }
 
     /**
-     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
+     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#UPSTREAM} if not set.
      *
      * @return the read from setting
      */
@@ -275,4 +277,5 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
     private boolean isEndTransaction(ProtocolKeyword command) {
         return command.name().equals("EXEC") || command.name().equals("DISCARD");
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,30 +67,31 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SafeVarargs
-    final Command<K, V, K> psubscribe(K... patterns) {
+    final Command<K, V, V> psubscribe(K... patterns) {
         LettuceAssert.notEmpty(patterns, "patterns " + MUST_NOT_BE_EMPTY);
 
         return pubSubCommand(PSUBSCRIBE, new PubSubOutput<>(codec), patterns);
     }
 
     @SafeVarargs
-    final Command<K, V, K> punsubscribe(K... patterns) {
+    final Command<K, V, V> punsubscribe(K... patterns) {
         return pubSubCommand(PUNSUBSCRIBE, new PubSubOutput<>(codec), patterns);
     }
 
     @SafeVarargs
-    final Command<K, V, K> subscribe(K... channels) {
+    final Command<K, V, V> subscribe(K... channels) {
         LettuceAssert.notEmpty(channels, "channels " + MUST_NOT_BE_EMPTY);
 
         return pubSubCommand(SUBSCRIBE, new PubSubOutput<>(codec), channels);
     }
 
     @SafeVarargs
-    final Command<K, V, K> unsubscribe(K... channels) {
+    final Command<K, V, V> unsubscribe(K... channels) {
         return pubSubCommand(UNSUBSCRIBE, new PubSubOutput<>(codec), channels);
     }
 
     <T> Command<K, V, T> pubSubCommand(CommandType type, CommandOutput<K, V, T> output, K... keys) {
         return new Command<>(type, output, new PubSubCommandArgs<>(codec).addKeys(keys));
     }
+
 }

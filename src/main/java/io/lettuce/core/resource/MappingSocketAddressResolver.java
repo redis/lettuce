@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,13 +35,24 @@ import io.lettuce.core.internal.LettuceAssert;
 public class MappingSocketAddressResolver extends SocketAddressResolver {
 
     private final Function<HostAndPort, HostAndPort> mappingFunction;
+
     private final DnsResolver dnsResolver;
+
+    /**
+     * Create a new {@link SocketAddressResolver} given {@link Function mapping function}.
+     *
+     * @param mappingFunction must not be {@code null}.
+     * @since 6.1
+     */
+    private MappingSocketAddressResolver(Function<HostAndPort, HostAndPort> mappingFunction) {
+        this(DnsResolver.unresolved(), mappingFunction);
+    }
 
     /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver} and {@link Function mapping function}.
      *
-     * @param dnsResolver must not be {@literal null}.
-     * @param mappingFunction must not be {@literal null}.
+     * @param dnsResolver must not be {@code null}.
+     * @param mappingFunction must not be {@code null}.
      */
     private MappingSocketAddressResolver(DnsResolver dnsResolver, Function<HostAndPort, HostAndPort> mappingFunction) {
 
@@ -55,8 +66,20 @@ public class MappingSocketAddressResolver extends SocketAddressResolver {
     /**
      * Create a new {@link SocketAddressResolver} given {@link DnsResolver} and {@link Function mapping function}.
      *
-     * @param dnsResolver must not be {@literal null}.
-     * @param mappingFunction must not be {@literal null}.
+     * @param mappingFunction must not be {@code null}.
+     * @return the {@link MappingSocketAddressResolver}.
+     * @since 6.1
+     */
+    public static MappingSocketAddressResolver create(
+            Function<HostAndPort, HostAndPort> mappingFunction) {
+        return new MappingSocketAddressResolver(mappingFunction);
+    }
+
+    /**
+     * Create a new {@link SocketAddressResolver} given {@link DnsResolver} and {@link Function mapping function}.
+     *
+     * @param dnsResolver must not be {@code null}.
+     * @param mappingFunction must not be {@code null}.
      * @return the {@link MappingSocketAddressResolver}.
      */
     public static MappingSocketAddressResolver create(DnsResolver dnsResolver,
@@ -95,4 +118,5 @@ public class MappingSocketAddressResolver extends SocketAddressResolver {
 
         return new InetSocketAddress(inetAddress[0], mapped.getPort());
     }
+
 }

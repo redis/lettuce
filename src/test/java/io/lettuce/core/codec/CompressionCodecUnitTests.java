@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.codec;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
 /**
+ * Unit tests for {@link CompressionCodec}.
+ *
  * @author Mark Paluch
  */
 class CompressionCodecUnitTests {
@@ -50,10 +51,9 @@ class CompressionCodecUnitTests {
         RedisCodec<String, String> sut = CompressionCodec.valueCompressor(StringCodec.UTF8,
                 CompressionCodec.CompressionType.GZIP);
         ByteBuffer byteBuffer = sut.encodeValue(key);
-        assertThat(toBytes(byteBuffer.duplicate())).isEqualTo(keyGzipBytes);
 
-        String s = sut.decodeValue(ByteBuffer.wrap(keyGzipBytes));
-        assertThat(s).isEqualTo(key);
+        assertThat(sut.decodeValue(byteBuffer)).isEqualTo(key);
+        assertThat(sut.decodeValue(ByteBuffer.wrap(keyGzipBytes))).isEqualTo(key);
     }
 
     @Test
@@ -61,10 +61,9 @@ class CompressionCodecUnitTests {
         RedisCodec<String, String> sut = CompressionCodec.valueCompressor(StringCodec.UTF8,
                 CompressionCodec.CompressionType.DEFLATE);
         ByteBuffer byteBuffer = sut.encodeValue(key);
-        assertThat(toBytes(byteBuffer.duplicate())).isEqualTo(keyDeflateBytes);
 
-        String s = sut.decodeValue(ByteBuffer.wrap(keyDeflateBytes));
-        assertThat(s).isEqualTo(key);
+        assertThat(sut.decodeValue(byteBuffer)).isEqualTo(key);
+        assertThat(sut.decodeValue(ByteBuffer.wrap(keyDeflateBytes))).isEqualTo(key);
     }
 
     @Test

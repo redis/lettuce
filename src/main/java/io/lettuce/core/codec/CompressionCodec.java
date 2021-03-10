@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ public abstract class CompressionCodec {
     /**
      * A {@link RedisCodec} that compresses values from a delegating {@link RedisCodec}.
      *
-     * @param delegate codec used for key-value encoding/decoding, must not be {@literal null}.
-     * @param compressionType the compression type, must not be {@literal null}.
+     * @param delegate codec used for key-value encoding/decoding, must not be {@code null}.
+     * @param compressionType the compression type, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return Value-compressing codec.
@@ -57,6 +57,7 @@ public abstract class CompressionCodec {
     private static class CompressingValueCodecWrapper implements RedisCodec<Object, Object> {
 
         private RedisCodec<Object, Object> delegate;
+
         private CompressionType compressionType;
 
         public CompressingValueCodecWrapper(RedisCodec<Object, Object> delegate, CompressionType compressionType) {
@@ -154,6 +155,7 @@ public abstract class CompressionCodec {
                 outputStream.close();
             }
         }
+
     }
 
     /**

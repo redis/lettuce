@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package io.lettuce.core.support;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.lang.reflect.Proxy;
 import java.util.Set;
@@ -26,7 +26,6 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -35,12 +34,15 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.StatefulRedisClusterConnectionImpl;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.netty.channel.group.ChannelGroup;
 
 /**
+ * Integration tests for {@link BoundedAsyncPool}.
+ *
  * @author Mark Paluch
  */
 class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
@@ -68,6 +70,28 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
 
         BoundedAsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
                 () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
+
+        borrowAndReturn(pool);
+        borrowAndClose(pool);
+        borrowAndCloseAsync(pool);
+
+        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire()).sync().getStatefulConnection()));
+        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire()).async().getStatefulConnection()));
+
+        assertThat(channels).hasSize(1);
+
+        pool.close();
+
+        assertThat(channels).isEmpty();
+    }
+
+    @Test
+    void asyncPoolWithAsyncCreationWorkWithWrappedConnections() {
+
+        BoundedAsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
+                .createBoundedObjectPoolAsync(() -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create(),
+                        true)
+                .toCompletableFuture().join();
 
         borrowAndReturn(pool);
         borrowAndClose(pool);

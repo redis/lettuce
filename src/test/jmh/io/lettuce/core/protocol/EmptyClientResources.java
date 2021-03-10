@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.CommandLatencyId;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.metrics.CommandMetrics;
 import io.lettuce.core.resource.*;
 import io.lettuce.core.tracing.Tracing;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -35,6 +37,7 @@ import io.netty.util.concurrent.SucceededFuture;
 
 /**
  * @author Mark Paluch
+ * @author Yohei Ueki
  */
 public class EmptyClientResources implements ClientResources {
 
@@ -93,7 +96,7 @@ public class EmptyClientResources implements ClientResources {
     }
 
     @Override
-    public CommandLatencyCollector commandLatencyCollector() {
+    public CommandLatencyRecorder commandLatencyRecorder() {
         return LATENCY_COLLECTOR;
     }
 
@@ -120,6 +123,11 @@ public class EmptyClientResources implements ClientResources {
     @Override
     public Tracing tracing() {
         return Tracing.disabled();
+    }
+
+    @Override
+    public AddressResolverGroup<?> addressResolverGroup() {
+        return null;
     }
 
     public static class EmptyCommandLatencyCollector implements CommandLatencyCollector {

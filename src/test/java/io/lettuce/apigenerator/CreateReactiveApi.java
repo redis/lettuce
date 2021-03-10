@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,27 @@
 package io.lettuce.apigenerator;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.comments.Comment;
+import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.printer.PrettyPrinterConfiguration;
 
 import io.lettuce.core.internal.LettuceSets;
 
@@ -36,15 +45,11 @@ import io.lettuce.core.internal.LettuceSets;
  *
  * @author Mark Paluch
  */
-@RunWith(Parameterized.class)
 public class CreateReactiveApi {
 
-    private static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
-            "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
-
-    private static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "dispatch");
-
-    private static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield");
+    public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+    public static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "dispatch");
+    public static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield");
 
     private static final Map<String, String> RESULT_SPEC;
 
@@ -52,43 +57,36 @@ public class CreateReactiveApi {
 
         Map<String, String> resultSpec = new HashMap<>();
         resultSpec.put("geopos", "Flux<Value<GeoCoordinates>>");
+        resultSpec.put("aclCat()", "Mono<Set<AclCategory>>");
+        resultSpec.put("aclCat(AclCategory category)", "Mono<Set<CommandType>>");
+        resultSpec.put("aclGetuser", "Mono<List<Object>>");
         resultSpec.put("bitfield", "Flux<Value<Long>>");
+        resultSpec.put("hgetall", "Flux<KeyValue<K, V>>");
+        resultSpec.put("zmscore", "Mono<List<Double>>"); // Redis returns null if element was not found
+        resultSpec.put("hgetall(KeyValueStreamingChannel<K, V> channel, K key)", "Mono<Long>");
 
         RESULT_SPEC = resultSpec;
     }
 
-    private CompilationUnitFactory factory;
+    protected Consumer<MethodDeclaration> methodMutator() {
+        return method -> {
 
-    @Parameterized.Parameters(name = "Create {0}")
-    public static List<Object[]> arguments() {
-        List<Object[]> result = new ArrayList<>();
+            if (isStreamingChannelMethod(method)) {
+                if (!method.getAnnotationByClass(Deprecated.class).isPresent()) {
+                    method.addAnnotation(new MarkerAnnotationExpr("Deprecated"));
+                }
+            }
 
-        for (String templateName : Constants.TEMPLATE_NAMES) {
-            result.add(new Object[] { templateName });
-        }
+            if (method.getNameAsString().equals("dispatch")) {
 
-        return result;
+                Parameter output = method.getParameterByName("output").get();
+                output.setType("CommandOutput<K, V, ?>");
+            }
+        };
     }
 
-    /**
-     *
-     * @param templateName
-     */
-    public CreateReactiveApi(String templateName) {
-
-        String targetName = templateName.replace("Commands", "ReactiveCommands");
-        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
-        String targetPackage;
-
-        if (templateName.contains("RedisSentinel")) {
-            targetPackage = "io.lettuce.core.sentinel.api.reactive";
-        } else {
-            targetPackage = "io.lettuce.core.api.reactive";
-        }
-
-        factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodDeclaration -> true, importSupplier(), null, methodCommentMutator());
-        factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
+    protected boolean isStreamingChannelMethod(MethodDeclaration method) {
+        return method.getParameters().stream().anyMatch(p -> p.getType().asString().contains("StreamingChannel"));
     }
 
     /**
@@ -101,11 +99,20 @@ public class CreateReactiveApi {
                 + "* @generated by " + getClass().getName() + "\r\n ";
     }
 
-    Function<Comment, Comment> methodCommentMutator() {
-        return comment -> {
-            if (comment != null && comment.getContent() != null) {
-                comment.setContent(
-                        comment.getContent().replaceAll("List&lt;(.*)&gt;", "$1").replaceAll("Set&lt;(.*)&gt;", "$1"));
+    BiFunction<MethodDeclaration, Comment, Comment> methodCommentMutator() {
+        return (method, comment) -> {
+            String commentText = comment != null ? comment.getContent() : null;
+
+            if (commentText != null) {
+
+                commentText = commentText.replaceAll("List&lt;(.*)&gt;", "$1").replaceAll("Set&lt;(.*)&gt;", "$1");
+
+                if (isStreamingChannelMethod(method)) {
+                    commentText += "* @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #"
+                            + method.getNameAsString() + "}.";
+                }
+
+                comment.setContent(commentText);
             }
             return comment;
         };
@@ -124,8 +131,9 @@ public class CreateReactiveApi {
             String baseType = "Mono";
             String typeArgument = method.getType().toString().trim();
 
-            if (getResultType(method, declaringClass) != null) {
-                typeArgument = getResultType(method, declaringClass);
+            String fixedResultType = getResultType(method, declaringClass);
+            if (fixedResultType != null) {
+                return new ClassOrInterfaceType(fixedResultType);
             } else if (CompilationUnitFactory.contains(FORCE_FLUX_RESULT, method)) {
                 baseType = "Flux";
             } else if (typeArgument.startsWith("List<")) {
@@ -138,7 +146,7 @@ public class CreateReactiveApi {
                 baseType = "Mono";
             }
 
-            if (CompilationUnitFactory.contains(VALUE_WRAP, method)) {
+            if (fixedResultType == null && CompilationUnitFactory.contains(VALUE_WRAP, method)) {
                 typeArgument = String.format("Value<%s>", typeArgument);
             }
 
@@ -146,24 +154,26 @@ public class CreateReactiveApi {
         };
     }
 
-
-
     private String getResultType(MethodDeclaration method,
-            ClassOrInterfaceDeclaration classOfMethod) {
+                                 ClassOrInterfaceDeclaration classOfMethod) {
 
-        if(RESULT_SPEC.containsKey(method.getName())){
-            return RESULT_SPEC.get(method.getName());
+        String declaration = nameAndParameters(method);
+        if (RESULT_SPEC.containsKey(declaration)) {
+            return RESULT_SPEC.get(declaration);
         }
 
-        String key = classOfMethod.getName() + "." + method.getName();
+        if (RESULT_SPEC.containsKey(method.getNameAsString())) {
+            return RESULT_SPEC.get(method.getNameAsString());
+        }
 
-        if(RESULT_SPEC.containsKey(key)){
+        String key = classOfMethod.getNameAsString() + "." + method.getNameAsString();
+
+        if (RESULT_SPEC.containsKey(key)) {
             return RESULT_SPEC.get(key);
         }
 
         return null;
     }
-
 
     /**
      * Supply additional imports.
@@ -174,8 +184,48 @@ public class CreateReactiveApi {
         return () -> Arrays.asList("reactor.core.publisher.Flux", "reactor.core.publisher.Mono");
     }
 
-    @Test
-    public void createInterface() throws Exception {
-        factory.createInterface();
+    @ParameterizedTest
+    @MethodSource("arguments")
+    void createInterface(String argument) throws Exception {
+        createFactory(argument).createInterface();
+    }
+
+    static List<String> arguments() {
+        return Arrays.asList(Constants.TEMPLATE_NAMES);
+    }
+
+    private CompilationUnitFactory createFactory(String templateName) {
+        String targetName = templateName.replace("Commands", "ReactiveCommands");
+        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
+        String targetPackage;
+
+        if (templateName.contains("RedisSentinel")) {
+            targetPackage = "io.lettuce.core.sentinel.api.reactive";
+        } else {
+            targetPackage = "io.lettuce.core.api.reactive";
+        }
+
+        CompilationUnitFactory factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
+                methodTypeMutator(), methodMutator(), methodDeclaration -> true, importSupplier(), null,
+                methodCommentMutator());
+        factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
+        return factory;
+    }
+
+    static String nameAndParameters(MethodDeclaration method) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(method.getName());
+        sb.append("(");
+        boolean firstParam = true;
+        for (Parameter param : method.getParameters()) {
+            if (firstParam) {
+                firstParam = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append(param.toString(new PrettyPrinterConfiguration().setPrintComments(false)));
+        }
+        sb.append(")");
+        return sb.toString();
     }
 }

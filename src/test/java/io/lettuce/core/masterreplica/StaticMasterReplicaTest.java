@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,13 +39,15 @@ import io.lettuce.test.WithPassword;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Integration tests for static master/replica via {@link MasterReplica}.
+ *
  * @author Mark Paluch
  */
 class StaticMasterReplicaTest extends AbstractRedisClientTest {
 
     private StatefulRedisMasterReplicaConnection<String, String> connection;
 
-    private RedisURI master;
+    private RedisURI upstream;
     private RedisURI replica;
 
     private RedisCommands<String, String> connection1;
@@ -64,12 +65,11 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
         RedisInstance node1Instance = RoleParser.parse(this.connection1.role());
         RedisInstance node2Instance = RoleParser.parse(this.connection2.role());
 
-        if (node1Instance.getRole() == RedisInstance.Role.MASTER && node2Instance.getRole() == RedisInstance.Role.SLAVE) {
-            master = node1;
+        if (node1Instance.getRole().isUpstream() && node2Instance.getRole().isReplica()) {
+            upstream = node1;
             replica = node2;
-        } else if (node2Instance.getRole() == RedisInstance.Role.MASTER
-                && node1Instance.getRole() == RedisInstance.Role.SLAVE) {
-            master = node2;
+        } else if (node2Instance.getRole().isUpstream() && node1Instance.getRole().isReplica()) {
+            upstream = node2;
             replica = node1;
         } else {
             assumeTrue(false,
@@ -88,7 +88,7 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
         node1.setPassword(passwd);
         node2.setPassword(passwd);
 
-        connection = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(master, replica));
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(upstream, replica));
         connection.setReadFrom(ReadFrom.REPLICA);
     }
 
@@ -142,7 +142,7 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = MasterReplica.connect(client, StringCodec.UTF8, Collections.singletonList(master));
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Collections.singletonList(upstream));
         connection.setReadFrom(ReadFrom.REPLICA);
 
         assertThatThrownBy(() -> replicaCall(connection)).isInstanceOf(RedisException.class);
@@ -153,7 +153,7 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
 
         connection.close();
 
-        connection = MasterReplica.connect(client, StringCodec.UTF8, Collections.singletonList(master));
+        connection = MasterReplica.connect(client, StringCodec.UTF8, Collections.singletonList(upstream));
 
         connection.sync().set(key, value);
         assertThat(connection.sync().get(key)).isEqualTo("value");
@@ -165,13 +165,13 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
         connection.close();
 
         connection = MasterReplica.connect(client, StringCodec.UTF8, Collections.singletonList(replica));
-        connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
+        connection.setReadFrom(ReadFrom.UPSTREAM_PREFERRED);
 
         assertThat(connection.sync().info()).isNotEmpty();
     }
 
     @Test
-    void noMasterForWrite() {
+    void noUpstreamForWrite() {
 
         connection.close();
 
@@ -221,6 +221,6 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
 
     MasterReplicaConnectionProvider getConnectionProvider() {
         MasterReplicaChannelWriter writer = ((StatefulRedisMasterReplicaConnectionImpl) connection).getChannelWriter();
-        return writer.getMasterReplicaConnectionProvider();
+        return writer.getUpstreamReplicaConnectionProvider();
     }
 }

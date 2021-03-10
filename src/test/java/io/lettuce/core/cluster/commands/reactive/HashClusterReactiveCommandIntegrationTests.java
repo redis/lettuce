@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package io.lettuce.core.cluster.commands.reactive;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.commands.HashCommandIntegrationTests;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
@@ -29,5 +32,17 @@ class HashClusterReactiveCommandIntegrationTests extends HashCommandIntegrationT
     @Inject
     HashClusterReactiveCommandIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
+    }
+
+    @Test
+    @Disabled("API differences")
+    public void hgetall() {
+
+    }
+
+    @Test
+    @Disabled("API differences")
+    public void hgetallStreaming() {
+
     }
 }

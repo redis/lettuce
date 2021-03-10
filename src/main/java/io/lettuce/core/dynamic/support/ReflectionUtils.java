@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,6 +323,7 @@ public abstract class ReflectionUtils {
          * @param method the method to operate on
          */
         void doWith(Method method) throws IllegalArgumentException, IllegalAccessException;
+
     }
 
     /**
@@ -336,6 +337,7 @@ public abstract class ReflectionUtils {
          * @param method the method to check
          */
         boolean matches(Method method);
+
     }
 
     /**
@@ -349,6 +351,7 @@ public abstract class ReflectionUtils {
          * @param field the field to operate on
          */
         void doWith(Field field) throws IllegalArgumentException, IllegalAccessException;
+
     }
 
     /**
@@ -362,5 +365,7 @@ public abstract class ReflectionUtils {
          * @param field the field to check
          */
         boolean matches(Field field);
+
     }
+
 }

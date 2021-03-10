@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package io.lettuce.core.internal;
 
-import io.lettuce.core.LettuceStrings;
-
 /**
  * An immutable representation of a host and port.
  *
@@ -29,11 +27,12 @@ public class HostAndPort {
     private static final int NO_PORT = -1;
 
     public final String hostText;
+
     public final int port;
 
     /**
      *
-     * @param hostText must not be empty or {@literal null}.
+     * @param hostText must not be empty or {@code null}.
      * @param port
      */
     private HostAndPort(String hostText, int port) {
@@ -130,7 +129,7 @@ public class HostAndPort {
 
     /**
      *
-     * @return {@literal true} if has a port.
+     * @return {@code true} if has a port.
      */
     public boolean hasPort() {
         return port != NO_PORT;
@@ -213,7 +212,7 @@ public class HostAndPort {
     /**
      *
      * @param port the port number
-     * @return {@literal true} for valid port numbers.
+     * @return {@code true} for valid port numbers.
      */
     private static boolean isValidPort(int port) {
         return port >= 0 && port <= 65535;
@@ -229,4 +228,5 @@ public class HostAndPort {
         }
         return sb.toString();
     }
+
 }

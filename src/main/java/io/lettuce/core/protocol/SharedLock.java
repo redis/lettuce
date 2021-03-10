@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package io.lettuce.core.protocol;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import io.lettuce.core.internal.LettuceAssert;
@@ -34,7 +36,13 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 class SharedLock {
 
-    private final AtomicLong writers = new AtomicLong();
+    private static final AtomicLongFieldUpdater<SharedLock> WRITERS = AtomicLongFieldUpdater.newUpdater(SharedLock.class,
+            "writers");
+
+    private final Lock lock = new ReentrantLock();
+
+    private volatile long writers = 0;
+
     private volatile Thread exclusiveLockOwner;
 
     /**
@@ -46,14 +54,17 @@ class SharedLock {
             return;
         }
 
-        synchronized (this) {
+        lock.lock();
+        try {
             for (;;) {
 
-                if (writers.get() >= 0) {
-                    writers.incrementAndGet();
+                if (WRITERS.get(this) >= 0) {
+                    WRITERS.incrementAndGet(this);
                     return;
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -66,13 +77,13 @@ class SharedLock {
             return;
         }
 
-        writers.decrementAndGet();
+        WRITERS.decrementAndGet(this);
     }
 
     /**
      * Execute a {@link Runnable} guarded by an exclusive lock.
      *
-     * @param runnable the runnable, must not be {@literal null}.
+     * @param runnable the runnable, must not be {@code null}.
      */
     void doExclusive(Runnable runnable) {
 
@@ -87,7 +98,7 @@ class SharedLock {
     /**
      * Retrieve a value produced by a {@link Supplier} guarded by an exclusive lock.
      *
-     * @param supplier the {@link Supplier}, must not be {@literal null}.
+     * @param supplier the {@link Supplier}, must not be {@code null}.
      * @param <T> the return type
      * @return the return value
      */
@@ -95,7 +106,8 @@ class SharedLock {
 
         LettuceAssert.notNull(supplier, "Supplier must not be null");
 
-        synchronized (this) {
+        lock.lock();
+        try {
 
             try {
 
@@ -104,6 +116,8 @@ class SharedLock {
             } finally {
                 unlockWritersExclusive();
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -114,18 +128,21 @@ class SharedLock {
     private void lockWritersExclusive() {
 
         if (exclusiveLockOwner == Thread.currentThread()) {
-            writers.decrementAndGet();
+            WRITERS.decrementAndGet(this);
             return;
         }
 
-        synchronized (this) {
+        lock.lock();
+        try {
             for (;;) {
 
-                if (writers.compareAndSet(0, -1)) {
+                if (WRITERS.compareAndSet(this, 0, -1)) {
                     exclusiveLockOwner = Thread.currentThread();
                     return;
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -135,9 +152,10 @@ class SharedLock {
     private void unlockWritersExclusive() {
 
         if (exclusiveLockOwner == Thread.currentThread()) {
-            if (writers.incrementAndGet() == 0) {
+            if (WRITERS.incrementAndGet(this) == 0) {
                 exclusiveLockOwner = null;
             }
         }
     }
+
 }

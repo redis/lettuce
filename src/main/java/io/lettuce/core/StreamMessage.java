@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,9 @@ import java.util.Objects;
 public class StreamMessage<K, V> {
 
     private final K stream;
+
     private final String id;
+
     private final Map<K, V> body;
 
     /**
@@ -53,7 +55,7 @@ public class StreamMessage<K, V> {
     }
 
     /**
-     * @return the message body. Can be {@literal null} for commands that do not return the message body.
+     * @return the message body. Can be {@code null} for commands that do not return the message body.
      */
     public Map<K, V> getBody() {
         return body;
@@ -78,4 +80,5 @@ public class StreamMessage<K, V> {
     public String toString() {
         return String.format("StreamMessage[%s:%s]%s", stream, id, body);
     }
+
 }

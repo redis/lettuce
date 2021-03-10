@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,11 +15,12 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,7 +37,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
@@ -44,17 +44,19 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
-import io.lettuce.core.masterreplica.SentinelTopologyRefresh;
+import io.lettuce.core.masterreplica.SentinelTopologyRefresh.PubSubMessageHandler;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.test.ReflectionTestUtils;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
+ * Unit tests for {@link SentinelTopologyRefresh}.
+ *
  * @author Mark Paluch
  */
 @SuppressWarnings("unchecked")
@@ -163,9 +165,9 @@ class SentinelTopologyRefreshUnitTests {
         Map<RedisURI, StatefulRedisPubSubConnection<String, String>> connections = (Map) ReflectionTestUtils.getField(sut,
                 "pubSubConnections");
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
 
-        adapter.message("*", "+sentinel",
+        adapter.handle("*", "+sentinel",
                 "sentinel c14cc895bb0479c91312cee0e0440b7d99ad367b 127.0.0.1 26380 @ mymaster 127.0.0.1 6483");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
@@ -211,7 +213,6 @@ class SentinelTopologyRefreshUnitTests {
         sut.bind(refreshRunnable);
         sut.close();
 
-        verify(connection).removeListener(any());
         verify(connection).closeAsync();
     }
 
@@ -228,10 +229,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldNotProcessOtherEvents() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "*", "irrelevant");
+        adapter.handle("*", "*", "irrelevant");
 
         verify(redisClient, times(3)).getResources();
         verify(redisClient).connectPubSubAsync(any(), any());
@@ -241,10 +242,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessSlaveDown() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "+sdown", "replica 127.0.0.1:6483 127.0.0.1 6483-2020 @ mymaster 127.0.0.1 6482");
+        adapter.handle("*", "+sdown", "replica 127.0.0.1:6483 127.0.0.1 6483-2020 @ mymaster 127.0.0.1 6482");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -254,10 +255,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessSlaveAdded() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "+slave", "replica 127.0.0.1:8483 127.0.0.1 8483-2020 @ mymaster 127.0.0.1 6482");
+        adapter.handle("*", "+slave", "replica 127.0.0.1:8483 127.0.0.1 8483-2020 @ mymaster 127.0.0.1 6482");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -267,10 +268,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessSlaveBackUp() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "-sdown", "replica 127.0.0.1:6483 127.0.0.1 6483-2020 @ mymaster 127.0.0.1 6482");
+        adapter.handle("*", "-sdown", "replica 127.0.0.1:6483 127.0.0.1 6483-2020 @ mymaster 127.0.0.1 6482");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -280,10 +281,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessElectedLeader() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "+elected-leader", "master mymaster 127.0.0.1");
+        adapter.handle("*", "+elected-leader", "master mymaster 127.0.0.1");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -293,10 +294,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessSwitchMaster() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "+switch-master", "mymaster 127.0.0.1");
+        adapter.handle("*", "+switch-master", "mymaster 127.0.0.1");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -306,10 +307,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessFixSlaveConfig() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "fix-slave-config", "@ mymaster 127.0.0.1");
+        adapter.handle("*", "fix-slave-config", "@ mymaster 127.0.0.1");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -319,10 +320,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessConvertToSlave() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "+convert-to-slave", "@ mymaster 127.0.0.1");
+        adapter.handle("*", "+convert-to-slave", "@ mymaster 127.0.0.1");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -332,10 +333,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessRoleChange() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "+role-change", "@ mymaster 127.0.0.1");
+        adapter.handle("*", "+role-change", "@ mymaster 127.0.0.1");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -345,10 +346,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessFailoverEnd() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "failover-end", "");
+        adapter.handle("*", "failover-end", "");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -358,10 +359,10 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldProcessFailoverTimeout() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "failover-end-for-timeout", "");
+        adapter.handle("*", "failover-end-for-timeout", "");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -371,11 +372,11 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldExecuteOnceWithinATimeout() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
 
-        adapter.message("*", "failover-end-for-timeout", "");
-        adapter.message("*", "failover-end-for-timeout", "");
+        adapter.handle("*", "failover-end-for-timeout", "");
+        adapter.handle("*", "failover-end-for-timeout", "");
 
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
@@ -385,17 +386,17 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void shouldNotProcessIfExecutorIsShuttingDown() {
 
-        RedisPubSubAdapter<String, String> adapter = getAdapter();
+        PubSubMessageHandler adapter = getMessageHandler();
         sut.bind(refreshRunnable);
         when(eventExecutors.isShuttingDown()).thenReturn(true);
 
-        adapter.message("*", "failover-end-for-timeout", "");
+        adapter.handle("*", "failover-end-for-timeout", "");
 
         verify(redisClient).connectPubSubAsync(any(), any());
         verify(eventExecutors, never()).schedule(any(Runnable.class), anyLong(), any());
     }
 
-    private RedisPubSubAdapter<String, String> getAdapter() {
-        return (RedisPubSubAdapter<String, String>) ReflectionTestUtils.getField(sut, "adapter");
+    private PubSubMessageHandler getMessageHandler() {
+        return ReflectionTestUtils.getField(sut, "messageHandler");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public interface NettyCustomizer {
      * is called after the driver has applied all {@link java.net.SocketOption}s. This is a good place to add extra
      * {@link io.netty.channel.ChannelOption}s to the {@link Bootstrap}.
      *
-     * @param bootstrap must not be {@literal null}.
+     * @param bootstrap must not be {@code null}.
      */
     default void afterBootstrapInitialized(Bootstrap bootstrap) {
     }
@@ -46,8 +46,9 @@ public interface NettyCustomizer {
      * Hook invoked each time the driver initializes the channel. This hook is called after the driver has registered all its
      * internal channel handlers, and applied the configured options.
      *
-     * @param channel must not be {@literal null}.
+     * @param channel must not be {@code null}.
      */
     default void afterChannelInitialized(Channel channel) {
     }
+
 }

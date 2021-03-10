@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,9 @@
  */
 package io.lettuce.core.pubsub;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Queue;
 
@@ -33,7 +30,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.codec.StringCodec;
@@ -45,10 +41,15 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
+import io.lettuce.test.ReflectionTestUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelConfig;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoop;
 
 /**
  * @author Mark Paluch
@@ -101,7 +102,7 @@ class PubSubCommandHandlerUnitTests {
             return null;
         });
 
-        when(clientResources.commandLatencyCollector())
+        when(clientResources.commandLatencyRecorder())
                 .thenReturn(new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create()));
         when(clientResources.tracing()).thenReturn(Tracing.disabled());
 
@@ -118,7 +119,8 @@ class PubSubCommandHandlerUnitTests {
 
         sut.channelRead(context, responseBytes(":1000\r\n"));
 
-        assertThat(ReflectionTestUtils.getField(command, "exception")).isInstanceOf(IllegalStateException.class);
+        assertThat((Object) ReflectionTestUtils.getField(command, "exception"))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -276,7 +278,7 @@ class PubSubCommandHandlerUnitTests {
                 null);
 
         doAnswer((Answer<PubSubEndpoint<String, String>>) inv -> {
-            PubSubOutput<String, String, String> out = inv.getArgument(0);
+            PubSubOutput<String, String> out = inv.getArgument(0);
             if (out.type() == PubSubOutput.Type.message) {
                 throw new NullPointerException("Expected exception");
             }

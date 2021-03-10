@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,11 @@ import io.netty.util.concurrent.ScheduledFuture;
 public class DefaultCommandLatencyEventPublisher implements MetricEventPublisher {
 
     private final EventExecutorGroup eventExecutorGroup;
+
     private final EventPublisherOptions options;
+
     private final EventBus eventBus;
+
     private final CommandLatencyCollector commandLatencyCollector;
 
     private final Runnable EMITTER = this::emitMetricsEvent;
@@ -76,4 +79,5 @@ public class DefaultCommandLatencyEventPublisher implements MetricEventPublisher
 
         eventBus.publish(new CommandLatencyEvent(commandLatencyCollector.retrieveMetrics()));
     }
+
 }

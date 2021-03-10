@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,11 +53,8 @@ public class KeyValue<K, V> extends Value<V> {
      * Creates a {@link KeyValue} from a {@code key} and an {@link Optional}. The resulting value contains the value from the
      * {@link Optional} if a value is present. Value is empty if the {@link Optional} is empty.
      *
-     * @param key the key, must not be {@literal null}.
-     * @param optional the optional. May be empty but never {@literal null}.
-     * @param <K>
-     * @param <T>
-     * @param <V>
+     * @param key the key, must not be {@code null}.
+     * @param optional the optional. May be empty but never {@code null}.
      * @return the {@link KeyValue}
      */
     public static <K, T extends V, V> KeyValue<K, V> from(K key, Optional<T> optional) {
@@ -75,11 +72,8 @@ public class KeyValue<K, V> extends Value<V> {
      * Creates a {@link KeyValue} from a {@code key} and{@code value}. The resulting value contains the value if the
      * {@code value} is not null.
      *
-     * @param key the key, must not be {@literal null}.
-     * @param value the value. May be {@literal null}.
-     * @param <K>
-     * @param <T>
-     * @param <V>
+     * @param key the key, must not be {@code null}.
+     * @param value the value. May be {@code null}.
      * @return the {@link KeyValue}
      */
     public static <K, T extends V, V> KeyValue<K, V> fromNullable(K key, T value) {
@@ -94,9 +88,7 @@ public class KeyValue<K, V> extends Value<V> {
     /**
      * Returns an empty {@code KeyValue} instance with the {@code key} set. No value is present for this instance.
      *
-     * @param key the key, must not be {@literal null}.
-     * @param <K>
-     * @param <V>
+     * @param key the key, must not be {@code null}.
      * @return the {@link KeyValue}
      */
     public static <K, V> KeyValue<K, V> empty(K key) {
@@ -106,11 +98,8 @@ public class KeyValue<K, V> extends Value<V> {
     /**
      * Creates a {@link KeyValue} from a {@code key} and {@code value}. The resulting value contains the value.
      *
-     * @param key the key. Must not be {@literal null}.
-     * @param value the value. Must not be {@literal null}.
-     * @param <K>
-     * @param <T>
-     * @param <V>
+     * @param key the key. Must not be {@code null}.
+     * @param value the value. Must not be {@code null}.
      * @return the {@link KeyValue}
      */
     public static <K, T extends V, V> KeyValue<K, V> just(K key, T value) {
@@ -165,6 +154,7 @@ public class KeyValue<K, V> extends Value<V> {
      * @return the new {@link KeyValue}
      */
     @SuppressWarnings("unchecked")
+    @Override
     public <R> KeyValue<K, R> map(Function<? super V, ? extends R> mapper) {
 
         LettuceAssert.notNull(mapper, "Mapper function must not be null");
@@ -175,4 +165,5 @@ public class KeyValue<K, V> extends Value<V> {
 
         return (KeyValue<K, R>) this;
     }
+
 }

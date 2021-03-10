@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package io.lettuce.core.commands;
 
 import static io.lettuce.core.SetArgs.Builder.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static io.lettuce.core.StringMatchResult.*;
+import static org.assertj.core.api.Assertions.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +32,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.GetExArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.SetArgs;
+import io.lettuce.core.StrAlgoArgs;
+import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.KeyValueStreamingAdapter;
@@ -39,8 +45,12 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisStringCommands}.
+ *
  * @author Will Glozer
  * @author Mark Paluch
+ * @author dengliming
+ * @author Andrey Shlykov
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -76,6 +86,24 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.getbit(key, 0)).isEqualTo(0);
         redis.setbit(key, 0, 1);
         assertThat(redis.getbit(key, 0)).isEqualTo(1);
+    }
+
+    @Test
+    @EnabledOnCommand("GETDEL")
+    void getdel() {
+        redis.set(key, value);
+        assertThat(redis.getdel(key)).isEqualTo(value);
+        assertThat(redis.get(key)).isNull();
+    }
+
+    @Test
+    @EnabledOnCommand("GETEX")
+    void getex() {
+        redis.set(key, value);
+        assertThat(redis.getex(key, GetExArgs.Builder.ex(Duration.ofSeconds(100)))).isEqualTo(value);
+        assertThat(redis.ttl(key)).isGreaterThan(1);
+        assertThat(redis.getex(key, GetExArgs.Builder.persist())).isEqualTo(value);
+        assertThat(redis.ttl(key)).isEqualTo(-1);
     }
 
     @Test
@@ -149,6 +177,12 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(9);
 
+        assertThat(redis.set(key, value, ex(Duration.ofSeconds(10)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(5L, 10L);
+
+        assertThat(redis.set(key, value, px(Duration.ofSeconds(10)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(5L, 10L);
+
         assertThat(redis.set(key, value, px(10000))).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(9);
@@ -166,6 +200,17 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.set(key, value, px(20000).nx())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key) >= 19).isTrue();
+    }
+
+    @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void setExAt() {
+
+        assertThat(redis.set(key, value, exAt(Instant.now().plusSeconds(60)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(50L, 61L);
+
+        assertThat(redis.set(key, value, pxAt(Instant.now().plusSeconds(60)))).isEqualTo("OK");
+        assertThat(redis.ttl(key)).isBetween(50L, 61L);
     }
 
     @Test
@@ -187,6 +232,23 @@ public class StringCommandIntegrationTests extends TestSupport {
     @Test
     void setNegativePX() {
         assertThatThrownBy(() -> redis.set(key, value, px(-1000))).isInstanceOf(RedisException. class);
+    }
+
+    @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void setGet() {
+        assertThat(redis.setGet(key, value)).isNull();
+        assertThat(redis.setGet(key, "value2")).isEqualTo(value);
+        assertThat(redis.get(key)).isEqualTo("value2");
+    }
+
+    @Test
+    @EnabledOnCommand("ZMSCORE") // Redis 6.2
+    void setGetWithArgs() {
+        assertThat(redis.setGet(key, value)).isNull();
+        assertThat(redis.setGet(key, "value2", SetArgs.Builder.ex(100))).isEqualTo(value);
+        assertThat(redis.get(key)).isEqualTo("value2");
+        assertThat(redis.ttl(key)).isGreaterThanOrEqualTo(10);
     }
 
     @Test
@@ -237,5 +299,77 @@ public class StringCommandIntegrationTests extends TestSupport {
 
         Long.parseLong(time.get(0));
         Long.parseLong(time.get(1));
+    }
+
+    @Test
+    @EnabledOnCommand("STRALGO")
+    void strAlgo() {
+
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("ohmytext", "mynewtext"));
+        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+
+        // STRALGO LCS STRINGS a b
+        matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("a", "b").minMatchLen(4).withIdx().withMatchLen());
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getLen()).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("STRALGO")
+    void strAlgoUsingKeys() {
+
+        redis.set("key1{k}", "ohmytext");
+        redis.set("key2{k}", "mynewtext");
+
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.keys("key1{k}", "key2{k}"));
+        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+
+        // STRALGO LCS STRINGS a b
+        matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.strings("a", "b").minMatchLen(4).withIdx().withMatchLen());
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getLen()).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("STRALGO")
+    void strAlgoJustLen() {
+
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("ohmytext", "mynewtext").justLen());
+
+        assertThat(matchResult.getLen()).isEqualTo(6);
+    }
+
+    @Test
+    @EnabledOnCommand("STRALGO")
+    void strAlgoWithMinMatchLen() {
+
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("ohmytext", "mynewtext").minMatchLen(4));
+
+        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+    }
+
+    @Test
+    @EnabledOnCommand("STRALGO")
+    void strAlgoWithIdx() {
+
+        // STRALGO LCS STRINGS ohmytext mynewtext IDX MINMATCHLEN 4 WITHMATCHLEN
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
+                .strings("ohmytext", "mynewtext").minMatchLen(4).withIdx().withMatchLen());
+
+        assertThat(matchResult.getMatches()).hasSize(1);
+        assertThat(matchResult.getMatches().get(0).getMatchLen()).isEqualTo(4);
+
+        Position a = matchResult.getMatches().get(0).getA();
+        Position b = matchResult.getMatches().get(0).getB();
+
+        assertThat(a.getStart()).isEqualTo(4);
+        assertThat(a.getEnd()).isEqualTo(7);
+        assertThat(b.getStart()).isEqualTo(5);
+        assertThat(b.getEnd()).isEqualTo(8);
+        assertThat(matchResult.getLen()).isEqualTo(6);
     }
 }

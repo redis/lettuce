@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ import io.lettuce.core.internal.LettuceAssert;
  * Topology changes are:
  *
  * <ul>
- * <li>Changes in {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#MASTER}/
- * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#SLAVE} state</li>
+ * <li>Changes in {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#UPSTREAM}/
+ * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#REPLICA} state</li>
  * <li>Newly added or removed nodes to/from the Redis Cluster</li>
  * <li>Changes in {@link RedisClusterNode#getSlots()} responsibility</li>
  * <li>Changes to the {@link RedisClusterNode#getSlaveOf() replication source} (the master of a replica)</li>
@@ -57,6 +57,7 @@ public class Partitions implements Collection<RedisClusterNode> {
     private final List<RedisClusterNode> partitions = new ArrayList<>();
 
     private volatile RedisClusterNode slotCache[] = EMPTY;
+
     private volatile Collection<RedisClusterNode> nodeReadView = Collections.emptyList();
 
     /**
@@ -84,7 +85,7 @@ public class Partitions implements Collection<RedisClusterNode> {
      * Retrieve a {@link RedisClusterNode} by its slot number. This method does not distinguish between masters and slaves.
      *
      * @param slot the slot hash.
-     * @return the {@link RedisClusterNode} or {@literal null} if not found.
+     * @return the {@link RedisClusterNode} or {@code null} if not found.
      */
     public RedisClusterNode getPartitionBySlot(int slot) {
         return slotCache[slot];
@@ -94,7 +95,7 @@ public class Partitions implements Collection<RedisClusterNode> {
      * Retrieve a {@link RedisClusterNode} by its node id.
      *
      * @param nodeId the nodeId.
-     * @return the {@link RedisClusterNode} or {@literal null} if not found.
+     * @return the {@link RedisClusterNode} or {@code null} if not found.
      */
     public RedisClusterNode getPartitionByNodeId(String nodeId) {
 
@@ -112,7 +113,7 @@ public class Partitions implements Collection<RedisClusterNode> {
      *
      * @param host hostname.
      * @param port port number.
-     * @return the {@link RedisClusterNode} or {@literal null} if not found.
+     * @return the {@link RedisClusterNode} or {@code null} if not found.
      */
     public RedisClusterNode getPartition(String host, int port) {
 
@@ -240,9 +241,9 @@ public class Partitions implements Collection<RedisClusterNode> {
     }
 
     /**
-     * Returns {@literal true} if this {@link Partitions} contains no elements using the read-view.
+     * Returns {@code true} if this {@link Partitions} contains no elements using the read-view.
      *
-     * @return {@literal true} if this {@link Partitions} contains no elements using the read-view.
+     * @return {@code true} if this {@link Partitions} contains no elements using the read-view.
      */
     @Override
     public boolean isEmpty() {
@@ -250,10 +251,10 @@ public class Partitions implements Collection<RedisClusterNode> {
     }
 
     /**
-     * Returns {@literal true} if this {@link Partitions} contains the specified element.
+     * Returns {@code true} if this {@link Partitions} contains the specified element.
      *
      * @param o the element to check for
-     * @return {@literal true} if this {@link Partitions} contains the specified element
+     * @return {@code true} if this {@link Partitions} contains the specified element
      */
     @Override
     public boolean contains(Object o) {
@@ -263,8 +264,8 @@ public class Partitions implements Collection<RedisClusterNode> {
     /**
      * Add all {@link RedisClusterNode nodes} from the given collection and update the read-view/caches.
      *
-     * @param c must not be {@literal null}
-     * @return {@literal true} if this {@link Partitions} changed as a result of the call
+     * @param c must not be {@code null}
+     * @return {@code true} if this {@link Partitions} changed as a result of the call
      */
     @Override
     public boolean addAll(Collection<? extends RedisClusterNode> c) {
@@ -282,8 +283,8 @@ public class Partitions implements Collection<RedisClusterNode> {
      * Remove all {@link RedisClusterNode nodes} from the {@link Partitions} using elements from the given collection and update
      * the read-view/caches.
      *
-     * @param c must not be {@literal null}
-     * @return {@literal true} if this {@link Partitions} changed as a result of the call
+     * @param c must not be {@code null}
+     * @return {@code true} if this {@link Partitions} changed as a result of the call
      */
     @Override
     public boolean removeAll(Collection<?> c) {
@@ -300,8 +301,8 @@ public class Partitions implements Collection<RedisClusterNode> {
      * operation)and update the read-view/caches. In other words, removes from this collection all of its elements that are not
      * contained in the specified collection.
      *
-     * @param c must not be {@literal null}
-     * @return {@literal true} if this {@link Partitions} changed as a result of the call
+     * @param c must not be {@code null}
+     * @return {@code true} if this {@link Partitions} changed as a result of the call
      */
     @Override
     public boolean retainAll(Collection<?> c) {
@@ -351,8 +352,8 @@ public class Partitions implements Collection<RedisClusterNode> {
     /**
      * Adds the {@link RedisClusterNode} to this {@link Partitions}.
      *
-     * @param redisClusterNode must not be {@literal null}
-     * @return {@literal true} if this {@link Partitions} changed as a result of the call
+     * @param redisClusterNode must not be {@code null}
+     * @return {@code true} if this {@link Partitions} changed as a result of the call
      */
     @Override
     public boolean add(RedisClusterNode redisClusterNode) {
@@ -369,8 +370,8 @@ public class Partitions implements Collection<RedisClusterNode> {
     /**
      * Remove the element from this {@link Partitions}.
      *
-     * @param o must not be {@literal null}
-     * @return {@literal true} if this {@link Partitions} changed as a result of the call
+     * @param o must not be {@code null}
+     * @return {@code true} if this {@link Partitions} changed as a result of the call
      */
     @Override
     public boolean remove(Object o) {
@@ -383,9 +384,9 @@ public class Partitions implements Collection<RedisClusterNode> {
     }
 
     /**
-     * Returns {@literal true} if this collection contains all of the elements in the specified collection.
+     * Returns {@code true} if this collection contains all of the elements in the specified collection.
      *
-     * @param c collection to be checked for containment in this collection, must not be {@literal null}
+     * @param c collection to be checked for containment in this collection, must not be {@code null}
      * @return
      */
     @Override
@@ -400,4 +401,5 @@ public class Partitions implements Collection<RedisClusterNode> {
         sb.append(" ").append(partitions);
         return sb.toString();
     }
+
 }

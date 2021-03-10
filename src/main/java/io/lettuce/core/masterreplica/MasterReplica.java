@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,10 +61,10 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@link TopologyProvider}:
  *
  * <ul>
- * <li>{@link MasterReplicaTopologyProvider}: Dynamic topology lookup using the {@code INFO REPLICATION} output. Replicas are
- * listed as {@code replicaN=...} entries. The initial connection can either point to a master or a replica and the topology
- * provider will discover nodes. The connection needs to be re-established outside of lettuce in a case of Master/Replica
- * failover or topology changes.</li>
+ * <li>{@link ReplicaTopologyProvider}: Dynamic topology lookup using the {@code INFO REPLICATION} output. Replicas are listed
+ * as {@code replicaN=...} entries. The initial connection can either point to a master or a replica and the topology provider
+ * will discover nodes. The connection needs to be re-established outside of lettuce in a case of Master/Replica failover or
+ * topology changes.</li>
  * <li>{@link StaticMasterReplicaTopologyProvider}: Topology is defined by the list of {@link RedisURI URIs} and the
  * {@code ROLE} output. MasterReplica uses only the supplied nodes and won't discover additional nodes in the setup. The
  * connection needs to be re-established outside of lettuce in a case of Master/Replica failover or topology changes.</li>
@@ -102,8 +102,8 @@ public class MasterReplica {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURI the Redis server to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURI the Redis server to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection.
@@ -122,8 +122,8 @@ public class MasterReplica {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURI the Redis server to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURI the Redis server to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return {@link CompletableFuture} that is notified once the connect is finished.
@@ -163,8 +163,8 @@ public class MasterReplica {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection.
@@ -190,8 +190,8 @@ public class MasterReplica {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return {@link CompletableFuture} that is notified once the connect is finished.
@@ -282,4 +282,5 @@ public class MasterReplica {
             return CompletableFuture.completedFuture(v);
         }).toCompletableFuture();
     }
+
 }

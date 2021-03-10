@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import io.lettuce.core.internal.LettuceAssert;
 class CodecAwareMethodParametersAccessor implements MethodParametersAccessor {
 
     private final MethodParametersAccessor delegate;
+
     private final TypeContext typeContext;
 
     public CodecAwareMethodParametersAccessor(MethodParametersAccessor delegate, RedisCodec<?, ?> redisCodec) {
@@ -124,6 +125,7 @@ class CodecAwareMethodParametersAccessor implements MethodParametersAccessor {
     public static class TypeContext {
 
         final TypeInformation<?> keyType;
+
         final TypeInformation<?> valueType;
 
         @SuppressWarnings("rawtypes")
@@ -136,5 +138,7 @@ class CodecAwareMethodParametersAccessor implements MethodParametersAccessor {
             this.keyType = typeInformation.getTypeArgument(RedisCodec.class, 0);
             this.valueType = typeInformation.getTypeArgument(RedisCodec.class, 1);
         }
+
     }
+
 }

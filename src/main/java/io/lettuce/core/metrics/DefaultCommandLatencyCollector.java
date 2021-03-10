@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
@@ -52,10 +54,13 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             .newUpdater(DefaultCommandLatencyCollector.class, PauseDetectorWrapper.class, "pauseDetectorWrapper");
 
     private static final boolean LATENCY_UTILS_AVAILABLE = isPresent("org.LatencyUtils.PauseDetector");
+
     private static final boolean HDR_UTILS_AVAILABLE = isPresent("org.HdrHistogram.Histogram");
+
     private static final PauseDetectorWrapper GLOBAL_PAUSE_DETECTOR = PauseDetectorWrapper.create();
 
     private static final long MIN_LATENCY = 1000;
+
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
 
     private final CommandLatencyCollectorOptions options;
@@ -212,7 +217,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     }
 
     /**
-     * Returns {@literal true} if HdrUtils and LatencyUtils are available on the class path.
+     * Returns {@code true} if HdrUtils and LatencyUtils are available on the class path.
      *
      * @return
      */
@@ -232,6 +237,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     public static CommandLatencyCollector disabled() {
 
         return new CommandLatencyCollector() {
+
             @Override
             public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
                     long firstResponseLatency, long completionLatency) {
@@ -250,12 +256,14 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             public boolean isEnabled() {
                 return false;
             }
+
         };
     }
 
     private static class Latencies {
 
         private final LatencyStats firstResponse;
+
         private final LatencyStats completion;
 
         Latencies(PauseDetector pauseDetector) {
@@ -275,11 +283,13 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             firstResponse.stop();
             completion.stop();
         }
+
     }
 
     private static class CummulativeLatencies extends Latencies {
 
         private final Histogram firstResponse;
+
         private final Histogram completion;
 
         CummulativeLatencies(PauseDetector pauseDetector) {
@@ -302,6 +312,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             completion.add(super.getFirstResponseHistogram());
             return completion;
         }
+
     }
 
     /**
@@ -313,6 +324,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          * No-operation {@link PauseDetectorWrapper} implementation.
          */
         PauseDetectorWrapper NO_OP = new PauseDetectorWrapper() {
+
             @Override
             public void release() {
             }
@@ -320,6 +332,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             @Override
             public void retain() {
             }
+
         };
 
         static PauseDetectorWrapper create() {
@@ -340,6 +353,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          * Release reference to {@link PauseDetectorWrapper} and decrement reference counter.
          */
         void release();
+
     }
 
     /**
@@ -350,9 +364,11 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         private static final AtomicLong instanceCounter = new AtomicLong();
 
         private final AtomicLong counter = new AtomicLong();
-        private final Object mutex = new Object();
+
+        private final Lock lock = new ReentrantLock();
 
         private volatile PauseDetector pauseDetector;
+
         private volatile Thread shutdownHook;
 
         /**
@@ -373,7 +389,8 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             if (counter.incrementAndGet() == 1) {
 
                 // Avoid concurrent calls to retain/release
-                synchronized (mutex) {
+                lock.lock();
+                try {
 
                     if (instanceCounter.getAndIncrement() > 0) {
                         InternalLogger instance = InternalLoggerFactory.getInstance(getClass());
@@ -384,14 +401,18 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                             TimeUnit.MILLISECONDS.toNanos(10), 3);
 
                     shutdownHook = new Thread("ShutdownHook for SimplePauseDetector") {
+
                         @Override
                         public void run() {
                             pauseDetector.shutdown();
                         }
+
                     };
 
                     this.pauseDetector = pauseDetector;
                     Runtime.getRuntime().addShutdownHook(shutdownHook);
+                } finally {
+                    lock.unlock();
                 }
             }
         }
@@ -404,7 +425,8 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             if (counter.decrementAndGet() == 0) {
 
                 // Avoid concurrent calls to retain/release
-                synchronized (mutex) {
+                lock.lock();
+                try {
 
                     instanceCounter.decrementAndGet();
 
@@ -419,8 +441,12 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                     }
 
                     shutdownHook = null;
+                } finally {
+                    lock.unlock();
                 }
             }
         }
+
     }
+
 }

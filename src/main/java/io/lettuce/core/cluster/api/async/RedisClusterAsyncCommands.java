@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package io.lettuce.core.cluster.api.async;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisFuture;
@@ -32,7 +31,7 @@ import io.lettuce.core.api.async.*;
  * @author Mark Paluch
  * @since 4.0
  */
-public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>,
+public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K,V>, RedisGeoAsyncCommands<K, V>,
         RedisHashAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
         RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V> {
@@ -83,7 +82,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
     RedisFuture<String> clusterMeet(String ip, int port);
 
     /**
-     * Blacklist and remove the cluster node from the cluster.
+     * Disallow connections and remove the cluster node from the cluster.
      *
      * @param nodeId the node Id
      * @return String simple-string-reply
@@ -91,7 +90,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
     RedisFuture<String> clusterForget(String nodeId);
 
     /**
-     * Adds slots to the cluster node. The current node will become the master for the specified slots.
+     * Adds slots to the cluster node. The current node will become the upstream for the specified slots.
      *
      * @param slots one or more slots from {@literal 0} to {@literal 16384}
      * @return String simple-string-reply
@@ -257,7 +256,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
     /**
      * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
      *
-     * @param force do not coordinate with master if {@literal true}
+     * @param force do not coordinate with master if {@code true}
      * @return String simple-string-reply
      */
     RedisFuture<String> clusterFailover(boolean force);
@@ -274,7 +273,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      * <li>If the node was a replica, the whole data set is flushed away</li>
      * </ul>
      *
-     * @param hard {@literal true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
+     * @param hard {@code true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
      * @return String simple-string-reply
      */
     RedisFuture<String> clusterReset(boolean hard);
@@ -287,8 +286,8 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
     RedisFuture<String> clusterFlushslots();
 
     /**
-     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running write
-     * queries.
+     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running
+     * write queries.
      *
      * @return String simple-string-reply
      */
@@ -337,4 +336,5 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
     RedisFuture<Boolean> msetnx(Map<K, V> map);
+
 }

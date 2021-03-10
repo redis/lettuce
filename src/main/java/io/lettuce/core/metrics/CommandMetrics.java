@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,11 @@ import java.util.concurrent.TimeUnit;
 public class CommandMetrics {
 
     private final long count;
+
     private final TimeUnit timeUnit;
 
     private final CommandLatency firstResponse;
+
     private final CommandLatency completion;
 
     public CommandMetrics(long count, TimeUnit timeUnit, CommandLatency firstResponse, CommandLatency completion) {
@@ -82,8 +84,11 @@ public class CommandMetrics {
     }
 
     public static class CommandLatency {
+
         private final long min;
+
         private final long max;
+
         private final Map<Double, Long> percentiles;
 
         public CommandLatency(long min, long max, Map<Double, Long> percentiles) {
@@ -125,5 +130,7 @@ public class CommandMetrics {
             sb.append(']');
             return sb.toString();
         }
+
     }
+
 }

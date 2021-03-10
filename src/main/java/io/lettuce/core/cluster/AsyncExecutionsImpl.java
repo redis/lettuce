@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,7 +226,8 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     }
 
     @Override
-    public <U> CompletionStage<U> applyToEitherAsync(CompletionStage<? extends List<T>> other, Function<? super List<T>, U> fn) {
+    public <U> CompletionStage<U> applyToEitherAsync(CompletionStage<? extends List<T>> other,
+            Function<? super List<T>, U> fn) {
         return publicStage().applyToEitherAsync(other, fn);
     }
 
@@ -278,7 +279,8 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     }
 
     @Override
-    public <U> CompletionStage<U> thenComposeAsync(Function<? super List<T>, ? extends CompletionStage<U>> fn, Executor executor) {
+    public <U> CompletionStage<U> thenComposeAsync(Function<? super List<T>, ? extends CompletionStage<U>> fn,
+            Executor executor) {
         return publicStage().thenComposeAsync(fn, executor);
     }
 
@@ -298,7 +300,8 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     }
 
     @Override
-    public CompletionStage<List<T>> whenCompleteAsync(BiConsumer<? super List<T>, ? super Throwable> action, Executor executor) {
+    public CompletionStage<List<T>> whenCompleteAsync(BiConsumer<? super List<T>, ? super Throwable> action,
+            Executor executor) {
         return publicStage().whenCompleteAsync(action, executor);
     }
 
@@ -321,4 +324,5 @@ class AsyncExecutionsImpl<T> implements AsyncExecutions<T> {
     public CompletableFuture<List<T>> toCompletableFuture() {
         return publicStage().toCompletableFuture();
     }
+
 }

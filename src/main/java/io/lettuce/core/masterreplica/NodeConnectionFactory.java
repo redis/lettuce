@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,11 +33,12 @@ interface NodeConnectionFactory {
     /**
      * Connects to a {@link SocketAddress} with the given {@link RedisCodec} asynchronously.
      *
-     * @param codec must not be {@literal null}.
-     * @param redisURI must not be {@literal null}.
+     * @param codec must not be {@code null}.
+     * @param redisURI must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link StatefulRedisConnection}
      */
     <K, V> CompletableFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec, RedisURI redisURI);
+
 }

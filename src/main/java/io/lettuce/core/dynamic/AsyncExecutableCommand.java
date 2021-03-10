@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@ package io.lettuce.core.dynamic;
 
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
-import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.dynamic.domain.Timeout;
 import io.lettuce.core.dynamic.parameter.ExecutionSpecificParameters;
@@ -36,7 +34,9 @@ import io.lettuce.core.protocol.RedisCommand;
 class AsyncExecutableCommand implements ExecutableCommand {
 
     private final CommandMethod commandMethod;
+
     private final CommandFactory commandFactory;
+
     private final StatefulConnection<Object, Object> connection;
 
     AsyncExecutableCommand(CommandMethod commandMethod, CommandFactory commandFactory,
@@ -96,4 +96,5 @@ class AsyncExecutableCommand implements ExecutableCommand {
     public CommandMethod getCommandMethod() {
         return commandMethod;
     }
+
 }

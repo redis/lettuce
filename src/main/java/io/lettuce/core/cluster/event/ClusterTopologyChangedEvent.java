@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,14 @@ import io.lettuce.core.event.Event;
 public class ClusterTopologyChangedEvent implements Event {
 
     private final List<RedisClusterNode> before;
+
     private final List<RedisClusterNode> after;
 
     /**
      * Creates a new {@link ClusterTopologyChangedEvent}.
      *
-     * @param before the cluster topology view before the topology changed, must not be {@literal null}
-     * @param after the cluster topology view after the topology changed, must not be {@literal null}
+     * @param before the cluster topology view before the topology changed, must not be {@code null}
+     * @param after the cluster topology view after the topology changed, must not be {@code null}
      */
     public ClusterTopologyChangedEvent(List<RedisClusterNode> before, List<RedisClusterNode> after) {
         this.before = Collections.unmodifiableList(before);
@@ -70,4 +71,5 @@ public class ClusterTopologyChangedEvent implements Event {
         sb.append(']');
         return sb.toString();
     }
+
 }

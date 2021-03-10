@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,15 +51,22 @@ import io.lettuce.core.protocol.RedisCommand;
 class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler {
 
     private final StatefulConnection<K, V> connection;
+
     private final TimeoutProvider timeoutProvider;
+
     private final Class<?> asyncCommandsInterface;
+
     private final Class<?> nodeSelectionInterface;
+
     private final Class<?> nodeSelectionCommandsInterface;
+
     private final Object asyncApi;
 
     private final Map<Method, Method> apiMethodCache = new ConcurrentHashMap<>(RedisClusterCommands.class.getMethods().length,
             1);
+
     private final Map<Method, Method> connectionMethodCache = new ConcurrentHashMap<>(5, 1);
+
     private final Map<Method, MethodHandle> methodHandleCache = new ConcurrentHashMap<>(5, 1);
 
     ClusterFutureSyncInvocationHandler(StatefulConnection<K, V> connection, Class<?> asyncCommandsInterface,
@@ -204,4 +211,5 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
             throw new IllegalArgumentException(e);
         }
     }
+
 }

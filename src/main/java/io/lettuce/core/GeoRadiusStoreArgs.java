@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,11 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class GeoRadiusStoreArgs<K> implements CompositeArgument {
 
     private K storeKey;
+
     private K storeDistKey;
+
     private Long count;
+
     private Sort sort = Sort.none;
 
     /**
@@ -49,7 +52,7 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
         /**
          * Creates new {@link GeoRadiusStoreArgs} with {@literal STORE} enabled.
          *
-         * @param key must not be {@literal null}.
+         * @param key must not be {@code null}.
          * @return new {@link GeoRadiusStoreArgs} with {@literal STORE} enabled.
          * @see GeoRadiusStoreArgs#withStore(Object)
          */
@@ -60,7 +63,7 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
         /**
          * Creates new {@link GeoRadiusStoreArgs} with {@literal STOREDIST} enabled.
          *
-         * @param key must not be {@literal null}.
+         * @param key must not be {@code null}.
          * @return new {@link GeoRadiusStoreArgs} with {@literal STOREDIST} enabled.
          * @see GeoRadiusStoreArgs#withStoreDist(Object)
          */
@@ -78,6 +81,7 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
         public static <K> GeoRadiusStoreArgs count(long count) {
             return new GeoRadiusStoreArgs<>().withCount(count);
         }
+
     }
 
     /**
@@ -159,7 +163,7 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
     /**
      * Sort results.
      *
-     * @param sort sort order, must not be {@literal null}
+     * @param sort sort order, must not be {@code null}
      * @return {@code this} {@link GeoRadiusStoreArgs}.
      */
     public GeoRadiusStoreArgs sort(Sort sort) {
@@ -188,4 +192,5 @@ public class GeoRadiusStoreArgs<K> implements CompositeArgument {
             args.add("STOREDIST").addKey((K) storeDistKey);
         }
     }
+
 }

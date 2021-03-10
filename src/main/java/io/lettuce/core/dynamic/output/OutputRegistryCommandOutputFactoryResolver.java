@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ import io.lettuce.core.output.CommandOutput;
  * @since 5.0
  * @see OutputRegistry
  */
-public class OutputRegistryCommandOutputFactoryResolver extends CommandOutputResolverSupport implements
-        CommandOutputFactoryResolver {
+public class OutputRegistryCommandOutputFactoryResolver extends CommandOutputResolverSupport
+        implements CommandOutputFactoryResolver {
 
     @SuppressWarnings("rawtypes")
     private static final ClassTypeInformation<CommandOutput> COMMAND_OUTPUT = ClassTypeInformation.from(CommandOutput.class);
@@ -45,7 +45,7 @@ public class OutputRegistryCommandOutputFactoryResolver extends CommandOutputRes
     /**
      * Create a new {@link OutputRegistryCommandOutputFactoryResolver} given {@link OutputRegistry}.
      *
-     * @param outputRegistry must not be {@literal null}.
+     * @param outputRegistry must not be {@code null}.
      */
     public OutputRegistryCommandOutputFactoryResolver(OutputRegistry outputRegistry) {
 
@@ -101,4 +101,5 @@ public class OutputRegistryCommandOutputFactoryResolver extends CommandOutputRes
             return isAssignableFrom(outputSelector, outputType);
         }).collect(Collectors.toList());
     }
+
 }

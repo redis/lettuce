@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.output;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 
@@ -41,7 +40,7 @@ class ScoredValueListOutputUnitTests {
 
     @Test
     void setIntegerShouldFail() {
-        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(IllegalStateException. class);
+        assertThatThrownBy(() -> sut.set(123L)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -52,6 +51,6 @@ class ScoredValueListOutputUnitTests {
         sut.set(ByteBuffer.wrap("4.567".getBytes()));
         sut.multi(-1);
 
-        assertThat(sut.get()).contains(ScoredValue.fromNullable(4.567, "key"));
+        assertThat(sut.get()).contains(ScoredValue.just(4.567, "key"));
     }
 }

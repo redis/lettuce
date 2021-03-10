@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
-
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.command.CommandDetail;
 import io.lettuce.core.models.command.CommandDetailParser;
 
@@ -66,7 +65,7 @@ public class RedisConditions {
     /**
      * Create {@link RedisCommands} given {@link StatefulRedisConnection}.
      *
-     * @param connection must not be {@literal null}.
+     * @param connection must not be {@code null}.
      * @return
      */
     public static RedisConditions of(StatefulRedisConnection<String, String> connection) {
@@ -76,7 +75,7 @@ public class RedisConditions {
     /**
      * Create {@link RedisCommands} given {@link StatefulRedisClusterConnection}.
      *
-     * @param connection must not be {@literal null}.
+     * @param connection must not be {@code null}.
      * @return
      */
     public static RedisConditions of(StatefulRedisClusterConnection<String, String> connection) {
@@ -86,7 +85,7 @@ public class RedisConditions {
     /**
      * Create {@link RedisConditions} given {@link RedisCommands}.
      *
-     * @param commands must not be {@literal null}.
+     * @param commands must not be {@code null}.
      * @return
      */
     public static RedisConditions of(RedisClusterCommands<String, String> commands) {
@@ -102,7 +101,7 @@ public class RedisConditions {
 
     /**
      * @param command
-     * @return {@literal true} if the command is present.
+     * @return {@code true} if the command is present.
      */
     public boolean hasCommand(String command) {
         return commands.containsKey(command.toUpperCase());
@@ -111,7 +110,7 @@ public class RedisConditions {
     /**
      * @param command command name.
      * @param arity expected arity.
-     * @return {@literal true} if the command is present with the given arity.
+     * @return {@code true} if the command is present with the given arity.
      */
     public boolean hasCommandArity(String command, int arity) {
 
@@ -124,7 +123,7 @@ public class RedisConditions {
 
     /**
      * @param versionNumber
-     * @return {@literal true} if the version number is met.
+     * @return {@code true} if the version number is met.
      */
     public boolean hasVersionGreaterOrEqualsTo(String versionNumber) {
         return version.isGreaterThanOrEqualTo(Version.parse(versionNumber));
@@ -145,33 +144,34 @@ public class RedisConditions {
         /**
          * Creates a new {@link Version} from the given integer values. At least one value has to be given but a maximum of 4.
          *
-         * @param parts must not be {@literal null} or empty.
+         * @param parts must not be {@code null} or empty.
          */
         Version(int... parts) {
 
-            Assert.notNull(parts, "Parts must not be null!");
-            Assert.isTrue(parts.length > 0 && parts.length < 5, String.format("Invalid parts length. 0 < %s < 5", parts.length));
+            LettuceAssert.notNull(parts, "Parts must not be null!");
+            LettuceAssert.isTrue(parts.length > 0 && parts.length < 5,
+                    String.format("Invalid parts length. 0 < %s < 5", parts.length));
 
             this.major = parts[0];
             this.minor = parts.length > 1 ? parts[1] : 0;
             this.bugfix = parts.length > 2 ? parts[2] : 0;
             this.build = parts.length > 3 ? parts[3] : 0;
 
-            Assert.isTrue(major >= 0, "Major version must be greater or equal zero!");
-            Assert.isTrue(minor >= 0, "Minor version must be greater or equal zero!");
-            Assert.isTrue(bugfix >= 0, "Bugfix version must be greater or equal zero!");
-            Assert.isTrue(build >= 0, "Build version must be greater or equal zero!");
+            LettuceAssert.isTrue(major >= 0, "Major version must be greater or equal zero!");
+            LettuceAssert.isTrue(minor >= 0, "Minor version must be greater or equal zero!");
+            LettuceAssert.isTrue(bugfix >= 0, "Bugfix version must be greater or equal zero!");
+            LettuceAssert.isTrue(build >= 0, "Build version must be greater or equal zero!");
         }
 
         /**
          * Parses the given string representation of a version into a {@link Version} object.
          *
-         * @param version must not be {@literal null} or empty.
+         * @param version must not be {@code null} or empty.
          * @return
          */
         public static Version parse(String version) {
 
-            Assert.hasText(version, "Version must not be null o empty!");
+            LettuceAssert.notEmpty(version, "Version must not be null o empty!");
 
             String[] parts = version.trim().split("\\.");
             int[] intParts = new int[parts.length];
@@ -180,7 +180,7 @@ public class RedisConditions {
 
                 String input = i == parts.length - 1 ? parts[i].replaceAll("\\D.*", "") : parts[i];
 
-                if (StringUtils.hasText(input)) {
+                if (LettuceStrings.isNotEmpty(input)) {
                     try {
                         intParts[i] = Integer.parseInt(input);
                     } catch (IllegalArgumentException o_O) {
@@ -330,7 +330,7 @@ public class RedisConditions {
                 digits.add(build);
             }
 
-            return StringUtils.collectionToDelimitedString(digits, ".");
+            return digits.stream().map(Object::toString).collect(Collectors.joining("."));
         }
     }
 }

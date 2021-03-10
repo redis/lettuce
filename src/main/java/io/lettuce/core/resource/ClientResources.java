@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.tracing.Tracing;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
@@ -35,18 +37,21 @@ import io.netty.util.concurrent.Future;
  *
  * {@link ClientResources} provides in particular:
  * <ul>
+ * <li>{@link AddressResolverGroup} for DNS resolution.</li>
+ * <li>{@link CommandLatencyRecorder} to collect latency details. Enabled using
+ * {@link io.lettuce.core.metrics.DefaultCommandLatencyCollector} when {@literal HdrHistogram} is on the classpath.</li>
+ * <li>{@link EventBus} for client event dispatching</li>
  * <li>{@link EventLoopGroupProvider} to obtain particular {@link io.netty.channel.EventLoopGroup EventLoopGroups}</li>
  * <li>{@link EventExecutorGroup} to perform internal computation tasks</li>
- * <li>{@link Timer} for scheduling</li>
- * <li>{@link EventBus} for client event dispatching</li>
- * <li>{@link EventPublisherOptions}</li>
- * <li>{@link CommandLatencyCollector} to collect latency details. Requires the {@literal HdrHistogram} library.</li>
- * <li>{@link DnsResolver} to collect latency details. Requires the {@literal LatencyUtils} library.</li>
  * <li>Reconnect {@link Delay}.</li>
+ * <li>{@link SocketAddressResolver} for to map/resolve DNS addresses to a {@link java.net.InetSocketAddress}.</li>
+ * <li>{@link Timer} for scheduling</li>
  * <li>{@link Tracing} to trace Redis commands.</li>
  * </ul>
  *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
+ * @author Yohei Ueki
  * @since 3.4
  * @see DefaultClientResources
  */
@@ -78,27 +83,57 @@ public interface ClientResources {
     interface Builder {
 
         /**
+         * Sets the {@link AddressResolverGroup} for DNS resolution. This option is only effective if
+         * {@link DnsResolvers#UNRESOLVED} is used as {@link DnsResolver}. Defaults to
+         * {@link io.netty.resolver.DefaultAddressResolverGroup#INSTANCE} if {@literal netty-dns-resolver} is not available,
+         * otherwise defaults to {@link io.netty.resolver.dns.DnsAddressResolverGroup}.
+         *
+         * @param addressResolverGroup the {@link AddressResolverGroup} instance, must not be {@code null}.
+         * @return {@code this} {@link Builder}
+         * @since 6.1
+         */
+        Builder addressResolverGroup(AddressResolverGroup<?> addressResolverGroup);
+
+        /**
          * Sets the {@link CommandLatencyCollector} that can that can be used across different instances of the RedisClient.
          *
-         * @param commandLatencyCollector the command latency collector, must not be {@literal null}.
+         * @param commandLatencyCollector the command latency collector, must not be {@code null}.
          * @return {@code this} {@link Builder}.
+         * @deprecated since 6.0, use {@link #commandLatencyRecorder(CommandLatencyRecorder)} instead.
          */
-        Builder commandLatencyCollector(CommandLatencyCollector commandLatencyCollector);
+        @Deprecated
+        default Builder commandLatencyCollector(CommandLatencyCollector commandLatencyCollector) {
+            return commandLatencyRecorder(commandLatencyCollector);
+        }
+
+        /**
+         * Sets the {@link CommandLatencyRecorder} that can that can be used across different instances of the RedisClient.
+         *
+         * @param latencyRecorder the command latency recorder, must not be {@code null}.
+         * @return {@code this} {@link Builder}.
+         * @since 6.0
+         */
+        Builder commandLatencyRecorder(CommandLatencyRecorder latencyRecorder);
 
         /**
          * Sets the {@link CommandLatencyCollectorOptions} that can that can be used across different instances of the
          * RedisClient. The options are only effective if no {@code commandLatencyCollector} is provided.
          *
-         * @param commandLatencyCollectorOptions the command latency collector options, must not be {@literal null}.
+         * @param commandLatencyCollectorOptions the command latency collector options, must not be {@code null}.
          * @return {@code this} {@link Builder}.
+         * @deprecated since 6.0. Configure {@link io.lettuce.core.metrics.CommandLatencyRecorder} directly using
+         *             {@link CommandLatencyCollectorOptions}.
          */
+        @Deprecated
         Builder commandLatencyCollectorOptions(CommandLatencyCollectorOptions commandLatencyCollectorOptions);
 
         /**
-         * Sets the {@link EventPublisherOptions} to publish command latency metrics using the {@link EventBus}.
+         * Sets the {@link EventPublisherOptions} to publish command latency metrics using the {@link EventBus} if the
+         * {@link CommandLatencyRecorder} is an instance of {@link CommandLatencyCollector} that allows latency metric
+         * retrieval.
          *
          * @param commandLatencyPublisherOptions the {@link EventPublisherOptions} to publish command latency metrics using the
-         *        {@link EventBus}, must not be {@literal null}.
+         *        {@link EventBus}, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder commandLatencyPublisherOptions(EventPublisherOptions commandLatencyPublisherOptions);
@@ -113,29 +148,21 @@ public interface ClientResources {
         Builder computationThreadPoolSize(int computationThreadPoolSize);
 
         /**
-         * Sets the {@link SocketAddressResolver} that is used to resolve {@link io.lettuce.core.RedisURI} to
-         * {@link java.net.SocketAddress}. Defaults to {@link SocketAddressResolver} using the configured {@link DnsResolver}.
-         *
-         * @param socketAddressResolver the socket address resolver, must not be {@literal null}.
-         * @return {@code this} {@link Builder}.
-         * @since 5.1
-         */
-        Builder socketAddressResolver(SocketAddressResolver socketAddressResolver);
-
-        /**
          * Sets the {@link DnsResolver} that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
-         * {@link DnsResolvers#JVM_DEFAULT}
+         * {@link DnsResolvers#UNRESOLVED} to use netty's {@link AddressResolverGroup}.
          *
-         * @param dnsResolver the DNS resolver, must not be {@literal null}.
+         * @param dnsResolver the DNS resolver, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          * @since 4.3
+         * @deprecated since 6.1. Configure {@link AddressResolverGroup} instead.
          */
+        @Deprecated
         Builder dnsResolver(DnsResolver dnsResolver);
 
         /**
          * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
          *
-         * @param eventBus the event bus, must not be {@literal null}.
+         * @param eventBus the event bus, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder eventBus(EventBus eventBus);
@@ -146,7 +173,7 @@ public interface ClientResources {
          * {@link EventExecutorGroup} instance will not be shut down when shutting down the client resources. You have to take
          * care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
-         * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@literal null}.
+         * @param eventExecutorGroup the shared eventExecutorGroup, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder eventExecutorGroup(EventExecutorGroup eventExecutorGroup);
@@ -157,7 +184,7 @@ public interface ClientResources {
          * {@link EventLoopGroupProvider} instance will not be shut down when shutting down the client resources. You have to
          * take care of that. This is an advanced configuration that should only be used if you know what you are doing.
          *
-         * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@literal null}.
+         * @param eventLoopGroupProvider the shared eventLoopGroupProvider, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          */
         Builder eventLoopGroupProvider(EventLoopGroupProvider eventLoopGroupProvider);
@@ -174,7 +201,7 @@ public interface ClientResources {
         /**
          * Sets the {@link NettyCustomizer} instance to customize netty components during connection.
          *
-         * @param nettyCustomizer the netty customizer instance, must not be {@literal null}.
+         * @param nettyCustomizer the netty customizer instance, must not be {@code null}.
          * @return this
          * @since 4.4
          */
@@ -184,7 +211,7 @@ public interface ClientResources {
          * Sets the stateless reconnect {@link Delay} to delay reconnect attempts. Defaults to binary exponential delay capped
          * at {@literal 30 SECONDS}. {@code reconnectDelay} must be a stateless {@link Delay}.
          *
-         * @param reconnectDelay the reconnect delay, must not be {@literal null}.
+         * @param reconnectDelay the reconnect delay, must not be {@code null}.
          * @return this
          * @since 4.3
          */
@@ -194,11 +221,21 @@ public interface ClientResources {
          * Sets the stateful reconnect {@link Supplier} to delay reconnect attempts. Defaults to binary exponential delay capped
          * at {@literal 30 SECONDS}.
          *
-         * @param reconnectDelay the reconnect delay, must not be {@literal null}.
+         * @param reconnectDelay the reconnect delay, must not be {@code null}.
          * @return this
          * @since 4.3
          */
         Builder reconnectDelay(Supplier<Delay> reconnectDelay);
+
+        /**
+         * Sets the {@link SocketAddressResolver} that is used to resolve {@link io.lettuce.core.RedisURI} to
+         * {@link java.net.SocketAddress}. Defaults to {@link SocketAddressResolver} using the configured {@link DnsResolver}.
+         *
+         * @param socketAddressResolver the socket address resolver, must not be {@code null}.
+         * @return {@code this} {@link Builder}.
+         * @since 5.1
+         */
+        Builder socketAddressResolver(SocketAddressResolver socketAddressResolver);
 
         /**
          * Sets a shared {@link Timer} that can be used across different instances of {@link io.lettuce.core.RedisClient} and
@@ -206,7 +243,7 @@ public interface ClientResources {
          * shutting down the client resources. You have to take care of that. This is an advanced configuration that should only
          * be used if you know what you are doing.
          *
-         * @param timer the shared {@link Timer}, must not be {@literal null}.
+         * @param timer the shared {@link Timer}, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          * @since 4.3
          */
@@ -215,7 +252,7 @@ public interface ClientResources {
         /**
          * Sets the {@link Tracing} instance to trace Redis calls.
          *
-         * @param tracing the tracer infrastructure instance, must not be {@literal null}.
+         * @param tracing the tracer infrastructure instance, must not be {@code null}.
          * @return this
          * @since 5.1
          */
@@ -225,10 +262,11 @@ public interface ClientResources {
          * @return a new instance of {@link DefaultClientResources}.
          */
         ClientResources build();
+
     }
 
     /**
-     * Returns a builder to create new {@link ClientResources} whose settings are replicated from the current
+     * Return a builder to create new {@link ClientResources} whose settings are replicated from the current
      * {@link ClientResources}.
      *
      * @return a {@link ClientResources.Builder} to create new {@link ClientResources} whose settings are replicated from the
@@ -257,20 +295,65 @@ public interface ClientResources {
     Future<Boolean> shutdown(long quietPeriod, long timeout, TimeUnit timeUnit);
 
     /**
-     * Returns the {@link EventLoopGroupProvider} that provides access to the particular {@link io.netty.channel.EventLoopGroup
+     * Return the {@link AddressResolverGroup} instance for DNS resolution.
+     *
+     * @return the address resolver group.
+     * @since 6.1
+     */
+    AddressResolverGroup<?> addressResolverGroup();
+
+    /**
+     * Return the {@link EventPublisherOptions} for latency event publishing.
+     *
+     * @return the {@link EventPublisherOptions} for latency event publishing.
+     */
+    EventPublisherOptions commandLatencyPublisherOptions();
+
+    /**
+     * Return the {@link CommandLatencyRecorder}.
+     *
+     * @return the command latency recorder.
+     * @since 6.0
+     */
+    CommandLatencyRecorder commandLatencyRecorder();
+
+    /**
+     * Return the pool size (number of threads) for all computation tasks.
+     *
+     * @return the pool size (number of threads to use).
+     */
+    int computationThreadPoolSize();
+
+    /**
+     * Return the {@link DnsResolver}.
+     *
+     * @return the DNS resolver.
+     * @since 4.3
+     */
+    DnsResolver dnsResolver();
+
+    /**
+     * Return the event bus used to publish events.
+     *
+     * @return the event bus
+     */
+    EventBus eventBus();
+
+    /**
+     * Return the {@link EventLoopGroupProvider} that provides access to the particular {@link io.netty.channel.EventLoopGroup
      * event loop groups}. lettuce requires at least two implementations: {@link io.netty.channel.nio.NioEventLoopGroup} for
      * TCP/IP connections and {@link io.netty.channel.epoll.EpollEventLoopGroup} for unix domain socket connections (epoll).
      *
      * You can use {@link DefaultEventLoopGroupProvider} as default implementation or implement an own
      * {@link EventLoopGroupProvider} to share existing {@link io.netty.channel.EventLoopGroup EventLoopGroup's} with lettuce.
      *
-     * @return the {@link EventLoopGroupProvider} which provides access to the particular
-     *         {@link io.netty.channel.EventLoopGroup event loop groups}
+     * @return the {@link EventLoopGroupProvider} which provides access to the particular {@link io.netty.channel.EventLoopGroup
+     *         event loop groups}
      */
     EventLoopGroupProvider eventLoopGroupProvider();
 
     /**
-     * Returns the computation pool used for internal operations. Such tasks are periodic Redis Cluster and Redis Sentinel
+     * Return the computation pool used for internal operations. Such tasks are periodic Redis Cluster and Redis Sentinel
      * topology updates and scheduling of connection reconnection by {@link io.lettuce.core.protocol.ConnectionWatchdog}.
      *
      * @return the computation pool used for internal operations
@@ -278,7 +361,7 @@ public interface ClientResources {
     EventExecutorGroup eventExecutorGroup();
 
     /**
-     * Returns the pool size (number of threads) for IO threads. The indicated size does not reflect the number for all IO
+     * Return the pool size (number of threads) for IO threads. The indicated size does not reflect the number for all IO
      * threads. TCP and socket connections (epoll) require different IO pool.
      *
      * @return the pool size (number of threads) for all IO tasks.
@@ -286,14 +369,31 @@ public interface ClientResources {
     int ioThreadPoolSize();
 
     /**
-     * Returns the pool size (number of threads) for all computation tasks.
+     * Return the {@link NettyCustomizer} to customize netty components.
      *
-     * @return the pool size (number of threads to use).
+     * @return the configured {@link NettyCustomizer}.
+     * @since 4.4
      */
-    int computationThreadPoolSize();
+    NettyCustomizer nettyCustomizer();
 
     /**
-     * Returns the {@link Timer} to schedule events. A timer object may run single- or multi-threaded but must be used for
+     * Return the {@link Delay} for reconnect attempts. May return a different instance on each call.
+     *
+     * @return the reconnect {@link Delay}.
+     * @since 4.3
+     */
+    Delay reconnectDelay();
+
+    /**
+     * Return the {@link SocketAddressResolver}.
+     *
+     * @return the socket address resolver.
+     * @since 5.1
+     */
+    SocketAddressResolver socketAddressResolver();
+
+    /**
+     * Return the {@link Timer} to schedule events. A timer object may run single- or multi-threaded but must be used for
      * scheduling of short-running jobs only. Long-running jobs should be scheduled and executed using
      * {@link #eventExecutorGroup()}.
      *
@@ -303,60 +403,7 @@ public interface ClientResources {
     Timer timer();
 
     /**
-     * Returns the event bus used to publish events.
-     *
-     * @return the event bus
-     */
-    EventBus eventBus();
-
-    /**
-     * Returns the {@link EventPublisherOptions} for latency event publishing.
-     *
-     * @return the {@link EventPublisherOptions} for latency event publishing.
-     */
-    EventPublisherOptions commandLatencyPublisherOptions();
-
-    /**
-     * Returns the {@link CommandLatencyCollector}.
-     *
-     * @return the command latency collector
-     */
-    CommandLatencyCollector commandLatencyCollector();
-
-    /**
-     * Returns the {@link DnsResolver}.
-     *
-     * @return the DNS resolver.
-     * @since 4.3
-     */
-    DnsResolver dnsResolver();
-
-    /**
-     * Returns the {@link SocketAddressResolver}.
-     *
-     * @return the socket address resolver.
-     * @since 5.1
-     */
-    SocketAddressResolver socketAddressResolver();
-
-    /**
-     * Returns the {@link Delay} for reconnect attempts. May return a different instance on each call.
-     *
-     * @return the reconnect {@link Delay}.
-     * @since 4.3
-     */
-    Delay reconnectDelay();
-
-    /**
-     * Returns the {@link NettyCustomizer} to customize netty components.
-     *
-     * @return the configured {@link NettyCustomizer}.
-     * @since 4.4
-     */
-    NettyCustomizer nettyCustomizer();
-
-    /**
-     * Returns the {@link Tracing} instance to support tracing of Redis commands.
+     * Return the {@link Tracing} instance to support tracing of Redis commands.
      *
      * @return the configured {@link Tracing}.
      * @since 5.1

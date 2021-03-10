@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,27 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 abstract class ConnectionEventSupport implements ConnectionEvent {
 
+    private final String redisUri;
+
+    private final String epId;
+
+    private final String channelId;
+
     private final SocketAddress local;
+
     private final SocketAddress remote;
 
     ConnectionEventSupport(SocketAddress local, SocketAddress remote) {
+        this(null, null, null, local, remote);
+    }
+
+    ConnectionEventSupport(String redisUri, String epId, String channelId, SocketAddress local, SocketAddress remote) {
         LettuceAssert.notNull(local, "Local must not be null");
         LettuceAssert.notNull(remote, "Remote must not be null");
 
+        this.redisUri = redisUri;
+        this.epId = epId;
+        this.channelId = channelId;
         this.local = local;
         this.remote = remote;
     }
@@ -52,6 +66,27 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
      */
     public SocketAddress remoteAddress() {
         return remote;
+    }
+
+    /**
+     * @return the underlying Redis URI.
+     */
+    String getRedisUri() {
+        return redisUri;
+    }
+
+    /**
+     * @return endpoint identifier.
+     */
+    String getEpId() {
+        return epId;
+    }
+
+    /**
+     * @return channel identifier.
+     */
+    String getChannelId() {
+        return channelId;
     }
 
     @Override

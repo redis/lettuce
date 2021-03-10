@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,14 @@ import io.lettuce.core.internal.LettuceFactories;
  * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Julien Ruaux
  */
 public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
 
     private final Deque<List<Object>> stack;
+
     private int depth;
+
     private boolean initialized;
 
     public NestedMultiOutput(RedisCodec<K, V> codec) {
@@ -53,6 +56,16 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         }
 
         output.add(integer);
+    }
+
+    @Override
+    public void set(double number) {
+
+        if (!initialized) {
+            output = new ArrayList<>();
+        }
+
+        output.add(number);
     }
 
     @Override
@@ -97,4 +110,5 @@ public class NestedMultiOutput<K, V> extends CommandOutput<K, V, List<Object>> {
         output = a;
         this.depth++;
     }
+
 }

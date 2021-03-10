@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 class EqualJitterDelay extends ExponentialDelay {
 
     private final long base;
+
     private final TimeUnit targetTimeUnit;
 
     EqualJitterDelay(Duration lower, Duration upper, long base, TimeUnit targetTimeUnit) {
@@ -49,4 +50,5 @@ class EqualJitterDelay extends ExponentialDelay {
         long value = randomBetween(0, base * calculatePowerOfTwo(attempt));
         return applyBounds(Duration.ofNanos(targetTimeUnit.toNanos(value)));
     }
+
 }

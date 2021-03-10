@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -42,6 +43,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
  *
  * @author Mark Paluch
  * @author Amin Mohtashami
+ * @author Felipe Ruiz
  */
 public class SslConnectionBuilder extends ConnectionBuilder {
 
@@ -66,7 +68,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
     @Override
     public ChannelInitializer<Channel> build(SocketAddress socketAddress) {
-        return new SslChannelInitializer(this::buildHandlers, toHostAndPort(socketAddress), redisURI.isVerifyPeer(),
+        return new SslChannelInitializer(this::buildHandlers, toHostAndPort(socketAddress), redisURI.getVerifyMode(),
                 redisURI.isStartTls(), clientResources(), clientOptions().getSslOptions());
     }
 
@@ -85,13 +87,18 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     static class SslChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
 
         private final Supplier<List<ChannelHandler>> handlers;
+
         private final HostAndPort hostAndPort;
-        private final boolean verifyPeer;
+
+        private final SslVerifyMode verifyPeer;
+
         private final boolean startTls;
+
         private final ClientResources clientResources;
+
         private final SslOptions sslOptions;
 
-        public SslChannelInitializer(Supplier<List<ChannelHandler>> handlers, HostAndPort hostAndPort, boolean verifyPeer,
+        public SslChannelInitializer(Supplier<List<ChannelHandler>> handlers, HostAndPort hostAndPort, SslVerifyMode verifyPeer,
                 boolean startTls, ClientResources clientResources, SslOptions sslOptions) {
 
             this.handlers = handlers;
@@ -107,6 +114,9 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             SSLEngine sslEngine = initializeSSLEngine(channel.alloc());
             SslHandler sslHandler = new SslHandler(sslEngine, startTls);
+            Duration sslHandshakeTimeout = sslOptions.getHandshakeTimeout();
+            sslHandler.setHandshakeTimeoutMillis(sslHandshakeTimeout.toMillis());
+
             channel.pipeline().addLast(sslHandler);
 
             for (ChannelHandler handler : handlers.get()) {
@@ -121,9 +131,11 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             SSLParameters sslParams = sslOptions.createSSLParameters();
             SslContextBuilder sslContextBuilder = sslOptions.createSslContextBuilder();
 
-            if (verifyPeer) {
+            if (verifyPeer == SslVerifyMode.FULL) {
                 sslParams.setEndpointIdentificationAlgorithm("HTTPS");
-            } else {
+            } else if (verifyPeer == SslVerifyMode.CA) {
+                sslParams.setEndpointIdentificationAlgorithm("");
+            } else if (verifyPeer == SslVerifyMode.NONE) {
                 sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
             }
 
@@ -136,5 +148,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
             return sslEngine;
         }
+
     }
+
 }

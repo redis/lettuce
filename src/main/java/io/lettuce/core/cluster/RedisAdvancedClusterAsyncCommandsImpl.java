@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,17 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterScanSupport.asyncClusterKeyScanCursorMapper;
-import static io.lettuce.core.cluster.ClusterScanSupport.asyncClusterStreamScanCursorMapper;
-import static io.lettuce.core.cluster.NodeSelectionInvocationHandler.ExecutionModel.ASYNC;
-import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
+import static io.lettuce.core.cluster.ClusterScanSupport.*;
+import static io.lettuce.core.cluster.NodeSelectionInvocationHandler.ExecutionModel.*;
+import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.*;
 
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadLocalRandom;
@@ -29,13 +33,22 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisAsyncCommands;
+import io.lettuce.core.GeoArgs;
+import io.lettuce.core.GeoWithin;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.async.RedisKeyAsyncCommands;
 import io.lettuce.core.api.async.RedisScriptingAsyncCommands;
 import io.lettuce.core.api.async.RedisServerAsyncCommands;
-import io.lettuce.core.cluster.ClusterScanSupport.ScanCursorMapper;
+import io.lettuce.core.cluster.ClusterScanSupport.*;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.AsyncNodeSelection;
@@ -58,6 +71,7 @@ import io.lettuce.core.protocol.CommandType;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Jon Chambers
  * @since 3.3
  */
 @SuppressWarnings("unchecked")
@@ -153,7 +167,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Long> dbsize() {
-        return MultiNodeExecution.aggregateAsync(executeOnMasters(RedisServerAsyncCommands::dbsize));
+        return MultiNodeExecution.aggregateAsync(executeOnUpstream(RedisServerAsyncCommands::dbsize));
     }
 
     @Override
@@ -205,60 +219,45 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<String> flushall() {
-        return MultiNodeExecution.firstOfAsync(executeOnMasters(RedisServerAsyncCommands::flushall));
+        return MultiNodeExecution.firstOfAsync(executeOnUpstream(RedisServerAsyncCommands::flushall));
+    }
+
+    @Override
+    public RedisFuture<String> flushallAsync() {
+        return MultiNodeExecution.firstOfAsync(executeOnUpstream(RedisServerAsyncCommands::flushallAsync));
     }
 
     @Override
     public RedisFuture<String> flushdb() {
-        return MultiNodeExecution.firstOfAsync(executeOnMasters(RedisServerAsyncCommands::flushdb));
+        return MultiNodeExecution.firstOfAsync(executeOnUpstream(RedisServerAsyncCommands::flushdb));
     }
 
     @Override
     public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-
-        if (hasRedisState() && getRedisState().hasCommand(CommandType.GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit);
+        return super.georadius_ro(key, longitude, latitude, distance, unit);
     }
 
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
             GeoArgs.Unit unit, GeoArgs geoArgs) {
-
-        if (hasRedisState() && getRedisState().hasCommand(CommandType.GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
+        return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
     }
 
     @Override
     public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-
-        if (hasRedisState() && getRedisState().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit);
+        return super.georadiusbymember_ro(key, member, distance, unit);
     }
 
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
-
-        if (hasRedisState() && getRedisState().hasCommand(CommandType.GEORADIUSBYMEMBER_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit, geoArgs);
+        return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
     }
 
     @Override
     public RedisFuture<List<K>> keys(K pattern) {
 
-        Map<String, CompletableFuture<List<K>>> executions = executeOnMasters(commands -> commands.keys(pattern));
+        Map<String, CompletableFuture<List<K>>> executions = executeOnUpstream(commands -> commands.keys(pattern));
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             List<K> result = new ArrayList<>();
@@ -272,7 +271,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
 
-        Map<String, CompletableFuture<Long>> executions = executeOnMasters(commands -> commands.keys(channel, pattern));
+        Map<String, CompletableFuture<Long>> executions = executeOnUpstream(commands -> commands.keys(channel, pattern));
         return MultiNodeExecution.aggregateAsync(executions);
     }
 
@@ -415,7 +414,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<String> scriptKill() {
 
-        Map<String, CompletableFuture<String>> executions = executeOnNodes(RedisScriptingAsyncCommands::scriptFlush,
+        Map<String, CompletableFuture<String>> executions = executeOnNodes(RedisScriptingAsyncCommands::scriptKill,
                 redisClusterNode -> true);
         return MultiNodeExecution.alwaysOkOfAsync(executions);
     }
@@ -608,9 +607,9 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * @param <T> result type
      * @return map of a key (counter) and commands.
      */
-    protected <T> Map<String, CompletableFuture<T>> executeOnMasters(
+    protected <T> Map<String, CompletableFuture<T>> executeOnUpstream(
             Function<RedisClusterAsyncCommands<K, V>, RedisFuture<T>> function) {
-        return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(MASTER));
+        return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(UPSTREAM));
     }
 
     /**
@@ -649,14 +648,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return null;
     }
 
-    private CommandSet getRedisState() {
-        return ((StatefulRedisClusterConnectionImpl<K, V>) super.getConnection()).getCommandSet();
-    }
-
-    private boolean hasRedisState() {
-        return super.getConnection() instanceof StatefulRedisClusterConnectionImpl;
-    }
-
     private AsyncClusterConnectionProvider getConnectionProvider() {
 
         ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) getStatefulConnection().getChannelWriter();
@@ -678,4 +669,5 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
+
 }

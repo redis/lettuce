@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,14 +61,15 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
     /**
      * Add a new {@link RedisPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     void addListener(RedisPubSubListener<K, V> listener);
 
     /**
-     * Remove an existing {@link RedisPubSubListener listener}..
+     * Remove an existing {@link RedisPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     void removeListener(RedisPubSubListener<K, V> listener);
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import io.lettuce.core.cluster.api.NodeSelectionSupport;
  *
  * @author Mark Paluch
  */
-public interface NodeSelectionCommands<K, V> extends BaseNodeSelectionCommands<K, V>, NodeSelectionGeoCommands<K, V>,
-        NodeSelectionHashCommands<K, V>, NodeSelectionHLLCommands<K, V>, NodeSelectionKeyCommands<K, V>,
-        NodeSelectionListCommands<K, V>, NodeSelectionScriptingCommands<K, V>, NodeSelectionServerCommands<K, V>,
-        NodeSelectionSetCommands<K, V>, NodeSelectionSortedSetCommands<K, V>, NodeSelectionStreamCommands<K, V>,
-        NodeSelectionStringCommands<K, V> {
+public interface NodeSelectionCommands<K, V>
+        extends BaseNodeSelectionCommands<K, V>, NodeSelectionGeoCommands<K, V>, NodeSelectionHashCommands<K, V>,
+        NodeSelectionHLLCommands<K, V>, NodeSelectionKeyCommands<K, V>, NodeSelectionListCommands<K, V>,
+        NodeSelectionScriptingCommands<K, V>, NodeSelectionServerCommands<K, V>, NodeSelectionSetCommands<K, V>,
+        NodeSelectionSortedSetCommands<K, V>, NodeSelectionStreamCommands<K, V>, NodeSelectionStringCommands<K, V> {
 }

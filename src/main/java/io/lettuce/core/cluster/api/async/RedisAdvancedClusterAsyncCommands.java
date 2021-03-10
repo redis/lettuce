@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.async.RedisKeyAsyncCommands;
 import io.lettuce.core.api.async.RedisScriptingAsyncCommands;
 import io.lettuce.core.api.async.RedisServerAsyncCommands;
@@ -34,6 +39,7 @@ import io.lettuce.core.output.KeyStreamingChannel;
  * Advanced asynchronous and thread-safe Redis Cluster API.
  *
  * @author Mark Paluch
+ * @author Jon Chambers
  * @since 4.0
  */
 public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsyncCommands<K, V> {
@@ -67,12 +73,23 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     StatefulRedisClusterConnection<K, V> getStatefulConnection();
 
     /**
-     * Select all masters.
+     * Select all upstream nodes.
      *
-     * @return API with asynchronous executed commands on a selection of master cluster nodes.
+     * @return API with asynchronous executed commands on a selection of upstream cluster nodes.
+     * @deprecated since 6.0 in favor of {@link #upstream()}.
      */
     default AsyncNodeSelection<K, V> masters() {
-        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER));
+        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
+    }
+
+    /**
+     * Select all upstream nodes.
+     *
+     * @return API with asynchronous executed commands on a selection of upstream cluster nodes.
+     * @since 6.0
+     */
+    default AsyncNodeSelection<K, V> upstream() {
+        return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
     }
 
     /**
@@ -95,8 +112,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      */
     @Deprecated
     default AsyncNodeSelection<K, V> slaves(Predicate<RedisClusterNode> predicate) {
-        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
+        return readonly(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -117,8 +134,8 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @since 5.2
      */
     default AsyncNodeSelection<K, V> replicas(Predicate<RedisClusterNode> predicate) {
-        return readonly(redisClusterNode -> predicate.test(redisClusterNode)
-                && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
+        return readonly(
+                redisClusterNode -> predicate.test(redisClusterNode) && redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA));
     }
 
     /**
@@ -227,7 +244,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<String> clientSetname(K name);
 
     /**
-     * Remove all keys from all databases on all cluster masters with pipelining.
+     * Remove all keys from all databases on all cluster upstream nodes with pipelining.
      *
      * @return String simple-string-reply
      * @see RedisServerAsyncCommands#flushall()
@@ -235,7 +252,16 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<String> flushall();
 
     /**
-     * Remove all keys from the current database on all cluster masters with pipelining.
+     * Remove all keys asynchronously from all databases on all cluster upstream nodes with pipelining.
+     *
+     * @return String simple-string-reply
+     * @see RedisServerAsyncCommands#flushallAsync()
+     * @since 6.0
+     */
+    RedisFuture<String> flushallAsync();
+
+    /**
+     * Remove all keys from the current database on all cluster upstream nodes with pipelining.
      *
      * @return String simple-string-reply
      * @see RedisServerAsyncCommands#flushdb()
@@ -243,7 +269,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<String> flushdb();
 
     /**
-     * Return the number of keys in the selected database on all cluster masters.
+     * Return the number of keys in the selected database on all cluster upstream nodes.
      *
      * @return Long integer-reply
      * @see RedisServerAsyncCommands#dbsize()
@@ -251,7 +277,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<Long> dbsize();
 
     /**
-     * Find all keys matching the given pattern on all cluster masters.
+     * Find all keys matching the given pattern on all cluster upstream nodes.
      *
      * @param pattern the pattern type: patternkey (pattern)
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
@@ -260,7 +286,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<List<K>> keys(K pattern);
 
     /**
-     * Find all keys matching the given pattern on all cluster masters.
+     * Find all keys matching the given pattern on all cluster upstream nodes.
      *
      * @param channel the channel
      * @param pattern the pattern
@@ -272,7 +298,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Return a random key from the keyspace on a random master.
      *
-     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@code null} when the database is empty.
      * @see RedisKeyAsyncCommands#randomkey()
      */
     RedisFuture<K> randomkey();
@@ -314,7 +340,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Synchronously save the dataset to disk and then shut down all nodes of the cluster.
      *
-     * @param save {@literal true} force save operation
+     * @param save {@code true} force save operation
      * @see RedisServerAsyncCommands#shutdown(boolean)
      */
     void shutdown(boolean save);
@@ -407,4 +433,5 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return Long integer-reply the number of found keys.
      */
     RedisFuture<Long> touch(K... keys);
+
 }

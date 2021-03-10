@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package io.lettuce.core.support;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.lang.reflect.Proxy;
 import java.util.Set;
@@ -28,7 +28,7 @@ import org.apache.commons.pool2.impl.SoftReferenceObjectPool;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
+import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -44,8 +44,8 @@ import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.masterslave.MasterSlave;
-import io.lettuce.core.masterslave.StatefulRedisMasterSlaveConnection;
+import io.lettuce.core.masterreplica.MasterReplica;
+import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
@@ -206,14 +206,14 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void wrappedMasterSlaveConnectionShouldUseWrappers() throws Exception {
 
-        GenericObjectPool<StatefulRedisMasterSlaveConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> MasterSlave.connect(client, new StringCodec(), RedisURI.create(host, port)),
+        GenericObjectPool<StatefulRedisMasterReplicaConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> MasterReplica.connect(client, new StringCodec(), RedisURI.create(host, port)),
                         new GenericObjectPoolConfig<>());
 
-        StatefulRedisMasterSlaveConnection<String, String> connection = pool.borrowObject();
+        StatefulRedisMasterReplicaConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
 
-        assertThat(connection).isInstanceOf(StatefulRedisMasterSlaveConnection.class);
+        assertThat(connection).isInstanceOf(StatefulRedisMasterReplicaConnection.class);
         assertThat(Proxy.isProxyClass(connection.getClass())).isTrue();
 
         assertThat(sync).isInstanceOf(RedisCommands.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterScanSupport.reactiveClusterKeyScanCursorMapper;
-import static io.lettuce.core.cluster.ClusterScanSupport.reactiveClusterStreamScanCursorMapper;
-import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.MASTER;
-import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
-import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
+import static io.lettuce.core.cluster.ClusterScanSupport.*;
+import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
@@ -33,7 +34,16 @@ import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisReactiveCommands;
+import io.lettuce.core.GeoArgs;
+import io.lettuce.core.GeoWithin;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
@@ -55,6 +65,7 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Jon Chambers
  * @since 4.0
  */
 public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
@@ -140,7 +151,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Mono<Long> dbsize() {
 
-        Map<String, Publisher<Long>> publishers = executeOnMasters(RedisServerReactiveCommands::dbsize);
+        Map<String, Publisher<Long>> publishers = executeOnUpstream(RedisServerReactiveCommands::dbsize);
         return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
     }
 
@@ -194,69 +205,56 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Mono<String> flushall() {
 
-        Map<String, Publisher<String>> publishers = executeOnMasters(RedisServerReactiveCommands::flushall);
+        Map<String, Publisher<String>> publishers = executeOnUpstream(RedisServerReactiveCommands::flushall);
+        return Flux.merge(publishers.values()).last();
+    }
+
+    @Override
+    public Mono<String> flushallAsync() {
+
+        Map<String, Publisher<String>> publishers = executeOnUpstream(RedisServerReactiveCommands::flushallAsync);
         return Flux.merge(publishers.values()).last();
     }
 
     @Override
     public Mono<String> flushdb() {
 
-        Map<String, Publisher<String>> publishers = executeOnMasters(RedisServerReactiveCommands::flushdb);
+        Map<String, Publisher<String>> publishers = executeOnUpstream(RedisServerReactiveCommands::flushdb);
         return Flux.merge(publishers.values()).last();
     }
 
     @Override
     public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-
-        if (hasRedisState() && getRedisState().hasCommand(GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit);
+        return super.georadius_ro(key, longitude, latitude, distance, unit);
     }
 
     @Override
     public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
-
-        if (hasRedisState() && getRedisState().hasCommand(GEORADIUS_RO)) {
-            return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
-        }
-
-        return super.georadius(key, longitude, latitude, distance, unit, geoArgs);
+        return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
     }
 
     @Override
     public Flux<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-
-        if (hasRedisState() && getRedisState().hasCommand(GEORADIUSBYMEMBER_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit);
+        return super.georadiusbymember_ro(key, member, distance, unit);
     }
 
     @Override
     public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
-
-        if (hasRedisState() && getRedisState().hasCommand(GEORADIUSBYMEMBER_RO)) {
-            return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
-        }
-
-        return super.georadiusbymember(key, member, distance, unit, geoArgs);
+        return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
     }
 
     @Override
     public Flux<K> keys(K pattern) {
 
-        Map<String, Publisher<K>> publishers = executeOnMasters(commands -> commands.keys(pattern));
+        Map<String, Publisher<K>> publishers = executeOnUpstream(commands -> commands.keys(pattern));
         return Flux.merge(publishers.values());
     }
 
     @Override
     public Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
 
-        Map<String, Publisher<Long>> publishers = executeOnMasters(commands -> commands.keys(channel, pattern));
+        Map<String, Publisher<Long>> publishers = executeOnUpstream(commands -> commands.keys(channel, pattern));
         return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
     }
 
@@ -364,7 +362,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<String> scriptKill() {
-        Map<String, Publisher<String>> publishers = executeOnNodes(RedisScriptingReactiveCommands::scriptFlush, ALL_NODES);
+        Map<String, Publisher<String>> publishers = executeOnNodes(RedisScriptingReactiveCommands::scriptKill, ALL_NODES);
         return Flux.merge(publishers.values()).onErrorReturn("OK").last();
     }
 
@@ -531,9 +529,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param <T> result type
      * @return map of a key (counter) and commands.
      */
-    protected <T> Map<String, Publisher<T>> executeOnMasters(
+    protected <T> Map<String, Publisher<T>> executeOnUpstream(
             Function<RedisClusterReactiveCommands<K, V>, ? extends Publisher<T>> function) {
-        return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(MASTER));
+        return executeOnNodes(function, redisClusterNode -> redisClusterNode.is(UPSTREAM));
     }
 
     /**
@@ -573,14 +571,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return Mono.error(new RedisException("No partition for slot " + slot));
     }
 
-    private CommandSet getRedisState() {
-        return ((StatefulRedisClusterConnectionImpl<K, V>) super.getConnection()).getCommandSet();
-    }
-
-    private boolean hasRedisState() {
-        return super.getConnection() instanceof StatefulRedisClusterConnectionImpl;
-    }
-
     private AsyncClusterConnectionProvider getConnectionProvider() {
 
         ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) getStatefulConnection().getChannelWriter();
@@ -608,4 +598,5 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {
         return Mono.fromCompletionStage(future);
     }
+
 }

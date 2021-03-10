@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,10 +96,11 @@ public class RedisConnectionException extends RedisException {
 
     /**
      * @param error the error message.
-     * @return {@literal true} if the {@code error} message indicates Redis protected mode.
+     * @return {@code true} if the {@code error} message indicates Redis protected mode.
      * @since 5.0.1
      */
     public static boolean isProtectedMode(String error) {
         return error != null && error.startsWith("DENIED");
     }
+
 }

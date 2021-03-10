@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ConnectionFacade;
@@ -90,6 +91,14 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
 
     @Override
     public void flushCommands() {
+    }
+
+    @Override
+    public void addListener(PushListener listener) {
+    }
+
+    @Override
+    public void removeListener(PushListener listener) {
     }
 
     @Override

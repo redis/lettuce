@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,22 @@ package io.lettuce.core;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * A tuple consisting of numerical geo data points to describe geo coordinates.
+ * A tuple consisting of numerical geo data points to describe geo coordinates (longitude/latitude coordinates according to
+ * WGS84).
  *
  * @author Mark Paluch
  */
 public class GeoCoordinates {
 
     private final Number x;
+
     private final Number y;
 
     /**
      * Creates new {@link GeoCoordinates}.
      *
-     * @param x the longitude, must not be {@literal null}.
-     * @param y the latitude, must not be {@literal null}.
+     * @param x the longitude, must not be {@code null}.
+     * @param y the latitude, must not be {@code null}.
      */
     public GeoCoordinates(Number x, Number y) {
 
@@ -45,8 +47,8 @@ public class GeoCoordinates {
     /**
      * Creates new {@link GeoCoordinates}.
      *
-     * @param x the longitude, must not be {@literal null}.
-     * @param y the latitude, must not be {@literal null}.
+     * @param x the longitude, must not be {@code null}.
+     * @param y the latitude, must not be {@code null}.
      * @return {@link GeoCoordinates}.
      */
     public static GeoCoordinates create(Number x, Number y) {
@@ -94,4 +96,5 @@ public class GeoCoordinates {
     public String toString() {
         return String.format("(%s, %s)", getX(), getY());
     }
+
 }

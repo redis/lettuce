@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ class ReactiveBackpressurePropagationUnitTests {
     @BeforeEach
     void before() {
 
-        when(clientResources.commandLatencyCollector()).thenReturn(latencyCollector);
+        when(clientResources.commandLatencyRecorder()).thenReturn(latencyCollector);
         when(clientResources.tracing()).thenReturn(Tracing.disabled());
         when(statefulConnection.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 

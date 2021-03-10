@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,18 +30,25 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  */
-public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>> implements StreamingOutput<GeoWithin<V>> {
+public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithin<V>>>
+        implements StreamingOutput<GeoWithin<V>> {
 
     private V member;
+
     private Double distance;
+
     private Long geohash;
+
     private GeoCoordinates coordinates;
 
     private Double x;
 
     private boolean withDistance;
+
     private boolean withHash;
+
     private boolean withCoordinates;
+
     private Subscriber<GeoWithin<V>> subscriber;
 
     public GeoWithinListOutput(RedisCodec<K, V> codec, boolean withDistance, boolean withHash, boolean withCoordinates) {
@@ -121,4 +128,5 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     public Subscriber<GeoWithin<V>> getSubscriber() {
         return subscriber;
     }
+
 }

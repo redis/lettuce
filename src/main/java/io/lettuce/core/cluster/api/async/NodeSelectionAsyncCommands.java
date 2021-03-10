@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import io.lettuce.core.cluster.api.sync.NodeSelectionStreamCommands;
  *
  * @author Mark Paluch
  */
-public interface NodeSelectionAsyncCommands<K, V> extends BaseNodeSelectionAsyncCommands<K, V>,
-        NodeSelectionGeoAsyncCommands<K, V>, NodeSelectionHashAsyncCommands<K, V>, NodeSelectionHLLAsyncCommands<K, V>,
-        NodeSelectionKeyAsyncCommands<K, V>, NodeSelectionListAsyncCommands<K, V>, NodeSelectionScriptingAsyncCommands<K, V>,
-        NodeSelectionServerAsyncCommands<K, V>, NodeSelectionSetAsyncCommands<K, V>, NodeSelectionSortedSetAsyncCommands<K, V>,
-        NodeSelectionStreamCommands<K, V>, NodeSelectionStringAsyncCommands<K, V> {
+public interface NodeSelectionAsyncCommands<K, V>
+        extends BaseNodeSelectionAsyncCommands<K, V>, NodeSelectionGeoAsyncCommands<K, V>, NodeSelectionHashAsyncCommands<K, V>,
+        NodeSelectionHLLAsyncCommands<K, V>, NodeSelectionKeyAsyncCommands<K, V>, NodeSelectionListAsyncCommands<K, V>,
+        NodeSelectionScriptingAsyncCommands<K, V>, NodeSelectionServerAsyncCommands<K, V>, NodeSelectionSetAsyncCommands<K, V>,
+        NodeSelectionSortedSetAsyncCommands<K, V>, NodeSelectionStreamCommands<K, V>, NodeSelectionStringAsyncCommands<K, V> {
 }

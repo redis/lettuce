@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.offset;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.List;
 import java.util.Set;
@@ -64,6 +62,28 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         Long readd = redis.geoadd(key, -73.9454966, 40.747533, "lic market");
         assertThat(readd).isEqualTo(0);
+    }
+
+    @Test
+    void geoaddValue() {
+
+        redis.geoadd(key, GeoValue.just(8.6638775, 49.5282537, "Weinheim"), GeoValue.just(8.665351, 49.553302, "Bahn"));
+
+        Set<String> georadius = redis.georadius(key, 8.6582861, 49.5285695, 1, GeoArgs.Unit.km);
+        assertThat(georadius).hasSize(1).contains("Weinheim");
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void geoaddXXNXCH() {
+
+        Long result = redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", GeoAddArgs.Builder.xx());
+        assertThat(result).isEqualTo(0);
+
+        redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
+        result = redis.geoadd(key, GeoAddArgs.Builder.ch(), 1.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "EFS9",
+                8.665351, 49.553302, "Bahn");
+        assertThat(result).isEqualTo(1);
     }
 
     @Test
@@ -225,6 +245,11 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         assertThat(weinheim.getMember()).isEqualTo("Weinheim");
         assertThat(weinheim.getGeohash()).isEqualTo(3666615932941099L);
+
+        GeoValue<String> value = weinheim.toValue();
+        assertThat(value.getValue()).isEqualTo("Weinheim");
+        assertThat(value.getLongitude()).isEqualTo(8.663875, offset(0.5));
+        assertThat(value.getLatitude()).isEqualTo(49.52825, offset(0.5));
 
         assertThat(weinheim.getDistance()).isEqualTo(2.7882, offset(0.5));
         assertThat(weinheim.getCoordinates().getX().doubleValue()).isEqualTo(8.663875, offset(0.5));
@@ -514,6 +539,58 @@ public class GeoCommandIntegrationTests extends TestSupport {
     void georadiusStorebymemberWithNullArgs() {
         assertThatThrownBy(() -> redis.georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km, (GeoRadiusStoreArgs<String>) null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @EnabledOnCommand("GEOSEARCH")
+    void geosearchWithCountAndSort() {
+
+        prepareGeo();
+
+        Set<String> empty = redis.geosearch(key, GeoSearch.fromMember("Bahn"), GeoSearch.byRadius(1, GeoArgs.Unit.km));
+        assertThat(empty).hasSize(1).contains("Bahn");
+
+        Set<String> radius = redis.geosearch(key, GeoSearch.fromMember("Bahn"), GeoSearch.byRadius(5, GeoArgs.Unit.km));
+        assertThat(radius).hasSize(2).contains("Bahn", "Weinheim");
+
+        Set<String> box = redis.geosearch(key, GeoSearch.fromMember("Bahn"), GeoSearch.byBox(6, 6, GeoArgs.Unit.km));
+        assertThat(box).hasSize(2).contains("Bahn", "Weinheim");
+    }
+
+    @Test
+    @EnabledOnCommand("GEOSEARCH")
+    void geosearchWithArgs() {
+
+        prepareGeo();
+
+        List<GeoWithin<String>> empty = redis.geosearch(key, GeoSearch.fromMember("Bahn"),
+                GeoSearch.byRadius(1, GeoArgs.Unit.km), new GeoArgs().withHash().withCoordinates().withDistance().desc());
+        assertThat(empty).isNotEmpty();
+
+        List<GeoWithin<String>> withDistanceAndCoordinates = redis.geosearch(key, GeoSearch.fromMember("Bahn"),
+                GeoSearch.byRadius(5, GeoArgs.Unit.km), new GeoArgs().withCoordinates().withDistance().desc());
+        assertThat(withDistanceAndCoordinates).hasSize(2);
+
+        GeoWithin<String> weinheim = withDistanceAndCoordinates.get(0);
+        assertThat(weinheim.getMember()).isEqualTo("Weinheim");
+        assertThat(weinheim.getGeohash()).isNull();
+        assertThat(weinheim.getDistance()).isNotNull();
+        assertThat(weinheim.getCoordinates()).isNotNull();
+    }
+
+    @Test
+    @EnabledOnCommand("GEOSEARCHSTORE")
+    void geosearchStoreWithCountAndSort() {
+
+        prepareGeo();
+
+        String resultKey = "38o54"; // yields in same slot as "key"
+        Long result = redis.geosearchstore(resultKey, key, GeoSearch.fromMember("Bahn"), GeoSearch.byRadius(5, GeoArgs.Unit.km),
+                new GeoArgs(), true);
+        assertThat(result).isEqualTo(2);
+
+        List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
+        assertThat(dist).hasSize(2);
     }
 
     protected void prepareGeo() {

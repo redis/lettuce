@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.DecodeBufferPolicies;
+import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 
@@ -32,64 +34,89 @@ import io.lettuce.core.resource.ClientResources;
 @SuppressWarnings("serial")
 public class ClientOptions implements Serializable {
 
-    public static final boolean DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION = true;
-    public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = ProtocolVersion.newestSupported();
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
-    public static final boolean DEFAULT_CANCEL_CMD_RECONNECT_FAIL = false;
-    public static final boolean DEFAULT_PUBLISH_ON_SCHEDULER = false;
-    public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
-    public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
-    public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
-    public static final Charset DEFAULT_SCRIPT_CHARSET = StandardCharsets.UTF_8;
-    public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
-    public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
-    public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
+
     public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
 
-    private final boolean pingBeforeActivateConnection;
-    private final ProtocolVersion protocolVersion;
+    public static final boolean DEFAULT_CANCEL_CMD_RECONNECT_FAIL = false;
+
+    public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
+
+    public static final boolean DEFAULT_PUBLISH_ON_SCHEDULER = false;
+
+    public static final boolean DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION = true;
+
+    public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = ProtocolVersion.newestSupported();
+
+    public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
+
+    public static final Charset DEFAULT_SCRIPT_CHARSET = StandardCharsets.UTF_8;
+
+    public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
+
+    public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
+
+    public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
+
+    public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
+
     private final boolean autoReconnect;
+
     private final boolean cancelCommandsOnReconnectFailure;
-    private final boolean publishOnScheduler;
-    private final boolean suspendReconnectOnProtocolFailure;
-    private final int requestQueueSize;
+
+    private final DecodeBufferPolicy decodeBufferPolicy;
+
     private final DisconnectedBehavior disconnectedBehavior;
+
+    private final boolean publishOnScheduler;
+
+    private final boolean pingBeforeActivateConnection;
+
+    private final ProtocolVersion protocolVersion;
+
+    private final int requestQueueSize;
+
     private final Charset scriptCharset;
+
     private final SocketOptions socketOptions;
+
     private final SslOptions sslOptions;
+
+    private final boolean suspendReconnectOnProtocolFailure;
+
     private final TimeoutOptions timeoutOptions;
-    private final int bufferUsageRatio;
+
 
     protected ClientOptions(Builder builder) {
+        this.autoReconnect = builder.autoReconnect;
+        this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
+        this.decodeBufferPolicy = builder.decodeBufferPolicy;
+        this.disconnectedBehavior = builder.disconnectedBehavior;
+        this.publishOnScheduler = builder.publishOnScheduler;
         this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
         this.protocolVersion = builder.protocolVersion;
-        this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
-        this.publishOnScheduler = builder.publishOnScheduler;
-        this.autoReconnect = builder.autoReconnect;
-        this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         this.requestQueueSize = builder.requestQueueSize;
-        this.disconnectedBehavior = builder.disconnectedBehavior;
         this.scriptCharset = builder.scriptCharset;
         this.socketOptions = builder.socketOptions;
         this.sslOptions = builder.sslOptions;
+        this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         this.timeoutOptions = builder.timeoutOptions;
-        this.bufferUsageRatio = builder.bufferUsageRatio;
     }
 
     protected ClientOptions(ClientOptions original) {
-        this.pingBeforeActivateConnection = original.isPingBeforeActivateConnection();
-        this.protocolVersion = original.getConfiguredProtocolVersion();
         this.autoReconnect = original.isAutoReconnect();
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
-        this.publishOnScheduler = original.isPublishOnScheduler();
-        this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
-        this.requestQueueSize = original.getRequestQueueSize();
+        this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
+        this.publishOnScheduler = original.isPublishOnScheduler();
+        this.pingBeforeActivateConnection = original.isPingBeforeActivateConnection();
+        this.protocolVersion = original.getConfiguredProtocolVersion();
+        this.requestQueueSize = original.getRequestQueueSize();
         this.scriptCharset = original.getScriptCharset();
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
+        this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
         this.timeoutOptions = original.getTimeoutOptions();
-        this.bufferUsageRatio = original.getBufferUsageRatio();
     }
 
     /**
@@ -125,25 +152,108 @@ public class ClientOptions implements Serializable {
      */
     public static class Builder {
 
-        private boolean pingBeforeActivateConnection = DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION;
-        private ProtocolVersion protocolVersion;
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
+
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
-        private boolean publishOnScheduler = DEFAULT_PUBLISH_ON_SCHEDULER;
-        private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
-        private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
+
+        private DecodeBufferPolicy decodeBufferPolicy = DecodeBufferPolicies.ratio(DEFAULT_BUFFER_USAGE_RATIO);
+
         private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
+
+        private boolean pingBeforeActivateConnection = DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION;
+
+        private ProtocolVersion protocolVersion;
+
+        private boolean publishOnScheduler = DEFAULT_PUBLISH_ON_SCHEDULER;
+
+        private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
+
         private Charset scriptCharset = DEFAULT_SCRIPT_CHARSET;
+
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
+
         private SslOptions sslOptions = DEFAULT_SSL_OPTIONS;
+
+        private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
+
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
-        private int bufferUsageRatio = DEFAULT_BUFFER_USAGE_RATIO;
 
         protected Builder() {
         }
 
         /**
-         * Sets the {@literal PING} before activate connection flag. Defaults to {@literal true}. See
+         * Enables or disables auto reconnection on connection loss. Defaults to {@code true}. See
+         * {@link #DEFAULT_AUTO_RECONNECT}.
+         *
+         * @param autoReconnect true/false
+         * @return {@code this}
+         */
+        public Builder autoReconnect(boolean autoReconnect) {
+            this.autoReconnect = autoReconnect;
+            return this;
+        }
+
+        /**
+         * Allows cancelling queued commands in case a reconnect fails.Defaults to {@code false}. See
+         * {@link #DEFAULT_CANCEL_CMD_RECONNECT_FAIL}.
+         *
+         * @param cancelCommandsOnReconnectFailure true/false
+         * @return {@code this}
+         */
+        public Builder cancelCommandsOnReconnectFailure(boolean cancelCommandsOnReconnectFailure) {
+            this.cancelCommandsOnReconnectFailure = cancelCommandsOnReconnectFailure;
+            return this;
+        }
+
+        /**
+         * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are
+         * discarded during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}.
+         * E.g. setting {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75
+         * percent. See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
+         *
+         * @param bufferUsageRatio the buffer usage ratio. Must be between {@code 0} and {@code 2^31-1}, typically a value
+         *        between 1 and 10 representing 50% to 90%.
+         * @return {@code this}
+         * @since 5.2
+         * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
+         */
+        @Deprecated
+        public Builder bufferUsageRatio(int bufferUsageRatio) {
+            this.decodeBufferPolicy = DecodeBufferPolicies.ratio(bufferUsageRatio);
+            return this;
+        }
+
+        /**
+         * Set the policy to discard read bytes from the decoding aggregation buffer to reclaim memory.
+         *
+         * @param policy the policy to use in {@link io.lettuce.core.protocol.CommandHandler}
+         * @return {@code this}
+         * @since 6.0
+         * @see DecodeBufferPolicies
+         */
+        public Builder decodeBufferPolicy(DecodeBufferPolicy policy) {
+
+            LettuceAssert.notNull(policy, "DecodeBufferPolicy must not be null");
+            this.decodeBufferPolicy = policy;
+            return this;
+        }
+
+        /**
+         * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to {@code true}. See
+         * {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
+         *
+         * @param disconnectedBehavior must not be {@code null}.
+         * @return {@code this}
+         */
+        public Builder disconnectedBehavior(DisconnectedBehavior disconnectedBehavior) {
+
+            LettuceAssert.notNull(disconnectedBehavior, "DisconnectedBehavior must not be null");
+            this.disconnectedBehavior = disconnectedBehavior;
+            return this;
+        }
+
+        /**
+         * Sets the {@literal PING} before activate connection flag. Defaults to {@code true}. See
          * {@link #DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION}. This option has no effect unless forcing to use the RESP 2 protocol
          * version.
          *
@@ -170,48 +280,12 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Enables or disables auto reconnection on connection loss. Defaults to {@literal true}. See
-         * {@link #DEFAULT_AUTO_RECONNECT}.
-         *
-         * @param autoReconnect true/false
-         * @return {@code this}
-         */
-        public Builder autoReconnect(boolean autoReconnect) {
-            this.autoReconnect = autoReconnect;
-            return this;
-        }
-
-        /**
-         * Suspends reconnect when reconnects run into protocol failures (SSL verification, PING before connect fails). Defaults
-         * to {@literal false}. See {@link #DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL}.
-         *
-         * @param suspendReconnectOnProtocolFailure true/false
-         * @return {@code this}
-         */
-        public Builder suspendReconnectOnProtocolFailure(boolean suspendReconnectOnProtocolFailure) {
-            this.suspendReconnectOnProtocolFailure = suspendReconnectOnProtocolFailure;
-            return this;
-        }
-
-        /**
-         * Allows cancelling queued commands in case a reconnect fails.Defaults to {@literal false}. See
-         * {@link #DEFAULT_CANCEL_CMD_RECONNECT_FAIL}.
-         *
-         * @param cancelCommandsOnReconnectFailure true/false
-         * @return {@code this}
-         */
-        public Builder cancelCommandsOnReconnectFailure(boolean cancelCommandsOnReconnectFailure) {
-            this.cancelCommandsOnReconnectFailure = cancelCommandsOnReconnectFailure;
-            return this;
-        }
-
-        /**
          * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
          * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
          * <p>
          * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
          * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
-         * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@literal false}
+         * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false}
          * , see {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
          *
          * @param publishOnScheduler true/false
@@ -240,25 +314,12 @@ public class ClientOptions implements Serializable {
             return this;
         }
 
-        /**
-         * Sets the behavior for command invocation when connections are in a disconnected state. Defaults to {@literal true}.
-         * See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
-         *
-         * @param disconnectedBehavior must not be {@literal null}.
-         * @return {@code this}
-         */
-        public Builder disconnectedBehavior(DisconnectedBehavior disconnectedBehavior) {
-
-            LettuceAssert.notNull(disconnectedBehavior, "DisconnectedBehavior must not be null");
-            this.disconnectedBehavior = disconnectedBehavior;
-            return this;
-        }
 
         /**
          * Sets the Lua script {@link Charset} to use to encode {@link String scripts} to {@code byte[]}. Defaults to
          * {@link StandardCharsets#UTF_8}. See {@link #DEFAULT_SCRIPT_CHARSET}.
          *
-         * @param scriptCharset must not be {@literal null}.
+         * @param scriptCharset must not be {@code null}.
          * @return {@code this}
          * @since 6.0
          */
@@ -273,7 +334,7 @@ public class ClientOptions implements Serializable {
          * Sets the low-level {@link SocketOptions} for the connections kept to Redis servers. See
          * {@link #DEFAULT_SOCKET_OPTIONS}.
          *
-         * @param socketOptions must not be {@literal null}.
+         * @param socketOptions must not be {@code null}.
          * @return {@code this}
          */
         public Builder socketOptions(SocketOptions socketOptions) {
@@ -286,7 +347,7 @@ public class ClientOptions implements Serializable {
         /**
          * Sets the {@link SslOptions} for SSL connections kept to Redis servers. See {@link #DEFAULT_SSL_OPTIONS}.
          *
-         * @param sslOptions must not be {@literal null}.
+         * @param sslOptions must not be {@code null}.
          * @return {@code this}
          */
         public Builder sslOptions(SslOptions sslOptions) {
@@ -297,9 +358,21 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Suspends reconnect when reconnects run into protocol failures (SSL verification, PING before connect fails). Defaults
+         * to {@code false}. See {@link #DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL}.
+         *
+         * @param suspendReconnectOnProtocolFailure true/false
+         * @return {@code this}
+         */
+        public Builder suspendReconnectOnProtocolFailure(boolean suspendReconnectOnProtocolFailure) {
+            this.suspendReconnectOnProtocolFailure = suspendReconnectOnProtocolFailure;
+            return this;
+        }
+
+        /**
          * Sets the {@link TimeoutOptions} to expire and cancel commands. See {@link #DEFAULT_TIMEOUT_OPTIONS}.
          *
-         * @param timeoutOptions must not be {@literal null}.
+         * @param timeoutOptions must not be {@code null}.
          * @return {@code this}
          * @since 5.1
          */
@@ -311,26 +384,6 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are
-         * discarded during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}.
-         * E.g. setting {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75
-         * percent. See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
-         *
-         * @param bufferUsageRatio must greater between 0 and 2^31-1, typically a value between 1 and 10 representing 50% to
-         *        90%.
-         * @return {@code this}
-         * @since 5.2
-         */
-        public Builder bufferUsageRatio(int bufferUsageRatio) {
-
-            LettuceAssert.isTrue(bufferUsageRatio > 0 && bufferUsageRatio < Integer.MAX_VALUE,
-                    "BufferUsageRatio must grater than 0");
-
-            this.bufferUsageRatio = bufferUsageRatio;
-            return this;
-        }
-
-        /**
          * Create a new instance of {@link ClientOptions}.
          *
          * @return new instance of {@link ClientOptions}
@@ -338,6 +391,7 @@ public class ClientOptions implements Serializable {
         public ClientOptions build() {
             return new ClientOptions(this);
         }
+
     }
 
     /**
@@ -352,24 +406,94 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).bufferUsageRatio(getBufferUsageRatio())
+        builder.autoReconnect(isAutoReconnect())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .disconnectedBehavior(getDisconnectedBehavior()).scriptCharset(getScriptCharset())
+                .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
                 .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
                 .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
-                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
 
+
     /**
-     * Enables initial {@literal PING} barrier before any connection is usable. If {@literal true} (default is {@literal true}
-     * ), every connection and reconnect will issue a {@literal PING} command and awaits its response before the connection is
+     * Controls auto-reconnect behavior on connections. If auto-reconnect is {@code true} (default), it is enabled. As soon
+     * as a connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any
+     * queued commands.
+     *
+     * This flag has also the effect that disconnected connections will refuse commands and cancel these with an exception.
+     *
+     * @return {@code true} if auto-reconnect is enabled.
+     */
+    public boolean isAutoReconnect() {
+        return autoReconnect;
+    }
+
+    /**
+     * If this flag is {@code true} any queued commands will be canceled when a reconnect fails within the activation
+     * sequence. Default is {@code false}.
+     *
+     * @return {@code true} if commands should be cancelled on reconnect failures.
+     */
+    public boolean isCancelCommandsOnReconnectFailure() {
+        return cancelCommandsOnReconnectFailure;
+    }
+
+    /**
+     * Returns the {@link DecodeBufferPolicy} used to reclaim memory.
+     *
+     * @return the {@link DecodeBufferPolicy}.
+     * @since 6.0
+     */
+    public DecodeBufferPolicy getDecodeBufferPolicy() {
+        return decodeBufferPolicy;
+    }
+
+    /**
+     * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are discarded
+     * during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}. E.g. setting
+     * {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75 percent.
+     *
+     * @return zero.
+     * @since 5.2
+     *
+     * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
+     */
+    @Deprecated
+    public int getBufferUsageRatio() {
+        return 0;
+    }
+
+    /**
+     * Behavior for command invocation when connections are in a disconnected state. Defaults to
+     * {@link DisconnectedBehavior#DEFAULT true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
+     *
+     * @return the behavior for command invocation when connections are in a disconnected state
+     */
+    public DisconnectedBehavior getDisconnectedBehavior() {
+        return disconnectedBehavior;
+    }
+
+    /**
+     * Request queue size for a connection. This value applies per connection. The command invocation will throw a
+     * {@link RedisException} if the queue size is exceeded and a new command is requested. Defaults to
+     * {@link Integer#MAX_VALUE}.
+     *
+     * @return the request queue size.
+     */
+    public int getRequestQueueSize() {
+        return requestQueueSize;
+    }
+
+    /**
+     * Enables initial {@literal PING} barrier before any connection is usable. If {@code true} (default is {@code true} ),
+     * every connection and reconnect will issue a {@literal PING} command and awaits its response before the connection is
      * activated and enabled for use. If the check fails, the connect/reconnect is treated as failure. This option has no effect
      * unless forcing to use the RESP 2 protocol version.
      *
-     * @return {@literal true} if {@literal PING} barrier is enabled.
+     * @return {@code true} if {@literal PING} barrier is enabled.
      */
     public boolean isPingBeforeActivateConnection() {
         return pingBeforeActivateConnection;
@@ -397,73 +521,30 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Controls auto-reconnect behavior on connections. If auto-reconnect is {@literal true} (default), it is enabled. As soon
-     * as a connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any
-     * queued commands.
-     *
-     * This flag has also the effect that disconnected connections will refuse commands and cancel these with an exception.
-     *
-     * @return {@literal true} if auto-reconnect is enabled.
-     */
-    public boolean isAutoReconnect() {
-        return autoReconnect;
-    }
-
-    /**
-     * If this flag is {@literal true} any queued commands will be canceled when a reconnect fails within the activation
-     * sequence. Default is {@literal false}.
-     *
-     * @return {@literal true} if commands should be cancelled on reconnect failures.
-     */
-    public boolean isCancelCommandsOnReconnectFailure() {
-        return cancelCommandsOnReconnectFailure;
-    }
-
-    /**
      * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
      * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
      * <p>
      * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
      * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
-     * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@literal false} ,
+     * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false} ,
      * see {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
      *
-     * @return {@literal true} to use a dedicated {@link reactor.core.scheduler.Scheduler}
+     * @return {@code true} to use a dedicated {@link reactor.core.scheduler.Scheduler}
      * @since 5.2
      */
     public boolean isPublishOnScheduler() {
         return publishOnScheduler;
     }
 
+
     /**
-     * If this flag is {@literal true} the reconnect will be suspended on protocol errors. Protocol errors are errors while SSL
+     * If this flag is {@code true} the reconnect will be suspended on protocol errors. Protocol errors are errors while SSL
      * negotiation or when PING before connect fails.
      *
-     * @return {@literal true} if reconnect will be suspended on protocol errors.
+     * @return {@code true} if reconnect will be suspended on protocol errors.
      */
     public boolean isSuspendReconnectOnProtocolFailure() {
         return suspendReconnectOnProtocolFailure;
-    }
-
-    /**
-     * Request queue size for a connection. This value applies per connection. The command invocation will throw a
-     * {@link RedisException} if the queue size is exceeded and a new command is requested. Defaults to
-     * {@link Integer#MAX_VALUE}.
-     *
-     * @return the request queue size.
-     */
-    public int getRequestQueueSize() {
-        return requestQueueSize;
-    }
-
-    /**
-     * Behavior for command invocation when connections are in a disconnected state. Defaults to
-     * {@link DisconnectedBehavior#DEFAULT true}. See {@link #DEFAULT_DISCONNECTED_BEHAVIOR}.
-     *
-     * @return the behavior for command invocation when connections are in a disconnected state
-     */
-    public DisconnectedBehavior getDisconnectedBehavior() {
-        return disconnectedBehavior;
     }
 
     /**
@@ -505,18 +586,6 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are discarded
-     * during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}. E.g. setting
-     * {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75 percent.
-     *
-     * @return the buffer usage ratio.
-     * @since 5.2
-     */
-    public int getBufferUsageRatio() {
-        return bufferUsageRatio;
-    }
-
-    /**
      * Behavior of connections in disconnected state.
      */
     public enum DisconnectedBehavior {
@@ -536,4 +605,5 @@ public class ClientOptions implements Serializable {
          */
         REJECT_COMMANDS,
     }
+
 }

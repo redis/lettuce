@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
     /**
      * Template method to be implemented by implementing classes to obtain a {@link StatefulRedisConnection}.
      *
-     * @param redisClusterNode must not be {@literal null}.
+     * @param redisClusterNode must not be {@code null}.
      * @return
      */
     protected abstract CompletableFuture<? extends StatefulRedisConnection<K, V>> getConnection(
@@ -91,7 +91,7 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
     /**
      * Template method to be implemented by implementing classes to obtain a the API object given a {@link RedisClusterNode}.
      *
-     * @param redisClusterNode must not be {@literal null}.
+     * @param redisClusterNode must not be {@code null}.
      * @return
      */
     protected abstract CompletableFuture<API> getApi(RedisClusterNode redisClusterNode);
@@ -100,4 +100,5 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
      * @return List of involved nodes
      */
     protected abstract List<RedisClusterNode> nodes();
+
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,12 +23,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import io.lettuce.core.internal.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -48,16 +48,19 @@ class SentinelTopologyProvider implements TopologyProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(SentinelTopologyProvider.class);
 
     private final String masterId;
+
     private final RedisClient redisClient;
+
     private final RedisURI sentinelUri;
+
     private final Duration timeout;
 
     /**
      * Creates a new {@link SentinelTopologyProvider}.
      *
      * @param masterId must not be empty
-     * @param redisClient must not be {@literal null}.
-     * @param sentinelUri must not be {@literal null}.
+     * @param redisClient must not be {@code null}.
+     * @param sentinelUri must not be {@code null}.
      */
     public SentinelTopologyProvider(String masterId, RedisClient redisClient, RedisURI sentinelUri) {
 
@@ -107,9 +110,9 @@ class SentinelTopologyProvider implements TopologyProvider {
 
             List<RedisNodeDescription> result = new ArrayList<>();
 
-            result.add(toNode(tuple.getT1(), RedisInstance.Role.MASTER));
+            result.add(toNode(tuple.getT1(), RedisInstance.Role.UPSTREAM));
             result.addAll(tuple.getT2().stream().filter(SentinelTopologyProvider::isAvailable)
-                    .map(map -> toNode(map, RedisInstance.Role.SLAVE)).collect(Collectors.toList()));
+                    .map(map -> toNode(map, RedisInstance.Role.REPLICA)).collect(Collectors.toList()));
 
             return result;
         });

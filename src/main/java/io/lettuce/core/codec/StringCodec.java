@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,25 @@ import io.netty.util.CharsetUtil;
  * {@link Charset}. It accepts provided {@link ByteBuf buffers} so it does not need to allocate buffers during encoding.
  *
  * @author Mark Paluch
+ * @author Dimitris Mandalidis
  * @since 4.3
  */
 public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder<String, String> {
 
     public static final StringCodec UTF8 = new StringCodec(StandardCharsets.UTF_8);
+
     public static final StringCodec ASCII = new StringCodec(StandardCharsets.US_ASCII);
 
     private static final byte[] EMPTY = new byte[0];
 
     private final Charset charset;
+
+    private final float averageBytesPerChar;
+
+    private final float maxBytesPerChar;
+
     private final boolean ascii;
+
     private final boolean utf8;
 
     /**
@@ -54,13 +62,17 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
     /**
      * Creates a new {@link StringCodec} for the given {@link Charset} that encodes and decodes keys and values.
      *
-     * @param charset must not be {@literal null}.
+     * @param charset must not be {@code null}.
      */
     public StringCodec(Charset charset) {
 
         LettuceAssert.notNull(charset, "Charset must not be null");
 
         this.charset = charset;
+
+        CharsetEncoder encoder = CharsetUtil.encoder(charset);
+        this.averageBytesPerChar = encoder.averageBytesPerChar();
+        this.maxBytesPerChar = encoder.maxBytesPerChar();
 
         if (charset.name().equals("UTF-8")) {
             utf8 = true;
@@ -79,48 +91,11 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
         encode(key, target);
     }
 
-    public void encode(String str, ByteBuf target) {
-
-        if (str == null) {
-            return;
-        }
-
-        if (utf8) {
-            ByteBufUtil.writeUtf8(target, str);
-            return;
-        }
-
-        if (ascii) {
-            ByteBufUtil.writeAscii(target, str);
-            return;
-        }
-
-        CharsetEncoder encoder = CharsetUtil.encoder(charset);
-        int length = (int) ((double) str.length() * encoder.maxBytesPerChar());
-        target.ensureWritable(length);
-        try {
-            final ByteBuffer dstBuf = target.nioBuffer(0, length);
-            final int pos = dstBuf.position();
-            CoderResult cr = encoder.encode(CharBuffer.wrap(str), dstBuf, true);
-            if (!cr.isUnderflow()) {
-                cr.throwException();
-            }
-            cr = encoder.flush(dstBuf);
-            if (!cr.isUnderflow()) {
-                cr.throwException();
-            }
-            target.writerIndex(target.writerIndex() + dstBuf.position() - pos);
-        } catch (CharacterCodingException x) {
-            throw new IllegalStateException(x);
-        }
-    }
-
     @Override
     public int estimateSize(Object keyOrValue) {
 
         if (keyOrValue instanceof String) {
-            CharsetEncoder encoder = CharsetUtil.encoder(charset);
-            return (int) (encoder.averageBytesPerChar() * ((String) keyOrValue).length());
+            return sizeOf((String) keyOrValue, true);
         }
         return 0;
     }
@@ -157,12 +132,12 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
      * @return
      */
     private ByteBuffer encodeAndAllocateBuffer(String key) {
+
         if (key == null) {
             return ByteBuffer.wrap(EMPTY);
         }
 
-        CharsetEncoder encoder = CharsetUtil.encoder(charset);
-        ByteBuffer buffer = ByteBuffer.allocate((int) (encoder.maxBytesPerChar() * key.length()));
+        ByteBuffer buffer = ByteBuffer.allocate(sizeOf(key, false));
 
         ByteBuf byteBuf = Unpooled.wrappedBuffer(buffer);
         byteBuf.clear();
@@ -170,5 +145,64 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
         buffer.limit(byteBuf.writerIndex());
 
         return buffer;
+    }
+
+    public void encode(String str, ByteBuf target) {
+
+        if (str == null) {
+            return;
+        }
+
+        if (utf8) {
+            ByteBufUtil.writeUtf8(target, str);
+            return;
+        }
+
+        if (ascii) {
+            ByteBufUtil.writeAscii(target, str);
+            return;
+        }
+
+        CharsetEncoder encoder = CharsetUtil.encoder(charset);
+        int length = sizeOf(str, false);
+        target.ensureWritable(length);
+
+        try {
+            ByteBuffer dstBuf = target.nioBuffer(0, length);
+            int pos = dstBuf.position();
+
+            CoderResult cr = encoder.encode(CharBuffer.wrap(str), dstBuf, true);
+            if (!cr.isUnderflow()) {
+                cr.throwException();
+            }
+            cr = encoder.flush(dstBuf);
+            if (!cr.isUnderflow()) {
+                cr.throwException();
+            }
+            target.writerIndex(target.writerIndex() + dstBuf.position() - pos);
+        } catch (CharacterCodingException x) {
+            throw new IllegalStateException(x);
+        }
+    }
+
+    /**
+     * Calculate either the maximum number of bytes a string may occupy in a given character set or
+     * the average number of bytes it may hold.
+     */
+    int sizeOf(String value, boolean estimate) {
+
+        if (utf8) {
+            return ByteBufUtil.utf8MaxBytes(value);
+        }
+
+        if (ascii) {
+            return value.length();
+        }
+
+        if (estimate) {
+            return (int) averageBytesPerChar * value.length();
+        }
+
+        return (int) maxBytesPerChar * value.length();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,20 +25,32 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * {@link List} of values output.
+ * {@link List} of {@link KeyValue} output. Can be either used to decode key-value tuples (e.g. {@code HGETALL}) of for a pure
+ * value response where keys are supplied as input (for e.g. {@code HMGET}).
  *
  * @param <K> Key type.
  * @param <V> Value type.
  *
  * @author Mark Paluch
  */
-public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<K, V>>> implements
-        StreamingOutput<KeyValue<K, V>> {
+public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<K, V>>>
+        implements StreamingOutput<KeyValue<K, V>> {
 
     private boolean initialized;
+
     private Subscriber<KeyValue<K, V>> subscriber;
-    private Iterable<K> keys;
+
+    private final Iterable<K> keys;
+
     private Iterator<K> keyIterator;
+
+    private K key;
+
+    public KeyValueListOutput(RedisCodec<K, V> codec) {
+        super(codec, Collections.emptyList());
+        setSubscriber(ListSubscriber.instance());
+        this.keys = null;
+    }
 
     public KeyValueListOutput(RedisCodec<K, V> codec, Iterable<K> keys) {
         super(codec, Collections.emptyList());
@@ -49,18 +61,31 @@ public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<
     @Override
     public void set(ByteBuffer bytes) {
 
-        if (keyIterator == null) {
-            keyIterator = keys.iterator();
-        }
+        if (keys == null) {
+            if (key == null) {
+                key = codec.decodeKey(bytes);
+                return;
+            }
 
-        subscriber.onNext(output, KeyValue.fromNullable(keyIterator.next(), bytes == null ? null : codec.decodeValue(bytes)));
+            K key = this.key;
+            this.key = null;
+            subscriber.onNext(output, KeyValue.fromNullable(key, bytes == null ? null : codec.decodeValue(bytes)));
+
+        } else {
+            if (keyIterator == null) {
+                keyIterator = keys.iterator();
+            }
+
+            subscriber.onNext(output,
+                    KeyValue.fromNullable(keyIterator.next(), bytes == null ? null : codec.decodeValue(bytes)));
+        }
     }
 
     @Override
     public void multi(int count) {
 
         if (!initialized) {
-            output = OutputFactory.newList(count);
+            output = OutputFactory.newList(keys == null ? count / 2 : count);
             initialized = true;
         }
     }
@@ -75,4 +100,5 @@ public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<
     public Subscriber<KeyValue<K, V>> getSubscriber() {
         return subscriber;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,18 +156,18 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
         Partitions partitions = commands.getStatefulConnection().getPartitions();
         partitions.forEach(redisClusterNode -> redisClusterNode.setFlags(Collections
-                .singleton(RedisClusterNode.NodeFlag.MASTER)));
+                .singleton(RedisClusterNode.NodeFlag.UPSTREAM)));
 
         AsyncNodeSelection<String, String> selection = commands.nodes(
                 redisClusterNode -> redisClusterNode.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF), true);
 
         assertThat(selection.asMap()).hasSize(0);
         partitions.getPartition(0).setFlags(
-                LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
+                LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.UPSTREAM));
         assertThat(selection.asMap()).hasSize(1);
 
         partitions.getPartition(1).setFlags(
-                LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.MASTER));
+                LettuceSets.unmodifiableSet(RedisClusterNode.NodeFlag.MYSELF, RedisClusterNode.NodeFlag.UPSTREAM));
         assertThat(selection.asMap()).hasSize(2);
 
         clusterClient.reloadPartitions();

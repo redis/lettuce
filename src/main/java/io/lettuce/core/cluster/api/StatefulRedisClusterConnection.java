@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -137,12 +138,12 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.
      *
-     * @param readFrom the read from setting, must not be {@literal null}
+     * @param readFrom the read from setting, must not be {@code null}
      */
     void setReadFrom(ReadFrom readFrom);
 
     /**
-     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#MASTER} if not set.
+     * Gets the {@link ReadFrom} setting for this connection. Defaults to {@link ReadFrom#UPSTREAM} if not set.
      *
      * @return the read from setting
      */
@@ -157,4 +158,21 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * @return the underlying {@link RedisChannelWriter}.
      */
     RedisChannelWriter getChannelWriter();
+
+    /**
+     * Add a new {@link RedisClusterPushListener listener} to consume push messages.
+     *
+     * @param listener the listener, must not be {@code null}.
+     * @since 6.0
+     */
+    void addListener(RedisClusterPushListener listener);
+
+    /**
+     * Remove an existing {@link RedisClusterPushListener listener}.
+     *
+     * @param listener the listener, must not be {@code null}.
+     * @since 6.0
+     */
+    void removeListener(RedisClusterPushListener listener);
+
 }

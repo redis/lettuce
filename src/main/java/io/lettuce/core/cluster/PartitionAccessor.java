@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,24 +35,14 @@ class PartitionAccessor {
         this.partitions = partitions;
     }
 
-    List<RedisClusterNode> getMasters() {
-        return get(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.MASTER));
+    List<RedisClusterNode> getUpstream() {
+        return get(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
     }
 
-    List<RedisClusterNode> getReplicas() {
-        return get(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE));
-
-    }
-
-    List<RedisClusterNode> getReplicas(RedisClusterNode master) {
-        return get(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)
-                && master.getNodeId().equals(redisClusterNode.getSlaveOf()));
-    }
-
-    List<RedisClusterNode> getReadCandidates(RedisClusterNode master) {
-        return get(redisClusterNode -> redisClusterNode.getNodeId().equals(master.getNodeId())
-                || (redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE) && master.getNodeId().equals(
-                        redisClusterNode.getSlaveOf())));
+    List<RedisClusterNode> getReadCandidates(RedisClusterNode upstream) {
+        return get(redisClusterNode -> redisClusterNode.getNodeId().equals(upstream.getNodeId())
+                || (redisClusterNode.is(RedisClusterNode.NodeFlag.SLAVE)
+                        && upstream.getNodeId().equals(redisClusterNode.getSlaveOf())));
     }
 
     List<RedisClusterNode> get(Predicate<RedisClusterNode> test) {

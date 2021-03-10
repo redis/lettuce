@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import java.util.stream.Stream;
 public interface TransactionResult extends Iterable<Object> {
 
     /**
-     * @return {@literal true} if the transaction batch was discarded.
+     * @return {@code true} if the transaction batch was discarded.
      * @since 5.1
      */
     boolean wasDiscarded();
 
     /**
-     * @return {@literal true} if the transaction batch was discarded.
+     * @return {@code true} if the transaction batch was discarded.
      * @deprecated use renamed method {@link #wasDiscarded()} as Redis has no notion of rollback.
      */
     @Deprecated
@@ -51,9 +51,9 @@ public interface TransactionResult extends Iterable<Object> {
     int size();
 
     /**
-     * Returns {@literal true} if this {@link TransactionResult} contains no elements.
+     * Returns {@code true} if this {@link TransactionResult} contains no elements.
      *
-     * @return {@literal true} if this {@link TransactionResult} contains no elements
+     * @return {@code true} if this {@link TransactionResult} contains no elements
      */
     boolean isEmpty();
 
@@ -73,4 +73,5 @@ public interface TransactionResult extends Iterable<Object> {
      * @return a sequential {@code Stream} over the elements in this {@link TransactionResult}
      */
     Stream<Object> stream();
+
 }

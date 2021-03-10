@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,7 @@ import io.lettuce.core.resource.ClientResources;
 
 /**
  * Factory Bean for {@link RedisClient} instances. Requires a {@link RedisURI} and allows to reuse
- * {@link io.lettuce.core.resource.ClientResources}. URI Formats:
- * {@code
+ * {@link io.lettuce.core.resource.ClientResources}. URI Formats: {@code
  *     redis-sentinel://host[:port][,host2[:port2]][/databaseNumber]#sentinelMasterId
  * }
  *
@@ -72,4 +71,5 @@ class RedisClientCdiBean extends AbstractCdiBean<RedisClient> {
     public void destroy(RedisClient instance, CreationalContext<RedisClient> creationalContext) {
         instance.shutdown();
     }
+
 }

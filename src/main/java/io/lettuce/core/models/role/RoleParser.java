@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,25 +28,26 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 @SuppressWarnings("serial")
 public class RoleParser {
+
     protected static final Map<String, RedisInstance.Role> ROLE_MAPPING;
-    protected static final Map<String, RedisSlaveInstance.State> SLAVE_STATE_MAPPING;
+
+    protected static final Map<String, RedisSlaveInstance.State> REPLICA_STATE_MAPPING;
 
     static {
         Map<String, RedisInstance.Role> roleMap = new HashMap<>();
-        roleMap.put("master", RedisInstance.Role.MASTER);
-        roleMap.put("slave", RedisInstance.Role.SLAVE);
+        roleMap.put("master", RedisInstance.Role.UPSTREAM);
+        roleMap.put("slave", RedisInstance.Role.REPLICA);
         roleMap.put("sentinel", RedisInstance.Role.SENTINEL);
 
         ROLE_MAPPING = Collections.unmodifiableMap(roleMap);
 
-        Map<String, RedisSlaveInstance.State> replicas = new HashMap<>();
-        replicas.put("connect", RedisSlaveInstance.State.CONNECT);
-        replicas.put("connected", RedisSlaveInstance.State.CONNECTED);
-        replicas.put("connecting",
-            RedisSlaveInstance.State.CONNECTING);
-        replicas.put("sync", RedisSlaveInstance.State.SYNC);
+        Map<String, RedisReplicaInstance.State> replicas = new HashMap<>();
+        replicas.put("connect", RedisReplicaInstance.State.CONNECT);
+        replicas.put("connected", RedisReplicaInstance.State.CONNECTED);
+        replicas.put("connecting", RedisReplicaInstance.State.CONNECTING);
+        replicas.put("sync", RedisReplicaInstance.State.SYNC);
 
-        SLAVE_STATE_MAPPING = Collections.unmodifiableMap(replicas);
+        REPLICA_STATE_MAPPING = Collections.unmodifiableMap(replicas);
     }
 
     /**
@@ -71,9 +72,11 @@ public class RoleParser {
 
         switch (role) {
             case MASTER:
-                return parseMaster(roleOutput);
+            case UPSTREAM:
+                return parseUpstream(roleOutput);
 
             case SLAVE:
+            case REPLICA:
                 return parseReplica(roleOutput);
 
             case SENTINEL:
@@ -84,14 +87,14 @@ public class RoleParser {
 
     }
 
-    private static RedisInstance parseMaster(List<?> roleOutput) {
+    private static RedisInstance parseUpstream(List<?> roleOutput) {
 
-        long replicationOffset = getMasterReplicationOffset(roleOutput);
-        List<ReplicationPartner> replicas = getMasterReplicaReplicationPartners(roleOutput);
+        long replicationOffset = getUpstreamReplicationOffset(roleOutput);
+        List<ReplicationPartner> replicas = getUpstreamReplicaReplicationPartners(roleOutput);
 
-        RedisMasterInstance redisMasterInstanceRole = new RedisMasterInstance(replicationOffset,
+        RedisMasterInstance redisUpstreamInstanceRole = new RedisMasterInstance(replicationOffset,
                 Collections.unmodifiableList(replicas));
-        return redisMasterInstanceRole;
+        return redisUpstreamInstanceRole;
     }
 
     private static RedisInstance parseReplica(List<?> roleOutput) {
@@ -107,10 +110,9 @@ public class RoleParser {
 
         ReplicationPartner master = new ReplicationPartner(HostAndPort.of(ip, Math.toIntExact(port)), replicationOffset);
 
-        RedisSlaveInstance.State state = SLAVE_STATE_MAPPING.get(stateString);
+        RedisReplicaInstance.State state = REPLICA_STATE_MAPPING.get(stateString);
 
-        RedisSlaveInstance redisSlaveInstanceRole = new RedisSlaveInstance(master, state);
-        return redisSlaveInstanceRole;
+        return new RedisReplicaInstance(master, state);
     }
 
     private static RedisInstance parseSentinel(List<?> roleOutput) {
@@ -118,35 +120,35 @@ public class RoleParser {
         Iterator<?> iterator = roleOutput.iterator();
         iterator.next(); // skip first element
 
-        List<String> monitoredMasters = getMonitoredMasters(iterator);
+        List<String> monitoredMasters = getMonitoredUpstreams(iterator);
 
         RedisSentinelInstance result = new RedisSentinelInstance(Collections.unmodifiableList(monitoredMasters));
         return result;
     }
 
-    private static List<String> getMonitoredMasters(Iterator<?> iterator) {
-        List<String> monitoredMasters = new ArrayList<>();
+    private static List<String> getMonitoredUpstreams(Iterator<?> iterator) {
+        List<String> monitoredUpstreams = new ArrayList<>();
 
         if (!iterator.hasNext()) {
-            return monitoredMasters;
+            return monitoredUpstreams;
         }
 
-        Object masters = iterator.next();
+        Object upstreams = iterator.next();
 
-        if (!(masters instanceof Collection)) {
-            return monitoredMasters;
+        if (!(upstreams instanceof Collection)) {
+            return monitoredUpstreams;
         }
 
-        for (Object monitoredMaster : (Collection) masters) {
-            if (monitoredMaster instanceof String) {
-                monitoredMasters.add((String) monitoredMaster);
+        for (Object upstream : (Collection) upstreams) {
+            if (upstream instanceof String) {
+                monitoredUpstreams.add((String) upstream);
             }
         }
 
-        return monitoredMasters;
+        return monitoredUpstreams;
     }
 
-    private static List<ReplicationPartner> getMasterReplicaReplicationPartners(List<?> roleOutput) {
+    private static List<ReplicationPartner> getUpstreamReplicaReplicationPartners(List<?> roleOutput) {
 
         List<ReplicationPartner> replicas = new ArrayList<>();
         if (roleOutput.size() > 2 && roleOutput.get(2) instanceof Collection) {
@@ -157,14 +159,14 @@ public class RoleParser {
                     continue;
                 }
 
-                ReplicationPartner replicationPartner = getMasterSlaveReplicationPartner((Collection<?>) output);
+                ReplicationPartner replicationPartner = getReplicationPartner((Collection<?>) output);
                 replicas.add(replicationPartner);
             }
         }
         return replicas;
     }
 
-    private static ReplicationPartner getMasterSlaveReplicationPartner(Collection<?> segments) {
+    private static ReplicationPartner getReplicationPartner(Collection<?> segments) {
 
         Iterator<?> iterator = segments.iterator();
 
@@ -199,7 +201,7 @@ public class RoleParser {
         return defaultValue;
     }
 
-    private static long getMasterReplicationOffset(List<?> roleOutput) {
+    private static long getUpstreamReplicationOffset(List<?> roleOutput) {
         long replicationOffset = 0;
 
         if (roleOutput.size() > 1 && roleOutput.get(1) instanceof Number) {
@@ -208,4 +210,5 @@ public class RoleParser {
         }
         return replicationOffset;
     }
+
 }

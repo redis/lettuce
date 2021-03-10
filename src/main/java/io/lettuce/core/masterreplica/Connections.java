@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -50,10 +52,12 @@ import io.lettuce.core.protocol.CommandType;
 class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, StatefulRedisConnection<String, String>>, Connections>
         implements AsyncCloseable {
 
+    private final Lock lock = new ReentrantLock();
     private final Map<RedisURI, StatefulRedisConnection<String, String>> connections = new TreeMap<>(
-            MasterReplicaUtils.RedisURIComparator.INSTANCE);
+            ReplicaUtils.RedisURIComparator.INSTANCE);
 
     private final List<Throwable> exceptions = new CopyOnWriteArrayList<>();
+
     private final List<RedisNodeDescription> nodes;
 
     private volatile boolean closed = false;
@@ -71,8 +75,11 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
             return;
         }
 
-        synchronized (this.connections) {
+        try {
+            lock.lock();
             this.connections.put(value.getT1(), value.getT2());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -107,17 +114,20 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
     }
 
     /**
-     * @return {@literal true} if no connections present.
+     * @return {@code true} if no connections present.
      */
     public boolean isEmpty() {
-        synchronized (this.connections) {
+        try {
+            lock.lock();
             return this.connections.isEmpty();
+        }
+        finally {
+            lock.unlock();
         }
     }
 
     /*
      * Initiate {@code PING} on all connections and return the {@link Requests}.
-     *
      * @return the {@link Requests}.
      */
     public Requests requestPing() {
@@ -162,4 +172,5 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
 
         return Futures.allOf(close);
     }
+
 }

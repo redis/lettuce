@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,13 @@ public class ConnectionState {
     private volatile HandshakeResponse handshakeResponse;
 
     private volatile String username;
+
     private volatile char[] password;
+
     private volatile int db;
+
     private volatile boolean readOnly;
+
     private volatile String clientName;
 
     /**
@@ -60,7 +64,7 @@ public class ConnectionState {
     /**
      * Returns the client connection id. Only available when using {@link ProtocolVersion#RESP3}.
      *
-     * @return the client connection id. Can be {@literal null} if Redis uses RESP2.
+     * @return the client connection id. Can be {@code null} if Redis uses RESP2.
      */
     public Long getConnectionId() {
         return handshakeResponse != null ? handshakeResponse.getConnectionId() : null;
@@ -171,9 +175,13 @@ public class ConnectionState {
     static class HandshakeResponse {
 
         private final ProtocolVersion negotiatedProtocolVersion;
+
         private final Long connectionId;
+
         private final String redisVersion;
+
         private final String mode;
+
         private final String role;
 
         public HandshakeResponse(ProtocolVersion negotiatedProtocolVersion, Long connectionId, String redisVersion, String mode,
@@ -204,5 +212,7 @@ public class ConnectionState {
         public String getRole() {
             return role;
         }
+
     }
+
 }

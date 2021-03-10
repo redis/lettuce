@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.FlushMode;
+import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,7 @@ import io.lettuce.test.Wait;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author dengliming
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -175,5 +178,35 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
         } finally {
             connection.close();
         }
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void scriptFlushAsync() {
+        assertThat(redis.scriptFlush()).isEqualTo("OK");
+
+        String script1 = "return 1 + 1";
+        String digest1 = redis.digest(script1);
+
+        assertThat(redis.scriptExists(digest1)).isEqualTo(list(false));
+        assertThat(redis.scriptLoad(script1)).isEqualTo(digest1);
+        assertThat(redis.scriptExists(digest1)).isEqualTo(list(true));
+        assertThat(redis.scriptFlush(FlushMode.ASYNC)).isEqualTo("OK");
+        assertThat(redis.scriptExists(digest1)).isEqualTo(list(false));
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void scriptFlushSync() {
+        assertThat(redis.scriptFlush()).isEqualTo("OK");
+
+        String script1 = "return 1 + 1";
+        String digest1 = redis.digest(script1);
+
+        assertThat(redis.scriptExists(digest1)).isEqualTo(list(false));
+        assertThat(redis.scriptLoad(script1)).isEqualTo(digest1);
+        assertThat(redis.scriptExists(digest1)).isEqualTo(list(true));
+        assertThat(redis.scriptFlush(FlushMode.SYNC)).isEqualTo("OK");
+        assertThat(redis.scriptExists(digest1)).isEqualTo(list(false));
     }
 }

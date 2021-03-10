@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,7 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandKeyword.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.CommandArgs;
 
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a> and
@@ -34,15 +28,9 @@ import io.lettuce.core.protocol.CommandArgs;
  * @author Will Glozer
  * @author Xy Ma
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
-public class ZStoreArgs implements CompositeArgument {
-
-    private enum Aggregate {
-        SUM, MIN, MAX
-    }
-
-    private List<Double> weights;
-    private Aggregate aggregate;
+public class ZStoreArgs extends ZAggregateArgs {
 
     /**
      * Builder entry points for {@link ScanArgs}.
@@ -106,12 +94,13 @@ public class ZStoreArgs implements CompositeArgument {
         public static ZStoreArgs max() {
             return new ZStoreArgs().max();
         }
+
     }
 
     /**
      * Specify a multiplication factor for each input sorted set.
      *
-     * @param weights must not be {@literal null}.
+     * @param weights must not be {@code null}.
      * @return {@code this} {@link ZStoreArgs}.
      * @deprecated use {@link #weights(double...)}
      */
@@ -126,18 +115,13 @@ public class ZStoreArgs implements CompositeArgument {
     /**
      * Specify a multiplication factor for each input sorted set.
      *
-     * @param weights must not be {@literal null}.
+     * @param weights must not be {@code null}.
      * @return {@code this} {@link ZStoreArgs}.
      */
+    @Override
     public ZStoreArgs weights(double... weights) {
 
-        LettuceAssert.notNull(weights, "Weights must not be null");
-
-        this.weights = new ArrayList<>(weights.length);
-
-        for (double weight : weights) {
-            this.weights.add(weight);
-        }
+        super.weights(weights);
         return this;
     }
 
@@ -146,9 +130,10 @@ public class ZStoreArgs implements CompositeArgument {
      *
      * @return {@code this} {@link ZStoreArgs}.
      */
+    @Override
     public ZStoreArgs sum() {
 
-        this.aggregate = Aggregate.SUM;
+        super.sum();
         return this;
     }
 
@@ -157,9 +142,10 @@ public class ZStoreArgs implements CompositeArgument {
      *
      * @return {@code this} {@link ZStoreArgs}.
      */
+    @Override
     public ZStoreArgs min() {
 
-        this.aggregate = Aggregate.MIN;
+        super.min();
         return this;
     }
 
@@ -168,46 +154,20 @@ public class ZStoreArgs implements CompositeArgument {
      *
      * @return {@code this} {@link ZStoreArgs}.
      */
+    @Override
     public ZStoreArgs max() {
 
-        this.aggregate = Aggregate.MAX;
+        super.max();
         return this;
     }
 
     private static double[] toDoubleArray(long[] weights) {
 
-        double result[] = new double[weights.length];
+        double[] result = new double[weights.length];
         for (int i = 0; i < weights.length; i++) {
             result[i] = weights[i];
         }
         return result;
     }
 
-    public <K, V> void build(CommandArgs<K, V> args) {
-
-        if (weights != null && !weights.isEmpty()) {
-
-            args.add(WEIGHTS);
-            for (double weight : weights) {
-                args.add(weight);
-            }
-        }
-
-        if (aggregate != null) {
-            args.add(AGGREGATE);
-            switch (aggregate) {
-                case SUM:
-                    args.add(SUM);
-                    break;
-                case MIN:
-                    args.add(MIN);
-                    break;
-                case MAX:
-                    args.add(MAX);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Aggregation " + aggregate + " not supported");
-            }
-        }
-    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,23 @@
  */
 package io.lettuce.core.protocol;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Fail.fail;
-import static org.mockito.AdditionalMatchers.gt;
-import static org.mockito.Matchers.any;
+import static org.mockito.AdditionalMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.eq;
 
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -42,26 +48,40 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.api.push.PushListener;
+import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.metrics.CommandLatencyCollector;
+import io.lettuce.core.output.KeyValueListOutput;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import io.lettuce.test.Delay;
+import io.lettuce.test.ReflectionTestUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelConfig;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
+import io.netty.channel.DefaultChannelPromise;
+import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
+ * Unit tests for {@link CommandHandler}.
+ *
  * @author Mark Paluch
  * @author Jongyeol Choi
  * @author Gavin Cook
+ * @author Shaphan
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -71,8 +91,8 @@ class CommandHandlerUnitTests {
 
     private CommandHandler sut;
 
-    private final Command<String, String, String> command = new Command<>(CommandType.APPEND, new StatusOutput<>(
-            StringCodec.UTF8), null);
+    private final Command<String, String, String> command = new Command<>(CommandType.APPEND,
+            new StatusOutput<>(StringCodec.UTF8), null);
 
     @Mock
     private ChannelHandlerContext context;
@@ -94,6 +114,9 @@ class CommandHandlerUnitTests {
 
     @Mock
     private Endpoint endpoint;
+
+    @Mock
+    private PushListener listener;
 
     @Mock
     private ChannelPromise promise;
@@ -134,8 +157,9 @@ class CommandHandlerUnitTests {
         });
 
         when(latencyCollector.isEnabled()).thenReturn(true);
-        when(clientResources.commandLatencyCollector()).thenReturn(latencyCollector);
+        when(clientResources.commandLatencyRecorder()).thenReturn(latencyCollector);
         when(clientResources.tracing()).thenReturn(Tracing.disabled());
+        when(endpoint.getPushListeners()).thenReturn(Collections.singleton(listener));
 
         sut = new CommandHandler(ClientOptions.create(), clientResources, endpoint);
         stack = (Queue) ReflectionTestUtils.getField(sut, "stack");
@@ -177,7 +201,7 @@ class CommandHandlerUnitTests {
         assertThat(stack).isEmpty();
         command.get();
 
-        assertThat(ReflectionTestUtils.getField(command, "exception")).isNotNull();
+        assertThat((Object) ReflectionTestUtils.getField(command, "exception")).isNotNull();
     }
 
     @Test
@@ -363,8 +387,8 @@ class CommandHandlerUnitTests {
     @Test
     void shouldWriteActiveCommandsInBatch() throws Exception {
 
-        Command<String, String, String> anotherCommand = new Command<>(CommandType.APPEND,
-                new StatusOutput<>(StringCodec.UTF8), null);
+        Command<String, String, String> anotherCommand = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8),
+                null);
 
         List<Command<String, String, String>> commands = Arrays.asList(command, anotherCommand);
         when(promise.isVoid()).thenReturn(true);
@@ -378,7 +402,8 @@ class CommandHandlerUnitTests {
     @SuppressWarnings("unchecked")
     void shouldWriteActiveCommandsInMixedBatch() throws Exception {
 
-        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8), null);
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8),
+                null);
         command.cancel();
         when(promise.isVoid()).thenReturn(true);
 
@@ -423,6 +448,26 @@ class CommandHandlerUnitTests {
     }
 
     @Test
+    void shouldNotifyPushListener() throws Exception {
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        channelPromise.setSuccess();
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        sut.channelRead(context, Unpooled.wrappedBuffer(">2\r\n+caching\r\n+foo\r\n".getBytes()));
+
+        ArgumentCaptor<PushMessage> messageCaptor = ArgumentCaptor.forClass(PushMessage.class);
+        verify(listener).onPushMessage(messageCaptor.capture());
+
+        PushMessage message = messageCaptor.getValue();
+        assertThat(message.getType()).isEqualTo("caching");
+        assertThat(message.getContent()).containsExactly(ByteBuffer.wrap("caching".getBytes()),
+                ByteBuffer.wrap("foo".getBytes()));
+    }
+
+    @Test
     void shouldNotDiscardReadBytes() throws Exception {
 
         ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
@@ -435,7 +480,7 @@ class CommandHandlerUnitTests {
 
         // set the command handler buffer capacity to 30, make it easy to test
         ByteBuf internalBuffer = context.alloc().buffer(30);
-        ReflectionTestUtils.setField(sut, "buffer", internalBuffer);
+        sut.setBuffer(internalBuffer);
 
         // mock a multi reply, which will reach the buffer usage ratio
         ByteBuf msg = context.alloc().buffer(100);
@@ -464,7 +509,7 @@ class CommandHandlerUnitTests {
 
         // set the command handler buffer capacity to 30, make it easy to test
         ByteBuf internalBuffer = context.alloc().buffer(30);
-        ReflectionTestUtils.setField(sut, "buffer", internalBuffer);
+        sut.setBuffer(internalBuffer);
 
         // mock a multi reply, which will reach the buffer usage ratio
         ByteBuf msg = context.alloc().buffer(100);
@@ -479,4 +524,68 @@ class CommandHandlerUnitTests {
         assertThat(internalBuffer.writerIndex()).isEqualTo(0);
         sut.channelUnregistered(context);
     }
+
+    @Test
+    void shouldCallPolicyToDiscardReadBytes() throws Exception {
+
+        DecodeBufferPolicy policy = mock(DecodeBufferPolicy.class);
+
+        CommandHandler commandHandler = new CommandHandler(ClientOptions.builder().decodeBufferPolicy(policy).build(),
+                clientResources, endpoint);
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        channelPromise.setSuccess();
+
+        commandHandler.channelRegistered(context);
+        commandHandler.channelActive(context);
+
+        commandHandler.getStack().add(new Command<>(CommandType.PING, new StatusOutput<>(StringCodec.UTF8)));
+
+        ByteBuf msg = context.alloc().buffer(100);
+        msg.writeBytes("*1\r\n+OK\r\n".getBytes());
+
+        commandHandler.channelRead(context, msg);
+        commandHandler.channelUnregistered(context);
+
+        verify(policy).afterCommandDecoded(any());
+    }
+
+    @Test
+    void shouldHandleIncompleteResponses() throws Exception {
+
+        Command<String, String, List<String>> lrangeCommand = new Command<>(CommandType.LRANGE,
+                new ValueListOutput<>(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).addKey("lrangeKey").add(0).add(1));
+
+        Command<String, String, List<KeyValue<String, String>>> hmgetCommand = new Command<>(CommandType.HMGET,
+                new KeyValueListOutput<>(StringCodec.UTF8, Arrays.asList("KEY1", "KEY2", "KEY3")),
+                new CommandArgs<>(StringCodec.UTF8).addKeys("hmgetKey", "KEY1", "KEY2", "KEY3"));
+
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        channelPromise.setSuccess();
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+
+        sut.write(context, lrangeCommand, channelPromise);
+        assertThat(stack).hasSize(1);
+
+        // the LRANGE response comes back across two channelReads
+        sut.channelRead(context, Unpooled.wrappedBuffer(("*4\r\n" + "$3\r\nONE\r\n" + "$4\r\n>TW").getBytes()));
+        assertThat(stack).hasSize(1);
+
+        sut.channelRead(context, Unpooled.wrappedBuffer(("O\r\n" + "$5\r\nTHREE\r\n" + "$4\r\nFOUR\r\n").getBytes()));
+        assertThat(stack).isEmpty();
+        assertThat(lrangeCommand.get()).isNotNull();
+        assertThat(lrangeCommand.get()).hasSize(4);
+
+        sut.write(context, hmgetCommand, channelPromise);
+
+        // the HMGET response comes back in another read
+        sut.channelRead(context, Unpooled.wrappedBuffer("*3\r\n$4\r\nVAL1\r\n$4\r\nVAL2\r\n$4\r\nVAL3\r\n".getBytes()));
+
+        assertThat(stack.isEmpty()).isTrue();
+        assertThat(hmgetCommand.get()).isNotNull();
+        assertThat(hmgetCommand.get()).hasSize(3);
+    }
+
 }

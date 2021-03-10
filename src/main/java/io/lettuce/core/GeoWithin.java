@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,17 +30,20 @@ package io.lettuce.core;
 public class GeoWithin<V> {
 
     private final V member;
+
     private final Double distance;
+
     private final Long geohash;
+
     private final GeoCoordinates coordinates;
 
     /**
      * Creates a new {@link GeoWithin}.
      *
      * @param member the member.
-     * @param distance the distance, may be {@literal null}.
-     * @param geohash the geohash, may be {@literal null}.
-     * @param coordinates the coordinates, may be {@literal null}.
+     * @param distance the distance, may be {@code null}.
+     * @param geohash the geohash, may be {@code null}.
+     * @param coordinates the coordinates, may be {@code null}.
      */
     public GeoWithin(V member, Double distance, Long geohash, GeoCoordinates coordinates) {
 
@@ -51,7 +54,6 @@ public class GeoWithin<V> {
     }
 
     /**
-     *
      * @return the member within the Geo set.
      */
     public V getMember() {
@@ -59,27 +61,32 @@ public class GeoWithin<V> {
     }
 
     /**
-     *
-     * @return distance if requested otherwise {@literal null}.
+     * @return distance if requested otherwise {@code null}.
      */
     public Double getDistance() {
         return distance;
     }
 
     /**
-     *
-     * @return geohash if requested otherwise {@literal null}.
+     * @return geohash if requested otherwise {@code null}.
      */
     public Long getGeohash() {
         return geohash;
     }
 
     /**
-     *
-     * @return coordinates if requested otherwise {@literal null}.
+     * @return coordinates if requested otherwise {@code null}.
      */
     public GeoCoordinates getCoordinates() {
         return coordinates;
+    }
+
+    /**
+     * @return a {@link GeoValue} if {@code coordinates} are set.
+     * @since 6.1
+     */
+    public GeoValue<V> toValue() {
+        return GeoValue.just(coordinates, this.member);
     }
 
     @Override
@@ -120,4 +127,5 @@ public class GeoWithin<V> {
         sb.append(']');
         return sb.toString();
     }
+
 }

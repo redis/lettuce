@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,8 +38,8 @@ class ReadOnlyCommands {
     }
 
     /**
-     * @param protocolKeyword must not be {@literal null}.
-     * @return {@literal true} if {@link ProtocolKeyword} is a read-only command.
+     * @param protocolKeyword must not be {@code null}.
+     * @return {@code true} if {@link ProtocolKeyword} is a read-only command.
      */
     public static boolean isReadOnlyCommand(ProtocolKeyword protocolKeyword) {
         return READ_ONLY_COMMANDS.contains(protocolKeyword);
@@ -55,13 +55,14 @@ class ReadOnlyCommands {
     enum CommandName {
         ASKING, BITCOUNT, BITPOS, CLIENT, COMMAND, DUMP, ECHO, EVAL, EVALSHA, EXISTS, //
         GEODIST, GEOPOS, GEORADIUS, GEORADIUSBYMEMBER, GEOHASH, GET, GETBIT, //
-        GETRANGE, HEXISTS, HGET, HGETALL, HKEYS, HLEN, HMGET, HSCAN, HSTRLEN, //
-        HVALS, INFO, KEYS, LINDEX, LLEN, LRANGE, MGET, PFCOUNT, PTTL, //
+        GETRANGE, HEXISTS, HGET, HGETALL, HKEYS, HLEN, HMGET, HRANDFIELD, HSCAN, HSTRLEN, //
+        HVALS, INFO, KEYS, LINDEX, LLEN, LPOS, LRANGE, MGET, PFCOUNT, PTTL, //
         RANDOMKEY, READWRITE, SCAN, SCARD, SCRIPT, //
         SDIFF, SINTER, SISMEMBER, SMEMBERS, SRANDMEMBER, SSCAN, STRLEN, //
         SUNION, TIME, TTL, TYPE, //
         XINFO, XLEN, XPENDING, XRANGE, XREVRANGE, XREAD, //
         ZCARD, ZCOUNT, ZLEXCOUNT, ZRANGE, //
-        ZRANGEBYLEX, ZRANGEBYSCORE, ZRANK, ZREVRANGE, ZREVRANGEBYLEX, ZREVRANGEBYSCORE, ZREVRANK, ZSCAN, ZSCORE,
+        ZRANDMEMBER, ZRANGEBYLEX, ZRANGEBYSCORE, ZRANK, ZREVRANGE, ZREVRANGEBYLEX, ZREVRANGEBYSCORE, ZREVRANK, ZSCAN, ZSCORE,
     }
+
 }

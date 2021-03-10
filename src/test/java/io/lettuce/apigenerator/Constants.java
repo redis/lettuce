@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,25 @@ import java.io.File;
  */
 class Constants {
 
-    public static final String[] TEMPLATE_NAMES = { "BaseRedisCommands", "RedisGeoCommands", "RedisHashCommands",
-            "RedisHLLCommands", "RedisKeyCommands", "RedisListCommands", "RedisScriptingCommands", "RedisSentinelCommands",
-            "RedisServerCommands", "RedisSetCommands", "RedisSortedSetCommands", "RedisStreamCommands", "RedisStringCommands",
-            "RedisTransactionalCommands" };
+    public static final String[] TEMPLATE_NAMES = {
+            "BaseRedisCommands",
+            "RedisAclCommands",
+            "RedisGeoCommands",
+            "RedisHashCommands",
+            "RedisHLLCommands",
+            "RedisKeyCommands",
+            "RedisListCommands",
+            "RedisScriptingCommands",
+            "RedisSentinelCommands",
+            "RedisServerCommands",
+            "RedisSetCommands",
+            "RedisSortedSetCommands",
+            "RedisStreamCommands",
+            "RedisStringCommands",
+            "RedisTransactionalCommands"
+    };
 
     public static final File TEMPLATES = new File("src/main/templates");
     public static final File SOURCES = new File("src/main/java");
+    public static final File KOTLIN_SOURCES = new File("src/main/kotlin");
 }

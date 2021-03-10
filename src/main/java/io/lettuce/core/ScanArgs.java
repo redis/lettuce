@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandKeyword.COUNT;
-import static io.lettuce.core.protocol.CommandKeyword.MATCH;
+import static io.lettuce.core.protocol.CommandKeyword.*;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +26,7 @@ import io.lettuce.core.protocol.CommandArgs;
 /**
  * Argument list builder for the Redis scan commands ({@literal SCAN, HSCAN, SSCAN, ZSCAN}). Static import the methods from
  *
- * {@link Builder} and chain the method calls: {@code matches("weight_*").limit(0, 2)}.
+ * {@link Builder} and chain the method calls: {@code matches("weight_*").limit(2)}.
  * <p>
  * {@link ScanArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
@@ -38,7 +37,9 @@ import io.lettuce.core.protocol.CommandArgs;
 public class ScanArgs implements CompositeArgument {
 
     private Long count;
+
     private String match;
+
     private Charset charset;
 
     /**
@@ -73,12 +74,13 @@ public class ScanArgs implements CompositeArgument {
         public static ScanArgs matches(String matches) {
             return new ScanArgs().match(matches);
         }
+
     }
 
     /**
      * Set the match filter. Uses {@link StandardCharsets#UTF_8 UTF-8} to encode {@code match}.
      *
-     * @param match the filter, must not be {@literal null}.
+     * @param match the filter, must not be {@code null}.
      * @return {@literal this} {@link ScanArgs}.
      */
     public ScanArgs match(String match) {
@@ -88,8 +90,8 @@ public class ScanArgs implements CompositeArgument {
     /**
      * Set the match filter along the given {@link Charset}.
      *
-     * @param match the filter, must not be {@literal null}.
-     * @param charset the charset for match, must not be {@literal null}.
+     * @param match the filter, must not be {@code null}.
+     * @param charset the charset for match, must not be {@code null}.
      * @return {@literal this} {@link ScanArgs}.
      * @since 6.0
      */
@@ -115,6 +117,7 @@ public class ScanArgs implements CompositeArgument {
         return this;
     }
 
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (match != null) {
@@ -125,4 +128,5 @@ public class ScanArgs implements CompositeArgument {
             args.add(COUNT).add(count);
         }
     }
+
 }

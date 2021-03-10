@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,23 +21,34 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Abstract representation of the output of a redis command.
+ * Base class for Redis command outputs.
+ *
+ * <p>
+ * Provides common decode methods and parsing functionality for output handling. Template methods that accept response values
+ * throw {@link UnsupportedOperationException} unless overridden by the concrete implementation.
+ * <p>
+ * Command outputs may accumulate their state until a command is finished or emit partial results during the decode process.
+ * Output implementations that wish to emit partial results can implement {@link StreamingOutput} push individual output
+ * elements to a {@link StreamingOutput.Subscriber}.
  *
  * @param <K> Key type.
  * @param <V> Value type.
  * @param <T> Output type.
  * @author Will Glozer
+ * @author Mark Paluch
  */
 public abstract class CommandOutput<K, V, T> {
 
     protected final RedisCodec<K, V> codec;
+
     protected T output;
+
     protected String error;
 
     /**
      * Initialize a new instance that encodes and decodes keys and values using the supplied codec.
      *
-     * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
+     * @param codec Codec used to encode/decode keys and values, must not be {@code null}.
      * @param output Initial value of output.
      */
     public CommandOutput(RedisCodec<K, V> codec, T output) {
@@ -56,18 +67,18 @@ public abstract class CommandOutput<K, V, T> {
     }
 
     /**
-     * Set the command output to a sequence of bytes, or null. Concrete {@link CommandOutput} implementations must override this
-     * method unless they only receive an integer value which cannot be null.
+     * Update the command output with a sequence of bytes, or {@code null}. Concrete {@link CommandOutput} implementations must
+     * override this method to decode {@code bulk}/bytes response values.
      *
      * @param bytes The command output, or null.
      */
     public void set(ByteBuffer bytes) {
-        throw new IllegalStateException();
+        throw new UnsupportedOperationException(getClass().getName() + " does not support set(ByteBuffer)");
     }
 
     /**
-     * Set the command output to a sequence of bytes, or null representing a simple string. Concrete {@link CommandOutput}
-     * implementations can override this method unless they only receive an integer value which cannot be null.
+     * Update the command output with a sequence of bytes, or {@code null} representing a simple string. Concrete
+     * {@link CommandOutput} implementations must override this method to decode {@code single}/bytes response values.
      *
      * @param bytes The command output, or null.
      */
@@ -76,8 +87,8 @@ public abstract class CommandOutput<K, V, T> {
     }
 
     /**
-     * Set the command output to a big number. Concrete {@link CommandOutput} implementations can override this method unless
-     * they only receive an integer value which cannot be null.
+     * Update the command output with a big number. Concrete {@link CommandOutput} implementations must override this method to
+     * decode {@code big number} response values.
      *
      * @param bytes The command output, or null.
      * @since 6.0/RESP 3
@@ -87,35 +98,35 @@ public abstract class CommandOutput<K, V, T> {
     }
 
     /**
-     * Set the command output to a 64-bit signed integer. Concrete {@link CommandOutput} implementations must override this
-     * method unless they only receive a byte array value.
+     * Update the command output with a 64-bit signed integer. Concrete {@link CommandOutput} implementations must override this
+     * method to decode {@code number} (integer) response values.
      *
      * @param integer The command output.
      */
     public void set(long integer) {
-        throw new IllegalStateException();
+        throw new UnsupportedOperationException(getClass().getName() + " does not support set(long)");
     }
 
     /**
-     * Set the command output to a floating-point number. Concrete {@link CommandOutput} implementations must override this
-     * method unless they only receive a byte array value.
+     * Update the command output with a floating-point number. Concrete {@link CommandOutput} implementations must override this
+     * method to decode {@code double} response values.
      *
      * @param number The command output.
      * @since 6.0/RESP 3
      */
     public void set(double number) {
-        throw new IllegalStateException();
+        throw new UnsupportedOperationException(getClass().getName() + " does not support set(double)");
     }
 
     /**
-     * Set the command output to a boolean. Concrete {@link CommandOutput} implementations must override this method unless they
-     * only receive a byte array value.
+     * Update the command output with a boolean. Concrete {@link CommandOutput} implementations must override this method to
+     * decode {@code boolean} response values.
      *
      * @param value The command output.
      * @since 6.0/RESP 3
      */
     public void set(boolean value) {
-        throw new IllegalStateException();
+        throw new UnsupportedOperationException(getClass().getName() + " does not support set(boolean)");
     }
 
     /**
@@ -234,4 +245,5 @@ public abstract class CommandOutput<K, V, T> {
     public void multiSet(int count) {
         multi(count);
     }
+
 }

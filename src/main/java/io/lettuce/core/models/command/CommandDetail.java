@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,34 @@
  */
 package io.lettuce.core.models.command;
 
+import io.lettuce.core.AclCategory;
+
 import java.io.Serializable;
 import java.util.Set;
 
 /**
+ * Domain object describing Redis Command details.
+ *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  * @since 3.0
  */
 @SuppressWarnings("serial")
 public class CommandDetail implements Serializable {
 
     private String name;
+
     private int arity;
+
     private Set<Flag> flags;
+
     private int firstKeyPosition;
+
     private int lastKeyPosition;
+
     private int keyStepCount;
+
+    private Set<AclCategory> aclCategories;
 
     public CommandDetail() {
     }
@@ -38,20 +50,39 @@ public class CommandDetail implements Serializable {
     /**
      * Constructs a {@link CommandDetail}
      *
-     * @param name name of the command, must not be {@literal null}
+     * @param name name of the command, must not be {@code null}
      * @param arity command arity specification
-     * @param flags set of flags, must not be {@literal null} but may be empty
+     * @param flags set of flags, must not be {@code null} but may be empty
      * @param firstKeyPosition position of first key in argument list
      * @param lastKeyPosition position of last key in argument list
      * @param keyStepCount step count for locating repeating keys
+     * @deprecated since 6.1
      */
+    @Deprecated
     public CommandDetail(String name, int arity, Set<Flag> flags, int firstKeyPosition, int lastKeyPosition, int keyStepCount) {
+        this(name, arity, flags, firstKeyPosition, lastKeyPosition, keyStepCount, null);
+    }
+
+    /**
+     * Constructs a {@link CommandDetail}
+     *
+     * @param name name of the command, must not be {@code null}
+     * @param arity command arity specification
+     * @param flags set of flags, must not be {@code null} but may be empty
+     * @param firstKeyPosition position of first key in argument list
+     * @param lastKeyPosition position of last key in argument list
+     * @param keyStepCount step count for locating repeating keys
+     * @param aclCategories command ACL details
+     * @since 6.1
+     */
+    public CommandDetail(String name, int arity, Set<Flag> flags, int firstKeyPosition, int lastKeyPosition, int keyStepCount, Set<AclCategory> aclCategories) {
         this.name = name;
         this.arity = arity;
         this.flags = flags;
         this.firstKeyPosition = firstKeyPosition;
         this.lastKeyPosition = lastKeyPosition;
         this.keyStepCount = keyStepCount;
+        this.aclCategories = aclCategories;
     }
 
     public String getName() {
@@ -102,6 +133,14 @@ public class CommandDetail implements Serializable {
         this.keyStepCount = keyStepCount;
     }
 
+    public Set<AclCategory> getAclCategories() {
+        return aclCategories;
+    }
+
+    public void setAclCategories(Set<AclCategory> aclCategories) {
+        this.aclCategories = aclCategories;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -112,11 +151,13 @@ public class CommandDetail implements Serializable {
         sb.append(", firstKeyPosition=").append(firstKeyPosition);
         sb.append(", lastKeyPosition=").append(lastKeyPosition);
         sb.append(", keyStepCount=").append(keyStepCount);
+        sb.append(", aclCategories=").append(aclCategories);
         sb.append(']');
         return sb.toString();
     }
 
     public enum Flag {
+
         /**
          * command may result in modifications.
          */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 
 /**
  * Base class for all types that include parametrization of some kind. Crucial as we have to take note of the parent class we
@@ -29,13 +29,14 @@ import io.lettuce.core.LettuceStrings;
 class ParametrizedTypeInformation<T> extends ParentTypeAwareTypeInformation<T> {
 
     private final ParameterizedType type;
+
     private Boolean resolved;
 
     /**
      * Creates a new {@link ParametrizedTypeInformation} for the given {@link Type} and parent {@link TypeDiscoverer}.
      *
-     * @param type must not be {@literal null}
-     * @param parent must not be {@literal null}
+     * @param type must not be {@code null}
+     * @param parent must not be {@code null}
      */
     public ParametrizedTypeInformation(ParameterizedType type, TypeDiscoverer<?> parent,
             Map<TypeVariable<?>, Type> typeVariableMap) {
@@ -206,4 +207,5 @@ class ParametrizedTypeInformation<T> extends ParentTypeAwareTypeInformation<T> {
         this.resolved = resolved;
         return resolved;
     }
+
 }

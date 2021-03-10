@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ class RoundRobinSocketAddressSupplierUnitTests {
     @Test
     void noOffset() {
 
-        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
+        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(() -> partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);
 
         assertThat(sut.get()).isEqualTo(addr1);
@@ -88,7 +88,7 @@ class RoundRobinSocketAddressSupplierUnitTests {
     @Test
     void partitionTableChangesNewNode() {
 
-        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
+        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(() -> partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);
 
         assertThat(sut.get()).isEqualTo(addr1);
@@ -106,7 +106,7 @@ class RoundRobinSocketAddressSupplierUnitTests {
     @Test
     void partitionTableChangesNodeRemoved() {
 
-        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(partitions,
+        RoundRobinSocketAddressSupplier sut = new RoundRobinSocketAddressSupplier(() -> partitions,
                 redisClusterNodes -> redisClusterNodes, clientResourcesMock);
 
         assertThat(sut.get()).isEqualTo(addr1);

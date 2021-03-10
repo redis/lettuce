@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
 
-import io.lettuce.core.LettuceStrings;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceStrings;
 
 /**
  * Streaming-Output of of values and their associated scores. Returns the count of all values (including null).
@@ -53,8 +53,13 @@ public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, Strea
 
     @Override
     public void set(double number) {
-        channel.onValue(ScoredValue.fromNullable(number, value));
+
+        if (value != null) {
+            channel.onValue(ScoredValue.just(number, value));
+        }
+
         value = null;
         output.setCount(output.getCount() + 1);
     }
+
 }

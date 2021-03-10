@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,14 @@ import io.lettuce.core.internal.LettuceAssert;
 class DefaultTransactionResult implements Iterable<Object>, TransactionResult {
 
     private final boolean discarded;
+
     private final List<Object> result;
 
     /**
      * Creates a new {@link DefaultTransactionResult}.
      *
-     * @param discarded {@literal true} if the transaction is discarded.
-     * @param result the transaction result, must not be {@literal null}.
+     * @param discarded {@code true} if the transaction is discarded.
+     * @param result the transaction result, must not be {@code null}.
      */
     public DefaultTransactionResult(boolean discarded, List<Object> result) {
 
@@ -87,4 +88,5 @@ class DefaultTransactionResult implements Iterable<Object>, TransactionResult {
         sb.append(']');
         return sb.toString();
     }
+
 }

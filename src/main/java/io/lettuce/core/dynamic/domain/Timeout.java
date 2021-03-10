@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class Timeout {
      * Create a {@link Timeout}.
      *
      * @param timeout the timeout value, must be non-negative.
-     * @param timeUnit the associated {@link TimeUnit}, must not be {@literal null}.
+     * @param timeUnit the associated {@link TimeUnit}, must not be {@code null}.
      * @return the {@link Timeout}.
      */
     public static Timeout create(long timeout, TimeUnit timeUnit) {
@@ -70,4 +70,5 @@ public class Timeout {
     public Duration getTimeout() {
         return timeout;
     }
+
 }

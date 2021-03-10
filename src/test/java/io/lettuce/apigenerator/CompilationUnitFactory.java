@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,30 @@ package io.lettuce.apigenerator;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.github.javaparser.JavaParser;
-import com.github.javaparser.ast.*;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.ImportDeclaration;
+import com.github.javaparser.ast.Modifier;
+import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.comments.Comment;
@@ -41,36 +55,60 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 /**
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
 class CompilationUnitFactory {
 
-    private File templateFile;
-    private File sources;
-    private File target;
-    private String targetPackage;
-    private String targetName;
+    private final File templateFile;
 
-    private Function<String, String> typeDocFunction;
-    private Map<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>> methodReturnTypeMutation;
-    private Predicate<MethodDeclaration> methodFilter;
-    private Supplier<List<String>> importSupplier;
-    private Consumer<ClassOrInterfaceDeclaration> typeMutator;
-    private Function<Comment, Comment> methodCommentMutator;
+    private final File sources;
+
+    private final File target;
+
+    private final String targetPackage;
+
+    private final String targetName;
+
+    private final Function<String, String> typeDocFunction;
+
+    private final Map<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>> methodReturnTypeMutation;
+
+    private final Predicate<MethodDeclaration> methodFilter;
+
+    private final Supplier<List<String>> importSupplier;
+
+    private final Consumer<ClassOrInterfaceDeclaration> typeMutator;
+
+    private final Consumer<MethodDeclaration> onMethod;
+
+    private final BiFunction<MethodDeclaration, Comment, Comment> methodCommentMutator;
 
     private CompilationUnit template;
-    private CompilationUnit result = new CompilationUnit();
+
+    private final CompilationUnit result = new CompilationUnit();
     private ClassOrInterfaceDeclaration resultType;
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
-            Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
-            Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
-            Consumer<ClassOrInterfaceDeclaration> typeMutator, Function<Comment, Comment> methodCommentMutator) {
+                                  Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
+                                  Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
+                                  Consumer<ClassOrInterfaceDeclaration> typeMutator, Function<Comment, Comment> methodCommentMutator) {
+        this(templateFile, sources, targetPackage, targetName, typeDocFunction, methodReturnTypeFunction, methodDeclaration -> {
+        }, methodFilter, importSupplier, typeMutator, (m, c) -> methodCommentMutator != null ? methodCommentMutator.apply(c) : c);
+
+    }
+
+    public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
+                                  Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
+                                  Consumer<MethodDeclaration> onMethod, Predicate<MethodDeclaration> methodFilter,
+                                  Supplier<List<String>> importSupplier, Consumer<ClassOrInterfaceDeclaration> typeMutator,
+                                  BiFunction<MethodDeclaration, Comment, Comment> methodCommentMutator) {
 
         this.templateFile = templateFile;
         this.sources = sources;
         this.targetPackage = targetPackage;
         this.targetName = targetName;
         this.typeDocFunction = typeDocFunction;
+        this.onMethod = onMethod;
         this.methodFilter = methodFilter;
         this.importSupplier = importSupplier;
         this.typeMutator = typeMutator;
@@ -97,13 +135,11 @@ class CompilationUnitFactory {
         if (!templateTypeDeclaration.getTypeParameters().isEmpty()) {
             resultType.setTypeParameters(new NodeList<>());
             for (TypeParameter typeParameter : templateTypeDeclaration.getTypeParameters()) {
-                resultType.getTypeParameters().add(
-                        new TypeParameter(typeParameter.getName().getIdentifier(), typeParameter.getTypeBound()));
+                resultType.getTypeParameters().add(new TypeParameter(typeParameter.getName().getIdentifier(), typeParameter.getTypeBound()));
             }
         }
 
-        resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().orElse(null)
-                .getContent())));
+        resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().get().getContent())));
         result.setComment(template.getComment().orElse(null));
 
         result.setImports(new NodeList<>());
@@ -115,15 +151,15 @@ class CompilationUnitFactory {
             result.getImports().addAll(template.getImports());
         }
         List<String> importLines = importSupplier.get();
-        for (String importLine : importLines) {
-            result.getImports().add(new ImportDeclaration(importLine, false, false));
-        }
+        importLines.forEach(importLine -> result.getImports().add(new ImportDeclaration(importLine, false, false)));
 
         new MethodVisitor().visit(template, null);
 
         if (typeMutator != null) {
             typeMutator.accept(resultType);
         }
+
+        removeUnusedImports();
 
         writeResult();
 
@@ -166,6 +202,31 @@ class CompilationUnitFactory {
                 || haystack.contains(declaringClass.getNameAsString() + "." + needle.getNameAsString());
     }
 
+    public void removeUnusedImports() {
+        ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) result.getChildNodes().get(1);
+
+        List<ImportDeclaration> optimizedImports = result
+                .getImports()
+                .stream()
+                .filter(i -> i.isAsterisk()
+                                || i.isStatic()
+                                || declaringClass.findFirst(Type.class, t -> {
+                                    String fullType = t.toString();
+                                    String importIdentifier = i.getName().getIdentifier();
+
+                                    return fullType.contains(importIdentifier);
+                                }).isPresent()
+                )
+                .sorted((o1, o2) -> {
+                    if (o1.getNameAsString().startsWith("java")) return -1;
+                    if (o2.getNameAsString().startsWith("java")) return 1;
+                    return o1.getNameAsString().compareTo(o2.getNameAsString());
+                })
+                .collect(Collectors.toList());
+
+        result.setImports(NodeList.nodeList(optimizedImports));
+    }
+
     /**
      * Simple visitor implementation for visiting MethodDeclaration nodes.
      */
@@ -178,9 +239,6 @@ class CompilationUnitFactory {
                 return;
             }
 
-            if (parsedDeclaration.getNameAsString().equals("close")) {
-                System.out.println();
-            }
             Type returnType = getMethodReturnType(parsedDeclaration);
 
             MethodDeclaration method = new MethodDeclaration(parsedDeclaration.getModifiers(),
@@ -189,29 +247,28 @@ class CompilationUnitFactory {
                     null);
 
             if (methodCommentMutator != null) {
-                method.setComment(methodCommentMutator.apply(parsedDeclaration.getComment().orElse(null)));
+                method.setComment(methodCommentMutator.apply(method, parsedDeclaration.getComment().orElse(null)));
             } else {
                 method.setComment(parsedDeclaration.getComment().orElse(null));
             }
+
+            onMethod.accept(method);
 
             resultType.addMember(method);
         }
 
         private Type getMethodReturnType(MethodDeclaration parsedDeclaration) {
 
-            List<Map.Entry<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>>> entries = new ArrayList<>(
-                    methodReturnTypeMutation.entrySet());
+            List<Map.Entry<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>>> entries = new ArrayList<>(methodReturnTypeMutation.entrySet());
 
             Collections.reverse(entries);
 
-            for (Map.Entry<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>> entry : entries) {
-
-                if (entry.getKey().test(parsedDeclaration)) {
-                    return entry.getValue().apply(parsedDeclaration);
-                }
-            }
-
-            return null;
+            return entries
+                    .stream()
+                    .filter(entry -> entry.getKey().test(parsedDeclaration))
+                    .findFirst()
+                    .map(entry -> entry.getValue().apply(parsedDeclaration))
+                    .orElse(null);
         }
     }
 }

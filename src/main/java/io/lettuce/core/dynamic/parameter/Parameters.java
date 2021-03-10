@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,13 @@ import io.lettuce.core.internal.LettuceAssert;
 public abstract class Parameters<P extends Parameter> implements Iterable<P> {
 
     private final List<P> parameters;
+
     private final List<P> bindableParameters;
 
     /**
      * Create new {@link Parameters} given a {@link Method}.
      *
-     * @param method must not be {@literal null}.
+     * @param method must not be {@code null}.
      */
     public Parameters(Method method) {
 
@@ -56,7 +57,7 @@ public abstract class Parameters<P extends Parameter> implements Iterable<P> {
     /**
      * Create a new {@link Parameters} for given a {@link Method} at {@code parameterIndex}.
      *
-     * @param method must not be {@literal null}.
+     * @param method must not be {@code null}.
      * @param parameterIndex the parameter index.
      * @return the {@link Parameter}.
      */

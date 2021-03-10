@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,39 +22,42 @@ package io.lettuce.core.protocol;
  */
 interface WithLatency {
 
-	/**
-	 * Sets the time of sending the item.
-	 * @param time the time of when the item was sent.
+    /**
+     * Sets the time of sending the item.
+     *
+     * @param time the time of when the item was sent.
      */
-	void sent(long time);
+    void sent(long time);
 
-	/**
-	 * Sets the time of the first response.
-	 * @param time the time of the first response.
+    /**
+     * Sets the time of the first response.
+     *
+     * @param time the time of the first response.
      */
-	void firstResponse(long time);
+    void firstResponse(long time);
 
-	/**
-	 * Set the time of completion.
-	 * @param time the time of completion.
+    /**
+     * Set the time of completion.
+     *
+     * @param time the time of completion.
      */
-	void completed(long time);
+    void completed(long time);
 
-	/**
-	 * @return the time of when the item was sent.
+    /**
+     * @return the time of when the item was sent.
      */
-	long getSent();
+    long getSent();
 
-	/**
-	 *
-	 * @return the time of the first response.
+    /**
+     *
+     * @return the time of the first response.
      */
-	long getFirstResponse();
+    long getFirstResponse();
 
-	/**
-	 *
-	 * @return the time of completion.
+    /**
+     *
+     * @return the time of completion.
      */
-	long getCompleted();
+    long getCompleted();
 
 }

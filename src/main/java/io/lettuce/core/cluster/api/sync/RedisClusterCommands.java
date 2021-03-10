@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package io.lettuce.core.cluster.api.sync;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.api.sync.*;
 
@@ -30,9 +29,11 @@ import io.lettuce.core.api.sync.*;
  * @since 4.0
  */
 public interface RedisClusterCommands<K, V>
-        extends BaseRedisCommands<K, V>, RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>,
-        RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
-        RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V> {
+        extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>, RedisGeoCommands<K, V>,
+        RedisHashCommands<K, V>, RedisHLLCommands<K, V>, RedisKeyCommands<K, V>,
+        RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
+        RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>,
+        RedisStringCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
@@ -80,7 +81,7 @@ public interface RedisClusterCommands<K, V>
     String clusterMeet(String ip, int port);
 
     /**
-     * Blacklist and remove the cluster node from the cluster.
+     * Disallow connections and remove the cluster node from the cluster.
      *
      * @param nodeId the node Id
      * @return String simple-string-reply
@@ -254,7 +255,7 @@ public interface RedisClusterCommands<K, V>
     /**
      * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
      *
-     * @param force do not coordinate with master if {@literal true}
+     * @param force do not coordinate with master if {@code true}
      * @return String simple-string-reply
      */
     String clusterFailover(boolean force);
@@ -271,7 +272,7 @@ public interface RedisClusterCommands<K, V>
      * <li>If the node was a replica, the whole data set is flushed away</li>
      * </ul>
      *
-     * @param hard {@literal true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
+     * @param hard {@code true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
      * @return String simple-string-reply
      */
     String clusterReset(boolean hard);
@@ -297,4 +298,5 @@ public interface RedisClusterCommands<K, V>
      * @return String simple-string-reply
      */
     String readWrite();
+
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.models.role.RedisInstance;
+import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
@@ -44,7 +44,9 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
     private final RedisClient redisClient;
+
     private final RedisCodec<K, V> codec;
+
     private final RedisURI redisURI;
 
     private final Map<RedisURI, StatefulRedisConnection<?, ?>> initialConnections = new ConcurrentHashMap<>();
@@ -59,18 +61,16 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
         ConnectionFuture<StatefulRedisConnection<K, V>> initialConnection = redisClient.connectAsync(codec, redisURI);
-        Mono<StatefulRedisMasterReplicaConnection<K, V>> connect = Mono
-                .fromCompletionStage(initialConnection)
-                .flatMap(
-                        nodeConnection -> {
+        Mono<StatefulRedisMasterReplicaConnection<K, V>> connect = Mono.fromCompletionStage(initialConnection)
+                .flatMap(nodeConnection -> {
 
-                            initialConnections.put(redisURI, nodeConnection);
+                    initialConnections.put(redisURI, nodeConnection);
 
-                            TopologyProvider topologyProvider = new MasterReplicaTopologyProvider(nodeConnection, redisURI);
+                    TopologyProvider topologyProvider = new ReplicaTopologyProvider(nodeConnection, redisURI);
 
-                            return Mono.fromCompletionStage(topologyProvider.getNodesAsync()).flatMap(
-                                    nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
-                        }).flatMap(connectionAndUri -> {
+                    return Mono.fromCompletionStage(topologyProvider.getNodesAsync())
+                            .flatMap(nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
+                }).flatMap(connectionAndUri -> {
                     return initializeConnection(codec, connectionAndUri);
                 });
 
@@ -92,7 +92,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
         RedisNodeDescription node = getConnectedNode(redisURI, nodes);
 
-        if (node.getRole() != RedisInstance.Role.MASTER) {
+        if (!node.getRole().isUpstream()) {
 
             RedisNodeDescription master = lookupMaster(nodes);
             ConnectionFuture<StatefulRedisConnection<K, V>> masterConnection = redisClient.connectAsync(codec, master.getUri());
@@ -110,7 +110,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     private Mono<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec,
             Tuple2<RedisURI, StatefulRedisConnection<K, V>> connectionAndUri) {
 
-        MasterReplicaTopologyProvider topologyProvider = new MasterReplicaTopologyProvider(connectionAndUri.getT2(),
+        ReplicaTopologyProvider topologyProvider = new ReplicaTopologyProvider(connectionAndUri.getT2(),
                 connectionAndUri.getT1());
 
         MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
@@ -121,11 +121,12 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
         return refreshFuture.map(nodes -> {
 
+            EventRecorder.getInstance().record(new MasterReplicaTopologyChangedEvent(redisURI, nodes));
+
             connectionProvider.setKnownNodes(nodes);
 
             MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
-                    redisClient
-                    .getResources());
+                    redisClient.getResources());
 
             StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
                     channelWriter, codec, redisURI.getTimeout());
@@ -138,15 +139,15 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
     private static RedisNodeDescription lookupMaster(List<RedisNodeDescription> nodes) {
 
-        Optional<RedisNodeDescription> first = findFirst(nodes, n -> n.getRole() == RedisInstance.Role.MASTER);
+        Optional<RedisNodeDescription> first = findFirst(nodes, n -> n.getRole().isUpstream());
         return first.orElseThrow(() -> new IllegalStateException("Cannot lookup master from " + nodes));
     }
 
     private static RedisNodeDescription getConnectedNode(RedisURI redisURI, List<RedisNodeDescription> nodes) {
 
         Optional<RedisNodeDescription> first = findFirst(nodes, n -> equals(redisURI, n));
-        return first.orElseThrow(() -> new IllegalStateException("Cannot lookup node descriptor for connected node at "
-                + redisURI));
+        return first.orElseThrow(
+                () -> new IllegalStateException("Cannot lookup node descriptor for connected node at " + redisURI));
     }
 
     private static Optional<RedisNodeDescription> findFirst(List<RedisNodeDescription> nodes,
@@ -157,4 +158,5 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     private static boolean equals(RedisURI redisURI, RedisNodeDescription node) {
         return node.getUri().getHost().equals(redisURI.getHost()) && node.getUri().getPort() == redisURI.getPort();
     }
+
 }

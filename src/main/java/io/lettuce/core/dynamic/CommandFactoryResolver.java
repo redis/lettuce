@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,10 @@ interface CommandFactoryResolver {
     /**
      * Resolve a {@link CommandFactory} given a{@link DeclaredCommandMethod} and {@link RedisCommandsMetadata}.
      *
-     * @param method must not be {@literal null}.
-     * @param redisCommandsMetadata must not be {@literal null}.
+     * @param method must not be {@code null}.
+     * @param redisCommandsMetadata must not be {@code null}.
      * @return the {@link CommandFactory}.
      */
     CommandFactory resolveRedisCommandFactory(CommandMethod method, RedisCommandsMetadata redisCommandsMetadata);
+
 }

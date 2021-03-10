@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
  * @author Mark Paluch
  * @since 5.0
  */
-interface ClusterNodeConnectionFactory<K, V> extends
-        Function<ClusterNodeConnectionFactory.ConnectionKey, ConnectionFuture<StatefulRedisConnection<K, V>>> {
+interface ClusterNodeConnectionFactory<K, V>
+        extends Function<ClusterNodeConnectionFactory.ConnectionKey, ConnectionFuture<StatefulRedisConnection<K, V>>> {
 
     /**
      * Set the {@link Partitions}.
@@ -46,8 +46,11 @@ interface ClusterNodeConnectionFactory<K, V> extends
     class ConnectionKey {
 
         final Intent intent;
+
         final String nodeId;
+
         final String host;
+
         final int port;
 
         public ConnectionKey(Intent intent, String nodeId) {
@@ -105,5 +108,7 @@ interface ClusterNodeConnectionFactory<K, V> extends
             sb.append(']');
             return sb.toString();
         }
+
     }
+
 }

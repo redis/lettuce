@@ -88,7 +88,8 @@ work/redis-6483.conf:
 	@echo client-output-buffer-limit pubsub 256k 128k 5 >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-6483 >> $@
 	@echo unixsocketperm 777 >> $@
-	@echo slaveof 127.0.0.1 6482 >> $@
+	@echo slaveof localhost 6482 >> $@
+	@echo replica-announce-ip localhost >> $@
 
 work/redis-%.conf:
 	@mkdir -p $(@D)
@@ -102,11 +103,12 @@ work/redis-%.conf:
 	@echo client-output-buffer-limit pubsub 256k 128k 5 >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
 	@echo unixsocketperm 777 >> $@
+	@echo replica-announce-ip localhost >> $@
 
 work/redis-%.pid: work/redis-%.conf work/redis-git/src/redis-server
 	work/redis-git/src/redis-server $<
 
-redis-start: work/redis-6479.pid work/redis-6480.pid work/redis-6481.pid work/redis-6482.pid work/redis-6483.pid
+redis-start: work/redis-6479.pid work/redis-6480.pid work/redis-6481.pid work/redis-6482.pid work/redis-6483.pid work/redis-6484.pid
 
 ##########
 # Sentinel
@@ -121,18 +123,39 @@ work/sentinel-%.conf:
 	@echo pidfile $(shell pwd)/work/redis-sentinel-$*.pid >> $@
 	@echo logfile $(shell pwd)/work/redis-sentinel-$*.log >> $@
 
-	@echo sentinel monitor mymaster 127.0.0.1 6482 1 >> $@
+	@echo sentinel monitor mymaster localhost 6482 1 >> $@
 	@echo sentinel down-after-milliseconds mymaster 200 >> $@
 	@echo sentinel failover-timeout mymaster 200 >> $@
 	@echo sentinel parallel-syncs mymaster 1 >> $@
+	@echo sentinel announce-hostnames yes >> $@
+	@echo sentinel resolve-hostnames yes >> $@
+	@echo sentinel announce-ip localhost >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
 	@echo unixsocketperm 777 >> $@
+
+work/sentinel-26381.conf:
+	@mkdir -p $(@D)
+
+	@echo port 26381 >> $@
+	@echo daemonize yes >> $@
+	@echo pidfile $(shell pwd)/work/redis-sentinel-26381.pid >> $@
+	@echo logfile $(shell pwd)/work/redis-sentinel-26381.log >> $@
+
+	@echo sentinel monitor mymaster localhost 6484 1 >> $@
+	@echo sentinel down-after-milliseconds mymaster 200 >> $@
+	@echo sentinel failover-timeout mymaster 200 >> $@
+	@echo sentinel parallel-syncs mymaster 1 >> $@
+	@echo sentinel announce-hostnames yes >> $@
+	@echo sentinel resolve-hostnames yes >> $@
+	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
+	@echo unixsocketperm 777 >> $@
+	@echo requirepass foobared >> $@
 
 work/sentinel-%.pid: work/sentinel-%.conf work/redis-git/src/redis-server
 	work/redis-git/src/redis-server $< --sentinel
 	sleep 0.5
 
-sentinel-start: work/sentinel-26379.pid work/sentinel-26380.pid
+sentinel-start: work/sentinel-26379.pid work/sentinel-26380.pid work/sentinel-26381.pid
 
 ##########
 # Cluster

@@ -21,14 +21,23 @@ include::{ext-doc}/Basic-usage.asciidoc[leveloffset=+1]
 
 [[asynchronous-api]]
 === Asynchronous API
+
 include::{ext-doc}/Asynchronous-API.asciidoc[leveloffset=+2]
 
 [[reactive-api]]
 === Reactive API
+
 include::{ext-doc}/Reactive-API-%285.0%29.asciidoc[leveloffset=+2]
 
+[[kotlin]]
+=== Kotlin API
+
+include::kotlin-api.asciidoc[leveloffset=+2]
+
 === Publish/Subscribe
+
 include::{ext-doc}/Pub-Sub.asciidoc[leveloffset=+1]
 
 === Transactions/Multi
+
 include::{ext-doc}/Transactions.asciidoc[leveloffset=+1]

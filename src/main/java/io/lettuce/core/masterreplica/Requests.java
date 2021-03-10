@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static io.lettuce.core.masterreplica.MasterReplicaUtils.findNodeByUri;
+import static io.lettuce.core.masterreplica.ReplicaUtils.findNodeByUri;
 import static io.lettuce.core.masterreplica.TopologyComparators.LatencyComparator;
 
 import java.util.*;
@@ -35,7 +35,8 @@ class Requests extends
         CompletableEventLatchSupport<Tuple2<RedisURI, TimedAsyncCommand<String, String, String>>, List<RedisNodeDescription>> {
 
     private final Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = new TreeMap<>(
-            MasterReplicaUtils.RedisURIComparator.INSTANCE);
+            ReplicaUtils.RedisURIComparator.INSTANCE);
+
     private final List<RedisNodeDescription> nodes;
 
     public Requests(int expectedCount, List<RedisNodeDescription> nodes) {
@@ -76,7 +77,6 @@ class Requests extends
             result.add(redisNodeDescription);
         }
 
-
         SortAction sortAction = SortAction.getSortAction();
         sortAction.sort(result, new LatencyComparator(latencies));
 
@@ -90,4 +90,5 @@ class Requests extends
     protected TimedAsyncCommand<String, String, String> getRequest(RedisURI redisURI) {
         return rawViews.get(redisURI);
     }
+
 }

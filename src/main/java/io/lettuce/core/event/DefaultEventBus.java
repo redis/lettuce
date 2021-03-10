@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Scheduler;
+import io.lettuce.core.event.jfr.EventRecorder;
 
 /**
- * Default implementation for an {@link EventBus}. Events are published using a {@link Scheduler}.
+ * Default implementation for an {@link EventBus}. Events are published using a {@link Scheduler} and events are recorded
+ * through {@link EventRecorder#record(Event) EventRecorder}.
  *
  * @author Mark Paluch
  * @since 3.4
@@ -29,8 +31,12 @@ import reactor.core.scheduler.Scheduler;
 public class DefaultEventBus implements EventBus {
 
     private final DirectProcessor<Event> bus;
+
     private final FluxSink<Event> sink;
+
     private final Scheduler scheduler;
+
+    private final EventRecorder recorder = EventRecorder.getInstance();
 
     public DefaultEventBus(Scheduler scheduler) {
         this.bus = DirectProcessor.create();
@@ -45,6 +51,10 @@ public class DefaultEventBus implements EventBus {
 
     @Override
     public void publish(Event event) {
+
+        recorder.record(event);
+
         sink.next(event);
     }
+
 }

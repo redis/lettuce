@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,17 @@ import io.lettuce.core.protocol.RedisCommand;
 class CommandSegmentCommandFactory implements CommandFactory {
 
     private final CommandMethod commandMethod;
+
     private final CommandSegments segments;
+
     private final CommandOutputFactoryResolver outputResolver;
+
     private final RedisCodec<Object, Object> redisCodec;
+
     private final ParameterBinder parameterBinder = new ParameterBinder();
+
     private final CommandOutputFactory outputFactory;
+
     private final TypeContext typeContext;
 
     public CommandSegmentCommandFactory(CommandSegments commandSegments, CommandMethod commandMethod,
@@ -91,11 +97,11 @@ class CommandSegmentCommandFactory implements CommandFactory {
         CommandArgs<Object, Object> args = new CommandArgs<>(redisCodec);
 
         CommandOutput<Object, Object, ?> output = outputFactory.create(redisCodec);
-        Command<Object, Object, ?> command = new Command<>(this.segments.getCommandType(),
-                output, args);
+        Command<Object, Object, ?> command = new Command<>(this.segments.getCommandType(), output, args);
 
         parameterBinder.bind(args, redisCodec, segments, parametersAccessor);
 
         return (Command) command;
     }
+
 }

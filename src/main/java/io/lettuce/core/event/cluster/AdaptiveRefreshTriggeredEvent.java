@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,9 @@ import io.lettuce.core.event.Event;
  */
 public class AdaptiveRefreshTriggeredEvent implements Event {
 
-    private Supplier<Partitions> partitionsSupplier;
-    private Runnable topologyRefreshScheduler;
+    private final Supplier<Partitions> partitionsSupplier;
+
+    private final Runnable topologyRefreshScheduler;
 
     public AdaptiveRefreshTriggeredEvent(Supplier<Partitions> partitionsSupplier, Runnable topologyRefreshScheduler) {
         this.partitionsSupplier = partitionsSupplier;
@@ -51,4 +52,5 @@ public class AdaptiveRefreshTriggeredEvent implements Event {
     public Partitions getPartitions() {
         return partitionsSupplier.get();
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,17 +40,19 @@ import io.lettuce.core.resource.ClientResources;
 class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvider<K, V> {
 
     private final RedisClusterClient redisClusterClient;
+
     private final RedisCodec<K, V> redisCodec;
+
     private final RedisClusterPubSubListener<K, V> notifications;
 
     /**
      * Creates a new {@link ClusterPubSubConnectionProvider}.
      *
-     * @param redisClusterClient must not be {@literal null}.
-     * @param clusterWriter must not be {@literal null}.
-     * @param redisCodec must not be {@literal null}.
-     * @param notificationTarget must not be {@literal null}.
-     * @param clusterEventListener must not be {@literal null}.
+     * @param redisClusterClient must not be {@code null}.
+     * @param clusterWriter must not be {@code null}.
+     * @param redisCodec must not be {@code null}.
+     * @param notificationTarget must not be {@code null}.
+     * @param clusterEventListener must not be {@code null}.
      */
     ClusterPubSubConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
             RedisCodec<K, V> redisCodec, RedisClusterPubSubListener<K, V> notificationTarget,
@@ -89,6 +91,7 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
             return redisClusterClient.connectPubSubToNodeAsync((RedisCodec) redisCodec, key.host + ":" + key.port,
                     getSocketAddressSupplier(key));
         }
+
     }
 
     @SuppressWarnings("unchecked")
@@ -111,25 +114,28 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
             ConnectionFuture<StatefulRedisConnection<K, V>> future = delegate.apply(key);
             if (key.nodeId != null) {
                 return future.thenApply(connection -> {
-                    ((StatefulRedisPubSubConnection) connection).addListener(new DelegatingRedisClusterPubSubListener(
-                            key.nodeId));
+                    ((StatefulRedisPubSubConnection) connection)
+                            .addListener(new DelegatingRedisClusterPubSubListener(key.nodeId));
                     return connection;
                 });
             }
 
             return future.thenApply(connection -> {
-                ((StatefulRedisPubSubConnection) connection).addListener(new DelegatingRedisClusterPubSubListener(key.host,
-                        key.port));
+                ((StatefulRedisPubSubConnection) connection)
+                        .addListener(new DelegatingRedisClusterPubSubListener(key.host, key.port));
 
                 return connection;
             });
         }
+
     }
 
     class DelegatingRedisClusterPubSubListener extends RedisPubSubAdapter<K, V> {
 
         private final String nodeId;
+
         private final String host;
+
         private final int port;
 
         DelegatingRedisClusterPubSubListener(String nodeId) {
@@ -179,5 +185,7 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
         private RedisClusterNode getNode() {
             return nodeId != null ? getPartitions().getPartitionByNodeId(nodeId) : getPartitions().getPartition(host, port);
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,14 @@ import io.lettuce.core.internal.LettuceAssert;
 public class CodecAwareOutputFactoryResolver implements CommandOutputFactoryResolver {
 
     private final CommandOutputFactoryResolver delegate;
+
     private final RedisCodec<?, ?> redisCodec;
 
     /**
      * Create a new {@link CodecAwareOutputFactoryResolver} given {@link CommandOutputFactoryResolver} and {@link RedisCodec}.
      *
-     * @param delegate must not be {@literal null}.
-     * @param redisCodec must not be {@literal null}.
+     * @param delegate must not be {@code null}.
+     * @param redisCodec must not be {@code null}.
      */
     public CodecAwareOutputFactoryResolver(CommandOutputFactoryResolver delegate, RedisCodec<?, ?> redisCodec) {
 
@@ -54,4 +55,5 @@ public class CodecAwareOutputFactoryResolver implements CommandOutputFactoryReso
     public CommandOutputFactory resolveStreamingCommandOutput(OutputSelector outputSelector) {
         return delegate.resolveStreamingCommandOutput(new OutputSelector(outputSelector.getOutputType(), redisCodec));
     }
+
 }

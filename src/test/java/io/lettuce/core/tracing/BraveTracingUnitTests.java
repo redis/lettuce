@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package io.lettuce.core.tracing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -24,17 +25,23 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
+import io.lettuce.test.ReflectionTestUtils;
 
+import io.lettuce.core.protocol.AsyncCommand;
 import zipkin2.Span;
+import brave.Tag;
 import brave.Tracer;
 import brave.Tracing;
 import brave.handler.MutableSpan;
 import brave.propagation.CurrentTraceContext;
 import io.lettuce.core.TestSupport;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandType;
 import io.netty.channel.unix.DomainSocketAddress;
 
 /**
+ * Unit tests for {@link BraveTracing}.
+ *
  * @author Mark Paluch
  * @author Daniel Albuquerque
  */
@@ -109,13 +116,14 @@ class BraveTracingUnitTests extends TestSupport {
     void shouldCustomizeSpan() {
 
         BraveTracing tracing = BraveTracing.builder().tracing(clientTracing)
-                .spanCustomizer(it -> it.remoteServiceName("remote")).build();
+                .spanCustomizer((command, span) -> span.tag("cmd", command.getType().name())).build();
 
         BraveTracing.BraveSpan span = (BraveTracing.BraveSpan) tracing.getTracerProvider().getTracer().nextSpan();
-        span.finish();
+        span.start(new AsyncCommand<>(new Command<>(CommandType.AUTH, null)));
 
-        MutableSpan braveSpan = (MutableSpan) ReflectionTestUtils.getField(span.getSpan(), "state");
+        MutableSpan braveSpan = ReflectionTestUtils.getField(span.getSpan(), "state");
+        Object[] tags = ReflectionTestUtils.getField(braveSpan, "tags");
 
-        assertThat(braveSpan.remoteServiceName()).isEqualTo("remote");
+        assertThat(tags).contains("cmd", "AUTH");
     }
 }

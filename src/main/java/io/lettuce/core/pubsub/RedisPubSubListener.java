@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package io.lettuce.core.pubsub;
 
 /**
- * Interface for redis pub/sub listeners.
+ * Interface for Redis Pub/Sub listeners.
  *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Will Glozer
  */
 public interface RedisPubSubListener<K, V> {
+
     /**
      * Message received from a channel subscription.
      *
@@ -71,4 +72,5 @@ public interface RedisPubSubListener<K, V> {
      * @param count Subscription count.
      */
     void punsubscribed(K pattern, long count);
+
 }

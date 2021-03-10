@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,10 +62,12 @@ public class ClusterSlotsParser {
         }
 
         Collections.sort(result, new Comparator<ClusterSlotRange>() {
+
             @Override
             public int compare(ClusterSlotRange o1, ClusterSlotRange o2) {
                 return o1.getFrom() - o2.getFrom();
             }
+
         });
 
         return Collections.unmodifiableList(result);
@@ -76,29 +78,29 @@ public class ClusterSlotsParser {
 
         int from = Math.toIntExact(getLongFromIterator(iterator, 0));
         int to = Math.toIntExact(getLongFromIterator(iterator, 0));
-        RedisClusterNode master = null;
+        RedisClusterNode upstream = null;
 
         List<RedisClusterNode> replicas = new ArrayList<>();
         if (iterator.hasNext()) {
-            master = getRedisClusterNode(iterator, nodeCache);
-            if (master != null) {
-                master.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MASTER));
-                Set<Integer> slots = new TreeSet<>(master.getSlots());
+            upstream = getRedisClusterNode(iterator, nodeCache);
+            if (upstream != null) {
+                upstream.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.UPSTREAM));
+                Set<Integer> slots = new TreeSet<>(upstream.getSlots());
                 slots.addAll(createSlots(from, to));
-                master.setSlots(new ArrayList<>(slots));
+                upstream.setSlots(new ArrayList<>(slots));
             }
         }
 
         while (iterator.hasNext()) {
             RedisClusterNode replica = getRedisClusterNode(iterator, nodeCache);
-            if (replica != null && master != null) {
-                replica.setSlaveOf(master.getNodeId());
-                replica.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.SLAVE));
+            if (replica != null && upstream != null) {
+                replica.setSlaveOf(upstream.getNodeId());
+                replica.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.REPLICA));
                 replicas.add(replica);
             }
         }
 
-        return new ClusterSlotRange(from, to, master, Collections.unmodifiableList(replicas));
+        return new ClusterSlotRange(from, to, upstream, Collections.unmodifiableList(replicas));
     }
 
     private static List<Integer> createSlots(int from, int to) {
@@ -164,4 +166,5 @@ public class ClusterSlotsParser {
         }
         return defaultValue;
     }
+
 }

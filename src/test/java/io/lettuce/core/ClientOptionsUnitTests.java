@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
+
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.protocol.ProtocolVersion;
-
-import java.nio.charset.StandardCharsets;
 
 /**
  * Unit tests for {@link ClientOptions}.
@@ -56,11 +56,10 @@ class ClientOptionsUnitTests {
     }
 
     void checkAssertions(ClientOptions sut) {
-        assertThat(sut.isAutoReconnect()).isEqualTo(true);
-        assertThat(sut.isCancelCommandsOnReconnectFailure()).isEqualTo(false);
+        assertThat(sut.isAutoReconnect()).isTrue();
+        assertThat(sut.isCancelCommandsOnReconnectFailure()).isFalse();
         assertThat(sut.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
-        assertThat(sut.isSuspendReconnectOnProtocolFailure()).isEqualTo(false);
+        assertThat(sut.isSuspendReconnectOnProtocolFailure()).isFalse();
         assertThat(sut.getDisconnectedBehavior()).isEqualTo(ClientOptions.DisconnectedBehavior.DEFAULT);
-        assertThat(sut.getBufferUsageRatio()).isEqualTo(ClientOptions.DEFAULT_BUFFER_USAGE_RATIO);
     }
 }

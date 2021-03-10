@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,20 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
         implements StreamingOutput<StreamMessage<K, V>> {
 
     private boolean initialized;
+
     private Subscriber<StreamMessage<K, V>> subscriber;
+
     private boolean skipStreamKeyReset = false;
+
     private K stream;
+
     private K key;
+
     private String id;
+
     private Map<K, V> body;
+
+    private boolean bodyReceived = false;
 
     public StreamReadOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());
@@ -64,6 +72,12 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
         }
 
         if (key == null) {
+            bodyReceived = true;
+
+            if (bytes == null) {
+                return;
+            }
+
             key = codec.decodeKey(bytes);
             return;
         }
@@ -79,6 +93,10 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
     @Override
     public void multi(int count) {
 
+        if (id != null && key == null && count == -1) {
+            bodyReceived = true;
+        }
+
         if (!initialized) {
             output = OutputFactory.newList(count);
             initialized = true;
@@ -88,8 +106,9 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
     @Override
     public void complete(int depth) {
 
-        if (depth == 3 && body != null) {
-            subscriber.onNext(output, new StreamMessage<>(stream, id, body));
+        if (depth == 3 && bodyReceived) {
+            subscriber.onNext(output, new StreamMessage<>(stream, id, body == null ? Collections.emptyMap() : body));
+            bodyReceived = false;
             key = null;
             body = null;
             id = null;
@@ -119,4 +138,5 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
     public Subscriber<StreamMessage<K, V>> getSubscriber() {
         return subscriber;
     }
+
 }

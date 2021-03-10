@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,14 +45,14 @@ public interface MethodParametersAccessor {
     /**
      *
      * @param index parameter index.
-     * @return {@literal true} if the parameter at {@code index} is a key.
+     * @return {@code true} if the parameter at {@code index} is a key.
      */
     boolean isKey(int index);
 
     /**
      *
      * @param index parameter index.
-     * @return {@literal true} if the parameter at {@code index} is a value.
+     * @return {@code true} if the parameter at {@code index} is a value.
      */
     boolean isValue(int index);
 
@@ -73,12 +73,13 @@ public interface MethodParametersAccessor {
     int resolveParameterIndex(String name);
 
     /**
-     * Return {@literal true} if the parameter at {@code index} is a bindable {@literal null} value that requires a
-     * {@literal null} value instead of being skipped.
+     * Return {@code true} if the parameter at {@code index} is a bindable {@code null} value that requires a
+     * {@code null} value instead of being skipped.
      *
      * @param index parameter index.
-     * @return {@literal true} if the parameter at {@code index} is a bindable {@literal null} value that requires a
-     *         {@literal null} value instead of being skipped.
+     * @return {@code true} if the parameter at {@code index} is a bindable {@code null} value that requires a
+     *         {@code null} value instead of being skipped.
      */
     boolean isBindableNullValue(int index);
+
 }

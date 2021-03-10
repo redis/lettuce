@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,13 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 public class CommandSegments implements Iterable<CommandSegment> {
 
     private final ProtocolKeyword commandType;
+
     private final List<CommandSegment> segments;
 
     /**
      * Create {@link CommandSegments} given a {@link List} of {@link CommandSegment}s.
      *
-     * @param segments must not be {@literal null.}
+     * @param segments must not be {@code null.}
      */
     public CommandSegments(List<CommandSegment> segments) {
 
@@ -52,7 +53,7 @@ public class CommandSegments implements Iterable<CommandSegment> {
      * Attempt to resolve the {@code commandType} against {@link CommandType}. This allows reuse of settings associated with the
      * actual command type such as read-write routing. Subclasses may override this method.
      *
-     * @param commandType must not be {@literal null}.
+     * @param commandType must not be {@code null}.
      * @return the resolved {@link ProtocolKeyword}.
      * @since 5.0.5
      */
@@ -81,6 +82,7 @@ public class CommandSegments implements Iterable<CommandSegment> {
     static class StringCommandType implements ProtocolKeyword {
 
         private final byte[] commandTypeBytes;
+
         private final String commandType;
 
         StringCommandType(String commandType) {
@@ -119,6 +121,7 @@ public class CommandSegments implements Iterable<CommandSegment> {
         public int hashCode() {
             return commandType.hashCode();
         }
+
     }
 
     @Override
@@ -132,4 +135,5 @@ public class CommandSegments implements Iterable<CommandSegment> {
 
         return sb.toString();
     }
+
 }

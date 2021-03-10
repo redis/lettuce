@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
     /**
      * Create a new {@link AbstractClusterNodeConnectionFactory} given {@link ClientResources}.
      *
-     * @param clientResources must not be {@literal null}.
+     * @param clientResources must not be {@code null}.
      */
     public AbstractClusterNodeConnectionFactory(ClientResources clientResources) {
         this.clientResources = clientResources;
@@ -66,7 +66,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
      * <p>
      * This {@link Supplier} resolves the requested endpoint on each {@link Supplier#get()}.
      *
-     * @param connectionKey must not be {@literal null}.
+     * @param connectionKey must not be {@code null}.
      * @return
      */
     Mono<SocketAddress> getSocketAddressSupplier(ConnectionKey connectionKey) {
@@ -108,4 +108,5 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
     private SocketAddress resolve(RedisURI redisURI) {
         return clientResources.socketAddressResolver().resolve(redisURI);
     }
+
 }

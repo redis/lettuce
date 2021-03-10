@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,13 +15,13 @@
  */
 package io.lettuce.core.internal;
 
-import io.lettuce.core.*;
-
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+
+import io.lettuce.core.*;
 
 /**
  * Factory for Redis exceptions.
@@ -115,7 +115,7 @@ public abstract class ExceptionFactory {
      * Redis error messages may create subtypes of {@link RedisCommandExecutionException}.
      *
      * @param message the detail message.
-     * @param cause the nested exception, may be {@literal null}.
+     * @param cause the nested exception, may be {@code null}.
      * @return the {@link RedisCommandExecutionException}.
      */
     public static RedisCommandExecutionException createExecutionException(String message, Throwable cause) {
@@ -140,4 +140,5 @@ public abstract class ExceptionFactory {
 
         return new RedisCommandExecutionException(cause);
     }
+
 }

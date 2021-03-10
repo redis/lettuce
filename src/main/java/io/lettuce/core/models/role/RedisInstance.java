@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,81 @@ public interface RedisInstance {
     /**
      * Possible Redis instance roles.
      */
-    public enum Role {
-        MASTER, SLAVE, SENTINEL;
+    enum Role {
+
+        MASTER {
+
+            @Override
+            public boolean isMaster() {
+                return true;
+            }
+
+            @Override
+            public boolean isUpstream() {
+                return true;
+            }
+
+        },
+
+        @Deprecated
+        SLAVE {
+
+            @Override
+            public boolean isReplica() {
+                return true;
+            }
+
+        },
+
+        UPSTREAM {
+
+            @Override
+            public boolean isMaster() {
+                return true;
+            }
+
+            @Override
+            public boolean isUpstream() {
+                return true;
+            }
+
+        },
+
+        REPLICA {
+
+            @Override
+            public boolean isReplica() {
+                return true;
+            }
+
+        },
+
+        SENTINEL;
+
+        /**
+         * @return {@code true} if the role indicates that the role is a replication source.
+         * @since 6.0
+         */
+        public boolean isMaster() {
+            return false;
+        }
+
+        /**
+         * @return {@code true} if the role indicates that the role is a replication source.
+         * @since 6.1
+         */
+        public boolean isUpstream() {
+            return isMaster();
+        }
+
+        /**
+         * @return {@code true} if the role indicates that the role is a replicated node (replica).
+         * @since 6.0
+         */
+        public boolean isReplica() {
+            return false;
+        }
+
     }
+
 }

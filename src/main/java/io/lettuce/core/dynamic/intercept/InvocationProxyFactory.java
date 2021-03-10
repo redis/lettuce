@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,13 @@ import io.lettuce.core.internal.LettuceAssert;
 public class InvocationProxyFactory {
 
     private final List<MethodInterceptor> interceptors = new ArrayList<>();
+
     private final List<Class<?>> interfaces = new ArrayList<>();
 
     /**
      * Create a proxy instance give a {@link ClassLoader}.
      *
-     * @param classLoader must not be {@literal null}.
+     * @param classLoader must not be {@code null}.
      * @param <T> inferred result type.
      * @return the invocation proxy instance.
      */
@@ -63,7 +64,7 @@ public class InvocationProxyFactory {
     /**
      * Add a interface type that should be implemented by the resulting invocation proxy.
      *
-     * @param ifc must not be {@literal null} and must be an interface type.
+     * @param ifc must not be {@code null} and must be an interface type.
      */
     public void addInterface(Class<?> ifc) {
 
@@ -100,5 +101,7 @@ public class InvocationProxyFactory {
         protected Object handleInvocation(Object proxy, Method method, Object[] args) throws Throwable {
             return context.invoke(proxy, method, args);
         }
+
     }
+
 }

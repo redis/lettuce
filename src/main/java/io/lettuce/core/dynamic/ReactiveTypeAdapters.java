@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,7 @@ class ReactiveTypeAdapters {
         public Flux<?> apply(Publisher<?> source) {
             return Flux.from(source);
         }
+
     }
 
     /**
@@ -166,6 +167,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(Publisher<?> source) {
             return Mono.from(source);
         }
+
     }
 
     // -------------------------------------------------------------------------
@@ -183,6 +185,7 @@ class ReactiveTypeAdapters {
         public Single<?> apply(Publisher<?> source) {
             return RxReactiveStreams.toSingle(source);
         }
+
     }
 
     /**
@@ -196,6 +199,7 @@ class ReactiveTypeAdapters {
         public Completable apply(Publisher<?> source) {
             return RxReactiveStreams.toCompletable(source);
         }
+
     }
 
     /**
@@ -209,6 +213,7 @@ class ReactiveTypeAdapters {
         public Observable<?> apply(Publisher<?> source) {
             return RxReactiveStreams.toObservable(source);
         }
+
     }
 
     /**
@@ -222,6 +227,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(Single<?> source) {
             return Flux.defer(() -> RxReactiveStreams.toPublisher(source));
         }
+
     }
 
     /**
@@ -235,6 +241,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(Single<?> source) {
             return Mono.defer(() -> Mono.from((Publisher<?>) RxReactiveStreams.toPublisher(source)));
         }
+
     }
 
     /**
@@ -248,6 +255,7 @@ class ReactiveTypeAdapters {
         public Flux<?> apply(Single<?> source) {
             return Flux.defer(() -> RxReactiveStreams.toPublisher(source));
         }
+
     }
 
     /**
@@ -261,6 +269,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(Completable source) {
             return Flux.defer(() -> RxReactiveStreams.toPublisher(source));
         }
+
     }
 
     /**
@@ -274,6 +283,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(Completable source) {
             return Mono.from(RxJava1CompletableToPublisherAdapter.INSTANCE.apply(source));
         }
+
     }
 
     /**
@@ -287,6 +297,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(Observable<?> source) {
             return Flux.defer(() -> new PublisherAdapter<>(source));
         }
+
     }
 
     /**
@@ -300,6 +311,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(Observable<?> source) {
             return Mono.defer(() -> Mono.from((Publisher<?>) RxReactiveStreams.toPublisher(source)));
         }
+
     }
 
     /**
@@ -313,6 +325,7 @@ class ReactiveTypeAdapters {
         public Flux<?> apply(Observable<?> source) {
             return Flux.defer(() -> Flux.from((Publisher<?>) RxReactiveStreams.toPublisher(source)));
         }
+
     }
 
     /**
@@ -326,6 +339,7 @@ class ReactiveTypeAdapters {
         public Single<?> apply(Observable<?> source) {
             return source.toSingle();
         }
+
     }
 
     /**
@@ -339,6 +353,7 @@ class ReactiveTypeAdapters {
         public Observable<?> apply(Single<?> source) {
             return source.toObservable();
         }
+
     }
 
     // -------------------------------------------------------------------------
@@ -356,6 +371,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.Single<?> apply(Publisher<?> source) {
             return io.reactivex.Single.fromPublisher(source);
         }
+
     }
 
     /**
@@ -369,6 +385,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.Completable apply(Publisher<?> source) {
             return io.reactivex.Completable.fromPublisher(source);
         }
+
     }
 
     /**
@@ -382,6 +399,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.Observable<?> apply(Publisher<?> source) {
             return io.reactivex.Observable.fromPublisher(source);
         }
+
     }
 
     /**
@@ -395,6 +413,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.Single<?> source) {
             return source.toFlowable();
         }
+
     }
 
     /**
@@ -408,6 +427,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(io.reactivex.Single<?> source) {
             return Mono.from(source.toFlowable());
         }
+
     }
 
     /**
@@ -421,6 +441,7 @@ class ReactiveTypeAdapters {
         public Flux<?> apply(io.reactivex.Single<?> source) {
             return Flux.from(source.toFlowable());
         }
+
     }
 
     /**
@@ -434,6 +455,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.Completable source) {
             return source.toFlowable();
         }
+
     }
 
     /**
@@ -447,6 +469,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(io.reactivex.Completable source) {
             return Mono.from(RxJava2CompletableToPublisherAdapter.INSTANCE.apply(source));
         }
+
     }
 
     /**
@@ -460,6 +483,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.Observable<?> source) {
             return source.toFlowable(BackpressureStrategy.BUFFER);
         }
+
     }
 
     /**
@@ -473,6 +497,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(io.reactivex.Observable<?> source) {
             return Mono.from(source.toFlowable(BackpressureStrategy.BUFFER));
         }
+
     }
 
     /**
@@ -486,6 +511,7 @@ class ReactiveTypeAdapters {
         public Flux<?> apply(io.reactivex.Observable<?> source) {
             return Flux.from(source.toFlowable(BackpressureStrategy.BUFFER));
         }
+
     }
 
     /**
@@ -499,6 +525,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.Flowable<?> apply(Publisher<?> source) {
             return Flowable.fromPublisher(source);
         }
+
     }
 
     /**
@@ -512,6 +539,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.Flowable<?> source) {
             return source;
         }
+
     }
 
     /**
@@ -525,6 +553,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.Maybe<?> apply(Publisher<?> source) {
             return Flowable.fromPublisher(source).singleElement();
         }
+
     }
 
     /**
@@ -538,6 +567,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.Maybe<?> source) {
             return source.toFlowable();
         }
+
     }
 
     /**
@@ -551,6 +581,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(io.reactivex.Maybe<?> source) {
             return Mono.from(source.toFlowable());
         }
+
     }
 
     /**
@@ -564,6 +595,7 @@ class ReactiveTypeAdapters {
         public Flux<?> apply(io.reactivex.Maybe<?> source) {
             return Flux.from(source.toFlowable());
         }
+
     }
 
     /**
@@ -577,6 +609,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.Single<?> apply(io.reactivex.Observable<?> source) {
             return source.singleOrError();
         }
+
     }
 
     /**
@@ -590,6 +623,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.Maybe<?> apply(io.reactivex.Observable<?> source) {
             return source.singleElement();
         }
+
     }
 
     /**
@@ -603,6 +637,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.Observable<?> apply(io.reactivex.Single<?> source) {
             return source.toObservable();
         }
+
     }
 
     // -------------------------------------------------------------------------
@@ -620,6 +655,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.rxjava3.core.Single<?> apply(Publisher<?> source) {
             return io.reactivex.rxjava3.core.Single.fromPublisher(source);
         }
+
     }
 
     /**
@@ -633,6 +669,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.rxjava3.core.Completable apply(Publisher<?> source) {
             return io.reactivex.rxjava3.core.Completable.fromPublisher(source);
         }
+
     }
 
     /**
@@ -646,6 +683,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.rxjava3.core.Observable<?> apply(Publisher<?> source) {
             return io.reactivex.rxjava3.core.Observable.fromPublisher(source);
         }
+
     }
 
     /**
@@ -659,6 +697,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.rxjava3.core.Single<?> source) {
             return source.toFlowable();
         }
+
     }
 
     /**
@@ -672,6 +711,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(io.reactivex.rxjava3.core.Single<?> source) {
             return Mono.from(source.toFlowable());
         }
+
     }
 
     /**
@@ -685,6 +725,7 @@ class ReactiveTypeAdapters {
         public Flux<?> apply(io.reactivex.rxjava3.core.Single<?> source) {
             return Flux.from(source.toFlowable());
         }
+
     }
 
     /**
@@ -698,6 +739,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.rxjava3.core.Completable source) {
             return source.toFlowable();
         }
+
     }
 
     /**
@@ -711,6 +753,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(io.reactivex.rxjava3.core.Completable source) {
             return Mono.from(RxJava3CompletableToPublisherAdapter.INSTANCE.apply(source));
         }
+
     }
 
     /**
@@ -724,6 +767,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
             return source.toFlowable(io.reactivex.rxjava3.core.BackpressureStrategy.BUFFER);
         }
+
     }
 
     /**
@@ -737,6 +781,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
             return Mono.from(source.toFlowable(io.reactivex.rxjava3.core.BackpressureStrategy.BUFFER));
         }
+
     }
 
     /**
@@ -750,6 +795,7 @@ class ReactiveTypeAdapters {
         public Flux<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
             return Flux.from(source.toFlowable(io.reactivex.rxjava3.core.BackpressureStrategy.BUFFER));
         }
+
     }
 
     /**
@@ -763,6 +809,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.rxjava3.core.Flowable<?> apply(Publisher<?> source) {
             return io.reactivex.rxjava3.core.Flowable.fromPublisher(source);
         }
+
     }
 
     /**
@@ -776,6 +823,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.rxjava3.core.Flowable<?> source) {
             return source;
         }
+
     }
 
     /**
@@ -789,6 +837,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.rxjava3.core.Maybe<?> apply(Publisher<?> source) {
             return io.reactivex.rxjava3.core.Flowable.fromPublisher(source).singleElement();
         }
+
     }
 
     /**
@@ -802,6 +851,7 @@ class ReactiveTypeAdapters {
         public Publisher<?> apply(io.reactivex.rxjava3.core.Maybe<?> source) {
             return source.toFlowable();
         }
+
     }
 
     /**
@@ -815,6 +865,7 @@ class ReactiveTypeAdapters {
         public Mono<?> apply(io.reactivex.rxjava3.core.Maybe<?> source) {
             return Mono.from(source.toFlowable());
         }
+
     }
 
     /**
@@ -828,6 +879,7 @@ class ReactiveTypeAdapters {
         public Flux<?> apply(io.reactivex.rxjava3.core.Maybe<?> source) {
             return Flux.from(source.toFlowable());
         }
+
     }
 
     /**
@@ -842,6 +894,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.rxjava3.core.Single<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
             return source.singleOrError();
         }
+
     }
 
     /**
@@ -856,6 +909,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.rxjava3.core.Maybe<?> apply(io.reactivex.rxjava3.core.Observable<?> source) {
             return source.singleElement();
         }
+
     }
 
     /**
@@ -870,5 +924,7 @@ class ReactiveTypeAdapters {
         public io.reactivex.rxjava3.core.Observable<?> apply(io.reactivex.rxjava3.core.Single<?> source) {
             return source.toObservable();
         }
+
     }
+
 }

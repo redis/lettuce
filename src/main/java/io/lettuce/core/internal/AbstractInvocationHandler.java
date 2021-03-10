@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,18 +144,19 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
 
     private static boolean isProxyOfSameInterfaces(Object arg, Class<?> proxyClass) {
         return proxyClass.isInstance(arg)
-        // Equal proxy instances should mostly be instance of proxyClass
-        // Under some edge cases (such as the proxy of JDK types serialized and then deserialized)
-        // the proxy type may not be the same.
-        // We first check isProxyClass() so that the common case of comparing with non-proxy objects
-        // is efficient.
-                || (Proxy.isProxyClass(arg.getClass()) && Arrays.equals(arg.getClass().getInterfaces(),
-                        proxyClass.getInterfaces()));
+                // Equal proxy instances should mostly be instance of proxyClass
+                // Under some edge cases (such as the proxy of JDK types serialized and then deserialized)
+                // the proxy type may not be the same.
+                // We first check isProxyClass() so that the common case of comparing with non-proxy objects
+                // is efficient.
+                || (Proxy.isProxyClass(arg.getClass())
+                        && Arrays.equals(arg.getClass().getInterfaces(), proxyClass.getInterfaces()));
     }
 
     protected static class MethodTranslator {
 
         private static final WeakHashMap<Class<?>, MethodTranslator> TRANSLATOR_MAP = new WeakHashMap<>(32);
+
         private final Map<Method, Method> map;
 
         private MethodTranslator(Class<?> delegate, Class<?>... methodSources) {
@@ -235,5 +236,7 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
             }
             throw new IllegalStateException("Cannot find source method " + key);
         }
+
     }
+
 }

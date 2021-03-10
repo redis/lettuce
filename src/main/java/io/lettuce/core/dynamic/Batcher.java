@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public interface Batcher {
      * Add command to the {@link Batcher}.
      *
      * @param command the command to batch.
-     * @param batching invocation-specific {@link CommandBatching} control. May be {@literal null} to use default batching
+     * @param batching invocation-specific {@link CommandBatching} control. May be {@code null} to use default batching
      *        settings.
      * @return result of the batching. Either an {@link BatchTasks#EMPTY empty} result or a result containing the batched
      *         commands.
@@ -51,4 +51,5 @@ public interface Batcher {
     default BatchTasks flush() {
         return BatchTasks.EMPTY;
     }
+
 }

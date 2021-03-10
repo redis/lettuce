@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public interface RedisTransactionalCommands<K, V> {
     /**
      * Watch the given keys to determine execution of the MULTI/EXEC block.
      *
-     * @param keys the key
+     * @param keys the key.
      * @return String simple-string-reply always {@code OK}.
      */
     String watch(K... keys);

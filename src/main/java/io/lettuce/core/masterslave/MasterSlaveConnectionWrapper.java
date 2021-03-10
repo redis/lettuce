@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
@@ -70,6 +71,16 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     @Override
     public RedisReactiveCommands<K, V> reactive() {
         return delegate.reactive();
+    }
+
+    @Override
+    public void addListener(PushListener listener) {
+        delegate.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(PushListener listener) {
+        delegate.removeListener(listener);
     }
 
     @Override
@@ -132,4 +143,5 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     public void flushCommands() {
         delegate.flushCommands();
     }
+
 }

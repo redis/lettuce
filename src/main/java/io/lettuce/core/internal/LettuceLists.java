@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public final class LettuceLists {
     /**
      * Creates a new {@link ArrayList} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param elements the elements that the list should contain, must not be {@code null}.
      * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
@@ -53,7 +53,7 @@ public final class LettuceLists {
     /**
      * Creates a new {@link ArrayList} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param elements the elements that the list should contain, must not be {@code null}.
      * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
@@ -71,7 +71,7 @@ public final class LettuceLists {
     /**
      * Creates a new {@link ArrayList} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param elements the elements that the list should contain, must not be {@code null}.
      * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
@@ -89,7 +89,7 @@ public final class LettuceLists {
     /**
      * Creates a new unmodifiable {@link ArrayList} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param elements the elements that the list should contain, must not be {@code null}.
      * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
@@ -101,11 +101,12 @@ public final class LettuceLists {
     /**
      * Creates a new unmodifiable {@link ArrayList} containing all elements from {@code elements}.
      *
-     * @param elements the elements that the list should contain, must not be {@literal null}.
+     * @param elements the elements that the list should contain, must not be {@code null}.
      * @param <T> the element type
      * @return a new {@link ArrayList} containing all elements from {@code elements}.
      */
     public static <T> List<T> unmodifiableList(Collection<? extends T> elements) {
         return Collections.unmodifiableList(new ArrayList<>(elements));
     }
+
 }

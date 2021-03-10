@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import io.lettuce.core.internal.LettuceAssert;
 public class Consumer<K> {
 
     final K group;
+
     final K name;
 
     private Consumer(K group, K name) {
@@ -40,8 +41,8 @@ public class Consumer<K> {
     /**
      * Create a new consumer.
      *
-     * @param group name of the consumer group, must not be {@literal null} or empty.
-     * @param name name of the consumer, must not be {@literal null} or empty.
+     * @param group name of the consumer group, must not be {@code null} or empty.
+     * @param name name of the consumer, must not be {@code null} or empty.
      * @return the consumer {@link Consumer} object.
      */
     public static <K> Consumer<K> from(K group, K name) {
@@ -85,4 +86,5 @@ public class Consumer<K> {
     public String toString() {
         return String.format("%s:%s", group, name);
     }
+
 }

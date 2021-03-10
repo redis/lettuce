@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +40,12 @@ import io.netty.buffer.ByteBuf;
  *
  * @author Mark Paluch
  */
-public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements RedisCommand<K, V, T>, RedisFuture<T>,
-        CompleteableCommand<T>, DecoratedCommand<K, V, T> {
+public class AsyncCommand<K, V, T> extends CompletableFuture<T>
+        implements RedisCommand<K, V, T>, RedisFuture<T>, CompleteableCommand<T>, DecoratedCommand<K, V, T> {
 
     @SuppressWarnings("rawtypes")
-    private static final AtomicIntegerFieldUpdater<AsyncCommand> COUNT_UPDATER = AtomicIntegerFieldUpdater.newUpdater(
-            AsyncCommand.class, "count");
+    private static final AtomicIntegerFieldUpdater<AsyncCommand> COUNT_UPDATER = AtomicIntegerFieldUpdater
+            .newUpdater(AsyncCommand.class, "count");
 
     private final RedisCommand<K, V, T> command;
 
@@ -54,14 +54,14 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T> implements Redis
     private volatile int count = 1;
 
     /**
-     * @param command the command, must not be {@literal null}.
+     * @param command the command, must not be {@code null}.
      */
     public AsyncCommand(RedisCommand<K, V, T> command) {
         this(command, 1);
     }
 
     /**
-     * @param command the command, must not be {@literal null}.
+     * @param command the command, must not be {@code null}.
      */
     protected AsyncCommand(RedisCommand<K, V, T> command, int count) {
         LettuceAssert.notNull(command, "RedisCommand must not be null");

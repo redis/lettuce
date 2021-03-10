@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,11 @@ import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.core.internal.*;
+import io.lettuce.core.internal.AbstractInvocationHandler;
+import io.lettuce.core.internal.ExceptionFactory;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.TimeoutProvider;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
@@ -44,11 +48,15 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     private static final Method NULL_MARKER_METHOD;
 
     private final Map<Method, Method> nodeSelectionMethods = new ConcurrentHashMap<>();
+
     private final Map<Method, Method> connectionMethod = new ConcurrentHashMap<>();
+
     private final Class<?> commandsInterface;
 
     private final AbstractNodeSelection<?, ?, ?, ?> selection;
+
     private final ExecutionModel executionModel;
+
     private final TimeoutProvider timeoutProvider;
 
     static {
@@ -182,40 +190,17 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         return new AsyncExecutionsImpl<>(asyncExecutions);
     }
 
-    private static boolean awaitAll(long timeout, TimeUnit unit, Collection<CompletionStage<?>> futures) {
+    @SuppressWarnings("rawtypes")
+    private static boolean awaitAll(long timeout, TimeUnit unit, Collection<CompletionStage<?>> stages) {
 
-        boolean complete;
+        CompletableFuture[] futures = new CompletableFuture[stages.size()];
 
-        try {
-            long nanos = unit.toNanos(timeout);
-            long time = System.nanoTime();
-
-            for (CompletionStage<?> f : futures) {
-
-                if (nanos == 0) {
-                    f.toCompletableFuture().get();
-                } else {
-                    if (nanos < 0) {
-                        return false;
-                    }
-                    try {
-                        f.toCompletableFuture().get(nanos, TimeUnit.NANOSECONDS);
-                    } catch (ExecutionException e) {
-                        // ignore
-                    }
-                    long now = System.nanoTime();
-                    nanos -= now - time;
-                    time = now;
-                }
-            }
-            complete = true;
-        } catch (TimeoutException e) {
-            complete = false;
-        } catch (Exception e) {
-            throw Exceptions.bubble(e);
+        int i = 0;
+        for (CompletionStage<?> completableFuture : stages) {
+            futures[i++] = completableFuture.toCompletableFuture();
         }
 
-        return complete;
+        return Futures.awaitAll(timeout, unit, futures);
     }
 
     private boolean atLeastOneFailed(Map<RedisClusterNode, CompletionStage<?>> executions) {
@@ -309,4 +294,5 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     enum ExecutionModel {
         SYNC, ASYNC, REACTIVE
     }
+
 }

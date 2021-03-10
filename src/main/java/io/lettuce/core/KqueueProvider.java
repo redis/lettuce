@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,10 @@ package io.lettuce.core;
 public class KqueueProvider {
 
     /**
-     * @return {@literal true} if kqueue is available.
+     * @return {@code true} if kqueue is available.
      */
     public static boolean isAvailable() {
         return io.lettuce.core.resource.KqueueProvider.isAvailable();
     }
+
 }

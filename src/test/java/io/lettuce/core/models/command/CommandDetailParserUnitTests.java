@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.models.command;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,7 +26,10 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.internal.LettuceLists;
 
 /**
+ * Unit tests for {@link CommandDetailParser}.
+ *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
 class CommandDetailParserUnitTests {
 
@@ -51,7 +54,8 @@ class CommandDetailParserUnitTests {
 
     @Test
     void testParse() {
-        Object o = LettuceLists.newList("get", "1", LettuceLists.newList("fast", "loading"), 1L, 2L, 3L);
+        Object o = LettuceLists.newList("get", "1", LettuceLists.newList("fast", "loading"), 1L, 2L, 3L,
+                LettuceLists.newList("@read", "@string", "@fast"));
         List<CommandDetail> result = CommandDetailParser.parse(LettuceLists.newList(o));
         assertThat(result).hasSize(1);
 
@@ -62,6 +66,7 @@ class CommandDetailParserUnitTests {
         assertThat(commandDetail.getFirstKeyPosition()).isEqualTo(1);
         assertThat(commandDetail.getLastKeyPosition()).isEqualTo(2);
         assertThat(commandDetail.getKeyStepCount()).isEqualTo(3);
+        assertThat(commandDetail.getAclCategories()).hasSize(3);
     }
 
     @Test
@@ -73,7 +78,9 @@ class CommandDetailParserUnitTests {
         commandDetail.setKeyStepCount(4);
         commandDetail.setName("theName");
         commandDetail.setFlags(new HashSet<>());
+        commandDetail.setAclCategories(new HashSet<>());
 
         assertThat(commandDetail.toString()).contains(CommandDetail.class.getSimpleName());
     }
+
 }

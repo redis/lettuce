@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandKeyword.ADDR;
-import static io.lettuce.core.protocol.CommandKeyword.ID;
-import static io.lettuce.core.protocol.CommandKeyword.SKIPME;
-import static io.lettuce.core.protocol.CommandType.TYPE;
-
+import static io.lettuce.core.protocol.CommandKeyword.*;
+//
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 
 /**
  *
@@ -40,8 +38,13 @@ public class KillArgs implements CompositeArgument {
     }
 
     private Boolean skipme;
+
     private String addr;
+
+    private String laddr;
+
     private Long id;
+
     private Type type;
 
     /**
@@ -66,14 +69,25 @@ public class KillArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link KillArgs} setting {@literal ADDR}.
+         * Creates new {@link KillArgs} setting {@literal ADDR} (Remote Address).
          *
-         * @param addr must not be {@literal null}.
+         * @param addr must not be {@code null}.
          * @return new {@link KillArgs} with {@literal ADDR} set.
          * @see KillArgs#addr(String)
          */
         public static KillArgs addr(String addr) {
             return new KillArgs().addr(addr);
+        }
+
+        /**
+         * Creates new {@link KillArgs} setting {@literal LADDR} (Local Address).
+         *
+         * @param laddr must not be {@code null}.
+         * @return new {@link KillArgs} with {@literal LADDR} set.
+         * @see KillArgs#laddr(String)
+         */
+        public static KillArgs laddr(String laddr) {
+            return new KillArgs().laddr(laddr);
         }
 
         /**
@@ -127,6 +141,7 @@ public class KillArgs implements CompositeArgument {
         public static KillArgs typeSlave() {
             return new KillArgs().type(Type.SLAVE);
         }
+
     }
 
     /**
@@ -153,9 +168,9 @@ public class KillArgs implements CompositeArgument {
     }
 
     /**
-     * Kill the client at {@code addr}.
+     * Kill the client at {@code addr} (Remote Address).
      *
-     * @param addr must not be {@literal null}.
+     * @param addr must not be {@code null}.
      * @return {@code this} {@link KillArgs}.
      */
     public KillArgs addr(String addr) {
@@ -163,6 +178,21 @@ public class KillArgs implements CompositeArgument {
         LettuceAssert.notNull(addr, "Client address must not be null");
 
         this.addr = addr;
+        return this;
+    }
+
+    /**
+     * Kill the client at {@code laddr} (Local Address).
+     *
+     * @param laddr must not be {@code null}.
+     * @return {@code this} {@link KillArgs}.
+     * @since 6.1
+     */
+    public KillArgs laddr(String laddr) {
+
+        LettuceAssert.notNull(laddr, "Local client address must not be null");
+
+        this.laddr = laddr;
         return this;
     }
 
@@ -182,7 +212,7 @@ public class KillArgs implements CompositeArgument {
      * This closes the connections of all the clients in the specified {@link Type class}. Note that clients blocked into the
      * {@literal MONITOR} command are considered to belong to the normal class.
      *
-     * @param type must not be {@literal null}.
+     * @param type must not be {@code null}.
      * @return {@code this} {@link KillArgs}.
      */
     public KillArgs type(Type type) {
@@ -193,6 +223,7 @@ public class KillArgs implements CompositeArgument {
         return this;
     }
 
+    @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (skipme != null) {
@@ -207,8 +238,13 @@ public class KillArgs implements CompositeArgument {
             args.add(ADDR).add(addr);
         }
 
+        if (laddr != null) {
+            args.add("LADDR").add(laddr);
+        }
+
         if (type != null) {
-            args.add(TYPE).add(type.name().toLowerCase());
+            args.add(CommandType.TYPE).add(type.name().toLowerCase());
         }
     }
+
 }

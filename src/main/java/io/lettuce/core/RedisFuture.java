@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,9 @@ public interface RedisFuture<V> extends CompletionStage<V>, Future<V> {
      * @param timeout Maximum time to wait for a result.
      * @param unit Unit of time for the timeout.
      *
-     * @return true if the output became available.
+     * @return {@code true} if the output became available.
      * @throws InterruptedException if the current thread is interrupted while waiting
      */
     boolean await(long timeout, TimeUnit unit) throws InterruptedException;
+
 }

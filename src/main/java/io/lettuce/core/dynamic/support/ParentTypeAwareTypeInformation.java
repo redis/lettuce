@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,15 @@ import java.util.Map;
 abstract class ParentTypeAwareTypeInformation<S> extends TypeDiscoverer<S> {
 
     private final TypeDiscoverer<?> parent;
+
     private int hashCode;
 
     /**
      * Creates a new {@link ParentTypeAwareTypeInformation}.
      *
-     * @param type must not be {@literal null}.
-     * @param parent must not be {@literal null}.
-     * @param map must not be {@literal null}.
+     * @param type must not be {@code null}.
+     * @param parent must not be {@code null}.
+     * @param map must not be {@code null}.
      */
     protected ParentTypeAwareTypeInformation(Type type, TypeDiscoverer<?> parent, Map<TypeVariable<?>, Type> map) {
 
@@ -44,8 +45,8 @@ abstract class ParentTypeAwareTypeInformation<S> extends TypeDiscoverer<S> {
     /**
      * Merges the type variable maps of the given parent with the new map.
      *
-     * @param parent must not be {@literal null}.
-     * @param map must not be {@literal null}.
+     * @param parent must not be {@code null}.
+     * @param map must not be {@code null}.
      * @return
      */
     private static Map<TypeVariable<?>, Type> mergeMaps(TypeDiscoverer<?> parent, Map<TypeVariable<?>, Type> map) {
@@ -91,4 +92,5 @@ abstract class ParentTypeAwareTypeInformation<S> extends TypeDiscoverer<S> {
 
         return this.hashCode;
     }
+
 }

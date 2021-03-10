@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
 public class DefaultEventPublisherOptions implements EventPublisherOptions {
 
     public static final long DEFAULT_EMIT_INTERVAL = 10;
+
     public static final TimeUnit DEFAULT_EMIT_INTERVAL_UNIT = TimeUnit.MINUTES;
+
     public static final Duration DEFAULT_EMIT_INTERVAL_DURATION = Duration.ofMinutes(DEFAULT_EMIT_INTERVAL);
 
     private static final DefaultEventPublisherOptions DISABLED = new Builder().eventEmitInterval(Duration.ZERO).build();
@@ -103,6 +105,7 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
         public DefaultEventPublisherOptions build() {
             return new DefaultEventPublisherOptions(this);
         }
+
     }
 
     @Override
@@ -127,4 +130,5 @@ public class DefaultEventPublisherOptions implements EventPublisherOptions {
     public static DefaultEventPublisherOptions disabled() {
         return DISABLED;
     }
+
 }

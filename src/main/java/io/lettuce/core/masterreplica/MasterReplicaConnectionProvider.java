@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static io.lettuce.core.masterreplica.MasterReplicaUtils.findNodeByHostAndPort;
+import static io.lettuce.core.masterreplica.ReplicaUtils.findNodeByHostAndPort;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +33,6 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
 import io.lettuce.core.internal.Exceptions;
-import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -47,15 +46,19 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class MasterReplicaConnectionProvider<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterReplicaConnectionProvider.class);
+
     private final boolean debugEnabled = logger.isDebugEnabled();
 
     private final RedisURI initialRedisUri;
+
     private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, CompletionStage<StatefulRedisConnection<K, V>>> connectionProvider;
 
     private List<RedisNodeDescription> knownNodes = new ArrayList<>();
 
     private boolean autoFlushCommands = true;
+
     private final Object stateLock = new Object();
+
     private ReadFrom readFrom;
 
     MasterReplicaConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
@@ -111,6 +114,7 @@ class MasterReplicaConnectionProvider<K, V> {
 
         if (readFrom != null && intent == Intent.READ) {
             List<RedisNodeDescription> selection = readFrom.select(new ReadFrom.Nodes() {
+
                 @Override
                 public List<RedisNodeDescription> getNodes() {
                     return knownNodes;
@@ -120,6 +124,7 @@ class MasterReplicaConnectionProvider<K, V> {
                 public Iterator<RedisNodeDescription> iterator() {
                     return knownNodes.iterator();
                 }
+
             });
 
             if (selection.isEmpty()) {
@@ -295,7 +300,7 @@ class MasterReplicaConnectionProvider<K, V> {
     public RedisNodeDescription getMaster() {
 
         for (RedisNodeDescription knownNode : knownNodes) {
-            if (knownNode.getRole() == RedisInstance.Role.MASTER) {
+            if (knownNode.getRole().isUpstream()) {
                 return knownNode;
             }
         }
@@ -306,6 +311,7 @@ class MasterReplicaConnectionProvider<K, V> {
     class DefaultConnectionFactory implements Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> {
 
         private final RedisClient redisClient;
+
         private final RedisCodec<K, V> redisCodec;
 
         DefaultConnectionFactory(RedisClient redisClient, RedisCodec<K, V> redisCodec) {
@@ -316,17 +322,7 @@ class MasterReplicaConnectionProvider<K, V> {
         @Override
         public ConnectionFuture<StatefulRedisConnection<K, V>> apply(ConnectionKey key) {
 
-            RedisURI.Builder builder = RedisURI.Builder.redis(key.host, key.port).withSsl(initialRedisUri.isSsl())
-                    .withVerifyPeer(initialRedisUri.isVerifyPeer()).withStartTls(initialRedisUri.isStartTls());
-
-            if (initialRedisUri.getPassword() != null && initialRedisUri.getPassword().length != 0) {
-                builder.withPassword(initialRedisUri.getPassword());
-            }
-
-            if (initialRedisUri.getClientName() != null) {
-                builder.withClientName(initialRedisUri.getClientName());
-            }
-            builder.withDatabase(initialRedisUri.getDatabase());
+            RedisURI.Builder builder = RedisURI.builder(initialRedisUri).withHost(key.host).withPort(key.port);
 
             ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = redisClient.connectAsync(redisCodec,
                     builder.build());
@@ -339,6 +335,7 @@ class MasterReplicaConnectionProvider<K, V> {
 
             return connectionFuture;
         }
+
     }
 
     private static ConnectionKey toConnectionKey(RedisURI redisURI) {
@@ -351,6 +348,7 @@ class MasterReplicaConnectionProvider<K, V> {
     static class ConnectionKey {
 
         private final String host;
+
         private final int port;
 
         ConnectionKey(String host, int port) {
@@ -379,9 +377,11 @@ class MasterReplicaConnectionProvider<K, V> {
             result = 31 * result + port;
             return result;
         }
+
     }
 
     enum Intent {
         READ, WRITE;
     }
+
 }

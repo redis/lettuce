@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
  * @author Mark Paluch
  * @since 3.0
  */
-public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V> implements
-        RedisSentinelReactiveCommands<K, V> {
+public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
+        implements RedisSentinelReactiveCommands<K, V> {
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
 
@@ -140,7 +140,8 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
         return createMono(() -> commandBuilder.info(section));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
@@ -149,7 +150,8 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
         return (Flux) createFlux(() -> new Command<>(type, output));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
     public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args) {
 
         LettuceAssert.notNull(type, "Command type must not be null");
@@ -173,4 +175,5 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
     public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
         return (StatefulRedisSentinelConnection<K, V>) super.getConnection();
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -35,6 +38,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.Timeout;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -52,6 +56,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultClusterTopologyRefresh.class);
 
     private final NodeConnectionFactory nodeConnectionFactory;
+
     private final ClientResources clientResources;
 
     public DefaultClusterTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, ClientResources clientResources) {
@@ -65,7 +70,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
      *
      * @param seed collection of {@link RedisURI}s
      * @param connectTimeout connect timeout
-     * @param discovery {@literal true} to discover additional nodes
+     * @param discovery {@code true} to discover additional nodes
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
     public CompletionStage<Map<RedisURI, Partitions>> loadViews(Iterable<RedisURI> seed, Duration connectTimeout,
@@ -356,24 +361,15 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         return !eventExecutors.isShuttingDown();
     }
 
-    private static <E> Set<E> difference(Set<E> set1, Set<E> set2) {
+    private static Set<RedisURI> difference(Set<RedisURI> allKnown, Set<RedisURI> seed) {
 
-        Set<E> result = new HashSet<>(set1.size());
+       Set<RedisURI> result = new TreeSet<>(TopologyComparators.RedisURIComparator.INSTANCE);
 
-        for (E e1 : set1) {
-            if (!set2.contains(e1)) {
-                result.add(e1);
+        for (RedisURI e : allKnown) {
+            if (!seed.contains(e)) {
+                result.add(e);
             }
         }
-
-        List<E> list = new ArrayList<>(set2.size());
-        for (E e : set2) {
-            if (!set1.contains(e)) {
-                list.add(e);
-            }
-        }
-
-        result.addAll(list);
 
         return result;
     }
@@ -403,10 +399,14 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
 
     static class ConnectionTracker {
 
-        private Map<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> connections = new LinkedHashMap<>();
+        private final Map<RedisURI, CompletableFuture<StatefulRedisConnection<String, String>>> connections = new LinkedHashMap<>();
 
         public void addConnection(RedisURI uri, CompletableFuture<StatefulRedisConnection<String, String>> future) {
-            connections.put(uri, future);
+            CompletableFuture<StatefulRedisConnection<String, String>> existing = connections.put(uri, future);
+
+            if(existing != null){
+                System.out.println("faiiil!1");
+            }
         }
 
         @SuppressWarnings("rawtypes")
@@ -465,6 +465,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
             }
             return activeConnections;
         }
+
     }
 
     @SuppressWarnings("serial")
@@ -501,5 +502,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         public synchronized Throwable fillInStackTrace() {
             return this;
         }
+
     }
+
 }

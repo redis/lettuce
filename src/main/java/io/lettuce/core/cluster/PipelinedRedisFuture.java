@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,14 +38,14 @@ class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFutur
     }
 
     public PipelinedRedisFuture(CompletionStage<V> completionStage, Function<V, V> converter) {
-        completionStage.thenAccept(v -> complete(converter.apply(v)))
-                .exceptionally(throwable -> {
-                    completeExceptionally(throwable);
-                    return null;
-                });
+        completionStage.thenAccept(v -> complete(converter.apply(v))).exceptionally(throwable -> {
+            completeExceptionally(throwable);
+            return null;
+        });
     }
 
-    public PipelinedRedisFuture(Map<?, ? extends CompletionStage<?>> executions, Function<PipelinedRedisFuture<V>, V> converter) {
+    public PipelinedRedisFuture(Map<?, ? extends CompletionStage<?>> executions,
+            Function<PipelinedRedisFuture<V>, V> converter) {
 
         CompletableFuture.allOf(executions.values().toArray(new CompletableFuture<?>[0]))
                 .thenRun(() -> complete(converter.apply(this))).exceptionally(throwable -> {

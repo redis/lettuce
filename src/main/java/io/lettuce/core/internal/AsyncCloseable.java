@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,4 +33,5 @@ public interface AsyncCloseable {
      * Calls to this method return a {@link CompletableFuture} that is notified with the outcome of the close request.
      */
     CompletableFuture<Void> closeAsync();
+
 }

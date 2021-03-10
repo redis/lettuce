@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,11 @@ import io.lettuce.core.codec.RedisCodec;
 public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
 
     private Iterable<K> keys;
+
     private Iterator<K> keyIterator;
+
     private K key;
+
     private KeyValueStreamingChannel<K, V> channel;
 
     public KeyValueStreamingOutput(RedisCodec<K, V> codec, KeyValueStreamingChannel<K, V> channel) {
@@ -65,4 +68,5 @@ public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
         output = output.longValue() + 1;
         key = null;
     }
+
 }

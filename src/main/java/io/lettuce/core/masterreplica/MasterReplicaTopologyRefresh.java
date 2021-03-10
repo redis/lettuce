@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,11 +40,14 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class MasterReplicaTopologyRefresh {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MasterReplicaTopologyRefresh.class);
+
     private static final StringCodec CODEC = StringCodec.UTF8;
 
     private final NodeConnectionFactory nodeConnectionFactory;
+
     private final TopologyProvider topologyProvider;
-    private ScheduledExecutorService eventExecutors;
+
+    private final ScheduledExecutorService eventExecutors;
 
     MasterReplicaTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
         this(new RedisClientNodeConnectionFactory(client), client.getResources().eventExecutorGroup(), topologyProvider);
@@ -70,7 +73,7 @@ class MasterReplicaTopologyRefresh {
         CompletableFuture<List<RedisNodeDescription>> future = topologyProvider.getNodesAsync();
 
         Mono<List<RedisNodeDescription>> initialNodes = Mono.fromFuture(future).doOnNext(nodes -> {
-            addPasswordIfNeeded(nodes, seed);
+            applyAuthenticationCredentials(nodes, seed);
         });
 
         return initialNodes.map(this::getConnections)
@@ -134,12 +137,11 @@ class MasterReplicaTopologyRefresh {
         return connections;
     }
 
-    private static void addPasswordIfNeeded(List<RedisNodeDescription> nodes, RedisURI seed) {
+    private static void applyAuthenticationCredentials(List<RedisNodeDescription> nodes, RedisURI seed) {
 
-        if (seed.getPassword() != null && seed.getPassword().length != 0) {
-            for (RedisNodeDescription node : nodes) {
-                node.getUri().setPassword(new String(seed.getPassword()));
-            }
+        for (RedisNodeDescription node : nodes) {
+            node.getUri().applyAuthentication(seed);
         }
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,39 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import reactor.core.publisher.Mono;
-import io.lettuce.core.Transports.NativeTransports;
+import io.lettuce.core.event.command.CommandListener;
+import io.lettuce.core.event.connection.ConnectEvent;
+import io.lettuce.core.event.connection.ConnectionCreatedEvent;
+import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
+import io.lettuce.core.resource.Transports;
+import io.lettuce.core.resource.Transports.NativeTransports;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -67,22 +84,36 @@ public abstract class AbstractRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractRedisClient.class);
 
+    private static final int EVENTLOOP_ACQ_INACTIVE = 0;
+
+    private static final int EVENTLOOP_ACQ_ACTIVE = 1;
+
+    private final AtomicInteger eventLoopGroupCas = new AtomicInteger();
+
     protected final ConnectionEvents connectionEvents = new ConnectionEvents();
+
     protected final Set<Closeable> closeableResources = ConcurrentHashMap.newKeySet();
+
     protected final ChannelGroup channels;
 
     private final ClientResources clientResources;
+
+    private final List<CommandListener> commandListeners = new ArrayList<>();
+
     private final Map<Class<? extends EventLoopGroup>, EventLoopGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
+
     private final boolean sharedResources;
+
     private final AtomicBoolean shutdown = new AtomicBoolean();
 
     private volatile ClientOptions clientOptions = ClientOptions.create();
+
     private volatile Duration defaultTimeout = RedisURI.DEFAULT_TIMEOUT_DURATION;
 
     /**
      * Create a new instance with client resources.
      *
-     * @param clientResources the client resources. If {@literal null}, the client will create a new dedicated instance of
+     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of
      *        client resources and keep track of them.
      */
     protected AbstractRedisClient(ClientResources clientResources) {
@@ -115,7 +146,7 @@ public abstract class AbstractRedisClient {
      * Set the default timeout for connections created by this client. The timeout applies to connection attempts and
      * non-blocking commands.
      *
-     * @param timeout default connection timeout, must not be {@literal null}.
+     * @param timeout default connection timeout, must not be {@code null}.
      * @since 5.0
      */
     public void setDefaultTimeout(Duration timeout) {
@@ -180,7 +211,7 @@ public abstract class AbstractRedisClient {
      * connection, the listener will be notified. The corresponding netty channel handler (async connection) is passed on the
      * event.
      *
-     * @param listener must not be {@literal null}
+     * @param listener must not be {@code null}
      */
     public void addListener(RedisConnectionStateListener listener) {
         LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
@@ -190,12 +221,39 @@ public abstract class AbstractRedisClient {
     /**
      * Removes a listener.
      *
-     * @param listener must not be {@literal null}
+     * @param listener must not be {@code null}
      */
     public void removeListener(RedisConnectionStateListener listener) {
 
         LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
         connectionEvents.removeListener(listener);
+    }
+
+    /**
+     * Add a listener for Redis Command events. The listener is notified on each command start/success/failure.
+     *
+     * @param listener must not be {@code null}
+     * @since 6.1
+     */
+    public void addListener(CommandListener listener) {
+        LettuceAssert.notNull(listener, "CommandListener must not be null");
+        commandListeners.add(listener);
+    }
+
+    /**
+     * Removes a listener.
+     *
+     * @param listener must not be {@code null}
+     * @since 6.1
+     */
+    public void removeListener(CommandListener listener) {
+
+        LettuceAssert.notNull(listener, "CommandListener must not be null");
+        commandListeners.remove(listener);
+    }
+
+    protected List<CommandListener> getCommandListeners() {
+        return commandListeners;
     }
 
     /**
@@ -211,20 +269,9 @@ public abstract class AbstractRedisClient {
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
 
-        ClientOptions clientOptions = getOptions();
-        SocketOptions socketOptions = clientOptions.getSocketOptions();
-
-        redisBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
-                Math.toIntExact(socketOptions.getConnectTimeout().toMillis()));
-
-        if (LettuceStrings.isEmpty(redisURI.getSocket())) {
-            redisBootstrap.option(ChannelOption.SO_KEEPALIVE, socketOptions.isKeepAlive());
-            redisBootstrap.option(ChannelOption.TCP_NODELAY, socketOptions.isTcpNoDelay());
-        }
-
-        connectionBuilder.apply(redisURI);
-
         connectionBuilder.bootstrap(redisBootstrap);
+        connectionBuilder.apply(redisURI);
+        connectionBuilder.configureBootstrap(!LettuceStrings.isEmpty(redisURI.getSocket()), this::getEventLoopGroup);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents);
         connectionBuilder.socketAddressSupplier(socketAddressSupplier);
     }
@@ -233,45 +280,33 @@ public abstract class AbstractRedisClient {
 
         LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
 
-        connectionBuilder.bootstrap().group(getEventLoopGroup(connectionPoint));
+        boolean domainSocket = LettuceStrings.isNotEmpty(connectionPoint.getSocket());
+        connectionBuilder.bootstrap().group(
+                getEventLoopGroup(domainSocket ? NativeTransports.eventLoopGroupClass() : Transports.eventLoopGroupClass()));
 
         if (connectionPoint.getSocket() != null) {
-            NativeTransports.assertAvailable();
+            NativeTransports.assertDomainSocketAvailable();
             connectionBuilder.bootstrap().channel(NativeTransports.domainSocketChannelClass());
         } else {
             connectionBuilder.bootstrap().channel(Transports.socketChannelClass());
         }
     }
 
-    private synchronized EventLoopGroup getEventLoopGroup(ConnectionPoint connectionPoint) {
+    private EventLoopGroup getEventLoopGroup(Class<? extends EventLoopGroup> eventLoopGroupClass) {
 
-        if (connectionPoint.getSocket() == null && !eventLoopGroups.containsKey(Transports.eventLoopGroupClass())) {
-            eventLoopGroups.put(Transports.eventLoopGroupClass(),
-                    clientResources.eventLoopGroupProvider().allocate(Transports.eventLoopGroupClass()));
-        }
+        for (;;) {
+            if (!eventLoopGroupCas.compareAndSet(EVENTLOOP_ACQ_INACTIVE, EVENTLOOP_ACQ_ACTIVE)) {
+                continue;
+            }
 
-        if (connectionPoint.getSocket() != null) {
+            try {
 
-            NativeTransports.assertAvailable();
-
-            Class<? extends EventLoopGroup> eventLoopGroupClass = NativeTransports.eventLoopGroupClass();
-
-            if (!eventLoopGroups.containsKey(NativeTransports.eventLoopGroupClass())) {
-                eventLoopGroups.put(eventLoopGroupClass,
-                        clientResources.eventLoopGroupProvider().allocate(eventLoopGroupClass));
+                return eventLoopGroups.computeIfAbsent(eventLoopGroupClass,
+                        it -> clientResources.eventLoopGroupProvider().allocate(it));
+            } finally {
+                eventLoopGroupCas.set(EVENTLOOP_ACQ_INACTIVE);
             }
         }
-
-        if (connectionPoint.getSocket() == null) {
-            return eventLoopGroups.get(Transports.eventLoopGroupClass());
-        }
-
-        if (connectionPoint.getSocket() != null) {
-            NativeTransports.assertAvailable();
-            return eventLoopGroups.get(NativeTransports.eventLoopGroupClass());
-        }
-
-        throw new IllegalStateException("This should not have happened in a binary decision. Please file a bug.");
     }
 
     /**
@@ -321,7 +356,7 @@ public abstract class AbstractRedisClient {
     /**
      * Connect and initialize a channel from {@link ConnectionBuilder}.
      *
-     * @param connectionBuilder must not be {@literal null}.
+     * @param connectionBuilder must not be {@code null}.
      * @return the {@link ConnectionFuture} to synchronize the connection process.
      * @since 4.4
      */
@@ -337,6 +372,15 @@ public abstract class AbstractRedisClient {
 
         CompletableFuture<SocketAddress> socketAddressFuture = new CompletableFuture<>();
         CompletableFuture<Channel> channelReadyFuture = new CompletableFuture<>();
+
+        EventRecorder.getInstance().record(
+                new ConnectionCreatedEvent(connectionBuilder.getRedisURI().toString(), connectionBuilder.endpoint().getId()));
+        EventRecorder.RecordableEvent event = EventRecorder.getInstance()
+                .start(new ConnectEvent(connectionBuilder.getRedisURI().toString(), connectionBuilder.endpoint().getId()));
+
+        channelReadyFuture.whenComplete((channel, throwable) -> {
+            event.record();
+        });
 
         socketAddressSupplier.doOnError(socketAddressFuture::completeExceptionally).doOnNext(socketAddressFuture::complete)
                 .subscribe(redisAddress -> {
@@ -557,4 +601,5 @@ public abstract class AbstractRedisClient {
         return new RedisHandshake(clientOptions.getConfiguredProtocolVersion(), clientOptions.isPingBeforeActivateConnection(),
                 state);
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import io.lettuce.core.internal.LettuceAssert;
 /**
  * Selector {@link CommandOutputFactory} resolution.
  * <p>
- * A {@link OutputSelector} is based on the result {@link ResolvableType} and {@link io.lettuce.core.codec.RedisCodec}.
- * The codec supplies types for generics resolution of {@link io.lettuce.core.output.CommandOutput}.
+ * A {@link OutputSelector} is based on the result {@link ResolvableType} and {@link io.lettuce.core.codec.RedisCodec}. The
+ * codec supplies types for generics resolution of {@link io.lettuce.core.output.CommandOutput}.
  *
  * @author Mark Paluch
  * @since 5.0
@@ -31,13 +31,14 @@ import io.lettuce.core.internal.LettuceAssert;
 public class OutputSelector {
 
     private final ResolvableType outputType;
+
     private final RedisCodec<?, ?> redisCodec;
 
     /**
      * Creates a new {@link OutputSelector} given {@link ResolvableType} and {@link RedisCodec}.
      *
-     * @param outputType must not be {@literal null}.
-     * @param redisCodec must not be {@literal null}.
+     * @param outputType must not be {@code null}.
+     * @param redisCodec must not be {@code null}.
      */
     public OutputSelector(ResolvableType outputType, RedisCodec<?, ?> redisCodec) {
 
@@ -62,4 +63,5 @@ public class OutputSelector {
     public RedisCodec<?, ?> getRedisCodec() {
         return redisCodec;
     }
+
 }

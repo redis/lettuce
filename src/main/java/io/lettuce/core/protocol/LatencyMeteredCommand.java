@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ package io.lettuce.core.protocol;
 class LatencyMeteredCommand<K, V, T> extends CommandWrapper<K, V, T> implements WithLatency {
 
     private long sentNs = -1;
+
     private long firstResponseNs = -1;
+
     private long completedNs = -1;
 
     public LatencyMeteredCommand(RedisCommand<K, V, T> command) {
@@ -62,4 +64,5 @@ class LatencyMeteredCommand<K, V, T> extends CommandWrapper<K, V, T> implements 
     public long getCompleted() {
         return completedNs;
     }
+
 }

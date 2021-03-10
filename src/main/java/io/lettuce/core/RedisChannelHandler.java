@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.CommandExpiryWriter;
+import io.lettuce.core.protocol.CommandWrapper;
+import io.lettuce.core.protocol.ConnectionFacade;
+import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.netty.util.internal.logging.InternalLogger;
@@ -48,25 +51,33 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
     @SuppressWarnings("rawtypes")
-    private static final AtomicIntegerFieldUpdater<RedisChannelHandler> CLOSED = AtomicIntegerFieldUpdater.newUpdater(
-            RedisChannelHandler.class, "closed");
+    private static final AtomicIntegerFieldUpdater<RedisChannelHandler> CLOSED = AtomicIntegerFieldUpdater
+            .newUpdater(RedisChannelHandler.class, "closed");
 
     private static final int ST_OPEN = 0;
+
     private static final int ST_CLOSED = 1;
 
     private Duration timeout;
+
     private CloseEvents closeEvents = new CloseEvents();
 
     private final RedisChannelWriter channelWriter;
+
     private final ClientResources clientResources;
+
     private final boolean tracingEnabled;
+
     private final boolean debugEnabled = logger.isDebugEnabled();
+
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
     // accessed via CLOSED
     @SuppressWarnings("unused")
     private volatile int closed = ST_OPEN;
+
     private volatile boolean active = true;
+
     private volatile ClientOptions clientOptions;
 
     /**
@@ -96,8 +107,13 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
         this.timeout = timeout;
 
-        if (channelWriter instanceof CommandExpiryWriter) {
-            ((CommandExpiryWriter) channelWriter).setTimeout(timeout);
+        RedisChannelWriter writer = channelWriter;
+        if (writer instanceof CommandListenerWriter) {
+            writer = ((CommandListenerWriter) channelWriter).getDelegate();
+        }
+
+        if (writer instanceof CommandExpiryWriter) {
+            ((CommandExpiryWriter) writer).setTimeout(timeout);
         }
     }
 
@@ -165,8 +181,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
             TraceContextProvider provider = CommandWrapper.unwrap(cmd, TraceContextProvider.class);
 
             if (provider == null) {
-                commandToSend = new TracedCommand<>(cmd, clientResources.tracing()
-                        .initialTraceContextProvider().getTraceContext());
+                commandToSend = new TracedCommand<>(cmd,
+                        clientResources.tracing().initialTraceContextProvider().getTraceContext());
             }
 
             return channelWriter.write(commandToSend);
@@ -190,8 +206,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
                 RedisCommand<K, V, ?> commandToUse = command;
                 TraceContextProvider provider = CommandWrapper.unwrap(command, TraceContextProvider.class);
                 if (provider == null) {
-                    commandToUse = new TracedCommand<>(command, clientResources.tracing()
-                            .initialTraceContextProvider().getTraceContext());
+                    commandToUse = new TracedCommand<>(command,
+                            clientResources.tracing().initialTraceContextProvider().getTraceContext());
                 }
 
                 withTracer.add(commandToUse);
@@ -313,4 +329,5 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     public void flushCommands() {
         getChannelWriter().flushCommands();
     }
+
 }

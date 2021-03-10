@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,19 @@ import io.lettuce.core.protocol.CommandType;
  * {@link MigrateArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @author dengliming
  */
 public class MigrateArgs<K> implements CompositeArgument {
 
     private boolean copy = false;
+
     private boolean replace = false;
+
     List<K> keys = new ArrayList<>();
+
     private char[] password;
+
+    private char[] username;
 
     /**
      * Builder entry points for {@link MigrateArgs}.
@@ -73,7 +79,7 @@ public class MigrateArgs<K> implements CompositeArgument {
         /**
          * Creates new {@link MigrateArgs} setting a {@code key} to migrate.
          *
-         * @param key must not be {@literal null}.
+         * @param key must not be {@code null}.
          * @return new {@link MigrateArgs} for {@code key} to migrate.
          * @see MigrateArgs#key(Object)
          */
@@ -84,7 +90,7 @@ public class MigrateArgs<K> implements CompositeArgument {
         /**
          * Creates new {@link MigrateArgs} setting {@code keys} to migrate.
          *
-         * @param keys must not be {@literal null}.
+         * @param keys must not be {@code null}.
          * @return new {@link MigrateArgs} for {@code keys} to migrate.
          * @see MigrateArgs#keys(Object[])
          */
@@ -96,7 +102,7 @@ public class MigrateArgs<K> implements CompositeArgument {
         /**
          * Creates new {@link MigrateArgs} setting {@code keys} to migrate.
          *
-         * @param keys must not be {@literal null}.
+         * @param keys must not be {@code null}.
          * @return new {@link MigrateArgs} for {@code keys} to migrate.
          * @see MigrateArgs#keys(Iterable)
          */
@@ -112,8 +118,18 @@ public class MigrateArgs<K> implements CompositeArgument {
          * @see MigrateArgs#auth(CharSequence)
          */
         public static <K> MigrateArgs<K> auth(CharSequence password) {
-            // TODO : implement auth(username,password) when https://github.com/antirez/redis/pull/7035 is fixed
             return new MigrateArgs<K>().auth(password);
+        }
+
+        /**
+         * Creates new {@link MigrateArgs} with {@code AUTH2} (target authentication) enabled.
+         *
+         * @return new {@link MigrateArgs} with {@code AUTH2} (target authentication) enabled.
+         * @since 6.1
+         * @see MigrateArgs#auth2(CharSequence, CharSequence)
+         */
+        public static <K> MigrateArgs<K> auth2(CharSequence username, CharSequence password) {
+            return new MigrateArgs<K>().auth2(username, password);
         }
 
         /**
@@ -126,6 +142,7 @@ public class MigrateArgs<K> implements CompositeArgument {
         public static <K> MigrateArgs<K> auth(char[] password) {
             return new MigrateArgs<K>().auth(password);
         }
+
     }
 
     /**
@@ -151,7 +168,7 @@ public class MigrateArgs<K> implements CompositeArgument {
     /**
      * Migrate a single {@code key}.
      *
-     * @param key must not be {@literal null}.
+     * @param key must not be {@code null}.
      * @return {@code this} {@link MigrateArgs}.
      */
     public MigrateArgs<K> key(K key) {
@@ -165,7 +182,7 @@ public class MigrateArgs<K> implements CompositeArgument {
     /**
      * Migrate one or more {@code keys}.
      *
-     * @param keys must not be {@literal null}.
+     * @param keys must not be {@code null}.
      * @return {@code this} {@link MigrateArgs}.
      */
     @SafeVarargs
@@ -180,7 +197,7 @@ public class MigrateArgs<K> implements CompositeArgument {
     /**
      * Migrate one or more {@code keys}.
      *
-     * @param keys must not be {@literal null}.
+     * @param keys must not be {@code null}.
      * @return {@code this} {@link MigrateArgs}.
      */
     public MigrateArgs<K> keys(Iterable<K> keys) {
@@ -194,7 +211,7 @@ public class MigrateArgs<K> implements CompositeArgument {
     /**
      * Set {@literal AUTH} {@code password} option.
      *
-     * @param password must not be {@literal null}.
+     * @param password must not be {@code null}.
      * @return {@code this} {@link MigrateArgs}.
      * @since 4.4.5
      */
@@ -213,9 +230,32 @@ public class MigrateArgs<K> implements CompositeArgument {
     }
 
     /**
+     * Set {@literal AUTH2} {@code username} and {@code password} option.
+     *
+     * @param username must not be {@code null}.
+     * @param password must not be {@code null}.
+     * @return {@code this} {@link MigrateArgs}.
+     * @since 6.1
+     */
+    public MigrateArgs<K> auth2(CharSequence username, CharSequence password) {
+
+        LettuceAssert.notNull(username, "Username must not be null");
+        LettuceAssert.notNull(password, "Password must not be null");
+
+        char[] chars = new char[username.length()];
+
+        for (int i = 0; i < username.length(); i++) {
+            chars[i] = username.charAt(i);
+        }
+
+        this.username = chars;
+        return auth(password);
+    }
+
+    /**
      * Set {@literal AUTH} {@code password} option.
      *
-     * @param password must not be {@literal null}.
+     * @param password must not be {@code null}.
      * @return {@code this} {@link MigrateArgs}.
      * @since 4.4.5
      */
@@ -239,7 +279,12 @@ public class MigrateArgs<K> implements CompositeArgument {
         }
 
         if (password != null) {
-            args.add(CommandType.AUTH).add(password);
+            if (username != null) {
+                args.add(CommandType.AUTH2).add(username);
+            } else {
+                args.add(CommandType.AUTH);
+            }
+            args.add(password);
         }
 
         if (keys.size() > 1) {
@@ -247,4 +292,5 @@ public class MigrateArgs<K> implements CompositeArgument {
             args.addKeys((List<K>) keys);
         }
     }
+
 }

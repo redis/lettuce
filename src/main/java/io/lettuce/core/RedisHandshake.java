@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.concurrent.CompletionStage;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.ConnectionInitializer;
@@ -42,7 +43,9 @@ class RedisHandshake implements ConnectionInitializer {
     private final RedisCommandBuilder<String, String> commandBuilder = new RedisCommandBuilder<>(StringCodec.UTF8);
 
     private final ProtocolVersion requestedProtocolVersion;
+
     private final boolean pingOnConnect;
+
     private final ConnectionState connectionState;
 
     private volatile ProtocolVersion negotiatedProtocolVersion;
@@ -55,7 +58,7 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     /**
-     * @return the requested {@link ProtocolVersion}. May be {@literal null} if not configured.
+     * @return the requested {@link ProtocolVersion}. May be {@code null} if not configured.
      */
     public ProtocolVersion getRequestedProtocolVersion() {
         return requestedProtocolVersion;
@@ -228,4 +231,5 @@ class RedisHandshake implements ConnectionInitializer {
     private static boolean isUnknownCommand(String error) {
         return LettuceStrings.isNotEmpty(error) && error.startsWith("ERR unknown command");
     }
+
 }

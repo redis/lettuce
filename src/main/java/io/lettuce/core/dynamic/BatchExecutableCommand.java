@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.dynamic.batch.BatchException;
@@ -39,10 +38,15 @@ import io.lettuce.core.protocol.RedisCommand;
 class BatchExecutableCommand implements ExecutableCommand {
 
     private final CommandMethod commandMethod;
+
     private final CommandFactory commandFactory;
+
     private final Batcher batcher;
+
     private final StatefulConnection<Object, Object> connection;
+
     private final ExecutionSpecificParameters parameters;
+
     private final boolean async;
 
     BatchExecutableCommand(CommandMethod commandMethod, CommandFactory commandFactory, Batcher batcher,
@@ -114,4 +118,5 @@ class BatchExecutableCommand implements ExecutableCommand {
     public CommandMethod getCommandMethod() {
         return commandMethod;
     }
+
 }

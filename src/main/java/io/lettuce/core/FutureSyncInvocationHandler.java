@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,10 @@ import java.util.concurrent.TimeUnit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.AbstractInvocationHandler;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.TimeoutProvider;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
@@ -30,13 +33,17 @@ import io.lettuce.core.protocol.RedisCommand;
  * sync class which just delegates every request.
  *
  * @author Mark Paluch
+ * @author Tz Zhuo
  * @since 3.0
  */
 class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
     private final StatefulConnection<?, ?> connection;
+
     private final TimeoutProvider timeoutProvider;
+
     private final Object asyncApi;
+
     private final MethodTranslator translator;
 
     FutureSyncInvocationHandler(StatefulConnection<?, ?> connection, Object asyncApi, Class<?>[] interfaces) {
@@ -59,13 +66,13 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
                 RedisFuture<?> command = (RedisFuture<?>) result;
 
-                if (isNonTxControlMethod(method.getName()) && isTransactionActive(connection)) {
+                if (!isTxControlMethod(method.getName(), args) && isTransactionActive(connection)) {
                     return null;
                 }
 
                 long timeout = getTimeoutNs(command);
 
-                return LettuceFutures.awaitOrCancel(command, timeout, TimeUnit.NANOSECONDS);
+                return Futures.awaitOrCancel(command, timeout, TimeUnit.NANOSECONDS);
             }
 
             return result;
@@ -87,7 +94,22 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
         return connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti();
     }
 
-    private static boolean isNonTxControlMethod(String methodName) {
-        return !methodName.equals("exec") && !methodName.equals("multi") && !methodName.equals("discard");
+    private static boolean isTxControlMethod(String methodName, Object[] args) {
+
+        if (methodName.equals("exec") || methodName.equals("multi") || methodName.equals("discard")) {
+            return true;
+        }
+
+        if (methodName.equals("dispatch") && args.length > 0 && args[0] instanceof ProtocolKeyword) {
+
+            ProtocolKeyword keyword = (ProtocolKeyword) args[0];
+            if (keyword.name().equals(CommandType.MULTI.name()) || keyword.name().equals(CommandType.EXEC.name())
+                    || keyword.name().equals(CommandType.DISCARD.name())) {
+                return true;
+            }
+        }
+
+        return false;
     }
+
 }

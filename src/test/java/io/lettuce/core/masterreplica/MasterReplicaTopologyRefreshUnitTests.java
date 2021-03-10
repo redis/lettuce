@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,11 +49,11 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class MasterReplicaTopologyRefreshUnitTests {
 
-    private static final RedisMasterReplicaNode MASTER = new RedisMasterReplicaNode("localhost", 1, new RedisURI(),
-            RedisInstance.Role.MASTER);
+    private static final RedisMasterReplicaNode UPSTREAM = new RedisMasterReplicaNode("localhost", 1, new RedisURI(),
+            RedisInstance.Role.UPSTREAM);
 
-    private static final RedisMasterReplicaNode SLAVE = new RedisMasterReplicaNode("localhost", 2, new RedisURI(),
-            RedisInstance.Role.SLAVE);
+    private static final RedisMasterReplicaNode REPLICA = new RedisMasterReplicaNode("localhost", 2, new RedisURI(),
+            RedisInstance.Role.REPLICA);
 
     @Mock
     NodeConnectionFactory connectionFactory;
@@ -82,7 +82,7 @@ class MasterReplicaTopologyRefreshUnitTests {
             return null;
         });
 
-        provider = () -> Arrays.asList(MASTER, SLAVE);
+        provider = () -> Arrays.asList(UPSTREAM, REPLICA);
     }
 
     @AfterEach
@@ -93,7 +93,8 @@ class MasterReplicaTopologyRefreshUnitTests {
     @Test
     void shouldRetrieveTopology() {
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService, provider);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService,
+                provider);
 
         CompletableFuture<StatefulRedisConnection<String, String>> master = CompletableFuture.completedFuture(connection);
         CompletableFuture<StatefulRedisConnection<String, String>> replica = CompletableFuture.completedFuture(connection);
@@ -111,7 +112,8 @@ class MasterReplicaTopologyRefreshUnitTests {
     @Test
     void shouldRetrieveTopologyWithFailedNode() {
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService, provider);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService,
+                provider);
 
         CompletableFuture<StatefulRedisConnection<String, String>> connected = CompletableFuture.completedFuture(connection);
         CompletableFuture<StatefulRedisConnection<String, String>> pending = new CompletableFuture<>();
@@ -123,6 +125,6 @@ class MasterReplicaTopologyRefreshUnitTests {
 
         List<RedisNodeDescription> nodes = refresh.getNodes(redisURI).block();
 
-        assertThat(nodes).hasSize(1).containsOnly(MASTER);
+        assertThat(nodes).hasSize(1).containsOnly(UPSTREAM);
     }
 }

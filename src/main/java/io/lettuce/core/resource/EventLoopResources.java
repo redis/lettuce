@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@ import java.util.concurrent.ThreadFactory;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.socket.DatagramChannel;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
  * Interface to encapsulate EventLoopGroup resources.
  *
  * @author Mark Paluch
+ * @author Yohei Ueki
  * @since 6.0
  */
 public interface EventLoopResources {
@@ -34,10 +36,15 @@ public interface EventLoopResources {
     /**
      * Checks if the given {@code type} matches the underlying {@link EventExecutorGroup} type.
      *
-     * @param type must not be {@literal null}.
-     * @return {@literal true} if {@code type} is a {@link EventExecutorGroup} of the underlying loop resources.
+     * @param type must not be {@code null}.
+     * @return {@code true} if {@code type} is a {@link EventExecutorGroup} of the underlying loop resources.
      */
     boolean matches(Class<? extends EventExecutorGroup> type);
+
+    /**
+     * @return the {@link EventLoopGroup} class.
+     */
+    Class<? extends EventLoopGroup> eventLoopGroupClass();
 
     /**
      * Create a new {@link EpollEventLoopGroup}.
@@ -49,23 +56,25 @@ public interface EventLoopResources {
     EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory);
 
     /**
-     * @return the Domain Socket {@link Channel} class.
-     */
-    Class<? extends Channel> domainSocketChannelClass();
-
-    /**
      * @return the {@link Channel} class.
      */
     Class<? extends Channel> socketChannelClass();
 
     /**
-     * @return the {@link EventLoopGroup} class.
+     * @return the Domain Socket {@link Channel} class.
      */
-    Class<? extends EventLoopGroup> eventLoopGroupClass();
+    Class<? extends Channel> domainSocketChannelClass();
+
+    /**
+     * @return the {@link DatagramChannel} class.
+     * @since 6.1
+     */
+    Class<? extends DatagramChannel> datagramChannelClass();
 
     /**
      * @param socketPath the socket file path.
      * @return a domain socket address object.
      */
     SocketAddress newSocketAddress(String socketPath);
+
 }

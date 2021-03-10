@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,15 @@ import io.lettuce.core.protocol.CommandType;
 public class XClaimArgs {
 
     long minIdleTime;
+
     private Long idle;
+
     private Long time;
+
     private Long retrycount;
+
     private boolean force;
+
     private boolean justid;
 
     /**
@@ -81,6 +86,7 @@ public class XClaimArgs {
 
             return minIdleTime(minIdleTime.toMillis());
         }
+
     }
 
     /**
@@ -206,7 +212,7 @@ public class XClaimArgs {
      * different client. However the message must be exist in the stream, otherwise the IDs of non existing messages are
      * ignored.
      *
-     * @param force {@literal true} to enforce PEL creation.
+     * @param force {@code true} to enforce PEL creation.
      * @return {@code this}.
      */
     public XClaimArgs force(boolean force) {
@@ -237,4 +243,5 @@ public class XClaimArgs {
             args.add(CommandKeyword.JUSTID);
         }
     }
+
 }

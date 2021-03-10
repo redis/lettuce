@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,33 @@
  */
 package io.lettuce.core.support;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.RedisException;
 import io.lettuce.test.TestFutures;
 
 /**
+ * Unit tests for {@link BoundedAsyncPool}.
+ *
  * @author Mark Paluch
  */
 class BoundedAsyncPoolUnitTests {
 
     private AtomicInteger counter = new AtomicInteger();
+
     private List<String> destroyed = new ArrayList<>();
 
     private AsyncObjectFactory<String> STRING_OBJECT_FACTORY = new AsyncObjectFactory<String>() {
+
         @Override
         public CompletableFuture<String> create() {
             return CompletableFuture.completedFuture(counter.incrementAndGet() + "");
@@ -50,6 +57,7 @@ class BoundedAsyncPoolUnitTests {
         public CompletableFuture<Boolean> validate(String object) {
             return CompletableFuture.completedFuture(true);
         }
+
     };
 
     @Test
@@ -64,10 +72,57 @@ class BoundedAsyncPoolUnitTests {
     }
 
     @Test
+    void shouldCreatePoolAsync() {
+
+        CompletionStage<BoundedAsyncPool<String>> pool = BoundedAsyncPool.create(STRING_OBJECT_FACTORY,
+                BoundedPoolConfig.builder().minIdle(5).build());
+
+        pool.toCompletableFuture().join();
+
+        assertThat(counter).hasValue(5);
+    }
+
+    @Test
+    void failedAsyncCreationShouldCleanUpResources() {
+
+        AtomicInteger cleanups = new AtomicInteger();
+        AtomicInteger creations = new AtomicInteger();
+        CompletionStage<BoundedAsyncPool<String>> pool = BoundedAsyncPool.create(new AsyncObjectFactory<String>() {
+
+            @Override
+            public CompletableFuture<String> create() {
+
+                if (creations.incrementAndGet() == 1) {
+                    return io.lettuce.core.internal.Futures.failed(new IllegalStateException());
+                }
+
+                return CompletableFuture.completedFuture("ok");
+            }
+
+            @Override
+            public CompletableFuture<Void> destroy(String object) {
+                cleanups.incrementAndGet();
+                return CompletableFuture.completedFuture(null);
+            }
+
+            @Override
+            public CompletableFuture<Boolean> validate(String object) {
+                return null;
+            }
+
+        }, BoundedPoolConfig.builder().minIdle(5).build());
+
+        assertThatExceptionOfType(CompletionException.class).isThrownBy(pool.toCompletableFuture()::join)
+                .withCauseInstanceOf(RedisException.class).withRootCauseInstanceOf(IllegalStateException.class);
+
+        assertThat(cleanups).hasValue(4);
+    }
+
+    @Test
     void shouldCreateMinIdleObject() {
 
-        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.builder().minIdle(2)
-                .build());
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY,
+                BoundedPoolConfig.builder().minIdle(2).build());
 
         assertThat(pool.getIdle()).isEqualTo(2);
         assertThat(pool.getObjectCount()).isEqualTo(2);
@@ -76,8 +131,8 @@ class BoundedAsyncPoolUnitTests {
     @Test
     void shouldCreateMaintainMinIdleObject() {
 
-        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.builder().minIdle(2)
-                .build());
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY,
+                BoundedPoolConfig.builder().minIdle(2).build());
 
         TestFutures.awaitOrTimeout(pool.acquire());
 
@@ -88,8 +143,8 @@ class BoundedAsyncPoolUnitTests {
     @Test
     void shouldCreateMaintainMinMaxIdleObject() {
 
-        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.builder().minIdle(2)
-                .maxTotal(2).build());
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY,
+                BoundedPoolConfig.builder().minIdle(2).maxTotal(2).build());
 
         TestFutures.awaitOrTimeout(pool.acquire());
 
@@ -123,8 +178,8 @@ class BoundedAsyncPoolUnitTests {
     @Test
     void shouldDestroyIdle() {
 
-        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.builder().maxIdle(2)
-                .maxTotal(5).build());
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY,
+                BoundedPoolConfig.builder().maxIdle(2).maxTotal(5).build());
 
         List<String> objects = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
@@ -147,8 +202,8 @@ class BoundedAsyncPoolUnitTests {
     @Test
     void shouldExhaustPool() {
 
-        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.builder().maxTotal(4)
-                .build());
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY,
+                BoundedPoolConfig.builder().maxTotal(4).build());
 
         String object1 = TestFutures.getOrTimeout(pool.acquire());
         String object2 = TestFutures.getOrTimeout(pool.acquire());
@@ -175,8 +230,8 @@ class BoundedAsyncPoolUnitTests {
     @Test
     void shouldClearPool() {
 
-        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.builder().maxTotal(4)
-                .build());
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY,
+                BoundedPoolConfig.builder().maxTotal(4).build());
 
         for (int i = 0; i < 20; i++) {
 
@@ -204,6 +259,7 @@ class BoundedAsyncPoolUnitTests {
 
         List<CompletableFuture<String>> progress = new ArrayList<>();
         AsyncObjectFactory<String> IN_PROGRESS = new AsyncObjectFactory<String>() {
+
             @Override
             public CompletableFuture<String> create() {
 
@@ -223,6 +279,7 @@ class BoundedAsyncPoolUnitTests {
             public CompletableFuture<Boolean> validate(String object) {
                 return CompletableFuture.completedFuture(true);
             }
+
         };
 
         BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(IN_PROGRESS, BoundedPoolConfig.builder().maxTotal(4).build());
@@ -251,6 +308,7 @@ class BoundedAsyncPoolUnitTests {
 
         List<CompletableFuture<String>> progress = new ArrayList<>();
         AsyncObjectFactory<String> IN_PROGRESS = new AsyncObjectFactory<String>() {
+
             @Override
             public CompletableFuture<String> create() {
 
@@ -270,6 +328,7 @@ class BoundedAsyncPoolUnitTests {
             public CompletableFuture<Boolean> validate(String object) {
                 return CompletableFuture.completedFuture(true);
             }
+
         };
 
         BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(IN_PROGRESS, BoundedPoolConfig.builder().maxTotal(4).build());
@@ -290,4 +349,46 @@ class BoundedAsyncPoolUnitTests {
         assertThat(pool.getObjectCount()).isZero();
         assertThat(pool.getCreationInProgress()).isZero();
     }
+
+    @Test
+    void cancelShouldReturnObjectToPool() {
+
+        List<CompletableFuture<String>> progress = new ArrayList<>();
+        AsyncObjectFactory<String> IN_PROGRESS = new AsyncObjectFactory<String>() {
+
+            @Override
+            public CompletableFuture<String> create() {
+
+                CompletableFuture<String> future = new CompletableFuture<>();
+                progress.add(future);
+
+                return future;
+            }
+
+            @Override
+            public CompletableFuture<Void> destroy(String object) {
+                destroyed.add(object);
+                return CompletableFuture.completedFuture(null);
+            }
+
+            @Override
+            public CompletableFuture<Boolean> validate(String object) {
+                return CompletableFuture.completedFuture(true);
+            }
+
+        };
+
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(IN_PROGRESS,
+                BoundedPoolConfig.builder().maxTotal(1).maxIdle(0).build());
+
+        CompletableFuture<String> acquire = pool.acquire();
+
+        assertThat(acquire).isNotCompleted();
+        acquire.cancel(false);
+        assertThat(acquire).isCancelled();
+
+        progress.get(0).complete("after-cancel");
+        assertThat(destroyed).contains("after-cancel");
+    }
+
 }

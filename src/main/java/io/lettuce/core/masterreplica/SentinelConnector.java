@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -41,7 +42,9 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SentinelConnector.class);
 
     private final RedisClient redisClient;
+
     private final RedisCodec<K, V> codec;
+
     private final RedisURI redisURI;
 
     SentinelConnector(RedisClient redisClient, RedisCodec<K, V> codec, RedisURI redisURI) {
@@ -107,6 +110,9 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
 
                 LOG.debug("Refreshing topology");
                 refresh.getNodes(redisURI).subscribe(nodes -> {
+
+                    EventRecorder.getInstance().record(new MasterReplicaTopologyChangedEvent(redisURI, nodes));
+
                     if (nodes.isEmpty()) {
                         LOG.warn("Topology refresh returned no nodes from {}", redisURI);
                     }
@@ -121,4 +127,5 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
             }
         };
     }
+
 }

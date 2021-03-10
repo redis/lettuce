@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import java.util.Collections;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.*;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.*;
 
 import io.lettuce.category.SlowTests;
 import io.lettuce.core.*;
@@ -36,7 +35,7 @@ import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 @SuppressWarnings("unchecked")
 @SlowTests
 public class RedisClusterStressScenariosTest extends TestSupport {
@@ -45,6 +44,7 @@ public class RedisClusterStressScenariosTest extends TestSupport {
 
     private static RedisClient client;
     private static RedisClusterClient clusterClient;
+    private static ClusterTestHelper clusterHelper;
 
     private Logger log = LogManager.getLogger(getClass());
 
@@ -57,38 +57,36 @@ public class RedisClusterStressScenariosTest extends TestSupport {
     protected String key = "key";
     protected String value = "value";
 
-    @Rule
-    public ClusterRule clusterRule = new ClusterRule(clusterClient, ClusterTestSettings.port5, ClusterTestSettings.port6);
-
-    @BeforeClass
+    @BeforeAll
     public static void setupClient() {
         client = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, ClusterTestSettings.port5).build());
         clusterClient = RedisClusterClient.create(TestClientResources.get(),
                 Collections.singletonList(RedisURI.Builder.redis(host, ClusterTestSettings.port5).build()));
+        clusterHelper = new ClusterTestHelper(clusterClient, ClusterTestSettings.port5, ClusterTestSettings.port6);
     }
 
-    @AfterClass
+    @AfterAll
     public static void shutdownClient() {
         FastShutdown.shutdown(client);
     }
 
-    @Before
+    @BeforeEach
     public void before() {
-
-        ClusterSetup.setupMasterWithReplica(clusterRule);
+        clusterHelper.flushdb();
+        ClusterSetup.setupMasterWithReplica(clusterHelper);
 
         redis5 = client.connect(RedisURI.Builder.redis(host, ClusterTestSettings.port5).build());
         redis6 = client.connect(RedisURI.Builder.redis(host, ClusterTestSettings.port6).build());
 
         redissync5 = redis5.sync();
         redissync6 = redis6.sync();
-        clusterClient.reloadPartitions();
+        clusterClient.refreshPartitions();
 
-        Wait.untilTrue(clusterRule::isStable).waitOrTimeout();
+        Wait.untilTrue(clusterHelper::isStable).waitOrTimeout();
 
     }
 
-    @After
+    @AfterEach
     public void after() {
         redis5.close();
 
@@ -103,14 +101,14 @@ public class RedisClusterStressScenariosTest extends TestSupport {
         log.info("Cluster nodes seen from node 5:\n" + redissync5.clusterNodes());
         log.info("Cluster nodes seen from node 6:\n" + redissync6.clusterNodes());
 
-        Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.MASTER)).waitOrTimeout();
-        Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.SLAVE)).waitOrTimeout();
+        Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.UPSTREAM)).waitOrTimeout();
+        Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.REPLICA)).waitOrTimeout();
 
         String failover = redissync6.clusterFailover(true);
         assertThat(failover).isEqualTo("OK");
 
-        Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.MASTER)).waitOrTimeout();
-        Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.SLAVE)).waitOrTimeout();
+        Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.UPSTREAM)).waitOrTimeout();
+        Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.REPLICA)).waitOrTimeout();
 
         log.info("Cluster nodes seen from node 5 after clusterFailover:\n" + redissync5.clusterNodes());
         log.info("Cluster nodes seen from node 6 after clusterFailover:\n" + redissync6.clusterNodes());
@@ -118,8 +116,8 @@ public class RedisClusterStressScenariosTest extends TestSupport {
         RedisClusterNode redis5Node = getOwnPartition(redissync5);
         RedisClusterNode redis6Node = getOwnPartition(redissync6);
 
-        assertThat(redis5Node.getFlags()).contains(RedisClusterNode.NodeFlag.SLAVE);
-        assertThat(redis6Node.getFlags()).contains(RedisClusterNode.NodeFlag.MASTER);
+        assertThat(redis5Node.is(RedisClusterNode.NodeFlag.REPLICA)).isTrue();
+        assertThat(redis6Node.is(RedisClusterNode.NodeFlag.UPSTREAM)).isTrue();
 
     }
 

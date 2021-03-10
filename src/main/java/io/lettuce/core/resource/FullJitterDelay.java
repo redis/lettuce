@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ import java.util.concurrent.TimeUnit;
 class FullJitterDelay extends ExponentialDelay {
 
     private final Duration upper;
+
     private final long base;
+
     private final TimeUnit targetTimeUnit;
 
     FullJitterDelay(Duration lower, Duration upper, long base, TimeUnit targetTimeUnit) {
@@ -55,4 +57,5 @@ class FullJitterDelay extends ExponentialDelay {
         long delay = temp / 2 + randomBetween(0, temp / 2);
         return applyBounds(Duration.ofNanos(targetTimeUnit.toNanos(delay)));
     }
+
 }

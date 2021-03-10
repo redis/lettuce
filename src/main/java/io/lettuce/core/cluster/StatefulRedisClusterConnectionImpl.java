@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.protocol.CommandType.AUTH;
-import static io.lettuce.core.protocol.CommandType.READONLY;
-import static io.lettuce.core.protocol.CommandType.READWRITE;
+import static io.lettuce.core.protocol.CommandType.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -29,11 +27,19 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClient;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionState;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelection;
 import io.lettuce.core.cluster.api.sync.NodeSelectionCommands;
@@ -59,26 +65,33 @@ import io.lettuce.core.protocol.RedisCommand;
 public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         implements StatefulRedisClusterConnection<K, V> {
 
+    private final ClusterPushHandler pushHandler;
+
     protected final RedisCodec<K, V> codec;
+
     protected final RedisAdvancedClusterCommands<K, V> sync;
+
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
+
     protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
 
     private final ClusterConnectionState connectionState = new ClusterConnectionState();
 
-    private Partitions partitions;
-    private volatile CommandSet commandSet;
+    private volatile Partitions partitions;
 
     /**
      * Initialize a new connection.
      *
      * @param writer the channel writer
+     * @param pushHandler the Cluster push handler
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      */
-    public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
+    public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
+            Duration timeout) {
 
         super(writer, timeout);
+        this.pushHandler = pushHandler;
         this.codec = codec;
 
         this.async = new RedisAdvancedClusterAsyncCommandsImpl<>(this, codec);
@@ -107,12 +120,14 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return reactive;
     }
 
-    CommandSet getCommandSet() {
-        return commandSet;
+    @Override
+    public void addListener(RedisClusterPushListener listener) {
+        pushHandler.addListener(listener);
     }
 
-    void setCommandSet(CommandSet commandSet) {
-        this.commandSet = commandSet;
+    @Override
+    public void removeListener(RedisClusterPushListener listener) {
+        pushHandler.removeListener(listener);
     }
 
     private RedisURI lookup(String nodeId) {
@@ -167,6 +182,13 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
                 .getClusterConnectionProvider();
 
         return provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port);
+    }
+
+    @Override
+    public void activated() {
+        super.activated();
+
+        async.clusterMyId().thenAccept(connectionState::setNodeId);
     }
 
     ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {
@@ -238,7 +260,19 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     public void setPartitions(Partitions partitions) {
+
+        LettuceAssert.notNull(partitions, "Partitions must not be null");
+
         this.partitions = partitions;
+
+        String nodeId = connectionState.getNodeId();
+        if (nodeId != null && expireStaleConnections()) {
+
+            if (partitions.getPartitionByNodeId(nodeId) == null) {
+                getClusterDistributionChannelWriter().disconnectDefaultEndpoint();
+            }
+        }
+
         getClusterDistributionChannelWriter().setPartitions(partitions);
     }
 
@@ -263,6 +297,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     static class ClusterConnectionState extends ConnectionState {
 
+        private volatile String nodeId;
+
         @Override
         protected void setUserNamePassword(List<char[]> args) {
             super.setUserNamePassword(args);
@@ -277,5 +313,27 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         protected void setReadOnly(boolean readOnly) {
             super.setReadOnly(readOnly);
         }
+
+        public String getNodeId() {
+            return nodeId;
+        }
+
+        public void setNodeId(String nodeId) {
+            this.nodeId = nodeId;
+        }
+
     }
+
+    private boolean expireStaleConnections() {
+
+        ClusterClientOptions options = getClusterClientOptions();
+        return options == null || options.isCloseStaleConnections();
+    }
+
+    private ClusterClientOptions getClusterClientOptions() {
+
+        ClientOptions options = getOptions();
+        return options instanceof ClusterClientOptions ? (ClusterClientOptions) options : null;
+    }
+
 }

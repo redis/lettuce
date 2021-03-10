@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import io.lettuce.core.AbstractRedisReactiveCommands;
 class ReactiveExecutableCommand implements ExecutableCommand {
 
     private final CommandMethod commandMethod;
+
     private final ReactiveCommandSegmentCommandFactory commandFactory;
+
     private final AbstractRedisReactiveCommands<Object, Object> redisReactiveCommands;
 
     ReactiveExecutableCommand(CommandMethod commandMethod, ReactiveCommandSegmentCommandFactory commandFactory,
@@ -59,4 +61,5 @@ class ReactiveExecutableCommand implements ExecutableCommand {
     public CommandMethod getCommandMethod() {
         return commandMethod;
     }
+
 }

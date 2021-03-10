@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,9 @@ public class BoundedPoolConfig extends BasePoolConfig {
     public static final int DEFAULT_MIN_IDLE = 0;
 
     private final int maxTotal;
+
     private final int maxIdle;
+
     private final int minIdle;
 
     protected BoundedPoolConfig(boolean testOnCreate, boolean testOnAcquire, boolean testOnRelease, int maxTotal, int maxIdle,
@@ -99,7 +101,9 @@ public class BoundedPoolConfig extends BasePoolConfig {
     public static class Builder extends BasePoolConfig.Builder {
 
         private int maxTotal = DEFAULT_MAX_TOTAL;
+
         private int maxIdle = DEFAULT_MAX_IDLE;
+
         private int minIdle = DEFAULT_MIN_IDLE;
 
         protected Builder() {
@@ -149,7 +153,8 @@ public class BoundedPoolConfig extends BasePoolConfig {
 
         /**
          * Configures the maximum number of objects that can be allocated by the pool (checked out to clients, or idle awaiting
-         * checkout) at a given time.
+         * checkout) at a given time. When negative, there is no limit to the number of objects that can be managed by the pool
+         * at one time.
          *
          * @param maxTotal maximum number of objects that can be allocated by the pool.
          * @return {@code this} {@link Builder}.
@@ -177,10 +182,10 @@ public class BoundedPoolConfig extends BasePoolConfig {
         }
 
         /**
-         * Configures the maximum number of objects that can be allocated by the pool (checked out to clients, or idle awaiting
-         * checkout) at a given time.
+         * Configures the minimum number of idle objects to maintain in the pool. If this is the case, an attempt is made to
+         * ensure that the pool has the required minimum number of instances during idle object eviction runs.
          *
-         * @param minIdle maximum number of objects that can be allocated by the pool.
+         * @param minIdle minimum number of idle objects to maintain in the pool.
          * @return {@code this} {@link Builder}.
          */
         public Builder minIdle(int minIdle) {
@@ -197,5 +202,7 @@ public class BoundedPoolConfig extends BasePoolConfig {
         public BoundedPoolConfig build() {
             return new BoundedPoolConfig(testOnCreate, testOnAcquire, testOnRelease, maxTotal, maxIdle, minIdle);
         }
+
     }
+
 }

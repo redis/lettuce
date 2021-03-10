@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
  * @author Mark Paluch
  * @since 3.0
  */
-public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisClusterCommands<K, V>, RedisGeoCommands<K, V>,
+public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>, RedisClusterCommands<K, V>, RedisGeoCommands<K, V>,
         RedisHashCommands<K, V>, RedisHLLCommands<K, V>, RedisKeyCommands<K, V>, RedisListCommands<K, V>,
         RedisScriptingCommands<K, V>, RedisServerCommands<K, V>, RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>,
         RedisStreamCommands<K, V>, RedisStringCommands<K, V>, RedisTransactionalCommands<K, V> {
@@ -72,4 +72,5 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisClust
      * @return the underlying connection.
      */
     StatefulRedisConnection<K, V> getStatefulConnection();
+
 }

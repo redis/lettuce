@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import java.util.function.Function;
 public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends CompletionStage<T>> {
 
     private final Function<K, F> connectionFactory;
+
     private final Map<K, Sync<K, T, F>> connections = new ConcurrentHashMap<>();
 
     private volatile boolean closed;
@@ -54,7 +55,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
     /**
      * Create a new {@link AsyncConnectionProvider}.
      *
-     * @param connectionFactory must not be {@literal null}.
+     * @param connectionFactory must not be {@code null}.
      */
     @SuppressWarnings("unchecked")
     public AsyncConnectionProvider(Function<? extends K, ? extends F> connectionFactory) {
@@ -67,7 +68,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
      * Request a connection for the given the connection {@code key} and return a {@link CompletionStage} that is notified about
      * the connection outcome.
      *
-     * @param key the connection {@code key}, must not be {@literal null}.
+     * @param key the connection {@code key}, must not be {@code null}.
      * @return
      */
     public F getConnection(K key) {
@@ -168,7 +169,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
     /**
      * Close a connection by its connection {@code key}. Pending connections are closed using future chaining.
      *
-     * @param key the connection {@code key}, must not be {@literal null}.
+     * @param key the connection {@code key}, must not be {@code null}.
      */
     public void close(K key) {
 
@@ -209,8 +210,11 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
     static class Sync<K, T extends AsyncCloseable, F extends CompletionStage<T>> {
 
         private static final int PHASE_IN_PROGRESS = 0;
+
         private static final int PHASE_COMPLETE = 1;
+
         private static final int PHASE_FAILED = 2;
+
         private static final int PHASE_CANCELED = 3;
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -223,6 +227,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
         private volatile T connection;
 
         private final K key;
+
         private final F future;
 
         @SuppressWarnings("unchecked")
@@ -288,5 +293,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
         private boolean isComplete() {
             return PHASE.get(this) == PHASE_COMPLETE;
         }
+
     }
+
 }

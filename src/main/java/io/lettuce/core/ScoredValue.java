@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Will Glozer
  * @author Mark Paluch
  */
-@SuppressWarnings("serial")
 public class ScoredValue<V> extends Value<V> {
 
     private static final ScoredValue<Object> EMPTY = new ScoredValue<>(0, null);
@@ -48,49 +47,44 @@ public class ScoredValue<V> extends Value<V> {
     }
 
     /**
-     * Creates a {@link ScoredValue} from a {@code key} and an {@link Optional}. The resulting value contains the value from the
+     * Creates a {@link Value} from a {@code key} and an {@link Optional}. The resulting value contains the value from the
      * {@link Optional} if a value is present. Value is empty if the {@link Optional} is empty.
      *
-     * @param score the score
-     * @param optional the optional. May be empty but never {@literal null}.
-     * @param <T>
-     * @param <V>
-     * @return the {@link ScoredValue}
+     * @param score the score.
+     * @param optional the optional. May be empty but never {@code null}.
+     * @return the {@link Value}.
      */
-    public static <T extends V, V> ScoredValue<V> from(double score, Optional<T> optional) {
+    public static <T extends V, V> Value<V> from(double score, Optional<T> optional) {
 
         LettuceAssert.notNull(optional, "Optional must not be null");
 
         if (optional.isPresent()) {
-            return new ScoredValue<V>(score, optional.get());
+            return new ScoredValue<>(score, optional.get());
         }
 
-        return fromNullable(score, null);
+        return empty();
     }
 
     /**
-     * Creates a {@link ScoredValue} from a {@code score} and {@code value}. The resulting value contains the value if the
+     * Creates a {@link Value} from a {@code score} and {@code value}. The resulting value contains the value if the
      * {@code value} is not null.
      *
-     * @param score the score
-     * @param value the value. May be {@literal null}.
-     * @param <T>
-     * @param <V>
-     * @return the {@link ScoredValue}
+     * @param score the score.
+     * @param value the value. May be {@code null}.
+     * @return the {@link Value}.
      */
-    public static <T extends V, V> ScoredValue<V> fromNullable(double score, T value) {
+    public static <T extends V, V> Value<V> fromNullable(double score, T value) {
 
         if (value == null) {
-            return new ScoredValue<V>(score, null);
+            return empty();
         }
 
-        return new ScoredValue<V>(score, value);
+        return new ScoredValue<>(score, value);
     }
 
     /**
      * Returns an empty {@code ScoredValue} instance. No value is present for this instance.
      *
-     * @param <V>
      * @return the {@link ScoredValue}
      */
     public static <V> ScoredValue<V> empty() {
@@ -100,17 +94,15 @@ public class ScoredValue<V> extends Value<V> {
     /**
      * Creates a {@link ScoredValue} from a {@code key} and {@code value}. The resulting value contains the value.
      *
-     * @param score the score
-     * @param value the value. Must not be {@literal null}.
-     * @param <T>
-     * @param <V>
-     * @return the {@link ScoredValue}
+     * @param score the score.
+     * @param value the value. Must not be {@code null}.
+     * @return the {@link ScoredValue}.
      */
     public static <T extends V, V> ScoredValue<V> just(double score, T value) {
 
         LettuceAssert.notNull(value, "Value must not be null");
 
-        return new ScoredValue<V>(score, value);
+        return new ScoredValue<>(score, value);
     }
 
     public double getScore() {
@@ -150,9 +142,9 @@ public class ScoredValue<V> extends Value<V> {
      * Returns a {@link ScoredValue} consisting of the results of applying the given function to the value of this element.
      * Mapping is performed only if a {@link #hasValue() value is present}.
      *
-     * @param <R> The element type of the new stream
-     * @param mapper a stateless function to apply to each element
-     * @return the new {@link ScoredValue}
+     * @param <R> element type of the new {@link ScoredValue}.
+     * @param mapper a stateless function to apply to each element.
+     * @return the new {@link ScoredValue}.
      */
     @SuppressWarnings("unchecked")
     public <R> ScoredValue<R> map(Function<? super V, ? extends R> mapper) {
@@ -170,8 +162,8 @@ public class ScoredValue<V> extends Value<V> {
      * Returns a {@link ScoredValue} consisting of the results of applying the given function to the score of this element.
      * Mapping is performed only if a {@link #hasValue() value is present}.
      *
-     * @param mapper a stateless function to apply to each element
-     * @return the new {@link ScoredValue}
+     * @param mapper a stateless function to apply to each element.
+     * @return the new {@link ScoredValue} .
      */
     @SuppressWarnings("unchecked")
     public ScoredValue<V> mapScore(Function<? super Number, ? extends Number> mapper) {
@@ -179,9 +171,10 @@ public class ScoredValue<V> extends Value<V> {
         LettuceAssert.notNull(mapper, "Mapper function must not be null");
 
         if (hasValue()) {
-            return new ScoredValue<V>(mapper.apply(score).doubleValue(), getValue());
+            return new ScoredValue<>(mapper.apply(score).doubleValue(), getValue());
         }
 
         return this;
     }
+
 }

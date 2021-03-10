@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,10 @@ abstract class PartitionsConsensus {
     /**
      * Determine the {@link Partitions} to be used by {@link RedisClusterClient}.
      *
-     * @param current the currently used topology view, must not be {@literal null}.
-     * @param topologyViews the newly retrieved views, must not be {@literal null}.
+     * @param current the currently used topology view, must not be {@code null}.
+     * @param topologyViews the newly retrieved views, must not be {@code null}.
      * @return the resulting {@link Partitions} to be used by {@link RedisClusterClient}.
      */
     abstract Partitions getPartitions(Partitions current, Map<RedisURI, Partitions> topologyViews);
+
 }

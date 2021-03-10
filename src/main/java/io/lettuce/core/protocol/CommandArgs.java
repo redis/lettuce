@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.ToByteBufEncoder;
@@ -55,7 +55,7 @@ public class CommandArgs<K, V> {
     final List<SingularArgument> singularArguments = new ArrayList<>(10);
 
     /**
-     * @param codec Codec used to encode/decode keys and values, must not be {@literal null}.
+     * @param codec Codec used to encode/decode keys and values, must not be {@code null}.
      */
     public CommandArgs(RedisCodec<K, V> codec) {
 
@@ -86,7 +86,7 @@ public class CommandArgs<K, V> {
     /**
      * Add multiple key arguments.
      *
-     * @param keys must not be {@literal null}.
+     * @param keys must not be {@code null}.
      * @return the command args.
      */
     public CommandArgs<K, V> addKeys(Iterable<K> keys) {
@@ -102,7 +102,7 @@ public class CommandArgs<K, V> {
     /**
      * Add multiple key arguments.
      *
-     * @param keys must not be {@literal null}.
+     * @param keys must not be {@code null}.
      * @return the command args.
      */
     @SafeVarargs
@@ -131,7 +131,7 @@ public class CommandArgs<K, V> {
     /**
      * Add multiple value arguments.
      *
-     * @param values must not be {@literal null}.
+     * @param values must not be {@code null}.
      * @return the command args.
      */
     public CommandArgs<K, V> addValues(Iterable<V> values) {
@@ -147,7 +147,7 @@ public class CommandArgs<K, V> {
     /**
      * Add multiple value arguments.
      *
-     * @param values must not be {@literal null}.
+     * @param values must not be {@code null}.
      * @return the command args.
      */
     @SafeVarargs
@@ -164,7 +164,7 @@ public class CommandArgs<K, V> {
     /**
      * Add a map (hash) argument.
      *
-     * @param map the map, must not be {@literal null}.
+     * @param map the map, must not be {@code null}.
      * @return the command args.
      */
     public CommandArgs<K, V> add(Map<K, V> map) {
@@ -241,7 +241,7 @@ public class CommandArgs<K, V> {
     /**
      * Add a {@link CommandKeyword} argument. The argument is represented as bulk string.
      *
-     * @param keyword must not be {@literal null}.
+     * @param keyword must not be {@code null}.
      * @return the command args.
      */
     public CommandArgs<K, V> add(CommandKeyword keyword) {
@@ -254,7 +254,7 @@ public class CommandArgs<K, V> {
     /**
      * Add a {@link CommandType} argument. The argument is represented as bulk string.
      *
-     * @param type must not be {@literal null}.
+     * @param type must not be {@code null}.
      * @return the command args.
      */
     public CommandArgs<K, V> add(CommandType type) {
@@ -267,7 +267,7 @@ public class CommandArgs<K, V> {
     /**
      * Add a {@link ProtocolKeyword} argument. The argument is represented as bulk string.
      *
-     * @param keyword the keyword, must not be {@literal null}
+     * @param keyword the keyword, must not be {@code null}
      * @return the command args.
      */
     public CommandArgs<K, V> add(ProtocolKeyword keyword) {
@@ -310,7 +310,7 @@ public class CommandArgs<K, V> {
     /**
      * Returns the first integer argument.
      *
-     * @return the first integer argument or {@literal null}.
+     * @return the first integer argument or {@code null}.
      */
     @Deprecated
     public Long getFirstInteger() {
@@ -320,7 +320,7 @@ public class CommandArgs<K, V> {
     /**
      * Returns the first string argument.
      *
-     * @return the first string argument or {@literal null}.
+     * @return the first string argument or {@code null}.
      */
     @Deprecated
     public String getFirstString() {
@@ -330,7 +330,7 @@ public class CommandArgs<K, V> {
     /**
      * Returns the first key argument in its byte-encoded representation.
      *
-     * @return the first key argument in its byte-encoded representation or {@literal null}.
+     * @return the first key argument in its byte-encoded representation or {@code null}.
      */
     public ByteBuffer getFirstEncodedKey() {
         return CommandArgsAccessor.encodeFirstKey(this);
@@ -360,6 +360,7 @@ public class CommandArgs<K, V> {
          * @param buffer
          */
         abstract void encode(ByteBuf buffer);
+
     }
 
     static class BytesArgument extends SingularArgument {
@@ -394,6 +395,7 @@ public class CommandArgs<K, V> {
         public String toString() {
             return Base64.getEncoder().encodeToString(val);
         }
+
     }
 
     static class ProtocolKeywordArgument extends BytesArgument {
@@ -422,6 +424,7 @@ public class CommandArgs<K, V> {
         public String toString() {
             return protocolKeyword.name();
         }
+
     }
 
     static class CommandTypeCache {
@@ -436,6 +439,7 @@ public class CommandArgs<K, V> {
                 cache[i] = new ProtocolKeywordArgument(values[i]);
             }
         }
+
     }
 
     static class CommandKeywordCache {
@@ -450,6 +454,7 @@ public class CommandArgs<K, V> {
                 cache[i] = new ProtocolKeywordArgument(values[i]);
             }
         }
+
     }
 
     static class ByteBufferArgument {
@@ -475,6 +480,7 @@ public class CommandArgs<K, V> {
             target.writeBytes(value);
             target.writeBytes(CRLF);
         }
+
     }
 
     static class IntegerArgument extends SingularArgument {
@@ -521,11 +527,13 @@ public class CommandArgs<K, V> {
                 target.writeByte((byte) asString.charAt(i));
             }
         }
+
     }
 
     static class IntegerCache {
 
         static final IntegerArgument cache[];
+
         static final IntegerArgument negativeCache[];
 
         static {
@@ -537,6 +545,7 @@ public class CommandArgs<K, V> {
                 negativeCache[i] = new IntegerArgument(-i);
             }
         }
+
     }
 
     static class DoubleArgument extends SingularArgument {
@@ -560,6 +569,7 @@ public class CommandArgs<K, V> {
         public String toString() {
             return "" + val;
         }
+
     }
 
     static class StringArgument extends SingularArgument {
@@ -596,6 +606,7 @@ public class CommandArgs<K, V> {
         public String toString() {
             return val;
         }
+
     }
 
     static class CharArrayArgument extends SingularArgument {
@@ -632,11 +643,13 @@ public class CommandArgs<K, V> {
         public String toString() {
             return new String(val);
         }
+
     }
 
     static class KeyArgument<K, V> extends SingularArgument {
 
         final K key;
+
         final RedisCodec<K, V> codec;
 
         private KeyArgument(K key, RedisCodec<K, V> codec) {
@@ -675,11 +688,13 @@ public class CommandArgs<K, V> {
         public String toString() {
             return String.format("key<%s>", new StringCodec().decodeKey(codec.encodeKey(key)));
         }
+
     }
 
     static class ValueArgument<K, V> extends SingularArgument {
 
         final V val;
+
         final RedisCodec<K, V> codec;
 
         private ValueArgument(V val, RedisCodec<K, V> codec) {
@@ -717,5 +732,7 @@ public class CommandArgs<K, V> {
         public String toString() {
             return String.format("value<%s>", new StringCodec().decodeValue(codec.encodeValue(val)));
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ public class TimeoutOptions implements Serializable {
     public static final boolean DEFAULT_TIMEOUT_COMMANDS = false;
 
     private final boolean timeoutCommands;
+
     private final boolean applyConnectionTimeout;
+
     private final TimeoutSource source;
 
     private TimeoutOptions(boolean timeoutCommands, boolean applyConnectionTimeout, TimeoutSource source) {
@@ -94,7 +96,9 @@ public class TimeoutOptions implements Serializable {
     public static class Builder {
 
         private boolean timeoutCommands = DEFAULT_TIMEOUT_COMMANDS;
+
         private boolean applyConnectionTimeout = false;
+
         private TimeoutSource source;
 
         /**
@@ -109,7 +113,7 @@ public class TimeoutOptions implements Serializable {
         /**
          * Configure whether commands should timeout. Disabled by default, see {@link #DEFAULT_TIMEOUT_COMMANDS}.
          *
-         * @param enabled {@literal true} to enable timeout; {@literal false} to disable timeouts.
+         * @param enabled {@code true} to enable timeout; {@code false} to disable timeouts.
          * @return {@code this}
          */
         public Builder timeoutCommands(boolean enabled) {
@@ -121,7 +125,7 @@ public class TimeoutOptions implements Serializable {
         /**
          * Set a fixed timeout for all commands.
          *
-         * @param duration the timeout {@link Duration}, must not be {@literal null}.
+         * @param duration the timeout {@link Duration}, must not be {@code null}.
          * @return {@code this}
          */
         public Builder fixedTimeout(Duration duration) {
@@ -171,25 +175,26 @@ public class TimeoutOptions implements Serializable {
 
             return new TimeoutOptions(timeoutCommands, applyConnectionTimeout, source);
         }
+
     }
 
     /**
-     * @return {@literal true} if commands should time out.
+     * @return {@code true} if commands should time out.
      */
     public boolean isTimeoutCommands() {
         return timeoutCommands;
     }
 
     /**
-     * @return {@literal true} to apply connection timeouts declared on connection level.
+     * @return {@code true} to apply connection timeouts declared on connection level.
      */
     public boolean isApplyConnectionTimeout() {
         return applyConnectionTimeout;
     }
 
     /**
-     * @return the timeout source to determine the timeout for a {@link RedisCommand}. Can be {@literal null} if
-     *         {@link #isTimeoutCommands()} is {@literal false}.
+     * @return the timeout source to determine the timeout for a {@link RedisCommand}. Can be {@code null} if
+     *         {@link #isTimeoutCommands()} is {@code false}.
      */
     public TimeoutSource getSource() {
         return source;
@@ -203,11 +208,13 @@ public class TimeoutOptions implements Serializable {
         public long getTimeout(RedisCommand<?, ?, ?> command) {
             return timeout;
         }
+
     }
 
     private static class FixedTimeoutSource extends TimeoutSource {
 
         private final long timeout;
+
         private final TimeUnit timeUnit;
 
         FixedTimeoutSource(long timeout, TimeUnit timeUnit) {
@@ -225,6 +232,7 @@ public class TimeoutOptions implements Serializable {
         public TimeUnit getTimeUnit() {
             return timeUnit;
         }
+
     }
 
     /**
@@ -239,7 +247,7 @@ public class TimeoutOptions implements Serializable {
          * {@code command} may be null if a timeout is required but the command is not yet known, e.g. when the timeout is
          * required but a connect did not finish yet.
          *
-         * @param command can be {@literal null}.
+         * @param command can be {@code null}.
          * @return the timeout value. Zero disables the timeout. A value of {@code -1} applies the default timeout configured on
          *         the connection.
          */
@@ -251,5 +259,7 @@ public class TimeoutOptions implements Serializable {
         public TimeUnit getTimeUnit() {
             return TimeUnit.MILLISECONDS;
         }
+
     }
+
 }

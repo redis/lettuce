@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,15 +41,16 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.test.TestFutures;
-import io.lettuce.test.KeysAndValues;
-import io.lettuce.test.LettuceExtension;
-import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.core.codec.Base16;
+import io.lettuce.test.*;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
 /**
+ * Integration tests for {@link StatefulRedisClusterConnection}.
+ *
  * @author Mark Paluch
+ * @author Jon Chambers
  */
 @SuppressWarnings("rawtypes")
 @ExtendWith(LettuceExtension.class)
@@ -336,6 +337,20 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
+    void flushallAsync() {
+
+        writeKeysToTwoNodes();
+
+        assertThat(sync.flushallAsync()).isEqualTo("OK");
+
+        Wait.untilTrue(() -> sync.get(KEY_ON_NODE_1) == null).waitOrTimeout();
+        Wait.untilTrue(() -> sync.get(KEY_ON_NODE_2) == null).waitOrTimeout();
+
+        assertThat(sync.get(KEY_ON_NODE_1)).isNull();
+        assertThat(sync.get(KEY_ON_NODE_2)).isNull();
+    }
+
+    @Test
     void flushdb() {
 
         writeKeysToTwoNodes();
@@ -379,7 +394,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
     @Test
     void scriptKill() {
-        assertThat(sync.scriptKill()).isEqualTo("OK");
+        assertThatThrownBy(sync::scriptKill).hasMessageContaining("NOTBUSY");
     }
 
     @Test
@@ -389,7 +404,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         String script = "return true";
 
-        String sha = LettuceStrings.digest(script.getBytes());
+        String sha = Base16.digest(script.getBytes());
         assertThat(sync.scriptExists(sha)).contains(false);
 
         String returnedSha = sync.scriptLoad(script);

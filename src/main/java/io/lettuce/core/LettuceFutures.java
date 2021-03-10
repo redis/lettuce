@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class LettuceFutures {
      *
      * @param timeout Maximum time to wait for futures to complete.
      * @param futures Futures to wait for.
-     * @return {@literal true} if all futures complete in time, otherwise {@literal false}
+     * @return {@code true} if all futures complete in time, otherwise {@code false}
      * @since 5.0
      */
     public static boolean awaitAll(Duration timeout, Future<?>... futures) {
@@ -53,7 +53,7 @@ public class LettuceFutures {
      * @param timeout Maximum time to wait for futures to complete.
      * @param unit Unit of time for the timeout.
      * @param futures Futures to wait for.
-     * @return {@literal true} if all futures complete in time, otherwise {@literal false}
+     * @return {@code true} if all futures complete in time, otherwise {@code false}
      */
     public static boolean awaitAll(long timeout, TimeUnit unit, Future<?>... futures) {
         return Futures.awaitAll(timeout, unit, futures);
@@ -73,4 +73,5 @@ public class LettuceFutures {
     public static <T> T awaitOrCancel(RedisFuture<T> cmd, long timeout, TimeUnit unit) {
         return Futures.awaitOrCancel(cmd, timeout, unit);
     }
+
 }

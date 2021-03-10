@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,16 +38,18 @@ import io.lettuce.core.output.CommandOutput;
 public class OutputType {
 
     private final Class<? extends CommandOutput> commandOutputClass;
+
     private final TypeInformation<?> typeInformation;
+
     private final boolean streaming;
 
     /**
      * Create a new {@link OutputType} given {@code primaryType}, the {@code commandOutputClass}, {@link TypeInformation} and
      * whether the {@link OutputType} is for a {@link io.lettuce.core.output.StreamingOutput}.
      *
-     * @param commandOutputClass must not be {@literal null}.
-     * @param typeInformation must not be {@literal null}.
-     * @param streaming {@literal true} if the type descriptor concerns the {@link io.lettuce.core.output.StreamingOutput}
+     * @param commandOutputClass must not be {@code null}.
+     * @param typeInformation must not be {@code null}.
+     * @param streaming {@code true} if the type descriptor concerns the {@link io.lettuce.core.output.StreamingOutput}
      */
     OutputType(Class<? extends CommandOutput> commandOutputClass, TypeInformation<?> typeInformation, boolean streaming) {
 
@@ -95,4 +97,5 @@ public class OutputType {
         sb.append(']');
         return sb.toString();
     }
+
 }

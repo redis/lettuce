@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,4 +35,15 @@ class NestedMultiOutputUnitTests {
         output.setError(StandardCharsets.US_ASCII.encode("Oops!"));
         assertThat(output.getError()).isNotNull();
     }
+
+    @Test
+    void nestedMultiDouble() {
+        NestedMultiOutput<String, String> output = new NestedMultiOutput<>(StringCodec.UTF8);
+        double value = 123.456;
+        output.set(value);
+        assertThat(output.get()).isNotNull();
+        assertThat(output.get()).size().isEqualTo(1);
+        assertThat(output.get().get(0)).isEqualTo(value);
+    }
+
 }

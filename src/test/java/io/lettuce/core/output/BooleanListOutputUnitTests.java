@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.output;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 
@@ -49,6 +48,7 @@ class BooleanListOutputUnitTests {
 
     @Test
     void setByteNotImplemented() {
-        assertThatThrownBy(() -> sut.set(ByteBuffer.wrap("4.567".getBytes()))).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> sut.set(ByteBuffer.wrap("4.567".getBytes())))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 }

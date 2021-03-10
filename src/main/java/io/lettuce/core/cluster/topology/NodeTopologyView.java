@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,17 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 class NodeTopologyView {
 
     private static final Pattern NUMBER = Pattern.compile("(\\d+)");
+
     private final boolean available;
+
     private final RedisURI redisURI;
 
     private Partitions partitions;
+
     private final int connectedClients;
 
     private final long latency;
+
     private final String clusterNodes;
 
     private final String clientList;
@@ -155,4 +159,5 @@ class NodeTopologyView {
     void setPartitions(Partitions partitions) {
         this.partitions = partitions;
     }
+
 }

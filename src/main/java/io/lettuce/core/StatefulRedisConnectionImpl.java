@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
@@ -48,28 +49,41 @@ import io.lettuce.core.protocol.*;
 public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements StatefulRedisConnection<K, V> {
 
     protected final RedisCodec<K, V> codec;
+
     protected final RedisCommands<K, V> sync;
+
     protected final RedisAsyncCommandsImpl<K, V> async;
+
     protected final RedisReactiveCommandsImpl<K, V> reactive;
+
     private final ConnectionState state = new ConnectionState();
+
+    private final PushHandler pushHandler;
 
     protected MultiOutput<K, V> multi;
 
     /**
      * Initialize a new connection.
      *
-     * @param writer the channel writer
+     * @param writer the channel writer.
+     * @param pushHandler the handler for push notifications.
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      */
-    public StatefulRedisConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
+    public StatefulRedisConnectionImpl(RedisChannelWriter writer, PushHandler pushHandler, RedisCodec<K, V> codec,
+            Duration timeout) {
 
         super(writer, timeout);
 
+        this.pushHandler = pushHandler;
         this.codec = codec;
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
+    }
+
+    public RedisCodec<K, V> getCodec() {
+        return codec;
     }
 
     @Override
@@ -112,6 +126,26 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     @Override
     public RedisCommands<K, V> sync() {
         return sync;
+    }
+
+    /**
+     * Add a new listener.
+     *
+     * @param listener Listener.
+     */
+    @Override
+    public void addListener(PushListener listener) {
+        pushHandler.addListener(listener);
+    }
+
+    /**
+     * Remove an existing listener.
+     *
+     * @param listener Listener.
+     */
+    @Override
+    public void removeListener(PushListener listener) {
+        pushHandler.removeListener(listener);
     }
 
     @Override
@@ -248,4 +282,5 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public ConnectionState getConnectionState() {
         return state;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated since 6.0, in favor or {@link RedisReplicaInstance}.
  */
 @SuppressWarnings("serial")
-public class RedisSlaveInstance implements RedisInstance, Serializable {
-    private ReplicationPartner master;
-    private State state;
+@Deprecated
+public class RedisSlaveInstance extends RedisReplicaInstance implements RedisInstance, Serializable {
 
     public RedisSlaveInstance() {
     }
@@ -36,18 +36,14 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
     /**
      * Constructs a {@link RedisSlaveInstance}
      *
-     * @param master master for the replication, must not be {@literal null}
-     * @param state replica state, must not be {@literal null}
+     * @param master master for the replication, must not be {@code null}
+     * @param state replica state, must not be {@code null}
      */
     RedisSlaveInstance(ReplicationPartner master, State state) {
-        LettuceAssert.notNull(master, "Master must not be null");
-        LettuceAssert.notNull(state, "State must not be null");
-        this.master = master;
-        this.state = state;
+        super(master, state);
     }
 
     /**
-     *
      * @return always {@link io.lettuce.core.models.role.RedisInstance.Role#SLAVE}
      */
     @Override
@@ -60,59 +56,12 @@ public class RedisSlaveInstance implements RedisInstance, Serializable {
      * @return the replication master.
      */
     public ReplicationPartner getMaster() {
-        return master;
-    }
-
-    /**
-     *
-     * @return Slave state.
-     */
-    public State getState() {
-        return state;
+        return getUpstream();
     }
 
     public void setMaster(ReplicationPartner master) {
         LettuceAssert.notNull(master, "Master must not be null");
-        this.master = master;
+        setUpstream(master);
     }
 
-    public void setState(State state) {
-        LettuceAssert.notNull(state, "State must not be null");
-        this.state = state;
-    }
-
-    /**
-     * State of the Replica.
-     */
-    public enum State {
-        /**
-         * the instance needs to connect to its master.
-         */
-        CONNECT,
-
-        /**
-         * the replica-master connection is in progress.
-         */
-        CONNECTING,
-
-        /**
-         * the master and replica are trying to perform the synchronization.
-         */
-        SYNC,
-
-        /**
-         * the replica is online.
-         */
-        CONNECTED;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName());
-        sb.append(" [master=").append(master);
-        sb.append(", state=").append(state);
-        sb.append(']');
-        return sb.toString();
-    }
 }

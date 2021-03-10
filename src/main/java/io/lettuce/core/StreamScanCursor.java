@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package io.lettuce.core;
  * @since 3.0
  */
 public class StreamScanCursor extends ScanCursor {
+
     private long count;
 
     public long getCount() {
@@ -31,4 +32,5 @@ public class StreamScanCursor extends ScanCursor {
     public void setCount(long count) {
         this.count = count;
     }
+
 }

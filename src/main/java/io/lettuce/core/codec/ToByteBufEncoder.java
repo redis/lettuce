@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,16 @@ public interface ToByteBufEncoder<K, V> {
     /**
      * Encode the key for output to redis.
      *
-     * @param key the key, may be {@literal null}.
-     * @param target the target buffer, must not be {@literal null}.
+     * @param key the key, may be {@code null}.
+     * @param target the target buffer, must not be {@code null}.
      */
     void encodeKey(K key, ByteBuf target);
 
     /**
      * Encode the value for output to redis.
      *
-     * @param value the value, may be {@literal null}.
-     * @param target the target buffer, must not be {@literal null}.
+     * @param value the value, may be {@code null}.
+     * @param target the target buffer, must not be {@code null}.
      */
     void encodeValue(V value, ByteBuf target);
 
@@ -51,8 +51,9 @@ public interface ToByteBufEncoder<K, V> {
      * Estimates the size of the resulting byte stream. This method is called for keys and values to estimate the size for the
      * temporary buffer to allocate.
      *
-     * @param keyOrValue the key or value, may be {@literal null}.
+     * @param keyOrValue the key or value, may be {@code null}.
      * @return the estimated number of bytes in the encoded representation.
      */
     int estimateSize(Object keyOrValue);
+
 }

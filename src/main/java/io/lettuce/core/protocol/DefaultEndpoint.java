@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,28 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.protocol.CommandHandler.SUPPRESS_IO_EXCEPTION_MESSAGES;
+import static io.lettuce.core.protocol.CommandHandler.*;
 
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionEvents;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
@@ -47,10 +57,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  */
-public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
+public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandler {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEndpoint.class);
+
     private static final AtomicLong ENDPOINT_COUNTER = new AtomicLong();
+
     private static final AtomicIntegerFieldUpdater<DefaultEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater
             .newUpdater(DefaultEndpoint.class, "queueSize");
 
@@ -58,28 +70,43 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             .newUpdater(DefaultEndpoint.class, "status");
 
     private static final int ST_OPEN = 0;
+
     private static final int ST_CLOSED = 1;
 
     protected volatile Channel channel;
 
     private final Reliability reliability;
+
     private final ClientOptions clientOptions;
+
     private final ClientResources clientResources;
+
     private final Queue<RedisCommand<?, ?, ?>> disconnectedBuffer;
+
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
+
     private final boolean boundedQueues;
+
     private final boolean rejectCommandsWhileDisconnected;
 
     private final long endpointId = ENDPOINT_COUNTER.incrementAndGet();
+
+    private final List<PushListener> pushListeners = new CopyOnWriteArrayList<>();
+
     private final SharedLock sharedLock = new SharedLock();
+
     private final boolean debugEnabled = logger.isDebugEnabled();
+
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
     private String logPrefix;
+
     private boolean autoFlushCommands = true;
+
     private boolean inActivation = false;
 
     private ConnectionWatchdog connectionWatchdog;
+
     private ConnectionFacade connectionFacade;
 
     private volatile Throwable connectionError;
@@ -92,11 +119,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     @SuppressWarnings("unused")
     private volatile int status = ST_OPEN;
 
+    private final String cachedEndpointId;
+
     /**
      * Create a new {@link DefaultEndpoint}.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}.
-     * @param clientResources client resources for this connection, must not be {@literal null}.
+     * @param clientOptions client options for this connection, must not be {@code null}.
+     * @param clientResources client resources for this connection, must not be {@code null}.
      */
     public DefaultEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
 
@@ -110,6 +139,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
+        this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
     }
 
     @Override
@@ -125,6 +155,21 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
         this.autoFlushCommands = autoFlush;
+    }
+
+    @Override
+    public void addListener(PushListener listener) {
+        pushListeners.add(listener);
+    }
+
+    @Override
+    public void removeListener(PushListener listener) {
+        pushListeners.remove(listener);
+    }
+
+    @Override
+    public List<PushListener> getPushListeners() {
+        return pushListeners;
     }
 
     @Override
@@ -567,7 +612,18 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
         }
 
         return closeFuture;
+    }
 
+    /**
+     * Disconnect the channel.
+     */
+    public void disconnect() {
+
+        Channel channel = this.channel;
+
+        if (channel != null && channel.isOpen()) {
+            channel.disconnect();
+        }
     }
 
     private Channel getOpenChannel() {
@@ -744,9 +800,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
             return logPrefix;
         }
 
-        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "epid=0x" + Long.toHexString(endpointId)
+        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "epid=" + getId()
                 + ']';
         return logPrefix = buffer;
+    }
+
+    @Override
+    public String getId() {
+        return cachedEndpointId;
     }
 
     private static boolean isRejectCommand(ClientOptions clientOptions) {
@@ -771,7 +832,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     static class ListenerSupport {
 
         Collection<? extends RedisCommand<?, ?, ?>> sentCommands;
+
         RedisCommand<?, ?, ?> sentCommand;
+
         DefaultEndpoint endpoint;
 
         void dequeue() {
@@ -793,15 +856,18 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
                 }
             }
         }
+
     }
 
     static class AtMostOnceWriteListener extends ListenerSupport implements ChannelFutureListener {
 
         private static final Recycler<AtMostOnceWriteListener> RECYCLER = new Recycler<AtMostOnceWriteListener>() {
+
             @Override
             protected AtMostOnceWriteListener newObject(Handle<AtMostOnceWriteListener> handle) {
                 return new AtMostOnceWriteListener(handle);
             }
+
         };
 
         private final Recycler.Handle<AtMostOnceWriteListener> handle;
@@ -854,6 +920,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             handle.recycle(this);
         }
+
     }
 
     /**
@@ -862,10 +929,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
     static class RetryListener extends ListenerSupport implements GenericFutureListener<Future<Void>> {
 
         private static final Recycler<RetryListener> RECYCLER = new Recycler<RetryListener>() {
+
             @Override
             protected RetryListener newObject(Handle<RetryListener> handle) {
                 return new RetryListener(handle);
             }
+
         };
 
         private final Recycler.Handle<RetryListener> handle;
@@ -1010,6 +1079,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             handle.recycle(this);
         }
+
     }
 
     private enum Reliability {
@@ -1038,5 +1108,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint {
 
             return false;
         }
+
     }
+
 }

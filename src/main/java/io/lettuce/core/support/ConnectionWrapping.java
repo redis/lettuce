@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,9 @@ public class ConnectionWrapping {
     static class ReturnObjectOnCloseInvocationHandler<T> extends AbstractInvocationHandler implements Wrapper<T> {
 
         private T connection;
+
         private T proxiedConnection;
+
         private Map<Method, Object> connectionProxies = new ConcurrentHashMap<>(5, 1);
 
         private final Origin<T> pool;
@@ -131,7 +133,8 @@ public class ConnectionWrapping {
 
             try {
 
-                if (method.getName().equals("sync") || method.getName().equals("async") || method.getName().equals("reactive")) {
+                if (method.getName().equals("sync") || method.getName().equals("async")
+                        || method.getName().equals("reactive")) {
                     return connectionProxies.computeIfAbsent(method, m -> getInnerProxy(method, args));
                 }
 
@@ -167,6 +170,7 @@ public class ConnectionWrapping {
         public T unwrap() {
             return getConnection();
         }
+
     }
 
     /**
@@ -177,10 +181,11 @@ public class ConnectionWrapping {
      * @since 4.3
      */
     @SuppressWarnings("try")
-    static class DelegateCloseToConnectionInvocationHandler<T extends AsyncCloseable & AutoCloseable> extends
-            AbstractInvocationHandler implements Wrapper<Object> {
+    static class DelegateCloseToConnectionInvocationHandler<T extends AsyncCloseable & AutoCloseable>
+            extends AbstractInvocationHandler implements Wrapper<Object> {
 
         private final T proxiedConnection;
+
         private final Object api;
 
         DelegateCloseToConnectionInvocationHandler(T proxiedConnection, Object api) {
@@ -218,13 +223,16 @@ public class ConnectionWrapping {
         public Object unwrap() {
             return api;
         }
+
     }
 
     /**
      * Interface to retrieve an underlying target connection from a proxy.
      */
     interface HasTargetConnection {
+
         StatefulConnection<?, ?> getTargetConnection();
+
     }
 
     /**
@@ -241,6 +249,7 @@ public class ConnectionWrapping {
          * Return the object asynchronously.
          */
         CompletableFuture<Void> returnObjectAsync(T o) throws Exception;
+
     }
 
     /**
@@ -250,6 +259,9 @@ public class ConnectionWrapping {
      * @since 5.2
      */
     interface Wrapper<T> {
+
         T unwrap();
+
     }
+
 }

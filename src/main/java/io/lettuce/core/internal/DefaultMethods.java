@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,8 @@ public class DefaultMethods {
             @Override
             MethodHandle lookup(Method method) throws ReflectiveOperationException {
 
-                Constructor<Lookup> constructor = this.constructor.orElseThrow(() -> new IllegalStateException(
-                        "Could not obtain MethodHandles.lookup constructor"));
+                Constructor<Lookup> constructor = this.constructor
+                        .orElseThrow(() -> new IllegalStateException("Could not obtain MethodHandles.lookup constructor"));
 
                 return constructor.newInstance(method.getDeclaringClass()).unreflectSpecial(method, method.getDeclaringClass());
             }
@@ -75,6 +75,7 @@ public class DefaultMethods {
             boolean isAvailable() {
                 return constructor.isPresent();
             }
+
         },
 
         /**
@@ -121,19 +122,20 @@ public class DefaultMethods {
             boolean isAvailable() {
                 return true;
             }
+
         };
 
         /**
          * Lookup a {@link MethodHandle} given {@link Method} to look up.
          *
-         * @param method must not be {@literal null}.
+         * @param method must not be {@code null}.
          * @return the method handle.
          * @throws ReflectiveOperationException
          */
         abstract MethodHandle lookup(Method method) throws ReflectiveOperationException;
 
         /**
-         * @return {@literal true} if the lookup is available.
+         * @return {@code true} if the lookup is available.
          */
         abstract boolean isAvailable();
 
@@ -170,5 +172,7 @@ public class DefaultMethods {
                 throw new IllegalStateException(ex);
             }
         }
+
     }
+
 }

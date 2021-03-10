@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package io.lettuce.core;
 
-import static junit.framework.TestCase.assertNotNull;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.concurrent.Future;
@@ -32,6 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.*;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -67,7 +65,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             RedisCommands<String, String> connection = client.connect().sync();
 
             assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class)
-                    .hasMessageContaining("NOAUTH Authentication required");
+                    .hasMessageContaining("NOAUTH");
 
             assertThat(connection.auth(passwd)).isEqualTo("OK");
             assertThat(connection.set(key, value)).isEqualTo("OK");
@@ -89,7 +87,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             RedisCommands<String, String> connection = client.connect().sync();
 
             assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class)
-                    .hasMessageContaining("NOAUTH Authentication required");
+                    .hasMessageContaining("NOAUTH");
 
             assertThat(connection.auth(passwd)).isEqualTo("OK");
             assertThat(connection.set(key, value)).isEqualTo("OK");
@@ -126,7 +124,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             assertThat(redis.ping()).isEqualTo("PONG");
         } catch (Exception e) {
         } finally {
-            assertNotNull(connTestResp2);
+            assertThat(connTestResp2).isNotNull();
             if (connTestResp2 != null) {
                 connTestResp2.getStatefulConnection().close();
             }
@@ -254,12 +252,12 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             assertThat(connection.auth(username, passwd)).isEqualTo("OK");
 
             assertThatThrownBy(() -> connection.auth(username, "invalid"))
-                    .hasMessage("WRONGPASS invalid username-password pair");
+                    .hasMessageContaining("WRONGPASS invalid username-password pair");
 
             assertThat(connection.auth(aclUsername, aclPasswd)).isEqualTo("OK");
 
             assertThatThrownBy(() -> connection.auth(aclUsername, "invalid"))
-                    .hasMessage("WRONGPASS invalid username-password pair");
+                    .hasMessageContaining("WRONGPASS invalid username-password pair");
 
             connection.getStatefulConnection().close();
         });

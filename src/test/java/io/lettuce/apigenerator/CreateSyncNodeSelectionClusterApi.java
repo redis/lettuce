@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 package io.lettuce.apigenerator;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
@@ -38,43 +38,14 @@ import io.lettuce.core.internal.LettuceSets;
  * Create sync API based on the templates.
  *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  */
-@RunWith(Parameterized.class)
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class CreateSyncNodeSelectionClusterApi {
 
-    private Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
+    private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands", "RedisTransactionalCommands");
+    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
             "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch", "setAutoFlushCommands", "flushCommands");
-
-    private CompilationUnitFactory factory;
-
-    @Parameterized.Parameters(name = "Create {0}")
-    public static List<Object[]> arguments() {
-        List<Object[]> result = new ArrayList<>();
-
-        for (String templateName : Constants.TEMPLATE_NAMES) {
-            if (templateName.contains("Transactional") || templateName.contains("Sentinel")) {
-                continue;
-            }
-            result.add(new Object[] { templateName });
-        }
-
-        return result;
-    }
-
-    /**
-     * @param templateName
-     */
-    public CreateSyncNodeSelectionClusterApi(String templateName) {
-
-        String targetName = templateName.replace("Redis", "NodeSelection");
-        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
-        String targetPackage = "io.lettuce.core.cluster.api.sync";
-
-        // todo: remove AutoCloseable from BaseNodeSelectionAsyncCommands
-        factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodFilter(), importSupplier(), null, null);
-        factory.keepMethodSignaturesFor(FILTER_METHODS);
-    }
 
     /**
      * Mutate type comment.
@@ -92,16 +63,10 @@ public class CreateSyncNodeSelectionClusterApi {
      * @return
      */
     Predicate<MethodDeclaration> methodFilter() {
-
         return method -> {
-
-            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode().orElse(null);
-            if (FILTER_METHODS.contains(method.getName().getIdentifier())
-                    || FILTER_METHODS.contains(classOfMethod.getName().getIdentifier() + "." + method.getName())) {
-                return false;
-            }
-
-            return true;
+            ClassOrInterfaceDeclaration classOfMethod = (ClassOrInterfaceDeclaration) method.getParentNode().get();
+            return !FILTER_METHODS.contains(method.getName().getIdentifier())
+                    && !FILTER_METHODS.contains(classOfMethod.getName().getIdentifier() + "." + method.getName());
         };
     }
 
@@ -111,10 +76,7 @@ public class CreateSyncNodeSelectionClusterApi {
      * @return
      */
     Function<MethodDeclaration, Type> methodTypeMutator() {
-
-        return method -> {
-            return CompilationUnitFactory.createParametrizedType("Executions", method.getType().toString());
-        };
+        return method -> CompilationUnitFactory.createParametrizedType("Executions", method.getType().toString());
     }
 
     /**
@@ -126,8 +88,28 @@ public class CreateSyncNodeSelectionClusterApi {
         return Collections::emptyList;
     }
 
-    @Test
-    public void createInterface() throws Exception {
-        factory.createInterface();
+    @ParameterizedTest
+    @MethodSource("arguments")
+    void createInterface(String argument) throws Exception {
+        createFactory(argument).createInterface();
+    }
+
+    static List<String> arguments() {
+        return Stream
+                .of(Constants.TEMPLATE_NAMES)
+                .filter(t -> !FILTER_TEMPLATES.contains(t))
+                .collect(Collectors.toList());
+    }
+
+    private CompilationUnitFactory createFactory(String templateName) {
+        String targetName = templateName.replace("Redis", "NodeSelection");
+        File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
+        String targetPackage = "io.lettuce.core.cluster.api.sync";
+
+        // todo: remove AutoCloseable from BaseNodeSelectionAsyncCommands
+        CompilationUnitFactory factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName,
+                commentMutator(), methodTypeMutator(), methodFilter(), importSupplier(), null, Function.identity());
+        factory.keepMethodSignaturesFor(FILTER_METHODS);
+        return factory;
     }
 }

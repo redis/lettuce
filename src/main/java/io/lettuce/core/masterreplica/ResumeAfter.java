@@ -1,11 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,12 +27,13 @@ import io.lettuce.core.internal.AsyncCloseable;
  */
 class ResumeAfter {
 
-    private static final AtomicIntegerFieldUpdater<ResumeAfter> UPDATER = AtomicIntegerFieldUpdater.newUpdater(
-            ResumeAfter.class, "closed");
+    private static final AtomicIntegerFieldUpdater<ResumeAfter> UPDATER = AtomicIntegerFieldUpdater
+            .newUpdater(ResumeAfter.class, "closed");
 
     private final AsyncCloseable closeable;
 
     private static final int ST_OPEN = 0;
+
     private static final int ST_CLOSED = 1;
 
     @SuppressWarnings("unused")
@@ -85,4 +86,5 @@ class ResumeAfter {
     private boolean firstCloseLatch() {
         return UPDATER.compareAndSet(ResumeAfter.this, ST_OPEN, ST_CLOSED);
     }
+
 }

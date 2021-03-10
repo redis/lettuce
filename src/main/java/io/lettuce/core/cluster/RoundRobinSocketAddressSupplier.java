@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
@@ -35,13 +36,15 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RoundRobinSocketAddressSupplier.class);
 
-    private final Collection<RedisClusterNode> partitions;
+    private final Supplier<Partitions> partitions;
+
     private final Function<Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction;
+
     private final ClientResources clientResources;
 
-    private RoundRobin<RedisClusterNode> roundRobin;
+    private final RoundRobin<RedisClusterNode> roundRobin;
 
-    public RoundRobinSocketAddressSupplier(Collection<RedisClusterNode> partitions,
+    public RoundRobinSocketAddressSupplier(Supplier<Partitions> partitions,
             Function<? extends Collection<RedisClusterNode>, Collection<RedisClusterNode>> sortFunction,
             ClientResources clientResources) {
 
@@ -52,21 +55,22 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
         this.roundRobin = new RoundRobin<>();
         this.sortFunction = (Function) sortFunction;
         this.clientResources = clientResources;
-        resetRoundRobin();
+        resetRoundRobin(partitions.get());
     }
 
     @Override
     public SocketAddress get() {
 
+        Partitions partitions = this.partitions.get();
         if (!roundRobin.isConsistent(partitions)) {
-            resetRoundRobin();
+            resetRoundRobin(partitions);
         }
 
         RedisClusterNode redisClusterNode = roundRobin.next();
         return getSocketAddress(redisClusterNode);
     }
 
-    protected void resetRoundRobin() {
+    protected void resetRoundRobin(Partitions partitions) {
         roundRobin.rebuild(sortFunction.apply(partitions));
     }
 
@@ -76,4 +80,5 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
         logger.debug("Resolved SocketAddress {} using for Cluster node {}", resolvedAddress, redisClusterNode.getNodeId());
         return resolvedAddress;
     }
+
 }

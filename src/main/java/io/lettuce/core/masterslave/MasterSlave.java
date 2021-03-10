@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,8 +96,8 @@ public class MasterSlave {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURI the Redis server to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURI the Redis server to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection.
@@ -121,8 +121,8 @@ public class MasterSlave {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURI the Redis server to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURI the Redis server to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return {@link CompletableFuture} that is notified once the connect is finished.
@@ -148,8 +148,8 @@ public class MasterSlave {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new connection.
@@ -174,8 +174,8 @@ public class MasterSlave {
      * </p>
      *
      * @param redisClient the Redis client.
-     * @param codec Use this codec to encode/decode keys and values, must not be {@literal null}.
-     * @param redisURIs the Redis server(s) to connect to, must not be {@literal null}.
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}.
+     * @param redisURIs the Redis server(s) to connect to, must not be {@code null}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return {@link CompletableFuture} that is notified once the connect is finished.
@@ -184,4 +184,5 @@ public class MasterSlave {
             RedisCodec<K, V> codec, Iterable<RedisURI> redisURIs) {
         return MasterReplica.connectAsync(redisClient, codec, redisURIs).thenApply(MasterSlaveConnectionWrapper::new);
     }
+
 }

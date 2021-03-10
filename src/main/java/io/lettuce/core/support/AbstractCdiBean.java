@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,13 @@ import io.lettuce.core.resource.ClientResources;
 abstract class AbstractCdiBean<T> implements Bean<T> {
 
     protected final Bean<RedisURI> redisURIBean;
+
     protected final Bean<ClientResources> clientResourcesBean;
+
     protected final BeanManager beanManager;
+
     protected final Set<Annotation> qualifiers;
+
     protected final String name;
 
     public AbstractCdiBean(Bean<RedisURI> redisURIBean, Bean<ClientResources> clientResourcesBean, BeanManager beanManager,
@@ -100,4 +104,5 @@ abstract class AbstractCdiBean<T> implements Bean<T> {
     public Set<InjectionPoint> getInjectionPoints() {
         return Collections.emptySet();
     }
+
 }

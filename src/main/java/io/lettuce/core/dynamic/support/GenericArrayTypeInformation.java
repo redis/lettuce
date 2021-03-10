@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ class GenericArrayTypeInformation<S> extends ParentTypeAwareTypeInformation<S> {
      * Creates a new {@link GenericArrayTypeInformation} for the given {@link GenericArrayTypeInformation} and
      * {@link TypeDiscoverer}.
      *
-     * @param type must not be {@literal null}.
-     * @param parent must not be {@literal null}.
-     * @param typeVariableMap must not be {@literal null}.
+     * @param type must not be {@code null}.
+     * @param parent must not be {@code null}.
+     * @param typeVariableMap must not be {@code null}.
      */
     protected GenericArrayTypeInformation(GenericArrayType type, TypeDiscoverer<?> parent,
             Map<TypeVariable<?>, Type> typeVariableMap) {
@@ -60,4 +60,5 @@ class GenericArrayTypeInformation<S> extends ParentTypeAwareTypeInformation<S> {
     public String toString() {
         return type.toString();
     }
+
 }

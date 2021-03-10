@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CancellationException;
@@ -26,7 +25,6 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisCommandInterruptedException;
 import io.lettuce.core.RedisException;
@@ -73,8 +71,8 @@ public class AsyncCommandUnitTests {
     @Test
     void awaitAllCompleted() {
         sut.complete();
-        assertThat(LettuceFutures.awaitAll(-1, TimeUnit.MILLISECONDS, sut)).isTrue();
-        assertThat(LettuceFutures.awaitAll(0, TimeUnit.MILLISECONDS, sut)).isTrue();
+        assertThat(Futures.awaitAll(-1, TimeUnit.MILLISECONDS, sut)).isTrue();
+        assertThat(Futures.awaitAll(0, TimeUnit.MILLISECONDS, sut)).isTrue();
         assertThat(Futures.await(5, TimeUnit.MILLISECONDS, sut)).isTrue();
     }
 
@@ -87,21 +85,21 @@ public class AsyncCommandUnitTests {
     void awaitReturnsCompleted() {
         sut.getOutput().set(StandardCharsets.US_ASCII.encode("one"));
         sut.complete();
-        assertThat(LettuceFutures.awaitOrCancel(sut, -1, TimeUnit.NANOSECONDS)).isEqualTo("one");
-        assertThat(LettuceFutures.awaitOrCancel(sut, 0, TimeUnit.NANOSECONDS)).isEqualTo("one");
-        assertThat(LettuceFutures.awaitOrCancel(sut, 1, TimeUnit.NANOSECONDS)).isEqualTo("one");
+        assertThat(Futures.awaitOrCancel(sut, -1, TimeUnit.NANOSECONDS)).isEqualTo("one");
+        assertThat(Futures.awaitOrCancel(sut, 0, TimeUnit.NANOSECONDS)).isEqualTo("one");
+        assertThat(Futures.awaitOrCancel(sut, 1, TimeUnit.NANOSECONDS)).isEqualTo("one");
     }
 
     @Test
     void awaitWithExecutionException() {
         sut.completeExceptionally(new RedisException("error"));
-        assertThatThrownBy(() -> LettuceFutures.awaitOrCancel(sut, 1, TimeUnit.SECONDS)).isInstanceOf(RedisException.class);
+        assertThatThrownBy(() -> Futures.awaitOrCancel(sut, 1, TimeUnit.SECONDS)).isInstanceOf(RedisException.class);
     }
 
     @Test
     void awaitWithCancelledCommand() {
         sut.cancel();
-        assertThatThrownBy(() -> LettuceFutures.awaitOrCancel(sut, 5, TimeUnit.SECONDS))
+        assertThatThrownBy(() -> Futures.awaitOrCancel(sut, 5, TimeUnit.SECONDS))
                 .isInstanceOf(CancellationException.class);
     }
 
@@ -199,7 +197,7 @@ public class AsyncCommandUnitTests {
                 return null;
             }
         };
-        assertThatThrownBy(() -> output.set(null)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> output.set(null)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -210,7 +208,7 @@ public class AsyncCommandUnitTests {
                 return null;
             }
         };
-        assertThatThrownBy(() -> output.set(0)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> output.set(0)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,20 @@
 package io.lettuce.core.resource;
 
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
+import io.netty.channel.epoll.EpollDatagramChannel;
 import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.SystemPropertyUtil;
@@ -36,6 +41,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * the {@literal netty-transport-native-epoll} library during runtime. Internal API.
  *
  * @author Mark Paluch
+ * @author Yohei Ueki
  * @since 4.4
  */
 public class EpollProvider {
@@ -43,9 +49,11 @@ public class EpollProvider {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(EpollProvider.class);
 
     private static final String EPOLL_ENABLED_KEY = "io.lettuce.core.epoll";
+
     private static final boolean EPOLL_ENABLED = Boolean.parseBoolean(SystemPropertyUtil.get(EPOLL_ENABLED_KEY, "true"));
 
     private static final boolean EPOLL_AVAILABLE;
+
     private static final EventLoopResources EPOLL_RESOURCES;
 
     static {
@@ -62,16 +70,16 @@ public class EpollProvider {
 
         if (EPOLL_AVAILABLE) {
             logger.debug("Starting with epoll library");
-            EPOLL_RESOURCES = AvailableEpollResources.INSTANCE;
+            EPOLL_RESOURCES = new EventLoopResourcesWrapper(EpollResources.INSTANCE, EpollProvider::checkForEpollLibrary);
 
         } else {
             logger.debug("Starting without optional epoll library");
-            EPOLL_RESOURCES = UnavailableEpollResources.INSTANCE;
+            EPOLL_RESOURCES = new EventLoopResourcesWrapper(UnavailableResources.INSTANCE, EpollProvider::checkForEpollLibrary);
         }
     }
 
     /**
-     * @return {@literal true} if epoll is available.
+     * @return {@code true} if epoll is available.
      */
     public static boolean isAvailable() {
         return EPOLL_AVAILABLE && EPOLL_ENABLED;
@@ -103,59 +111,21 @@ public class EpollProvider {
     }
 
     /**
-     * {@link EventLoopResources} for unavailable EPoll.
+     * Apply Keep-Alive options.
+     *
+     * @since 6.1
      */
-    enum UnavailableEpollResources implements EventLoopResources {
+    public static void applyKeepAlive(Bootstrap bootstrap, int count, Duration idle, Duration interval) {
 
-        INSTANCE;
-
-        @Override
-        public Class<? extends Channel> domainSocketChannelClass() {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-        @Override
-        public Class<? extends EventLoopGroup> eventLoopGroupClass() {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-        @Override
-        public boolean matches(Class<? extends EventExecutorGroup> type) {
-
-            checkForEpollLibrary();
-            return false;
-        }
-
-        @Override
-        public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-        @Override
-        public SocketAddress newSocketAddress(String socketPath) {
-
-            checkForEpollLibrary();
-            return null;
-        }
-
-        @Override
-        public Class<? extends Channel> socketChannelClass() {
-
-            checkForEpollLibrary();
-            return null;
-        }
+        bootstrap.option(EpollChannelOption.TCP_KEEPCNT, count);
+        bootstrap.option(EpollChannelOption.TCP_KEEPIDLE, Math.toIntExact(idle.getSeconds()));
+        bootstrap.option(EpollChannelOption.TCP_KEEPINTVL, Math.toIntExact(interval.getSeconds()));
     }
 
     /**
      * {@link EventLoopResources} for available Epoll.
      */
-    enum AvailableEpollResources implements EventLoopResources {
+    enum EpollResources implements EventLoopResources {
 
         INSTANCE;
 
@@ -168,43 +138,35 @@ public class EpollProvider {
         }
 
         @Override
-        public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-
-            checkForEpollLibrary();
-
-            return new EpollEventLoopGroup(nThreads, threadFactory);
-        }
-
-        @Override
-        public Class<? extends Channel> domainSocketChannelClass() {
-
-            checkForEpollLibrary();
-
-            return EpollDomainSocketChannel.class;
-        }
-
-        @Override
-        public Class<? extends Channel> socketChannelClass() {
-
-            checkForEpollLibrary();
-
-            return EpollSocketChannel.class;
-        }
-
-        @Override
         public Class<? extends EventLoopGroup> eventLoopGroupClass() {
-
-            checkForEpollLibrary();
-
             return EpollEventLoopGroup.class;
         }
 
         @Override
+        public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
+            return new EpollEventLoopGroup(nThreads, threadFactory);
+        }
+
+        @Override
+        public Class<? extends Channel> socketChannelClass() {
+            return EpollSocketChannel.class;
+        }
+
+        @Override
+        public Class<? extends Channel> domainSocketChannelClass() {
+            return EpollDomainSocketChannel.class;
+        }
+
+        @Override
+        public Class<? extends DatagramChannel> datagramChannelClass() {
+            return EpollDatagramChannel.class;
+        }
+
+        @Override
         public SocketAddress newSocketAddress(String socketPath) {
-
-            checkForEpollLibrary();
-
             return new DomainSocketAddress(socketPath);
         }
+
     }
+
 }

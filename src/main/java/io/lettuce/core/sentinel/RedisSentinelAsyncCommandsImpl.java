@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncCommands<K, V> {
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
+
     private final StatefulConnection<K, V> connection;
 
     public RedisSentinelAsyncCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
@@ -157,7 +158,13 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     }
 
     public <T> AsyncCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
-        return (AsyncCommand<K, V, T>) connection.dispatch(new AsyncCommand<>(cmd));
+
+        AsyncCommand<K, V, T> asyncCommand = new AsyncCommand<>(cmd);
+        RedisCommand<K, V, T> dispatched = connection.dispatch(asyncCommand);
+        if (dispatched instanceof AsyncCommand) {
+            return (AsyncCommand<K, V, T>) dispatched;
+        }
+        return asyncCommand;
     }
 
     public void close() {
@@ -173,4 +180,5 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
         return (StatefulRedisSentinelConnection<K, V>) connection;
     }
+
 }

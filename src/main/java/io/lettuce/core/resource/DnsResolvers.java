@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,12 @@ public enum DnsResolvers implements DnsResolver {
      * Java VM default resolver.
      */
     JVM_DEFAULT {
+
         @Override
         public InetAddress[] resolve(String host) throws UnknownHostException {
             return InetAddress.getAllByName(host);
         }
+
     },
 
     /**
@@ -43,10 +45,12 @@ public enum DnsResolvers implements DnsResolver {
      * @since 4.4
      */
     UNRESOLVED {
+
         @Override
         public InetAddress[] resolve(String host) throws UnknownHostException {
             return new InetAddress[0];
         }
+
     };
 
 }

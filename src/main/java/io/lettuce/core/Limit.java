@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ public class Limit {
     private static final Limit UNLIMITED = new Limit(null, null);
 
     private final Long offset;
+
     private final Long count;
 
     protected Limit(Long offset, Long count) {
@@ -89,7 +90,7 @@ public class Limit {
 
     /**
      *
-     * @return {@literal true} if the {@link Limit} contains a limitation.
+     * @return {@code true} if the {@link Limit} contains a limitation.
      */
     public boolean isLimited() {
         return offset != null && count != null;
@@ -106,4 +107,5 @@ public class Limit {
 
         return sb.append(" [unlimited]").toString();
     }
+
 }

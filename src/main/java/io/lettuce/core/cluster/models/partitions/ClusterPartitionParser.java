@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package io.lettuce.core.cluster.models.partitions;
 
 import java.util.*;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.SlotHash;
@@ -35,7 +35,9 @@ public class ClusterPartitionParser {
     public static final String CONNECTED = "connected";
 
     private static final String TOKEN_SLOT_IN_TRANSITION = "[";
+
     private static final char TOKEN_NODE_SEPARATOR = '\n';
+
     private static final Map<String, RedisClusterNode.NodeFlag> FLAG_MAPPING;
 
     static {

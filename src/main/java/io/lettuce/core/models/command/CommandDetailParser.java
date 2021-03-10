@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@ package io.lettuce.core.models.command;
 
 import java.util.*;
 
+import io.lettuce.core.AclCategory;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Parser for Redis <a href="http://redis.io/commands/command">COMMAND</a>/<a
- * href="http://redis.io/commands/command-info">COMMAND INFO</a> output.
+ * Parser for Redis
+ * <a href="http://redis.io/commands/command">COMMAND</a>/<a href="http://redis.io/commands/command-info">COMMAND INFO</a>
+ * output.
  *
  * @author Mark Paluch
+ * @author Mikhael Sokolov
  * @since 3.0
  */
 @SuppressWarnings("serial")
@@ -36,6 +39,9 @@ public class CommandDetailParser {
 
     @SuppressWarnings("serial")
     protected static final Map<String, CommandDetail.Flag> FLAG_MAPPING;
+
+    @SuppressWarnings("serial")
+    protected static final Map<String, AclCategory> ACL_CATEGORY_MAPPING;
 
     static {
         Map<String, CommandDetail.Flag> flagMap = new HashMap<>();
@@ -54,6 +60,30 @@ public class CommandDetailParser {
         flagMap.put("stale", CommandDetail.Flag.STALE);
         flagMap.put("write", CommandDetail.Flag.WRITE);
         FLAG_MAPPING = Collections.unmodifiableMap(flagMap);
+
+        Map<String, AclCategory> aclCategoriesMap = new HashMap<>();
+        aclCategoriesMap.put("@keyspace", AclCategory.KEYSPACE);
+        aclCategoriesMap.put("@read", AclCategory.READ);
+        aclCategoriesMap.put("@write", AclCategory.WRITE);
+        aclCategoriesMap.put("@set", AclCategory.SET);
+        aclCategoriesMap.put("@sortedset", AclCategory.SORTEDSET);
+        aclCategoriesMap.put("@list", AclCategory.LIST);
+        aclCategoriesMap.put("@hash", AclCategory.HASH);
+        aclCategoriesMap.put("@string", AclCategory.STRING);
+        aclCategoriesMap.put("@bitmap", AclCategory.BITMAP);
+        aclCategoriesMap.put("@hyperloglog", AclCategory.HYPERLOGLOG);
+        aclCategoriesMap.put("@geo", AclCategory.GEO);
+        aclCategoriesMap.put("@stream", AclCategory.STREAM);
+        aclCategoriesMap.put("@pubsub", AclCategory.PUBSUB);
+        aclCategoriesMap.put("@admin", AclCategory.ADMIN);
+        aclCategoriesMap.put("@fast", AclCategory.FAST);
+        aclCategoriesMap.put("@slow", AclCategory.SLOW);
+        aclCategoriesMap.put("@blocking", AclCategory.BLOCKING);
+        aclCategoriesMap.put("@dangerous", AclCategory.DANGEROUS);
+        aclCategoriesMap.put("@connection", AclCategory.CONNECTION);
+        aclCategoriesMap.put("@transaction", AclCategory.TRANSACTION);
+        aclCategoriesMap.put("@scripting", AclCategory.SCRIPTING);
+        ACL_CATEGORY_MAPPING = Collections.unmodifiableMap(aclCategoriesMap);
     }
 
     private CommandDetailParser() {
@@ -62,7 +92,7 @@ public class CommandDetailParser {
     /**
      * Parse the output of the Redis COMMAND/COMMAND INFO command and convert to a list of {@link CommandDetail}.
      *
-     * @param commandOutput the command output, must not be {@literal null}
+     * @param commandOutput the command output, must not be {@code null}
      * @return RedisInstance
      */
     public static List<CommandDetail> parse(List<?> commandOutput) {
@@ -95,11 +125,12 @@ public class CommandDetailParser {
         int firstKey = Math.toIntExact(getLongFromIterator(iterator, 0));
         int lastKey = Math.toIntExact(getLongFromIterator(iterator, 0));
         int keyStepCount = Math.toIntExact(getLongFromIterator(iterator, 0));
+        Object categories = iterator.hasNext() ? iterator.next() : null;
 
         Set<CommandDetail.Flag> parsedFlags = parseFlags(flags);
+        Set<AclCategory> parsedAclCategories = parseAclCategories(categories);
 
-        // TODO: Extract command grouping (ACL)
-        return new CommandDetail(name, arity, parsedFlags, firstKey, lastKey, keyStepCount);
+        return new CommandDetail(name, arity, parsedFlags, firstKey, lastKey, keyStepCount, parsedAclCategories);
     }
 
     private static Set<CommandDetail.Flag> parseFlags(Object flags) {
@@ -111,6 +142,22 @@ public class CommandDetailParser {
                 CommandDetail.Flag flag = FLAG_MAPPING.get(o);
                 if (flag != null) {
                     result.add(flag);
+                }
+            }
+        }
+
+        return Collections.unmodifiableSet(result);
+    }
+
+    private static Set<AclCategory> parseAclCategories(Object aclCategories) {
+        Set<AclCategory> result = new HashSet<>();
+
+        if (aclCategories instanceof Collection<?>) {
+            Collection<?> collection = (Collection<?>) aclCategories;
+            for (Object o : collection) {
+                AclCategory aclCategory = ACL_CATEGORY_MAPPING.get(o);
+                if (aclCategory != null) {
+                    result.add(aclCategory);
                 }
             }
         }

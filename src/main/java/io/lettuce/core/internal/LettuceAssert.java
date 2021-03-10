@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package io.lettuce.core.internal;
 
 import java.util.Collection;
 import java.util.function.Supplier;
-
-import io.lettuce.core.LettuceStrings;
 
 /**
  * Assertion utility class that assists in validating arguments. This class is part of the internal API and may change without
@@ -199,7 +197,7 @@ public class LettuceAssert {
     }
 
     /**
-     * Assert that {@code value} is {@literal true}.
+     * Assert that {@code value} is {@code true}.
      *
      * @param value the value to check
      * @param message the exception message to use if the assertion fails
@@ -212,7 +210,7 @@ public class LettuceAssert {
     }
 
     /**
-     * Assert that {@code value} is {@literal true}.
+     * Assert that {@code value} is {@code true}.
      *
      * @param value the value to check
      * @param messageSupplier the exception message supplier to use if the assertion fails
@@ -253,4 +251,5 @@ public class LettuceAssert {
             throw new IllegalStateException(messageSupplier.get());
         }
     }
+
 }

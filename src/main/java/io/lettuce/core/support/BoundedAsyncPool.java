@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 
@@ -43,26 +45,33 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
 
     private static final CompletableFuture<Void> COMPLETED = CompletableFuture.completedFuture(null);
 
-    private static final IllegalStateException POOL_SHUTDOWN = unknownStackTrace(new IllegalStateException(
-            "AsyncPool is closed"), BoundedAsyncPool.class, "acquire()");
+    private static final IllegalStateException POOL_SHUTDOWN = unknownStackTrace(
+            new IllegalStateException("AsyncPool is closed"), BoundedAsyncPool.class, "acquire()");
 
-    private static final NoSuchElementException POOL_EXHAUSTED = unknownStackTrace(
-            new NoSuchElementException("Pool exhausted"), BoundedAsyncPool.class, "acquire()");
+    private static final NoSuchElementException POOL_EXHAUSTED = unknownStackTrace(new NoSuchElementException("Pool exhausted"),
+            BoundedAsyncPool.class, "acquire()");
 
-    private static final IllegalStateException NOT_PART_OF_POOL = unknownStackTrace(new IllegalStateException(
-            "Returned object not currently part of this pool"), BoundedAsyncPool.class, "release()");
+    private static final IllegalStateException NOT_PART_OF_POOL = unknownStackTrace(
+            new IllegalStateException("Returned object not currently part of this pool"), BoundedAsyncPool.class, "release()");
+
+    public static final CompletableFuture<Object> COMPLETED_FUTURE = CompletableFuture.completedFuture(null);
 
     private final int maxTotal;
+
     private final int maxIdle;
+
     private final int minIdle;
 
     private final AsyncObjectFactory<T> factory;
 
     private final Queue<T> cache;
+
     private final Queue<T> all;
 
     private final AtomicInteger objectCount = new AtomicInteger();
+
     private final AtomicInteger objectsInCreationCount = new AtomicInteger();
+
     private final AtomicInteger idleCount = new AtomicInteger();
 
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
@@ -72,11 +81,26 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
     /**
      * Create a new {@link BoundedAsyncPool} given {@link BasePoolConfig} and {@link AsyncObjectFactory}. The factory creates
      * idle objects upon construction and requires {@link #closeAsync() termination} once it's no longer in use.
+     * <p>
+     * Please note that pre-initialization cannot be awaited when using this constructor. Please use
+     * {@link #create(AsyncObjectFactory, BoundedPoolConfig)} instead.
      *
-     * @param factory must not be {@literal null}.
-     * @param poolConfig must not be {@literal null}.
+     * @param factory must not be {@code null}.
+     * @param poolConfig must not be {@code null}.
      */
     public BoundedAsyncPool(AsyncObjectFactory<T> factory, BoundedPoolConfig poolConfig) {
+        this(factory, poolConfig, true);
+    }
+
+    /**
+     * Create a new {@link BoundedAsyncPool} given {@link BasePoolConfig} and {@link AsyncObjectFactory}.
+     *
+     * @param factory must not be {@code null}.
+     * @param poolConfig must not be {@code null}.
+     * @param createIdle whether to pre-initialize the pool.
+     * @since 5.3.2
+     */
+    BoundedAsyncPool(AsyncObjectFactory<T> factory, BoundedPoolConfig poolConfig, boolean createIdle) {
 
         super(poolConfig);
 
@@ -91,26 +115,63 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
         this.cache = new ConcurrentLinkedQueue<>();
         this.all = new ConcurrentLinkedQueue<>();
 
-        createIdle();
+        if (createIdle) {
+            createIdle();
+        }
     }
 
-    private void createIdle() {
+    /**
+     * Create and initialize {@link BoundedAsyncPool} asynchronously.
+     *
+     * @param factory must not be {@code null}.
+     * @param poolConfig must not be {@code null}.
+     * @param <T> object type that is managed by the pool.
+     * @return a {@link CompletionStage} that completes with the {@link BoundedAsyncPool} when created and pre-initialized
+     *         successfully. Completes exceptionally if the pool initialization failed.
+     * @since 5.3.3
+     */
+    public static <T> CompletionStage<BoundedAsyncPool<T>> create(AsyncObjectFactory<T> factory, BoundedPoolConfig poolConfig) {
+
+        BoundedAsyncPool<T> pool = new BoundedAsyncPool<>(factory, poolConfig, false);
+
+        CompletableFuture<BoundedAsyncPool<T>> future = new CompletableFuture<>();
+
+        pool.createIdle().whenComplete((v, throwable) -> {
+
+            if (throwable == null) {
+                future.complete(pool);
+            } else {
+                pool.closeAsync().whenComplete((v1, throwable1) -> {
+                    future.completeExceptionally(new RedisConnectionException("Could not create pool", throwable));
+                });
+            }
+        });
+
+        return future;
+    }
+
+    @SuppressWarnings("rawtypes")
+    CompletableFuture<Void> createIdle() {
 
         int potentialIdle = getMinIdle() - getIdle();
         if (potentialIdle <= 0 || !isPoolActive()) {
-            return;
+            return (CompletableFuture) COMPLETED_FUTURE;
         }
 
         int totalLimit = getAvailableCapacity();
         int toCreate = Math.min(Math.max(0, totalLimit), potentialIdle);
 
+        CompletableFuture[] futures = new CompletableFuture[toCreate];
         for (int i = 0; i < toCreate; i++) {
 
             if (getAvailableCapacity() <= 0) {
-                break;
+
+                futures[i] = COMPLETED_FUTURE;
+                continue;
             }
 
             CompletableFuture<T> future = new CompletableFuture<>();
+            futures[i] = future;
             makeObject0(future);
 
             future.thenAccept(it -> {
@@ -123,6 +184,8 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
                 }
             });
         }
+
+        return CompletableFuture.allOf(futures);
     }
 
     private int getAvailableCapacity() {
@@ -200,72 +263,68 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
             return;
         }
 
-        factory.create().whenComplete(
-                (o, t) -> {
+        factory.create().whenComplete((o, t) -> {
 
-                    if (t != null) {
-                        objectsInCreationCount.decrementAndGet();
-                        res.completeExceptionally(new IllegalStateException("Cannot allocate object", t));
-                        return;
-                    }
+            if (t != null) {
+                objectsInCreationCount.decrementAndGet();
+                res.completeExceptionally(new IllegalStateException("Cannot allocate object", t));
+                return;
+            }
 
-                    if (isTestOnCreate()) {
+            if (isTestOnCreate()) {
 
-                        factory.validate(o).whenComplete(
-                                (state, throwable) -> {
-
-                                    try {
-
-                                        if (isPoolActive() && state != null && state) {
-
-                                            objectCount.incrementAndGet();
-                                            all.add(o);
-
-                                            completeAcquire(res, o);
-                                            return;
-                                        }
-
-                                        if (!isPoolActive()) {
-                                            rejectPoolClosed(res, o);
-                                            return;
-                                        }
-
-                                        factory.destroy(o).whenComplete(
-                                                (v, th) -> res.completeExceptionally(new IllegalStateException(
-                                                        "Cannot allocate object: Validation failed", throwable)));
-                                    } catch (Exception e) {
-                                        factory.destroy(o).whenComplete(
-                                                (v, th) -> res.completeExceptionally(new IllegalStateException(
-                                                        "Cannot allocate object: Validation failed", throwable)));
-                                    } finally {
-                                        objectsInCreationCount.decrementAndGet();
-                                    }
-                                });
-
-                        return;
-                    }
+                factory.validate(o).whenComplete((state, throwable) -> {
 
                     try {
 
-                        if (isPoolActive()) {
+                        if (isPoolActive() && state != null && state) {
+
                             objectCount.incrementAndGet();
                             all.add(o);
 
                             completeAcquire(res, o);
-                        } else {
-                            rejectPoolClosed(res, o);
+                            return;
                         }
 
+                        if (!isPoolActive()) {
+                            rejectPoolClosed(res, o);
+                            return;
+                        }
+
+                        factory.destroy(o).whenComplete((v, th) -> res.completeExceptionally(
+                                new IllegalStateException("Cannot allocate object: Validation failed", throwable)));
                     } catch (Exception e) {
-
-                        objectCount.decrementAndGet();
-                        all.remove(o);
-
-                        factory.destroy(o).whenComplete((v, th) -> res.completeExceptionally(e));
+                        factory.destroy(o).whenComplete((v, th) -> res.completeExceptionally(
+                                new IllegalStateException("Cannot allocate object: Validation failed", throwable)));
                     } finally {
                         objectsInCreationCount.decrementAndGet();
                     }
                 });
+
+                return;
+            }
+
+            try {
+
+                if (isPoolActive()) {
+                    objectCount.incrementAndGet();
+                    all.add(o);
+
+                    completeAcquire(res, o);
+                } else {
+                    rejectPoolClosed(res, o);
+                }
+
+            } catch (Exception e) {
+
+                objectCount.decrementAndGet();
+                all.remove(o);
+
+                factory.destroy(o).whenComplete((v, th) -> res.completeExceptionally(e));
+            } finally {
+                objectsInCreationCount.decrementAndGet();
+            }
+        });
     }
 
     private void completeAcquire(CompletableFuture<T> res, T o) {
@@ -393,6 +452,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
      * one time.
      *
      * @return the cap on the total number of object instances managed by the pool.
+     * @see BoundedPoolConfig#getMaxTotal()
      */
     public int getMaxTotal() {
         return maxTotal;
@@ -406,6 +466,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
      * a good starting point.
      *
      * @return the maximum number of "idle" instances that can be held in the pool.
+     * @see BoundedPoolConfig#getMaxIdle()
      */
     public int getMaxIdle() {
         return maxIdle;
@@ -419,6 +480,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
      * {@code maxIdle} will be used instead.
      *
      * @return The minimum number of objects.
+     * @see BoundedPoolConfig#getMinIdle()
      */
     public int getMinIdle() {
 
@@ -449,4 +511,5 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
     enum State {
         ACTIVE, TERMINATING, TERMINATED;
     }
+
 }

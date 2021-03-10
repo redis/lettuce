@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,42 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.ConnectionEvents.Reset;
+import static io.lettuce.core.ConnectionEvents.*;
 
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.api.push.PushListener;
+import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.output.PushOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracer;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.local.LocalAddress;
 import io.netty.util.Recycler;
 import io.netty.util.concurrent.Future;
@@ -65,39 +80,61 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             "Broken pipe", "Connection timed out");
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
+
     private static final AtomicLong COMMAND_HANDLER_COUNTER = new AtomicLong();
 
     private final ClientOptions clientOptions;
+
     private final ClientResources clientResources;
+
     private final Endpoint endpoint;
 
     private final ArrayDeque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
+
     private final long commandHandlerId = COMMAND_HANDLER_COUNTER.incrementAndGet();
 
     private final boolean traceEnabled = logger.isTraceEnabled();
+
     private final boolean debugEnabled = logger.isDebugEnabled();
+
+    private final CommandLatencyRecorder commandLatencyRecorder;
+
     private final boolean latencyMetricsEnabled;
+
     private final boolean tracingEnabled;
-    private final boolean includeCommandArgsInSpanTags;
-    private final float discardReadBytesRatio;
+
+    private final DecodeBufferPolicy decodeBufferPolicy;
+
     private final boolean boundedQueues;
+
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
     private RedisStateMachine rsm;
+
     private Channel channel;
+
     private ByteBuf buffer;
+
+    private boolean hasDecodeProgress;
+
+    private PushOutput<ByteBuffer, ByteBuffer> pushOutput;
+
     private LifecycleState lifecycleState = LifecycleState.NOT_CONNECTED;
+
     private String logPrefix;
+
     private PristineFallbackCommand fallbackCommand;
+
     private boolean pristine;
+
     private Tracing.Endpoint tracedEndpoint;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}
-     * @param clientResources client resources for this connection, must not be {@literal null}
-     * @param endpoint must not be {@literal null}.
+     * @param clientOptions client options for this connection, must not be {@code null}
+     * @param clientResources client resources for this connection, must not be {@code null}
+     * @param endpoint must not be {@code null}.
      */
     public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Endpoint endpoint) {
 
@@ -108,16 +145,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
         this.endpoint = endpoint;
-        this.latencyMetricsEnabled = clientResources.commandLatencyCollector().isEnabled();
+        this.commandLatencyRecorder = clientResources.commandLatencyRecorder();
+        this.latencyMetricsEnabled = commandLatencyRecorder.isEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
 
         Tracing tracing = clientResources.tracing();
 
         this.tracingEnabled = tracing.isEnabled();
-        this.includeCommandArgsInSpanTags = tracing.includeCommandArgsInSpanTags();
 
-        float bufferUsageRatio = clientOptions.getBufferUsageRatio();
-        this.discardReadBytesRatio = bufferUsageRatio / (bufferUsageRatio + 1);
+        this.decodeBufferPolicy = clientOptions.getDecodeBufferPolicy();
+    }
+
+    public Endpoint getEndpoint() {
+        return endpoint;
     }
 
     public Queue<RedisCommand<?, ?, ?>> getStack() {
@@ -129,6 +169,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         if (this.lifecycleState != LifecycleState.CLOSED) {
             this.lifecycleState = lifecycleState;
         }
+    }
+
+    void setBuffer(ByteBuf buffer) {
+        this.buffer = buffer;
     }
 
     @Override
@@ -377,39 +421,16 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             TraceContext context = provider.getTraceContext();
 
             Tracer.Span span = tracer.nextSpan(context);
-            span.name(command.getType().name());
-
-            if (includeCommandArgsInSpanTags && command.getArgs() != null) {
-                span.tag("redis.args", command.getArgs().toCommandString());
-            }
 
             if (tracedEndpoint == null) {
                 tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
             }
 
-            span.remoteEndpoint(tracedEndpoint);
-            span.start();
+            span.remoteEndpoint(tracedEndpoint).start(command);
 
             if (traced != null) {
                 traced.setSpan(span);
             }
-
-            CompleteableCommand<?> completeableCommand = (CompleteableCommand<?>) command;
-            completeableCommand.onComplete((o, throwable) -> {
-
-                if (command.getOutput() != null) {
-
-                    String error = command.getOutput().getError();
-                    if (error != null) {
-                        span.tag("error", error);
-                    } else if (throwable != null) {
-                        span.tag("exception", throwable.toString());
-                        span.error(throwable);
-                    }
-                }
-
-                span.finish();
-            });
         }
 
         ctx.write(command, promise);
@@ -564,58 +585,105 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
 
-        if (pristine && stack.isEmpty() && buffer.isReadable()) {
+        if (pristine) {
 
-            if (debugEnabled) {
-                logger.debug("{} Received response without a command context (empty stack)", logPrefix());
+            if (stack.isEmpty() && buffer.isReadable() && !isPushDecode(buffer)) {
+
+                if (debugEnabled) {
+                    logger.debug("{} Received response without a command context (empty stack)", logPrefix());
+                }
+
+                if (consumeResponse(buffer)) {
+                    pristine = false;
+                }
+
+                return;
             }
-
-            if (consumeResponse(buffer)) {
-                pristine = false;
-            }
-
-            return;
         }
 
         while (canDecode(buffer)) {
 
-            RedisCommand<?, ?, ?> command = stack.peek();
-            if (debugEnabled) {
-                logger.debug("{} Stack contains: {} commands", logPrefix(), stack.size());
-            }
+            if (isPushDecode(buffer)) {
 
-            pristine = false;
-
-            try {
-                if (!decode(ctx, buffer, command)) {
-                    discardReadBytesIfNecessary(buffer);
-                    return;
+                if (pushOutput == null) {
+                    pushOutput = new PushOutput<>(ByteBufferCopyCodec.INSTANCE);
                 }
-            } catch (Exception e) {
 
-                ctx.close();
-                throw e;
-            }
+                try {
+                    if (!decode(ctx, buffer, pushOutput)) {
+                        hasDecodeProgress = true;
+                        decodeBufferPolicy.afterPartialDecode(buffer);
+                        return;
+                    }
 
-            if (isProtectedMode(command)) {
-                onProtectedMode(command.getOutput().getError());
+                } catch (Exception e) {
+
+                    ctx.close();
+                    throw e;
+                }
+
+                hasDecodeProgress = false;
+                PushOutput<ByteBuffer, ByteBuffer> output = pushOutput;
+                pushOutput = null;
+                notifyPushListeners(output);
             } else {
 
-                if (canComplete(command)) {
-                    stack.poll();
+                RedisCommand<?, ?, ?> command = stack.peek();
+                if (debugEnabled) {
+                    logger.debug("{} Stack contains: {} commands", logPrefix(), stack.size());
+                }
 
-                    try {
-                        complete(command);
-                    } catch (Exception e) {
-                        logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                pristine = false;
+
+                try {
+
+                    if (!decode(ctx, buffer, command)) {
+                        hasDecodeProgress = true;
+                        decodeBufferPolicy.afterPartialDecode(buffer);
+                        return;
+                    }
+                } catch (Exception e) {
+
+                    ctx.close();
+                    throw e;
+                }
+
+                hasDecodeProgress = false;
+                if (isProtectedMode(command)) {
+                    onProtectedMode(command.getOutput().getError());
+                } else {
+
+                    if (canComplete(command)) {
+                        stack.poll();
+
+                        try {
+                            if (debugEnabled) {
+                                logger.debug("{} Completing command {}", logPrefix(), command);
+                            }
+                            complete(command);
+                        } catch (Exception e) {
+                            logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                        }
                     }
                 }
+                afterDecode(ctx, command);
             }
-
-            afterDecode(ctx, command);
         }
 
-        discardReadBytesIfNecessary(buffer);
+        decodeBufferPolicy.afterDecoding(buffer);
+    }
+
+    protected void notifyPushListeners(PushMessage notification) {
+
+        Collection<PushListener> pushListeners = endpoint.getPushListeners();
+
+        try {
+            pushListeners.forEach(pushListener -> {
+                pushListener.onPushMessage(notification);
+            });
+        } catch (Exception e) {
+            logger.warn("PushListener.onPushMessage failed with " + e.toString(), e);
+        }
     }
 
     /**
@@ -625,7 +693,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * @return
      */
     protected boolean canDecode(ByteBuf buffer) {
-        return !stack.isEmpty() && buffer.isReadable();
+        return buffer.isReadable() && (isMessageDecode() || isPushDecode(buffer));
+    }
+
+    private boolean isPushMessage(ByteBuf buffer) {
+        return buffer.getByte(buffer.readerIndex()) == RedisStateMachine.State.Type.PUSH.marker;
+    }
+
+    protected boolean isPushDecode(ByteBuf buffer) {
+        return (!hasDecodeProgress && isPushMessage(buffer)) || pushOutput != null;
+    }
+
+    private boolean isMessageDecode() {
+        return !stack.isEmpty();
     }
 
     /**
@@ -648,6 +728,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         command.complete();
     }
 
+    /**
+     * Decode a command.
+     *
+     * @param ctx
+     * @param buffer
+     * @param command
+     * @return
+     */
     private boolean decode(ChannelHandlerContext ctx, ByteBuf buffer, RedisCommand<?, ?, ?> command) {
 
         if (latencyMetricsEnabled && command instanceof WithLatency) {
@@ -669,6 +757,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         return decode0(ctx, buffer, command);
     }
 
+    /**
+     * Decode to a {@link CommandOutput}.
+     *
+     * @param ctx
+     * @param buffer
+     * @param output
+     * @return
+     */
+    private boolean decode(ChannelHandlerContext ctx, ByteBuf buffer, CommandOutput<?, ?, ?> output) {
+        return decode0(ctx, buffer, output);
+    }
+
     private boolean decode0(ChannelHandlerContext ctx, ByteBuf buffer, RedisCommand<?, ?, ?> command) {
 
         if (!decode(buffer, command, getCommandOutput(command))) {
@@ -681,6 +781,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 ctx.channel().config().setAutoRead(sink.hasDemand());
             }
 
+            return false;
+        }
+
+        if (!ctx.channel().config().isAutoRead()) {
+            ctx.channel().config().setAutoRead(true);
+        }
+
+        return true;
+    }
+
+    private boolean decode0(ChannelHandlerContext ctx, ByteBuf buffer, CommandOutput<?, ?, ?> pushOutput) {
+
+        if (!rsm.decode(buffer, pushOutput, ctx::fireExceptionCaught)) {
             return false;
         }
 
@@ -707,14 +820,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     protected boolean decode(ByteBuf buffer, RedisCommand<?, ?, ?> command, CommandOutput<?, ?, ?> output) {
-        return rsm.decode(buffer, command, output);
+        return rsm.decode(buffer, output, command::completeExceptionally);
     }
 
     /**
      * Consume a response without having a command on the stack.
      *
      * @param buffer
-     * @return {@literal true} if the buffer decode was successful. {@literal false} if the buffer was not decoded.
+     * @return {@code true} if the buffer decode was successful. {@code false} if the buffer was not decoded.
      */
     private boolean consumeResponse(ByteBuf buffer) {
 
@@ -769,17 +882,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * @param command
      */
     protected void afterDecode(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
+        decodeBufferPolicy.afterCommandDecoded(buffer);
     }
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
 
-        if (withLatency != null && clientResources.commandLatencyCollector().isEnabled() && channel != null
+        if (withLatency != null && latencyMetricsEnabled && channel != null
                 && remote() != null) {
 
             long firstResponseLatency = withLatency.getFirstResponse() - withLatency.getSent();
             long completionLatency = nanoTime() - withLatency.getSent();
 
-            clientResources.commandLatencyCollector().recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
+            commandLatencyRecorder.recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
                     completionLatency);
         }
     }
@@ -827,33 +941,31 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
+    /**
+     * @return the channel Id.
+     * @since 6.1
+     */
+    public String getChannelId() {
+        return channel == null ? "unknown" : ChannelLogDescriptor.getId(channel);
+    }
+
     private String logPrefix() {
 
         if (logPrefix != null) {
             return logPrefix;
         }
 
-        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "chid=0x"
-                + Long.toHexString(commandHandlerId) + ']';
+        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", epid=" + endpoint.getId() + ", chid=0x"
+                + getCommandHandlerId() + ']';
         return logPrefix = buffer;
+    }
+
+    private String getCommandHandlerId() {
+        return Long.toHexString(commandHandlerId);
     }
 
     private static long nanoTime() {
         return System.nanoTime();
-    }
-
-    /**
-     * Try to discard read bytes when buffer usage reach a higher usage ratio.
-     *
-     * @param buffer
-     */
-    private void discardReadBytesIfNecessary(ByteBuf buffer) {
-
-        float usedRatio = (float) buffer.readerIndex() / buffer.capacity();
-
-        if (usedRatio >= discardReadBytesRatio && buffer.refCnt() != 0) {
-            buffer.discardReadBytes();
-        }
     }
 
     public enum LifecycleState {
@@ -874,6 +986,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 }
             }
         }
+
     }
 
     enum EnableAutoRead {
@@ -886,14 +999,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     static class AddToStack implements GenericFutureListener<Future<Void>> {
 
         private static final Recycler<AddToStack> RECYCLER = new Recycler<AddToStack>() {
+
             @Override
             protected AddToStack newObject(Handle<AddToStack> handle) {
                 return new AddToStack(handle);
             }
+
         };
 
         private final Recycler.Handle<AddToStack> handle;
+
         private ArrayDeque<Object> stack;
+
         private RedisCommand<?, ?, ?> command;
 
         AddToStack(Recycler.Handle<AddToStack> handle) {
@@ -938,5 +1055,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             handle.recycle(this);
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import io.lettuce.core.protocol.RedisCommand;
 public class TimeoutProvider {
 
     private final Supplier<TimeoutOptions> timeoutOptionsSupplier;
+
     private final LongSupplier defaultTimeoutSupplier;
 
     private State state;
@@ -41,8 +42,8 @@ public class TimeoutProvider {
      * Creates a new {@link TimeoutProvider} given {@link TimeoutOptions supplier} and {@link LongSupplier default timeout
      * supplier in nano seconds}.
      *
-     * @param timeoutOptionsSupplier must not be {@literal null}.
-     * @param defaultTimeoutNsSupplier must not be {@literal null}.
+     * @param timeoutOptionsSupplier must not be {@code null}.
+     * @param defaultTimeoutNsSupplier must not be {@code null}.
      */
     public TimeoutProvider(Supplier<TimeoutOptions> timeoutOptionsSupplier, LongSupplier defaultTimeoutNsSupplier) {
 
@@ -78,6 +79,7 @@ public class TimeoutProvider {
     static class State {
 
         final boolean applyDefaultTimeout;
+
         final TimeoutOptions.TimeoutSource timeoutSource;
 
         State(TimeoutOptions timeoutOptions) {
@@ -90,5 +92,7 @@ public class TimeoutProvider {
                 this.applyDefaultTimeout = false;
             }
         }
+
     }
+
 }

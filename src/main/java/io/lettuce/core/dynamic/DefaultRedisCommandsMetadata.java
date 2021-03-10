@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
     /**
      * Create {@link DefaultRedisCommandsMetadata} given a {@link Class command interface}.
      *
-     * @param apiInterface must not be {@literal null}.
+     * @param apiInterface must not be {@code null}.
      */
     DefaultRedisCommandsMetadata(Class<?> apiInterface) {
         this.apiInterface = apiInterface;

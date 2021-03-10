@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ import io.lettuce.core.codec.RedisCodec;
 public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>> {
 
     private MapOutput<K, V> nested;
+
     private int mapCount = -1;
+
     private final List<Integer> counts = new ArrayList<>();
 
     public ListOfMapsOutput(RedisCodec<K, V> codec) {
@@ -72,5 +74,10 @@ public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>>
             // div 2 because of key value pair counts twice
             counts.add(count / 2);
         }
+    }
+
+    @Override
+    public void set(long integer) {
+        nested.set(integer);
     }
 }

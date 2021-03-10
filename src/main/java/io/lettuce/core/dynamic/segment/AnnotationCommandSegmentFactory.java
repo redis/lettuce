@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import io.lettuce.core.LettuceStrings;
+import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.dynamic.CommandMethod;
 import io.lettuce.core.dynamic.annotation.Command;
 import io.lettuce.core.dynamic.annotation.CommandNaming;
@@ -38,7 +38,9 @@ import io.lettuce.core.internal.LettuceAssert;
 public class AnnotationCommandSegmentFactory implements CommandSegmentFactory {
 
     private static final Pattern SPACE = Pattern.compile("\\s");
+
     private static final String INDEX_BASED_PARAM_START = "?";
+
     private static final String NAME_BASED_PARAM_START = ":";
 
     @Override
@@ -225,5 +227,7 @@ public class AnnotationCommandSegmentFactory implements CommandSegmentFactory {
 
             return false;
         }
+
     }
+
 }

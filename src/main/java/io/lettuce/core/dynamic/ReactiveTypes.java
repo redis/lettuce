@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,11 @@ import io.lettuce.core.internal.LettuceClassUtils;
 class ReactiveTypes {
 
     private static final boolean PROJECT_REACTOR_PRESENT = LettuceClassUtils.isPresent("reactor.core.publisher.Mono");
+
     private static final boolean RXJAVA1_PRESENT = LettuceClassUtils.isPresent("rx.Completable");
+
     private static final boolean RXJAVA2_PRESENT = LettuceClassUtils.isPresent("io.reactivex.Flowable");
+
     private static final boolean RXJAVA3_PRESENT = LettuceClassUtils.isPresent("io.reactivex.rxjava3.core.Flowable");
 
     private static final Map<Class<?>, Descriptor> REACTIVE_WRAPPERS;
@@ -104,10 +107,10 @@ class ReactiveTypes {
     }
 
     /**
-     * Returns {@literal true} if reactive support is available. More specifically, whether RxJava1/2 or Project Reactor
+     * Returns {@code true} if reactive support is available. More specifically, whether RxJava1/2 or Project Reactor
      * libraries are on the class path.
      *
-     * @return {@literal true} if reactive support is available.
+     * @return {@code true} if reactive support is available.
      */
     public static boolean isAvailable() {
         return isAvailable(ReactiveLibrary.PROJECT_REACTOR) || isAvailable(ReactiveLibrary.RXJAVA1)
@@ -115,10 +118,10 @@ class ReactiveTypes {
     }
 
     /**
-     * Returns {@literal true} if the {@link ReactiveLibrary} is available.
+     * Returns {@code true} if the {@link ReactiveLibrary} is available.
      *
-     * @param reactiveLibrary must not be {@literal null}.
-     * @return {@literal true} if the {@link ReactiveLibrary} is available.
+     * @param reactiveLibrary must not be {@code null}.
+     * @return {@code true} if the {@link ReactiveLibrary} is available.
      */
     public static boolean isAvailable(ReactiveLibrary reactiveLibrary) {
 
@@ -139,20 +142,20 @@ class ReactiveTypes {
     }
 
     /**
-     * Returns {@literal true} if the {@code type} is a supported reactive wrapper type.
+     * Returns {@code true} if the {@code type} is a supported reactive wrapper type.
      *
-     * @param type must not be {@literal null}.
-     * @return {@literal true} if the {@code type} is a supported reactive wrapper type.
+     * @param type must not be {@code null}.
+     * @return {@code true} if the {@code type} is a supported reactive wrapper type.
      */
     public static boolean supports(Class<?> type) {
         return isNoValueType(type) || isSingleValueType(type) || isMultiValueType(type);
     }
 
     /**
-     * Returns {@literal true} if {@code type} is a reactive wrapper type that contains no value.
+     * Returns {@code true} if {@code type} is a reactive wrapper type that contains no value.
      *
-     * @param type must not be {@literal null}.
-     * @return {@literal true} if {@code type} is a reactive wrapper type that contains no value.
+     * @param type must not be {@code null}.
+     * @return {@code true} if {@code type} is a reactive wrapper type that contains no value.
      */
     public static boolean isNoValueType(Class<?> type) {
 
@@ -162,10 +165,10 @@ class ReactiveTypes {
     }
 
     /**
-     * Returns {@literal true} if {@code type} is a reactive wrapper type for a single value.
+     * Returns {@code true} if {@code type} is a reactive wrapper type for a single value.
      *
-     * @param type must not be {@literal null}.
-     * @return {@literal true} if {@code type} is a reactive wrapper type for a single value.
+     * @param type must not be {@code null}.
+     * @return {@code true} if {@code type} is a reactive wrapper type for a single value.
      */
     public static boolean isSingleValueType(Class<?> type) {
 
@@ -175,10 +178,10 @@ class ReactiveTypes {
     }
 
     /**
-     * Returns {@literal true} if {@code type} is a reactive wrapper type supporting multiple values ({@code 0..N} elements).
+     * Returns {@code true} if {@code type} is a reactive wrapper type supporting multiple values ({@code 0..N} elements).
      *
-     * @param type must not be {@literal null}.
-     * @return {@literal true} if {@code type} is a reactive wrapper type supporting multiple values ({@code 0..N} elements).
+     * @param type must not be {@code null}.
+     * @return {@code true} if {@code type} is a reactive wrapper type supporting multiple values ({@code 0..N} elements).
      */
     public static boolean isMultiValueType(Class<?> type) {
 
@@ -243,8 +246,11 @@ class ReactiveTypes {
     }
 
     public static class Descriptor {
+
         private final boolean isMultiValue;
+
         private final boolean supportsEmpty;
+
         private final boolean isNoValue;
 
         public Descriptor(boolean isMultiValue, boolean canBeEmpty, boolean isNoValue) {
@@ -264,5 +270,7 @@ class ReactiveTypes {
         public boolean isNoValue() {
             return this.isNoValue;
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.RedisBug;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
@@ -206,4 +205,20 @@ public class SentinelConnectionIntegrationTests extends TestSupport {
 
         connection.close();
     }
+
+    @Test
+    void sentinelWithAuthentication() {
+
+        RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), 26381, SentinelTestSettings.MASTER_ID, "foobared")
+                .withClientName("my-client").build();
+
+        redisClient.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+        StatefulRedisConnection<String, String> connection = redisClient.connect(redisURI);
+
+        connection.sync().quit();
+        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+
+        connection.close();
+    }
+
 }

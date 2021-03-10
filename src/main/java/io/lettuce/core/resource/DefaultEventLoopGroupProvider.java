@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.resource;
 
-import static io.lettuce.core.resource.PromiseAdapter.toBooleanPromise;
+import static io.lettuce.core.resource.PromiseAdapter.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,11 +23,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.*;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.ImmediateEventExecutor;
+import io.netty.util.concurrent.Promise;
+import io.netty.util.concurrent.PromiseCombiner;
+import io.netty.util.concurrent.SucceededFuture;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -41,10 +51,14 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     protected static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultEventLoopGroupProvider.class);
 
+    private final Lock lock = new ReentrantLock();
+
     private final Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = new ConcurrentHashMap<>(2);
+
     private final Map<ExecutorService, Long> refCounter = new ConcurrentHashMap<>(2);
 
     private final int numberOfThreads;
+
     private final ThreadFactoryProvider threadFactoryProvider;
 
     private volatile boolean shutdownCalled = false;
@@ -77,15 +91,19 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     @Override
     public <T extends EventLoopGroup> T allocate(Class<T> type) {
 
-        synchronized (this) {
+        lock.lock();
+        try {
             logger.debug("Allocating executor {}", type.getName());
             return addReference(getOrCreate(type));
+        } finally {
+            lock.unlock();
         }
     }
 
     private <T extends ExecutorService> T addReference(T reference) {
 
-        synchronized (refCounter) {
+        lock.lock();
+        try {
             long counter = 0;
             if (refCounter.containsKey(reference)) {
                 counter = refCounter.get(reference);
@@ -94,6 +112,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             logger.debug("Adding reference to {}, existing ref count {}", reference, counter);
             counter++;
             refCounter.put(reference, counter);
+        } finally {
+            lock.unlock();
         }
 
         return reference;
@@ -101,7 +121,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     private <T extends ExecutorService> T release(T reference) {
 
-        synchronized (refCounter) {
+        lock.lock();
+        try {
             long counter = 0;
             if (refCounter.containsKey(reference)) {
                 counter = refCounter.get(reference);
@@ -117,6 +138,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             } else {
                 refCounter.put(reference, counter);
             }
+        } finally {
+            lock.unlock();
         }
 
         return reference;
@@ -138,7 +161,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     /**
      * Customization hook for {@link EventLoopGroup} creation.
-     * 
+     *
      * @param <T>
      * @param type requested event loop group type.
      * @param numberOfThreads number of threads to create.
@@ -219,6 +242,16 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
             }
         }
 
+        if (IOUringProvider.isAvailable()) {
+
+            EventLoopResources resources = IOUringProvider.getResources();
+
+            if (resources.matches(type)) {
+                return resources.newEventLoopGroup(numberOfThreads,
+                        factoryProvider.getThreadFactory("lettuce-io_uringEventLoop"));
+            }
+        }
+
         throw new IllegalArgumentException(String.format("Type %s not supported", type.getName()));
     }
 
@@ -286,18 +319,19 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     /**
      * Interface to provide a custom {@link java.util.concurrent.ThreadFactory}. Implementations are asked through
      * {@link #getThreadFactory(String)} to provide a thread factory for a given pool name.
-     * 
+     *
      * @since 6.0
      */
     public interface ThreadFactoryProvider {
 
         /**
          * Return a {@link ThreadFactory} for the given {@code poolName}.
-         * 
+         *
          * @param poolName a descriptive pool name. Typically used as prefix for thread names.
          * @return the {@link ThreadFactory}.
          */
         ThreadFactory getThreadFactory(String poolName);
+
     }
 
     enum DefaultThreadFactoryProvider implements ThreadFactoryProvider {
@@ -308,5 +342,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         public ThreadFactory getThreadFactory(String poolName) {
             return new DefaultThreadFactory(poolName, true);
         }
+
     }
+
 }

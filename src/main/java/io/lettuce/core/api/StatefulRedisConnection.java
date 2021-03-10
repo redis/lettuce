@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package io.lettuce.core.api;
 
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ConnectionWatchdog;
@@ -59,4 +60,21 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * @return the reactive API for the underlying connection.
      */
     RedisReactiveCommands<K, V> reactive();
+
+    /**
+     * Add a new {@link PushListener listener} to consume push messages.
+     *
+     * @param listener the listener, must not be {@code null}.
+     * @since 6.0
+     */
+    void addListener(PushListener listener);
+
+    /**
+     * Remove an existing {@link PushListener listener}.
+     *
+     * @param listener the listener, must not be {@code null}.
+     * @since 6.0
+     */
+    void removeListener(PushListener listener);
+
 }

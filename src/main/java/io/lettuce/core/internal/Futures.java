@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public abstract class Futures {
     /**
      * Create a composite {@link CompletableFuture} is composed from the given {@code stages}.
      *
-     * @param stages must not be {@literal null}.
+     * @param stages must not be {@code null}.
      * @return the composed {@link CompletableFuture}.
      * @since 5.1.1
      */
@@ -60,7 +60,7 @@ public abstract class Futures {
     /**
      * Create a {@link CompletableFuture} that is completed exceptionally with {@code throwable}.
      *
-     * @param throwable must not be {@literal null}.
+     * @param throwable must not be {@code null}.
      * @return the exceptionally completed {@link CompletableFuture}.
      */
     public static <T> CompletableFuture<T> failed(Throwable throwable) {
@@ -137,7 +137,7 @@ public abstract class Futures {
      *
      * @param timeout Maximum time to wait for futures to complete.
      * @param future Future to wait for.
-     * @return {@literal true} if future completes in time, otherwise {@literal false}
+     * @return {@code true} if future completes in time, otherwise {@code false}
      * @since 6.0
      */
     public static boolean await(Duration timeout, Future<?> future) {
@@ -150,7 +150,7 @@ public abstract class Futures {
      * @param timeout Maximum time to wait for futures to complete.
      * @param unit Unit of time for the timeout.
      * @param future Future to wait for.
-     * @return {@literal true} if future completes in time, otherwise {@literal false}
+     * @return {@code true} if future completes in time, otherwise {@code false}
      * @since 6.0
      */
     public static boolean await(long timeout, TimeUnit unit, Future<?> future) {
@@ -181,7 +181,7 @@ public abstract class Futures {
      *
      * @param timeout Maximum time to wait for futures to complete.
      * @param futures Futures to wait for.
-     * @return {@literal true} if all futures complete in time, otherwise {@literal false}
+     * @return {@code true} if all futures complete in time, otherwise {@code false}
      * @since 6.0
      */
     public static boolean awaitAll(Duration timeout, Future<?>... futures) {
@@ -194,7 +194,7 @@ public abstract class Futures {
      * @param timeout Maximum time to wait for futures to complete.
      * @param unit Unit of time for the timeout.
      * @param futures Futures to wait for.
-     * @return {@literal true} if all futures complete in time, otherwise {@literal false}
+     * @return {@code true} if all futures complete in time, otherwise {@code false}
      */
     public static boolean awaitAll(long timeout, TimeUnit unit, Future<?>... futures) {
 
@@ -250,4 +250,5 @@ public abstract class Futures {
             throw Exceptions.bubble(e);
         }
     }
+
 }

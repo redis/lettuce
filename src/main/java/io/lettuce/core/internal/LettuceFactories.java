@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ public class LettuceFactories {
      * Threshold used to determine queue implementation. A queue size above the size indicates usage of
      * {@link LinkedBlockingQueue} otherwise {@link ArrayBlockingQueue}.
      */
-    private static final int ARRAY_QUEUE_THRESHOLD = Integer.getInteger(
-            "io.lettuce.core.LettuceFactories.array-queue-threshold", 200000);
+    private static final int ARRAY_QUEUE_THRESHOLD = Integer
+            .getInteger("io.lettuce.core.LettuceFactories.array-queue-threshold", 200000);
 
     /**
      * Creates a new, optionally bounded, {@link Queue} that does not require external synchronization.
@@ -70,4 +70,5 @@ public class LettuceFactories {
     public static <T> LinkedBlockingQueue<T> newBlockingQueue() {
         return new LinkedBlockingQueue<>();
     }
+
 }

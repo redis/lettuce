@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public abstract class TestSupport {
     }
 
     protected static ScoredValue<String> sv(double score, String value) {
-        return ScoredValue.fromNullable(score, value);
+        return ScoredValue.just(score, value);
     }
 
     protected static Set<String> set(String... args) {

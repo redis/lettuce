@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,20 @@
  */
 package io.lettuce.core.cluster.api.async;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
-import io.lettuce.core.*;
+import io.lettuce.core.CopyArgs;
+import io.lettuce.core.KeyScanArgs;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.MigrateArgs;
+import io.lettuce.core.RestoreArgs;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.SortArgs;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 
@@ -34,9 +44,30 @@ import io.lettuce.core.output.ValueStreamingChannel;
 public interface NodeSelectionKeyAsyncCommands<K, V> {
 
     /**
+     * Copy the value stored at the source key to the destination key.
+     *
+     * @param source the source.
+     * @param destination the destination.
+     * @return Boolean integer-reply specifically: {@code true} if source was copied. {@code false} if source was not copied.
+     * @since 6.1
+     */
+    AsyncExecutions<Boolean> copy(K source, K destination);
+
+    /**
+     * Copy the value stored at the source key to the destination key.
+     *
+     * @param source the source.
+     * @param destination the destination.
+     * @param copyArgs the copyArgs.
+     * @return Boolean integer-reply specifically: {@code true} if source was copied. {@code false} if source was not copied.
+     * @since 6.1
+     */
+    AsyncExecutions<Boolean> copy(K source, K destination, CopyArgs copyArgs);
+
+    /**
      * Delete one or more keys.
      *
-     * @param keys the keys
+     * @param keys the keys.
      * @return Long integer-reply The number of keys that were removed.
      */
     AsyncExecutions<Long> del(K... keys);
@@ -44,7 +75,7 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Unlink one or more keys (non blocking DEL).
      *
-     * @param keys the keys
+     * @param keys the keys.
      * @return Long integer-reply The number of keys that were removed.
      */
     AsyncExecutions<Long> unlink(K... keys);
@@ -52,7 +83,7 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Return a serialized version of the value stored at the specified key.
      *
-     * @param key the key
+     * @param key the key.
      * @return byte[] bulk-string-reply the serialized value.
      */
     AsyncExecutions<byte[]> dump(K key);
@@ -60,51 +91,67 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Determine how many keys exist.
      *
-     * @param keys the keys
-     * @return Long integer-reply specifically: Number of existing keys
+     * @param keys the keys.
+     * @return Long integer-reply specifically: Number of existing keys.
      */
     AsyncExecutions<Long> exists(K... keys);
 
     /**
      * Set a key's time to live in seconds.
      *
-     * @param key the key
-     * @param seconds the seconds type: long
+     * @param key the key.
+     * @param seconds the seconds type: long.
      * @return Boolean integer-reply specifically:
-     *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
-     *         be set.
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
      */
     AsyncExecutions<Boolean> expire(K key, long seconds);
 
     /**
+     * Set a key's time to live in seconds.
+     *
+     * @param key the key.
+     * @param seconds the seconds.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 6.1
+     */
+    AsyncExecutions<Boolean> expire(K key, Duration seconds);
+
+    /**
      * Set the expiration for a key as a UNIX timestamp.
      *
-     * @param key the key
-     * @param timestamp the timestamp type: posix time
-     * @return Boolean integer-reply specifically:
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     */
+    AsyncExecutions<Boolean> expireat(K key, long timestamp);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp.
      *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
-     *         be set (see: {@code EXPIRE}).
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     AsyncExecutions<Boolean> expireat(K key, Date timestamp);
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
      *
-     * @param key the key
-     * @param timestamp the timestamp type: posix time
-     * @return Boolean integer-reply specifically:
-     *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
-     *         be set (see: {@code EXPIRE}).
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 6.1
      */
-    AsyncExecutions<Boolean> expireat(K key, long timestamp);
+    AsyncExecutions<Boolean> expireat(K key, Instant timestamp);
 
     /**
      * Find all keys matching the given pattern.
      *
-     * @param pattern the pattern type: patternkey (pattern)
+     * @param pattern the pattern type: patternkey (pattern).
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
      */
     AsyncExecutions<List<K>> keys(K pattern);
@@ -112,8 +159,8 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Find all keys matching the given pattern.
      *
-     * @param channel the channel
-     * @param pattern the pattern
+     * @param channel the channel.
+     * @param pattern the pattern.
      * @return Long array-reply list of keys matching {@code pattern}.
      */
     AsyncExecutions<Long> keys(KeyStreamingChannel<K> channel, K pattern);
@@ -121,11 +168,11 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Atomically transfer a key from a Redis instance to another one.
      *
-     * @param host the host
-     * @param port the port
-     * @param key the key
-     * @param db the database
-     * @param timeout the timeout in milliseconds
+     * @param host the host.
+     * @param port the port.
+     * @param key the key.
+     * @param db the database.
+     * @param timeout the timeout in milliseconds.
      * @return String simple-string-reply The command returns OK on success.
      */
     AsyncExecutions<String> migrate(String host, int port, K key, int db, long timeout);
@@ -133,11 +180,11 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Atomically transfer one or more keys from a Redis instance to another one.
      *
-     * @param host the host
-     * @param port the port
-     * @param db the database
-     * @param timeout the timeout in milliseconds
-     * @param migrateArgs migrate args that allow to configure further options
+     * @param host the host.
+     * @param port the port.
+     * @param db the database.
+     * @param timeout the timeout in milliseconds.
+     * @param migrateArgs migrate args that allow to configure further options.
      * @return String simple-string-reply The command returns OK on success.
      */
     AsyncExecutions<String> migrate(String host, int port, int db, long timeout, MigrateArgs<K> migrateArgs);
@@ -145,17 +192,17 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Move a key to another database.
      *
-     * @param key the key
-     * @param db the db type: long
-     * @return Boolean integer-reply specifically:
+     * @param key the key.
+     * @param db the db type: long.
+     * @return Boolean integer-reply specifically:.
      */
     AsyncExecutions<Boolean> move(K key, int db);
 
     /**
      * returns the kind of internal representation used in order to store the value associated with a key.
      *
-     * @param key the key
-     * @return String
+     * @param key the key.
+     * @return String.
      */
     AsyncExecutions<String> objectEncoding(K key);
 
@@ -163,7 +210,7 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
      * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
      * operations).
      *
-     * @param key the key
+     * @param key the key.
      * @return number of seconds since the object stored at the specified key is idle.
      */
     AsyncExecutions<Long> objectIdletime(K key);
@@ -171,18 +218,18 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * returns the number of references of the value associated with the specified key.
      *
-     * @param key the key
-     * @return Long
+     * @param key the key.
+     * @return Long.
      */
     AsyncExecutions<Long> objectRefcount(K key);
 
     /**
      * Remove the expiration from a key.
      *
-     * @param key the key
+     * @param key the key.
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if the timeout was removed. {@literal false} if {@code key} does not exist or does not have an
+     *         {@code true} if the timeout was removed. {@code false} if {@code key} does not exist or does not have an
      *         associated timeout.
      */
     AsyncExecutions<Boolean> persist(K key);
@@ -190,43 +237,59 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Set a key's time to live in milliseconds.
      *
-     * @param key the key
-     * @param milliseconds the milliseconds type: long
+     * @param key the key.
+     * @param milliseconds the milliseconds type: long.
      * @return integer-reply, specifically:
-     *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
-     *         be set.
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
      */
     AsyncExecutions<Boolean> pexpire(K key, long milliseconds);
 
     /**
+     * Set a key's time to live in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
+     * @since 6.1
+     */
+    AsyncExecutions<Boolean> pexpire(K key, Duration milliseconds);
+
+    /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
      *
-     * @param key the key
-     * @param timestamp the milliseconds-timestamp type: posix time
-     * @return Boolean integer-reply specifically:
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     */
+    AsyncExecutions<Boolean> pexpireat(K key, long timestamp);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
      *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
-     *         be set (see: {@code EXPIRE}).
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     AsyncExecutions<Boolean> pexpireat(K key, Date timestamp);
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
      *
-     * @param key the key
-     * @param timestamp the milliseconds-timestamp type: posix time
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
      * @return Boolean integer-reply specifically:
-     *
-     *         {@literal true} if the timeout was set. {@literal false} if {@code key} does not exist or the timeout could not
-     *         be set (see: {@code EXPIRE}).
+     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
+     *         (see: {@code EXPIRE}).
      */
-    AsyncExecutions<Boolean> pexpireat(K key, long timestamp);
+    AsyncExecutions<Boolean> pexpireat(K key, Instant timestamp);
 
     /**
      * Get the time to live for a key in milliseconds.
      *
-     * @param key the key
+     * @param key the key.
      * @return Long integer-reply TTL in milliseconds, or a negative value in order to signal an error (see the description
      *         above).
      */
@@ -235,36 +298,36 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Return a random key from the keyspace.
      *
-     * @return K bulk-string-reply the random key, or {@literal null} when the database is empty.
+     * @return K bulk-string-reply the random key, or {@code null} when the database is empty.
      */
     AsyncExecutions<K> randomkey();
 
     /**
      * Rename a key.
      *
-     * @param key the key
-     * @param newKey the newkey type: key
-     * @return String simple-string-reply
+     * @param key the key.
+     * @param newKey the newkey type: key.
+     * @return String simple-string-reply.
      */
     AsyncExecutions<String> rename(K key, K newKey);
 
     /**
      * Rename a key, only if the new key does not exist.
      *
-     * @param key the key
-     * @param newKey the newkey type: key
+     * @param key the key.
+     * @param newKey the newkey type: key.
      * @return Boolean integer-reply specifically:
      *
-     *         {@literal true} if {@code key} was renamed to {@code newkey}. {@literal false} if {@code newkey} already exists.
+     *         {@code true} if {@code key} was renamed to {@code newkey}. {@code false} if {@code newkey} already exists.
      */
     AsyncExecutions<Boolean> renamenx(K key, K newKey);
 
     /**
      * Create a key using the provided serialized value, previously obtained using DUMP.
      *
-     * @param key the key
-     * @param ttl the ttl type: long
-     * @param value the serialized-value type: string
+     * @param key the key.
+     * @param ttl the ttl type: long.
+     * @param value the serialized-value type: string.
      * @return String simple-string-reply The command returns OK on success.
      */
     AsyncExecutions<String> restore(K key, long ttl, byte[] value);
@@ -272,9 +335,9 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Create a key using the provided serialized value, previously obtained using DUMP.
      *
-     * @param key the key
-     * @param value the serialized-value type: string
-     * @param args the {@link RestoreArgs}, must not be {@literal null}.
+     * @param key the key.
+     * @param value the serialized-value type: string.
+     * @param args the {@link RestoreArgs}, must not be {@code null}.
      * @return String simple-string-reply The command returns OK on success.
      * @since 5.1
      */
@@ -283,7 +346,7 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      *
-     * @param key the key
+     * @param key the key.
      * @return List&lt;V&gt; array-reply list of sorted elements.
      */
     AsyncExecutions<List<V>> sort(K key);
@@ -291,8 +354,8 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      *
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
      * @return Long number of values.
      */
     AsyncExecutions<Long> sort(ValueStreamingChannel<V> channel, K key);
@@ -300,8 +363,8 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      *
-     * @param key the key
-     * @param sortArgs sort arguments
+     * @param key the key.
+     * @param sortArgs sort arguments.
      * @return List&lt;V&gt; array-reply list of sorted elements.
      */
     AsyncExecutions<List<V>> sort(K key, SortArgs sortArgs);
@@ -309,9 +372,9 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      *
-     * @param channel streaming channel that receives a call for every value
-     * @param key the key
-     * @param sortArgs sort arguments
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
+     * @param sortArgs sort arguments.
      * @return Long number of values.
      */
     AsyncExecutions<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
@@ -319,9 +382,9 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Sort the elements in a list, set or sorted set.
      *
-     * @param key the key
-     * @param sortArgs sort arguments
-     * @param destination the destination key to store sort results
+     * @param key the key.
+     * @param sortArgs sort arguments.
+     * @param destination the destination key to store sort results.
      * @return Long number of values.
      */
     AsyncExecutions<Long> sortStore(K key, SortArgs sortArgs, K destination);
@@ -329,7 +392,7 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Touch one or more keys. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
      *
-     * @param keys the keys
+     * @param keys the keys.
      * @return Long integer-reply the number of found keys.
      */
     AsyncExecutions<Long> touch(K... keys);
@@ -337,7 +400,7 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Get the time to live for a key.
      *
-     * @param key the key
+     * @param key the key.
      * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error (see the description above).
      */
     AsyncExecutions<Long> ttl(K key);
@@ -345,7 +408,7 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Determine the type stored at key.
      *
-     * @param key the key
+     * @param key the key.
      * @return String simple-string-reply type of {@code key}, or {@code none} when {@code key} does not exist.
      */
     AsyncExecutions<String> type(K key);
@@ -358,26 +421,28 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     AsyncExecutions<KeyScanCursor<K>> scan();
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
-     * @param scanArgs scan arguments
+     * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     AsyncExecutions<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
-     * @param scanArgs scan arguments
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @see KeyScanArgs
      */
     AsyncExecutions<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
      *
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      */
     AsyncExecutions<KeyScanCursor<K>> scan(ScanCursor scanCursor);
@@ -385,35 +450,37 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     /**
      * Incrementally iterate the keys space.
      *
-     * @param channel streaming channel that receives a call for every key
+     * @param channel streaming channel that receives a call for every key.
      * @return StreamScanCursor scan cursor.
      */
     AsyncExecutions<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
-     * @param channel streaming channel that receives a call for every key
-     * @param scanArgs scan arguments
+     * @param channel streaming channel that receives a call for every key.
+     * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @see KeyScanArgs
      */
     AsyncExecutions<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
-     * @param channel streaming channel that receives a call for every key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
-     * @param scanArgs scan arguments
+     * @param channel streaming channel that receives a call for every key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @see KeyScanArgs
      */
     AsyncExecutions<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space.
      *
-     * @param channel streaming channel that receives a call for every key
-     * @param scanCursor cursor to resume from a previous scan, must not be {@literal null}
+     * @param channel streaming channel that receives a call for every key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
      */
     AsyncExecutions<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);

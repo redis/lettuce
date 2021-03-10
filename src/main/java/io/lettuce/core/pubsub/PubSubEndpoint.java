@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,26 +31,34 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * @author Mark Paluch
+ * @author dengliming
  */
 public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PubSubEndpoint.class);
+
     private static final Set<String> ALLOWED_COMMANDS_SUBSCRIBED;
+
     private static final Set<String> SUBSCRIBE_COMMANDS;
+
     private final List<RedisPubSubListener<K, V>> listeners = new CopyOnWriteArrayList<>();
+
     private final Set<Wrapper<K>> channels;
+
     private final Set<Wrapper<K>> patterns;
+
     private volatile boolean subscribeWritten = false;
 
     static {
 
-        ALLOWED_COMMANDS_SUBSCRIBED = new HashSet<>(5, 1);
+        ALLOWED_COMMANDS_SUBSCRIBED = new HashSet<>(6, 1);
 
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.SUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.UNSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PUNSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.QUIT.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PING.name());
 
         SUBSCRIBE_COMMANDS = new HashSet<>(2, 1);
 
@@ -61,8 +69,8 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection, must not be {@literal null}
-     * @param clientResources client resources for this connection, must not be {@literal null}.
+     * @param clientOptions client options for this connection, must not be {@code null}
+     * @param clientResources client resources for this connection, must not be {@code null}.
      */
     public PubSubEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
 
@@ -75,16 +83,16 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     /**
      * Add a new {@link RedisPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     public void addListener(RedisPubSubListener<K, V> listener) {
         listeners.add(listener);
     }
 
     /**
-     * Remove an existing {@link RedisPubSubListener listener}..
+     * Remove an existing {@link RedisPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     public void removeListener(RedisPubSubListener<K, V> listener) {
         listeners.remove(listener);
@@ -188,63 +196,63 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         return subscribeWritten && (hasChannelSubscriptions() || hasPatternSubscriptions());
     }
 
-    public void notifyMessage(PubSubOutput<K, V, V> output) {
+    void notifyMessage(PubSubMessage<K, V> message) {
 
         // drop empty messages
-        if (output.type() == null || (output.pattern() == null && output.channel() == null && output.get() == null)) {
+        if (message.type() == null || (message.pattern() == null && message.channel() == null && message.body() == null)) {
             return;
         }
 
-        updateInternalState(output);
+        updateInternalState(message);
         try {
-            notifyListeners(output);
+            notifyListeners(message);
         } catch (Exception e) {
             logger.error("Unexpected error occurred in RedisPubSubListener callback", e);
         }
     }
 
-    protected void notifyListeners(PubSubOutput<K, V, V> output) {
+    protected void notifyListeners(PubSubMessage<K, V> message) {
         // update listeners
         for (RedisPubSubListener<K, V> listener : listeners) {
-            switch (output.type()) {
+            switch (message.type()) {
                 case message:
-                    listener.message(output.channel(), output.get());
+                    listener.message(message.channel(), message.body());
                     break;
                 case pmessage:
-                    listener.message(output.pattern(), output.channel(), output.get());
+                    listener.message(message.pattern(), message.channel(), message.body());
                     break;
                 case psubscribe:
-                    listener.psubscribed(output.pattern(), output.count());
+                    listener.psubscribed(message.pattern(), message.count());
                     break;
                 case punsubscribe:
-                    listener.punsubscribed(output.pattern(), output.count());
+                    listener.punsubscribed(message.pattern(), message.count());
                     break;
                 case subscribe:
-                    listener.subscribed(output.channel(), output.count());
+                    listener.subscribed(message.channel(), message.count());
                     break;
                 case unsubscribe:
-                    listener.unsubscribed(output.channel(), output.count());
+                    listener.unsubscribed(message.channel(), message.count());
                     break;
                 default:
-                    throw new UnsupportedOperationException("Operation " + output.type() + " not supported");
+                    throw new UnsupportedOperationException("Operation " + message.type() + " not supported");
             }
         }
     }
 
-    private void updateInternalState(PubSubOutput<K, V, V> output) {
+    private void updateInternalState(PubSubMessage<K, V> message) {
         // update internal state
-        switch (output.type()) {
+        switch (message.type()) {
             case psubscribe:
-                patterns.add(new Wrapper<>(output.pattern()));
+                patterns.add(new Wrapper<>(message.pattern()));
                 break;
             case punsubscribe:
-                patterns.remove(new Wrapper<>(output.pattern()));
+                patterns.remove(new Wrapper<>(message.pattern()));
                 break;
             case subscribe:
-                channels.add(new Wrapper<>(output.channel()));
+                channels.add(new Wrapper<>(message.channel()));
                 break;
             case unsubscribe:
-                channels.remove(new Wrapper<>(output.channel()));
+                channels.remove(new Wrapper<>(message.channel()));
                 break;
             default:
                 break;
@@ -308,5 +316,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
             sb.append(']');
             return sb.toString();
         }
+
     }
+
 }

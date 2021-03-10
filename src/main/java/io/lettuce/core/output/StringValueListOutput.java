@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,11 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Mark Paluch
  * @since 5.0
  */
-public class StringValueListOutput<K, V> extends CommandOutput<K, V, List<Value<String>>> implements
-        StreamingOutput<Value<String>> {
+public class StringValueListOutput<K, V> extends CommandOutput<K, V, List<Value<String>>>
+        implements StreamingOutput<Value<String>> {
 
     private boolean initialized;
+
     private Subscriber<Value<String>> subscriber;
 
     public StringValueListOutput(RedisCodec<K, V> codec) {
@@ -66,4 +67,5 @@ public class StringValueListOutput<K, V> extends CommandOutput<K, V, List<Value<
     public Subscriber<Value<String>> getSubscriber() {
         return subscriber;
     }
+
 }

@@ -1,7 +1,7 @@
 <img src="https://avatars2.githubusercontent.com/u/25752188?v=4" width="50" height="50"> Lettuce - Advanced Java Redis client
 ===============================
 
-[![Build Status](https://travis-ci.org/lettuce-io/lettuce-core.svg)](https://travis-ci.org/lettuce-io/lettuce-core) [![codecov](https://codecov.io/gh/lettuce-io/lettuce-core/branch/master/graph/badge.svg)](https://codecov.io/gh/lettuce-io/lettuce-core)
+[![Build Status](https://travis-ci.org/lettuce-io/lettuce-core.svg)](https://travis-ci.org/lettuce-io/lettuce-core) [![codecov](https://codecov.io/gh/lettuce-io/lettuce-core/branch/main/graph/badge.svg)](https://codecov.io/gh/lettuce-io/lettuce-core)
  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core)
 
 Lettuce is a scalable thread-safe Redis client for synchronous,
@@ -20,7 +20,8 @@ This version of Lettuce has been tested against the latest Redis source-build.
 * [CDI](https://github.com/lettuce-io/lettuce-core/wiki/CDI-Support) and [Spring](https://github.com/lettuce-io/lettuce-core/wiki/Spring-Support) integration
 * [Codecs](https://github.com/lettuce-io/lettuce-core/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
 * multiple [Command Interfaces](https://github.com/lettuce-io/lettuce-core/wiki/Command-Interfaces-%284.0%29)
-* Compatible with Java 8 and 9 (implicit automatic module w/o descriptors)
+* Support for [Native Transports](https://github.com/lettuce-io/lettuce-core/wiki/Native-Transports)
+* Compatible with Java 8++ (implicit automatic module w/o descriptors)
 
 See the [reference documentation](https://lettuce.io/docs/) and [Wiki](https://github.com/lettuce-io/lettuce-core/wiki) for more details.
 
@@ -28,9 +29,9 @@ See the [reference documentation](https://lettuce.io/docs/) and [Wiki](https://g
 Communication
 ---------------
 
-* Google Group/Mailing List (General discussion, announcements and releases): [lettuce-redis-client-users](https://groups.google.com/d/forum/lettuce-redis-client-users) or lettuce-redis-client-users@googlegroups.com
+* [GitHub Discussions](https://github.com/lettuce-io/lettuce-core/discussions) (Q&A, Ideas, General discussion)
 * Stack Overflow (Questions): [https://stackoverflow.com/questions/tagged/lettuce](https://stackoverflow.com/questions/tagged/lettuce)
-* Gitter (General discussion): [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+* Gitter (chat): [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 * Twitter: [@LettuceDriver](https://twitter.com/LettuceDriver)
 * [GitHub Issues](https://github.com/lettuce-io/lettuce-core/issues) (Bug reports, feature requests)
 
@@ -140,6 +141,19 @@ connection.getStatefulConnection().addListener(new RedisPubSubListener<String, S
 connection.subscribe("channel")
 ```
 
+Cloud Provider Compatibility
+----------------------------
+
+While we're not actively testing Lettuce against various cloud offerings, we've verified initial compatibility with the following services (or have seen folks using Lettuce there):
+
+* AWS Elasticache (Operated in replica- and Redis Cluster mode)
+* Azure Redis
+* IBM Cloud Databases for Redis
+* Google Cloud Memorystore for Redis
+* RedisLabs Enterprise Redis Cluster
+
+Note: Some providers operate Redis in non-standard modes that aren't fully supported by Lettuce. 
+
 Building
 -----------
 
@@ -176,4 +190,4 @@ Contributing
 -------
 
 Github is for social coding: if you want to write code, I encourage contributions through pull requests from forks of this repository. 
-Create Github tickets for bugs and new features and comment on the ones that you are interested in and take a look into [CONTRIBUTING.md](https://github.com/lettuce-io/lettuce-core/blob/master/.github/CONTRIBUTING.md)
+Create Github tickets for bugs and new features and comment on the ones that you are interested in and take a look into [CONTRIBUTING.md](https://github.com/lettuce-io/lettuce-core/blob/main/.github/CONTRIBUTING.md)

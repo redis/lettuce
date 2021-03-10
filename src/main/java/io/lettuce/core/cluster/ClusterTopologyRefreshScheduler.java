@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,16 +39,23 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterTopologyRefreshScheduler.class);
+
     private static final ClusterTopologyRefreshOptions FALLBACK_OPTIONS = ClusterTopologyRefreshOptions.create();
 
     private final Supplier<ClusterClientOptions> clientOptions;
+
     private final Supplier<Partitions> partitions;
+
     private final ClientResources clientResources;
+
     private final ClusterTopologyRefreshTask clusterTopologyRefreshTask;
+
     private final AtomicReference<Timeout> timeoutRef = new AtomicReference<>();
 
     private final AtomicBoolean clusterTopologyRefreshActivated = new AtomicBoolean(false);
+
     private final AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = new AtomicReference<>();
+
     private final EventExecutorGroup genericWorkerPool;
 
     ClusterTopologyRefreshScheduler(Supplier<ClusterClientOptions> clientOptions, Supplier<Partitions> partitions,
@@ -268,11 +275,13 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
             }
             return 0;
         }
+
     }
 
     private static class ClusterTopologyRefreshTask extends AtomicBoolean implements Runnable {
 
         private static final long serialVersionUID = -1337731371220365694L;
+
         private final Supplier<CompletionStage<?>> reloadTopologyAsync;
 
         ClusterTopologyRefreshTask(Supplier<CompletionStage<?>> reloadTopologyAsync) {
@@ -309,5 +318,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
                 logger.warn("Cannot refresh Redis Cluster topology", e);
             }
         }
+
     }
+
 }

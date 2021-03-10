@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,13 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClient;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
@@ -32,6 +38,7 @@ import io.lettuce.core.cluster.pubsub.api.sync.NodeSelectionPubSubCommands;
 import io.lettuce.core.cluster.pubsub.api.sync.PubSubNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.sync.RedisClusterPubSubCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
 import io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -46,22 +53,28 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         implements StatefulRedisClusterPubSubConnection<K, V> {
 
     private final PubSubClusterEndpoint<K, V> endpoint;
+
+    private final ClusterPushHandler clusterPushHandler;
+
     private volatile Partitions partitions;
-    private volatile CommandSet commandSet;
+
+    private volatile String nodeId;
 
     /**
      * Initialize a new connection.
      *
-     * @param writer the channel writer
+     * @param endpoint the channel writer.
+     * @param clusterPushHandler the cluster push message handler.
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      */
-    public StatefulRedisClusterPubSubConnectionImpl(PubSubClusterEndpoint<K, V> endpoint, RedisChannelWriter writer,
-            RedisCodec<K, V> codec, Duration timeout) {
+    public StatefulRedisClusterPubSubConnectionImpl(PubSubClusterEndpoint<K, V> endpoint, ClusterPushHandler clusterPushHandler,
+            RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
 
         super(endpoint, writer, codec, timeout);
 
         this.endpoint = endpoint;
+        this.clusterPushHandler = clusterPushHandler;
     }
 
     @Override
@@ -100,14 +113,6 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisClusterPubSubReactiveCommandsImpl<K, V>(this, codec);
-    }
-
-    CommandSet getCommandSet() {
-        return commandSet;
-    }
-
-    void setCommandSet(CommandSet commandSet) {
-        this.commandSet = commandSet;
     }
 
     @Override
@@ -163,9 +168,36 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         return (CompletableFuture) provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port);
     }
 
+    @Override
+    public void activated() {
+        super.activated();
+
+        async.clusterMyId().thenAccept(this::setNodeId);
+    }
+
     public void setPartitions(Partitions partitions) {
+
+        LettuceAssert.notNull(partitions, "Partitions must not be null");
+
         this.partitions = partitions;
+
+        String nodeId = getNodeId();
+        if (nodeId != null && expireStaleConnections()) {
+
+            if (partitions.getPartitionByNodeId(nodeId) == null) {
+                endpoint.disconnect();
+            }
+        }
+
         getClusterDistributionChannelWriter().setPartitions(partitions);
+    }
+
+    private String getNodeId() {
+        return this.nodeId;
+    }
+
+    private void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
     }
 
     public Partitions getPartitions() {
@@ -180,7 +212,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     /**
      * Add a new {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     @Override
     public void addListener(RedisClusterPubSubListener<K, V> listener) {
@@ -190,15 +222,21 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     /**
      * Remove an existing {@link RedisClusterPubSubListener listener}.
      *
-     * @param listener the listener, must not be {@literal null}.
+     * @param listener the listener, must not be {@code null}.
      */
     @Override
     public void removeListener(RedisClusterPubSubListener<K, V> listener) {
         endpoint.removeListener(listener);
     }
 
-    RedisClusterPubSubListener<K, V> getUpstreamListener() {
-        return endpoint.getUpstreamListener();
+    @Override
+    public void addListener(RedisClusterPushListener listener) {
+        clusterPushHandler.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(RedisClusterPushListener listener) {
+        clusterPushHandler.removeListener(listener);
     }
 
     protected ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {
@@ -214,4 +252,17 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         }
         return null;
     }
+
+    private boolean expireStaleConnections() {
+
+        ClusterClientOptions options = getClusterClientOptions();
+        return options == null || options.isCloseStaleConnections();
+    }
+
+    private ClusterClientOptions getClusterClientOptions() {
+
+        ClientOptions options = getOptions();
+        return options instanceof ClusterClientOptions ? (ClusterClientOptions) options : null;
+    }
+
 }

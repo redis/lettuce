@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,13 +73,14 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *     public CustomCommandTest(StatefulRedisConnection&lt;String, String&gt; connection) {
  *         this.redis = connection.sync();
  *     }
+ *
  * }
  * </pre>
  *
  * <h3>Resource lifecycle</h3>
  *
  * This extension allocates resources lazily and stores them in its {@link ExtensionContext}
- * {@link org.junit.jupiter.api.extension.ExtensionContext.Store} for resuse across multiple tests. Client and
+ * {@link org.junit.jupiter.api.extension.ExtensionContext.Store} for reuse across multiple tests. Client and
  * {@link ClientResources} are allocated through{@link DefaultRedisClient} respective {@link TestClientResources} so shutdown is
  * managed by the actual suppliers. Singleton connection resources are closed after the test class (test container) is finished.
  * Newable connection resources are closed after the actual test is finished.
@@ -113,7 +114,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
             RedisClusterClientSupplier.INSTANCE, RedisClientSupplier.INSTANCE, StatefulRedisConnectionSupplier.INSTANCE,
             StatefulRedisPubSubConnectionSupplier.INSTANCE, StatefulRedisClusterConnectionSupplier.INSTANCE);
 
-    private static final List<Function<?, ?>> RESOURCE_FUNCTIONS = Arrays.asList(RedisCommandsFunction.INSTANCE);
+    private static final List<Function<?, ?>> RESOURCE_FUNCTIONS = Collections.singletonList(RedisCommandsFunction.INSTANCE);
 
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
@@ -138,9 +139,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
             throws ParameterResolutionException {
 
         ExtensionContext.Store store = getStore(extensionContext);
-
         Parameter parameter = parameterContext.getParameter();
-
         Type parameterizedType = parameter.getParameterizedType();
         if (parameterContext.isAnnotated(New.class)) {
 

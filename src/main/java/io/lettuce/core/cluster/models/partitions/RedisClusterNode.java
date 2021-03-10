@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,16 +41,23 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     private RedisURI uri;
+
     private String nodeId;
 
     private boolean connected;
+
     private String slaveOf;
+
     private long pingSentTimestamp;
+
     private long pongReceivedTimestamp;
+
     private long configEpoch;
 
     private BitSet slots;
+
     private final Set<NodeFlag> flags = EnumSet.noneOf(NodeFlag.class);
+
     private final List<RedisURI> aliases = new ArrayList<>();
 
     public RedisClusterNode() {
@@ -142,7 +149,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the connection point details. Usually the host/ip/port where a particular Redis Cluster node server is running.
      *
-     * @param uri the {@link RedisURI}, must not be {@literal null}
+     * @param uri the {@link RedisURI}, must not be {@code null}
      */
     public void setUri(RedisURI uri) {
 
@@ -185,7 +192,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     /**
      * Sets the replication source.
      *
-     * @param slaveOf the replication source, can be {@literal null}
+     * @param slaveOf the replication source, can be {@code null}
      */
     public void setSlaveOf(String slaveOf) {
         this.slaveOf = slaveOf;
@@ -277,10 +284,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     /**
      * Sets the list of slots for which this {@link RedisClusterNode} is the
-     * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#MASTER}. The list is empty if this node is not
-     * a master or the node is not responsible for any slots at all.
+     * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#UPSTREAM}. The list is empty if this node is
+     * not a upstream or the node is not responsible for any slots at all.
      *
-     * @param slots list of slots, must not be {@literal null} but may be empty
+     * @param slots list of slots, must not be {@code null} but may be empty
      */
     public void setSlots(List<Integer> slots) {
 
@@ -307,10 +314,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * Return {@literal true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
+     * Return {@code true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
      *
      * @param other the node to compare with.
-     * @return {@literal true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
+     * @return {@code true} if {@link RedisClusterNode the other node} contains the same slots as {@code this node}.
      */
     public boolean hasSameSlotsAs(RedisClusterNode other) {
 
@@ -350,13 +357,22 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * @return true if the {@linkplain NodeFlag} is contained within the flags.
      */
     public boolean is(NodeFlag nodeFlag) {
+
+        if (nodeFlag == NodeFlag.MASTER || nodeFlag == NodeFlag.UPSTREAM) {
+            return getFlags().contains(NodeFlag.MASTER) || getFlags().contains(NodeFlag.UPSTREAM);
+        }
+
+        if (nodeFlag == NodeFlag.SLAVE || nodeFlag == NodeFlag.REPLICA) {
+            return getFlags().contains(NodeFlag.SLAVE) || getFlags().contains(NodeFlag.REPLICA);
+        }
+
         return getFlags().contains(nodeFlag);
     }
 
     /**
      * Add an alias to {@link RedisClusterNode}.
      *
-     * @param alias must not be {@literal null}.
+     * @param alias must not be {@code null}.
      */
     public void addAlias(RedisURI alias) {
 
@@ -383,7 +399,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      */
     @Override
     public Role getRole() {
-        return is(NodeFlag.MASTER) ? Role.MASTER : Role.SLAVE;
+        return is(NodeFlag.UPSTREAM) ? Role.UPSTREAM : Role.REPLICA;
     }
 
     @Override
@@ -433,6 +449,22 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * Redis Cluster node flags.
      */
     public enum NodeFlag {
-        NOFLAGS, MYSELF, SLAVE, REPLICA, MASTER, EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
+        NOFLAGS, MYSELF, //
+
+        /**
+         * Synonym for {@link #REPLICA}.
+         */
+        @Deprecated
+        SLAVE,
+
+        REPLICA, //
+
+        /**
+         * Synonym for {@link #UPSTREAM}.
+         */
+        @Deprecated
+        MASTER, UPSTREAM, //
+        EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
     }
+
 }

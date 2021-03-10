@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 public class Wait {
 
     /**
-     * Initialize a {@link Wait.WaitBuilder} to wait until the {@code supplier} supplies {@literal true}
+     * Initialize a {@link Wait.WaitBuilder} to wait until the {@code supplier} supplies {@code true}
      *
      * @param supplier
      * @return
@@ -230,7 +230,7 @@ public class Wait {
     }
 
     /**
-     * Utility to await until a {@link WaitCondition} yields {@literal true}.
+     * Utility to await until a {@link WaitCondition} yields {@code true}.
      */
     private static class Waiter {
 

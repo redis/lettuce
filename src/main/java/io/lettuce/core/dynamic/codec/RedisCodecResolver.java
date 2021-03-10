@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,9 @@ public interface RedisCodecResolver {
     /**
      * Resolve a {@link RedisCodec} for the given {@link CommandMethod}.
      *
-     * @param commandMethod must not be {@literal null}.
-     * @return the resolved {@link RedisCodec} or {@literal null} if not resolvable.
+     * @param commandMethod must not be {@code null}.
+     * @return the resolved {@link RedisCodec} or {@code null} if not resolvable.
      */
     RedisCodec<?, ?> resolve(CommandMethod commandMethod);
+
 }

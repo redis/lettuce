@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package io.lettuce.core.tracing;
+
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * Tracing abstraction to create {@link Span}s to capture latency and behavior of Redis commands.
@@ -33,7 +35,7 @@ public abstract class Tracer {
 
     /**
      * Returns a new trace {@link Tracer.Span} associated with {@link TraceContext} or a new one if {@link TraceContext} is
-     * {@literal null}.
+     * {@code null}.
      *
      * @param traceContext the trace context.
      * @return a new {@link Span}.
@@ -48,14 +50,15 @@ public abstract class Tracer {
         /**
          * Starts the span with.
          *
+         * @param command the underlying command.
          * @return {@literal this} {@link Span}.
          */
-        public abstract Span start();
+        public abstract Span start(RedisCommand<?, ?, ?> command);
 
         /**
          * Sets the name for this {@link Span}.
          *
-         * @param name must not be {@literal null}.
+         * @param name must not be {@code null}.
          * @return {@literal this} {@link Span}.
          */
         public abstract Span name(String name);
@@ -70,8 +73,8 @@ public abstract class Tracer {
         /**
          * Associates a tag with this {@link Span}.
          *
-         * @param key must not be {@literal null}.
-         * @param value must not be {@literal null}.
+         * @param key must not be {@code null}.
+         * @param value must not be {@code null}.
          * @return {@literal this} {@link Span}.
          */
         public abstract Span tag(String key, String value);
@@ -79,7 +82,7 @@ public abstract class Tracer {
         /**
          * Associate an {@link Throwable error} with this {@link Span}.
          *
-         * @param throwable must not be {@literal null}.
+         * @param throwable must not be {@code null}.
          * @return
          */
         public abstract Span error(Throwable throwable);
@@ -87,7 +90,7 @@ public abstract class Tracer {
         /**
          * Associates an {@link Tracing.Endpoint} with this {@link Span}.
          *
-         * @param endpoint must not be {@literal null}.
+         * @param endpoint must not be {@code null}.
          * @return
          */
         public abstract Span remoteEndpoint(Tracing.Endpoint endpoint);
@@ -96,5 +99,7 @@ public abstract class Tracer {
          * Reports the span complete.
          */
         public abstract void finish();
+
     }
+
 }

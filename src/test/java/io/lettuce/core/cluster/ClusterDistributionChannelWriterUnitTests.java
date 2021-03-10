@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,38 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.event.EventBus;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.output.ValueOutput;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.resource.ClientResources;
 
 /**
  * Unit tests for {@link ClusterDistributionChannelWriter}.
@@ -52,10 +55,17 @@ import io.lettuce.core.protocol.*;
  * @author koisyu
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ClusterDistributionChannelWriterUnitTests {
 
     @Mock
     private RedisChannelWriter defaultWriter;
+
+    @Mock
+    private EventBus eventBus;
+
+    @Mock
+    private ClientResources clientResources;
 
     @Mock
     private ClusterEventListener clusterEventListener;
@@ -74,6 +84,12 @@ class ClusterDistributionChannelWriterUnitTests {
 
     @InjectMocks
     private ClusterDistributionChannelWriter clusterDistributionChannelWriter;
+
+    @BeforeEach
+    void setUp() {
+        when(defaultWriter.getClientResources()).thenReturn(clientResources);
+        when(clientResources.eventBus()).thenReturn(eventBus);
+    }
 
     @Test
     void shouldParseAskTargetCorrectly() {

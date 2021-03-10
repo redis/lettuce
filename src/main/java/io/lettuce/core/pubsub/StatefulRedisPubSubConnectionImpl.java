@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     public StatefulRedisPubSubConnectionImpl(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec,
             Duration timeout) {
 
-        super(writer, codec, timeout);
+        super(writer, endpoint, codec, timeout);
 
         this.endpoint = endpoint;
     }
@@ -152,4 +152,5 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
             });
         }
     }
+
 }

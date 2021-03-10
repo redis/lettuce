@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,9 +115,9 @@ class PubSubEndpointUnitTests {
         assertThat(notified).hasValue(1);
     }
 
-    private static <K, V> PubSubOutput<K, V, V> createMessage(String action, String channel, RedisCodec<K, V> codec) {
+    private static <K, V> PubSubOutput<K, V> createMessage(String action, String channel, RedisCodec<K, V> codec) {
 
-        PubSubOutput<K, V, V> output = new PubSubOutput<>(codec);
+        PubSubOutput<K, V> output = new PubSubOutput<>(codec);
 
         output.set(ByteBuffer.wrap(action.getBytes()));
         output.set(ByteBuffer.wrap(channel.getBytes()));

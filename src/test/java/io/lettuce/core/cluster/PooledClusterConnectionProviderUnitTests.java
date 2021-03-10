@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package io.lettuce.core.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
@@ -41,6 +41,7 @@ import org.mockito.quality.Strictness;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -53,6 +54,8 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.resource.ClientResources;
 
 /**
+ * Unit tests for {@link PooledClusterConnectionProvider}.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(MockitoExtension.class)
@@ -100,9 +103,9 @@ class PooledClusterConnectionProviderUnitTests {
         List<Integer> slots2 = IntStream.range(8192, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList());
 
         partitions.add(new RedisClusterNode(RedisURI.create("localhost", 1), "1", true, null, 0, 0, 0, slots1, Collections
-                .singleton(RedisClusterNode.NodeFlag.MASTER)));
+                .singleton(RedisClusterNode.NodeFlag.UPSTREAM)));
         partitions.add(new RedisClusterNode(RedisURI.create("localhost", 2), "2", true, "1", 0, 0, 0, slots2, Collections
-                .singleton(RedisClusterNode.NodeFlag.SLAVE)));
+                .singleton(RedisClusterNode.NodeFlag.REPLICA)));
 
         sut.setPartitions(partitions);
 
@@ -120,6 +123,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         assertThat(connection).isSameAs(nodeConnectionMock);
         verify(connection).setAutoFlushCommands(true);
+        verify(connection).addListener(any(PushListener.class));
         verifyNoMoreInteractions(connection);
     }
 
@@ -130,12 +134,13 @@ class PooledClusterConnectionProviderUnitTests {
                 .thenReturn(
                 ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
 
-        sut.setReadFrom(ReadFrom.MASTER);
+        sut.setReadFrom(ReadFrom.UPSTREAM);
 
         StatefulRedisConnection<String, String> connection = sut.getConnection(Intent.READ, 1);
 
         assertThat(connection).isSameAs(nodeConnectionMock);
         verify(connection).setAutoFlushCommands(true);
+        verify(connection).addListener(any(PushListener.class));
         verifyNoMoreInteractions(connection);
     }
 
@@ -292,7 +297,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         when(asyncCommandsMock.readOnly()).thenReturn(async);
 
-        sut.setReadFrom(ReadFrom.MASTER_PREFERRED);
+        sut.setReadFrom(ReadFrom.UPSTREAM_PREFERRED);
 
         assertThat(sut.getConnection(Intent.READ, 1)).isNotNull().isSameAs(nodeConnectionMock);
 
@@ -321,7 +326,7 @@ class PooledClusterConnectionProviderUnitTests {
         AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.READONLY, null, null));
         async.complete("OK");
 
-        sut.setReadFrom(ReadFrom.MASTER_PREFERRED);
+        sut.setReadFrom(ReadFrom.UPSTREAM_PREFERRED);
 
         try {
             sut.getConnection(Intent.READ, 1);

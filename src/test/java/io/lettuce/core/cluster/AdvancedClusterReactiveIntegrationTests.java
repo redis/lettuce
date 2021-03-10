@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,15 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -32,7 +37,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
-import io.lettuce.core.*;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.TestSupport;
+import io.lettuce.core.Value;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
@@ -40,8 +53,13 @@ import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.test.*;
+import io.lettuce.test.KeyValueStreamingAdapter;
+import io.lettuce.test.KeysAndValues;
+import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.netty.util.internal.ConcurrentSet;
 
@@ -291,7 +309,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
         String script = "return true";
 
-        String sha = LettuceStrings.digest(script.getBytes());
+        String sha = Base16.digest(script.getBytes());
 
         StepVerifier.create(commands.scriptExists(sha)).expectNext(false).verifyComplete();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ package io.lettuce.core;
  * <ul>
  * <li>Lua number -&gt; Redis integer reply (the number is converted into an integer)</li>
  * <li>Lua string -&gt; Redis bulk reply</li>
- * <li>Lua table (array) -&gt; Redis multi bulk reply (truncated to the first {@literal null} inside the Lua array if any)</li>
+ * <li>Lua table (array) -&gt; Redis multi bulk reply (truncated to the first {@code null} inside the Lua array if any)</li>
  * <li>Lua table with a single {@code ok} field -&gt; Redis status reply</li>
  * <li>Lua table with a single {@code err} field -&gt; Redis error reply</li>
  * <li>Lua boolean false -&gt; Redis Nil bulk reply.</li>

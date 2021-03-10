@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public abstract class RedisClusterURIUtil {
      *
      * An URI follows the syntax: {@code redis://[password@]host[:port][,host2[:port2]]}
      *
-     * @param uri must not be empty or {@literal null}.
+     * @param uri must not be empty or {@code null}.
      * @return {@link List} of {@link RedisURI}.
      */
     public static List<RedisURI> toRedisURIs(URI uri) {
@@ -52,8 +52,8 @@ public abstract class RedisClusterURIUtil {
         for (String part : parts) {
             HostAndPort hostAndPort = HostAndPort.parse(part);
 
-            RedisURI nodeUri = RedisURI.create(hostAndPort.getHostText(), hostAndPort.hasPort() ? hostAndPort.getPort()
-                    : redisURI.getPort());
+            RedisURI nodeUri = RedisURI.create(hostAndPort.getHostText(),
+                    hostAndPort.hasPort() ? hostAndPort.getPort() : redisURI.getPort());
 
             applyUriConnectionSettings(redisURI, nodeUri);
 
@@ -71,13 +71,9 @@ public abstract class RedisClusterURIUtil {
      */
     static void applyUriConnectionSettings(RedisURI from, RedisURI to) {
 
-        if (from.getPassword() != null && from.getPassword().length != 0) {
-            to.setPassword(new String(from.getPassword()));
-        }
-
+        to.applyAuthentication(from);
+        to.applySsl(from);
         to.setTimeout(from.getTimeout());
-        to.setSsl(from.isSsl());
-        to.setStartTls(from.isStartTls());
-        to.setVerifyPeer(from.isVerifyPeer());
     }
+
 }

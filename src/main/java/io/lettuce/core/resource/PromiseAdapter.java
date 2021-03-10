@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class PromiseAdapter {
      * Create a promise that emits a {@code Boolean} value on completion of the {@code future}
      *
      * @param future the future.
-     * @return Promise emitting a {@code Boolean} value. {@literal true} if the {@code future} completed successfully, otherwise
+     * @return Promise emitting a {@code Boolean} value. {@code true} if the {@code future} completed successfully, otherwise
      *         the cause wil be transported.
      */
     static Promise<Boolean> toBooleanPromise(Future<?> future) {
@@ -55,4 +55,5 @@ class PromiseAdapter {
         });
         return result;
     }
+
 }

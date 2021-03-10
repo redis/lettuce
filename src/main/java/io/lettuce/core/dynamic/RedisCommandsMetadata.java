@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 the original author or authors.
+ * Copyright 2011-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,14 @@ interface RedisCommandsMetadata {
      * Lookup an interface annotation.
      *
      * @param annotationClass the annotation class.
-     * @return the annotation object or {@literal null} if not found.
+     * @return the annotation object or {@code null} if not found.
      */
     <A extends Annotation> A getAnnotation(Class<A> annotationClass);
 
     /**
      * @param annotationClass the annotation class.
-     * @return {@literal true} if the interface is annotated with {@code annotationClass}.
+     * @return {@code true} if the interface is annotated with {@code annotationClass}.
      */
     boolean hasAnnotation(Class<? extends Annotation> annotationClass);
+
 }

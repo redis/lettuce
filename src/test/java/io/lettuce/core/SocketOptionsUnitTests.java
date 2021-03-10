@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -37,11 +37,11 @@ class SocketOptionsUnitTests {
     @Test
     void testBuilder() {
 
-        SocketOptions sut = SocketOptions.builder().connectTimeout(1, TimeUnit.MINUTES).keepAlive(true).tcpNoDelay(true)
+        SocketOptions sut = SocketOptions.builder().connectTimeout(1, TimeUnit.MINUTES).keepAlive(true).tcpNoDelay(false)
                 .build();
 
         assertThat(sut.isKeepAlive()).isTrue();
-        assertThat(sut.isTcpNoDelay()).isTrue();
+        assertThat(sut.isTcpNoDelay()).isFalse();
         assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofMinutes(1));
     }
 
@@ -61,13 +61,31 @@ class SocketOptionsUnitTests {
     }
 
     @Test
+    void shouldConfigureSimpleKeepAlive() {
+
+        SocketOptions sut = SocketOptions.builder().keepAlive(true).build();
+
+        assertThat(sut.isKeepAlive()).isTrue();
+        assertThat(sut.isExtendedKeepAlive()).isFalse();
+    }
+
+    @Test
+    void shouldConfigureSimpleExtendedAlive() {
+
+        SocketOptions sut = SocketOptions.builder().keepAlive(SocketOptions.KeepAliveOptions.builder().build()).build();
+
+        assertThat(sut.isKeepAlive()).isFalse();
+        assertThat(sut.isExtendedKeepAlive()).isTrue();
+    }
+
+    @Test
     void testCopy() {
         checkAssertions(SocketOptions.copyOf(SocketOptions.builder().build()));
     }
 
     void checkAssertions(SocketOptions sut) {
         assertThat(sut.isKeepAlive()).isFalse();
-        assertThat(sut.isTcpNoDelay()).isFalse();
+        assertThat(sut.isTcpNoDelay()).isTrue();
         assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofSeconds(10));
     }
 }
