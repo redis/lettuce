@@ -161,7 +161,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             logger.debug("{} channelRegistered()", logPrefix());
         }
 
-        tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
         logPrefix = null;
         pristine = true;
         fallbackCommand = null;
@@ -382,6 +381,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             if (includeCommandArgsInSpanTags && command.getArgs() != null) {
                 span.tag("redis.args", command.getArgs().toCommandString());
+            }
+
+            if (tracedEndpoint == null) {
+                tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
             }
 
             span.remoteEndpoint(tracedEndpoint);
