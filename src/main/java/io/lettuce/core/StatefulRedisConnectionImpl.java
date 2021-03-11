@@ -158,9 +158,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         RedisCommand<K, V, T> toSend = preProcessCommand(command);
 
-        if (command.getType().name().equals(MULTI.name())) {
-            multi = (multi == null ? new MultiOutput<>(codec) : multi);
-        }
+        potentiallyEnableMulti(command);
 
         return super.dispatch(toSend);
     }
@@ -174,12 +172,26 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             RedisCommand<K, V, ?> command = preProcessCommand(o);
 
             sentCommands.add(command);
-            if (command.getType().name().equals(MULTI.name())) {
-                multi = (multi == null ? new MultiOutput<>(codec) : multi);
-            }
+            potentiallyEnableMulti(command);
         });
 
         return super.dispatch(sentCommands);
+    }
+
+    private void potentiallyEnableMulti(RedisCommand<K, V, ?> command) {
+
+        if (command.getType().name().equals(MULTI.name())) {
+
+            multi = (multi == null ? new MultiOutput<>(codec) : multi);
+
+            if (command instanceof CompleteableCommand) {
+                ((CompleteableCommand<?>) command).onComplete((ignored, e) -> {
+                    if (e != null) {
+                        multi = null;
+                    }
+                });
+            }
+        }
     }
 
     protected <T> RedisCommand<K, V, T> preProcessCommand(RedisCommand<K, V, T> command) {
