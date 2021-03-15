@@ -30,7 +30,7 @@
 
     <ciManagement>
         <system>Travis CI</system>
-        <url>https://travis-ci.org/lettuce-io/lettuce-core</url>
+        <url>https://travis-ci.com/lettuce-io/lettuce-core</url>
     </ciManagement>
 
     <issueManagement>
