@@ -101,7 +101,7 @@ class BraveTracingIntegrationTests extends TestSupport {
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
         assertThat(spans.get(0).name()).isEqualTo("hello");
-        assertThat(spans.get(0).remoteEndpoint().port()).isEqualTo(port);
+        assertThat(spans.get(0).remoteEndpoint()).isNull();
         assertThat(spans.get(1).name()).isEqualTo("ping");
         assertThat(spans.get(1).remoteEndpoint().port()).isEqualTo(port);
     }

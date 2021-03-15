@@ -311,6 +311,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         setState(LifecycleState.CONNECTED);
 
+        tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
+
         endpoint.notifyChannelActive(ctx.channel());
         super.channelActive(ctx);
 
@@ -422,11 +424,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             Tracer.Span span = tracer.nextSpan(context);
 
-            if (tracedEndpoint == null) {
-                tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
+            if (tracedEndpoint != null) {
+                span.remoteEndpoint(tracedEndpoint);
             }
-
-            span.remoteEndpoint(tracedEndpoint).start(command);
+            span.start(command);
 
             if (traced != null) {
                 traced.setSpan(span);
