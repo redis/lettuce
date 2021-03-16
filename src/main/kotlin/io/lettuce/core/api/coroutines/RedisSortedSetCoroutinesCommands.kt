@@ -353,11 +353,10 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * Return a random member along its value from the sorted set stored at `key`.
      *
      * @param key the key.
-     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct fields.
      * @return the score and element.
      * @since 6.1
      */
-    suspend fun zrandmemberWithscores(key: K): ScoredValue<V>?
+    suspend fun zrandmemberWithScores(key: K): ScoredValue<V>?
 
     /**
      * Return `count` random members along their value from the sorted set stored at `key`.
@@ -367,7 +366,7 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @return List<ScoredValue<V>> array-reply list of scores and elements.
      * @since 6.1
      */
-    suspend fun zrandmemberWithscores(key: K, count: Long): List<ScoredValue<V>>
+    suspend fun zrandmemberWithScores(key: K, count: Long): List<ScoredValue<V>>
 
     /**
      * Return a range of members in a sorted set, by index.

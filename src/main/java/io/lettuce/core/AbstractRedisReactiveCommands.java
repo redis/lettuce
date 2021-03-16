@@ -2207,13 +2207,13 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<ScoredValue<V>> zrandmemberWithscores(K key) {
-        return createMono(() -> commandBuilder.zrandmemberWithscores(key));
+    public Mono<ScoredValue<V>> zrandmemberWithScores(K key) {
+        return createMono(() -> commandBuilder.zrandmemberWithScores(key));
     }
 
     @Override
-    public Flux<ScoredValue<V>> zrandmemberWithscores(K key, long count) {
-        return createDissolvingFlux(() -> commandBuilder.zrandmemberWithscores(key, count));
+    public Flux<ScoredValue<V>> zrandmemberWithScores(K key, long count) {
+        return createDissolvingFlux(() -> commandBuilder.zrandmemberWithScores(key, count));
     }
 
     @Override
