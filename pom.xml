@@ -831,7 +831,7 @@
                             <stylesheetfile>src/main/javadoc/stylesheet.css</stylesheetfile>
                             <links>
                                 <link>https://netty.io/4.1/api/</link>
-                                <link>https://commons.apache.org/proper/commons-pool/api-2.7.0/</link>
+                                <link>https://commons.apache.org/proper/commons-pool/apidocs/</link>
                                 <link>http://reactivex.io/RxJava/1.x/javadoc/</link>
                                 <link>http://reactivex.io/RxJava/javadoc/</link>
                                 <link>https://projectreactor.io/docs/core/release/api/</link>
