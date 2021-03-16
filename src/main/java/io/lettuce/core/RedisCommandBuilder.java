@@ -3100,7 +3100,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANDMEMBER, new ValueListOutput<>(codec), args);
     }
 
-    Command<K, V, ScoredValue<V>> zrandmemberWithscores(K key) {
+    Command<K, V, ScoredValue<V>> zrandmemberWithScores(K key) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key).add(1).add(WITHSCORES);
@@ -3108,7 +3108,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANDMEMBER, new ScoredValueOutput<>(codec), args);
     }
 
-    Command<K, V, List<ScoredValue<V>>> zrandmemberWithscores(K key, long count) {
+    Command<K, V, List<ScoredValue<V>>> zrandmemberWithScores(K key, long count) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(key).add(count).add(WITHSCORES);

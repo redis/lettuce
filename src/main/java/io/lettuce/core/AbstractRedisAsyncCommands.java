@@ -2134,13 +2134,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<ScoredValue<V>> zrandmemberWithscores(K key) {
-        return dispatch(commandBuilder.zrandmemberWithscores(key));
+    public RedisFuture<ScoredValue<V>> zrandmemberWithScores(K key) {
+        return dispatch(commandBuilder.zrandmemberWithScores(key));
     }
 
     @Override
-    public RedisFuture<List<ScoredValue<V>>> zrandmemberWithscores(K key, long count) {
-        return dispatch(commandBuilder.zrandmemberWithscores(key, count));
+    public RedisFuture<List<ScoredValue<V>>> zrandmemberWithScores(K key, long count) {
+        return dispatch(commandBuilder.zrandmemberWithScores(key, count));
     }
 
     @Override

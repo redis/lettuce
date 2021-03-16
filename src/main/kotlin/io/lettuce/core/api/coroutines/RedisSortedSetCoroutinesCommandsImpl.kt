@@ -102,13 +102,13 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override suspend fun zrandmember(key: K, count: Long): List<V> =
         ops.zrandmember(key, count).asFlow().toList()
 
-    override suspend fun zrandmemberWithscores(key: K): ScoredValue<V>? =
-        ops.zrandmemberWithscores(key).awaitFirstOrNull()
+    override suspend fun zrandmemberWithScores(key: K): ScoredValue<V>? =
+        ops.zrandmemberWithScores(key).awaitFirstOrNull()
 
-    override suspend fun zrandmemberWithscores(
+    override suspend fun zrandmemberWithScores(
         key: K,
         count: Long
-    ): List<ScoredValue<V>> = ops.zrandmemberWithscores(key, count).asFlow().toList()
+    ): List<ScoredValue<V>> = ops.zrandmemberWithScores(key, count).asFlow().toList()
 
     override fun zrange(key: K, start: Long, stop: Long): Flow<V> =
         ops.zrange(key, start, stop).asFlow()

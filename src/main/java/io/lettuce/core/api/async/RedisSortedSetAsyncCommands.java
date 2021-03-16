@@ -388,12 +388,10 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * Return a random member along its value from the sorted set stored at {@code key}.
      *
      * @param key the key.
-     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct
-     *        fields.
      * @return the score and element.
      * @since 6.1
      */
-    RedisFuture<ScoredValue<V>> zrandmemberWithscores(K key);
+    RedisFuture<ScoredValue<V>> zrandmemberWithScores(K key);
 
     /**
      * Return {@code count} random members along their value from the sorted set stored at {@code key}.
@@ -404,7 +402,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of scores and elements.
      * @since 6.1
      */
-    RedisFuture<List<ScoredValue<V>>> zrandmemberWithscores(K key, long count);
+    RedisFuture<List<ScoredValue<V>>> zrandmemberWithScores(K key, long count);
 
     /**
      * Return a range of members in a sorted set, by index.
