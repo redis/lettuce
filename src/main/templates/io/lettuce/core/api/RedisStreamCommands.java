@@ -92,6 +92,16 @@ public interface RedisStreamCommands<K, V> {
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
      *
      * @param key the stream key.
+     * @param args
+     * @return simple-reply the claimed stream messages.
+     * @since 6.1
+     */
+    ClaimedMessages<K, V> xautoclaim(K key, XAutoClaimArgs<K> args);
+
+    /**
+     * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
+     *
+     * @param key the stream key.
      * @param consumer consumer identified by group name and consumer key.
      * @param minIdleTime
      * @param messageIds message Id's to claim.

@@ -19,6 +19,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.*
 import io.lettuce.core.XReadArgs.StreamOffset
 import io.lettuce.core.api.reactive.RedisStreamReactiveCommands
+import io.lettuce.core.models.stream.ClaimedMessages
 import io.lettuce.core.models.stream.PendingMessage
 import io.lettuce.core.models.stream.PendingMessages
 import kotlinx.coroutines.flow.Flow
@@ -46,6 +47,8 @@ internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun xadd(key: K, vararg keysAndValues: Any): String? = ops.xadd(key, *keysAndValues).awaitFirstOrNull()
 
     override suspend fun xadd(key: K, args: XAddArgs, vararg keysAndValues: Any): String? = ops.xadd(key, args, *keysAndValues).awaitFirstOrNull()
+
+    override suspend fun xautoclaim(key: K, args: XAutoClaimArgs<K>): ClaimedMessages<K, V>? = ops.xautoclaim(key, args).awaitFirstOrNull()
 
     override fun xclaim(key: K, consumer: Consumer<K>, minIdleTime: Long, vararg messageIds: String): Flow<StreamMessage<K, V>> = ops.xclaim(key, consumer, minIdleTime, *messageIds).asFlow()
 

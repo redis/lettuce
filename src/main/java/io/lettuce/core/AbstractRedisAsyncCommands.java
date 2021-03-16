@@ -31,6 +31,7 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.CommandOutput;
@@ -1825,6 +1826,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> xadd(K key, XAddArgs args, Object... keysAndValues) {
         return dispatch(commandBuilder.xadd(key, args, keysAndValues));
+    }
+
+    @Override
+    public RedisFuture<ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> args) {
+        return dispatch(commandBuilder.xautoclaim(key, args));
     }
 
     @Override

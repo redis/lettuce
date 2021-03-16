@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import io.lettuce.core.models.stream.ClaimedMessages;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.GeoArgs.Unit;
@@ -1899,6 +1900,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<String> xadd(K key, XAddArgs args, Object... keysAndValues) {
         return createMono(() -> commandBuilder.xadd(key, args, keysAndValues));
+    }
+
+    @Override
+    public Mono<ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> args) {
+        return createMono(() -> commandBuilder.xautoclaim(key, args));
     }
 
     @Override

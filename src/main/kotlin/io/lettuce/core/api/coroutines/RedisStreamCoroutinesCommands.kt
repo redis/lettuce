@@ -18,6 +18,7 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
 import io.lettuce.core.XReadArgs.StreamOffset
+import io.lettuce.core.models.stream.ClaimedMessages
 import io.lettuce.core.models.stream.PendingMessage
 import io.lettuce.core.models.stream.PendingMessages
 import kotlinx.coroutines.flow.Flow
@@ -81,6 +82,16 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
      * @return simple-reply the message Id.
      */
     suspend fun xadd(key: K, args: XAddArgs, vararg keysAndValues: Any): String?
+
+    /**
+     * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
+     *
+     * @param key the stream key.
+     * @param args
+     * @return simple-reply the claimed stream messages.
+     * @since 6.1
+     */
+    suspend fun xautoclaim(key: K, args: XAutoClaimArgs<K>): ClaimedMessages<K, V>?
 
     /**
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
@@ -247,6 +258,7 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
      * @param key the stream key.
      * @param args
      * @return List<Any> array-reply list with members of the resulting stream.
+     * @since 6.1
      */
     fun xpending(key: K, args: XPendingArgs<K>): Flow<PendingMessage>
 

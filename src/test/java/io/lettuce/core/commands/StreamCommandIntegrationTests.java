@@ -29,6 +29,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.models.stream.ClaimedMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -566,6 +567,42 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         List<PendingMessage> pendingEntries = redis.xpending(key, "group", Range.unbounded(), Limit.from(10));
         assertThat(pendingEntries).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xautoclaim() {
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id1 = redis.xadd(key, Collections.singletonMap("key1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("key2", "value2"));
+
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
+                StreamOffset.lastConsumed(key));
+
+        ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key,
+                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), 0, id1).count(20));
+        assertThat(claimedMessages.getId()).isNotNull();
+        assertThat(claimedMessages.getMessages()).hasSize(2).contains(messages.get(0));
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xautoclaimJustId() {
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id1 = redis.xadd(key, Collections.singletonMap("key1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("key2", "value2"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key,
+                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), 0, id1).justid().count(20));
+        assertThat(claimedMessages.getId()).isNotNull();
+        assertThat(claimedMessages.getMessages()).hasSize(2);
+
+        StreamMessage<String, String> message = claimedMessages.getMessages().get(0);
+        assertThat(message.getBody()).isNull();
+        assertThat(message.getStream()).isEqualTo("key");
+        assertThat(message.getId()).isEqualTo(id1);
     }
 
     @Test
