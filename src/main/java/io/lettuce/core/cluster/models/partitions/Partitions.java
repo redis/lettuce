@@ -119,6 +119,10 @@ public class Partitions implements Collection<RedisClusterNode> {
 
         for (RedisClusterNode partition : nodeReadView) {
 
+            if (!partition.isConnected()) {
+                continue;
+            }
+
             RedisURI uri = partition.getUri();
 
             if (matches(uri, host, port)) {
