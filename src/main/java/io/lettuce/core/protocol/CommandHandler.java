@@ -68,6 +68,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Grzegorz Szpak
  * @author Daniel Albuquerque
  * @author Gavin Cook
+ * @author Anuraag Agrawal
  */
 public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCommands {
 
@@ -411,31 +412,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         addToStack(command, promise);
 
-        if (tracingEnabled && command instanceof CompleteableCommand) {
-
-            TracedCommand<?, ?, ?> traced = CommandWrapper.unwrap(command, TracedCommand.class);
-            TraceContextProvider provider = (traced == null ? clientResources.tracing().initialTraceContextProvider() : traced);
-            Tracer tracer = clientResources.tracing().getTracerProvider().getTracer();
-            TraceContext context = provider.getTraceContext();
-
-            Tracer.Span span = tracer.nextSpan(context);
-            span.name(command.getType().name());
-
-            if (includeCommandArgsInSpanTags && command.getArgs() != null) {
-                span.tag("redis.args", command.getArgs().toCommandString());
-            }
-
-            if (tracedEndpoint != null) {
-                span.remoteEndpoint(tracedEndpoint);
-            }
-
-            span.remoteEndpoint(tracedEndpoint);
-            span.start(command);
-
-            if (traced != null) {
-                traced.setSpan(span);
-            }
-        }
+        attachTracing(ctx, command);
 
         ctx.write(command, promise);
     }
@@ -465,6 +442,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         for (RedisCommand<?, ?, ?> command : deduplicated) {
+            attachTracing(ctx, command);
             addToStack(command, promise);
         }
 
@@ -472,6 +450,33 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             ctx.write(deduplicated, promise);
         } else {
             promise.trySuccess();
+        }
+    }
+
+    private void attachTracing(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
+
+        if (!tracingEnabled || !(command instanceof CompleteableCommand)) {
+            return;
+        }
+
+        TracedCommand<?, ?, ?> traced = CommandWrapper.unwrap(command, TracedCommand.class);
+        TraceContextProvider provider = (traced == null ? clientResources.tracing().initialTraceContextProvider() : traced);
+        Tracer tracer = clientResources.tracing().getTracerProvider().getTracer();
+        TraceContext context = provider.getTraceContext();
+
+        Tracer.Span span = tracer.nextSpan(context);
+        span.name(command.getType().name());
+
+        if (tracedEndpoint != null) {
+            span.remoteEndpoint(tracedEndpoint);
+        } else {
+            span.remoteEndpoint(clientResources.tracing().createEndpoint(ctx.channel().remoteAddress()));
+        }
+
+        span.start(command);
+
+        if (traced != null) {
+            traced.setSpan(span);
         }
     }
 
