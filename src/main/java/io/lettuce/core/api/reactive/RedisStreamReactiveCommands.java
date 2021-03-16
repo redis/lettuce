@@ -17,6 +17,7 @@ package io.lettuce.core.api.reactive;
 
 import java.util.Map;
 
+import io.lettuce.core.models.stream.ClaimedMessages;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
@@ -82,6 +83,16 @@ public interface RedisStreamReactiveCommands<K, V> {
      * @return simple-reply the message Id.
      */
     Mono<String> xadd(K key, XAddArgs args, Object... keysAndValues);
+
+    /**
+     * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
+     *
+     * @param key the stream key.
+     * @param args
+     * @return simple-reply the claimed stream messages.
+     * @since 6.1
+     */
+    Mono<ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> args);
 
     /**
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.

@@ -33,6 +33,7 @@ import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
@@ -2509,6 +2510,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(XACK, new IntegerOutput<>(codec), args);
+    }
+
+    public Command<K, V, ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> xAutoClaimArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(xAutoClaimArgs, "XAutoClaimArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        xAutoClaimArgs.build(args);
+        return createCommand(XAUTOCLAIM, new ClaimedMessagesOutput<>(codec, key, xAutoClaimArgs.isJustid()), args);
     }
 
     public Command<K, V, List<StreamMessage<K, V>>> xclaim(K key, Consumer<K> consumer, XClaimArgs xClaimArgs,

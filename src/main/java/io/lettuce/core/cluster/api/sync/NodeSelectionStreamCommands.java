@@ -20,6 +20,7 @@ import java.util.Map;
 
 import io.lettuce.core.*;
 import io.lettuce.core.XReadArgs.StreamOffset;
+import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 
@@ -81,6 +82,16 @@ public interface NodeSelectionStreamCommands<K, V> {
      * @return simple-reply the message Id.
      */
     Executions<String> xadd(K key, XAddArgs args, Object... keysAndValues);
+
+    /**
+     * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
+     *
+     * @param key the stream key.
+     * @param args
+     * @return simple-reply the claimed stream messages.
+     * @since 6.1
+     */
+    Executions<ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> args);
 
     /**
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
