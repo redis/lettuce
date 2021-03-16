@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.tracing;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +50,7 @@ import io.lettuce.test.resource.FastShutdown;
  *
  * @author Mark Paluch
  * @author Daniel Albuquerque
+ * @author Anuraag Agrawal
  */
 @EnabledOnCommand("HELLO")
 class BraveTracingIntegrationTests extends TestSupport {
@@ -101,7 +102,7 @@ class BraveTracingIntegrationTests extends TestSupport {
         List<Span> spans = new ArrayList<>(BraveTracingIntegrationTests.spans);
 
         assertThat(spans.get(0).name()).isEqualTo("hello");
-        assertThat(spans.get(0).remoteEndpoint()).isNull();
+        assertThat(spans.get(0).remoteEndpoint()).isNotNull();
         assertThat(spans.get(1).name()).isEqualTo("ping");
         assertThat(spans.get(1).remoteEndpoint().port()).isEqualTo(port);
     }
