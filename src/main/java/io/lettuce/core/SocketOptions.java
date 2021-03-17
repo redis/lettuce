@@ -280,7 +280,7 @@ public class SocketOptions {
 
         public static final Duration DEFAULT_IDLE = Duration.ofHours(2);
 
-        public static final Duration DEFAULT_INTERVAL = Duration.ofSeconds(1);
+        public static final Duration DEFAULT_INTERVAL = Duration.ofSeconds(75);
 
         private final int count;
 
@@ -390,7 +390,7 @@ public class SocketOptions {
             }
 
             /**
-             * The time between individual keepalive probes. Defaults to {@code 1 second}. See also {@link #DEFAULT_INTERVAL}
+             * The time between individual keepalive probes. Defaults to {@code 75 second}. See also {@link #DEFAULT_INTERVAL}
              * and {@code TCP_KEEPINTVL}.
              * <p>
              * The time granularity of is seconds.
