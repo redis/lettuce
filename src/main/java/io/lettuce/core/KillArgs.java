@@ -29,6 +29,7 @@ import io.lettuce.core.protocol.CommandType;
  * {@link KillArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mark Paluch
+ * @author dengliming
  * @since 3.0
  */
 public class KillArgs implements CompositeArgument {
@@ -46,6 +47,8 @@ public class KillArgs implements CompositeArgument {
     private Long id;
 
     private Type type;
+
+    private String username;
 
     /**
      * Builder entry points for {@link KillArgs}.
@@ -142,6 +145,16 @@ public class KillArgs implements CompositeArgument {
             return new KillArgs().type(Type.SLAVE);
         }
 
+        /**
+         * Creates new {@link KillArgs} setting {@literal USER}.
+         *
+         * @return new {@link KillArgs} with {@literal USER} set.
+         * @see KillArgs#user(String)
+         * @since 6.1
+         */
+        public static KillArgs user(String username) {
+            return new KillArgs().user(username);
+        }
     }
 
     /**
@@ -223,6 +236,21 @@ public class KillArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Closes all the connections that are authenticated with the specified ACL {@code username}.
+     *
+     * @param username must not be {@code null}.
+     * @return {@code this} {@link KillArgs}.
+     * @since 6.1
+     */
+    public KillArgs user(String username) {
+
+        LettuceAssert.notNull(username, "UserName must not be null");
+
+        this.username = username;
+        return this;
+    }
+
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
@@ -244,6 +272,10 @@ public class KillArgs implements CompositeArgument {
 
         if (type != null) {
             args.add(CommandType.TYPE).add(type.name().toLowerCase());
+        }
+
+        if (username != null) {
+            args.add("USER").add(username);
         }
     }
 
