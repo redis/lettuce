@@ -130,17 +130,17 @@ work/sentinel-%.conf:
 	@echo pidfile $(shell pwd)/work/redis-sentinel-$*.pid >> $@
 	@echo logfile $(shell pwd)/work/redis-sentinel-$*.log >> $@
 
-	@echo sentinel down-after-milliseconds mymaster 200 >> $@
-	@echo sentinel failover-timeout mymaster 200 >> $@
-	@echo sentinel parallel-syncs mymaster 1 >> $@
 ifeq ($(REDIS),unstable)
 	@echo sentinel monitor mymaster localhost 6482 1 >> $@
 	@echo sentinel announce-hostnames yes >> $@
 	@echo sentinel resolve-hostnames yes >> $@
+	@echo sentinel announce-ip localhost >> $@
 else
 	@echo sentinel monitor mymaster 127.0.0.1 6482 1 >> $@
 endif
-	@echo sentinel announce-ip localhost >> $@
+	@echo sentinel down-after-milliseconds mymaster 200 >> $@
+	@echo sentinel failover-timeout mymaster 200 >> $@
+	@echo sentinel parallel-syncs mymaster 1 >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
 	@echo unixsocketperm 777 >> $@
 
@@ -152,9 +152,6 @@ work/sentinel-26381.conf:
 	@echo pidfile $(shell pwd)/work/redis-sentinel-26381.pid >> $@
 	@echo logfile $(shell pwd)/work/redis-sentinel-26381.log >> $@
 
-	@echo sentinel down-after-milliseconds mymaster 200 >> $@
-	@echo sentinel failover-timeout mymaster 200 >> $@
-	@echo sentinel parallel-syncs mymaster 1 >> $@
 ifeq ($(REDIS),unstable)
 	@echo sentinel monitor mymaster localhost 6484 1 >> $@
 	@echo sentinel announce-hostnames yes >> $@
@@ -162,6 +159,9 @@ ifeq ($(REDIS),unstable)
 else
 	@echo sentinel monitor mymaster 127.0.0.1 6484 1 >> $@
 endif
+	@echo sentinel down-after-milliseconds mymaster 200 >> $@
+	@echo sentinel failover-timeout mymaster 200 >> $@
+	@echo sentinel parallel-syncs mymaster 1 >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
 	@echo unixsocketperm 777 >> $@
 	@echo requirepass foobared >> $@
