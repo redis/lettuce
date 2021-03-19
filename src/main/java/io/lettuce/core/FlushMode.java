@@ -28,12 +28,12 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 public enum FlushMode implements ProtocolKeyword {
 
     /**
-     * flushes asynchronously
+     * flushes synchronously
      */
     SYNC,
 
     /**
-     * flushes synchronously
+     * flushes asynchronously
      */
     ASYNC;
 
