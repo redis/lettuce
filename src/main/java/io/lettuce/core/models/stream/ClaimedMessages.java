@@ -15,12 +15,12 @@
  */
 package io.lettuce.core.models.stream;
 
-import io.lettuce.core.StreamMessage;
-
 import java.util.List;
 
+import io.lettuce.core.StreamMessage;
+
 /**
- * Value object representing the claimed messages reported through XAUTOCLAIM.
+ * Value object representing the claimed messages reported through {@code XAUTOCLAIM}.
  *
  * @author dengliming
  * @since 6.1

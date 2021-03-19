@@ -29,7 +29,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import io.lettuce.core.models.stream.ClaimedMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -39,6 +38,7 @@ import io.lettuce.core.*;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.NestedMultiOutput;
@@ -119,7 +119,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @EnabledOnCommand("LMOVE") // Redis 6.2
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void xaddWithNomkstream() {
 
         String id = redis.xadd(key, XAddArgs.Builder.nomkstream(), Collections.singletonMap("foo", "bar"));
@@ -300,7 +300,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void xreadTransactional() {
+    public void xreadTransactional() {
 
         String initial1 = redis.xadd("stream-1", Collections.singletonMap("key1", "value1"));
         String initial2 = redis.xadd("stream-2", Collections.singletonMap("key2", "value2"));
@@ -374,7 +374,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @EnabledOnCommand("LMOVE") // Redis 6.2
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void xgroupCreateconsumer() {
 
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
@@ -572,15 +572,16 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void xautoclaim() {
+
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
         String id1 = redis.xadd(key, Collections.singletonMap("key1", "value1"));
-        String id2 = redis.xadd(key, Collections.singletonMap("key2", "value2"));
+        redis.xadd(key, Collections.singletonMap("key2", "value2"));
 
         List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer1"),
                 StreamOffset.lastConsumed(key));
 
         ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key,
-                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), 0, id1).count(20));
+                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, id1).count(20));
         assertThat(claimedMessages.getId()).isNotNull();
         assertThat(claimedMessages.getMessages()).hasSize(2).contains(messages.get(0));
     }
@@ -588,14 +589,15 @@ public class StreamCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void xautoclaimJustId() {
+
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
         String id1 = redis.xadd(key, Collections.singletonMap("key1", "value1"));
-        String id2 = redis.xadd(key, Collections.singletonMap("key2", "value2"));
+        redis.xadd(key, Collections.singletonMap("key2", "value2"));
 
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
         ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key,
-                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), 0, id1).justid().count(20));
+                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, id1).justid().count(20));
         assertThat(claimedMessages.getId()).isNotNull();
         assertThat(claimedMessages.getMessages()).hasSize(2);
 

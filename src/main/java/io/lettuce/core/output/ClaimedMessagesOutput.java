@@ -36,11 +36,11 @@ import io.lettuce.core.models.stream.ClaimedMessages;
  */
 public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMessages<K, V>> {
 
+    private final boolean justId;
+
+    private final K stream;
+
     private String startId;
-
-    private K stream;
-
-    private boolean justId;
 
     private String id;
 
@@ -96,6 +96,7 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
 
     @Override
     public void complete(int depth) {
+
         if (depth == 3 && bodyReceived) {
             messages.add(new StreamMessage<>(stream, id, body == null ? Collections.emptyMap() : body));
             bodyReceived = false;
@@ -112,7 +113,7 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
         }
 
         if (depth == 0) {
-            output = new ClaimedMessages<>(startId, messages);
+            output = new ClaimedMessages<>(startId, Collections.unmodifiableList(messages));
         }
     }
 
