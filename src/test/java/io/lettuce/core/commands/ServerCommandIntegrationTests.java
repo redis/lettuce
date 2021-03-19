@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.AclSetuserArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.KillArgs;
@@ -174,6 +175,16 @@ public class ServerCommandIntegrationTests extends TestSupport {
         assertThat(redis.clientKill(KillArgs.Builder.typePubsub().id(4234))).isEqualTo(0);
 
         connection2.getStatefulConnection().close();
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void clientKillUser() {
+        RedisCommands<String, String> connection2 = client.connect().sync();
+        redis.aclSetuser("test_kill", AclSetuserArgs.Builder.addPassword("password1").on().addCommand(CommandType.ACL));
+        connection2.auth("test_kill", "password1");
+        assertThat(redis.clientKill(KillArgs.Builder.user("test_kill"))).isGreaterThan(0);
+        redis.aclDeluser("test_kill");
     }
 
     @Test
