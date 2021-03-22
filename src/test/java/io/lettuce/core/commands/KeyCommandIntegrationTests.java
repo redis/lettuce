@@ -338,6 +338,21 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void restoreIdleTime() {
+
+        redis.set(key, value);
+        byte[] bytes = redis.dump(key);
+        redis.set(key, "foo");
+
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(Duration.ofSeconds(1)).idleTime(111).replace())).isEqualTo("OK");
+        assertThat(redis.objectIdletime(key)).isEqualTo(111);
+        assertThat(redis.get(key)).isEqualTo(value);
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(1000);
+
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(Duration.ofSeconds(1)).frequency(111).replace())).isEqualTo("OK");
+    }
+
+    @Test
     @EnabledOnCommand("TOUCH")
     void touch() {
 

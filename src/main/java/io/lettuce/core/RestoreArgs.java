@@ -37,6 +37,10 @@ public class RestoreArgs {
 
     boolean absttl;
 
+    Long frequency;
+
+    Long idleTime;
+
     /**
      * Builder entry points for {@link XAddArgs}.
      */
@@ -139,6 +143,33 @@ public class RestoreArgs {
     public RestoreArgs absttl(boolean absttl) {
 
         this.absttl = absttl;
+        return this;
+    }
+
+    /**
+     * Set the number of seconds since the object stored at the specified key is idle (not requested by read or write
+     * operations).
+     *
+     * @param idleTime
+     * @return {@code this}.
+     * @since 6.1
+     */
+    public RestoreArgs idleTime(long idleTime) {
+
+        this.idleTime = idleTime;
+        return this;
+    }
+
+    /**
+     * Set the logarithmic access frequency counter of the object stored at the specified key.
+     *
+     * @param frequency
+     * @return {@code this}.
+     * @since 6.1
+     */
+    public RestoreArgs frequency(long frequency) {
+
+        this.frequency = frequency;
         return this;
     }
 }
