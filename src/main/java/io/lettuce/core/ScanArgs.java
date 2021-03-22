@@ -39,9 +39,7 @@ public class ScanArgs implements CompositeArgument {
 
     private Long count;
 
-    private String match;
-
-    private Charset charset;
+    private byte[] match;
 
     /**
      * Builder entry points for {@link ScanArgs}.
@@ -76,6 +74,18 @@ public class ScanArgs implements CompositeArgument {
             return new ScanArgs().match(matches);
         }
 
+        /**
+         * Creates new {@link ScanArgs} with {@literal MATCH} set.
+         *
+         * @param matches the filter.
+         * @return new {@link ScanArgs} with {@literal MATCH} set.
+         * @since 6.0.4
+         * @see ScanArgs#match(byte[])
+         */
+        public static ScanArgs matches(byte[] matches) {
+            return new ScanArgs().match(matches);
+        }
+
     }
 
     /**
@@ -101,8 +111,23 @@ public class ScanArgs implements CompositeArgument {
         LettuceAssert.notNull(match, "Match must not be null");
         LettuceAssert.notNull(charset, "Charset must not be null");
 
-        this.match = match;
-        this.charset = charset;
+        return match(match.getBytes(charset));
+    }
+
+    /**
+     * Set the match filter.
+     *
+     * @param match the filter, must not be {@code null}.
+     * @return {@literal this} {@link ScanArgs}.
+     * @since 6.0.4
+     */
+    public ScanArgs match(byte[] match) {
+
+        LettuceAssert.notNull(match, "Match must not be null");
+
+        this.match = new byte[match.length];
+        System.arraycopy(match, 0, this.match, 0, match.length);
+
         return this;
     }
 
@@ -121,7 +146,7 @@ public class ScanArgs implements CompositeArgument {
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (match != null) {
-            args.add(MATCH).add(match.getBytes(charset));
+            args.add(MATCH).add(match);
         }
 
         if (count != null) {
