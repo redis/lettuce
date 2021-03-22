@@ -192,6 +192,15 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
     suspend fun objectEncoding(key: K): String?
 
     /**
+     * returns the logarithmic access frequency counter of the object stored at the specified key.
+     *
+     * @param key the key.
+     * @return Long.
+     * @since 6.1
+     */
+    suspend fun objectFreq(key: K): Long?
+
+    /**
      * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
      * operations).
      *

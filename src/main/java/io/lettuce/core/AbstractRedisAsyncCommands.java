@@ -1220,6 +1220,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> objectFreq(K key) {
+        return dispatch(commandBuilder.objectFreq(key));
+    }
+
+    @Override
     public RedisFuture<Long> objectIdletime(K key) {
         return dispatch(commandBuilder.objectIdletime(key));
     }

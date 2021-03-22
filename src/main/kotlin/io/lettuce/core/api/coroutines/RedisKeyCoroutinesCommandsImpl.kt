@@ -68,6 +68,8 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun objectEncoding(key: K): String? = ops.objectEncoding(key).awaitFirstOrNull()
 
+    override suspend fun objectFreq(key: K): Long? = ops.objectFreq(key).awaitFirstOrNull()
+
     override suspend fun objectIdletime(key: K): Long? = ops.objectIdletime(key).awaitFirstOrNull()
 
     override suspend fun objectRefcount(key: K): Long? = ops.objectRefcount(key).awaitFirstOrNull()
