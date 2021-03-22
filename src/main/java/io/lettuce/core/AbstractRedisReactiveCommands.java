@@ -1285,6 +1285,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<Long> objectFreq(K key) {
+        return createMono(() -> commandBuilder.objectFreq(key));
+    }
+
+    @Override
     public Mono<Long> objectIdletime(K key) {
         return createMono(() -> commandBuilder.objectIdletime(key));
     }

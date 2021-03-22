@@ -207,6 +207,15 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
     AsyncExecutions<String> objectEncoding(K key);
 
     /**
+     * returns the logarithmic access frequency counter of the object stored at the specified key.
+     *
+     * @param key the key.
+     * @return Long.
+     * @since 6.1
+     */
+    AsyncExecutions<Long> objectFreq(K key);
+
+    /**
      * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
      * operations).
      *

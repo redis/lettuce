@@ -1697,6 +1697,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(OBJECT, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, Long> objectFreq(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FREQ).addKey(key);
+        return createCommand(OBJECT, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Long> objectIdletime(K key) {
         notNullKey(key);
 
