@@ -20,6 +20,9 @@ import io.lettuce.core.event.Event;
 /**
  * Event recorder that can delegate events from the {@link io.lettuce.core.event.EventBus} into a recording facility such as
  * JFR. Transforming an {@link Event} into a recordable event is subject to the actual {@link EventRecorder} implementation.
+ * <p>
+ * You can record data by launching the application with recording enabled:
+ * {@code java -XX:StartFlightRecording:filename=recording.jfr,duration=10s -jar app.jar}.
  *
  * @author Mark Paluch
  * @since 6.1
