@@ -212,9 +212,14 @@ public class KeyCommandIntegrationTests extends TestSupport {
 
     @Test
     void objectFreq() {
-        redis.configSet("maxmemory-policy", "allkeys-lfu");
-        redis.set(key, value);
-        assertThat(redis.objectFreq(key)).isGreaterThan(0);
+        String maxmemoryPolicy = redis.configGet("maxmemory-policy").get("maxmemory-policy");
+        try {
+            redis.configSet("maxmemory-policy", "allkeys-lfu");
+            redis.set(key, value);
+            assertThat(redis.objectFreq(key)).isGreaterThan(0);
+        } finally {
+            redis.configSet("maxmemory-policy", maxmemoryPolicy);
+        }
     }
 
     @Test

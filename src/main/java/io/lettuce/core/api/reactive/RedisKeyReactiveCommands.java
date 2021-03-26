@@ -202,7 +202,7 @@ public interface RedisKeyReactiveCommands<K, V> {
     Mono<Boolean> move(K key, int db);
 
     /**
-     * returns the kind of internal representation used in order to store the value associated with a key.
+     * Returns the kind of internal representation used in order to store the value associated with the {@code key}.
      *
      * @param key the key.
      * @return String.
@@ -210,7 +210,7 @@ public interface RedisKeyReactiveCommands<K, V> {
     Mono<String> objectEncoding(K key);
 
     /**
-     * returns the logarithmic access frequency counter of the object stored at the specified key.
+     * Returns the logarithmic access frequency counter of the object stored at the specified {@code key}.
      *
      * @param key the key.
      * @return Long.
@@ -219,7 +219,7 @@ public interface RedisKeyReactiveCommands<K, V> {
     Mono<Long> objectFreq(K key);
 
     /**
-     * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
+     * Returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
      * operations).
      *
      * @param key the key.
@@ -228,7 +228,7 @@ public interface RedisKeyReactiveCommands<K, V> {
     Mono<Long> objectIdletime(K key);
 
     /**
-     * returns the number of references of the value associated with the specified key.
+     * Returns the number of references of the value associated with the specified key.
      *
      * @param key the key.
      * @return Long.

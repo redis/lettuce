@@ -184,7 +184,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
     suspend fun move(key: K, db: Int): Boolean?
 
     /**
-     * returns the kind of internal representation used in order to store the value associated with a key.
+     * Returns the kind of internal representation used in order to store the value associated with the `key`.
      *
      * @param key the key.
      * @return String.
@@ -192,7 +192,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
     suspend fun objectEncoding(key: K): String?
 
     /**
-     * returns the logarithmic access frequency counter of the object stored at the specified key.
+     * Returns the logarithmic access frequency counter of the object stored at the specified `key`.
      *
      * @param key the key.
      * @return Long.
@@ -201,7 +201,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
     suspend fun objectFreq(key: K): Long?
 
     /**
-     * returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
+     * Returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
      * operations).
      *
      * @param key the key.
@@ -210,7 +210,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
     suspend fun objectIdletime(key: K): Long?
 
     /**
-     * returns the number of references of the value associated with the specified key.
+     * Returns the number of references of the value associated with the specified key.
      *
      * @param key the key.
      * @return Long.
