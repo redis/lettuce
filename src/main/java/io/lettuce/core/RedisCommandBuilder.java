@@ -1885,21 +1885,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(restoreArgs.ttl).add(value);
 
-        if (restoreArgs.replace) {
-            args.add(REPLACE);
-        }
-
-        if (restoreArgs.absttl) {
-            args.add(ABSTTL);
-        }
-
-        if (restoreArgs.idleTime != null) {
-            args.add(IDLETIME).add(restoreArgs.idleTime);
-        }
-
-        if (restoreArgs.frequency != null) {
-            args.add(FREQ).add(restoreArgs.frequency);
-        }
+        restoreArgs.build(args);
 
         return createCommand(RESTORE, new StatusOutput<>(codec), args);
     }

@@ -15,9 +15,12 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.core.protocol.CommandKeyword.*;
+
 import java.time.Duration;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandArgs;
 
 /**
  * Argument list builder for the Redis <a href="http://redis.io/commands/restore">RESTORE</a> command. Static import the methods
@@ -29,17 +32,17 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author dengliming
  * @since 5.1
  */
-public class RestoreArgs {
+public class RestoreArgs implements CompositeArgument {
 
     long ttl;
 
-    boolean replace;
+    private boolean replace;
 
-    boolean absttl;
+    private boolean absttl;
 
-    Long frequency;
+    private Long frequency;
 
-    Long idleTime;
+    private Long idleTime;
 
     /**
      * Builder entry points for {@link XAddArgs}.
@@ -136,7 +139,7 @@ public class RestoreArgs {
     /**
      * TTL will represent an absolute Unix timestamp (in milliseconds) in which the key will expire.
      *
-     * @param absttl
+     * @param absttl {@code true} to apply absolute TTL instead of a relative remaining TTL.
      * @return {@code this}.
      * @since 6.1
      */
@@ -150,7 +153,7 @@ public class RestoreArgs {
      * Set the number of seconds since the object stored at the specified key is idle (not requested by read or write
      * operations).
      *
-     * @param idleTime
+     * @param idleTime the idle time when using a LRU eviction policy.
      * @return {@code this}.
      * @since 6.1
      */
@@ -163,7 +166,7 @@ public class RestoreArgs {
     /**
      * Set the logarithmic access frequency counter of the object stored at the specified key.
      *
-     * @param frequency
+     * @param frequency the access frequency when using a LFU eviction policy.
      * @return {@code this}.
      * @since 6.1
      */
@@ -171,5 +174,25 @@ public class RestoreArgs {
 
         this.frequency = frequency;
         return this;
+    }
+
+    @Override
+    public <K, V> void build(CommandArgs<K, V> args) {
+
+        if (replace) {
+            args.add(REPLACE);
+        }
+
+        if (absttl) {
+            args.add(ABSTTL);
+        }
+
+        if (idleTime != null) {
+            args.add(IDLETIME).add(idleTime);
+        }
+
+        if (frequency != null) {
+            args.add(FREQ).add(frequency);
+        }
     }
 }
