@@ -277,3 +277,4 @@ Other
 * Ensure Kotlin 1.3 compatibility #1694
 * Upgrade to Netty 4.1.61.Final #1696
 * Upgrade to Kotlin 1.4.32 #1697
+* Upgrade to Micrometer 1.6.5 #1698

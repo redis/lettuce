@@ -64,7 +64,7 @@
         <kotlinx-coroutines.version>1.4.3</kotlinx-coroutines.version>
         <latencyutils.version>2.0.3</latencyutils.version>
         <log4j2-version>2.14.1</log4j2-version>
-        <micrometer.version>1.6.4</micrometer.version>
+        <micrometer.version>1.6.5</micrometer.version>
         <mockito.version>3.8.0</mockito.version>
         <netty.version>4.1.61.Final</netty.version>
         <openwebbeans.version>2.0.21</openwebbeans.version>
