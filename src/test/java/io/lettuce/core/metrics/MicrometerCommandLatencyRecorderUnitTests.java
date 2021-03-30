@@ -19,13 +19,13 @@ import static io.lettuce.core.metrics.MicrometerCommandLatencyRecorder.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.net.SocketAddress;
+import java.util.Arrays;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.google.common.primitives.Doubles;
 
 import io.lettuce.core.protocol.CommandType;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -64,13 +64,13 @@ class MicrometerCommandLatencyRecorderUnitTests {
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(2);
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers()).hasSize(1)
                 .element(0).extracting(Timer::takeSnapshot).hasFieldOrPropertyWithValue("count", 3L)
-                .hasFieldOrPropertyWithValue("max", 300.0).hasFieldOrPropertyWithValue("mean", 200.0)
+                .hasFieldOrPropertyWithValue("max", 300.0)
                 .hasFieldOrPropertyWithValue("total", 600.0);
 
         assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(2);
         assertThat(meterRegistry.find(METRIC_COMPLETION).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers()).hasSize(1)
                 .element(0).extracting(Timer::takeSnapshot).hasFieldOrPropertyWithValue("count", 3L)
-                .hasFieldOrPropertyWithValue("max", 1500.0).hasFieldOrPropertyWithValue("mean", 1000.0)
+                .hasFieldOrPropertyWithValue("max", 1500.0)
                 .hasFieldOrPropertyWithValue("total", 3000.0);
     }
 
@@ -97,11 +97,11 @@ class MicrometerCommandLatencyRecorderUnitTests {
         assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(1).element(0).extracting(Timer::takeSnapshot)
                 .extracting(HistogramSnapshot::percentileValues, InstanceOfAssertFactories.array(ValueAtPercentile[].class))
                 .extracting(ValueAtPercentile::percentile)
-                .containsExactlyElementsOf(Doubles.asList(options.targetPercentiles()));
+                .containsExactlyElementsOf(Arrays.asList(ArrayUtils.toObject(options.targetPercentiles())));
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(1).element(0).extracting(Timer::takeSnapshot)
                 .extracting(HistogramSnapshot::percentileValues, InstanceOfAssertFactories.array(ValueAtPercentile[].class))
                 .extracting(ValueAtPercentile::percentile)
-                .containsExactlyElementsOf(Doubles.asList(options.targetPercentiles()));
+                .containsExactlyElementsOf(Arrays.asList(ArrayUtils.toObject(options.targetPercentiles())));
     }
 
     @Test
