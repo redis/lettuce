@@ -237,7 +237,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @param host the host
      * @param port the port
      * @param timeout timeout value
-     * @param timeout unit of the timeout value
      */
     public RedisURI(String host, int port, Duration timeout) {
 
@@ -505,7 +504,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Returns the Redis database number. Databases are only available for Redis Standalone and Redis Master/Slave.
      *
-     * @return
+     * @return the Redis database number
      */
     public int getDatabase() {
         return database;
@@ -526,7 +525,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Returns the client name.
      *
-     * @return
+     * @return the client name.
      * @since 4.4
      */
     public String getClientName() {

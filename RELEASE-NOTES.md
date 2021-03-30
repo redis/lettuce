@@ -3,17 +3,16 @@ Lettuce 6.1.0 RELEASE NOTES
 
 The Lettuce team is delighted to announce general availability of Lettuce 6.1.
 
-This is a massive release thanks to all the community contributions. This release ships mostly with command updates to support Redis 6.2.
-
+This is a massive release thanks to all the community contributions. 
 Most notable changes that ship with this release are:
 
-* Support for Redis 6.2 commands and command changes
+* Support for Redis 6.2 commands and modifier/argument updates
 * Micrometer integration
 * `CommandListeners` API to intercept Redis commands
 * extended Keep-Alive options
 * Coroutine variant of `ScanStream`
 * TCP NoDelay enabled by default
-* Experimental support for io_uring
+* Experimental support for `io_uring`
 * Java Flight Recorder Integration for Connection and Cluster Events
 
 Lettuce 6 supports Redis 2.6+ up to Redis 6.x. In terms of Java runtime, Lettuce requires at least Java 8 and works with Java 16.

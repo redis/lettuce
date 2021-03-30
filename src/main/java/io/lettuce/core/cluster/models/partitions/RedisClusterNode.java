@@ -16,12 +16,18 @@
 package io.lettuce.core.cluster.models.partitions;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.IntConsumer;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.SlotHash;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
@@ -393,7 +399,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
-     * Returns the {@link Role} of the Redis Cluster node based on the {@link #getFlags() flags}.
+     * Returns the {@link RedisInstance.Role} of the Redis Cluster node based on the {@link #getFlags() flags}.
      *
      * @return the Redis Cluster node role
      */

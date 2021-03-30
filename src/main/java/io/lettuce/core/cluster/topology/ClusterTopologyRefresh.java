@@ -34,9 +34,9 @@ public interface ClusterTopologyRefresh {
     /**
      * Create a new {@link ClusterTopologyRefresh} instance.
      *
-     * @param nodeConnectionFactory
-     * @param clientResources
-     * @return
+     * @param nodeConnectionFactory the connection factory to open connections to specific cluster nodes
+     * @param clientResources shared client resources
+     * @return a new {@link ClusterTopologyRefresh} instance.
      */
     static ClusterTopologyRefresh create(NodeConnectionFactory nodeConnectionFactory, ClientResources clientResources) {
         return new DefaultClusterTopologyRefresh(nodeConnectionFactory, clientResources);

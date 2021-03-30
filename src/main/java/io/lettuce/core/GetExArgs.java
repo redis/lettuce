@@ -175,7 +175,7 @@ public class GetExArgs implements CompositeArgument {
          * Creates new {@link GetExArgs} and enable {@literal PERSIST}.
          *
          * @return new {@link GetExArgs} with {@literal PERSIST} enabled.
-         * @see GetExArgs#nx()
+         * @see GetExArgs#persist()
          */
         public static GetExArgs persist() {
             return new GetExArgs().persist();

@@ -64,7 +64,7 @@ public interface RedisGeoCommands<K, V> {
      * Multi geo add.
      *
      * @param key the key of the geo set.
-     * @param lngLatMember triplets of double longitude, double latitude and V member.
+     * @param values {@link io.lettuce.core.GeoValue} values to add.
      * @return Long integer-reply the number of elements that were added to the set.
      * @since 6.1
      */
@@ -75,7 +75,7 @@ public interface RedisGeoCommands<K, V> {
      *
      * @param key the key of the geo set.
      * @param args additional arguments.
-     * @param values {@link io.lettuce.core.GeoValue} values to add.
+     * @param lngLatMember triplets of double longitude, double latitude and V member.
      * @return Long integer-reply the number of elements that were added to the set.
      * @since 6.1
      */

@@ -89,6 +89,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
      * @param firstResponseLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the first response
      * @param completionLatency latency value in {@link TimeUnit#NANOSECONDS} from send to the command completion
      */
+    @Override
     public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
             long firstResponseLatency, long completionLatency) {
 

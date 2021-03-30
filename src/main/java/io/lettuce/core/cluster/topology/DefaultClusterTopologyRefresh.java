@@ -18,8 +18,21 @@ package io.lettuce.core.cluster.topology;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -73,6 +86,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
      * @param discovery {@code true} to discover additional nodes
      * @return mapping between {@link RedisURI} and {@link Partitions}
      */
+    @Override
     public CompletionStage<Map<RedisURI, Partitions>> loadViews(Iterable<RedisURI> seed, Duration connectTimeout,
             boolean discovery) {
 

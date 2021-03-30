@@ -222,7 +222,7 @@ public class KillArgs implements CompositeArgument {
     }
 
     /**
-     * This closes the connections of all the clients in the specified {@link Type class}. Note that clients blocked into the
+     * This closes the connections of all the clients in the specified {@link KillArgs.Type}. Note that clients blocked into the
      * {@literal MONITOR} command are considered to belong to the normal class.
      *
      * @param type must not be {@code null}.

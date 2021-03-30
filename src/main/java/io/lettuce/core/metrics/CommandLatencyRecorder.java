@@ -33,7 +33,7 @@ public interface CommandLatencyRecorder {
     /**
      * Returns a disabled no-op {@link CommandLatencyRecorder}.
      *
-     * @return
+     * @return a disabled {@link CommandLatencyRecorder}.
      */
     static CommandLatencyRecorder disabled() {
 

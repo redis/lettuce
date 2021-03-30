@@ -30,7 +30,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @author dengliming
  * @since 6.1
  */
-public class XPendingArgs<K> {
+public class XPendingArgs<K> implements CompositeArgument {
 
     private Consumer<K> consumer;
 
@@ -54,9 +54,10 @@ public class XPendingArgs<K> {
         /**
          * Create a new {@link XPendingArgs} .
          *
-         * @param consumer
-         * @param range
-         * @param limit
+         * @param consumer the consumer
+         * @param range the range of message Id's
+         * @param limit limit {@code COUNT}
+         * @return a new {@link XPendingArgs} with {@link Range} and {@link Limit} applied.
          */
         public static <K> XPendingArgs<K> xpending(Consumer<K> consumer, Range<String> range, Limit limit) {
             return new XPendingArgs<K>().consumer(consumer).range(range).limit(limit);
@@ -64,6 +65,7 @@ public class XPendingArgs<K> {
     }
 
     public XPendingArgs<K> range(Range<String> range) {
+
         LettuceAssert.notNull(range, "Range must not be null");
 
         this.range = range;
@@ -71,6 +73,7 @@ public class XPendingArgs<K> {
     }
 
     public XPendingArgs<K> consumer(Consumer<K> consumer) {
+
         LettuceAssert.notNull(consumer, "Consumer must not be null");
 
         this.consumer = consumer;
@@ -78,6 +81,7 @@ public class XPendingArgs<K> {
     }
 
     public XPendingArgs<K> limit(Limit limit) {
+
         LettuceAssert.notNull(limit, "Limit must not be null");
 
         this.limit = limit;
@@ -88,10 +92,12 @@ public class XPendingArgs<K> {
      * Include only entries that are idle for {@link Duration}.
      *
      * @param timeout
-     * @return
+     * @return {@code this} {@link XPendingArgs}.
      */
     public XPendingArgs<K> idle(Duration timeout) {
+
         LettuceAssert.notNull(timeout, "Timeout must not be null");
+
         return idle(timeout.toMillis());
     }
 
@@ -99,16 +105,17 @@ public class XPendingArgs<K> {
      * Include only entries that are idle for {@code milliseconds}.
      *
      * @param milliseconds
-     * @return
+     * @return {@code this} {@link XPendingArgs}.
      */
     public XPendingArgs<K> idle(long milliseconds) {
         this.idle = milliseconds;
         return this;
     }
 
-    public <V> void build(CommandArgs<K, V> args) {
+    @Override
+    public <K, V> void build(CommandArgs<K, V> args) {
 
-        args.addKey(consumer.group);
+        args.addKey((K) consumer.group);
 
         if (idle != null) {
             args.add(CommandKeyword.IDLE).add(idle);
@@ -127,6 +134,6 @@ public class XPendingArgs<K> {
         }
 
         args.add(limit.isLimited() ? limit.getCount() : Long.MAX_VALUE);
-        args.addKey(consumer.name);
+        args.addKey((K) consumer.name);
     }
 }

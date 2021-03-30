@@ -61,7 +61,7 @@ public class XAutoClaimArgs<K> implements CompositeArgument {
          * @param minIdleTime
          * @param startId
          * @param <K>
-         * @return
+         * @return new {@link XAutoClaimArgs} with {@code minIdleTime} and {@code startId} configured.
          */
         public static <K> XAutoClaimArgs<K> justid(Consumer<K> consumer, long minIdleTime, String startId) {
             return new XAutoClaimArgs<K>().justid().consumer(consumer).minIdleTime(minIdleTime).startId(startId);
@@ -75,7 +75,7 @@ public class XAutoClaimArgs<K> implements CompositeArgument {
          * @param minIdleTime
          * @param startId
          * @param <K>
-         * @return
+         * @return new {@link XAutoClaimArgs} with {@code minIdleTime} and {@code startId} configured.
          */
         public static <K> XAutoClaimArgs<K> justid(Consumer<K> consumer, Duration minIdleTime, String startId) {
             return new XAutoClaimArgs<K>().justid().consumer(consumer).minIdleTime(minIdleTime).startId(startId);
@@ -88,7 +88,7 @@ public class XAutoClaimArgs<K> implements CompositeArgument {
          * @param minIdleTime
          * @param startId
          * @param <K>
-         * @return
+         * @return new {@link XAutoClaimArgs} with {@code minIdleTime} and {@code startId} configured.
          */
         public static <K> XAutoClaimArgs<K> xautoclaim(Consumer<K> consumer, long minIdleTime, String startId) {
             return new XAutoClaimArgs<K>().consumer(consumer).minIdleTime(minIdleTime).startId(startId);
@@ -101,7 +101,7 @@ public class XAutoClaimArgs<K> implements CompositeArgument {
          * @param minIdleTime
          * @param startId
          * @param <K>
-         * @return
+         * @return new {@link XAutoClaimArgs} with {@code minIdleTime} and {@code startId} configured.
          */
         public static <K> XAutoClaimArgs<K> xautoclaim(Consumer<K> consumer, Duration minIdleTime, String startId) {
             return new XAutoClaimArgs<K>().consumer(consumer).minIdleTime(minIdleTime).startId(startId);

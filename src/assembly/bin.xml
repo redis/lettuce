@@ -26,6 +26,7 @@
                 <include>org.apache.commons:*</include>
                 <include>org.latencyutils:*</include>
                 <include>org.hdrhistogram:*</include>
+                <include>io.micrometer:*</include>
             </includes>
             <outputDirectory>dependencies</outputDirectory>
             <unpack>false</unpack>

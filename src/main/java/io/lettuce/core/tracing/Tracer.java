@@ -83,7 +83,7 @@ public abstract class Tracer {
          * Associate an {@link Throwable error} with this {@link Span}.
          *
          * @param throwable must not be {@code null}.
-         * @return
+         * @return {@literal this} {@link Span}.
          */
         public abstract Span error(Throwable throwable);
 
@@ -91,7 +91,7 @@ public abstract class Tracer {
          * Associates an {@link Tracing.Endpoint} with this {@link Span}.
          *
          * @param endpoint must not be {@code null}.
-         * @return
+         * @return {@literal this} {@link Span}.
          */
         public abstract Span remoteEndpoint(Tracing.Endpoint endpoint);
 
