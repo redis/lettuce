@@ -120,6 +120,21 @@
     "allDeclaredConstructors": true
   },
   {
+    "name": "io.lettuce.core.cluster.pubsub.api.sync.NodeSelectionPubSubCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.cluster.pubsub.api.sync.RedisClusterPubSubCommands",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.cluster.pubsub.api.sync.PubSubNodeSelection",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
     "name": "io.lettuce.core.protocol.CommandHandler",
     "allPublicMethods": true,
     "allDeclaredConstructors": true
@@ -136,6 +151,11 @@
   },
   {
     "name": "io.lettuce.core.protocol.ConnectionWatchdog",
+    "allPublicMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.lettuce.core.pubsub.api.sync.RedisPubSubCommands",
     "allPublicMethods": true,
     "allDeclaredConstructors": true
   },
