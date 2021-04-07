@@ -421,9 +421,15 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 span.tag("redis.args", command.getArgs().toCommandString());
             }
 
-            span.remoteEndpoint(tracedEndpoint);
+            if (tracedEndpoint != null) {
+                span.remoteEndpoint(tracedEndpoint);
+            } else {
+                span.remoteEndpoint(clientResources.tracing().createEndpoint(ctx.channel().remoteAddress()));
+            }
             span.start();
-            provider.setSpan(span);
+            if (provider != null) {
+                provider.setSpan(span);
+            }
 
             CompleteableCommand<?> completeableCommand = (CompleteableCommand<?>) command;
             completeableCommand.onComplete((o, throwable) -> {
