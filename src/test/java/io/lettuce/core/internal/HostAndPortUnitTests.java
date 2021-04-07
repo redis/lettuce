@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
 /**
- * @author Mark Paluch
+ * @author Mark Paluch, Guilherme Amaral
  */
 class HostAndPortUnitTests {
 
