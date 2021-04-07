@@ -17,6 +17,7 @@ package io.lettuce.core.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
@@ -101,17 +102,13 @@ class HostAndPortUnitTests {
         assertThat(hp.hasPort()).isTrue();
         assertThat(hp.getPort()).isEqualTo(81);
 
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             HostAndPort.of("gmail.com:80", 81);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException expected) {
-        }
+        });
 
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             HostAndPort.of("gmail.com", -1);
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException expected) {
-        }
+        });
     }
 
     @Test
